@@ -1,0 +1,577 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bilangan Rasional — Belanja Cermat · Matematika SMP</title>
+  <meta name="description"
+    content="Media pembelajaran interaktif: mengonversi dan membandingkan bilangan rasional dalam konteks belanja bahan makanan.">
+  <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+
+  <a href="#konten-utama" class="skip-link">Lewati ke konten utama</a>
+
+  <header class="app-header">
+    <div class="app-header__brand">
+      <span class="app-header__kicker">Matematika SMP · Bilangan Rasional</span>
+      <h1 class="app-header__title">Belanja Cermat: Eksplorasi Bilangan Rasional</h1>
+    </div>
+    <div class="app-header__actions">
+      <button type="button" id="resetAppBtn" class="btn btn--ghost btn--small">Reset aplikasi</button>
+      <a href="../index.html" class="btn btn--ghost btn--small">Beranda</a>
+    </div>
+  </header>
+
+  <nav class="stage-nav" aria-label="Tahapan pembelajaran">
+    <ol class="stage-nav__list" id="stageNavList">
+      <li>
+        <button type="button" class="stage-nav__item" data-stage="orientasi" aria-current="step">
+          <span class="stage-nav__num">1</span>
+          <span class="stage-nav__label">Orientasi</span>
+        </button>
+      </li>
+      <li>
+        <button type="button" class="stage-nav__item" data-stage="eksplorasi" disabled>
+          <span class="stage-nav__num">2</span>
+          <span class="stage-nav__label">Eksplorasi</span>
+        </button>
+      </li>
+      <li>
+        <button type="button" class="stage-nav__item" data-stage="matching" disabled>
+          <span class="stage-nav__num">3</span>
+          <span class="stage-nav__label">Matching</span>
+        </button>
+      </li>
+      <li>
+        <button type="button" class="stage-nav__item" data-stage="konversi" disabled>
+          <span class="stage-nav__num">4</span>
+          <span class="stage-nav__label">Temukan Pola</span>
+        </button>
+      </li>
+      <li>
+        <button type="button" class="stage-nav__item" data-stage="belanja" disabled>
+          <span class="stage-nav__num">5</span>
+          <span class="stage-nav__label">Simulasi Belanja</span>
+        </button>
+      </li>
+      <li>
+        <button type="button" class="stage-nav__item" data-stage="kuis" disabled>
+          <span class="stage-nav__num">6</span>
+          <span class="stage-nav__label">Kuis</span>
+        </button>
+      </li>
+      <li>
+        <button type="button" class="stage-nav__item" data-stage="refleksi" disabled>
+          <span class="stage-nav__num">7</span>
+          <span class="stage-nav__label">Refleksi</span>
+        </button>
+      </li>
+      <li>
+        <button type="button" class="stage-nav__item" data-stage="hasil" disabled>
+          <span class="stage-nav__num">8</span>
+          <span class="stage-nav__label">Hasil</span>
+        </button>
+      </li>
+    </ol>
+  </nav>
+
+  <main id="konten-utama">
+
+    <!-- ===== STAGE 1: ORIENTASI ===== -->
+    <section class="stage" id="stage-orientasi" data-stage="orientasi">
+      <div class="panel">
+        <h2>Selamat datang di Belanja Cermat!</h2>
+        <p>Media ini membantu kamu mengeksplorasi <strong>bilangan rasional</strong> — angka yang sering kita temukan
+          dalam kehidupan sehari-hari, seperti saat berbelanja bahan makanan.</p>
+
+        <p>Kamu akan berlatih:</p>
+        <div class="hero-steps" aria-label="Aktivitas dalam media ini">
+          <div class="hero-steps__item">
+            <span class="hero-steps__num">1</span>
+            <span>Mengenali berbagai representasi bilangan rasional: pecahan biasa, pecahan campuran, dan
+              desimal.</span>
+          </div>
+          <div class="hero-steps__item">
+            <span class="hero-steps__num">2</span>
+            <span>Menjodohkan kartu bilangan yang memiliki nilai sama.</span>
+          </div>
+          <div class="hero-steps__item">
+            <span class="hero-steps__num">3</span>
+            <span>Menemukan cara mengonversi pecahan ke desimal dan sebaliknya.</span>
+          </div>
+          <div class="hero-steps__item">
+            <span class="hero-steps__num">4</span>
+            <span>Membandingkan dan mengurutkan bilangan rasional untuk membuat keputusan belanja yang cerdas.</span>
+          </div>
+          <div class="hero-steps__item">
+            <span class="hero-steps__num">5</span>
+            <span>Memilih barang belanjaan yang paling efisien sesuai anggaran.</span>
+          </div>
+        </div>
+
+        <div class="panel panel--info" style="margin: 0 0 var(--space-4) 0;">
+          <strong>Catatan penting:</strong> Media ini adalah pendukung pembelajaran — bukan pengganti diskusi bersama
+          teman atau benda nyata di kelas. Tetap catat pengamatanmu di buku tulis!
+        </div>
+
+        <button type="button" class="btn btn--primary btn--large" id="startBtn">Mulai →</button>
+      </div>
+    </section>
+
+    <!-- ===== STAGE 2: EKSPLORASI ===== -->
+    <section class="stage" id="stage-eksplorasi" data-stage="eksplorasi" hidden>
+      <div class="stage-head">
+        <h2>Eksplorasi Representasi Bilangan Rasional</h2>
+        <p class="stage-head__goal">Tujuan: mengenali berbagai cara penulisan bilangan rasional dan hubungan nilai
+          antarrepresentasi.</p>
+      </div>
+
+      <div class="panel panel--compact" style="margin-bottom: var(--space-4);">
+        <p>Saat berbelanja, kamu akan sering melihat kuantitas barang dituliskan dalam berbagai bentuk. Semua bentuk di
+          bawah ini mewakili bilangan yang sama nilainya.</p>
+        <p>Klik tombol <strong>"Lihat Setara"</strong> pada setiap baris untuk melihat nilai yang setara.</p>
+      </div>
+
+      <div class="receipt" aria-label="Struk belanjaan Bu Sari">
+        <div class="receipt__header">
+          <h3>STRUK BELANJAAN — TOKO SEGAR MANDIRI</h3>
+          <p>Jl. Pasar Minggu No. 7 · 9 September 2026</p>
+        </div>
+        <table class="receipt__table">
+          <thead>
+            <tr>
+              <th scope="col">Nama Barang</th>
+              <th scope="col">Tertulis di struk</th>
+              <th scope="col">Desimal</th>
+              <th scope="col">Pecahan biasa</th>
+            </tr>
+          </thead>
+          <tbody id="receiptBody">
+            <!-- Filled by JS -->
+          </tbody>
+        </table>
+      </div>
+
+      <div class="panel panel--compact" style="margin-top: var(--space-4);">
+        <h3>Pertanyaan untuk dipikirkan</h3>
+        <ul class="guiding-questions">
+          <li>Mengapa penjual bisa menuliskan kuantitas dalam dua cara yang berbeda?</li>
+          <li>Bagaimana kamu membuktikan bahwa <strong>3/4</strong> dan <strong>0,75</strong> memiliki nilai yang sama?
+          </li>
+          <li>Manakah bentuk yang lebih mudah kamu gunakan untuk membandingkan dua kuantitas?</li>
+        </ul>
+        <p style="font-size: 0.88rem; color: var(--color-ink-muted);">Diskusikan dengan teman sekelasmu, lalu lanjutkan
+          ke tahap berikutnya.</p>
+      </div>
+
+      <div class="stage-nav-buttons">
+        <button type="button" class="btn btn--ghost" data-go-stage="orientasi">← Kembali</button>
+        <button type="button" class="btn btn--primary" data-go-stage="matching">Lanjut: Matching Kartu →</button>
+      </div>
+    </section>
+
+    <!-- ===== STAGE 3: MATCHING ===== -->
+    <section class="stage" id="stage-matching" data-stage="matching" hidden>
+      <div class="stage-head">
+        <h2>Matching Kartu Bilangan Rasional</h2>
+        <p class="stage-head__goal">Tujuan: menjodohkan kartu pecahan dengan kartu desimal yang nilainya sama.</p>
+      </div>
+
+      <div class="panel panel--compact" style="margin-bottom: var(--space-4);">
+        <p><strong>Cara bermain:</strong> Pilih satu kartu pecahan (kiri) dan satu kartu desimal (kanan) yang menurutmu
+          memiliki nilai sama. Di perangkat desktop, kamu juga bisa <em>drag-and-drop</em> kartu pecahan ke kartu
+          desimal pasangannya.</p>
+        <p style="margin: 0; font-size: 0.88rem; color: var(--color-ink-muted);">Pikirkan terlebih dahulu sebelum
+          memilih. Setiap percobaan dicatat sebagai latihan.</p>
+      </div>
+
+      <div class="match-score-bar" role="status" aria-live="polite" id="matchScoreBar">
+        <span class="match-score-bar__stat">Pasangan benar: <strong id="matchCorrect">0</strong>/8</span>
+        <span class="match-score-bar__stat">Percobaan: <strong id="matchAttempts">0</strong></span>
+        <button type="button" class="btn btn--ghost btn--small" id="matchResetBtn" style="margin-left: auto;">Reset
+          matching</button>
+      </div>
+
+      <div class="match-grid" id="matchGrid">
+        <div>
+          <p class="match-col__header">Kartu Pecahan</p>
+          <div class="match-col" id="fracCol" role="list" aria-label="Kartu pecahan"></div>
+        </div>
+        <div>
+          <p class="match-col__header">Kartu Desimal</p>
+          <div class="match-col" id="decCol" role="list" aria-label="Kartu desimal"></div>
+        </div>
+      </div>
+
+      <div class="feedback-box" id="matchFeedback" role="alert" aria-live="polite"></div>
+
+      <div id="matchDoneMsg" hidden class="match-done-msg">
+        <p><strong>Semua pasangan berhasil dijodohkan! 🎉</strong></p>
+        <p id="matchDoneSummary"></p>
+      </div>
+
+      <div class="stage-nav-buttons">
+        <button type="button" class="btn btn--ghost" data-go-stage="eksplorasi">← Kembali</button>
+        <button type="button" class="btn btn--primary" data-go-stage="konversi">Lanjut: Temukan Pola →</button>
+      </div>
+    </section>
+
+    <!-- ===== STAGE 4: KONVERSI ===== -->
+    <section class="stage" id="stage-konversi" data-stage="konversi" hidden>
+      <div class="stage-head">
+        <h2>Temukan Pola Konversi</h2>
+        <p class="stage-head__goal">Tujuan: menemukan prosedur sistematis mengonversi pecahan ke desimal dan sebaliknya.
+        </p>
+      </div>
+
+      <div class="panel panel--compact" style="margin-bottom: var(--space-4);">
+        <h3>Amati contoh-contoh ini</h3>
+        <p>Cermati pola yang muncul: bagaimana pecahan diubah menjadi desimal?</p>
+        <div class="konversi-examples" id="konversiExamples" aria-label="Contoh konversi pecahan ke desimal"></div>
+
+        <h3 style="margin-top: var(--space-4);">Pertanyaan panduan</h3>
+        <ul class="guiding-questions">
+          <li>Operasi apa yang dilakukan untuk mengubah <strong>3/4 menjadi 0,75</strong>?</li>
+          <li>Jika kamu mengubah <strong>2/5</strong>, operasi apa yang kamu lakukan?</li>
+          <li>Bagaimana cara mengubah pecahan campuran <strong>1 1/4</strong> ke desimal?</li>
+        </ul>
+      </div>
+
+      <div class="panel">
+        <h3>Coba Sendiri: Kalkulator Konversi</h3>
+
+        <div class="konversi-tool">
+          <!-- Pecahan → Desimal -->
+          <div class="konversi-box">
+            <p class="konversi-box__title">Pecahan → Desimal</p>
+
+            <div class="field-group">
+              <label>Masukkan bilangan bulat (opsional untuk pecahan campuran)</label>
+              <input type="text" id="fracWhole" class="input-text" placeholder="0 (kosongkan jika tidak ada)"
+                inputmode="numeric" aria-label="Bagian bulat (opsional)">
+            </div>
+            <div class="field-group" style="margin-bottom: var(--space-2);">
+              <label>Masukkan pecahan (pembilang / penyebut)</label>
+              <div class="input-fraction-row">
+                <input type="text" id="fracNum" class="input-text" value="3" inputmode="numeric" aria-label="Pembilang">
+                <span class="fraction-divider" aria-hidden="true">⁄</span>
+                <input type="text" id="fracDen" class="input-text" value="4" inputmode="numeric" aria-label="Penyebut">
+              </div>
+              <p class="field-error" id="fracError" role="alert"></p>
+            </div>
+            <button type="button" class="btn btn--primary" id="fracConvertBtn">Ubah ke desimal</button>
+            <div class="konversi-result" id="fracResult" aria-live="polite"
+              aria-label="Hasil konversi pecahan ke desimal"></div>
+          </div>
+
+          <!-- Desimal → Pecahan -->
+          <div class="konversi-box">
+            <p class="konversi-box__title">Desimal → Pecahan</p>
+            <div class="field-group">
+              <label for="decInput">Masukkan bilangan desimal (gunakan koma atau titik)</label>
+              <input type="text" id="decInput" class="input-text" value="0,75" inputmode="decimal"
+                aria-label="Bilangan desimal">
+              <p class="field-error" id="decError" role="alert"></p>
+            </div>
+            <button type="button" class="btn btn--primary" id="decConvertBtn">Ubah ke pecahan</button>
+            <div class="konversi-result" id="decResult" aria-live="polite"
+              aria-label="Hasil konversi desimal ke pecahan"></div>
+          </div>
+        </div>
+      </div>
+
+      <details class="reveal-block" id="konversiSummary">
+        <summary>Lihat Ringkasan Prosedur Konversi</summary>
+        <div class="reveal-block__content">
+          <h3 style="margin-top:0;">Pecahan → Desimal</h3>
+          <ol class="procedure-steps">
+            <li class="procedure-step"><span class="procedure-step__num">1.</span><span>Bagi pembilang dengan penyebut:
+                <strong>pembilang ÷ penyebut</strong></span></li>
+            <li class="procedure-step"><span class="procedure-step__num">2.</span><span>Untuk pecahan campuran: ubah
+                bagian pecahan saja, lalu tambahkan bagian bilangan bulatnya. Contoh: 1¼ = 1 + (1 ÷ 4) = 1 + 0,25 =
+                <strong>1,25</strong></span></li>
+          </ol>
+
+          <h3 style="margin-top: var(--space-4);">Desimal → Pecahan</h3>
+          <ol class="procedure-steps">
+            <li class="procedure-step"><span class="procedure-step__num">1.</span><span>Hitung berapa angka di belakang
+                koma. Misalnya 0,75 punya 2 angka di belakang koma.</span></li>
+            <li class="procedure-step"><span class="procedure-step__num">2.</span><span>Tulis sebagai pecahan:
+                <strong>angka tanpa koma / (10^banyak_desimal)</strong>. Jadi 0,75 = 75/100.</span></li>
+            <li class="procedure-step"><span class="procedure-step__num">3.</span><span>Sederhanakan dengan membagi
+                pembilang dan penyebut dengan FPB. 75/100 ÷ 25/25 = <strong>3/4</strong>.</span></li>
+          </ol>
+        </div>
+      </details>
+
+      <div class="stage-nav-buttons">
+        <button type="button" class="btn btn--ghost" data-go-stage="matching">← Kembali</button>
+        <button type="button" class="btn btn--primary" data-go-stage="belanja">Lanjut: Simulasi Belanja →</button>
+      </div>
+    </section>
+
+    <!-- ===== STAGE 5: SIMULASI BELANJA ===== -->
+    <section class="stage" id="stage-belanja" data-stage="belanja" hidden>
+      <div class="stage-head">
+        <h2>Simulasi Belanja Bahan Masakan</h2>
+        <p class="stage-head__goal">Tujuan: menggunakan konversi dan perbandingan bilangan rasional untuk mengurutkan
+          barang dan memilih sesuai anggaran.</p>
+      </div>
+
+      <!-- Sub-section A: Sorting -->
+      <div id="belanjaSort">
+        <div class="panel panel--compact" style="margin-bottom: var(--space-3);">
+          <h3>Bagian 1: Urutkan Berdasarkan Kuantitas</h3>
+          <p>Bu Sari membeli beberapa bahan masakan. Kuantitas setiap barang dituliskan dalam bentuk yang berbeda-beda
+            (sebagian pecahan, sebagian desimal).</p>
+        </div>
+
+        <div class="sort-instructions" role="note">
+          <strong>Tugasmu:</strong> Urutkan barang-barang berikut dari kuantitas <strong>terkecil hingga
+            terbesar</strong>.
+          Geser kartu (drag &amp; drop) atau gunakan tombol ▲▼ untuk memindahkan posisi.
+          <em>Konversi ke bentuk yang sama terlebih dahulu agar mudah membandingkan!</em>
+        </div>
+
+        <ul class="sort-list" id="sortList" role="list" aria-label="Daftar barang untuk diurutkan"></ul>
+
+        <div class="feedback-box" id="sortFeedback" role="alert" aria-live="polite"></div>
+
+        <div style="display: flex; gap: var(--space-3); flex-wrap: wrap; margin-top: var(--space-3);">
+          <button type="button" class="btn btn--primary" id="sortCheckBtn">Periksa Urutan</button>
+          <button type="button" class="btn btn--ghost" id="sortResetBtn">Reset Urutan</button>
+        </div>
+      </div>
+
+      <!-- Sub-section B: Budget decision (shown after sort attempt) -->
+      <div id="belanjaBudget" style="margin-top: var(--space-6);">
+        <div class="panel panel--compact" style="margin-bottom: var(--space-3);">
+          <h3>Bagian 2: Pilih Belanjaan Sesuai Anggaran</h3>
+          <p>Setelah mengurutkan, sekarang Bu Sari harus memilih barang yang akan dibeli. Total pengeluaran tidak boleh
+            melebihi anggaran.</p>
+        </div>
+
+        <div class="budget-header">
+          <div>
+            <p class="budget-header__label">Anggaran Bu Sari</p>
+            <span class="budget-header__amount">Rp 30.000</span>
+          </div>
+          <div>
+            <p class="budget-header__label" style="text-align: right;">Tantangan</p>
+            <p style="margin:0; font-size: 0.9rem; font-weight: 600;">Pilih sebanyak mungkin item dalam anggaran!</p>
+          </div>
+        </div>
+
+        <div class="cart-items" id="cartItems" role="list" aria-label="Daftar barang belanjaan"></div>
+
+        <div class="cart-total-box" id="cartTotalBox" aria-live="polite">
+          <div class="cart-total-row">
+            <span class="cart-total-row__label">Item dipilih</span>
+            <span class="cart-total-row__value" id="cartItemCount">0 item</span>
+          </div>
+          <div class="cart-total-row">
+            <span class="cart-total-row__label">Total belanja</span>
+            <span class="cart-total-row__value" id="cartTotal">Rp 0</span>
+          </div>
+          <div class="cart-total-row" id="cartSisaRow">
+            <span class="cart-total-row__label">Sisa anggaran</span>
+            <span class="cart-total-row__value" id="cartSisa">Rp 30.000</span>
+          </div>
+        </div>
+
+        <div class="feedback-box" id="budgetFeedback" role="alert" aria-live="polite"></div>
+
+        <div style="display: flex; gap: var(--space-3); flex-wrap: wrap; margin-top: var(--space-3);">
+          <button type="button" class="btn btn--primary" id="budgetCheckBtn">Konfirmasi Pilihan</button>
+          <button type="button" class="btn btn--ghost" id="budgetResetBtn">Hapus Pilihan</button>
+        </div>
+      </div>
+
+      <div class="stage-nav-buttons">
+        <button type="button" class="btn btn--ghost" data-go-stage="konversi">← Kembali</button>
+        <button type="button" class="btn btn--primary" data-go-stage="kuis">Lanjut: Kuis →</button>
+      </div>
+    </section>
+
+    <!-- ===== STAGE 6: KUIS ===== -->
+    <section class="stage" id="stage-kuis" data-stage="kuis" hidden>
+      <div class="stage-head">
+        <h2>Kuis Formatif</h2>
+        <p class="stage-head__goal">Tujuan: memeriksa pemahamanmu tentang konversi, kesetaraan, dan perbandingan
+          bilangan rasional.</p>
+      </div>
+
+      <div class="quiz-progress" role="status" aria-live="polite" id="kuisProgress">
+        <span class="quiz-progress__item">Soal dijawab: <strong id="kuisAnswered">0</strong>/3</span>
+        <span class="quiz-progress__item">Benar: <strong id="kuisCorrect">0</strong></span>
+        <button type="button" class="btn btn--ghost btn--small" id="kuisResetBtn" style="margin-left: auto;">Reset
+          kuis</button>
+      </div>
+
+      <!-- Soal 1 -->
+      <div class="quiz-question" id="quizQ1" role="group" aria-labelledby="q1label">
+        <p class="quiz-question__meta" id="q1label">Soal 1 · Konversi pecahan ke desimal · Tingkat: Dasar</p>
+        <p class="quiz-question__prompt">Ubah pecahan <strong>7/20</strong> ke dalam bentuk desimal.</p>
+        <div class="quiz-options" role="radiogroup" aria-label="Pilihan jawaban soal 1" id="q1options"></div>
+        <div class="feedback-box" id="q1feedback" role="alert" aria-live="polite"></div>
+      </div>
+
+      <!-- Soal 2 -->
+      <div class="quiz-question" id="quizQ2" role="group" aria-labelledby="q2label">
+        <p class="quiz-question__meta" id="q2label">Soal 2 · Kesetaraan representasi · Tingkat: Menengah</p>
+        <p class="quiz-question__prompt">Manakah yang nilainya sama dengan <strong>1,6</strong>?</p>
+        <div class="quiz-options" role="radiogroup" aria-label="Pilihan jawaban soal 2" id="q2options"></div>
+        <div class="feedback-box" id="q2feedback" role="alert" aria-live="polite"></div>
+      </div>
+
+      <!-- Soal 3 -->
+      <div class="quiz-question" id="quizQ3" role="group" aria-labelledby="q3label">
+        <p class="quiz-question__meta" id="q3label">Soal 3 · Perbandingan dan pengurutan · Tingkat: Lanjut</p>
+        <p class="quiz-question__prompt">Manakah urutan yang benar dari <strong>terkecil ke terbesar</strong> untuk
+          bilangan: <strong>3/4 , 0,6 , dan 1 1/5</strong> ?</p>
+        <div class="quiz-options" role="radiogroup" aria-label="Pilihan jawaban soal 3" id="q3options"></div>
+        <div class="feedback-box" id="q3feedback" role="alert" aria-live="polite"></div>
+      </div>
+
+      <div class="panel panel--success" id="kuisResultPanel" hidden>
+        <h3 style="margin-top:0;">Hasil Kuis</h3>
+        <p id="kuisResultText"></p>
+      </div>
+
+      <div class="stage-nav-buttons">
+        <button type="button" class="btn btn--ghost" data-go-stage="belanja">← Kembali</button>
+        <button type="button" class="btn btn--primary" data-go-stage="refleksi">Lanjut: Refleksi →</button>
+      </div>
+    </section>
+
+    <!-- ===== STAGE 7: REFLEKSI ===== -->
+    <section class="stage" id="stage-refleksi" data-stage="refleksi" hidden>
+      <div class="stage-head">
+        <h2>Refleksi Diri</h2>
+        <p class="stage-head__goal">Tujuan: menilai secara jujur kemampuanmu sendiri. Hasil ini bukan nilai rapor,
+          melainkan bahan pertimbangan untuk belajar lebih lanjut.</p>
+      </div>
+
+      <div class="panel panel--compact" style="margin-bottom: var(--space-4);">
+        <p>Pilih angka <strong>1 hingga 4</strong> yang paling menggambarkan dirimu untuk setiap kemampuan. Baca
+          deskripsi setiap level dengan cermat.</p>
+      </div>
+
+      <!-- SA 1: Konversi -->
+      <div class="self-assess-item">
+        <h3>1. Kemampuan Mengonversi Representasi Bilangan Rasional</h3>
+        <p style="font-size: 0.9rem; color: var(--color-ink-muted);">Seberapa yakin kamu dalam mengubah bentuk pecahan
+          ke desimal dan sebaliknya?</p>
+
+        <div class="self-assess-scale" role="radiogroup" aria-label="Skala penilaian kemampuan konversi"
+          id="saConvertScale">
+          <button type="button" class="self-assess-option" data-assess="convert" data-value="1" aria-pressed="false">
+            <span class="self-assess-option__num">1</span>
+            <span class="self-assess-option__desc">Saya belum paham cara mengubah pecahan ke desimal atau
+              sebaliknya.</span>
+          </button>
+          <button type="button" class="self-assess-option" data-assess="convert" data-value="2" aria-pressed="false">
+            <span class="self-assess-option__num">2</span>
+            <span class="self-assess-option__desc">Saya bisa mengubah beberapa pecahan sederhana, tetapi masih sering
+              salah.</span>
+          </button>
+          <button type="button" class="self-assess-option" data-assess="convert" data-value="3" aria-pressed="false">
+            <span class="self-assess-option__num">3</span>
+            <span class="self-assess-option__desc">Saya bisa mengubah sebagian besar pecahan biasa dan campuran dengan
+              benar.</span>
+          </button>
+          <button type="button" class="self-assess-option" data-assess="convert" data-value="4" aria-pressed="false">
+            <span class="self-assess-option__num">4</span>
+            <span class="self-assess-option__desc">Saya bisa mengonversi berbagai pecahan dan menjelaskan caranya kepada
+              orang lain.</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- SA 2: Perbandingan -->
+      <div class="self-assess-item">
+        <h3>2. Kemampuan Membandingkan Bilangan Rasional</h3>
+        <p style="font-size: 0.9rem; color: var(--color-ink-muted);">Seberapa yakin kamu dalam membandingkan dan
+          mengurutkan bilangan rasional dalam berbagai bentuk?</p>
+
+        <div class="self-assess-scale" role="radiogroup" aria-label="Skala penilaian kemampuan membandingkan"
+          id="saCompareScale">
+          <button type="button" class="self-assess-option" data-assess="compare" data-value="1" aria-pressed="false">
+            <span class="self-assess-option__num">1</span>
+            <span class="self-assess-option__desc">Saya belum bisa membandingkan bilangan rasional yang berbeda
+              bentuk.</span>
+          </button>
+          <button type="button" class="self-assess-option" data-assess="compare" data-value="2" aria-pressed="false">
+            <span class="self-assess-option__num">2</span>
+            <span class="self-assess-option__desc">Saya bisa membandingkan jika keduanya sudah dalam bentuk yang
+              sama.</span>
+          </button>
+          <button type="button" class="self-assess-option" data-assess="compare" data-value="3" aria-pressed="false">
+            <span class="self-assess-option__num">3</span>
+            <span class="self-assess-option__desc">Saya bisa mengubah dulu kemudian membandingkan, meskipun kadang
+              membutuhkan waktu.</span>
+          </button>
+          <button type="button" class="self-assess-option" data-assess="compare" data-value="4" aria-pressed="false">
+            <span class="self-assess-option__num">4</span>
+            <span class="self-assess-option__desc">Saya bisa membandingkan dan mengurutkan bilangan rasional berbeda
+              bentuk dengan cepat dan percaya diri.</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="feedback-box feedback-box--info" id="saFeedback" role="status" aria-live="polite"
+        style="margin-top: var(--space-3);"></div>
+
+      <div class="stage-nav-buttons">
+        <button type="button" class="btn btn--ghost" data-go-stage="kuis">← Kembali</button>
+        <button type="button" class="btn btn--primary" data-go-stage="hasil">Lihat Hasil →</button>
+      </div>
+    </section>
+
+    <!-- ===== STAGE 8: HASIL ===== -->
+    <section class="stage" id="stage-hasil" data-stage="hasil" hidden>
+      <div class="stage-head">
+        <h2>Ringkasan Aktivitas</h2>
+        <p class="stage-head__goal">Berikut ringkasan pencapaianmu dalam media ini. Ingat: ini adalah latihan dan
+          refleksi, bukan penilaian akhir.</p>
+      </div>
+
+      <div class="summary-stats" id="hasilStats" aria-label="Ringkasan hasil"></div>
+
+      <div class="panel" id="hasilDetail">
+        <!-- Filled by JS -->
+      </div>
+
+      <div class="summary-reflect">
+        <h3 style="margin-top:0;">Pesan Refleksi</h3>
+        <p id="hasilReflect"></p>
+      </div>
+
+      <div class="catatan-reminder">
+        <strong>📒 Jangan lupa!</strong> Tuliskan ringkasan pribadimu di buku catatan:
+        <ul style="margin: var(--space-2) 0 0 0;">
+          <li>Metode konversi mana yang paling mudah kamu gunakan?</li>
+          <li>Apa strategi yang kamu pakai untuk membandingkan bilangan rasional berbeda bentuk?</li>
+          <li>Kesalahan apa yang sempat kamu lakukan, dan bagaimana cara menghindarinya?</li>
+        </ul>
+      </div>
+
+      <div class="stage-nav-buttons">
+        <button type="button" class="btn btn--ghost" data-go-stage="refleksi">← Kembali</button>
+        <button type="button" class="btn btn--primary" id="resetAllBtn">Mulai Ulang dari Awal</button>
+      </div>
+    </section>
+
+  </main>
+
+  <footer class="app-footer">
+    <p>Media Pembelajaran Interaktif · Matematika SMP · Bilangan Rasional</p>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+
+</html>

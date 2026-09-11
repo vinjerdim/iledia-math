@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Matematika Fase F — Eksplorasi Barisan dan Deret Geometri</title>
+  <meta name="description"
+    content="Media pembelajaran interaktif untuk menganalisis pertumbuhan berlipat dengan barisan dan deret geometri.">
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    .btn--back {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.82rem;
+      color: var(--color-ink-muted);
+      text-decoration: none;
+      padding: var(--space-2) var(--space-3);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-sm);
+      background: transparent;
+      line-height: 1;
+      white-space: nowrap;
+      transition: border-color 0.15s, color 0.15s;
+    }
+
+    .btn--back:hover {
+      color: var(--color-ink);
+      border-color: var(--color-border-strong);
+    }
+
+    .btn--back::before {
+      content: "←";
+    }
+  </style>
+</head>
+
+<body>
+
+  <a href="#konten-utama" class="skip-link">Lewati ke konten utama</a>
+
+  <header class="app-header">
+    <div class="app-header__brand">
+      <span class="app-header__kicker">Matematika Fase F</span>
+      <h1 class="app-header__title">Eksplorasi Barisan &amp; Deret Geometri</h1>
+    </div>
+    <div style="display: flex; align-items: right; gap: var(--space-4);">
+      <button type="button" id="resetAppBtn" class="btn btn--ghost btn--small">Reset aplikasi</button>
+      <a href="../index.html" class="btn btn--ghost btn--small">Beranda</a>
+    </div>
+  </header>
+
+  <nav class="stage-nav" aria-label="Tahapan pembelajaran">
+    <ol class="stage-nav__list" id="stageNavList">
+      <li><button type="button" class="stage-nav__item" data-stage="orientasi" aria-current="step">
+          <span class="stage-nav__num">1</span><span class="stage-nav__label">Orientasi</span>
+        </button></li>
+      <li><button type="button" class="stage-nav__item" data-stage="eksplorasi">
+          <span class="stage-nav__num">2</span><span class="stage-nav__label">Eksplorasi</span>
+        </button></li>
+      <li><button type="button" class="stage-nav__item" data-stage="perbandingan">
+          <span class="stage-nav__num">3</span><span class="stage-nav__label">Bandingkan</span>
+        </button></li>
+      <li><button type="button" class="stage-nav__item" data-stage="konstruksi">
+          <span class="stage-nav__num">4</span><span class="stage-nav__label">Pola &amp; Formula</span>
+        </button></li>
+      <li><button type="button" class="stage-nav__item" data-stage="simulasi">
+          <span class="stage-nav__num">5</span><span class="stage-nav__label">Simulasi Aset</span>
+        </button></li>
+      <li><button type="button" class="stage-nav__item" data-stage="latihan">
+          <span class="stage-nav__num">6</span><span class="stage-nav__label">Latihan</span>
+        </button></li>
+      <li><button type="button" class="stage-nav__item" data-stage="ringkasan">
+          <span class="stage-nav__num">7</span><span class="stage-nav__label">Ringkasan</span>
+        </button></li>
+    </ol>
+  </nav>
+
+  <main id="konten-utama">
+
+    <!-- ===================== STAGE 1: ORIENTASI ===================== -->
+    <section class="stage" id="stage-orientasi" data-stage="orientasi">
+      <div class="stage-head">
+        <p class="stage-head__goal">Tujuan tahap ini: mengenal apa yang akan kamu pelajari dan bagaimana cara memakai
+          laboratorium ini.</p>
+      </div>
+
+      <div class="panel panel--hero">
+        <h2>Bagaimana sesuatu bisa "berlipat ganda"?</h2>
+        <p>Bayangkan selembar kertas dilipat berulang kali, tabungan yang bertambah karena bunga, atau nilai mesin
+          pabrik yang terus menyusut tiap tahun. Semua itu adalah contoh <strong>pertumbuhan berlipat</strong> — nilai
+          berikutnya diperoleh dengan <em>mengalikan</em> nilai sebelumnya dengan sebuah faktor tetap, yang disebut
+          <strong>rasio (r)</strong>.
+        </p>
+        <p>Di laboratorium ini kamu akan mengubah-ubah angka, mengamati tabel dan grafik yang berubah seketika, lalu
+          membandingkannya dengan pola pertambahan tetap (aritmetika) yang sudah kamu kenal sebelumnya.</p>
+
+        <div class="hero-steps" aria-label="Cara menggunakan laboratorium ini">
+          <div class="hero-steps__item"><span class="hero-steps__num">1</span>Ubah nilai awal, rasio, dan banyak suku
+            menggunakan kontrol yang tersedia.</div>
+          <div class="hero-steps__item"><span class="hero-steps__num">2</span>Amati tabel dan grafik — keduanya
+            diperbarui langsung tanpa memuat ulang halaman.</div>
+          <div class="hero-steps__item"><span class="hero-steps__num">3</span>Kerjakan latihan untuk memeriksa
+            pemahamanmu, lalu lanjutkan ke Google Sheets/Excel bersama pasanganmu.</div>
+        </div>
+
+        <button type="button" class="btn btn--primary btn--large" id="startBtn">Mulai eksplorasi</button>
+      </div>
+    </section>
+
+    <!-- ===================== STAGE 2: EKSPLORASI ===================== -->
+    <section class="stage" id="stage-eksplorasi" data-stage="eksplorasi" hidden>
+      <div class="stage-head">
+        <h2>Eksplorasi Barisan Geometri</h2>
+        <p class="stage-head__goal">Tujuan tahap ini: menemukan bahwa setiap suku diperoleh dengan
+          <strong>mengalikan</strong> suku sebelumnya dengan rasio tetap.
+        </p>
+      </div>
+
+      <div class="layout-2col">
+        <div class="panel panel--controls">
+          <h3>Atur parameter</h3>
+
+          <div class="field-group">
+            <label for="expA">Nilai awal (a)</label>
+            <input type="number" id="expA" class="input-number" value="100" step="any" inputmode="decimal">
+            <p class="field-error" id="expA-error" role="alert"></p>
+          </div>
+
+          <div class="field-group">
+            <label for="expR">Rasio (r)</label>
+            <div class="field-group__slider-row">
+              <input type="range" id="expRSlider" class="input-slider" min="-3" max="3" step="0.1" value="2"
+                aria-hidden="true" tabindex="-1">
+              <input type="number" id="expR" class="input-number" value="2" step="any" inputmode="decimal">
+            </div>
+            <p class="field-error" id="expR-error" role="alert"></p>
+          </div>
+
+          <div class="field-group">
+            <label for="expN">Banyak suku (n)</label>
+            <div class="field-group__slider-row">
+              <input type="range" id="expNSlider" class="input-slider" min="1" max="20" step="1" value="6"
+                aria-hidden="true" tabindex="-1">
+              <input type="number" id="expN" class="input-number" value="6" step="1" inputmode="numeric">
+            </div>
+            <p class="field-error" id="expN-error" role="alert"></p>
+          </div>
+
+          <button type="button" class="btn btn--ghost" id="expResetBtn">Kembalikan ke contoh awal</button>
+
+          <div class="info-box" id="expInterpretation" aria-live="polite"></div>
+        </div>
+
+        <div class="panel panel--viz">
+          <h3>Rantai perkalian suku</h3>
+          <div class="chain-strip" id="expChain" aria-hidden="false"></div>
+
+          <div class="viz-split">
+            <div class="viz-split__table">
+              <h3>Tabel suku</h3>
+              <div class="table-scroll">
+                <table class="data-table" id="expTable">
+                  <caption class="sr-only">Tabel suku barisan geometri</caption>
+                  <thead>
+                    <tr>
+                      <th scope="col">n</th>
+                      <th scope="col">Uₙ</th>
+                      <th scope="col">Perubahan dari suku sebelumnya</th>
+                    </tr>
+                  </thead>
+                  <tbody></tbody>
+                </table>
+              </div>
+            </div>
+            <div class="viz-split__chart">
+              <h3>Grafik barisan</h3>
+              <div class="chart-holder" id="expChartHolder"></div>
+              <p class="chart-narrative" id="expChartNarrative"></p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="stage-nav-buttons">
+        <button type="button" class="btn btn--ghost" data-go-prev>Kembali</button>
+        <button type="button" class="btn btn--primary" data-go-next>Lanjut: Bandingkan pola</button>
+      </div>
+    </section>
+
+    <!-- ===================== STAGE 3: PERBANDINGAN ===================== -->
+    <section class="stage" id="stage-perbandingan" data-stage="perbandingan" hidden>
+      <div class="stage-head">
+        <h2>Aritmetika vs Geometri</h2>
+        <p class="stage-head__goal">Tujuan tahap ini: membedakan pola bertambah dengan <strong>jumlah tetap
+            (beda)</strong> dan pola bertambah dengan <strong>faktor kali tetap (rasio)</strong>.</p>
+      </div>
+
+      <div class="compare-controls">
+        <div class="panel panel--controls panel--compact panel--tone-lin">
+          <h3><span class="op-chip op-chip--lin">+d</span> Pola Aritmetika</h3>
+          <div class="field-group">
+            <label for="cmpA1">Nilai awal</label>
+            <input type="number" id="cmpA1" class="input-number" value="10" step="any">
+            <p class="field-error" id="cmpA1-error" role="alert"></p>
+          </div>
+          <div class="field-group">
+            <label for="cmpD">Beda (d)</label>
+            <input type="number" id="cmpD" class="input-number" value="5" step="any">
+            <p class="field-error" id="cmpD-error" role="alert"></p>
+          </div>
+        </div>
+
+        <div class="panel panel--controls panel--compact panel--tone-geo">
+          <h3><span class="op-chip op-chip--geo">×r</span> Pola Geometri</h3>
+          <div class="field-group">
+            <label for="cmpA2">Nilai awal</label>
+            <input type="number" id="cmpA2" class="input-number" value="10" step="any">
+            <p class="field-error" id="cmpA2-error" role="alert"></p>
+          </div>
+          <div class="field-group">
+            <label for="cmpR">Rasio (r)</label>
+            <input type="number" id="cmpR" class="input-number" value="1.5" step="any">
+            <p class="field-error" id="cmpR-error" role="alert"></p>
+          </div>
+        </div>
+
+        <div class="panel panel--controls panel--compact">
+          <h3>Banyak langkah</h3>
+          <div class="field-group">
+            <label for="cmpN">Banyak suku (n)</label>
+            <div class="field-group__slider-row">
+              <input type="range" id="cmpNSlider" class="input-slider" min="2" max="15" step="1" value="8"
+                aria-hidden="true" tabindex="-1">
+              <input type="number" id="cmpN" class="input-number" value="8" step="1">
+            </div>
+            <p class="field-error" id="cmpN-error" role="alert"></p>
+          </div>
+        </div>
+      </div>
+
+      <div class="viz-split">
+        <div class="viz-split__table">
+          <h3>Tabel perbandingan</h3>
+          <div class="table-scroll">
+            <table class="data-table" id="cmpTable">
+              <caption class="sr-only">Tabel perbandingan barisan aritmetika dan geometri</caption>
+              <thead>
+                <tr>
+                  <th scope="col">n</th>
+                  <th scope="col">Aritmetika</th>
+                  <th scope="col">Geometri</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+        <div class="viz-split__chart">
+          <h3>Grafik perbandingan</h3>
+          <div class="chart-holder" id="cmpChartHolder"></div>
+          <p class="chart-narrative" id="cmpChartNarrative"></p>
+        </div>
+      </div>
+
+      <div class="panel panel--questions">
+        <h3>Pertanyaan pemandu</h3>
+        <p>Diskusikan dengan pasanganmu sebelum melihat kunci diskusi.</p>
+        <ol class="guiding-questions">
+          <li>Apa yang tetap sama pada setiap langkah di masing-masing pola?</li>
+          <li>Pada pola aritmetika, apakah nilai bertambah dengan jumlah yang sama setiap langkah?</li>
+          <li>Pada pola geometri, apakah nilai diperoleh dengan mengalikan faktor yang sama setiap langkah?</li>
+          <li>Manakah grafik yang berbentuk garis lurus, dan manakah yang melengkung? Mengapa demikian?</li>
+        </ol>
+        <details class="reveal-block">
+          <summary class="btn btn--ghost btn--small">Tampilkan kunci diskusi</summary>
+          <div class="reveal-block__content" id="cmpDiscussionKey"></div>
+        </details>
+      </div>
+
+      <div class="stage-nav-buttons">
+        <button type="button" class="btn btn--ghost" data-go-prev>Kembali</button>
+        <button type="button" class="btn btn--primary" data-go-next>Lanjut: Bangun formula</button>
+      </div>
+    </section>
+
+    <!-- ===================== STAGE 4: KONSTRUKSI POLA & FORMULA ===================== -->
+    <section class="stage" id="stage-konstruksi" data-stage="konstruksi" hidden>
+      <div class="stage-head">
+        <h2>Menyusun Formula dari Pola</h2>
+        <p class="stage-head__goal">Tujuan tahap ini: menemukan sendiri formula suku ke-n dan jumlah n suku, bukan
+          langsung menghafalnya.</p>
+      </div>
+
+      <div class="panel panel--build">
+        <p>Kita gunakan nilai dari tahap Eksplorasi: nilai awal <strong id="buildAVal">a</strong> dan rasio <strong
+            id="buildRVal">r</strong>. Klik tombol di bawah untuk mengungkap satu suku setiap kali, lalu perhatikan
+          polanya.</p>
+
+        <div class="build-steps" id="buildSteps" aria-live="polite"></div>
+
+        <button type="button" class="btn btn--primary" id="buildRevealBtn">Ungkap suku berikutnya</button>
+        <button type="button" class="btn btn--ghost" id="buildRestartBtn">Ulangi dari awal</button>
+
+        <div class="formula-reveal" id="formulaReveal" hidden>
+          <h3>Formula suku ke-n</h3>
+          <p class="formula-box">Uₙ = a · r<sup>(n−1)</sup></p>
+          <p>Pangkat pada r selalu <strong>satu langkah lebih sedikit</strong> daripada nomor suku, karena suku pertama
+            (U₁) belum dikalikan sama sekali.</p>
+
+          <h3>Formula jumlah n suku pertama</h3>
+          <p class="formula-box">Sₙ = a(rⁿ − 1) / (r − 1), &nbsp; untuk r ≠ 1</p>
+          <p class="formula-box">Sₙ = a · n, &nbsp; untuk r = 1</p>
+          <p>Kasus r = 1 harus ditangani terpisah karena pembagian dengan (r − 1) akan menjadi pembagian dengan nol.</p>
+
+          <div class="worked-example" id="buildWorkedExample"></div>
+        </div>
+      </div>
+
+      <div class="stage-nav-buttons">
+        <button type="button" class="btn btn--ghost" data-go-prev>Kembali</button>
+        <button type="button" class="btn btn--primary" data-go-next>Lanjut: Simulasi industri</button>
+      </div>
+    </section>
+
+    <!-- ===================== STAGE 5: SIMULASI PENYUSUTAN ===================== -->
+    <section class="stage" id="stage-simulasi" data-stage="simulasi" hidden>
+      <div class="stage-head">
+        <h2>Simulasi Penyusutan Aset Mesin</h2>
+        <p class="stage-head__goal">Tujuan tahap ini: menerapkan barisan geometri pada penyusutan nilai aset dan
+          mengubah persentase penyusutan menjadi rasio dengan benar.</p>
+      </div>
+
+      <p class="context-note">Konteks: sebuah mesin produksi di industri mengalami penyusutan nilai setiap periode
+        (misalnya per tahun) sebesar persentase tetap. Data di bawah ini adalah skenario pembelajaran umum, bukan data
+        perusahaan tertentu.</p>
+
+      <div class="layout-2col">
+        <div class="panel panel--controls">
+          <h3>Atur skenario</h3>
+          <div class="field-group">
+            <label for="simInitial">Nilai awal aset (Rp)</label>
+            <input type="number" id="simInitial" class="input-number" value="100000000" step="any" min="0">
+            <p class="field-error" id="simInitial-error" role="alert"></p>
+          </div>
+          <div class="field-group">
+            <label for="simPercent">Penyusutan per periode (%)</label>
+            <input type="number" id="simPercent" class="input-number" value="10" step="any" min="0" max="100">
+            <p class="field-error" id="simPercent-error" role="alert"></p>
+          </div>
+          <div class="field-group">
+            <label for="simPeriods">Jumlah periode</label>
+            <div class="field-group__slider-row">
+              <input type="range" id="simPeriodsSlider" class="input-slider" min="1" max="20" step="1" value="8"
+                aria-hidden="true" tabindex="-1">
+              <input type="number" id="simPeriods" class="input-number" value="8" step="1" min="1">
+            </div>
+            <p class="field-error" id="simPeriods-error" role="alert"></p>
+          </div>
+
+          <div class="ratio-conversion" id="simRatioConversion" aria-live="polite"></div>
+
+          <div class="field-group">
+            <label for="simQueryPeriod">Cek nilai aset pada periode ke-</label>
+            <input type="number" id="simQueryPeriod" class="input-number" value="3" step="1" min="0">
+            <p class="field-error" id="simQueryPeriod-error" role="alert"></p>
+            <p class="info-inline" id="simQueryResult" aria-live="polite"></p>
+          </div>
+        </div>
+
+        <div class="panel panel--viz">
+          <div class="viz-split">
+            <div class="viz-split__table">
+              <h3>Tabel nilai aset</h3>
+              <div class="table-scroll">
+                <table class="data-table" id="simTable">
+                  <caption class="sr-only">Tabel nilai aset per periode</caption>
+                  <thead>
+                    <tr>
+                      <th scope="col">Periode</th>
+                      <th scope="col">Nilai aset (Rp)</th>
+                    </tr>
+                  </thead>
+                  <tbody></tbody>
+                </table>
+              </div>
+            </div>
+            <div class="viz-split__chart">
+              <h3>Grafik penyusutan</h3>
+              <div class="chart-holder" id="simChartHolder"></div>
+              <p class="chart-narrative" id="simChartNarrative"></p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel panel--questions">
+        <h3>Pertanyaan interpretasi</h3>
+        <ol class="guiding-questions">
+          <li>Mengapa persentase penyusutan tidak bisa langsung dipakai sebagai rasio (r)?</li>
+          <li>Apa yang terjadi pada grafik jika persentase penyusutan diperbesar?</li>
+          <li>Apakah nilai aset bisa mencapai nol persis? Jelaskan berdasarkan sifat perkalian berulang.</li>
+        </ol>
+        <details class="reveal-block">
+          <summary class="btn btn--ghost btn--small">Tampilkan kunci diskusi</summary>
+          <div class="reveal-block__content" id="simDiscussionKey"></div>
+        </details>
+      </div>
+
+      <div class="stage-nav-buttons">
+        <button type="button" class="btn btn--ghost" data-go-prev>Kembali</button>
+        <button type="button" class="btn btn--primary" data-go-next>Lanjut: Latihan formatif</button>
+      </div>
+    </section>
+
+    <!-- ===================== STAGE 6: LATIHAN FORMATIF ===================== -->
+    <section class="stage" id="stage-latihan" data-stage="latihan" hidden>
+      <div class="stage-head">
+        <h2>Latihan Formatif</h2>
+        <p class="stage-head__goal">Tujuan tahap ini: memeriksa pemahamanmu sendiri. Kamu boleh mencoba lagi setelah
+          melihat penjelasan.</p>
+      </div>
+
+      <div class="exercise-progress" id="exerciseProgress" aria-live="polite"></div>
+
+      <div class="exercise-list" id="exerciseList"></div>
+
+      <div class="stage-nav-buttons">
+        <button type="button" class="btn btn--ghost" data-go-prev>Kembali</button>
+        <button type="button" class="btn btn--primary" data-go-next>Lihat ringkasan hasil</button>
+      </div>
+    </section>
+
+    <!-- ===================== STAGE 7: RINGKASAN ===================== -->
+    <section class="stage" id="stage-ringkasan" data-stage="ringkasan" hidden>
+      <div class="stage-head">
+        <h2>Ringkasan Hasil Eksplorasi</h2>
+        <p class="stage-head__goal">Tujuan tahap ini: melihat capaianmu sejauh ini dan menyiapkan langkah lanjutan
+          bersama guru dan pasanganmu.</p>
+      </div>
+
+      <div class="panel" id="summaryStats"></div>
+
+      <div class="panel">
+        <p class="disclaimer-box">Ringkasan ini adalah <strong>umpan balik formatif dari media pembelajaran</strong>,
+          bukan nilai akhir. Penilaian resmi tetap dilakukan oleh guru melalui unjuk kerja spreadsheet, portofolio, dan
+          rubrik.</p>
+      </div>
+
+      <div class="panel panel--bridge">
+        <h3>Jembatan ke aktivitas spreadsheet</h3>
+        <p>Gunakan pemahaman dari simulasi ini untuk membangun model Anda sendiri di Google Sheets atau Microsoft Excel.
+          Buat tabel nilai awal (a) dan rasio (r), lalu buat grafiknya bersama pasanganmu.</p>
+      </div>
+
+      <div class="panel panel--bridge">
+        <h3>Jembatan ke refleksi</h3>
+        <p>Gunakan pertanyaan berikut sebagai pemantik jurnal refleksimu. Jurnal tetap ditulis dan dinilai sesuai arahan
+          guru.</p>
+        <ul class="reflection-prompts">
+          <li>Bagian mana yang terasa lebih sulit: menentukan beda pada aritmetika atau menentukan rasio pada geometri?
+            Mengapa?</li>
+          <li>Kesalahan apa yang paling sering kamu lakukan saat mengerjakan latihan tadi?</li>
+          <li>Strategi apa yang akan kamu pakai agar lebih teliti menentukan rasio dalam soal cerita?</li>
+        </ul>
+        <label for="scratchpad">Catatan sementara (tidak tersimpan, hanya untuk membantumu menulis jurnal)</label>
+        <textarea id="scratchpad" rows="4" class="scratchpad"></textarea>
+      </div>
+
+      <div class="stage-nav-buttons">
+        <button type="button" class="btn btn--ghost" data-go-prev>Kembali ke latihan</button>
+        <button type="button" class="btn btn--ghost" id="restartAllBtn">Mulai ulang dari awal</button>
+      </div>
+    </section>
+
+  </main>
+
+  <div id="toastRegion" class="toast-region" aria-live="polite"></div>
+
+  <footer class="app-footer">
+    <p>Media pembelajaran bersifat client-side · Tidak menyimpan data pribadi peserta didik.</p>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+
+</html>

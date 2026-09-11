@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Matematika Fase F — Aritmetika &amp; Geometri: Analisis &amp; Keputusan</title>
+  <meta name="description"
+    content="Media pembelajaran interaktif untuk menganalisis dan membedakan pola aritmetika dan geometri dalam kasus kontekstual.">
+  <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+
+  <a href="#konten-utama" class="skip-link">Lewati ke konten utama</a>
+
+  <header class="app-header">
+    <div class="app-header__brand">
+      <span class="app-header__kicker">Matematika · Fase F · SMK</span>
+      <h1 class="app-header__title">Aritmetika &amp; Geometri: Analisis &amp; Keputusan</h1>
+    </div>
+    <div class="app-header__actions">
+      <button type="button" id="resetAppBtn" class="btn btn--ghost btn--small">Reset aplikasi</button>
+      <a href="../index.html" class="btn btn--ghost btn--small">Beranda</a>
+    </div>
+  </header>
+
+  <nav class="stage-nav" aria-label="Tahapan pembelajaran">
+    <ol class="stage-nav__list" id="stageNavList" role="list">
+      <li><button type="button" class="stage-nav__item" data-stage="orientasi" aria-current="step">
+          <span class="stage-nav__num" aria-hidden="true">1</span>
+          <span class="stage-nav__label">Orientasi</span>
+        </button></li>
+      <li><button type="button" class="stage-nav__item" data-stage="eksplorasi">
+          <span class="stage-nav__num" aria-hidden="true">2</span>
+          <span class="stage-nav__label">Eksplorasi</span>
+        </button></li>
+      <li><button type="button" class="stage-nav__item" data-stage="komparasi">
+          <span class="stage-nav__num" aria-hidden="true">3</span>
+          <span class="stage-nav__label">Komparasi</span>
+        </button></li>
+      <li><button type="button" class="stage-nav__item" data-stage="skenario">
+          <span class="stage-nav__num" aria-hidden="true">4</span>
+          <span class="stage-nav__label">Skenario</span>
+        </button></li>
+      <li><button type="button" class="stage-nav__item" data-stage="simulasi">
+          <span class="stage-nav__num" aria-hidden="true">5</span>
+          <span class="stage-nav__label">Simulasi</span>
+        </button></li>
+      <li><button type="button" class="stage-nav__item" data-stage="ringkasan">
+          <span class="stage-nav__num" aria-hidden="true">6</span>
+          <span class="stage-nav__label">Ringkasan</span>
+        </button></li>
+      <li><button type="button" class="stage-nav__item" data-stage="refleksi">
+          <span class="stage-nav__num" aria-hidden="true">7</span>
+          <span class="stage-nav__label">Refleksi</span>
+        </button></li>
+      <li><button type="button" class="stage-nav__item" data-stage="penutup">
+          <span class="stage-nav__num" aria-hidden="true">8</span>
+          <span class="stage-nav__label">Penutup</span>
+        </button></li>
+    </ol>
+  </nav>
+
+  <!-- Progress bar -->
+  <div class="progress-bar-wrap" role="progressbar" aria-valuemin="0" aria-valuemax="8" aria-valuenow="1"
+    aria-label="Progres pembelajaran" id="progressBarWrap">
+    <div class="progress-bar__fill" id="progressBarFill" style="width: 12.5%"></div>
+    <span class="progress-bar__label" id="progressBarLabel" aria-live="polite">Tahap 1 dari 8</span>
+  </div>
+
+  <main id="konten-utama">
+
+    <!-- ===================== STAGE 1: ORIENTASI ===================== -->
+    <section class="stage" id="stage-orientasi" data-stage="orientasi">
+      <div class="panel panel--hero">
+        <div class="orient-badge">Media Pembelajaran Interaktif</div>
+        <h2 class="orient-title">Aritmetika atau Geometri?<br>Analisis Data, Ambil Keputusan.</h2>
+        <p class="orient-subtitle">Tujuan Pembelajaran: Menganalisis dan membedakan pola aritmetika dan geometri dalam
+          kasus kontekstual.</p>
+
+        <p>Dalam kehidupan nyata, banyak situasi melibatkan pola matematika. Dua pola yang paling penting adalah
+          <strong>pola aritmetika</strong> (pertambahan tetap) dan <strong>pola geometri</strong> (perkalian tetap).
+          Memahami perbedaannya memungkinkan kamu menganalisis data dan mengambil keputusan berbasis matematika.</p>
+
+        <div class="orient-steps" aria-label="Yang akan kamu lakukan">
+          <div class="orient-step">
+            <span class="orient-step__num" aria-hidden="true">1</span>
+            <div>
+              <strong>Eksplorasi</strong> — Amati dua kasus nyata berdampingan dan identifikasi pola di balik datanya.
+            </div>
+          </div>
+          <div class="orient-step">
+            <span class="orient-step__num" aria-hidden="true">2</span>
+            <div>
+              <strong>Komparasi</strong> — Bandingkan karakteristik, rumus, dan bentuk grafik kedua pola.
+            </div>
+          </div>
+          <div class="orient-step">
+            <span class="orient-step__num" aria-hidden="true">3</span>
+            <div>
+              <strong>Skenario Bisnis</strong> — Analisis dua rencana keuangan, pilih model yang tepat, hitung, dan
+              ambil keputusan berbasis data.
+            </div>
+          </div>
+          <div class="orient-step">
+            <span class="orient-step__num" aria-hidden="true">4</span>
+            <div>
+              <strong>Refleksi</strong> — Nilai sendiri pemahamanmu dan identifikasi indikator yang paling membantumu.
+            </div>
+          </div>
+        </div>
+
+        <div class="orient-note">
+          <strong>Cara menggunakan:</strong> Kerjakan setiap tahap secara berurutan. Kamu akan diminta menganalisis data
+          sebelum mendapatkan konfirmasi jawaban. Hasil latihan ini bukan nilai akhir — digunakan sebagai bahan refleksi
+          dan diskusi bersama guru.
+        </div>
+
+        <button type="button" class="btn btn--primary btn--large" id="startBtn">Mulai Eksplorasi →</button>
+      </div>
+    </section>
+
+    <!-- ===================== STAGE 2: EKSPLORASI ===================== -->
+    <section class="stage" id="stage-eksplorasi" data-stage="eksplorasi" hidden>
+      <div class="stage-head">
+        <h2>Eksplorasi Dua Kasus</h2>
+        <p class="stage-head__goal">Tujuan: Identifikasi pola yang tersembunyi di balik data. Amati perubahan dari satu
+          periode ke periode berikutnya — apakah perubahan itu berupa <em>selisih tetap</em> atau <em>rasio tetap</em>?
+        </p>
+      </div>
+
+      <div id="explorationCasesContainer" class="cases-grid">
+        <!-- Rendered by app.js -->
+      </div>
+
+      <div class="panel" id="explorationSubmitPanel">
+        <div id="explorationFeedback" class="feedback-block" aria-live="polite" hidden></div>
+
+        <div class="stage-nav-buttons">
+          <button type="button" class="btn btn--ghost" data-go-prev>← Kembali</button>
+          <button type="button" class="btn btn--primary" id="explorationSubmitBtn">Periksa Analisisku</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================== STAGE 3: KOMPARASI ===================== -->
+    <section class="stage" id="stage-komparasi" data-stage="komparasi" hidden>
+      <div class="stage-head">
+        <h2>Komparasi: Aritmetika vs Geometri</h2>
+        <p class="stage-head__goal">Tujuan: Bandingkan karakteristik kedua pola secara sistematis — dari segi operasi,
+          rumus, dan bentuk grafik.</p>
+      </div>
+
+      <!-- Comparison table -->
+      <div class="panel">
+        <h3>Tabel Perbandingan</h3>
+        <div class="table-scroll">
+          <table class="data-table comp-table">
+            <caption class="sr-only">Perbandingan pola aritmetika dan geometri</caption>
+            <thead>
+              <tr>
+                <th scope="col">Kriteria</th>
+                <th scope="col" class="arith-col">Pola Aritmetika</th>
+                <th scope="col" class="geom-col">Pola Geometri</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Operasi dasar</td>
+                <td class="arith-col">Penjumlahan (+d)</td>
+                <td class="geom-col">Perkalian (×r)</td>
+              </tr>
+              <tr>
+                <td>Penanda kunci</td>
+                <td class="arith-col">Selisih antar suku <strong>selalu sama</strong></td>
+                <td class="geom-col">Rasio antar suku <strong>selalu sama</strong></td>
+              </tr>
+              <tr>
+                <td>Rumus suku ke-n</td>
+                <td class="arith-col font-mono">Uₙ = a + (n − 1) × d</td>
+                <td class="geom-col font-mono">Uₙ = a × r <sup>(n−1)</sup></td>
+              </tr>
+              <tr>
+                <td>Bentuk grafik</td>
+                <td class="arith-col">Garis lurus (linier)</td>
+                <td class="geom-col">Kurva melengkung (eksponensial)</td>
+              </tr>
+              <tr>
+                <td>Contoh konteks</td>
+                <td class="arith-col">Tabungan rutin, angsuran tetap</td>
+                <td class="geom-col">Bunga berbunga, pertumbuhan viral</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Side-by-side charts -->
+      <div class="panel">
+        <h3>Perbandingan Grafik</h3>
+        <p class="chart-intro">Grafik berikut menunjukkan perbedaan bentuk pertumbuhan kedua pola menggunakan nilai
+          contoh yang sama (a = 100).</p>
+        <div class="comp-charts-grid">
+          <div>
+            <h4 class="arith-label">Aritmetika (a=100, d=50)</h4>
+            <div class="chart-holder" id="compChartArith"
+              aria-label="Grafik barisan aritmetika: garis lurus naik dari 100 dengan beda 50"></div>
+            <p class="chart-narrative" id="compNarrativeArith"></p>
+          </div>
+          <div>
+            <h4 class="geom-label">Geometri (a=100, r=1.5)</h4>
+            <div class="chart-holder" id="compChartGeom"
+              aria-label="Grafik barisan geometri: kurva melengkung ke atas dari 100 dengan rasio 1.5"></div>
+            <p class="chart-narrative" id="compNarrativeGeom"></p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Classification activity -->
+      <div class="panel">
+        <h3>Aktivitas Klasifikasi</h3>
+        <p>Untuk setiap pernyataan di bawah, pilih apakah itu ciri <strong>Aritmetika</strong> atau
+          <strong>Geometri</strong>. Setelah semua terisi, klik "Periksa".</p>
+
+        <div id="classificationCards" class="class-cards">
+          <!-- Rendered by app.js -->
+        </div>
+
+        <div id="classificationFeedback" class="feedback-block" aria-live="polite" hidden></div>
+
+        <div class="stage-nav-buttons" style="margin-top: var(--space-4)">
+          <button type="button" class="btn btn--ghost" data-go-prev>← Kembali</button>
+          <button type="button" class="btn btn--secondary" id="classificationCheckBtn">Periksa Klasifikasi</button>
+          <button type="button" class="btn btn--primary" id="komparasiNextBtn" disabled>Lanjut: Skenario Bisnis
+            →</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================== STAGE 4: SKENARIO ===================== -->
+    <section class="stage" id="stage-skenario" data-stage="skenario" hidden>
+      <div class="stage-head">
+        <h2>Skenario Bisnis: Pemilihan Rencana Keuangan Usaha Kecil</h2>
+        <p class="stage-head__goal">Tujuan: Gunakan analisis pola dan formula untuk mendukung keputusan keuangan nyata.
+        </p>
+      </div>
+
+      <div id="scenarioContainer">
+        <!-- Steps rendered by app.js -->
+      </div>
+    </section>
+
+    <!-- ===================== STAGE 5: SIMULASI ===================== -->
+    <section class="stage" id="stage-simulasi" data-stage="simulasi" hidden>
+      <div class="stage-head">
+        <h2>Simulasi Visual: Perbandingan Pertumbuhan</h2>
+        <p class="stage-head__goal">Tujuan: Amati bagaimana kedua rencana berkembang seiring waktu dan temukan titik di
+          mana pola geometri melampaui pola aritmetika.</p>
+      </div>
+
+      <div class="sim-layout">
+        <div class="panel sim-controls-panel">
+          <h3>Atur Horizon Waktu</h3>
+          <div class="field-group">
+            <label for="simMonthsInput">Jumlah bulan (n)</label>
+            <div class="field-group__slider-row">
+              <input type="range" id="simMonthsSlider" class="input-slider" min="4" max="24" step="1" value="12"
+                aria-hidden="true" tabindex="-1">
+              <input type="number" id="simMonthsInput" class="input-number" value="12" min="4" max="24" step="1"
+                aria-label="Jumlah bulan">
+            </div>
+          </div>
+
+          <div class="sim-params">
+            <div class="sim-param-group arith-bg">
+              <h4>Rencana A (Aritmetika)</h4>
+              <p class="font-mono sim-formula">Uₙ = 500.000 + (n−1) × 250.000</p>
+              <p class="sim-value-display">Bulan ke-<span id="simNLabelA">12</span>: <strong id="simValueA">—</strong>
+              </p>
+            </div>
+            <div class="sim-param-group geom-bg">
+              <h4>Rencana B (Geometri)</h4>
+              <p class="font-mono sim-formula">Uₙ = 500.000 × 1,3 <sup>(n−1)</sup></p>
+              <p class="sim-value-display">Bulan ke-<span id="simNLabelB">12</span>: <strong id="simValueB">—</strong>
+              </p>
+            </div>
+          </div>
+
+          <div class="sim-crossover-info" id="simCrossoverInfo" aria-live="polite"></div>
+        </div>
+
+        <div class="panel sim-chart-panel">
+          <h3>Grafik Perbandingan Dua Rencana</h3>
+          <div class="chart-holder" id="simChartHolder"
+            aria-label="Grafik perbandingan pertumbuhan Rencana A dan Rencana B"></div>
+          <div class="chart-legend" id="simChartLegend">
+            <div class="chart-legend__item">
+              <span class="chart-legend__swatch" style="background: var(--color-arith)"></span>
+              Rencana A (Aritmetika)
+            </div>
+            <div class="chart-legend__item">
+              <span class="chart-legend__swatch" style="background: var(--color-geom)"></span>
+              Rencana B (Geometri)
+            </div>
+          </div>
+          <div class="sim-table-container">
+            <h4>Tabel Nilai per Bulan</h4>
+            <div class="table-scroll">
+              <table class="data-table" id="simTable">
+                <caption class="sr-only">Nilai Rencana A dan Rencana B per bulan</caption>
+                <thead>
+                  <tr>
+                    <th scope="col">Bulan (n)</th>
+                    <th scope="col" class="arith-col">Rencana A (Rp)</th>
+                    <th scope="col" class="geom-col">Rencana B (Rp)</th>
+                    <th scope="col">Selisih B−A (Rp)</th>
+                  </tr>
+                </thead>
+                <tbody id="simTableBody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="stage-nav-buttons">
+        <button type="button" class="btn btn--ghost" data-go-prev>← Kembali</button>
+        <button type="button" class="btn btn--primary" data-go-next>Lanjut: Ringkasan →</button>
+      </div>
+    </section>
+
+    <!-- ===================== STAGE 6: RINGKASAN ===================== -->
+    <section class="stage" id="stage-ringkasan" data-stage="ringkasan" hidden>
+      <div class="stage-head">
+        <h2>Ringkasan Hasil Latihan</h2>
+        <p class="stage-head__goal">Berikut adalah rekap pilihan, perhitungan, dan keputusan yang kamu buat selama
+          latihan. Gunakan ini sebagai bahan refleksi dan diskusi bersama guru.</p>
+      </div>
+
+      <div id="summaryContainer">
+        <!-- Rendered by app.js -->
+      </div>
+
+      <div class="stage-nav-buttons">
+        <button type="button" class="btn btn--ghost" data-go-prev>← Kembali</button>
+        <button type="button" class="btn btn--primary" data-go-next>Lanjut: Refleksi →</button>
+      </div>
+    </section>
+
+    <!-- ===================== STAGE 7: REFLEKSI ===================== -->
+    <section class="stage" id="stage-refleksi" data-stage="refleksi" hidden>
+      <div class="stage-head">
+        <h2>Refleksi Diri</h2>
+        <p class="stage-head__goal">Tujuan: Nilai ketercapaian belajarmu secara jujur. Ini bukan penilaian resmi — ini
+          alat bantu untuk mengetahui bagian mana yang perlu diperkuat.</p>
+      </div>
+
+      <div class="panel">
+        <h3>Self-Assessment: Ceklis Ketercapaian</h3>
+        <p>Untuk setiap pernyataan berikut, pilih level yang paling mencerminkan kemampuanmu saat ini.</p>
+
+        <div id="selfAssessmentList" class="sa-list">
+          <!-- Rendered by app.js -->
+        </div>
+      </div>
+
+      <div class="panel">
+        <h3>Indikator Kunci</h3>
+        <p>Menurut kamu, indikator apa yang paling membantu untuk membedakan pola aritmetika dan geometri dari soal
+          cerita kontekstual?</p>
+        <div class="field-group">
+          <label for="keyIndicatorInput" class="sr-only">Tulis indikator kunci menurutmu</label>
+          <textarea id="keyIndicatorInput" class="input-textarea" rows="3" placeholder="Tuliskan indikatornya di sini…"
+            aria-describedby="keyIndicatorHint"></textarea>
+          <p class="field-hint" id="keyIndicatorHint">Contoh: "Hitung selisih antar suku. Jika sama, itu aritmetika.
+            Hitung rasio antar suku. Jika sama, itu geometri."</p>
+        </div>
+      </div>
+
+      <div id="reflectionFeedback" class="feedback-block" aria-live="polite" hidden></div>
+
+      <div class="panel panel--bridge">
+        <h3>Jembatan ke Pembelajaran Berikutnya</h3>
+        <p>Kamu telah menganalisis pola pertumbuhan nilai. Pada materi selanjutnya, kamu akan mempelajari <strong>bunga
+            tunggal</strong> dan <strong>bunga majemuk</strong> — dua konsep yang sangat erat kaitannya dengan apa yang
+          baru saja kamu pelajari.</p>
+        <ul>
+          <li><strong>Bunga tunggal</strong> → pertumbuhan dengan pola <em>aritmetika</em> (bunga dihitung dari pokok
+            saja)</li>
+          <li><strong>Bunga majemuk</strong> → pertumbuhan dengan pola <em>geometri</em> (bunga dihitung dari pokok +
+            bunga sebelumnya)</li>
+        </ul>
+        <p>Kemampuanmu membedakan kedua pola ini akan menjadi fondasi untuk memahami kedua konsep tersebut.</p>
+      </div>
+
+      <div class="stage-nav-buttons">
+        <button type="button" class="btn btn--ghost" data-go-prev>← Kembali</button>
+        <button type="button" class="btn btn--primary" id="reflectionSubmitBtn">Simpan Refleksi →</button>
+      </div>
+    </section>
+
+    <!-- ===================== STAGE 8: PENUTUP ===================== -->
+    <section class="stage" id="stage-penutup" data-stage="penutup" hidden>
+      <div class="stage-head">
+        <h2>Penutup: Kembali ke Kelas</h2>
+      </div>
+
+      <div class="panel panel--hero">
+        <p class="orient-subtitle">Kamu telah menyelesaikan seluruh tahap media pembelajaran ini.</p>
+
+        <div id="closingSummary" class="closing-summary">
+          <!-- Populated by app.js -->
+        </div>
+
+        <div class="closing-next">
+          <h3>Yang dilakukan selanjutnya bersama guru:</h3>
+          <ul class="closing-list">
+            <li>Presentasikan hasil analisis kasus dan keputusanmu kepada teman-temanmu.</li>
+            <li>Argumentasikan pilihan modelmu secara matematis (mengapa kamu memilih aritmetika atau geometri).</li>
+            <li>Diskusikan perbedaan hasil tiap kelompok dalam pleno kelas.</li>
+            <li>Kerjakan tes tertulis case-study yang disiapkan gurumu.</li>
+          </ul>
+        </div>
+
+        <div class="closing-note">
+          <strong>Catatan:</strong> Skor latihan di media ini bukan nilai akhir. Penilaian resmi dilakukan oleh gurumu
+          melalui tes tertulis, observasi presentasi, dan rubrik penilaian yang telah disiapkan.
+        </div>
+
+        <div class="closing-actions">
+          <button type="button" class="btn btn--ghost" data-go-prev>← Kembali ke Refleksi</button>
+          <button type="button" class="btn btn--primary" id="restartBtn">Ulangi dari Awal</button>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <script src="data.js"></script>
+  <script src="app.js"></script>
+</body>
+
+</html>
