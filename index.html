@@ -6,7 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Media Pembelajaran Interaktif — Matematika</title>
   <meta name="description"
-    content="Kumpulan media pembelajaran interaktif berbasis web untuk Matematika SMP (Fase D), SMA/SMK (Fase E dan Fase F).">
+    content="Kumpulan media pembelajaran interaktif untuk mata pelajaran Matematika SMP (Fase D) dan SMA/SMK (Fase E dan Fase F).">
   <style>
     :root {
       --color-bg: #f7f8f5;
@@ -16,13 +16,9 @@
       --color-border-strong: #b8bbb2;
       --color-ink: #21262b;
       --color-ink-muted: #565c5f;
-      --color-primary: #2a7d6f;
-      --color-primary-soft: #d5eee9;
-      --color-primary-strong: #1e5c52;
-      --color-secondary: #b1500a;
-      --color-secondary-soft: #f4dcc7;
-      --color-secondary-strong: #8a3d07;
-      --color-focus: #1c4e9c;
+      --color-primary: #2563EB;
+      --color-primary-soft: #EFF6FF;
+      --color-primary-strong: #1D4ED8;
       --font-display: "Avenir Next", "Segoe UI Semibold", "Segoe UI", "Helvetica Neue", Arial, sans-serif;
       --font-body: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
       --font-mono: ui-monospace, "Cascadia Mono", Consolas, monospace;
@@ -75,11 +71,6 @@
 
     p {
       margin: 0 0 var(--space-3) 0;
-    }
-
-    :focus-visible {
-      outline: 3px solid var(--color-focus);
-      outline-offset: 2px;
     }
 
     /* ── Header ── */
@@ -163,15 +154,13 @@
       display: block;
     }
 
-    /* ── Fase D content ── */
-    .fase-d-main {
+    .main {
       max-width: var(--max-width);
       margin: 0 auto;
       padding: var(--space-6) var(--space-5);
     }
 
     .section-label {
-      font-family: var(--font-mono);
       font-size: 0.75rem;
       font-weight: 700;
       text-transform: uppercase;
@@ -182,14 +171,14 @@
       border-bottom: 1px solid var(--color-border);
     }
 
-    .mpi-grid {
+    .card-grid {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
       gap: var(--space-5);
       margin-bottom: var(--space-7);
     }
 
-    .mpi-card {
+    .card {
       background: var(--color-surface);
       border: 1px solid var(--color-border);
       border-radius: var(--radius-lg);
@@ -201,187 +190,70 @@
       overflow: hidden;
     }
 
-    .mpi-card:hover {
+    .card:hover {
       border-color: var(--color-primary);
       box-shadow: 0 4px 16px rgba(42, 125, 111, 0.12);
     }
 
-    .mpi-card__stripe {
+    .card:focus-visible {
+      outline: 3px solid var(--color-primary);
+      outline-offset: 2px;
+    }
+
+    .card__stripe {
       height: 4px;
       background: var(--color-primary);
     }
 
-    .mpi-card__stripe--secondary {
+    .card__stripe--secondary {
       background: var(--color-secondary);
     }
 
-    .mpi-card__body {
+    .card__body {
       padding: var(--space-5);
       flex: 1;
       display: flex;
       flex-direction: column;
     }
 
-    .mpi-card__meta {
-      display: flex;
-      gap: var(--space-2);
-      margin-bottom: var(--space-3);
-      flex-wrap: wrap;
-    }
-
-    .badge {
-      font-family: var(--font-mono);
+    .card__badge {
+      display: inline-block;
       font-size: 0.7rem;
       font-weight: 700;
-      padding: 2px 8px;
-      border-radius: var(--radius-sm);
+      letter-spacing: 0.06em;
       text-transform: uppercase;
-      letter-spacing: 0.04em;
-    }
-
-    .badge--level {
-      background: var(--color-bg-grid);
-      color: var(--color-ink-muted);
-      border: 1px solid var(--color-border);
-    }
-
-    .badge--subject {
       background: var(--color-primary-soft);
       color: var(--color-primary-strong);
+      border-radius: 4px;
+      padding: 2px 8px;
+      margin-bottom: 14px;
+      align-self: flex-start;
     }
 
-    .badge--subject-secondary {
-      background: var(--color-secondary-soft);
-      color: var(--color-secondary);
-    }
-
-    .mpi-card__title {
+    .card__title {
       font-size: 1.05rem;
       font-family: var(--font-display);
       margin-bottom: var(--space-2);
     }
 
-    .mpi-card__tp {
-      font-size: 0.85rem;
+    .card__desc {
+      font-size: 0.875rem;
       color: var(--color-ink-muted);
+      line-height: 1.55;
+      margin: 0 0 20px;
       flex: 1;
-      margin-bottom: var(--space-4);
-      font-style: italic;
     }
 
-    .mpi-card__footer {
-      display: flex;
-      align-items: center;
-      gap: var(--space-2);
-      font-size: 0.82rem;
+    .card__cta {
+      font-size: 0.8rem;
+      font-weight: 600;
       color: var(--color-primary);
-      font-weight: 600;
-    }
-
-    .mpi-card__footer::after {
-      content: "→";
-      font-size: 1rem;
-    }
-
-    .mpi-card__activities {
-      display: flex;
-      flex-wrap: wrap;
-      gap: var(--space-2);
-      margin-bottom: var(--space-4);
-    }
-
-    .activity-tag {
-      font-family: var(--font-mono);
-      font-size: 0.72rem;
-      background: var(--color-bg-grid);
-      border: 1px solid var(--color-border);
-      border-radius: var(--radius-sm);
-      padding: 2px var(--space-2);
-      color: var(--color-ink-muted);
-    }
-
-    /* ── Fase F content ── */
-    .fase-f-main {
-      flex: 1;
-      width: 100%;
-      max-width: var(--max-width);
-      margin: 0 auto;
-      padding: var(--space-7) var(--space-5);
-    }
-
-    .page-intro {
-      margin-bottom: var(--space-7);
-    }
-
-    .page-intro h2 {
-      font-size: 1.75rem;
-      margin-bottom: var(--space-3);
-    }
-
-    .page-intro p {
-      color: var(--color-ink-muted);
-      max-width: 64ch;
-    }
-
-    .module-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-      gap: var(--space-5);
-    }
-
-    .module-card {
-      background: var(--color-surface);
-      border: 1px solid var(--color-border);
-      border-radius: var(--radius-md);
-      padding: var(--space-5);
-      display: flex;
-      flex-direction: column;
-      gap: var(--space-3);
-      text-decoration: none;
-      color: inherit;
-      transition: box-shadow 0.15s, border-color 0.15s;
-    }
-
-    .module-card:hover {
-      border-color: var(--color-secondary);
-      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
-    }
-
-    .module-card__tag {
-      font-family: var(--font-mono);
-      font-size: 0.7rem;
-      letter-spacing: 0.07em;
-      text-transform: uppercase;
-      color: var(--color-secondary);
-      background: var(--color-secondary-soft);
-      padding: 2px var(--space-2);
-      border-radius: var(--radius-sm);
-      align-self: flex-start;
-    }
-
-    .module-card__title {
-      font-size: 1.1rem;
-      margin: 0;
-    }
-
-    .module-card__desc {
-      font-size: 0.9rem;
-      color: var(--color-ink-muted);
-      margin: 0;
-      flex: 1;
-    }
-
-    .module-card__cta {
-      font-size: 0.85rem;
-      font-family: var(--font-display);
-      color: var(--color-secondary-strong);
-      font-weight: 600;
       display: flex;
       align-items: center;
-      gap: var(--space-2);
+      gap: 4px;
     }
 
-    .module-card__cta::after {
+    .card__cta::after {
       content: "→";
     }
 
@@ -395,18 +267,25 @@
       background: var(--color-surface);
     }
 
+    .link {
+      color: var(--color-primary);
+      text-decoration: none;
+    }
+
+    .link:hover {
+      text-decoration: underline;
+    }
+
     @media (max-width: 600px) {
       .site-header h1 {
         font-size: 1.35rem;
       }
 
-      .fase-d-main,
-      .fase-f-main {
+      .main {
         padding: var(--space-4) var(--space-3);
       }
 
-      .mpi-grid,
-      .module-grid {
+      .card-grid {
         grid-template-columns: 1fr;
       }
     }
@@ -419,8 +298,8 @@
     <div class="site-header__inner">
       <span class="site-header__kicker">Media Pembelajaran Interaktif</span>
       <h1 class="site-header__title">Matematika</h1>
-      <p class="site-header__desc">Kumpulan media pembelajaran interaktif untuk mendukung proses belajar Matematika SMP
-        dan SMA/SMK.</p>
+      <p class="site-header__desc">Kumpulan media pembelajaran interaktif untuk mendukung proses belajar Matematika di
+        SMP dan SMA/SMK.</p>
       <p class="site-header__desc">Pilih fase dan media sesuai materi yang sedang dipelajari.</p>
     </div>
   </header>
@@ -436,32 +315,17 @@
 
   <!-- Tab: Fase D -->
   <div class="tab-panel is-active" id="panel-fase-d" role="tabpanel" aria-labelledby="tab-fase-d">
-    <main class="fase-d-main">
-
-      <p class="section-label">Daftar Media Pembelajaran — Fase D</p>
-
-      <div class="mpi-grid" role="list">
-
-        <a href="fase-d/mpi-1.2/index.html" class="mpi-card" role="listitem"
+    <main class="main">
+      <p class="section-label">Daftar Materi</p>
+      <div class="card-grid" role="list">
+        <a href="fase-d/mpi-1.2/index.html" class="card" role="listitem"
           aria-label="MPI 1.2 Bilangan Rasional — Belanja Cermat, Matematika SMP">
-          <div class="mpi-card__stripe"></div>
-          <div class="mpi-card__body">
-            <div class="mpi-card__meta">
-              <span class="badge badge--level">SMP</span>
-              <span class="badge badge--subject">Bilangan Rasional</span>
-            </div>
-            <h2 class="mpi-card__title">MPI 1.2 — Belanja Cermat</h2>
-            <p class="mpi-card__tp">"Mengonversi dan Membandingkan Representasi Bilangan Rasional dalam Situasi Nyata"
-            </p>
-            <div class="mpi-card__activities">
-              <span class="activity-tag">Matching kartu</span>
-              <span class="activity-tag">Konversi pecahan↔desimal</span>
-              <span class="activity-tag">Pengurutan</span>
-              <span class="activity-tag">Simulasi belanja</span>
-              <span class="activity-tag">Kuis formatif</span>
-              <span class="activity-tag">Self-assessment</span>
-            </div>
-            <span class="mpi-card__footer">Buka media</span>
+          <div class="card__stripe"></div>
+          <div class="card__body">
+            <span class="card__badge">Materi 1.2</span>
+            <h2 class="card__title">Belanja Cermat</h2>
+            <p class="card__desc">Mengonversi dan Membandingkan Representasi Bilangan Rasional dalam Situasi Nyata"</p>
+            <span class="card__cta">Buka media</span>
           </div>
         </a>
       </div>
@@ -470,33 +334,38 @@
 
   <!-- Tab: Fase F -->
   <div class="tab-panel" id="panel-fase-f" role="tabpanel" aria-labelledby="tab-fase-f">
-    <main class="fase-f-main">
-      <div class="page-intro">
-        <h2>Pilih Modul — Fase F</h2>
-        <p>Klik modul di bawah ini untuk membuka laboratorium pembelajaran interaktif.</p>
-      </div>
-
-      <div class="module-grid">
-        <a href="fase-f/mpi-1.2/index.html" class="module-card">
-          <span class="module-card__tag">MPI 1.2</span>
-          <h3 class="module-card__title">GeoGrowth Lab — Geometri &amp; Aritmetika</h3>
-          <p class="module-card__desc">Laboratorium eksplorasi mendalam barisan geometri dan perbandingannya dengan
-            barisan aritmetika, dilengkapi latihan soal formatif.</p>
-          <span class="module-card__cta">Buka laboratorium</span>
+    <main class="main">
+      <p class="section-label">Daftar Materi</p>
+      <div class="card-grid" role="list">
+        <a href="fase-f/mpi-1.2/index.html" class="card" role="listitem"
+          aria-label="MPI 1.2 GeoGrowth Lab — Geometri &amp; Aritmetika">
+          <div class="card__stripe"></div>
+          <div class="card__body">
+            <span class="card__badge">Materi 1.2</span>
+            <h2 class="card__title">GeoGrowth Lab — Geometri &amp; Aritmetika</h2>
+            <p class="card__desc">Laboratorium eksplorasi mendalam barisan geometri dan perbandingannya dengan barisan
+              aritmetika, dilengkapi latihan soal formatif.</p>
+            <span class="card__cta">Buka laboratorium</span>
+          </div>
         </a>
-        <a href="fase-f/mpi-1.3/index.html" class="module-card">
-          <span class="module-card__tag">MPI 1.3</span>
-          <h3 class="module-card__title">Aritmetika &amp; Geometri: Analisis &amp; Keputusan</h3>
-          <p class="module-card__desc">Media pembelajaran interaktif untuk menganalisis dan membedakan pola aritmetika
-            dan geometri melalui eksplorasi kasus, komparasi, skenario bisnis, dan simulasi visual.</p>
-          <span class="module-card__cta">Buka media</span>
+        <a href="fase-f/mpi-1.3/index.html" class="card" role="listitem"
+          aria-label="MPI 1.3 Aritmetika &amp; Geometri: Analisis &amp; Keputusan">
+          <div class="card__stripe"></div>
+          <div class="card__body">
+            <span class="card__badge">Materi 1.3</span>
+            <h2 class="card__title">Aritmetika &amp; Geometri: Analisis &amp; Keputusan</h2>
+            <p class="card__desc">Media pembelajaran interaktif untuk menganalisis dan membedakan pola aritmetika dan
+              geometri melalui eksplorasi kasus, komparasi, skenario bisnis, dan simulasi visual.</p>
+            <span class="card__cta">Buka media</span>
+          </div>
         </a>
       </div>
     </main>
   </div>
 
   <footer class="site-footer">
-    <p>Media Pembelajaran Interaktif · Matematika · Dibuat untuk mendukung pembelajaran aktif di kelas</p>
+    <p>iLedia — Interactive Learning Media by <a href="https://github.com/vinjerdim" target="_blank" rel="noopener"
+        class="link">vinjerdim</a></p>
   </footer>
 
   <script>
