@@ -29,7 +29,15 @@
 
 function parseInputInt(str) {
   if (!str || str.trim() === '') return { value: null, error: 'empty' };
-  var s = str.trim().replace(/\./g, '').replace(/,/g, '').replace(/\s/g, '');
+  var trimmed = str.trim();
+  var chars = [];
+  for (var i = 0; i < trimmed.length; i++) {
+    var ch = trimmed.charAt(i);
+    if (ch !== '.' && ch !== ',' && ch !== ' ' && ch !== '\t' && ch !== '\n' && ch !== '\r') {
+      chars.push(ch);
+    }
+  }
+  var s = chars.join('');
   if (!/^-?\d+$/.test(s)) return { value: null, error: 'invalid' };
   var v = parseInt(s, 10);
   if (isNaN(v)) return { value: null, error: 'invalid' };
@@ -37,16 +45,32 @@ function parseInputInt(str) {
 }
 
 function esc(str) {
-  return String(str)
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#39;');
+  var escapeMap = {
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#39;'
+  };
+  return String(str).replace(/[&<>"']/g, function (match) {
+    return escapeMap[match];
+  });
 }
 
 function formatNumber(n) {
-  return n.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+  var str = String(n);
+  var sign = '';
+  var parts = [];
+  if (str.charAt(0) === '-') {
+    sign = '-';
+    str = str.slice(1);
+  }
+  while (str.length > 3) {
+    parts.unshift(str.slice(str.length - 3));
+    str = str.slice(0, str.length - 3);
+  }
+  if (str) parts.unshift(str);
+  return sign + parts.join('.');
 }
 
 /* ============================================================
@@ -101,7 +125,7 @@ var State = {
 };
 
 function saveState() {
-  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(State)); } catch (e) {}
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(State)); } catch (e) { /* Abaikan saat storage browser tidak tersedia. */ }
 }
 
 function loadState() {
@@ -110,11 +134,14 @@ function loadState() {
     if (!raw) return false;
     Object.assign(State, JSON.parse(raw));
     return true;
-  } catch (e) { return false; }
+  } catch (e) {
+    /* Jika storage rusak atau tidak tersedia, lanjutkan dengan state awal. */
+    return false;
+  }
 }
 
 function clearState() {
-  try { localStorage.removeItem(STORAGE_KEY); } catch (e) {}
+  try { localStorage.removeItem(STORAGE_KEY); } catch (e) { /* Abaikan; reset state in-memory tetap dijalankan. */ }
   State.currentStage = 'orientasi';
   State.completedStages = {};
   State.eksplorasiCtxIdx = 0;
@@ -568,14 +595,14 @@ function renderRumusUn(container) {
   if (!State.rumusUnFormulaShown) {
     var s = data.steps[step];
     var ex = State.rumusUnStepDone[step];
-    var inp = State.rumusUnStepInputs[step] || '';
+    var stepInputValue = State.rumusUnStepInputs[step] || '';
     stepHTML =
       '<div class="panel panel--compact" id="stepPanel">' +
       '<span class="stage-head__kicker" style="margin-bottom:var(--space-2);">LANGKAH ' + (step + 1) + ' dari ' + data.steps.length + '</span>' +
       '<p style="font-size:0.95rem;margin-bottom:var(--space-3);">' + s.question + '</p>' +
       (!ex ?
         '<div class="un-answer-row">' +
-        '<input type="text" inputmode="numeric" id="stepInput" class="input-text" value="' + esc(inp) + '" placeholder="..." style="max-width:120px;text-align:center;font-family:var(--font-mono);font-size:1.1rem;">' +
+        '<input type="text" inputmode="numeric" id="stepInput" class="input-text" value="' + esc(stepInputValue) + '" placeholder="..." style="max-width:120px;text-align:center;font-family:var(--font-mono);font-size:1.1rem;">' +
         '<button type="button" class="btn btn--primary" id="checkStepBtn">Periksa</button>' +
         '<button type="button" class="btn btn--ghost btn--small" id="hintStepBtn">💡 Petunjuk</button>' +
         '</div>' +
@@ -625,13 +652,13 @@ function renderRumusUn(container) {
     if (fb) fb.innerHTML = buildFeedbackBox('warning', '💡', esc(data.steps[step].hint));
   });
 
-  var inp = document.getElementById('stepInput');
-  if (inp) {
-    inp.addEventListener('input', function () { State.rumusUnStepInputs[step] = inp.value; });
-    inp.addEventListener('keydown', function (e) {
+  var stepInputEl = document.getElementById('stepInput');
+  if (stepInputEl) {
+    stepInputEl.addEventListener('input', function () { State.rumusUnStepInputs[step] = stepInputEl.value; });
+    stepInputEl.addEventListener('keydown', function (e) {
       if (e.key === 'Enter') { e.preventDefault(); if (checkBtn) checkBtn.click(); }
     });
-    setTimeout(function () { inp.focus(); }, 50);
+    setTimeout(function () { stepInputEl.focus(); }, 50);
   }
 
   var nextBtn = document.getElementById('nextRumusBtn');
@@ -881,7 +908,6 @@ function renderEkspSn(container) {
   var steps = data.steps;
 
   /* Build Gauss animation */
-  var b = data.b;
   var terms = data.barisan;
   var n = data.n_demo;
 
