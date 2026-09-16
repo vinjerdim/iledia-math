@@ -1,0 +1,843 @@
+/* =========================================================================
+   mpi-1.1 - Bilangan Bulat pada Garis Bilangan (Matematika Fase D / SMP)
+   Gaya dasar berada di shared/base.css.
+   File ini hanya berisi komponen spesifik mpi-1.1.
+   ========================================================================= */
+
+/* =========================================================================
+   Kartu konteks bilangan bulat (tahap kenaliBulat)
+   ========================================================================= */
+
+.ctx-tabs {
+  display: flex;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+  margin-bottom: var(--space-4);
+}
+
+.int-item-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin: var(--space-4) 0;
+}
+
+.int-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  transition: transform 0.15s;
+}
+
+.int-item:hover {
+  transform: translateX(3px);
+}
+
+.int-item--blue {
+  border-left: 4px solid var(--color-blue);
+  background: var(--color-blue-soft);
+}
+
+.int-item--orange {
+  border-left: 4px solid var(--color-orange);
+  background: var(--color-orange-soft);
+}
+
+.int-item--neutral {
+  border-left: 4px solid var(--color-primary);
+  background: var(--color-primary-soft);
+}
+
+.int-item__value {
+  font-family: var(--font-mono);
+  font-size: 1.4rem;
+  font-weight: 700;
+  min-width: 60px;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.int-item--blue .int-item__value {
+  color: var(--color-blue-strong);
+}
+
+.int-item--orange .int-item__value {
+  color: var(--color-orange-strong);
+}
+
+.int-item--neutral .int-item__value {
+  color: var(--color-primary-strong);
+}
+
+.int-item__info {
+  flex: 1;
+  min-width: 0;
+}
+
+.int-item__label {
+  font-weight: 600;
+  font-size: 0.92rem;
+  color: var(--color-ink);
+}
+
+.int-item__note {
+  font-size: 0.8rem;
+  color: var(--color-ink-muted);
+  margin-top: 2px;
+}
+
+.int-item__unit {
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  color: var(--color-ink-muted);
+  flex-shrink: 0;
+}
+
+.insight-box {
+  display: flex;
+  gap: var(--space-3);
+  align-items: flex-start;
+  background: var(--color-warning-soft);
+  border: 1px solid var(--color-warning);
+  border-radius: var(--radius-md);
+  padding: var(--space-4);
+  margin-top: var(--space-3);
+  font-size: 0.9rem;
+  color: var(--color-warning-strong);
+}
+
+.insight-box__icon {
+  font-size: 1.2rem;
+  flex-shrink: 0;
+  line-height: 1.4;
+}
+
+/* =========================================================================
+   Garis Bilangan SVG (tahap garisBilangan)
+   ========================================================================= */
+
+.numberline-wrap {
+  overflow-x: auto;
+  padding: var(--space-4) 0;
+  background: var(--color-bg-grid);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border);
+  margin: var(--space-4) 0;
+}
+
+.numberline-svg {
+  display: block;
+  margin: 0 auto;
+  min-width: 320px;
+  max-width: 100%;
+  height: auto;
+}
+
+.nl-axis {
+  stroke: var(--color-ink);
+  stroke-width: 2;
+}
+
+.nl-tick {
+  stroke: var(--color-ink);
+  stroke-width: 1.5;
+}
+
+.nl-tick--major {
+  stroke-width: 2;
+}
+
+.nl-label {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  fill: var(--color-ink-muted);
+  text-anchor: middle;
+  dominant-baseline: hanging;
+}
+
+.nl-label--zero {
+  fill: var(--color-primary-strong);
+  font-weight: 700;
+}
+
+.nl-point {
+  fill: var(--color-error);
+  stroke: var(--color-error-strong);
+  stroke-width: 2;
+  cursor: default;
+  transition: r 0.15s;
+}
+
+.nl-point-label {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 700;
+  fill: var(--color-error-strong);
+  text-anchor: middle;
+  pointer-events: none;
+}
+
+.nl-arrow {
+  fill: var(--color-ink);
+}
+
+/* =========================================================================
+   Latihan garis bilangan — input & feedback
+   ========================================================================= */
+
+.gb-exercise {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: var(--space-4);
+  margin-bottom: var(--space-4);
+}
+
+.gb-question {
+  font-size: 0.95rem;
+  font-weight: 600;
+  margin-bottom: var(--space-3);
+  color: var(--color-ink);
+}
+
+.gb-input-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+}
+
+.gb-input-row .input-text {
+  max-width: 120px;
+  font-family: var(--font-mono);
+  font-size: 1.2rem;
+  text-align: center;
+}
+
+/* =========================================================================
+   Perbandingan bilangan bulat (tahap membandingkan)
+   ========================================================================= */
+
+.compare-card {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-5);
+  padding: var(--space-5);
+  background: var(--color-bg-grid);
+  border-radius: var(--radius-md);
+  margin: var(--space-4) 0;
+  flex-wrap: wrap;
+}
+
+.compare-number {
+  font-family: var(--font-mono);
+  font-size: 2.8rem;
+  font-weight: 700;
+  color: var(--color-primary-strong);
+  min-width: 80px;
+  text-align: center;
+  padding: var(--space-3) var(--space-4);
+  background: var(--color-surface);
+  border: 2px solid var(--color-primary);
+  border-radius: var(--radius-md);
+  line-height: 1;
+}
+
+.compare-number--negative {
+  color: var(--color-blue-strong);
+  border-color: var(--color-blue);
+  background: var(--color-blue-soft);
+}
+
+.compare-symbol-area {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.compare-symbol-display {
+  font-family: var(--font-mono);
+  font-size: 2rem;
+  font-weight: 700;
+  min-width: 60px;
+  min-height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px dashed var(--color-border-strong);
+  border-radius: var(--radius-md);
+  color: var(--color-ink-muted);
+  background: var(--color-surface);
+  transition: all 0.2s;
+}
+
+.compare-symbol-display--correct {
+  border-color: var(--color-success);
+  color: var(--color-success-strong);
+  background: var(--color-success-soft);
+  border-style: solid;
+}
+
+.compare-symbol-display--incorrect {
+  border-color: var(--color-error);
+  color: var(--color-error-strong);
+  background: var(--color-error-soft);
+  border-style: solid;
+}
+
+.compare-btn-group {
+  display: flex;
+  gap: var(--space-2);
+  justify-content: center;
+  margin-top: var(--space-3);
+}
+
+.compare-btn {
+  font-family: var(--font-mono);
+  font-size: 1.4rem;
+  font-weight: 700;
+  width: 60px;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid var(--color-border-strong);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  color: var(--color-ink);
+  cursor: pointer;
+  transition:
+    background-color 0.12s,
+    border-color 0.12s,
+    transform 0.05s;
+}
+
+.compare-btn:hover {
+  background: var(--color-primary-soft);
+  border-color: var(--color-primary);
+  color: var(--color-primary-strong);
+}
+
+.compare-btn:active {
+  transform: scale(0.92);
+}
+
+.compare-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+/* =========================================================================
+   Mengurutkan bilangan (tahap mengurutkan)
+   ========================================================================= */
+
+.sort-instruction {
+  font-size: 0.9rem;
+  color: var(--color-ink-muted);
+  margin-bottom: var(--space-3);
+  font-style: italic;
+}
+
+.sort-chips-pool {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  padding: var(--space-4);
+  background: var(--color-bg-grid);
+  border-radius: var(--radius-md);
+  border: 2px dashed var(--color-border-strong);
+  min-height: 72px;
+  margin-bottom: var(--space-3);
+}
+
+.sort-chip {
+  font-family: var(--font-mono);
+  font-size: 1.15rem;
+  font-weight: 700;
+  padding: var(--space-2) var(--space-4);
+  min-width: 60px;
+  min-height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid var(--color-primary);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+  color: var(--color-primary-strong);
+  cursor: pointer;
+  transition:
+    background-color 0.12s,
+    transform 0.08s,
+    box-shadow 0.12s;
+  user-select: none;
+}
+
+.sort-chip--negative {
+  border-color: var(--color-blue);
+  color: var(--color-blue-strong);
+  background: var(--color-blue-soft);
+}
+
+.sort-chip:hover {
+  background: var(--color-primary-soft);
+  transform: translateY(-2px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.sort-chip--negative:hover {
+  background: var(--color-blue-soft);
+}
+
+.sort-chip--selected {
+  opacity: 0.35;
+  cursor: not-allowed;
+  pointer-events: none;
+  transform: none;
+}
+
+.sort-answer-slots {
+  display: flex;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+  padding: var(--space-4);
+  background: var(--color-surface);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border);
+  min-height: 72px;
+  margin-bottom: var(--space-3);
+  align-items: center;
+}
+
+.sort-slot {
+  font-family: var(--font-mono);
+  font-size: 1.15rem;
+  font-weight: 700;
+  min-width: 60px;
+  min-height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px dashed var(--color-border-strong);
+  border-radius: var(--radius-sm);
+  color: var(--color-ink-muted);
+  position: relative;
+}
+
+.sort-slot--filled {
+  border-color: var(--color-primary);
+  color: var(--color-primary-strong);
+  background: var(--color-primary-soft);
+  border-style: solid;
+  cursor: pointer;
+}
+
+.sort-slot--filled-negative {
+  border-color: var(--color-blue);
+  color: var(--color-blue-strong);
+  background: var(--color-blue-soft);
+  border-style: solid;
+}
+
+.sort-slot__num {
+  position: absolute;
+  top: -10px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 0.65rem;
+  font-family: var(--font-mono);
+  color: var(--color-ink-muted);
+  background: var(--color-surface);
+  padding: 0 4px;
+}
+
+.sort-progress-text {
+  font-size: 0.82rem;
+  color: var(--color-ink-muted);
+  font-style: italic;
+  margin-top: var(--space-2);
+}
+
+/* =========================================================================
+   Situasi nyata — badge chip konteks
+   ========================================================================= */
+
+.badge-chip {
+  display: inline-block;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 10px;
+  background: var(--color-primary-soft);
+  color: var(--color-primary-strong);
+  border: 1px solid var(--color-primary);
+  margin-bottom: var(--space-2);
+}
+
+.story-list {
+  margin: var(--space-2) 0 var(--space-3) var(--space-5);
+}
+
+/* =========================================================================
+   Pilihan ganda (digunakan di situasiNyata)
+   ========================================================================= */
+
+.choice-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin: var(--space-3) 0;
+}
+
+.choice-btn {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  background: var(--color-surface);
+  border: 2px solid var(--color-border);
+  border-radius: var(--radius-md);
+  text-align: left;
+  font-family: var(--font-body);
+  font-size: 0.92rem;
+  color: var(--color-ink);
+  cursor: pointer;
+  min-height: 52px;
+  transition:
+    background-color 0.12s,
+    border-color 0.12s;
+  width: 100%;
+}
+
+.choice-btn:hover {
+  background: var(--color-primary-soft);
+  border-color: var(--color-primary);
+}
+
+.choice-btn--correct {
+  background: var(--color-success-soft);
+  border-color: var(--color-success);
+  color: var(--color-success-strong);
+  pointer-events: none;
+}
+
+.choice-btn--incorrect {
+  background: var(--color-error-soft);
+  border-color: var(--color-error);
+  color: var(--color-error-strong);
+  pointer-events: none;
+}
+
+.choice-btn--disabled {
+  opacity: 0.55;
+  pointer-events: none;
+}
+
+.choice-letter {
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  font-weight: 700;
+  min-width: 26px;
+  height: 26px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  border: 1.5px solid currentColor;
+  flex-shrink: 0;
+  opacity: 0.7;
+}
+
+/* =========================================================================
+   Exercise progress (dot navigation)
+   ========================================================================= */
+
+.exercise-progress {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+  margin-bottom: var(--space-4);
+}
+
+.exercise-progress__dot {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: 2px solid var(--color-border-strong);
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--color-ink-muted);
+  background: var(--color-surface);
+  cursor: default;
+}
+
+.exercise-progress__dot--current {
+  border-color: var(--color-primary);
+  background: var(--color-primary);
+  color: #fff;
+}
+
+.exercise-progress__dot--done {
+  border-color: var(--color-success);
+  background: var(--color-success);
+  color: #fff;
+}
+
+.exercise-progress__dot--incorrect {
+  border-color: var(--color-error);
+  background: var(--color-error-soft);
+  color: var(--color-error-strong);
+}
+
+.exercise-label {
+  font-size: 0.82rem;
+  color: var(--color-ink-muted);
+  margin-left: var(--space-2);
+}
+
+/* =========================================================================
+   Feedback boxes (jika belum ada di base.css)
+   ========================================================================= */
+
+.feedback-box {
+  display: flex;
+  gap: var(--space-3);
+  align-items: flex-start;
+  padding: var(--space-4);
+  border-radius: var(--radius-md);
+  border: 1px solid transparent;
+  font-size: 0.9rem;
+  line-height: 1.5;
+  animation: fadeSlideIn 0.2s ease;
+}
+
+@keyframes fadeSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.feedback-box--success {
+  background: var(--color-success-soft);
+  border-color: var(--color-success);
+  color: var(--color-success-strong);
+}
+
+.feedback-box--error {
+  background: var(--color-error-soft);
+  border-color: var(--color-error);
+  color: var(--color-error-strong);
+}
+
+.feedback-box--warning {
+  background: var(--color-warning-soft);
+  border-color: var(--color-warning);
+  color: var(--color-warning-strong);
+}
+
+.feedback-box--info {
+  background: var(--color-primary-soft);
+  border-color: var(--color-primary);
+  color: var(--color-primary-strong);
+}
+
+.feedback-box__icon {
+  font-size: 1.1rem;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.feedback-box__body {
+  flex: 1;
+  min-width: 0;
+}
+
+/* =========================================================================
+   App notice (toast)
+   ========================================================================= */
+
+.app-notice {
+  position: fixed;
+  bottom: var(--space-5);
+  left: 50%;
+  transform: translateX(-50%) translateY(20px);
+  background: var(--color-ink);
+  color: #fff;
+  padding: var(--space-3) var(--space-5);
+  border-radius: var(--radius-md);
+  font-size: 0.9rem;
+  font-weight: 600;
+  opacity: 0;
+  pointer-events: none;
+  transition:
+    opacity 0.2s,
+    transform 0.2s;
+  z-index: 50;
+  max-width: 400px;
+  text-align: center;
+}
+
+.app-notice--visible {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+/* =========================================================================
+   Orientasi — hero steps & objectives
+   ========================================================================= */
+
+.hero-steps {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.hero-steps__item {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  font-size: 0.9rem;
+}
+
+.hero-steps__num {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: var(--color-primary);
+  color: #fff;
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  font-weight: 700;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.objectives-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.objectives-list li {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  font-size: 0.9rem;
+  padding: var(--space-2) 0;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.objectives-list li:last-child {
+  border-bottom: none;
+}
+
+.objectives-list__num {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--color-primary-soft);
+  color: var(--color-primary-strong);
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  font-weight: 700;
+  flex-shrink: 0;
+  border: 1px solid var(--color-primary);
+}
+
+/* =========================================================================
+   Selesai — ringkasan
+   ========================================================================= */
+
+.achievement-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: var(--space-3);
+  margin: var(--space-4) 0;
+}
+
+.achievement-card {
+  background: var(--color-primary-soft);
+  border: 1px solid var(--color-primary);
+  border-radius: var(--radius-md);
+  padding: var(--space-4);
+  text-align: center;
+}
+
+.achievement-card__icon {
+  font-size: 2rem;
+  margin-bottom: var(--space-2);
+}
+
+.achievement-card__title {
+  font-weight: 700;
+  font-size: 0.88rem;
+  color: var(--color-primary-strong);
+}
+
+.achievement-card__desc {
+  font-size: 0.78rem;
+  color: var(--color-ink-muted);
+  margin-top: 4px;
+}
+
+/* =========================================================================
+   Responsive tweaks
+   ========================================================================= */
+
+@media (max-width: 480px) {
+  .compare-number {
+    font-size: 2rem;
+    min-width: 60px;
+    padding: var(--space-2) var(--space-3);
+  }
+
+  .compare-card {
+    gap: var(--space-3);
+    padding: var(--space-4);
+  }
+
+  .compare-btn {
+    width: 52px;
+    height: 52px;
+    font-size: 1.2rem;
+  }
+
+  .sort-chip {
+    font-size: 1rem;
+    padding: var(--space-2) var(--space-3);
+    min-width: 52px;
+  }
+
+  .int-item__value {
+    font-size: 1.2rem;
+    min-width: 50px;
+  }
+}
