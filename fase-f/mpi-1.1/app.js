@@ -61,7 +61,7 @@ function formatNumber(n) {
   var str = String(n);
   var sign = '';
   var parts = [];
-  if (str.charAt(0) === '-') {
+  if (str.startsWith('-')) {
     sign = '-';
     str = str.slice(1);
   }
@@ -371,49 +371,56 @@ function renderOrientasi(container) {
    7. STAGE: EKSPLORASI POLA
    ============================================================ */
 
-function renderEksplorasi(container) {
-  var ctxList = DATA.eksplorasi.konteks;
-  var idx = State.eksplorasiCtxIdx;
-  var ctx = ctxList[idx];
-  var revealCount = State.eksplorasiRevealCount[idx] || 0;
-  var isDone = State.eksplorasiDone[idx] || false;
-  var doneCounts = State.eksplorasiDone.filter(Boolean).length;
-  var allDone = doneCounts === ctxList.length;
+function buildSeqTermClass(revealed, idx, revealCount) {
+  var cls = 'seq-term__val';
+  if (!revealed) return cls + ' seq-term__val--hidden';
+  if (idx === revealCount + 1 && revealCount > 0) return cls + ' seq-term__val--revealed';
+  return cls;
+}
 
-  /* Sequence display */
-  var termsHTML = '';
+function buildSeqTermsHTML(ctx, revealCount) {
+  var html = '';
   for (var i = 0; i < ctx.terms.length; i++) {
     var revealed = i < 2 || i < revealCount + 2;
-    var valCls = 'seq-term__val' + (revealed ? '' : ' seq-term__val--hidden') + (i === revealCount + 1 && revealCount > 0 ? ' seq-term__val--revealed' : '');
-    termsHTML += '<div class="seq-term">' +
+    var valCls = buildSeqTermClass(revealed, i, revealCount);
+    html += '<div class="seq-term">' +
       '<div class="' + valCls + '">' + (revealed ? esc(String(ctx.terms[i])) : '?') + '</div>' +
       '<div class="seq-term__label">' + esc(ctx.labels[i]) + '</div>' +
       '</div>';
     if (i < ctx.terms.length - 1) {
-      if (revealed && (i + 1 < 2 || i + 1 < revealCount + 2)) {
-        var diff = ctx.terms[i + 1] - ctx.terms[i];
-        termsHTML += '<div class="seq-beda-badge">+' + diff + '</div>';
+      var nextRevealed = (i + 1 < 2) || (i + 1 < revealCount + 2);
+      if (revealed && nextRevealed) {
+        html += '<div class="seq-beda-badge">+' + (ctx.terms[i + 1] - ctx.terms[i]) + '</div>';
       } else {
-        termsHTML += '<div class="seq-arrow">→</div>';
+        html += '<div class="seq-arrow">→</div>';
       }
     }
   }
+  return html;
+}
 
-  /* Context tabs */
-  var tabsHTML = ctxList.map(function (c, i) {
+function buildCtxTabsHTML(ctxList, idx) {
+  return ctxList.map(function (c, i) {
     var active = i === idx ? ' aria-current="step"' : '';
     var done = State.eksplorasiDone[i] ? ' is-complete' : '';
-    var num = State.eksplorasiDone[i] ? '✓' : (i + 1);
+    var num = State.eksplorasiDone[i] ? '&#10003;' : (i + 1);
     return '<button type="button" class="stage-nav__item' + done + '"' + active + ' data-ctx="' + i + '">' +
-      '<span class="stage-nav__num">' + num + '</span>' + esc(c.badge) +
-      '</button>';
+      '<span class="stage-nav__num">' + num + '</span>' + esc(c.badge) + '</button>';
   }).join('');
+}
 
-  /* Input for beda */
-  var bedaInputHTML = '';
-  if (revealCount >= 2 && !isDone) {
-    bedaInputHTML =
-      '<div class="panel panel--compact" style="margin-top:var(--space-4);">' +
+function buildBedaInputPanel(ctx, revealCount, isDone) {
+  if (isDone) {
+    return '<div class="panel panel--compact" style="margin-top:var(--space-4);">' +
+      buildFeedbackBox('success', '&#10003;',
+        '<strong>Barisan aritmetika teridentifikasi!</strong><br>' +
+        'Suku pertama <strong>a = ' + ctx.a + '</strong> ' + esc(ctx.unit) +
+        ', beda <strong>b = ' + ctx.b + '</strong> ' + esc(ctx.unit) + '.<br>' +
+        '<em>Setiap suku bertambah secara konstan sebesar ' + ctx.b + ' ' + ctx.unit + '.</em>'
+      ) + '</div>';
+  }
+  if (revealCount >= 2) {
+    return '<div class="panel panel--compact" style="margin-top:var(--space-4);">' +
       '<h4>Identifikasi Barisan</h4>' +
       '<div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--space-3);margin-bottom:var(--space-3);">' +
       '<div class="field-group" style="margin:0;">' +
@@ -428,22 +435,26 @@ function renderEksplorasi(container) {
       '</div>' +
       '</div>' +
       '<div class="btn-group">' +
-      '<button type="button" class="btn btn--ghost btn--small" id="hintAbBtn">💡 Petunjuk</button>' +
+      '<button type="button" class="btn btn--ghost btn--small" id="hintAbBtn">&#128161; Petunjuk</button>' +
       '<button type="button" class="btn btn--primary" id="checkAbBtn">Periksa</button>' +
       '</div>' +
       '<div id="abFeedback" style="margin-top:var(--space-3);"></div>' +
       '</div>';
-  } else if (isDone) {
-    bedaInputHTML =
-      '<div class="panel panel--compact" style="margin-top:var(--space-4);">' +
-      buildFeedbackBox('success', '✓',
-        '<strong>Barisan aritmetika teridentifikasi!</strong><br>' +
-        'Suku pertama <strong>a = ' + ctx.a + '</strong> ' + esc(ctx.unit) +
-        ', beda <strong>b = ' + ctx.b + '</strong> ' + esc(ctx.unit) + '.<br>' +
-        '<em>Setiap suku bertambah secara konstan sebesar ' + ctx.b + ' ' + ctx.unit + '.</em>'
-      ) +
-      '</div>';
   }
+  return '';
+}
+
+function renderEksplorasi(container) {
+  var ctxList = DATA.eksplorasi.konteks;
+  var idx = State.eksplorasiCtxIdx;
+  var ctx = ctxList[idx];
+  var revealCount = State.eksplorasiRevealCount[idx] || 0;
+  var isDone = State.eksplorasiDone[idx] || false;
+  var allDone = State.eksplorasiDone.filter(Boolean).length === ctxList.length;
+
+  var termsHTML = buildSeqTermsHTML(ctx, revealCount);
+  var tabsHTML = buildCtxTabsHTML(ctxList, idx);
+  var bedaInputHTML = buildBedaInputPanel(ctx, revealCount, isDone);
 
   container.innerHTML =
     '<section aria-label="Eksplorasi Pola Barisan">' +
@@ -518,49 +529,49 @@ function renderEksplorasi(container) {
   });
 }
 
-function checkAbAnswer(container, idx) {
-  var ctx = DATA.eksplorasi.konteks[idx];
+function validateAbInputs() {
   var inpA = document.getElementById('inputA');
   var inpB = document.getElementById('inputB');
   var errA = document.getElementById('errA');
   var errB = document.getElementById('errB');
-  var fb   = document.getElementById('abFeedback');
-
   errA.textContent = ''; errB.textContent = '';
-  var pA = parseInputInt(inpA.value);
-  var pB = parseInputInt(inpB.value);
-  var valid = true;
+  var pA = parseInputInt(inpA ? inpA.value : '');
+  var pB = parseInputInt(inpB ? inpB.value : '');
+  if (pA.error === 'empty')   { errA.textContent = 'Isi nilai a.'; return null; }
+  if (pA.error === 'invalid') { errA.textContent = 'Masukkan bilangan bulat.'; return null; }
+  if (pB.error === 'empty')   { errB.textContent = 'Isi nilai b.'; return null; }
+  if (pB.error === 'invalid') { errB.textContent = 'Masukkan bilangan bulat.'; return null; }
+  return { pA: pA, pB: pB };
+}
 
-  if (pA.error === 'empty') { errA.textContent = 'Isi nilai a.'; valid = false; }
-  else if (pA.error === 'invalid') { errA.textContent = 'Masukkan bilangan bulat.'; valid = false; }
-  if (pB.error === 'empty') { errB.textContent = 'Isi nilai b.'; valid = false; }
-  else if (pB.error === 'invalid') { errB.textContent = 'Masukkan bilangan bulat.'; valid = false; }
-  if (!valid) return;
+function findNextPendingCtxIdx() {
+  for (var i = 0; i < DATA.eksplorasi.konteks.length; i++) {
+    if (!State.eksplorasiDone[i]) return i;
+  }
+  return -1;
+}
 
-  var correctA = pA.value === ctx.a;
-  var correctB = pB.value === ctx.b;
+function buildAbErrorMsg(correctA, correctB) {
+  if (!correctA && !correctB) return 'Kedua nilai kurang tepat.';
+  if (!correctA) return 'Nilai a kurang tepat. Perhatikan suku pertama.';
+  return 'Nilai b kurang tepat. Periksa selisih antar suku yang berurutan.';
+}
 
-  if (correctA && correctB) {
+function checkAbAnswer(container, idx) {
+  var ctx = DATA.eksplorasi.konteks[idx];
+  var fb  = document.getElementById('abFeedback');
+  var inputs = validateAbInputs();
+  if (!inputs) return;
+
+  if (inputs.pA.value === ctx.a && inputs.pB.value === ctx.b) {
     State.eksplorasiDone[idx] = true;
-    /* Auto-advance to next context if available */
-    var nextIdx = -1;
-    for (var i = 0; i < DATA.eksplorasi.konteks.length; i++) {
-      if (!State.eksplorasiDone[i]) { nextIdx = i; break; }
-    }
+    var nextIdx = findNextPendingCtxIdx();
     saveState();
-    if (nextIdx !== -1) {
-      State.eksplorasiCtxIdx = nextIdx;
-      renderEksplorasi(container);
-      showNotice('✓ Benar! Lanjut ke konteks berikutnya.');
-    } else {
-      renderEksplorasi(container);
-    }
+    State.eksplorasiCtxIdx = nextIdx !== -1 ? nextIdx : idx;
+    renderEksplorasi(container);
+    if (nextIdx !== -1) showNotice('Benar! Lanjut ke konteks berikutnya.');
   } else {
-    var msg = '';
-    if (!correctA && !correctB) msg = 'Kedua nilai kurang tepat.';
-    else if (!correctA) msg = 'Nilai a kurang tepat. Perhatikan suku pertama.';
-    else msg = 'Nilai b kurang tepat. Periksa selisih antar suku yang berurutan.';
-    fb.innerHTML = buildFeedbackBox('error', '✗', msg);
+    fb.innerHTML = buildFeedbackBox('error', '&#10007;', buildAbErrorMsg(inputs.pA.value === ctx.a, inputs.pB.value === ctx.b));
   }
 }
 
