@@ -45,15 +45,23 @@ function parseInputInt(str) {
 
 function esc(str) {
   var escapeMap = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
-  return String(str).replace(/[&<>"']/g, function (m) { return escapeMap[m]; });
+  return String(str).replace(/[&<>"']/g, function (m) {
+    return escapeMap[m];
+  });
 }
 
 function formatRp(n) {
   var str = String(Math.round(n));
   var sign = '';
-  if (str.startsWith('-')) { sign = '-'; str = str.slice(1); }
+  if (str.startsWith('-')) {
+    sign = '-';
+    str = str.slice(1);
+  }
   var parts = [];
-  while (str.length > 3) { parts.unshift(str.slice(str.length - 3)); str = str.slice(0, str.length - 3); }
+  while (str.length > 3) {
+    parts.unshift(str.slice(str.length - 3));
+    str = str.slice(0, str.length - 3);
+  }
   if (str) parts.unshift(str);
   return sign + parts.join('.');
 }
@@ -62,8 +70,28 @@ function formatRp(n) {
    2. KONSTANTA
    ============================================================ */
 
-var STAGES = ['orientasi', 'eksplorasiBT', 'rumusBT', 'eksplorasiBM', 'rumusBM', 'perbandingan', 'latihan', 'refleksi', 'selesai'];
-var STAGE_LABELS = ['Orientasi', 'Pola BT', 'Rumus BT', 'Pola BM', 'Rumus BM', 'Perbandingan', 'Latihan', 'Refleksi', 'Selesai'];
+var STAGES = [
+  'orientasi',
+  'eksplorasiBT',
+  'rumusBT',
+  'eksplorasiBM',
+  'rumusBM',
+  'perbandingan',
+  'latihan',
+  'refleksi',
+  'selesai',
+];
+var STAGE_LABELS = [
+  'Orientasi',
+  'Pola BT',
+  'Rumus BT',
+  'Pola BM',
+  'Rumus BM',
+  'Perbandingan',
+  'Latihan',
+  'Refleksi',
+  'Selesai',
+];
 var STORAGE_KEY = 'mpi-1-3-bunga-v1';
 
 /* ============================================================
@@ -112,11 +140,15 @@ var State = {
 
   /* Refleksi */
   refleksiAnswers: {},
-  refleksiSaved: false
+  refleksiSaved: false,
 };
 
 function saveState() {
-  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(State)); } catch (e) { /* abaikan */ }
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(State));
+  } catch (e) {
+    /* abaikan */
+  }
 }
 
 function loadState() {
@@ -125,11 +157,17 @@ function loadState() {
     if (!raw) return false;
     Object.assign(State, JSON.parse(raw));
     return true;
-  } catch (e) { return false; }
+  } catch (e) {
+    return false;
+  }
 }
 
 function clearState() {
-  try { localStorage.removeItem(STORAGE_KEY); } catch (e) { /* abaikan */ }
+  try {
+    localStorage.removeItem(STORAGE_KEY);
+  } catch (e) {
+    /* abaikan */
+  }
   State.currentStage = 'orientasi';
   State.completedStages = {};
   State.btCtxIdx = 0;
@@ -165,32 +203,56 @@ function initExerciseArrays() {
   var n = DATA.latihan.soal.length;
   if (!State.latihanExercises || State.latihanExercises.length !== n) {
     State.latihanExercises = DATA.latihan.soal.map(function (s) {
-      return { attempts: 0, hintLevel: 0, correct: false, userInput: '', chosen: null, checked: false, revealed: false };
+      return {
+        attempts: 0,
+        hintLevel: 0,
+        correct: false,
+        userInput: '',
+        chosen: null,
+        checked: false,
+        revealed: false,
+      };
     });
   }
   if (!State.btRevealCount || State.btRevealCount.length !== DATA.eksplorasiBT.konteks.length) {
-    State.btRevealCount = DATA.eksplorasiBT.konteks.map(function () { return 0; });
+    State.btRevealCount = DATA.eksplorasiBT.konteks.map(function () {
+      return 0;
+    });
   }
   if (!State.btDone || State.btDone.length !== DATA.eksplorasiBT.konteks.length) {
-    State.btDone = DATA.eksplorasiBT.konteks.map(function () { return false; });
+    State.btDone = DATA.eksplorasiBT.konteks.map(function () {
+      return false;
+    });
   }
   if (!State.bmRevealCount || State.bmRevealCount.length !== DATA.eksplorasiBM.konteks.length) {
-    State.bmRevealCount = DATA.eksplorasiBM.konteks.map(function () { return 0; });
+    State.bmRevealCount = DATA.eksplorasiBM.konteks.map(function () {
+      return 0;
+    });
   }
   if (!State.bmDone || State.bmDone.length !== DATA.eksplorasiBM.konteks.length) {
-    State.bmDone = DATA.eksplorasiBM.konteks.map(function () { return false; });
+    State.bmDone = DATA.eksplorasiBM.konteks.map(function () {
+      return false;
+    });
   }
   if (!State.rumusBTStepInputs || State.rumusBTStepInputs.length !== DATA.rumusBT.steps.length) {
-    State.rumusBTStepInputs = DATA.rumusBT.steps.map(function () { return ''; });
+    State.rumusBTStepInputs = DATA.rumusBT.steps.map(function () {
+      return '';
+    });
   }
   if (!State.rumusBTStepDone || State.rumusBTStepDone.length !== DATA.rumusBT.steps.length) {
-    State.rumusBTStepDone = DATA.rumusBT.steps.map(function () { return false; });
+    State.rumusBTStepDone = DATA.rumusBT.steps.map(function () {
+      return false;
+    });
   }
   if (!State.rumusBMStepInputs || State.rumusBMStepInputs.length !== DATA.rumusBM.steps.length) {
-    State.rumusBMStepInputs = DATA.rumusBM.steps.map(function () { return ''; });
+    State.rumusBMStepInputs = DATA.rumusBM.steps.map(function () {
+      return '';
+    });
   }
   if (!State.rumusBMStepDone || State.rumusBMStepDone.length !== DATA.rumusBM.steps.length) {
-    State.rumusBMStepDone = DATA.rumusBM.steps.map(function () { return false; });
+    State.rumusBMStepDone = DATA.rumusBM.steps.map(function () {
+      return false;
+    });
   }
 }
 
@@ -245,7 +307,10 @@ function updateProgress() {
   var pct = Math.round((done / total) * 100);
   var fill = document.getElementById('progressFill');
   var label = document.getElementById('progressLabel');
-  if (fill) { fill.style.width = pct + '%'; fill.parentElement.setAttribute('aria-valuenow', pct); }
+  if (fill) {
+    fill.style.width = pct + '%';
+    fill.parentElement.setAttribute('aria-valuenow', pct);
+  }
   if (label) label.textContent = done + ' dari ' + total + ' tahap selesai';
 }
 
@@ -254,10 +319,18 @@ function updateProgress() {
    ============================================================ */
 
 function buildFeedbackBox(type, icon, html) {
-  return '<div class="feedback-box feedback-box--' + esc(type) + '" role="alert">' +
-    '<span class="feedback-box__icon" aria-hidden="true">' + icon + '</span>' +
-    '<div class="feedback-box__body">' + html + '</div>' +
-    '</div>';
+  return (
+    '<div class="feedback-box feedback-box--' +
+    esc(type) +
+    '" role="alert">' +
+    '<span class="feedback-box__icon" aria-hidden="true">' +
+    icon +
+    '</span>' +
+    '<div class="feedback-box__body">' +
+    html +
+    '</div>' +
+    '</div>'
+  );
 }
 
 function buildProgressDots(total, current, statuses) {
@@ -269,9 +342,16 @@ function buildProgressDots(total, current, statuses) {
     else if (statuses && statuses[i] === 'incorrect') cls += ' exercise-progress__dot--incorrect';
     dots += '<span class="' + cls + '" title="Soal ' + (i + 1) + '">' + (i + 1) + '</span>';
   }
-  return '<div class="exercise-progress" aria-label="Progress soal">' + dots +
-    '<span class="exercise-label">Soal ' + (current + 1) + ' dari ' + total + '</span>' +
-    '</div>';
+  return (
+    '<div class="exercise-progress" aria-label="Progress soal">' +
+    dots +
+    '<span class="exercise-label">Soal ' +
+    (current + 1) +
+    ' dari ' +
+    total +
+    '</span>' +
+    '</div>'
+  );
 }
 
 function renderCurrentStage() {
@@ -280,16 +360,35 @@ function renderCurrentStage() {
   container.innerHTML = '';
   updateProgress();
   switch (State.currentStage) {
-    case 'orientasi':    renderOrientasi(container);    break;
-    case 'eksplorasiBT': renderEksplorasiBT(container); break;
-    case 'rumusBT':      renderRumusBT(container);      break;
-    case 'eksplorasiBM': renderEksplorasiBM(container); break;
-    case 'rumusBM':      renderRumusBM(container);      break;
-    case 'perbandingan': renderPerbandingan(container); break;
-    case 'latihan':      renderLatihan(container);      break;
-    case 'refleksi':     renderRefleksi(container);     break;
-    case 'selesai':      renderSelesai(container);      break;
-    default: container.innerHTML = '<p style="padding:var(--space-5);">Tahap tidak ditemukan.</p>';
+    case 'orientasi':
+      renderOrientasi(container);
+      break;
+    case 'eksplorasiBT':
+      renderEksplorasiBT(container);
+      break;
+    case 'rumusBT':
+      renderRumusBT(container);
+      break;
+    case 'eksplorasiBM':
+      renderEksplorasiBM(container);
+      break;
+    case 'rumusBM':
+      renderRumusBM(container);
+      break;
+    case 'perbandingan':
+      renderPerbandingan(container);
+      break;
+    case 'latihan':
+      renderLatihan(container);
+      break;
+    case 'refleksi':
+      renderRefleksi(container);
+      break;
+    case 'selesai':
+      renderSelesai(container);
+      break;
+    default:
+      container.innerHTML = '<p style="padding:var(--space-5);">Tahap tidak ditemukan.</p>';
   }
 }
 
@@ -304,10 +403,13 @@ function renderOrientasi(container) {
     '<span class="stage-head__kicker">TAHAP 1 — MEMAHAMI</span>' +
     '<p class="stage-head__goal">Tujuan: Mempersiapkan diri untuk menjelajahi konsep bunga tunggal dan bunga majemuk.</p>' +
     '</div>' +
-
     '<div class="panel panel--hero">' +
-    '<h2>' + esc(DATA.meta.title) + '</h2>' +
-    '<p style="font-size:1.05rem;"><strong>Tujuan Pembelajaran:</strong><br>' + DATA.meta.goal + '</p>' +
+    '<h2>' +
+    esc(DATA.meta.title) +
+    '</h2>' +
+    '<p style="font-size:1.05rem;"><strong>Tujuan Pembelajaran:</strong><br>' +
+    DATA.meta.goal +
+    '</p>' +
     '<div class="panel panel--info" style="margin-bottom:0;">' +
     '<h3 style="margin-bottom:var(--space-2);">Dalam media ini kamu akan:</h3>' +
     '<ol class="objectives-list">' +
@@ -318,7 +420,6 @@ function renderOrientasi(container) {
     '<li><span class="objectives-list__num">5</span>Membandingkan dan membedakan karakteristik kedua jenis bunga secara interaktif.</li>' +
     '</ol>' +
     '</div></div>' +
-
     '<div class="panel panel--compact">' +
     '<h3>Bunga dalam Dunia Fintech & RPL</h3>' +
     '<p>Sebagai calon developer RPL, kamu akan sering membangun aplikasi yang melibatkan perhitungan bunga:</p>' +
@@ -330,7 +431,6 @@ function renderOrientasi(container) {
     '</ul>' +
     '<p>Memahami perbedaan bunga tunggal dan majemuk adalah dasar penting untuk membangun fitur-fitur tersebut!</p>' +
     '</div>' +
-
     '<div class="compare-grid">' +
     '<div class="compare-card compare-card--bt">' +
     '<span class="compare-card__badge">Bunga Tunggal</span>' +
@@ -345,12 +445,10 @@ function renderOrientasi(container) {
     '<p class="compare-card__desc">Bunga dihitung dari <em>saldo terkini</em> setiap periode. Kenaikan semakin besar → rasio konstan.</p>' +
     '</div>' +
     '</div>' +
-
     '<div class="panel panel--compact panel--warning">' +
     '<p style="margin:0;font-size:0.88rem;color:var(--color-warning-strong);">' +
     '<strong>Catatan:</strong> Media ini adalah panduan belajar mandiri. Diskusi dan asesmen oleh guru tetap menjadi bagian utama penilaian.' +
     '</p></div>' +
-
     '<div class="btn-group btn-group--end">' +
     '<button type="button" class="btn btn--primary btn--large" id="startBtn">Mulai Eksplorasi →</button>' +
     '</div></section>';
@@ -372,12 +470,19 @@ function buildBTSeqHTML(ctx, revealCount) {
     var valCls = 'seq-term__val';
     if (!revealed) valCls += ' seq-term__val--hidden';
     else if (i === revealCount && i > 0) valCls += ' seq-term__val--revealed';
-    html += '<div class="seq-term">' +
-      '<div class="' + valCls + '">' + (revealed ? formatRp(ctx.terms[i]) : '?') + '</div>' +
-      '<div class="seq-term__label">' + esc(ctx.labels[i]) + '</div>' +
+    html +=
+      '<div class="seq-term">' +
+      '<div class="' +
+      valCls +
+      '">' +
+      (revealed ? formatRp(ctx.terms[i]) : '?') +
+      '</div>' +
+      '<div class="seq-term__label">' +
+      esc(ctx.labels[i]) +
+      '</div>' +
       '</div>';
     if (i < ctx.terms.length - 1) {
-      var nextRevealed = (i + 1) === 0 || (i + 1) < revealCount + 1;
+      var nextRevealed = i + 1 === 0 || i + 1 < revealCount + 1;
       if (revealed && nextRevealed) {
         var diff = ctx.terms[i + 1] - ctx.terms[i];
         html += '<div class="seq-beda-badge">+' + formatRp(diff) + '</div>';
@@ -390,27 +495,51 @@ function buildBTSeqHTML(ctx, revealCount) {
 }
 
 function buildBTCtxTabs(ctxList, idx) {
-  return ctxList.map(function (c, i) {
-    var active = i === idx ? ' aria-current="step"' : '';
-    var done = State.btDone[i] ? ' is-complete' : '';
-    var num = State.btDone[i] ? '&#10003;' : (i + 1);
-    return '<button type="button" class="stage-nav__item' + done + '"' + active + ' data-ctx="' + i + '">' +
-      '<span class="stage-nav__num">' + num + '</span>' + esc(c.badge) + '</button>';
-  }).join('');
+  return ctxList
+    .map(function (c, i) {
+      var active = i === idx ? ' aria-current="step"' : '';
+      var done = State.btDone[i] ? ' is-complete' : '';
+      var num = State.btDone[i] ? '&#10003;' : i + 1;
+      return (
+        '<button type="button" class="stage-nav__item' +
+        done +
+        '"' +
+        active +
+        ' data-ctx="' +
+        i +
+        '">' +
+        '<span class="stage-nav__num">' +
+        num +
+        '</span>' +
+        esc(c.badge) +
+        '</button>'
+      );
+    })
+    .join('');
 }
 
 function buildBTIdentifyPanel(ctx, revealCount, isDone, idx) {
   if (isDone) {
-    return '<div class="panel panel--compact" style="margin-top:var(--space-4);">' +
-      buildFeedbackBox('success', '✓',
+    return (
+      '<div class="panel panel--compact" style="margin-top:var(--space-4);">' +
+      buildFeedbackBox(
+        'success',
+        '✓',
         '<strong>Barisan aritmetika teridentifikasi!</strong><br>' +
-        'Modal awal <strong>a = ' + formatRp(ctx.a) + '</strong> rupiah, ' +
-        'kenaikan tetap <strong>b = ' + formatRp(ctx.b) + '</strong> rupiah/tahun.<br>' +
-        '<em>Ini adalah pola BUNGA TUNGGAL: bunga selalu dihitung dari modal awal → beda konstan.</em>'
-      ) + '</div>';
+          'Modal awal <strong>a = ' +
+          formatRp(ctx.a) +
+          '</strong> rupiah, ' +
+          'kenaikan tetap <strong>b = ' +
+          formatRp(ctx.b) +
+          '</strong> rupiah/tahun.<br>' +
+          '<em>Ini adalah pola BUNGA TUNGGAL: bunga selalu dihitung dari modal awal → beda konstan.</em>'
+      ) +
+      '</div>'
+    );
   }
   if (revealCount >= 2) {
-    return '<div class="panel panel--compact identify-input-panel" style="margin-top:var(--space-4);">' +
+    return (
+      '<div class="panel panel--compact identify-input-panel" style="margin-top:var(--space-4);">' +
       '<h4>Identifikasi Pola Bunga Tunggal</h4>' +
       '<div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--space-3);margin-bottom:var(--space-3);">' +
       '<div class="field-group" style="margin:0;">' +
@@ -429,7 +558,8 @@ function buildBTIdentifyPanel(ctx, revealCount, isDone, idx) {
       '<button type="button" class="btn btn--primary" id="btCheckBtn">Periksa</button>' +
       '</div>' +
       '<div id="btFeedback" style="margin-top:var(--space-3);"></div>' +
-      '</div>';
+      '</div>'
+    );
   }
   return '';
 }
@@ -449,32 +579,42 @@ function renderEksplorasiBT(container) {
     '<span class="stage-head__kicker">TAHAP 2 — EKSPLORASI POLA BUNGA TUNGGAL</span>' +
     '<p class="stage-head__goal">Tujuan: Mengamati pola kenaikan nilai uang dengan bunga tunggal dan mengidentifikasinya sebagai barisan aritmetika.</p>' +
     '</div>' +
-
     '<div class="panel">' +
-    '<p style="font-size:0.88rem;color:var(--color-ink-muted);margin-bottom:var(--space-3);">' + esc(DATA.eksplorasiBT.instruction) + '</p>' +
-    '<div style="display:flex;gap:var(--space-2);flex-wrap:wrap;margin-bottom:var(--space-4);">' + buildBTCtxTabs(ctxList, idx) + '</div>' +
-
+    '<p style="font-size:0.88rem;color:var(--color-ink-muted);margin-bottom:var(--space-3);">' +
+    esc(DATA.eksplorasiBT.instruction) +
+    '</p>' +
+    '<div style="display:flex;gap:var(--space-2);flex-wrap:wrap;margin-bottom:var(--space-4);">' +
+    buildBTCtxTabs(ctxList, idx) +
+    '</div>' +
     '<div class="panel panel--hero" style="margin-bottom:var(--space-3);">' +
     '<div style="display:flex;align-items:flex-start;gap:var(--space-3);flex-wrap:wrap;margin-bottom:var(--space-3);">' +
-    '<span style="font-size:1.8rem;">' + ctx.icon + '</span>' +
+    '<span style="font-size:1.8rem;">' +
+    ctx.icon +
+    '</span>' +
     '<div>' +
-    '<span class="badge-chip">' + esc(ctx.badge) + '</span>' +
-    '<p style="margin:var(--space-1) 0 0;font-size:0.92rem;">' + ctx.story + '</p>' +
+    '<span class="badge-chip">' +
+    esc(ctx.badge) +
+    '</span>' +
+    '<p style="margin:var(--space-1) 0 0;font-size:0.92rem;">' +
+    ctx.story +
+    '</p>' +
     '</div></div>' +
-    '<div class="seq-display" id="btSeqDisplay">' + buildBTSeqHTML(ctx, revealCount) + '</div>' +
-    (revealCount < maxReveal ?
-      '<div style="text-align:center;margin-top:var(--space-3);">' +
-      '<button type="button" class="seq-reveal-btn" id="btRevealBtn">▶ Tampilkan Tahun Berikutnya</button>' +
-      '</div>' : '') +
+    '<div class="seq-display" id="btSeqDisplay">' +
+    buildBTSeqHTML(ctx, revealCount) +
     '</div>' +
-
+    (revealCount < maxReveal
+      ? '<div style="text-align:center;margin-top:var(--space-3);">' +
+        '<button type="button" class="seq-reveal-btn" id="btRevealBtn">▶ Tampilkan Tahun Berikutnya</button>' +
+        '</div>'
+      : '') +
+    '</div>' +
     buildBTIdentifyPanel(ctx, revealCount, isDone, idx) +
     '</div>' +
-
-    (allDone ?
-      '<div class="btn-group btn-group--end">' +
-      '<button type="button" class="btn btn--primary btn--large" id="nextBTBtn">Lanjut: Rumus Bunga Tunggal →</button>' +
-      '</div>' : '') +
+    (allDone
+      ? '<div class="btn-group btn-group--end">' +
+        '<button type="button" class="btn btn--primary btn--large" id="nextBTBtn">Lanjut: Rumus Bunga Tunggal →</button>' +
+        '</div>'
+      : '') +
     '</section>';
 
   container.querySelectorAll('[data-ctx]').forEach(function (btn) {
@@ -486,30 +626,43 @@ function renderEksplorasiBT(container) {
   });
 
   var revBtn = document.getElementById('btRevealBtn');
-  if (revBtn) revBtn.addEventListener('click', function () {
-    if (State.btRevealCount[idx] < maxReveal) {
-      State.btRevealCount[idx] += 1;
-      saveState();
-      renderEksplorasiBT(container);
-    }
-  });
+  if (revBtn)
+    revBtn.addEventListener('click', function () {
+      if (State.btRevealCount[idx] < maxReveal) {
+        State.btRevealCount[idx] += 1;
+        saveState();
+        renderEksplorasiBT(container);
+      }
+    });
 
   var hintBtn = document.getElementById('btHintBtn');
-  if (hintBtn) hintBtn.addEventListener('click', function () {
-    var fb = document.getElementById('btFeedback');
-    if (fb) fb.innerHTML = buildFeedbackBox('warning', '💡',
-      '<strong>Petunjuk a:</strong> ' + ctx.hint_a + '<br>' +
-      '<strong>Petunjuk b:</strong> ' + ctx.hint_b);
-  });
+  if (hintBtn)
+    hintBtn.addEventListener('click', function () {
+      var fb = document.getElementById('btFeedback');
+      if (fb)
+        fb.innerHTML = buildFeedbackBox(
+          'warning',
+          '💡',
+          '<strong>Petunjuk a:</strong> ' +
+            ctx.hint_a +
+            '<br>' +
+            '<strong>Petunjuk b:</strong> ' +
+            ctx.hint_b
+        );
+    });
 
   var checkBtn = document.getElementById('btCheckBtn');
-  if (checkBtn) checkBtn.addEventListener('click', function () { checkBTAnswer(container, idx); });
+  if (checkBtn)
+    checkBtn.addEventListener('click', function () {
+      checkBTAnswer(container, idx);
+    });
 
   var nextBtn = document.getElementById('nextBTBtn');
-  if (nextBtn) nextBtn.addEventListener('click', function () {
-    completeStage('eksplorasiBT');
-    navigateTo('rumusBT');
-  });
+  if (nextBtn)
+    nextBtn.addEventListener('click', function () {
+      completeStage('eksplorasiBT');
+      navigateTo('rumusBT');
+    });
 }
 
 function checkBTAnswer(container, idx) {
@@ -519,26 +672,47 @@ function checkBTAnswer(container, idx) {
   var inpB = document.getElementById('btInputB');
   var errA = document.getElementById('btErrA');
   var errB = document.getElementById('btErrB');
-  errA.textContent = ''; errB.textContent = '';
+  errA.textContent = '';
+  errB.textContent = '';
   var pA = parseInputInt(inpA ? inpA.value : '');
   var pB = parseInputInt(inpB ? inpB.value : '');
-  if (pA.error === 'empty')   { errA.textContent = 'Isi nilai a.'; return; }
-  if (pA.error === 'invalid') { errA.textContent = 'Masukkan bilangan bulat.'; return; }
-  if (pB.error === 'empty')   { errB.textContent = 'Isi nilai b.'; return; }
-  if (pB.error === 'invalid') { errB.textContent = 'Masukkan bilangan bulat.'; return; }
+  if (pA.error === 'empty') {
+    errA.textContent = 'Isi nilai a.';
+    return;
+  }
+  if (pA.error === 'invalid') {
+    errA.textContent = 'Masukkan bilangan bulat.';
+    return;
+  }
+  if (pB.error === 'empty') {
+    errB.textContent = 'Isi nilai b.';
+    return;
+  }
+  if (pB.error === 'invalid') {
+    errB.textContent = 'Masukkan bilangan bulat.';
+    return;
+  }
 
   if (pA.value === ctx.a && pB.value === ctx.b) {
     State.btDone[idx] = true;
     var nextPending = -1;
-    for (var i = 0; i < State.btDone.length; i++) { if (!State.btDone[i]) { nextPending = i; break; } }
+    for (var i = 0; i < State.btDone.length; i++) {
+      if (!State.btDone[i]) {
+        nextPending = i;
+        break;
+      }
+    }
     State.btCtxIdx = nextPending !== -1 ? nextPending : idx;
     saveState();
     renderEksplorasiBT(container);
     if (nextPending !== -1) showNotice('Benar! Lanjut ke konteks berikutnya.');
   } else {
-    var msg = (!( pA.value === ctx.a) && !(pB.value === ctx.b))
-      ? 'Kedua nilai kurang tepat.'
-      : (pA.value !== ctx.a ? 'Nilai a kurang tepat. Perhatikan nilai awal (suku pertama).' : 'Nilai b kurang tepat. Periksa selisih antar suku berurutan.');
+    var msg =
+      !(pA.value === ctx.a) && !(pB.value === ctx.b)
+        ? 'Kedua nilai kurang tepat.'
+        : pA.value !== ctx.a
+          ? 'Nilai a kurang tepat. Perhatikan nilai awal (suku pertama).'
+          : 'Nilai b kurang tepat. Periksa selisih antar suku berurutan.';
     if (fb) fb.innerHTML = buildFeedbackBox('error', '✗', msg);
   }
 }
@@ -551,31 +725,44 @@ function renderRumusBT(container) {
   var data = DATA.rumusBT;
   var step = State.rumusBTStep;
 
-  var tableRows = data.tableRows.map(function (row) {
-    var nCell = '<td class="cell-highlight">' + esc(String(row.n)) + '</td>';
-    var bentukCell = '<td>' + esc(row.bentuk) + '</td>';
-    var expandedCell = '<td>' + esc(row.expanded) + '</td>';
-    var mnCell = row.Mn !== null
-      ? '<td class="cell-highlight">' + formatRp(row.Mn) + '</td>'
-      : '<td style="font-style:italic;color:var(--color-primary);">Mₙ</td>';
-    return '<tr>' + nCell + bentukCell + expandedCell + mnCell + '</tr>';
-  }).join('');
+  var tableRows = data.tableRows
+    .map(function (row) {
+      var nCell = '<td class="cell-highlight">' + esc(String(row.n)) + '</td>';
+      var bentukCell = '<td>' + esc(row.bentuk) + '</td>';
+      var expandedCell = '<td>' + esc(row.expanded) + '</td>';
+      var mnCell =
+        row.Mn !== null
+          ? '<td class="cell-highlight">' + formatRp(row.Mn) + '</td>'
+          : '<td style="font-style:italic;color:var(--color-primary);">Mₙ</td>';
+      return '<tr>' + nCell + bentukCell + expandedCell + mnCell + '</tr>';
+    })
+    .join('');
 
   var koneksi = data.koneksiArtimatika;
-  var koneksiHTML = State.rumusBTFormulaShown ?
-    '<div class="panel panel--compact" style="margin-top:var(--space-4);border-left:4px solid var(--color-blue);">' +
-    '<h4 style="color:var(--color-blue-strong);">🔗 Koneksi dengan Barisan Aritmetika</h4>' +
-    '<p>' + koneksi.penjelasan + '</p>' +
-    '<ul>' + koneksi.poin.map(function (p) { return '<li>' + p + '</li>'; }).join('') + '</ul>' +
-    '</div>' : '';
+  var koneksiHTML = State.rumusBTFormulaShown
+    ? '<div class="panel panel--compact" style="margin-top:var(--space-4);border-left:4px solid var(--color-blue);">' +
+      '<h4 style="color:var(--color-blue-strong);">🔗 Koneksi dengan Barisan Aritmetika</h4>' +
+      '<p>' +
+      koneksi.penjelasan +
+      '</p>' +
+      '<ul>' +
+      koneksi.poin
+        .map(function (p) {
+          return '<li>' + p + '</li>';
+        })
+        .join('') +
+      '</ul>' +
+      '</div>'
+    : '';
 
-  var formulaHTML = State.rumusBTFormulaShown ?
-    '<div class="formula-box formula-box--bt formula-box--reveal">' +
-    '<div class="formula-box__label">Rumus Bunga Tunggal</div>' +
-    '<div class="formula-box__expr formula-box__expr--large">Mₙ = M₀(1 + n·i)</div>' +
-    '<div class="formula-box__note">M₀ = modal awal &nbsp;·&nbsp; n = jumlah periode &nbsp;·&nbsp; i = suku bunga per periode<br>' +
-    'Setara: <strong>a = M₀</strong>, <strong>b = M₀·i</strong> dalam barisan aritmetika Uₙ = a + n·b</div>' +
-    '</div>' : '';
+  var formulaHTML = State.rumusBTFormulaShown
+    ? '<div class="formula-box formula-box--bt formula-box--reveal">' +
+      '<div class="formula-box__label">Rumus Bunga Tunggal</div>' +
+      '<div class="formula-box__expr formula-box__expr--large">Mₙ = M₀(1 + n·i)</div>' +
+      '<div class="formula-box__note">M₀ = modal awal &nbsp;·&nbsp; n = jumlah periode &nbsp;·&nbsp; i = suku bunga per periode<br>' +
+      'Setara: <strong>a = M₀</strong>, <strong>b = M₀·i</strong> dalam barisan aritmetika Uₙ = a + n·b</div>' +
+      '</div>'
+    : '';
 
   var stepHTML = '';
   if (!State.rumusBTFormulaShown) {
@@ -584,18 +771,25 @@ function renderRumusBT(container) {
     var inputVal = State.rumusBTStepInputs[step] || '';
     stepHTML =
       '<div class="panel panel--compact" id="btStepPanel">' +
-      '<span class="stage-head__kicker" style="margin-bottom:var(--space-2);">LANGKAH ' + (step + 1) + ' dari ' + data.steps.length + '</span>' +
-      '<p style="font-size:0.95rem;margin-bottom:var(--space-3);">' + s.question + '</p>' +
-      (!ex ?
-        '<div style="display:flex;align-items:center;gap:var(--space-3);flex-wrap:wrap;">' +
-        '<input type="text" inputmode="numeric" id="btStepInput" class="input-text" value="' + esc(inputVal) + '" placeholder="..." style="max-width:160px;text-align:center;font-family:var(--font-mono);font-size:1.05rem;">' +
-        '<button type="button" class="btn btn--primary" id="btCheckStepBtn">Periksa</button>' +
-        '<button type="button" class="btn btn--ghost btn--small" id="btHintStepBtn">💡 Petunjuk</button>' +
-        '</div>' +
-        '<div id="btStepFeedback" style="margin-top:var(--space-3);"></div>'
-        :
-        buildFeedbackBox('success', '✓', '<strong>Benar!</strong> ' + s.explanation)
-      ) + '</div>';
+      '<span class="stage-head__kicker" style="margin-bottom:var(--space-2);">LANGKAH ' +
+      (step + 1) +
+      ' dari ' +
+      data.steps.length +
+      '</span>' +
+      '<p style="font-size:0.95rem;margin-bottom:var(--space-3);">' +
+      s.question +
+      '</p>' +
+      (!ex
+        ? '<div style="display:flex;align-items:center;gap:var(--space-3);flex-wrap:wrap;">' +
+          '<input type="text" inputmode="numeric" id="btStepInput" class="input-text" value="' +
+          esc(inputVal) +
+          '" placeholder="..." style="max-width:160px;text-align:center;font-family:var(--font-mono);font-size:1.05rem;">' +
+          '<button type="button" class="btn btn--primary" id="btCheckStepBtn">Periksa</button>' +
+          '<button type="button" class="btn btn--ghost btn--small" id="btHintStepBtn">💡 Petunjuk</button>' +
+          '</div>' +
+          '<div id="btStepFeedback" style="margin-top:var(--space-3);"></div>'
+        : buildFeedbackBox('success', '✓', '<strong>Benar!</strong> ' + s.explanation)) +
+      '</div>';
   }
 
   container.innerHTML =
@@ -604,50 +798,67 @@ function renderRumusBT(container) {
     '<span class="stage-head__kicker">TAHAP 3 — RUMUS BUNGA TUNGGAL</span>' +
     '<p class="stage-head__goal">Tujuan: Menemukan rumus Mₙ = M₀(1 + n·i) dan menghubungkannya dengan barisan aritmetika.</p>' +
     '</div>' +
-
     '<div class="panel">' +
-    '<h3>' + esc(data.title) + '</h3>' +
+    '<h3>' +
+    esc(data.title) +
+    '</h3>' +
     '<p style="font-size:0.88rem;background:var(--color-blue-soft);border-left:3px solid var(--color-blue);padding:var(--space-2) var(--space-3);border-radius:0 var(--radius-sm) var(--radius-sm) 0;color:var(--color-blue-strong);">' +
-    esc(data.konteks) + '</p>' +
+    esc(data.konteks) +
+    '</p>' +
     '<div style="overflow-x:auto;">' +
     '<table class="pattern-table">' +
     '<thead><tr><th>n (periode ke-)</th><th>Bentuk Perhitungan</th><th>Bentuk Diperluas</th><th>Nilai Mₙ (Rp)</th></tr></thead>' +
-    '<tbody>' + tableRows + '</tbody>' +
+    '<tbody>' +
+    tableRows +
+    '</tbody>' +
     '</table></div>' +
     '<p style="font-size:0.82rem;color:var(--color-ink-muted);margin-top:var(--space-2);">Perhatikan: bunga setiap periode = M₀ × i = konstan → ini adalah <strong>beda (b)</strong> dalam barisan aritmetika!</p>' +
     '</div>' +
-
     stepHTML +
     formulaHTML +
     koneksiHTML +
-
-    (State.rumusBTFormulaShown ?
-      '<div class="btn-group btn-group--end">' +
-      '<button type="button" class="btn btn--primary btn--large" id="nextRumusBTBtn">Lanjut: Eksplorasi Bunga Majemuk →</button>' +
-      '</div>' : '') +
+    (State.rumusBTFormulaShown
+      ? '<div class="btn-group btn-group--end">' +
+        '<button type="button" class="btn btn--primary btn--large" id="nextRumusBTBtn">Lanjut: Eksplorasi Bunga Majemuk →</button>' +
+        '</div>'
+      : '') +
     '</section>';
 
   var checkBtn = document.getElementById('btCheckStepBtn');
-  if (checkBtn) checkBtn.addEventListener('click', function () { checkRumusBTStep(container, step); });
+  if (checkBtn)
+    checkBtn.addEventListener('click', function () {
+      checkRumusBTStep(container, step);
+    });
 
   var hintBtn = document.getElementById('btHintStepBtn');
-  if (hintBtn) hintBtn.addEventListener('click', function () {
-    var fb = document.getElementById('btStepFeedback');
-    if (fb) fb.innerHTML = buildFeedbackBox('warning', '💡', data.steps[step].hint);
-  });
+  if (hintBtn)
+    hintBtn.addEventListener('click', function () {
+      var fb = document.getElementById('btStepFeedback');
+      if (fb) fb.innerHTML = buildFeedbackBox('warning', '💡', data.steps[step].hint);
+    });
 
   var inp = document.getElementById('btStepInput');
   if (inp) {
-    inp.addEventListener('input', function () { State.rumusBTStepInputs[step] = inp.value; });
-    inp.addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); if (checkBtn) checkBtn.click(); } });
-    setTimeout(function () { inp.focus(); }, 50);
+    inp.addEventListener('input', function () {
+      State.rumusBTStepInputs[step] = inp.value;
+    });
+    inp.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        if (checkBtn) checkBtn.click();
+      }
+    });
+    setTimeout(function () {
+      inp.focus();
+    }, 50);
   }
 
   var nextBtn = document.getElementById('nextRumusBTBtn');
-  if (nextBtn) nextBtn.addEventListener('click', function () {
-    completeStage('rumusBT');
-    navigateTo('eksplorasiBM');
-  });
+  if (nextBtn)
+    nextBtn.addEventListener('click', function () {
+      completeStage('rumusBT');
+      navigateTo('eksplorasiBM');
+    });
 }
 
 function checkRumusBTStep(container, step) {
@@ -656,7 +867,14 @@ function checkRumusBTStep(container, step) {
   var fb = document.getElementById('btStepFeedback');
   if (!inp || !fb) return;
   var parsed = parseInputInt(inp.value);
-  if (parsed.error) { fb.innerHTML = buildFeedbackBox('error', '✗', 'Masukkan bilangan bulat (tanpa titik/koma pemisah tidak masalah).'); return; }
+  if (parsed.error) {
+    fb.innerHTML = buildFeedbackBox(
+      'error',
+      '✗',
+      'Masukkan bilangan bulat (tanpa titik/koma pemisah tidak masalah).'
+    );
+    return;
+  }
   State.rumusBTStepInputs[step] = inp.value;
   if (parsed.value === parseInt(s.answer, 10)) {
     State.rumusBTStepDone[step] = true;
@@ -668,7 +886,11 @@ function checkRumusBTStep(container, step) {
     saveState();
     renderRumusBT(container);
   } else {
-    fb.innerHTML = buildFeedbackBox('error', '✗', 'Jawaban kurang tepat. Coba lagi atau lihat petunjuk.');
+    fb.innerHTML = buildFeedbackBox(
+      'error',
+      '✗',
+      'Jawaban kurang tepat. Coba lagi atau lihat petunjuk.'
+    );
   }
 }
 
@@ -683,13 +905,21 @@ function buildBMSeqHTML(ctx, revealCount) {
     var valCls = 'seq-term__val';
     if (!revealed) valCls += ' seq-term__val--hidden';
     else if (i === revealCount && i > 0) valCls += ' seq-term__val--revealed';
-    html += '<div class="seq-term">' +
-      '<div class="' + valCls + '" style="' + (revealed ? 'border-color:var(--color-orange);color:var(--color-orange-strong);' : '') + '">' +
-      (revealed ? formatRp(ctx.terms[i]) : '?') + '</div>' +
-      '<div class="seq-term__label">' + esc(ctx.labels[i]) + '</div>' +
+    html +=
+      '<div class="seq-term">' +
+      '<div class="' +
+      valCls +
+      '" style="' +
+      (revealed ? 'border-color:var(--color-orange);color:var(--color-orange-strong);' : '') +
+      '">' +
+      (revealed ? formatRp(ctx.terms[i]) : '?') +
+      '</div>' +
+      '<div class="seq-term__label">' +
+      esc(ctx.labels[i]) +
+      '</div>' +
       '</div>';
     if (i < ctx.terms.length - 1) {
-      var nextRevealed = (i + 1) < revealCount + 1;
+      var nextRevealed = i + 1 < revealCount + 1;
       if (revealed && nextRevealed) {
         var ratio = ctx.terms[i + 1] / ctx.terms[i];
         var ratioStr = Number.isInteger(ratio) ? '×' + ratio : '×' + ratio.toFixed(1);
@@ -703,27 +933,53 @@ function buildBMSeqHTML(ctx, revealCount) {
 }
 
 function buildBMCtxTabs(ctxList, idx) {
-  return ctxList.map(function (c, i) {
-    var active = i === idx ? ' aria-current="step"' : '';
-    var done = State.bmDone[i] ? ' is-complete' : '';
-    var num = State.bmDone[i] ? '&#10003;' : (i + 1);
-    return '<button type="button" class="stage-nav__item' + done + '"' + active + ' data-ctx="' + i + '">' +
-      '<span class="stage-nav__num">' + num + '</span>' + esc(c.badge) + '</button>';
-  }).join('');
+  return ctxList
+    .map(function (c, i) {
+      var active = i === idx ? ' aria-current="step"' : '';
+      var done = State.bmDone[i] ? ' is-complete' : '';
+      var num = State.bmDone[i] ? '&#10003;' : i + 1;
+      return (
+        '<button type="button" class="stage-nav__item' +
+        done +
+        '"' +
+        active +
+        ' data-ctx="' +
+        i +
+        '">' +
+        '<span class="stage-nav__num">' +
+        num +
+        '</span>' +
+        esc(c.badge) +
+        '</button>'
+      );
+    })
+    .join('');
 }
 
 function buildBMIdentifyPanel(ctx, revealCount, isDone) {
   if (isDone) {
-    return '<div class="panel panel--compact" style="margin-top:var(--space-4);">' +
-      buildFeedbackBox('success', '✓',
+    return (
+      '<div class="panel panel--compact" style="margin-top:var(--space-4);">' +
+      buildFeedbackBox(
+        'success',
+        '✓',
         '<strong>Barisan geometri teridentifikasi!</strong><br>' +
-        'Suku pertama <strong>a = ' + formatRp(ctx.a) + '</strong> ' + esc(ctx.unit) + ', ' +
-        'rasio <strong>r = ' + ctx.r + '</strong>.<br>' +
-        '<em>Ini adalah pola BUNGA MAJEMUK: bunga dihitung dari saldo terkini → rasio konstan → pertumbuhan eksponensial.</em>'
-      ) + '</div>';
+          'Suku pertama <strong>a = ' +
+          formatRp(ctx.a) +
+          '</strong> ' +
+          esc(ctx.unit) +
+          ', ' +
+          'rasio <strong>r = ' +
+          ctx.r +
+          '</strong>.<br>' +
+          '<em>Ini adalah pola BUNGA MAJEMUK: bunga dihitung dari saldo terkini → rasio konstan → pertumbuhan eksponensial.</em>'
+      ) +
+      '</div>'
+    );
   }
   if (revealCount >= 2) {
-    return '<div class="panel panel--compact identify-input-panel" style="margin-top:var(--space-4);">' +
+    return (
+      '<div class="panel panel--compact identify-input-panel" style="margin-top:var(--space-4);">' +
       '<h4>Identifikasi Pola Bunga Majemuk</h4>' +
       '<div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--space-3);margin-bottom:var(--space-3);">' +
       '<div class="field-group" style="margin:0;">' +
@@ -742,7 +998,8 @@ function buildBMIdentifyPanel(ctx, revealCount, isDone) {
       '<button type="button" class="btn btn--primary" id="bmCheckBtn">Periksa</button>' +
       '</div>' +
       '<div id="bmFeedback" style="margin-top:var(--space-3);"></div>' +
-      '</div>';
+      '</div>'
+    );
   }
   return '';
 }
@@ -762,32 +1019,42 @@ function renderEksplorasiBM(container) {
     '<span class="stage-head__kicker">TAHAP 4 — EKSPLORASI POLA BUNGA MAJEMUK</span>' +
     '<p class="stage-head__goal">Tujuan: Mengamati pola pertumbuhan dengan rasio tetap dan mengidentifikasinya sebagai barisan geometri.</p>' +
     '</div>' +
-
     '<div class="panel">' +
-    '<p style="font-size:0.88rem;color:var(--color-ink-muted);margin-bottom:var(--space-3);">' + esc(DATA.eksplorasiBM.instruction) + '</p>' +
-    '<div style="display:flex;gap:var(--space-2);flex-wrap:wrap;margin-bottom:var(--space-4);">' + buildBMCtxTabs(ctxList, idx) + '</div>' +
-
+    '<p style="font-size:0.88rem;color:var(--color-ink-muted);margin-bottom:var(--space-3);">' +
+    esc(DATA.eksplorasiBM.instruction) +
+    '</p>' +
+    '<div style="display:flex;gap:var(--space-2);flex-wrap:wrap;margin-bottom:var(--space-4);">' +
+    buildBMCtxTabs(ctxList, idx) +
+    '</div>' +
     '<div class="panel panel--hero" style="margin-bottom:var(--space-3);">' +
     '<div style="display:flex;align-items:flex-start;gap:var(--space-3);flex-wrap:wrap;margin-bottom:var(--space-3);">' +
-    '<span style="font-size:1.8rem;">' + ctx.icon + '</span>' +
+    '<span style="font-size:1.8rem;">' +
+    ctx.icon +
+    '</span>' +
     '<div>' +
-    '<span class="badge-chip" style="background:var(--color-orange-soft);color:var(--color-orange-strong);border-color:var(--color-orange);">' + esc(ctx.badge) + '</span>' +
-    '<p style="margin:var(--space-1) 0 0;font-size:0.92rem;">' + ctx.story + '</p>' +
+    '<span class="badge-chip" style="background:var(--color-orange-soft);color:var(--color-orange-strong);border-color:var(--color-orange);">' +
+    esc(ctx.badge) +
+    '</span>' +
+    '<p style="margin:var(--space-1) 0 0;font-size:0.92rem;">' +
+    ctx.story +
+    '</p>' +
     '</div></div>' +
-    '<div class="seq-display" id="bmSeqDisplay">' + buildBMSeqHTML(ctx, revealCount) + '</div>' +
-    (revealCount < maxReveal ?
-      '<div style="text-align:center;margin-top:var(--space-3);">' +
-      '<button type="button" class="seq-reveal-btn" style="background:var(--color-orange);color:#fff;" id="bmRevealBtn">▶ Tampilkan Periode Berikutnya</button>' +
-      '</div>' : '') +
+    '<div class="seq-display" id="bmSeqDisplay">' +
+    buildBMSeqHTML(ctx, revealCount) +
     '</div>' +
-
+    (revealCount < maxReveal
+      ? '<div style="text-align:center;margin-top:var(--space-3);">' +
+        '<button type="button" class="seq-reveal-btn" style="background:var(--color-orange);color:#fff;" id="bmRevealBtn">▶ Tampilkan Periode Berikutnya</button>' +
+        '</div>'
+      : '') +
+    '</div>' +
     buildBMIdentifyPanel(ctx, revealCount, isDone) +
     '</div>' +
-
-    (allDone ?
-      '<div class="btn-group btn-group--end">' +
-      '<button type="button" class="btn btn--primary btn--large" id="nextBMBtn">Lanjut: Rumus Bunga Majemuk →</button>' +
-      '</div>' : '') +
+    (allDone
+      ? '<div class="btn-group btn-group--end">' +
+        '<button type="button" class="btn btn--primary btn--large" id="nextBMBtn">Lanjut: Rumus Bunga Majemuk →</button>' +
+        '</div>'
+      : '') +
     '</section>';
 
   container.querySelectorAll('[data-ctx]').forEach(function (btn) {
@@ -799,30 +1066,43 @@ function renderEksplorasiBM(container) {
   });
 
   var revBtn = document.getElementById('bmRevealBtn');
-  if (revBtn) revBtn.addEventListener('click', function () {
-    if (State.bmRevealCount[idx] < maxReveal) {
-      State.bmRevealCount[idx] += 1;
-      saveState();
-      renderEksplorasiBM(container);
-    }
-  });
+  if (revBtn)
+    revBtn.addEventListener('click', function () {
+      if (State.bmRevealCount[idx] < maxReveal) {
+        State.bmRevealCount[idx] += 1;
+        saveState();
+        renderEksplorasiBM(container);
+      }
+    });
 
   var hintBtn = document.getElementById('bmHintBtn');
-  if (hintBtn) hintBtn.addEventListener('click', function () {
-    var fb = document.getElementById('bmFeedback');
-    if (fb) fb.innerHTML = buildFeedbackBox('warning', '💡',
-      '<strong>Petunjuk a:</strong> ' + ctx.hint_a + '<br>' +
-      '<strong>Petunjuk r:</strong> ' + ctx.hint_r);
-  });
+  if (hintBtn)
+    hintBtn.addEventListener('click', function () {
+      var fb = document.getElementById('bmFeedback');
+      if (fb)
+        fb.innerHTML = buildFeedbackBox(
+          'warning',
+          '💡',
+          '<strong>Petunjuk a:</strong> ' +
+            ctx.hint_a +
+            '<br>' +
+            '<strong>Petunjuk r:</strong> ' +
+            ctx.hint_r
+        );
+    });
 
   var checkBtn = document.getElementById('bmCheckBtn');
-  if (checkBtn) checkBtn.addEventListener('click', function () { checkBMAnswer(container, idx); });
+  if (checkBtn)
+    checkBtn.addEventListener('click', function () {
+      checkBMAnswer(container, idx);
+    });
 
   var nextBtn = document.getElementById('nextBMBtn');
-  if (nextBtn) nextBtn.addEventListener('click', function () {
-    completeStage('eksplorasiBM');
-    navigateTo('rumusBM');
-  });
+  if (nextBtn)
+    nextBtn.addEventListener('click', function () {
+      completeStage('eksplorasiBM');
+      navigateTo('rumusBM');
+    });
 }
 
 function checkBMAnswer(container, idx) {
@@ -832,26 +1112,47 @@ function checkBMAnswer(container, idx) {
   var inpR = document.getElementById('bmInputR');
   var errA = document.getElementById('bmErrA');
   var errR = document.getElementById('bmErrR');
-  errA.textContent = ''; errR.textContent = '';
+  errA.textContent = '';
+  errR.textContent = '';
   var pA = parseInputInt(inpA ? inpA.value : '');
   var pR = parseInputInt(inpR ? inpR.value : '');
-  if (pA.error === 'empty')   { errA.textContent = 'Isi nilai a.'; return; }
-  if (pA.error === 'invalid') { errA.textContent = 'Masukkan bilangan bulat.'; return; }
-  if (pR.error === 'empty')   { errR.textContent = 'Isi nilai r.'; return; }
-  if (pR.error === 'invalid') { errR.textContent = 'Masukkan bilangan bulat.'; return; }
+  if (pA.error === 'empty') {
+    errA.textContent = 'Isi nilai a.';
+    return;
+  }
+  if (pA.error === 'invalid') {
+    errA.textContent = 'Masukkan bilangan bulat.';
+    return;
+  }
+  if (pR.error === 'empty') {
+    errR.textContent = 'Isi nilai r.';
+    return;
+  }
+  if (pR.error === 'invalid') {
+    errR.textContent = 'Masukkan bilangan bulat.';
+    return;
+  }
 
   if (pA.value === ctx.a && pR.value === ctx.r) {
     State.bmDone[idx] = true;
     var nextPending = -1;
-    for (var i = 0; i < State.bmDone.length; i++) { if (!State.bmDone[i]) { nextPending = i; break; } }
+    for (var i = 0; i < State.bmDone.length; i++) {
+      if (!State.bmDone[i]) {
+        nextPending = i;
+        break;
+      }
+    }
     State.bmCtxIdx = nextPending !== -1 ? nextPending : idx;
     saveState();
     renderEksplorasiBM(container);
     if (nextPending !== -1) showNotice('Benar! Lanjut ke konteks berikutnya.');
   } else {
-    var msg = (pA.value !== ctx.a && pR.value !== ctx.r)
-      ? 'Kedua nilai kurang tepat.'
-      : (pA.value !== ctx.a ? 'Nilai a kurang tepat. Perhatikan suku pertama.' : 'Nilai r kurang tepat. Hitung perbandingan dua suku berurutan.');
+    var msg =
+      pA.value !== ctx.a && pR.value !== ctx.r
+        ? 'Kedua nilai kurang tepat.'
+        : pA.value !== ctx.a
+          ? 'Nilai a kurang tepat. Perhatikan suku pertama.'
+          : 'Nilai r kurang tepat. Hitung perbandingan dua suku berurutan.';
     if (fb) fb.innerHTML = buildFeedbackBox('error', '✗', msg);
   }
 }
@@ -864,31 +1165,44 @@ function renderRumusBM(container) {
   var data = DATA.rumusBM;
   var step = State.rumusBMStep;
 
-  var tableRows = data.tableRows.map(function (row) {
-    var nCell = '<td class="cell-highlight">' + esc(String(row.n)) + '</td>';
-    var bentukCell = '<td>' + esc(row.bentuk) + '</td>';
-    var expandedCell = '<td>' + esc(row.expanded) + '</td>';
-    var mnCell = row.Mn !== null
-      ? '<td class="cell-highlight">' + formatRp(row.Mn) + '</td>'
-      : '<td style="font-style:italic;color:var(--color-orange-strong);">Mₙ</td>';
-    return '<tr>' + nCell + bentukCell + expandedCell + mnCell + '</tr>';
-  }).join('');
+  var tableRows = data.tableRows
+    .map(function (row) {
+      var nCell = '<td class="cell-highlight">' + esc(String(row.n)) + '</td>';
+      var bentukCell = '<td>' + esc(row.bentuk) + '</td>';
+      var expandedCell = '<td>' + esc(row.expanded) + '</td>';
+      var mnCell =
+        row.Mn !== null
+          ? '<td class="cell-highlight">' + formatRp(row.Mn) + '</td>'
+          : '<td style="font-style:italic;color:var(--color-orange-strong);">Mₙ</td>';
+      return '<tr>' + nCell + bentukCell + expandedCell + mnCell + '</tr>';
+    })
+    .join('');
 
   var koneksi = data.koneksiGeometri;
-  var koneksiHTML = State.rumusBMFormulaShown ?
-    '<div class="panel panel--compact" style="margin-top:var(--space-4);border-left:4px solid var(--color-orange);">' +
-    '<h4 style="color:var(--color-orange-strong);">🔗 Koneksi dengan Barisan Geometri</h4>' +
-    '<p>' + koneksi.penjelasan + '</p>' +
-    '<ul>' + koneksi.poin.map(function (p) { return '<li>' + p + '</li>'; }).join('') + '</ul>' +
-    '</div>' : '';
+  var koneksiHTML = State.rumusBMFormulaShown
+    ? '<div class="panel panel--compact" style="margin-top:var(--space-4);border-left:4px solid var(--color-orange);">' +
+      '<h4 style="color:var(--color-orange-strong);">🔗 Koneksi dengan Barisan Geometri</h4>' +
+      '<p>' +
+      koneksi.penjelasan +
+      '</p>' +
+      '<ul>' +
+      koneksi.poin
+        .map(function (p) {
+          return '<li>' + p + '</li>';
+        })
+        .join('') +
+      '</ul>' +
+      '</div>'
+    : '';
 
-  var formulaHTML = State.rumusBMFormulaShown ?
-    '<div class="formula-box formula-box--bm formula-box--reveal">' +
-    '<div class="formula-box__label">Rumus Bunga Majemuk</div>' +
-    '<div class="formula-box__expr formula-box__expr--large">Mₙ = M₀ × (1+i)ⁿ</div>' +
-    '<div class="formula-box__note">M₀ = modal awal &nbsp;·&nbsp; n = jumlah periode &nbsp;·&nbsp; i = suku bunga per periode<br>' +
-    'Setara: <strong>a = M₀</strong>, <strong>r = (1+i)</strong> dalam barisan geometri Uₙ = a × rⁿ</div>' +
-    '</div>' : '';
+  var formulaHTML = State.rumusBMFormulaShown
+    ? '<div class="formula-box formula-box--bm formula-box--reveal">' +
+      '<div class="formula-box__label">Rumus Bunga Majemuk</div>' +
+      '<div class="formula-box__expr formula-box__expr--large">Mₙ = M₀ × (1+i)ⁿ</div>' +
+      '<div class="formula-box__note">M₀ = modal awal &nbsp;·&nbsp; n = jumlah periode &nbsp;·&nbsp; i = suku bunga per periode<br>' +
+      'Setara: <strong>a = M₀</strong>, <strong>r = (1+i)</strong> dalam barisan geometri Uₙ = a × rⁿ</div>' +
+      '</div>'
+    : '';
 
   var stepHTML = '';
   if (!State.rumusBMFormulaShown) {
@@ -897,18 +1211,25 @@ function renderRumusBM(container) {
     var inputVal = State.rumusBMStepInputs[step] || '';
     stepHTML =
       '<div class="panel panel--compact" id="bmStepPanel">' +
-      '<span class="stage-head__kicker" style="margin-bottom:var(--space-2);color:var(--color-orange);">LANGKAH ' + (step + 1) + ' dari ' + data.steps.length + '</span>' +
-      '<p style="font-size:0.95rem;margin-bottom:var(--space-3);">' + s.question + '</p>' +
-      (!ex ?
-        '<div style="display:flex;align-items:center;gap:var(--space-3);flex-wrap:wrap;">' +
-        '<input type="text" inputmode="numeric" id="bmStepInput" class="input-text" value="' + esc(inputVal) + '" placeholder="..." style="max-width:160px;text-align:center;font-family:var(--font-mono);font-size:1.05rem;">' +
-        '<button type="button" class="btn btn--primary" style="background:var(--color-orange);" id="bmCheckStepBtn">Periksa</button>' +
-        '<button type="button" class="btn btn--ghost btn--small" id="bmHintStepBtn">💡 Petunjuk</button>' +
-        '</div>' +
-        '<div id="bmStepFeedback" style="margin-top:var(--space-3);"></div>'
-        :
-        buildFeedbackBox('success', '✓', '<strong>Benar!</strong> ' + s.explanation)
-      ) + '</div>';
+      '<span class="stage-head__kicker" style="margin-bottom:var(--space-2);color:var(--color-orange);">LANGKAH ' +
+      (step + 1) +
+      ' dari ' +
+      data.steps.length +
+      '</span>' +
+      '<p style="font-size:0.95rem;margin-bottom:var(--space-3);">' +
+      s.question +
+      '</p>' +
+      (!ex
+        ? '<div style="display:flex;align-items:center;gap:var(--space-3);flex-wrap:wrap;">' +
+          '<input type="text" inputmode="numeric" id="bmStepInput" class="input-text" value="' +
+          esc(inputVal) +
+          '" placeholder="..." style="max-width:160px;text-align:center;font-family:var(--font-mono);font-size:1.05rem;">' +
+          '<button type="button" class="btn btn--primary" style="background:var(--color-orange);" id="bmCheckStepBtn">Periksa</button>' +
+          '<button type="button" class="btn btn--ghost btn--small" id="bmHintStepBtn">💡 Petunjuk</button>' +
+          '</div>' +
+          '<div id="bmStepFeedback" style="margin-top:var(--space-3);"></div>'
+        : buildFeedbackBox('success', '✓', '<strong>Benar!</strong> ' + s.explanation)) +
+      '</div>';
   }
 
   container.innerHTML =
@@ -917,50 +1238,69 @@ function renderRumusBM(container) {
     '<span class="stage-head__kicker">TAHAP 5 — RUMUS BUNGA MAJEMUK</span>' +
     '<p class="stage-head__goal">Tujuan: Menemukan rumus Mₙ = M₀ × (1+i)ⁿ dan menghubungkannya dengan barisan geometri.</p>' +
     '</div>' +
-
     '<div class="panel">' +
-    '<h3>' + esc(data.title) + '</h3>' +
+    '<h3>' +
+    esc(data.title) +
+    '</h3>' +
     '<p style="font-size:0.88rem;background:var(--color-orange-soft);border-left:3px solid var(--color-orange);padding:var(--space-2) var(--space-3);border-radius:0 var(--radius-sm) var(--radius-sm) 0;color:var(--color-orange-strong);">' +
-    esc(data.konteks) + '</p>' +
+    esc(data.konteks) +
+    '</p>' +
     '<div style="overflow-x:auto;">' +
     '<table class="pattern-table">' +
     '<thead><tr><th>n (periode ke-)</th><th>Bentuk Perhitungan</th><th>Bentuk Diperluas</th><th>Nilai Mₙ</th></tr></thead>' +
-    '<tbody>' + tableRows + '</tbody>' +
+    '<tbody>' +
+    tableRows +
+    '</tbody>' +
     '</table></div>' +
-    '<p style="font-size:0.82rem;color:var(--color-ink-muted);margin-top:var(--space-2);">Perhatikan: setiap periode dikalikan dengan rasio r = ' + data.rasio + ' (konstan) → ini adalah <strong>rasio</strong> dalam barisan geometri!</p>' +
+    '<p style="font-size:0.82rem;color:var(--color-ink-muted);margin-top:var(--space-2);">Perhatikan: setiap periode dikalikan dengan rasio r = ' +
+    data.rasio +
+    ' (konstan) → ini adalah <strong>rasio</strong> dalam barisan geometri!</p>' +
     '</div>' +
-
     stepHTML +
     formulaHTML +
     koneksiHTML +
-
-    (State.rumusBMFormulaShown ?
-      '<div class="btn-group btn-group--end">' +
-      '<button type="button" class="btn btn--primary btn--large" id="nextRumusBMBtn">Lanjut: Perbandingan Interaktif →</button>' +
-      '</div>' : '') +
+    (State.rumusBMFormulaShown
+      ? '<div class="btn-group btn-group--end">' +
+        '<button type="button" class="btn btn--primary btn--large" id="nextRumusBMBtn">Lanjut: Perbandingan Interaktif →</button>' +
+        '</div>'
+      : '') +
     '</section>';
 
   var checkBtn = document.getElementById('bmCheckStepBtn');
-  if (checkBtn) checkBtn.addEventListener('click', function () { checkRumusBMStep(container, step); });
+  if (checkBtn)
+    checkBtn.addEventListener('click', function () {
+      checkRumusBMStep(container, step);
+    });
 
   var hintBtn = document.getElementById('bmHintStepBtn');
-  if (hintBtn) hintBtn.addEventListener('click', function () {
-    var fb = document.getElementById('bmStepFeedback');
-    if (fb) fb.innerHTML = buildFeedbackBox('warning', '💡', data.steps[step].hint);
-  });
+  if (hintBtn)
+    hintBtn.addEventListener('click', function () {
+      var fb = document.getElementById('bmStepFeedback');
+      if (fb) fb.innerHTML = buildFeedbackBox('warning', '💡', data.steps[step].hint);
+    });
 
   var inp = document.getElementById('bmStepInput');
   if (inp) {
-    inp.addEventListener('input', function () { State.rumusBMStepInputs[step] = inp.value; });
-    inp.addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); if (checkBtn) checkBtn.click(); } });
-    setTimeout(function () { inp.focus(); }, 50);
+    inp.addEventListener('input', function () {
+      State.rumusBMStepInputs[step] = inp.value;
+    });
+    inp.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        if (checkBtn) checkBtn.click();
+      }
+    });
+    setTimeout(function () {
+      inp.focus();
+    }, 50);
   }
 
   var nextBtn = document.getElementById('nextRumusBMBtn');
-  if (nextBtn) nextBtn.addEventListener('click', function () {
-    completeStage('rumusBM');
-    navigateTo('perbandingan');
-  });
+  if (nextBtn)
+    nextBtn.addEventListener('click', function () {
+      completeStage('rumusBM');
+      navigateTo('perbandingan');
+    });
 }
 
 function checkRumusBMStep(container, step) {
@@ -969,7 +1309,10 @@ function checkRumusBMStep(container, step) {
   var fb = document.getElementById('bmStepFeedback');
   if (!inp || !fb) return;
   var parsed = parseInputInt(inp.value);
-  if (parsed.error) { fb.innerHTML = buildFeedbackBox('error', '✗', 'Masukkan bilangan bulat.'); return; }
+  if (parsed.error) {
+    fb.innerHTML = buildFeedbackBox('error', '✗', 'Masukkan bilangan bulat.');
+    return;
+  }
   State.rumusBMStepInputs[step] = inp.value;
   if (parsed.value === parseInt(s.answer, 10)) {
     State.rumusBMStepDone[step] = true;
@@ -981,7 +1324,11 @@ function checkRumusBMStep(container, step) {
     saveState();
     renderRumusBM(container);
   } else {
-    fb.innerHTML = buildFeedbackBox('error', '✗', 'Jawaban kurang tepat. Coba lagi atau lihat petunjuk.');
+    fb.innerHTML = buildFeedbackBox(
+      'error',
+      '✗',
+      'Jawaban kurang tepat. Coba lagi atau lihat petunjuk.'
+    );
   }
 }
 
@@ -992,24 +1339,40 @@ function checkRumusBMStep(container, step) {
 function renderPerbandingan(container) {
   var data = DATA.perbandingan;
 
-  var tableRowsHTML = data.tableData.map(function (row) {
-    var diff = row.bm - row.bt;
-    var maxBM = data.tableData[data.tableData.length - 1].bm;
-    var barBTW = Math.max(2, Math.round((row.bt / maxBM) * 120));
-    var barBMW = Math.max(2, Math.round((row.bm / maxBM) * 120));
-    return '<tr>' +
-      '<td class="td-n">' + row.n + '</td>' +
-      '<td class="td-bt">' +
-      '<div class="growth-bar-wrap"><div class="growth-bar growth-bar--bt" style="width:' + barBTW + 'px;"></div>' +
-      '<span>Rp ' + formatRp(row.bt) + '</span></div>' +
-      '</td>' +
-      '<td class="td-bm">' +
-      '<div class="growth-bar-wrap"><div class="growth-bar growth-bar--bm" style="width:' + barBMW + 'px;"></div>' +
-      '<span>Rp ' + formatRp(row.bm) + '</span></div>' +
-      '</td>' +
-      '<td class="td-diff">+Rp ' + formatRp(diff) + '</td>' +
-      '</tr>';
-  }).join('');
+  var tableRowsHTML = data.tableData
+    .map(function (row) {
+      var diff = row.bm - row.bt;
+      var maxBM = data.tableData[data.tableData.length - 1].bm;
+      var barBTW = Math.max(2, Math.round((row.bt / maxBM) * 120));
+      var barBMW = Math.max(2, Math.round((row.bm / maxBM) * 120));
+      return (
+        '<tr>' +
+        '<td class="td-n">' +
+        row.n +
+        '</td>' +
+        '<td class="td-bt">' +
+        '<div class="growth-bar-wrap"><div class="growth-bar growth-bar--bt" style="width:' +
+        barBTW +
+        'px;"></div>' +
+        '<span>Rp ' +
+        formatRp(row.bt) +
+        '</span></div>' +
+        '</td>' +
+        '<td class="td-bm">' +
+        '<div class="growth-bar-wrap"><div class="growth-bar growth-bar--bm" style="width:' +
+        barBMW +
+        'px;"></div>' +
+        '<span>Rp ' +
+        formatRp(row.bm) +
+        '</span></div>' +
+        '</td>' +
+        '<td class="td-diff">+Rp ' +
+        formatRp(diff) +
+        '</td>' +
+        '</tr>'
+      );
+    })
+    .join('');
 
   var calcResultHTML = '';
   if (State.calcDone) {
@@ -1019,23 +1382,40 @@ function renderPerbandingan(container) {
     if (!isNaN(m0) && !isNaN(i) && !isNaN(n) && m0 > 0 && i > 0 && n > 0) {
       var resBT = m0 * (1 + n * i);
       var resBM = m0 * Math.pow(1 + i, n);
-      var winner = resBM > resBT ? 'Bunga Majemuk lebih menguntungkan sebesar Rp ' + formatRp(resBM - resBT) + '!'
-        : resBM === resBT ? 'Hasilnya sama (periode pertama).'
-        : 'Bunga Tunggal lebih besar (tidak mungkin untuk n > 1 dengan i > 0).';
+      var winner =
+        resBM > resBT
+          ? 'Bunga Majemuk lebih menguntungkan sebesar Rp ' + formatRp(resBM - resBT) + '!'
+          : resBM === resBT
+            ? 'Hasilnya sama (periode pertama).'
+            : 'Bunga Tunggal lebih besar (tidak mungkin untuk n > 1 dengan i > 0).';
       calcResultHTML =
         '<div class="interest-calc__result">' +
         '<div class="interest-calc__result-card interest-calc__result-card--bt">' +
         '<div class="interest-calc__result-card__label">Bunga Tunggal</div>' +
-        '<div class="interest-calc__result-card__value">Rp ' + formatRp(resBT) + '</div>' +
-        '<div class="interest-calc__result-card__formula">M₀×(1 + ' + n + '×' + (i * 100) + '%)</div>' +
+        '<div class="interest-calc__result-card__value">Rp ' +
+        formatRp(resBT) +
+        '</div>' +
+        '<div class="interest-calc__result-card__formula">M₀×(1 + ' +
+        n +
+        '×' +
+        i * 100 +
+        '%)</div>' +
         '</div>' +
         '<div class="interest-calc__result-card interest-calc__result-card--bm">' +
         '<div class="interest-calc__result-card__label">Bunga Majemuk</div>' +
-        '<div class="interest-calc__result-card__value">Rp ' + formatRp(resBM) + '</div>' +
-        '<div class="interest-calc__result-card__formula">M₀×(1+' + (i * 100) + '%)^' + n + '</div>' +
+        '<div class="interest-calc__result-card__value">Rp ' +
+        formatRp(resBM) +
+        '</div>' +
+        '<div class="interest-calc__result-card__formula">M₀×(1+' +
+        i * 100 +
+        '%)^' +
+        n +
         '</div>' +
         '</div>' +
-        '<div class="interest-calc__winner">🏆 ' + winner + '</div>';
+        '</div>' +
+        '<div class="interest-calc__winner">🏆 ' +
+        winner +
+        '</div>';
     }
   }
 
@@ -1045,7 +1425,6 @@ function renderPerbandingan(container) {
     '<span class="stage-head__kicker">TAHAP 6 — PERBANDINGAN INTERAKTIF</span>' +
     '<p class="stage-head__goal">Tujuan: Membedakan karakteristik bunga tunggal (aritmetika) dan bunga majemuk (geometri) secara visual dan interaktif.</p>' +
     '</div>' +
-
     '<div class="compare-grid">' +
     '<div class="compare-card compare-card--bt">' +
     '<span class="compare-card__badge">Bunga Tunggal</span>' +
@@ -1060,7 +1439,6 @@ function renderPerbandingan(container) {
     '<p class="compare-card__desc"><strong>Rasio r = (1+i)</strong> (konstan). Pertumbuhan eksponensial — seperti bola salju!</p>' +
     '</div>' +
     '</div>' +
-
     '<div class="panel">' +
     '<h3>Contoh: M₀ = Rp 1.000.000, i = 10% per tahun</h3>' +
     '<p style="font-size:0.85rem;color:var(--color-ink-muted);">Bilah biru = BT, bilah oranye = BM. Amati perbedaan panjangnya seiring tahun bertambah.</p>' +
@@ -1072,15 +1450,21 @@ function renderPerbandingan(container) {
     '<th class="th-bm">📈 Bunga Majemuk (BM)</th>' +
     '<th class="th-diff">Selisih (BM−BT)</th>' +
     '</tr></thead>' +
-    '<tbody>' + tableRowsHTML + '</tbody>' +
+    '<tbody>' +
+    tableRowsHTML +
+    '</tbody>' +
     '</table></div>' +
     '</div>' +
-
     '<div class="panel panel--compact">' +
     '<h3>💡 Perbedaan Kunci</h3>' +
-    '<ul>' + data.kunciPerbedaan.map(function (p) { return '<li>' + p + '</li>'; }).join('') + '</ul>' +
+    '<ul>' +
+    data.kunciPerbedaan
+      .map(function (p) {
+        return '<li>' + p + '</li>';
+      })
+      .join('') +
+    '</ul>' +
     '</div>' +
-
     '<div class="panel">' +
     '<h3>🧮 Kalkulator Perbandingan</h3>' +
     '<p style="font-size:0.88rem;color:var(--color-ink-muted);">Masukkan nilai sendiri untuk membandingkan kedua jenis bunga.</p>' +
@@ -1088,40 +1472,51 @@ function renderPerbandingan(container) {
     '<div class="interest-calc__inputs">' +
     '<div class="field-group" style="margin:0;">' +
     '<label for="calcM0">Modal Awal (M₀) dalam Rp</label>' +
-    '<input type="number" id="calcM0" class="input-text" placeholder="mis. 1000000" value="' + esc(State.calcM0) + '" min="1">' +
+    '<input type="number" id="calcM0" class="input-text" placeholder="mis. 1000000" value="' +
+    esc(State.calcM0) +
+    '" min="1">' +
     '<div class="field-error" id="calcErrM0"></div>' +
     '</div>' +
     '<div class="field-group" style="margin:0;">' +
     '<label for="calcI">Suku Bunga per Tahun (%)</label>' +
-    '<input type="number" id="calcI" class="input-text" placeholder="mis. 10" value="' + esc(State.calcI) + '" min="0.1" max="100" step="0.1">' +
+    '<input type="number" id="calcI" class="input-text" placeholder="mis. 10" value="' +
+    esc(State.calcI) +
+    '" min="0.1" max="100" step="0.1">' +
     '<div class="field-error" id="calcErrI"></div>' +
     '</div>' +
     '<div class="field-group" style="margin:0;">' +
     '<label for="calcN">Jumlah Tahun (n)</label>' +
-    '<input type="number" id="calcN" class="input-text" placeholder="mis. 5" value="' + esc(State.calcN) + '" min="1" max="30" step="1">' +
+    '<input type="number" id="calcN" class="input-text" placeholder="mis. 5" value="' +
+    esc(State.calcN) +
+    '" min="1" max="30" step="1">' +
     '<div class="field-error" id="calcErrN"></div>' +
     '</div>' +
     '</div>' +
     '<div class="btn-group">' +
     '<button type="button" class="btn btn--primary" id="calcBtn">Hitung & Bandingkan</button>' +
     '</div>' +
-    '<div id="calcResult">' + calcResultHTML + '</div>' +
+    '<div id="calcResult">' +
+    calcResultHTML +
     '</div>' +
     '</div>' +
-
+    '</div>' +
     '<div class="btn-group btn-group--end">' +
     '<button type="button" class="btn btn--primary btn--large" id="nextPerbandinganBtn">Lanjut: Latihan →</button>' +
     '</div>' +
     '</section>';
 
   var calcBtn = document.getElementById('calcBtn');
-  if (calcBtn) calcBtn.addEventListener('click', function () { runCalc(container); });
+  if (calcBtn)
+    calcBtn.addEventListener('click', function () {
+      runCalc(container);
+    });
 
   var nextBtn = document.getElementById('nextPerbandinganBtn');
-  if (nextBtn) nextBtn.addEventListener('click', function () {
-    completeStage('perbandingan');
-    navigateTo('latihan');
-  });
+  if (nextBtn)
+    nextBtn.addEventListener('click', function () {
+      completeStage('perbandingan');
+      navigateTo('latihan');
+    });
 }
 
 function runCalc(container) {
@@ -1131,20 +1526,31 @@ function runCalc(container) {
   var errM0 = document.getElementById('calcErrM0');
   var errI = document.getElementById('calcErrI');
   var errN = document.getElementById('calcErrN');
-  errM0.textContent = ''; errI.textContent = ''; errN.textContent = '';
+  errM0.textContent = '';
+  errI.textContent = '';
+  errN.textContent = '';
 
   var m0 = parseFloat(m0El ? m0El.value : '');
   var iVal = parseFloat(iEl ? iEl.value : '');
   var nVal = parseInt(nEl ? nEl.value : '', 10);
   var valid = true;
-  if (!m0 || m0 <= 0) { errM0.textContent = 'Masukkan modal awal yang valid (> 0).'; valid = false; }
-  if (!iVal || iVal <= 0 || iVal > 100) { errI.textContent = 'Masukkan suku bunga antara 0,1 – 100.'; valid = false; }
-  if (!nVal || nVal < 1 || nVal > 30) { errN.textContent = 'Masukkan jumlah tahun antara 1 – 30.'; valid = false; }
+  if (!m0 || m0 <= 0) {
+    errM0.textContent = 'Masukkan modal awal yang valid (> 0).';
+    valid = false;
+  }
+  if (!iVal || iVal <= 0 || iVal > 100) {
+    errI.textContent = 'Masukkan suku bunga antara 0,1 – 100.';
+    valid = false;
+  }
+  if (!nVal || nVal < 1 || nVal > 30) {
+    errN.textContent = 'Masukkan jumlah tahun antara 1 – 30.';
+    valid = false;
+  }
   if (!valid) return;
 
   State.calcM0 = String(m0);
-  State.calcI  = String(iVal);
-  State.calcN  = String(nVal);
+  State.calcI = String(iVal);
+  State.calcN = String(nVal);
   State.calcDone = true;
   saveState();
   renderPerbandingan(container);
@@ -1161,19 +1567,29 @@ function renderLatihan(container) {
   var idx = State.latihanIdx;
   var soal = soalList[idx];
   var ex = State.latihanExercises[idx];
-  var allDone = State.latihanExercises.every(function (e) { return e.correct || e.revealed; });
-
-  var statuses = State.latihanExercises.map(function (e) {
-    return e.correct ? 'correct' : (e.checked ? 'incorrect' : null);
+  var allDone = State.latihanExercises.every(function (e) {
+    return e.correct || e.revealed;
   });
 
-  var tipeBadge = '<span class="type-badge type-badge--' + esc(soal.tipe) + '">' + esc(soal.tipeBadge) + '</span>';
+  var statuses = State.latihanExercises.map(function (e) {
+    return e.correct ? 'correct' : e.checked ? 'incorrect' : null;
+  });
+
+  var tipeBadge =
+    '<span class="type-badge type-badge--' +
+    esc(soal.tipe) +
+    '">' +
+    esc(soal.tipeBadge) +
+    '</span>';
 
   var konteksHTML = soal.konteks
     ? '<div class="panel panel--compact panel--info" style="margin-bottom:var(--space-3);">' +
       '<span style="font-size:0.8rem;font-family:var(--font-mono);color:var(--color-primary);font-weight:700;letter-spacing:0.05em;">KONTEKS</span>' +
-      '<p style="margin:var(--space-1) 0 0;">' + soal.konteks + '</p>' +
-      '</div>' : '';
+      '<p style="margin:var(--space-1) 0 0;">' +
+      soal.konteks +
+      '</p>' +
+      '</div>'
+    : '';
 
   var bodyHTML = '';
   if (soal.type === 'input') {
@@ -1184,12 +1600,23 @@ function renderLatihan(container) {
     } else {
       bodyHTML =
         '<div style="display:flex;align-items:center;gap:var(--space-3);flex-wrap:wrap;margin-bottom:var(--space-3);">' +
-        '<input type="text" inputmode="numeric" id="latihanInput" class="input-text" value="' + esc(ex.userInput) + '" placeholder="Jawaban..." style="max-width:180px;font-family:var(--font-mono);font-size:1.1rem;text-align:center;">' +
-        (soal.unit ? '<span style="font-size:0.88rem;color:var(--color-ink-muted);">' + esc(soal.unit) + '</span>' : '') +
+        '<input type="text" inputmode="numeric" id="latihanInput" class="input-text" value="' +
+        esc(ex.userInput) +
+        '" placeholder="Jawaban..." style="max-width:180px;font-family:var(--font-mono);font-size:1.1rem;text-align:center;">' +
+        (soal.unit
+          ? '<span style="font-size:0.88rem;color:var(--color-ink-muted);">' +
+            esc(soal.unit) +
+            '</span>'
+          : '') +
         '</div>' +
         '<div class="btn-group">' +
-        (ex.hintLevel < (soal.hints || []).length ?
-          '<button type="button" class="btn btn--ghost btn--small" id="latihanHintBtn">💡 Petunjuk (' + (ex.hintLevel + 1) + '/' + (soal.hints || []).length + ')</button>' : '') +
+        (ex.hintLevel < (soal.hints || []).length
+          ? '<button type="button" class="btn btn--ghost btn--small" id="latihanHintBtn">💡 Petunjuk (' +
+            (ex.hintLevel + 1) +
+            '/' +
+            (soal.hints || []).length +
+            ')</button>'
+          : '') +
         '<button type="button" class="btn btn--ghost btn--small" id="latihanRevealBtn">Lihat Jawaban</button>' +
         '<button type="button" class="btn btn--primary" id="latihanCheckBtn">Periksa</button>' +
         '</div>' +
@@ -1197,21 +1624,40 @@ function renderLatihan(container) {
     }
   } else if (soal.type === 'choice') {
     if (ex.checked) {
-      bodyHTML = buildFeedbackBox(ex.correct ? 'success' : 'warning', ex.correct ? '✓' : '💡',
-        (ex.correct ? '<strong>Benar!</strong> ' : '<strong>Jawaban tepat:</strong> ') + soal.explanation);
+      bodyHTML = buildFeedbackBox(
+        ex.correct ? 'success' : 'warning',
+        ex.correct ? '✓' : '💡',
+        (ex.correct ? '<strong>Benar!</strong> ' : '<strong>Jawaban tepat:</strong> ') +
+          soal.explanation
+      );
     } else {
-      var choicesHTML = '<ul class="choice-list">' +
-        soal.options.map(function (opt) {
-          var sel = ex.chosen === opt.id ? ' is-selected' : '';
-          return '<li><button type="button" class="choice-btn' + sel + '" data-opt="' + esc(opt.id) + '">' +
-            '<span class="choice-btn__key">' + opt.id.replace('opt_', '').toUpperCase() + '</span>' +
-            esc(opt.label) + '</button></li>';
-        }).join('') +
+      var choicesHTML =
+        '<ul class="choice-list">' +
+        soal.options
+          .map(function (opt) {
+            var sel = ex.chosen === opt.id ? ' is-selected' : '';
+            return (
+              '<li><button type="button" class="choice-btn' +
+              sel +
+              '" data-opt="' +
+              esc(opt.id) +
+              '">' +
+              '<span class="choice-btn__key">' +
+              opt.id.replace('opt_', '').toUpperCase() +
+              '</span>' +
+              esc(opt.label) +
+              '</button></li>'
+            );
+          })
+          .join('') +
         '</ul>';
-      bodyHTML = choicesHTML +
+      bodyHTML =
+        choicesHTML +
         '<div class="btn-group">' +
         '<button type="button" class="btn btn--ghost btn--small" id="latihanHintBtn">💡 Petunjuk</button>' +
-        '<button type="button" class="btn btn--primary" id="latihanCheckChoiceBtn" ' + (!ex.chosen ? 'disabled' : '') + '>Periksa</button>' +
+        '<button type="button" class="btn btn--primary" id="latihanCheckChoiceBtn" ' +
+        (!ex.chosen ? 'disabled' : '') +
+        '>Periksa</button>' +
         '</div>' +
         '<div id="latihanFeedback" style="margin-top:var(--space-3);"></div>';
     }
@@ -1220,7 +1666,8 @@ function renderLatihan(container) {
   var navHTML = '';
   if (ex.correct || ex.revealed || ex.checked) {
     if (idx < soalList.length - 1) {
-      navHTML = '<div class="btn-group btn-group--end">' +
+      navHTML =
+        '<div class="btn-group btn-group--end">' +
         '<button type="button" class="btn btn--primary" id="latihanNextBtn">Soal Berikutnya →</button>' +
         '</div>';
     }
@@ -1232,64 +1679,82 @@ function renderLatihan(container) {
     '<span class="stage-head__kicker">TAHAP 7 — LATIHAN CAMPURAN</span>' +
     '<p class="stage-head__goal">Tujuan: Menerapkan rumus bunga tunggal dan majemuk pada berbagai soal kontekstual.</p>' +
     '</div>' +
-
     '<div class="panel">' +
     buildProgressDots(soalList.length, idx, statuses) +
-    '<p style="font-size:0.82rem;color:var(--color-ink-muted);margin-bottom:var(--space-4);">' + esc(DATA.latihan.instruction) + '</p>' +
+    '<p style="font-size:0.82rem;color:var(--color-ink-muted);margin-bottom:var(--space-4);">' +
+    esc(DATA.latihan.instruction) +
+    '</p>' +
     tipeBadge +
     '<div style="margin-top:var(--space-2);">' +
     konteksHTML +
-    '<p style="font-size:0.95rem;font-weight:500;margin-bottom:var(--space-3);">' + soal.question + '</p>' +
+    '<p style="font-size:0.95rem;font-weight:500;margin-bottom:var(--space-3);">' +
+    soal.question +
+    '</p>' +
     bodyHTML +
     '</div></div>' +
-
     navHTML +
-
-    (allDone ?
-      '<div class="btn-group btn-group--end">' +
-      '<button type="button" class="btn btn--primary btn--large" id="nextLatihanBtn">Lanjut: Refleksi →</button>' +
-      '</div>' : '') +
+    (allDone
+      ? '<div class="btn-group btn-group--end">' +
+        '<button type="button" class="btn btn--primary btn--large" id="nextLatihanBtn">Lanjut: Refleksi →</button>' +
+        '</div>'
+      : '') +
     '</section>';
 
   /* Input events */
   var latihanInput = document.getElementById('latihanInput');
   if (latihanInput) {
-    latihanInput.addEventListener('input', function () { State.latihanExercises[idx].userInput = latihanInput.value; });
-    latihanInput.addEventListener('keydown', function (e) {
-      if (e.key === 'Enter') { e.preventDefault(); var cb = document.getElementById('latihanCheckBtn'); if (cb) cb.click(); }
+    latihanInput.addEventListener('input', function () {
+      State.latihanExercises[idx].userInput = latihanInput.value;
     });
-    setTimeout(function () { latihanInput.focus(); }, 50);
+    latihanInput.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        var cb = document.getElementById('latihanCheckBtn');
+        if (cb) cb.click();
+      }
+    });
+    setTimeout(function () {
+      latihanInput.focus();
+    }, 50);
   }
 
   var checkBtn = document.getElementById('latihanCheckBtn');
-  if (checkBtn) checkBtn.addEventListener('click', function () { checkLatihanInput(container, idx); });
+  if (checkBtn)
+    checkBtn.addEventListener('click', function () {
+      checkLatihanInput(container, idx);
+    });
 
   var checkChoiceBtn = document.getElementById('latihanCheckChoiceBtn');
-  if (checkChoiceBtn) checkChoiceBtn.addEventListener('click', function () { checkLatihanChoice(container, idx); });
+  if (checkChoiceBtn)
+    checkChoiceBtn.addEventListener('click', function () {
+      checkLatihanChoice(container, idx);
+    });
 
   var hintBtn = document.getElementById('latihanHintBtn');
-  if (hintBtn) hintBtn.addEventListener('click', function () {
-    var fb = document.getElementById('latihanFeedback');
-    if (!fb) return;
-    if (soal.type === 'input') {
-      var hl = ex.hintLevel;
-      if (hl < (soal.hints || []).length) {
-        fb.innerHTML = buildFeedbackBox('warning', '💡', soal.hints[hl]);
-        State.latihanExercises[idx].hintLevel++;
-        saveState();
-        renderLatihan(container);
+  if (hintBtn)
+    hintBtn.addEventListener('click', function () {
+      var fb = document.getElementById('latihanFeedback');
+      if (!fb) return;
+      if (soal.type === 'input') {
+        var hl = ex.hintLevel;
+        if (hl < (soal.hints || []).length) {
+          fb.innerHTML = buildFeedbackBox('warning', '💡', soal.hints[hl]);
+          State.latihanExercises[idx].hintLevel++;
+          saveState();
+          renderLatihan(container);
+        }
+      } else {
+        fb.innerHTML = buildFeedbackBox('warning', '💡', soal.hint);
       }
-    } else {
-      fb.innerHTML = buildFeedbackBox('warning', '💡', soal.hint);
-    }
-  });
+    });
 
   var revealBtn = document.getElementById('latihanRevealBtn');
-  if (revealBtn) revealBtn.addEventListener('click', function () {
-    State.latihanExercises[idx].revealed = true;
-    saveState();
-    renderLatihan(container);
-  });
+  if (revealBtn)
+    revealBtn.addEventListener('click', function () {
+      State.latihanExercises[idx].revealed = true;
+      saveState();
+      renderLatihan(container);
+    });
 
   container.querySelectorAll('[data-opt]').forEach(function (btn) {
     btn.addEventListener('click', function () {
@@ -1300,17 +1765,19 @@ function renderLatihan(container) {
   });
 
   var nextBtn = document.getElementById('latihanNextBtn');
-  if (nextBtn) nextBtn.addEventListener('click', function () {
-    State.latihanIdx = idx + 1;
-    saveState();
-    renderLatihan(container);
-  });
+  if (nextBtn)
+    nextBtn.addEventListener('click', function () {
+      State.latihanIdx = idx + 1;
+      saveState();
+      renderLatihan(container);
+    });
 
   var finishBtn = document.getElementById('nextLatihanBtn');
-  if (finishBtn) finishBtn.addEventListener('click', function () {
-    completeStage('latihan');
-    navigateTo('refleksi');
-  });
+  if (finishBtn)
+    finishBtn.addEventListener('click', function () {
+      completeStage('latihan');
+      navigateTo('refleksi');
+    });
 }
 
 function checkLatihanInput(container, idx) {
@@ -1320,7 +1787,10 @@ function checkLatihanInput(container, idx) {
   var fb = document.getElementById('latihanFeedback');
   if (!inp || !fb) return;
   var parsed = parseInputInt(inp.value);
-  if (parsed.error) { fb.innerHTML = buildFeedbackBox('error', '✗', 'Masukkan bilangan bulat.'); return; }
+  if (parsed.error) {
+    fb.innerHTML = buildFeedbackBox('error', '✗', 'Masukkan bilangan bulat.');
+    return;
+  }
   ex.userInput = inp.value;
   ex.attempts++;
   if (parsed.value === soal.answer) {
@@ -1328,7 +1798,11 @@ function checkLatihanInput(container, idx) {
     saveState();
     renderLatihan(container);
   } else {
-    fb.innerHTML = buildFeedbackBox('error', '✗', 'Jawaban kurang tepat. Coba lagi atau gunakan petunjuk.');
+    fb.innerHTML = buildFeedbackBox(
+      'error',
+      '✗',
+      'Jawaban kurang tepat. Coba lagi atau gunakan petunjuk.'
+    );
     saveState();
   }
 }
@@ -1351,14 +1825,31 @@ function renderRefleksi(container) {
   var data = DATA.refleksi;
   var saved = State.refleksiSaved;
 
-  var fieldsHTML = data.soal.map(function (q, i) {
-    var val = State.refleksiAnswers[q.id] || '';
-    return '<div class="field-group">' +
-      '<label for="refl_' + esc(q.id) + '" style="font-weight:500;">' + (i + 1) + '. ' + q.question + '</label>' +
-      '<textarea id="refl_' + esc(q.id) + '" class="input-text" rows="3" placeholder="' + esc(q.placeholder) + '"' +
-      (saved ? ' readonly' : '') + '>' + esc(val) + '</textarea>' +
-      '</div>';
-  }).join('');
+  var fieldsHTML = data.soal
+    .map(function (q, i) {
+      var val = State.refleksiAnswers[q.id] || '';
+      return (
+        '<div class="field-group">' +
+        '<label for="refl_' +
+        esc(q.id) +
+        '" style="font-weight:500;">' +
+        (i + 1) +
+        '. ' +
+        q.question +
+        '</label>' +
+        '<textarea id="refl_' +
+        esc(q.id) +
+        '" class="input-text" rows="3" placeholder="' +
+        esc(q.placeholder) +
+        '"' +
+        (saved ? ' readonly' : '') +
+        '>' +
+        esc(val) +
+        '</textarea>' +
+        '</div>'
+      );
+    })
+    .join('');
 
   container.innerHTML =
     '<section aria-label="Refleksi">' +
@@ -1366,23 +1857,27 @@ function renderRefleksi(container) {
     '<span class="stage-head__kicker">TAHAP 8 — REFLEKSI</span>' +
     '<p class="stage-head__goal">Tujuan: Merangkum dan mengkonsolidasikan pemahaman tentang bunga tunggal dan majemuk.</p>' +
     '</div>' +
-
     '<div class="panel">' +
-    '<h3>' + esc(data.title) + '</h3>' +
+    '<h3>' +
+    esc(data.title) +
+    '</h3>' +
     '<div class="panel panel--compact panel--warning" style="margin-bottom:var(--space-4);">' +
-    '<p style="margin:0;font-size:0.88rem;">' + data.note + '</p>' +
+    '<p style="margin:0;font-size:0.88rem;">' +
+    data.note +
+    '</p>' +
     '</div>' +
     fieldsHTML +
-    (!saved ?
-      '<div class="btn-group btn-group--end">' +
-      '<button type="button" class="btn btn--primary" id="saveReflBtn">Simpan Refleksi</button>' +
-      '</div>' : '') +
+    (!saved
+      ? '<div class="btn-group btn-group--end">' +
+        '<button type="button" class="btn btn--primary" id="saveReflBtn">Simpan Refleksi</button>' +
+        '</div>'
+      : '') +
     '</div>' +
-
-    (saved ?
-      '<div class="btn-group btn-group--end">' +
-      '<button type="button" class="btn btn--primary btn--large" id="nextReflBtn">Selesai →</button>' +
-      '</div>' : '') +
+    (saved
+      ? '<div class="btn-group btn-group--end">' +
+        '<button type="button" class="btn btn--primary btn--large" id="nextReflBtn">Selesai →</button>' +
+        '</div>'
+      : '') +
     '</section>';
 
   data.soal.forEach(function (q) {
@@ -1396,18 +1891,20 @@ function renderRefleksi(container) {
   });
 
   var saveBtn = document.getElementById('saveReflBtn');
-  if (saveBtn) saveBtn.addEventListener('click', function () {
-    State.refleksiSaved = true;
-    completeStage('refleksi');
-    saveState();
-    renderRefleksi(container);
-    showNotice('Refleksi tersimpan!');
-  });
+  if (saveBtn)
+    saveBtn.addEventListener('click', function () {
+      State.refleksiSaved = true;
+      completeStage('refleksi');
+      saveState();
+      renderRefleksi(container);
+      showNotice('Refleksi tersimpan!');
+    });
 
   var nextBtn = document.getElementById('nextReflBtn');
-  if (nextBtn) nextBtn.addEventListener('click', function () {
-    navigateTo('selesai');
-  });
+  if (nextBtn)
+    nextBtn.addEventListener('click', function () {
+      navigateTo('selesai');
+    });
 }
 
 /* ============================================================
@@ -1415,7 +1912,9 @@ function renderRefleksi(container) {
    ============================================================ */
 
 function renderSelesai(container) {
-  var correct = State.latihanExercises.filter(function (e) { return e.correct; }).length;
+  var correct = State.latihanExercises.filter(function (e) {
+    return e.correct;
+  }).length;
   var total = DATA.latihan.soal.length;
 
   container.innerHTML =
@@ -1423,14 +1922,16 @@ function renderSelesai(container) {
     '<div class="stage-head">' +
     '<span class="stage-head__kicker">SELESAI 🎉</span>' +
     '</div>' +
-
     '<div class="panel panel--hero" style="max-width:640px;margin:0 auto var(--space-6);">' +
     '<div style="font-size:3rem;margin-bottom:var(--space-3);">🏆</div>' +
     '<h2>Kamu Telah Menyelesaikan</h2>' +
     '<h2 style="color:var(--color-primary);">Bunga Tunggal & Bunga Majemuk!</h2>' +
-    '<p style="font-size:1.05rem;margin-top:var(--space-3);">Skor latihan kamu: <strong>' + correct + ' dari ' + total + ' soal benar</strong></p>' +
+    '<p style="font-size:1.05rem;margin-top:var(--space-3);">Skor latihan kamu: <strong>' +
+    correct +
+    ' dari ' +
+    total +
+    ' soal benar</strong></p>' +
     '</div>' +
-
     '<div class="compare-grid" style="max-width:800px;margin:0 auto var(--space-5);">' +
     '<div class="compare-card compare-card--bt">' +
     '<span class="compare-card__badge">Bunga Tunggal</span>' +
@@ -1445,7 +1946,6 @@ function renderSelesai(container) {
     '<p class="compare-card__desc">Rasio r = (1+i) (konstan). Pertumbuhan eksponensial. Cocok untuk investasi jangka panjang.</p>' +
     '</div>' +
     '</div>' +
-
     '<div class="panel panel--compact" style="max-width:640px;margin:0 auto var(--space-5);text-align:left;">' +
     '<h3>Poin Kunci yang Telah Kamu Pelajari</h3>' +
     '<ul>' +
@@ -1456,7 +1956,6 @@ function renderSelesai(container) {
     '<li>Untuk jangka panjang, bunga majemuk selalu menghasilkan nilai lebih besar</li>' +
     '</ul>' +
     '</div>' +
-
     '<div class="btn-group" style="justify-content:center;gap:var(--space-3);flex-wrap:wrap;">' +
     '<button type="button" class="btn btn--ghost" id="ulangBtn">↩ Ulangi dari Awal</button>' +
     '<a href="../../index.html" class="btn btn--primary">Kembali ke Beranda</a>' +
@@ -1466,15 +1965,16 @@ function renderSelesai(container) {
   completeStage('selesai');
 
   var ulangBtn = document.getElementById('ulangBtn');
-  if (ulangBtn) ulangBtn.addEventListener('click', function () {
-    if (confirm('Reset semua progress dan mulai dari awal?')) {
-      clearState();
-      saveState();
-      updateStageNav();
-      updateProgress();
-      navigateTo('orientasi');
-    }
-  });
+  if (ulangBtn)
+    ulangBtn.addEventListener('click', function () {
+      if (confirm('Reset semua progress dan mulai dari awal?')) {
+        clearState();
+        saveState();
+        updateStageNav();
+        updateProgress();
+        navigateTo('orientasi');
+      }
+    });
 }
 
 /* ============================================================
@@ -1488,7 +1988,9 @@ function showNotice(msg) {
   el.textContent = msg;
   el.classList.add('is-visible');
   if (_noticeTimer) clearTimeout(_noticeTimer);
-  _noticeTimer = setTimeout(function () { el.classList.remove('is-visible'); }, 3000);
+  _noticeTimer = setTimeout(function () {
+    el.classList.remove('is-visible');
+  }, 3000);
 }
 
 /* ============================================================
@@ -1499,15 +2001,23 @@ function buildStageNav() {
   var nav = document.getElementById('stageNavList');
   if (!nav) return;
   nav.innerHTML = STAGES.map(function (id, i) {
-    return '<li>' +
-      '<button type="button" class="stage-nav__item" data-stage="' + id + '">' +
-      '<span class="stage-nav__num">' + (i + 1) + '</span>' +
+    return (
+      '<li>' +
+      '<button type="button" class="stage-nav__item" data-stage="' +
+      id +
+      '">' +
+      '<span class="stage-nav__num">' +
+      (i + 1) +
+      '</span>' +
       STAGE_LABELS[i] +
       '</button>' +
-      '</li>';
+      '</li>'
+    );
   }).join('');
   nav.querySelectorAll('.stage-nav__item').forEach(function (btn) {
-    btn.addEventListener('click', function () { navigateTo(btn.dataset.stage); });
+    btn.addEventListener('click', function () {
+      navigateTo(btn.dataset.stage);
+    });
   });
 }
 
@@ -1520,15 +2030,16 @@ function init() {
   renderCurrentStage();
 
   var resetBtn = document.getElementById('resetAppBtn');
-  if (resetBtn) resetBtn.addEventListener('click', function () {
-    if (confirm('Reset semua progress pembelajaran?')) {
-      clearState();
-      saveState();
-      updateStageNav();
-      updateProgress();
-      navigateTo('orientasi');
-    }
-  });
+  if (resetBtn)
+    resetBtn.addEventListener('click', function () {
+      if (confirm('Reset semua progress pembelajaran?')) {
+        clearState();
+        saveState();
+        updateStageNav();
+        updateProgress();
+        navigateTo('orientasi');
+      }
+    });
 }
 
 document.addEventListener('DOMContentLoaded', init);

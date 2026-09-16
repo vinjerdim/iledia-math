@@ -36,9 +36,14 @@
   background: var(--color-surface);
   border: 2px solid var(--color-primary);
   border-radius: var(--radius-sm);
-  width: 72px; height: 48px;
-  display: flex; align-items: center; justify-content: center;
-  transition: background-color 0.2s, transform 0.15s;
+  width: 72px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition:
+    background-color 0.2s,
+    transform 0.15s;
   text-align: center;
   padding: 0 4px;
 }
@@ -56,9 +61,17 @@
 }
 
 @keyframes popIn {
-  0%   { transform: scale(0.7); opacity: 0; }
-  70%  { transform: scale(1.1); }
-  100% { transform: scale(1); opacity: 1; }
+  0% {
+    transform: scale(0.7);
+    opacity: 0;
+  }
+  70% {
+    transform: scale(1.1);
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
 }
 
 .seq-term__label {
@@ -106,19 +119,30 @@
 }
 
 .seq-reveal-btn {
-  display: inline-flex; align-items: center; justify-content: center;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   gap: var(--space-2);
   background: var(--color-primary);
-  color: #fff; border: none;
+  color: #fff;
+  border: none;
   border-radius: var(--radius-sm);
   padding: var(--space-2) var(--space-4);
-  font-family: var(--font-body); font-size: 0.88rem; font-weight: 600;
-  cursor: pointer; min-height: 36px;
+  font-family: var(--font-body);
+  font-size: 0.88rem;
+  font-weight: 600;
+  cursor: pointer;
+  min-height: 36px;
   transition: background-color 0.12s;
 }
 
-.seq-reveal-btn:hover { background: var(--color-primary-strong); }
-.seq-reveal-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+.seq-reveal-btn:hover {
+  background: var(--color-primary-strong);
+}
+.seq-reveal-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
 
 /* =========================================================================
    Pattern table (menemukan rumus)
@@ -151,7 +175,9 @@
   background: var(--color-surface);
 }
 
-.pattern-table tr:hover td { background: var(--color-primary-soft); }
+.pattern-table tr:hover td {
+  background: var(--color-primary-soft);
+}
 
 .pattern-table td.cell-highlight {
   background: var(--color-primary-soft);
@@ -209,8 +235,12 @@
   border-color: var(--color-blue);
 }
 
-.formula-box--bt .formula-box__label { color: var(--color-blue); }
-.formula-box--bt .formula-box__expr { color: var(--color-blue-strong); }
+.formula-box--bt .formula-box__label {
+  color: var(--color-blue);
+}
+.formula-box--bt .formula-box__expr {
+  color: var(--color-blue-strong);
+}
 
 /* Formula box khusus BM (oranye) */
 .formula-box--bm {
@@ -218,12 +248,22 @@
   border-color: var(--color-orange);
 }
 
-.formula-box--bm .formula-box__label { color: var(--color-orange); }
-.formula-box--bm .formula-box__expr { color: var(--color-orange-strong); }
+.formula-box--bm .formula-box__label {
+  color: var(--color-orange);
+}
+.formula-box--bm .formula-box__expr {
+  color: var(--color-orange-strong);
+}
 
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(8px); }
-  to   { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 /* =========================================================================
@@ -264,7 +304,9 @@
 }
 
 @media (max-width: 640px) {
-  .compare-grid { grid-template-columns: 1fr; }
+  .compare-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 .compare-card {
@@ -320,13 +362,17 @@
   font-weight: 700;
   margin: var(--space-2) 0;
   padding: var(--space-3);
-  background: rgba(255,255,255,0.6);
+  background: rgba(255, 255, 255, 0.6);
   border-radius: var(--radius-sm);
   text-align: center;
 }
 
-.compare-card--bt .compare-card__formula { color: var(--color-blue-strong); }
-.compare-card--bm .compare-card__formula { color: var(--color-orange-strong); }
+.compare-card--bt .compare-card__formula {
+  color: var(--color-blue-strong);
+}
+.compare-card--bm .compare-card__formula {
+  color: var(--color-orange-strong);
+}
 
 .compare-card__desc {
   font-size: 0.85rem;
@@ -399,7 +445,9 @@
   color: var(--color-primary-strong);
 }
 
-.comparison-table tr:hover td { opacity: 0.85; }
+.comparison-table tr:hover td {
+  opacity: 0.85;
+}
 
 /* Visual growth bar di tabel perbandingan */
 .growth-bar-wrap {
@@ -415,8 +463,12 @@
   transition: width 0.3s ease;
 }
 
-.growth-bar--bt { background: var(--color-blue); }
-.growth-bar--bm { background: var(--color-orange); }
+.growth-bar--bt {
+  background: var(--color-blue);
+}
+.growth-bar--bm {
+  background: var(--color-orange);
+}
 
 /* =========================================================================
    Kalkulator perbandingan interaktif
@@ -444,7 +496,9 @@
 }
 
 @media (max-width: 480px) {
-  .interest-calc__result { grid-template-columns: 1fr; }
+  .interest-calc__result {
+    grid-template-columns: 1fr;
+  }
 }
 
 .interest-calc__result-card {
@@ -525,9 +579,15 @@
 }
 
 .exercise-progress__dot {
-  display: inline-flex; align-items: center; justify-content: center;
-  width: 28px; height: 28px; border-radius: 50%;
-  font-family: var(--font-mono); font-size: 0.75rem; font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  font-weight: 700;
   border: 2px solid var(--color-border-strong);
   color: var(--color-ink-muted);
   background: var(--color-surface);
@@ -593,20 +653,29 @@
 /* Pilihan ganda */
 .choice-list {
   list-style: none;
-  padding: 0; margin: var(--space-3) 0;
-  display: flex; flex-direction: column; gap: var(--space-2);
+  padding: 0;
+  margin: var(--space-3) 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
 }
 
 .choice-btn {
-  display: flex; align-items: center; gap: var(--space-3);
-  width: 100%; text-align: left;
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  width: 100%;
+  text-align: left;
   background: var(--color-surface);
   border: 2px solid var(--color-border);
   border-radius: var(--radius-md);
   padding: var(--space-3) var(--space-4);
-  font-family: var(--font-body); font-size: 0.95rem;
+  font-family: var(--font-body);
+  font-size: 0.95rem;
   cursor: pointer;
-  transition: border-color 0.12s, background-color 0.12s;
+  transition:
+    border-color 0.12s,
+    background-color 0.12s;
 }
 
 .choice-btn:hover:not(:disabled) {
@@ -631,14 +700,22 @@
   color: var(--color-error-strong);
 }
 
-.choice-btn:disabled { cursor: not-allowed; opacity: 0.7; }
+.choice-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.7;
+}
 
 .choice-btn__key {
-  display: inline-flex; align-items: center; justify-content: center;
-  min-width: 28px; height: 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 28px;
+  height: 28px;
   background: var(--color-bg-grid);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-sm);
-  font-family: var(--font-mono); font-size: 0.8rem; font-weight: 700;
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  font-weight: 700;
   flex-shrink: 0;
 }
