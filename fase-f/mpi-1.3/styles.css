@@ -1,0 +1,721 @@
+/* =========================================================================
+   mpi-1.3 — Bunga Tunggal dan Bunga Majemuk (Matematika Fase F / SMK RPL)
+   Gaya dasar berada di shared/base.css.
+   File ini hanya berisi komponen spesifik mpi-1.3.
+   ========================================================================= */
+
+/* =========================================================================
+   Sequence visualizer (sama dengan mpi-1.1, dipakai kembali)
+   ========================================================================= */
+
+.seq-display {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+  margin: var(--space-4) 0;
+  padding: var(--space-4);
+  background: var(--color-bg-grid);
+  border-radius: var(--radius-md);
+  justify-content: center;
+}
+
+.seq-term {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  min-width: 72px;
+}
+
+.seq-term__val {
+  font-family: var(--font-mono);
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--color-primary-strong);
+  background: var(--color-surface);
+  border: 2px solid var(--color-primary);
+  border-radius: var(--radius-sm);
+  width: 72px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition:
+    background-color 0.2s,
+    transform 0.15s;
+  text-align: center;
+  padding: 0 4px;
+}
+
+.seq-term__val--hidden {
+  background: var(--color-bg-grid);
+  border-color: var(--color-border-strong);
+  color: var(--color-border-strong);
+  font-size: 1.4rem;
+  cursor: pointer;
+}
+
+.seq-term__val--revealed {
+  animation: popIn 0.25s ease;
+}
+
+@keyframes popIn {
+  0% {
+    transform: scale(0.7);
+    opacity: 0;
+  }
+  70% {
+    transform: scale(1.1);
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.seq-term__label {
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  color: var(--color-ink-muted);
+}
+
+.seq-arrow {
+  font-size: 1.1rem;
+  color: var(--color-ink-muted);
+  flex-shrink: 0;
+  align-self: center;
+  margin-bottom: 20px;
+}
+
+/* Beda badge (Bunga Tunggal — Aritmetika) */
+.seq-beda-badge {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--color-blue-strong);
+  background: var(--color-blue-soft);
+  border: 1px solid var(--color-blue);
+  border-radius: 10px;
+  padding: 2px 6px;
+  margin-bottom: 18px;
+  align-self: center;
+  flex-shrink: 0;
+}
+
+/* Rasio badge (Bunga Majemuk — Geometri) */
+.seq-rasio-badge {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--color-orange-strong);
+  background: var(--color-orange-soft);
+  border: 1px solid var(--color-orange);
+  border-radius: 10px;
+  padding: 2px 6px;
+  margin-bottom: 18px;
+  align-self: center;
+  flex-shrink: 0;
+}
+
+.seq-reveal-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  background: var(--color-primary);
+  color: #fff;
+  border: none;
+  border-radius: var(--radius-sm);
+  padding: var(--space-2) var(--space-4);
+  font-family: var(--font-body);
+  font-size: 0.88rem;
+  font-weight: 600;
+  cursor: pointer;
+  min-height: 36px;
+  transition: background-color 0.12s;
+}
+
+.seq-reveal-btn:hover {
+  background: var(--color-primary-strong);
+}
+.seq-reveal-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+/* =========================================================================
+   Pattern table (menemukan rumus)
+   ========================================================================= */
+
+.pattern-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: var(--space-4) 0;
+  font-size: 0.9rem;
+}
+
+.pattern-table th {
+  background: var(--color-primary-soft);
+  color: var(--color-primary-strong);
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  font-weight: 700;
+  padding: var(--space-2) var(--space-3);
+  text-align: center;
+  border: 1px solid var(--color-border);
+  letter-spacing: 0.04em;
+}
+
+.pattern-table td {
+  padding: var(--space-2) var(--space-3);
+  text-align: center;
+  border: 1px solid var(--color-border);
+  font-family: var(--font-mono);
+  background: var(--color-surface);
+}
+
+.pattern-table tr:hover td {
+  background: var(--color-primary-soft);
+}
+
+.pattern-table td.cell-highlight {
+  background: var(--color-primary-soft);
+  color: var(--color-primary-strong);
+  font-weight: 700;
+}
+
+/* =========================================================================
+   Formula box
+   ========================================================================= */
+
+.formula-box {
+  background: linear-gradient(135deg, var(--color-primary-soft) 0%, #fff 80%);
+  border: 2px solid var(--color-primary);
+  border-radius: var(--radius-md);
+  padding: var(--space-5);
+  text-align: center;
+  margin: var(--space-4) 0;
+}
+
+.formula-box__label {
+  font-size: 0.78rem;
+  font-family: var(--font-mono);
+  letter-spacing: 0.06em;
+  color: var(--color-primary);
+  text-transform: uppercase;
+  margin-bottom: var(--space-2);
+}
+
+.formula-box__expr {
+  font-family: var(--font-mono);
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: var(--color-primary-strong);
+  margin-bottom: var(--space-2);
+  line-height: 1.3;
+}
+
+.formula-box__expr--large {
+  font-size: 2rem;
+}
+
+.formula-box__note {
+  font-size: 0.82rem;
+  color: var(--color-ink-muted);
+}
+
+.formula-box--reveal {
+  animation: fadeIn 0.4s ease;
+}
+
+/* Formula box khusus BT (biru) */
+.formula-box--bt {
+  background: linear-gradient(135deg, var(--color-blue-soft) 0%, #fff 80%);
+  border-color: var(--color-blue);
+}
+
+.formula-box--bt .formula-box__label {
+  color: var(--color-blue);
+}
+.formula-box--bt .formula-box__expr {
+  color: var(--color-blue-strong);
+}
+
+/* Formula box khusus BM (oranye) */
+.formula-box--bm {
+  background: linear-gradient(135deg, var(--color-orange-soft) 0%, #fff 80%);
+  border-color: var(--color-orange);
+}
+
+.formula-box--bm .formula-box__label {
+  color: var(--color-orange);
+}
+.formula-box--bm .formula-box__expr {
+  color: var(--color-orange-strong);
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* =========================================================================
+   Kartu identifikasi (identifikasi BT/BM)
+   ========================================================================= */
+
+.identify-input-panel {
+  background: var(--color-bg-grid);
+  border-radius: var(--radius-md);
+  padding: var(--space-4);
+  margin: var(--space-4) 0;
+}
+
+.identify-input-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+  margin-bottom: var(--space-3);
+}
+
+.identify-input-row .input-text {
+  max-width: 160px;
+  font-family: var(--font-mono);
+  font-size: 1.1rem;
+  text-align: center;
+}
+
+/* =========================================================================
+   Comparison (Perbandingan BT vs BM)
+   ========================================================================= */
+
+.compare-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-4);
+  margin: var(--space-4) 0;
+}
+
+@media (max-width: 640px) {
+  .compare-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.compare-card {
+  background: var(--color-surface);
+  border: 2px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: var(--space-4);
+}
+
+.compare-card--bt {
+  border-color: var(--color-blue);
+  background: linear-gradient(160deg, var(--color-blue-soft) 0%, var(--color-surface) 60%);
+}
+
+.compare-card--bm {
+  border-color: var(--color-orange);
+  background: linear-gradient(160deg, var(--color-orange-soft) 0%, var(--color-surface) 60%);
+}
+
+.compare-card__badge {
+  display: inline-block;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  border-radius: var(--radius-sm);
+  padding: 2px 8px;
+  margin-bottom: var(--space-2);
+}
+
+.compare-card--bt .compare-card__badge {
+  background: var(--color-blue-soft);
+  color: var(--color-blue-strong);
+  border: 1px solid var(--color-blue);
+}
+
+.compare-card--bm .compare-card__badge {
+  background: var(--color-orange-soft);
+  color: var(--color-orange-strong);
+  border: 1px solid var(--color-orange);
+}
+
+.compare-card__title {
+  font-size: 1rem;
+  font-weight: 700;
+  margin-bottom: var(--space-2);
+}
+
+.compare-card__formula {
+  font-family: var(--font-mono);
+  font-size: 1.2rem;
+  font-weight: 700;
+  margin: var(--space-2) 0;
+  padding: var(--space-3);
+  background: rgba(255, 255, 255, 0.6);
+  border-radius: var(--radius-sm);
+  text-align: center;
+}
+
+.compare-card--bt .compare-card__formula {
+  color: var(--color-blue-strong);
+}
+.compare-card--bm .compare-card__formula {
+  color: var(--color-orange-strong);
+}
+
+.compare-card__desc {
+  font-size: 0.85rem;
+  color: var(--color-ink-muted);
+  margin: 0;
+}
+
+/* Tabel perbandingan BT vs BM */
+.comparison-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: var(--space-4) 0;
+  font-size: 0.9rem;
+}
+
+.comparison-table th {
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--color-border);
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-align: center;
+  letter-spacing: 0.04em;
+}
+
+.comparison-table th.th-n {
+  background: var(--color-bg-grid);
+  color: var(--color-ink-muted);
+}
+
+.comparison-table th.th-bt {
+  background: var(--color-blue-soft);
+  color: var(--color-blue-strong);
+}
+
+.comparison-table th.th-bm {
+  background: var(--color-orange-soft);
+  color: var(--color-orange-strong);
+}
+
+.comparison-table th.th-diff {
+  background: var(--color-primary-soft);
+  color: var(--color-primary-strong);
+}
+
+.comparison-table td {
+  padding: var(--space-2) var(--space-3);
+  text-align: right;
+  border: 1px solid var(--color-border);
+  font-family: var(--font-mono);
+  font-size: 0.88rem;
+}
+
+.comparison-table td.td-n {
+  text-align: center;
+  background: var(--color-bg-grid);
+  font-weight: 700;
+}
+
+.comparison-table td.td-bt {
+  color: var(--color-blue-strong);
+}
+
+.comparison-table td.td-bm {
+  color: var(--color-orange-strong);
+  font-weight: 600;
+}
+
+.comparison-table td.td-diff {
+  color: var(--color-primary-strong);
+}
+
+.comparison-table tr:hover td {
+  opacity: 0.85;
+}
+
+/* Visual growth bar di tabel perbandingan */
+.growth-bar-wrap {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.growth-bar {
+  height: 10px;
+  border-radius: 5px;
+  min-width: 2px;
+  transition: width 0.3s ease;
+}
+
+.growth-bar--bt {
+  background: var(--color-blue);
+}
+.growth-bar--bm {
+  background: var(--color-orange);
+}
+
+/* =========================================================================
+   Kalkulator perbandingan interaktif
+   ========================================================================= */
+
+.interest-calc {
+  background: var(--color-bg-grid);
+  border-radius: var(--radius-md);
+  padding: var(--space-5);
+  margin: var(--space-4) 0;
+}
+
+.interest-calc__inputs {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
+}
+
+.interest-calc__result {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-3);
+  margin-bottom: var(--space-3);
+}
+
+@media (max-width: 480px) {
+  .interest-calc__result {
+    grid-template-columns: 1fr;
+  }
+}
+
+.interest-calc__result-card {
+  background: var(--color-surface);
+  border-radius: var(--radius-md);
+  padding: var(--space-3);
+  text-align: center;
+  border: 2px solid var(--color-border);
+}
+
+.interest-calc__result-card--bt {
+  border-color: var(--color-blue);
+}
+
+.interest-calc__result-card--bm {
+  border-color: var(--color-orange);
+}
+
+.interest-calc__result-card__label {
+  font-size: 0.78rem;
+  font-family: var(--font-mono);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  margin-bottom: var(--space-1);
+}
+
+.interest-calc__result-card--bt .interest-calc__result-card__label {
+  color: var(--color-blue);
+}
+
+.interest-calc__result-card--bm .interest-calc__result-card__label {
+  color: var(--color-orange);
+}
+
+.interest-calc__result-card__value {
+  font-family: var(--font-mono);
+  font-size: 1.3rem;
+  font-weight: 700;
+}
+
+.interest-calc__result-card--bt .interest-calc__result-card__value {
+  color: var(--color-blue-strong);
+}
+
+.interest-calc__result-card--bm .interest-calc__result-card__value {
+  color: var(--color-orange-strong);
+}
+
+.interest-calc__result-card__formula {
+  font-size: 0.75rem;
+  color: var(--color-ink-muted);
+  font-family: var(--font-mono);
+  margin-top: var(--space-1);
+}
+
+.interest-calc__winner {
+  text-align: center;
+  font-size: 0.9rem;
+  padding: var(--space-3);
+  border-radius: var(--radius-sm);
+  background: var(--color-primary-soft);
+  color: var(--color-primary-strong);
+  font-weight: 600;
+  margin-top: var(--space-2);
+}
+
+/* =========================================================================
+   Latihan soal
+   ========================================================================= */
+
+.exercise-progress {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+  margin-bottom: var(--space-4);
+}
+
+.exercise-progress__dot {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  font-weight: 700;
+  border: 2px solid var(--color-border-strong);
+  color: var(--color-ink-muted);
+  background: var(--color-surface);
+  cursor: default;
+}
+
+.exercise-progress__dot--current {
+  border-color: var(--color-primary);
+  color: var(--color-primary-strong);
+  background: var(--color-primary-soft);
+}
+
+.exercise-progress__dot--done {
+  border-color: var(--color-success);
+  color: var(--color-success-strong);
+  background: var(--color-success-soft);
+}
+
+.exercise-progress__dot--incorrect {
+  border-color: var(--color-error);
+  color: var(--color-error-strong);
+  background: var(--color-error-soft);
+}
+
+.exercise-label {
+  font-size: 0.82rem;
+  color: var(--color-ink-muted);
+  font-family: var(--font-mono);
+}
+
+/* Tipe badge pada soal latihan */
+.type-badge {
+  display: inline-block;
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  border-radius: 10px;
+  padding: 2px 8px;
+  margin-bottom: var(--space-2);
+  vertical-align: middle;
+}
+
+.type-badge--bt {
+  background: var(--color-blue-soft);
+  color: var(--color-blue-strong);
+  border: 1px solid var(--color-blue);
+}
+
+.type-badge--bm {
+  background: var(--color-orange-soft);
+  color: var(--color-orange-strong);
+  border: 1px solid var(--color-orange);
+}
+
+.type-badge--id {
+  background: var(--color-purple-soft);
+  color: var(--color-purple-strong);
+  border: 1px solid var(--color-purple);
+}
+
+/* Pilihan ganda */
+.choice-list {
+  list-style: none;
+  padding: 0;
+  margin: var(--space-3) 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.choice-btn {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  width: 100%;
+  text-align: left;
+  background: var(--color-surface);
+  border: 2px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: var(--space-3) var(--space-4);
+  font-family: var(--font-body);
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition:
+    border-color 0.12s,
+    background-color 0.12s;
+}
+
+.choice-btn:hover:not(:disabled) {
+  border-color: var(--color-primary);
+  background: var(--color-primary-soft);
+}
+
+.choice-btn.is-selected {
+  border-color: var(--color-primary);
+  background: var(--color-primary-soft);
+}
+
+.choice-btn.is-correct {
+  border-color: var(--color-success);
+  background: var(--color-success-soft);
+  color: var(--color-success-strong);
+}
+
+.choice-btn.is-wrong {
+  border-color: var(--color-error);
+  background: var(--color-error-soft);
+  color: var(--color-error-strong);
+}
+
+.choice-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+.choice-btn__key {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 28px;
+  height: 28px;
+  background: var(--color-bg-grid);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  font-weight: 700;
+  flex-shrink: 0;
+}
