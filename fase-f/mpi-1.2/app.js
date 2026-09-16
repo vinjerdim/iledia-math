@@ -272,15 +272,15 @@ function renderCurrentStage() {
   container.innerHTML = '';
   updateProgress();
   switch (State.currentStage) {
-    case 'orientasi':  renderOrientasi(container);  break;
+    case 'orientasi': renderOrientasi(container); break;
     case 'eksplorasi': renderEksplorasi(container); break;
-    case 'rumusUn':    renderRumusUn(container);    break;
-    case 'latihanUn':  renderLatihanUn(container);  break;
-    case 'ekspSn':     renderEkspSn(container);     break;
-    case 'latihanSn':  renderLatihanSn(container);  break;
-    case 'tantangan':  renderTantangan(container);  break;
-    case 'refleksi':   renderRefleksi(container);   break;
-    case 'selesai':    renderSelesai(container);    break;
+    case 'rumusUn': renderRumusUn(container); break;
+    case 'latihanUn': renderLatihanUn(container); break;
+    case 'ekspSn': renderEkspSn(container); break;
+    case 'latihanSn': renderLatihanSn(container); break;
+    case 'tantangan': renderTantangan(container); break;
+    case 'refleksi': renderRefleksi(container); break;
+    case 'selesai': renderSelesai(container); break;
     default: container.innerHTML = '<p style="padding:var(--space-5);">Tahap tidak ditemukan.</p>';
   }
 }
@@ -511,7 +511,7 @@ function renderEksplorasi(container) {
 
 function checkArAnswer(container, idx) {
   var ctx = DATA.eksplorasi.konteks[idx];
-  var fb  = document.getElementById('arFeedback');
+  var fb = document.getElementById('arFeedback');
   var inpA = document.getElementById('inputA');
   var inpR = document.getElementById('inputR');
   var errA = document.getElementById('errA');
@@ -522,9 +522,9 @@ function checkArAnswer(container, idx) {
   var pA = parseInputInt(inpA ? inpA.value : '');
   var pR = parseInputInt(inpR ? inpR.value : '');
 
-  if (pA.error === 'empty')   { if (errA) errA.textContent = 'Isi nilai a.'; return; }
+  if (pA.error === 'empty') { if (errA) errA.textContent = 'Isi nilai a.'; return; }
   if (pA.error === 'invalid') { if (errA) errA.textContent = 'Masukkan bilangan bulat.'; return; }
-  if (pR.error === 'empty')   { if (errR) errR.textContent = 'Isi nilai r.'; return; }
+  if (pR.error === 'empty') { if (errR) errR.textContent = 'Isi nilai r.'; return; }
   if (pR.error === 'invalid') { if (errR) errR.textContent = 'Masukkan bilangan bulat.'; return; }
 
   var correctA = pA.value === ctx.a;
@@ -658,7 +658,7 @@ function renderRumusUn(container) {
 function checkRumusUnStep(container, step) {
   var s = DATA.rumusUn.steps[step];
   var inp = document.getElementById('stepInput');
-  var fb  = document.getElementById('stepFeedback');
+  var fb = document.getElementById('stepFeedback');
   if (!inp || !fb) return;
 
   var parsed = parseInputInt(inp.value);
@@ -690,7 +690,7 @@ function checkRumusUnStep(container, step) {
 
 function renderLatihanUn(container) {
   var soal = DATA.latihanUn.soal;
-  var idx  = State.latihanUnIdx;
+  var idx = State.latihanUnIdx;
   var allDone = State.latihanUnExercises.every(function (e) { return e.correct || e.revealed; });
 
   if (allDone || idx >= soal.length) {
@@ -698,7 +698,7 @@ function renderLatihanUn(container) {
     return;
   }
 
-  var s  = soal[idx];
+  var s = soal[idx];
   var ex = State.latihanUnExercises[idx];
   var done = ex.correct || ex.revealed;
 
@@ -754,8 +754,8 @@ function renderLatihanUn(container) {
     (!done
       ? '<button type="button" class="btn btn--primary" id="checkUnBtn">Periksa Jawaban</button>'
       : (idx < soal.length - 1
-          ? '<button type="button" class="btn btn--primary" id="nextUnBtn">Lanjut →</button>'
-          : '<button type="button" class="btn btn--primary" id="summaryUnBtn">Lihat Ringkasan →</button>')
+        ? '<button type="button" class="btn btn--primary" id="nextUnBtn">Lanjut →</button>'
+        : '<button type="button" class="btn btn--primary" id="summaryUnBtn">Lihat Ringkasan →</button>')
     ) +
     '</div>' +
     '</div></div></section>';
@@ -823,8 +823,8 @@ function renderEkspSn(container) {
   var rsnHTML = buildDerivRow(r + 'S' + n + ' =', rsnDisplayTerms, 'rsn');
 
   /* Cancellation visual: rSₙ row with [0..n-2] cancelled, Sₙ row with [1..n-1] cancelled */
-  var cancelRsnHTML = buildDerivRowCancel(r + 'S' + n + ' =', rsnDisplayTerms, 'rsn', function(i) { return i < n - 1; });
-  var cancelSnHTML  = buildDerivRowCancel('S' + n + ' =', terms, 'sn', function(i) { return i > 0; });
+  var cancelRsnHTML = buildDerivRowCancel(r + 'S' + n + ' =', rsnDisplayTerms, 'rsn', function (i) { return i < n - 1; });
+  var cancelSnHTML = buildDerivRowCancel('S' + n + ' =', terms, 'sn', function (i) { return i > 0; });
   var resultVal = rsnDisplayTerms[n - 1] - terms[0]; /* arⁿ - a */
   var resultHTML = '<div class="geom-row">' +
     '<span class="geom-label-side">' + r + 'S' + n + ' − S' + n + ' =</span>' +
@@ -939,7 +939,7 @@ function renderEkspSn(container) {
   var checkVerif = document.getElementById('checkVerifBtn');
   if (checkVerif) checkVerif.addEventListener('click', function () {
     var inp = document.getElementById('verifInput');
-    var fb  = document.getElementById('verifFeedback');
+    var fb = document.getElementById('verifFeedback');
     if (!inp || !fb) return;
     State.ekspSnVerifInput = inp.value;
     var parsed = parseInputInt(inp.value);
@@ -998,7 +998,7 @@ function buildDerivRowCancel(label, termValues, cellClass, isCancelledFn) {
 
 function renderLatihanSn(container) {
   var soal = DATA.latihanSn.soal;
-  var idx  = State.latihanSnIdx;
+  var idx = State.latihanSnIdx;
   var allDone = State.latihanSnExercises.every(function (e) { return e.correct || e.revealed; });
 
   if (allDone || idx >= soal.length) {
@@ -1006,7 +1006,7 @@ function renderLatihanSn(container) {
     return;
   }
 
-  var s  = soal[idx];
+  var s = soal[idx];
   var ex = State.latihanSnExercises[idx];
   var done = ex.correct || ex.revealed;
 
@@ -1060,8 +1060,8 @@ function renderLatihanSn(container) {
     (!done
       ? '<button type="button" class="btn btn--primary" id="checkSnBtn">Periksa Jawaban</button>'
       : (idx < soal.length - 1
-          ? '<button type="button" class="btn btn--primary" id="nextSnBtn">Lanjut →</button>'
-          : '<button type="button" class="btn btn--primary" id="summarySnBtn">Lihat Ringkasan →</button>')
+        ? '<button type="button" class="btn btn--primary" id="nextSnBtn">Lanjut →</button>'
+        : '<button type="button" class="btn btn--primary" id="summarySnBtn">Lihat Ringkasan →</button>')
     ) +
     '</div>' +
     '</div></div></section>';
@@ -1156,10 +1156,10 @@ function attachInputExerciseEvents(container, inputId, errId, checkId, hintId, p
 }
 
 function checkInputExercise(container, idx, exercises, soal, stateKey) {
-  var s  = soal[idx];
+  var s = soal[idx];
   var ex = exercises[idx];
   var input = document.getElementById(stateKey === 'latihanUn' ? 'latihanUnInput' : 'latihanSnInput');
-  var errEl = document.getElementById(stateKey === 'latihanUn' ? 'latihanUnErr'   : 'latihanSnErr');
+  var errEl = document.getElementById(stateKey === 'latihanUn' ? 'latihanUnErr' : 'latihanSnErr');
   if (!input || !errEl) return;
 
   errEl.textContent = '';
@@ -1188,7 +1188,7 @@ function checkInputExercise(container, idx, exercises, soal, stateKey) {
 
 function renderTantangan(container) {
   var soal = DATA.tantangan.soal;
-  var idx  = State.tantanganIdx;
+  var idx = State.tantanganIdx;
   var allDone = State.tantanganExercises.every(function (e) { return e.checked; });
 
   if (allDone || idx >= soal.length) {
@@ -1196,7 +1196,7 @@ function renderTantangan(container) {
     return;
   }
 
-  var s  = soal[idx];
+  var s = soal[idx];
   var ex = State.tantanganExercises[idx];
   var done = ex.checked;
 
@@ -1272,8 +1272,8 @@ function renderTantangan(container) {
     (!done
       ? '<button type="button" class="btn btn--primary" id="checkTBtn">Periksa</button>'
       : (idx < soal.length - 1
-          ? '<button type="button" class="btn btn--primary" id="nextTBtn">Lanjut →</button>'
-          : '<button type="button" class="btn btn--primary" id="summaryTBtn">Lihat Ringkasan →</button>')
+        ? '<button type="button" class="btn btn--primary" id="nextTBtn">Lanjut →</button>'
+        : '<button type="button" class="btn btn--primary" id="summaryTBtn">Lihat Ringkasan →</button>')
     ) +
     '</div>' +
     '</div></div></section>';
@@ -1313,7 +1313,7 @@ function renderTantangan(container) {
 }
 
 function checkTantangan(container, idx) {
-  var s  = DATA.tantangan.soal[idx];
+  var s = DATA.tantangan.soal[idx];
   var ex = State.tantanganExercises[idx];
   var errEl = document.getElementById('tantanganErr');
   if (errEl) errEl.textContent = '';
@@ -1436,9 +1436,9 @@ function renderRefleksi(container) {
 function renderSelesai(container) {
   var correctUn = State.latihanUnExercises.filter(function (e) { return e.correct; }).length;
   var correctSn = State.latihanSnExercises.filter(function (e) { return e.correct; }).length;
-  var correctT  = State.tantanganExercises.filter(function (e) { return e.correct; }).length;
+  var correctT = State.tantanganExercises.filter(function (e) { return e.correct; }).length;
   var totalScore = correctUn + correctSn + correctT;
-  var maxScore   = DATA.latihanUn.soal.length + DATA.latihanSn.soal.length + DATA.tantangan.soal.length;
+  var maxScore = DATA.latihanUn.soal.length + DATA.latihanSn.soal.length + DATA.tantangan.soal.length;
 
   container.innerHTML =
     '<section aria-label="Selesai">' +

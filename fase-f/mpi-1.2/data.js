@@ -74,12 +74,12 @@ var DATA = {
     r: 2,
     konteks: 'Pengguna App: 500, 1.000, 2.000, 4.000, 8.000, ... (a = 500, r = 2)',
     tableRows: [
-      { n: 1, bentuk: 'a',             nilai_r: 'r⁰ = 1',  Un: 500   },
-      { n: 2, bentuk: 'a × r',         nilai_r: 'r¹ = 2',  Un: 1000  },
-      { n: 3, bentuk: 'a × r²',        nilai_r: 'r² = 4',  Un: 2000  },
-      { n: 4, bentuk: 'a × r³',        nilai_r: 'r³ = 8',  Un: 4000  },
-      { n: 5, bentuk: 'a × r⁴',        nilai_r: 'r⁴ = 16', Un: 8000  },
-      { n: 'n', bentuk: 'a × rⁿ⁻¹',   nilai_r: 'rⁿ⁻¹',   Un: null  }
+      { n: 1, bentuk: 'a', nilai_r: 'r⁰ = 1', Un: 500 },
+      { n: 2, bentuk: 'a × r', nilai_r: 'r¹ = 2', Un: 1000 },
+      { n: 3, bentuk: 'a × r²', nilai_r: 'r² = 4', Un: 2000 },
+      { n: 4, bentuk: 'a × r³', nilai_r: 'r³ = 8', Un: 4000 },
+      { n: 5, bentuk: 'a × r⁴', nilai_r: 'r⁴ = 16', Un: 8000 },
+      { n: 'n', bentuk: 'a × rⁿ⁻¹', nilai_r: 'rⁿ⁻¹', Un: null }
     ],
     steps: [
       {
