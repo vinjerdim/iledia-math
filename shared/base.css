@@ -5,18 +5,18 @@
    ========================================================================= */
 
 :root {
-  --color-bg: #f7f7f2;
-  --color-bg-grid: #eeede4;
+  --color-bg: #f7f8f5;
+  --color-bg-grid: #edeee8;
   --color-surface: #ffffff;
-  --color-border: #d9d6cb;
-  --color-border-strong: #b9b6aa;
+  --color-border: #d6d8d0;
+  --color-border-strong: #b8bbb2;
   --color-ink: #21262b;
   --color-ink-muted: #565c5f;
 
-  /* primary — forest green for math */
-  --color-primary: #1a6b4a;
-  --color-primary-soft: #d8ede3;
-  --color-primary-strong: #114a33;
+  /* primary */
+  --color-primary: #2563eb;
+  --color-primary-soft: #eff6ff;
+  --color-primary-strong: #1d4ed8;
 
   /* accents */
   --color-blue: #1856a4;
@@ -39,7 +39,7 @@
   --color-warning: #8a6200;
   --color-warning-soft: #fdf3d0;
   --color-warning-strong: #6a4c00;
-  --color-focus: #1a6b4a;
+  --color-focus: #2563eb;
 
   --font-display:
     'Avenir Next', 'Segoe UI Semibold', 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
