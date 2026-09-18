@@ -1,4 +1,4 @@
-"use strict";
+'use strict';
 
 /* ============================================================
    app.js — Logika aplikasi media pembelajaran
@@ -26,21 +26,21 @@
    ============================================================ */
 
 function parseInputInt(str) {
-  if (!str || str.trim() === "") return { value: null, error: "empty" };
-  var trimmed = str.trim().replace(/\s/g, "");
-  if (!/^-?\d+$/.test(trimmed)) return { value: null, error: "invalid" };
+  if (!str || str.trim() === '') return { value: null, error: 'empty' };
+  var trimmed = str.trim().replace(/\s/g, '');
+  if (!/^-?\d+$/.test(trimmed)) return { value: null, error: 'invalid' };
   var v = parseInt(trimmed, 10);
-  if (isNaN(v)) return { value: null, error: "invalid" };
+  if (isNaN(v)) return { value: null, error: 'invalid' };
   return { value: v, error: null };
 }
 
 function esc(str) {
   var m = {
-    "&": "&amp;",
-    "<": "&lt;",
-    ">": "&gt;",
-    '"': "&quot;",
-    "'": "&#39;",
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#39;',
   };
   return String(str).replace(/[&<>"']/g, function (ch) {
     return m[ch];
@@ -52,35 +52,35 @@ function esc(str) {
    ============================================================ */
 
 var STAGES = [
-  "orientasi",
-  "kenaliBulat",
-  "garisBilangan",
-  "membandingkan",
-  "mengurutkan",
-  "situasiNyata",
-  "refleksi",
-  "selesai",
+  'orientasi',
+  'kenaliBulat',
+  'garisBilangan',
+  'membandingkan',
+  'mengurutkan',
+  'situasiNyata',
+  'refleksi',
+  'selesai',
 ];
 
 var STAGE_LABELS = [
-  "Orientasi",
-  "Kenali",
-  "Garis Bilangan",
-  "Bandingkan",
-  "Urutkan",
-  "Situasi Nyata",
-  "Refleksi",
-  "Selesai",
+  'Orientasi',
+  'Kenali',
+  'Garis Bilangan',
+  'Bandingkan',
+  'Urutkan',
+  'Situasi Nyata',
+  'Refleksi',
+  'Selesai',
 ];
 
-var STORAGE_KEY = "mpi-d-1-1-bilbulat-v1";
+var STORAGE_KEY = 'mpi-d-1-1-bilbulat-v1';
 
 /* ============================================================
    3. STATE & STORAGE
    ============================================================ */
 
 var State = {
-  currentStage: "orientasi",
+  currentStage: 'orientasi',
   completedStages: {},
 
   /* Kenali Bilangan Bulat */
@@ -133,7 +133,7 @@ function clearState() {
   } catch (e) {
     /* ignore */
   }
-  State.currentStage = "orientasi";
+  State.currentStage = 'orientasi';
   State.completedStages = {};
   State.kenaliCtxIdx = 0;
   State.kenaliSeen = [];
@@ -151,10 +151,7 @@ function clearState() {
 }
 
 function initExerciseArrays() {
-  if (
-    !State.kenaliSeen ||
-    State.kenaliSeen.length !== DATA.kenaliBulat.konteks.length
-  ) {
+  if (!State.kenaliSeen || State.kenaliSeen.length !== DATA.kenaliBulat.konteks.length) {
     State.kenaliSeen = DATA.kenaliBulat.konteks.map(function () {
       return false;
     });
@@ -168,7 +165,7 @@ function initExerciseArrays() {
         attempts: 0,
         hintShown: false,
         correct: false,
-        userInput: "",
+        userInput: '',
         revealed: false,
       };
     });
@@ -211,9 +208,7 @@ function navigateTo(stageId) {
   if (targetIdx > currentIdx) {
     for (var i = currentIdx; i < targetIdx; i++) {
       if (!State.completedStages[STAGES[i]]) {
-        showNotice(
-          'Selesaikan tahap "' + STAGE_LABELS[i] + '" terlebih dahulu.',
-        );
+        showNotice('Selesaikan tahap "' + STAGE_LABELS[i] + '" terlebih dahulu.');
         return;
       }
     }
@@ -223,7 +218,7 @@ function navigateTo(stageId) {
   saveState();
   updateStageNav();
   renderCurrentStage();
-  window.scrollTo({ top: 0, behavior: "smooth" });
+  window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
 function completeStage(stageId) {
@@ -234,39 +229,38 @@ function completeStage(stageId) {
 }
 
 function updateStageNav() {
-  var items = document.querySelectorAll(".stage-nav__item");
+  var items = document.querySelectorAll('.stage-nav__item');
   var currentIdx = STAGES.indexOf(State.currentStage);
   items.forEach(function (item) {
     var sid = item.dataset.stage;
     var idx = STAGES.indexOf(sid);
-    item.removeAttribute("aria-current");
-    item.classList.remove("is-complete");
+    item.removeAttribute('aria-current');
+    item.classList.remove('is-complete');
     item.disabled = false;
-    if (sid === State.currentStage) item.setAttribute("aria-current", "step");
-    else if (State.completedStages[sid]) item.classList.add("is-complete");
-    if (idx > currentIdx && !State.completedStages[STAGES[idx - 1]])
-      item.disabled = true;
+    if (sid === State.currentStage) item.setAttribute('aria-current', 'step');
+    else if (State.completedStages[sid]) item.classList.add('is-complete');
+    if (idx > currentIdx && !State.completedStages[STAGES[idx - 1]]) item.disabled = true;
   });
 }
 
 function buildStageNav() {
-  var list = document.getElementById("stageNavList");
+  var list = document.getElementById('stageNavList');
   if (!list) return;
   list.innerHTML = STAGES.map(function (sid, i) {
     return (
-      "<li>" +
+      '<li>' +
       '<button type="button" class="stage-nav__item" data-stage="' +
       sid +
       '">' +
       '<span class="stage-nav__num">' +
       (i + 1) +
-      "</span>" +
+      '</span>' +
       esc(STAGE_LABELS[i]) +
-      "</button></li>"
+      '</button></li>'
     );
-  }).join("");
-  list.querySelectorAll(".stage-nav__item").forEach(function (btn) {
-    btn.addEventListener("click", function () {
+  }).join('');
+  list.querySelectorAll('.stage-nav__item').forEach(function (btn) {
+    btn.addEventListener('click', function () {
       navigateTo(btn.dataset.stage);
     });
   });
@@ -277,13 +271,13 @@ function updateProgress() {
   var total = STAGES.length;
   var done = Object.keys(State.completedStages).length;
   var pct = Math.round((done / total) * 100);
-  var fill = document.getElementById("progressFill");
-  var label = document.getElementById("progressLabel");
+  var fill = document.getElementById('progressFill');
+  var label = document.getElementById('progressLabel');
   if (fill) {
-    fill.style.width = pct + "%";
-    fill.parentElement.setAttribute("aria-valuenow", pct);
+    fill.style.width = pct + '%';
+    fill.parentElement.setAttribute('aria-valuenow', pct);
   }
-  if (label) label.textContent = done + " dari " + total + " tahap selesai";
+  if (label) label.textContent = done + ' dari ' + total + ' tahap selesai';
 }
 
 /* ============================================================
@@ -297,41 +291,32 @@ function buildFeedbackBox(type, icon, html) {
     '" role="alert">' +
     '<span class="feedback-box__icon" aria-hidden="true">' +
     icon +
-    "</span>" +
+    '</span>' +
     '<div class="feedback-box__body">' +
     html +
-    "</div>" +
-    "</div>"
+    '</div>' +
+    '</div>'
   );
 }
 
 function buildProgressDots(total, current, statuses) {
-  var dots = "";
+  var dots = '';
   for (var i = 0; i < total; i++) {
-    var cls = "exercise-progress__dot";
-    if (i === current) cls += " exercise-progress__dot--current";
-    else if (statuses && statuses[i] === "correct")
-      cls += " exercise-progress__dot--done";
-    else if (statuses && statuses[i] === "incorrect")
-      cls += " exercise-progress__dot--incorrect";
-    dots +=
-      '<span class="' +
-      cls +
-      '" title="Soal ' +
-      (i + 1) +
-      '">' +
-      (i + 1) +
-      "</span>";
+    var cls = 'exercise-progress__dot';
+    if (i === current) cls += ' exercise-progress__dot--current';
+    else if (statuses && statuses[i] === 'correct') cls += ' exercise-progress__dot--done';
+    else if (statuses && statuses[i] === 'incorrect') cls += ' exercise-progress__dot--incorrect';
+    dots += '<span class="' + cls + '" title="Soal ' + (i + 1) + '">' + (i + 1) + '</span>';
   }
   return (
     '<div class="exercise-progress" aria-label="Progress soal">' +
     dots +
     '<span class="exercise-label">Soal ' +
     (current + 1) +
-    " dari " +
+    ' dari ' +
     total +
-    "</span>" +
-    "</div>"
+    '</span>' +
+    '</div>'
   );
 }
 
@@ -348,15 +333,15 @@ function buildNumberLineSVG(value, min, max) {
     return padX + ((v - min) / (max - min)) * (W - 2 * padX);
   }
 
-  var ticks = "";
-  var labels = "";
+  var ticks = '';
+  var labels = '';
   for (var v = min; v <= max; v++) {
     var x = xOf(v);
     var isMajor = v % 5 === 0;
     var h = isMajor ? majorH : tickH;
     ticks +=
       '<line class="nl-tick' +
-      (isMajor ? " nl-tick--major" : "") +
+      (isMajor ? ' nl-tick--major' : '') +
       '" x1="' +
       x +
       '" y1="' +
@@ -367,23 +352,14 @@ function buildNumberLineSVG(value, min, max) {
       (axisY + h / 2) +
       '"/>';
     if (isMajor || v === 0) {
-      var lCls = v === 0 ? "nl-label nl-label--zero" : "nl-label";
+      var lCls = v === 0 ? 'nl-label nl-label--zero' : 'nl-label';
       labels +=
-        '<text class="' +
-        lCls +
-        '" x="' +
-        x +
-        '" y="' +
-        (axisY + h / 2 + 4) +
-        '">' +
-        v +
-        "</text>";
+        '<text class="' + lCls + '" x="' + x + '" y="' + (axisY + h / 2 + 4) + '">' + v + '</text>';
     }
   }
 
   var px = xOf(value);
-  var point =
-    '<circle class="nl-point" cx="' + px + '" cy="' + axisY + '" r="8"/>';
+  var point = '<circle class="nl-point" cx="' + px + '" cy="' + axisY + '" r="8"/>';
   var isNeg = value < 0;
   var ptLabel =
     '<text class="nl-point-label" x="' +
@@ -391,47 +367,47 @@ function buildNumberLineSVG(value, min, max) {
     '" y="' +
     (axisY - 14) +
     '">' +
-    (isNeg ? value : "+" + value === "+0" ? "0" : value) +
-    "</text>";
+    (isNeg ? value : '+' + value === '+0' ? '0' : value) +
+    '</text>';
 
   var arrowL = padX - 10;
   var arrowR = W - padX + 10;
   var arrowHead =
     '<polygon class="nl-arrow" points="' +
     arrowR +
-    "," +
+    ',' +
     axisY +
-    " " +
+    ' ' +
     (arrowR - 8) +
-    "," +
+    ',' +
     (axisY - 4) +
-    " " +
+    ' ' +
     (arrowR - 8) +
-    "," +
+    ',' +
     (axisY + 4) +
     '"/>' +
     '<polygon class="nl-arrow" points="' +
     arrowL +
-    "," +
+    ',' +
     axisY +
-    " " +
+    ' ' +
     (arrowL + 8) +
-    "," +
+    ',' +
     (axisY - 4) +
-    " " +
+    ' ' +
     (arrowL + 8) +
-    "," +
+    ',' +
     (axisY + 4) +
     '"/>';
 
   return (
     '<svg class="numberline-svg" viewBox="0 0 ' +
     W +
-    " " +
+    ' ' +
     H +
     '" xmlns="http://www.w3.org/2000/svg" aria-label="Garis bilangan dari ' +
     min +
-    " hingga " +
+    ' hingga ' +
     max +
     '">' +
     '<line class="nl-axis" x1="' +
@@ -448,38 +424,38 @@ function buildNumberLineSVG(value, min, max) {
     point +
     ptLabel +
     arrowHead +
-    "</svg>"
+    '</svg>'
   );
 }
 
 function renderCurrentStage() {
-  var container = document.getElementById("stageContainer");
+  var container = document.getElementById('stageContainer');
   if (!container) return;
-  container.innerHTML = "";
+  container.innerHTML = '';
   updateProgress();
   switch (State.currentStage) {
-    case "orientasi":
+    case 'orientasi':
       renderOrientasi(container);
       break;
-    case "kenaliBulat":
+    case 'kenaliBulat':
       renderKenaliBulat(container);
       break;
-    case "garisBilangan":
+    case 'garisBilangan':
       renderGarisBilangan(container);
       break;
-    case "membandingkan":
+    case 'membandingkan':
       renderMembandingkan(container);
       break;
-    case "mengurutkan":
+    case 'mengurutkan':
       renderMengurutkan(container);
       break;
-    case "situasiNyata":
+    case 'situasiNyata':
       renderSituasiNyata(container);
       break;
-    case "refleksi":
+    case 'refleksi':
       renderRefleksi(container);
       break;
-    case "selesai":
+    case 'selesai':
       renderSelesai(container);
       break;
     default:
@@ -499,12 +475,12 @@ function renderOrientasi(container) {
     '<span class="stage-head__kicker">TAHAP 1 — MEMAHAMI KONTEKS</span>' +
     '<p class="stage-head__goal">Tujuan: ' +
     esc(DATA.meta.goal) +
-    "</p>" +
-    "</div>" +
+    '</p>' +
+    '</div>' +
     '<div class="panel panel--hero">' +
-    "<h2>" +
+    '<h2>' +
     esc(DATA.meta.title) +
-    "</h2>" +
+    '</h2>' +
     '<p style="font-size:1.05rem;"><strong>Dalam kehidupan sehari-hari,</strong> kita sering menemukan situasi yang membutuhkan bilangan di bawah nol — suhu dingin, lantai basement, atau saldo rekening yang minus. Bilangan-bilangan ini disebut <strong>bilangan bulat negatif</strong>.</p>' +
     '<div class="panel panel--info" style="margin-bottom:0;">' +
     '<h3 style="margin-bottom:var(--space-2);">Dalam media ini kamu akan:</h3>' +
@@ -514,37 +490,37 @@ function renderOrientasi(container) {
     '<li><span class="objectives-list__num">3</span>Membandingkan dua bilangan bulat menggunakan notasi <strong>&lt;, &gt;, =</strong>.</li>' +
     '<li><span class="objectives-list__num">4</span>Mengurutkan sekelompok bilangan bulat dari terkecil ke terbesar.</li>' +
     '<li><span class="objectives-list__num">5</span>Menggunakan bilangan bulat untuk <strong>memodelkan situasi nyata</strong> (suhu, ketinggian, skor, keuangan).</li>' +
-    "</ol></div></div>" +
+    '</ol></div></div>' +
     '<div class="panel panel--compact">' +
-    "<h3>Bilangan Bulat di Sekitar Kita</h3>" +
-    "<p>Pernahkah kamu memperhatikan bilangan-bilangan seperti ini?</p>" +
-    "<ul>" +
-    "<li>Suhu di puncak gunung yang bisa mencapai <strong>−5°C</strong></li>" +
-    "<li>Tombol lift bertuliskan <strong>B2, B1, 0, 1, 2, 3</strong> untuk basement dan lantai</li>" +
-    "<li>Skor permainan yang bisa bernilai <strong>negatif</strong> karena jawaban salah</li>" +
-    "<li>Kedalaman kapal selam dinyatakan dengan bilangan <strong>negatif</strong> (misal: −50 m)</li>" +
-    "</ul>" +
-    "<p>Semua itu merupakan contoh penggunaan <strong>bilangan bulat</strong> dalam kehidupan nyata.</p>" +
-    "</div>" +
+    '<h3>Bilangan Bulat di Sekitar Kita</h3>' +
+    '<p>Pernahkah kamu memperhatikan bilangan-bilangan seperti ini?</p>' +
+    '<ul>' +
+    '<li>Suhu di puncak gunung yang bisa mencapai <strong>−5°C</strong></li>' +
+    '<li>Tombol lift bertuliskan <strong>B2, B1, 0, 1, 2, 3</strong> untuk basement dan lantai</li>' +
+    '<li>Skor permainan yang bisa bernilai <strong>negatif</strong> karena jawaban salah</li>' +
+    '<li>Kedalaman kapal selam dinyatakan dengan bilangan <strong>negatif</strong> (misal: −50 m)</li>' +
+    '</ul>' +
+    '<p>Semua itu merupakan contoh penggunaan <strong>bilangan bulat</strong> dalam kehidupan nyata.</p>' +
+    '</div>' +
     '<div class="panel panel--compact">' +
-    "<h3>Cara Menggunakan Media Ini</h3>" +
+    '<h3>Cara Menggunakan Media Ini</h3>' +
     '<div class="hero-steps">' +
     '<div class="hero-steps__item"><span class="hero-steps__num">1</span>Kerjakan tahap dari kiri ke kanan. Setiap tahap harus diselesaikan sebelum lanjut.</div>' +
     '<div class="hero-steps__item"><span class="hero-steps__num">2</span>Setiap aktivitas memiliki tombol <strong>Periksa</strong>, <strong>Petunjuk</strong>, dan <strong>Coba Lagi</strong>.</div>' +
     '<div class="hero-steps__item"><span class="hero-steps__num">3</span>Baca umpan balik dengan teliti — penjelasannya akan membantumu memahami konsepnya.</div>' +
     '<div class="hero-steps__item"><span class="hero-steps__num">4</span>Progress tersimpan otomatis di browser ini.</div>' +
-    "</div></div>" +
+    '</div></div>' +
     '<div class="panel panel--compact panel--warning">' +
     '<p style="margin:0;font-size:0.88rem;color:var(--color-warning-strong);">' +
-    "<strong>Catatan:</strong> Media ini adalah panduan belajar mandiri. Diskusi dan asesmen bersama guru tetap menjadi bagian utama dari proses belajarmu." +
-    "</p></div>" +
+    '<strong>Catatan:</strong> Media ini adalah panduan belajar mandiri. Diskusi dan asesmen bersama guru tetap menjadi bagian utama dari proses belajarmu.' +
+    '</p></div>' +
     '<div class="btn-group btn-group--end">' +
     '<button type="button" class="btn btn--primary btn--large" id="startBtn">Mulai Eksplorasi →</button>' +
-    "</div></section>";
+    '</div></section>';
 
-  document.getElementById("startBtn").addEventListener("click", function () {
-    completeStage("orientasi");
-    navigateTo("kenaliBulat");
+  document.getElementById('startBtn').addEventListener('click', function () {
+    completeStage('orientasi');
+    navigateTo('kenaliBulat');
   });
 }
 
@@ -568,9 +544,9 @@ function renderKenaliBulat(container) {
   /* Tab navigation HTML */
   var tabsHTML = ctxList
     .map(function (c, i) {
-      var active = i === idx ? ' aria-current="step"' : "";
-      var done = State.kenaliSeen[i] ? " is-complete" : "";
-      var check = State.kenaliSeen[i] ? "&#10003; " : "";
+      var active = i === idx ? ' aria-current="step"' : '';
+      var done = State.kenaliSeen[i] ? ' is-complete' : '';
+      var check = State.kenaliSeen[i] ? '&#10003; ' : '';
       return (
         '<button type="button" class="stage-nav__item' +
         done +
@@ -580,105 +556,99 @@ function renderKenaliBulat(container) {
         i +
         '">' +
         '<span class="stage-nav__num">' +
-        (State.kenaliSeen[i] ? "&#10003;" : i + 1) +
-        "</span>" +
+        (State.kenaliSeen[i] ? '&#10003;' : i + 1) +
+        '</span>' +
         esc(c.badge) +
-        "</button>"
+        '</button>'
       );
     })
-    .join("");
+    .join('');
 
   /* Items HTML */
   var itemsHTML = ctx.items
     .map(function (item) {
-      var colorCls = "int-item--" + item.color;
+      var colorCls = 'int-item--' + item.color;
       return (
         '<div class="int-item ' +
         colorCls +
         '">' +
         '<div class="int-item__value">' +
-        (item.value >= 0
-          ? item.value === 0
-            ? "0"
-            : "+" + item.value
-          : item.value) +
-        "</div>" +
+        (item.value >= 0 ? (item.value === 0 ? '0' : '+' + item.value) : item.value) +
+        '</div>' +
         '<div class="int-item__info">' +
         '<div class="int-item__label">' +
         esc(item.label) +
-        "</div>" +
+        '</div>' +
         '<div class="int-item__note">' +
         esc(item.note) +
-        "</div>" +
-        "</div>" +
-        (ctx.unit
-          ? '<div class="int-item__unit">' + esc(ctx.unit) + "</div>"
-          : "") +
-        "</div>"
+        '</div>' +
+        '</div>' +
+        (ctx.unit ? '<div class="int-item__unit">' + esc(ctx.unit) + '</div>' : '') +
+        '</div>'
       );
     })
-    .join("");
+    .join('');
 
   container.innerHTML =
     '<section aria-label="Kenali Bilangan Bulat">' +
     '<div class="stage-head">' +
     '<span class="stage-head__kicker">TAHAP 2 — EKSPLORASI</span>' +
     '<p class="stage-head__goal">Tujuan: Memahami makna bilangan bulat positif, nol, dan negatif melalui konteks kehidupan nyata.</p>' +
-    "</div>" +
+    '</div>' +
     '<div class="panel">' +
     '<p style="font-size:0.88rem;color:var(--color-ink-muted);margin-bottom:var(--space-3);">' +
     esc(DATA.kenaliBulat.instruction) +
-    "</p>" +
+    '</p>' +
     '<div class="ctx-tabs">' +
     tabsHTML +
-    "</div>" +
+    '</div>' +
     '<div class="panel panel--hero" style="margin-bottom:var(--space-3);">' +
     '<div style="display:flex;align-items:center;gap:var(--space-3);flex-wrap:wrap;margin-bottom:var(--space-3);">' +
     '<span style="font-size:2rem;">' +
     ctx.icon +
-    "</span>" +
-    "<div>" +
+    '</span>' +
+    '<div>' +
     '<span class="badge-chip">' +
     esc(ctx.badge) +
-    "</span>" +
+    '</span>' +
     '<p style="margin:var(--space-1) 0 0;font-size:0.92rem;">' +
     esc(ctx.story) +
-    "</p>" +
-    "</div></div>" +
+    '</p>' +
+    '</div></div>' +
     '<div class="int-item-list">' +
     itemsHTML +
-    "</div>" +
-    "</div>" +
+    '</div>' +
+    '</div>' +
     '<div class="insight-box">' +
     '<span class="insight-box__icon">💡</span>' +
-    "<div>" +
+    '<div>' +
     esc(ctx.insight) +
-    "</div>" +
-    "</div>" +
-    "</div>" +
+    '</div>' +
+    '</div>' +
+    '</div>' +
     (allSeen
       ? '<div class="btn-group btn-group--end">' +
         '<button type="button" class="btn btn--primary btn--large" id="nextKenaliBtn">Lanjut: Garis Bilangan →</button>' +
-        "</div>"
+        '</div>'
       : '<p style="text-align:center;font-size:0.85rem;color:var(--color-ink-muted);margin-top:var(--space-3);">Jelajahi semua ' +
         ctxList.length +
-        " konteks untuk melanjutkan.</p>") +
-    "</section>";
+        ' konteks untuk melanjutkan.</p>') +
+    '</section>';
 
   /* Tab click events */
-  container.querySelectorAll("[data-ctx-idx]").forEach(function (btn) {
-    btn.addEventListener("click", function () {
+  container.querySelectorAll('[data-ctx-idx]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
       State.kenaliCtxIdx = parseInt(btn.dataset.ctxIdx, 10);
       saveState();
       renderKenaliBulat(container);
     });
   });
 
-  var nextBtn = document.getElementById("nextKenaliBtn");
+  var nextBtn = document.getElementById('nextKenaliBtn');
   if (nextBtn)
-    nextBtn.addEventListener("click", function () {
-      completeStage("kenaliBulat");
-      navigateTo("garisBilangan");
+    nextBtn.addEventListener('click', function () {
+      completeStage('kenaliBulat');
+      navigateTo('garisBilangan');
     });
 }
 
@@ -698,42 +668,34 @@ function renderGarisBilangan(container) {
     }).length === soal.length;
 
   var statuses = exArr.map(function (e) {
-    return e.correct ? "correct" : e.attempts > 0 ? "incorrect" : null;
+    return e.correct ? 'correct' : e.attempts > 0 ? 'incorrect' : null;
   });
   var dotsHTML = buildProgressDots(soal.length, idx, statuses);
 
   var svgHTML = buildNumberLineSVG(s.nilai, -10, 10);
 
-  var feedbackHTML = "";
+  var feedbackHTML = '';
   if (ex.correct) {
-    feedbackHTML = buildFeedbackBox(
-      "success",
-      "✓",
-      "<strong>Tepat!</strong> " + s.explanation,
-    );
+    feedbackHTML = buildFeedbackBox('success', '✓', '<strong>Tepat!</strong> ' + s.explanation);
   } else if (ex.revealed) {
     feedbackHTML = buildFeedbackBox(
-      "info",
-      "👁",
-      "<strong>Jawaban:</strong> " + s.nilai + ". " + s.explanation,
+      'info',
+      '👁',
+      '<strong>Jawaban:</strong> ' + s.nilai + '. ' + s.explanation
     );
   } else if (ex.hintShown) {
-    feedbackHTML = buildFeedbackBox(
-      "warning",
-      "💡",
-      "<strong>Petunjuk:</strong> " + s.hint,
-    );
+    feedbackHTML = buildFeedbackBox('warning', '💡', '<strong>Petunjuk:</strong> ' + s.hint);
   } else if (ex.attempts > 0) {
     feedbackHTML = buildFeedbackBox(
-      "error",
-      "✗",
-      "Jawabanmu <strong>" +
+      'error',
+      '✗',
+      'Jawabanmu <strong>' +
         esc(ex.userInput) +
-        "</strong> belum tepat. Coba lagi atau lihat petunjuk.",
+        '</strong> belum tepat. Coba lagi atau lihat petunjuk.'
     );
   }
 
-  var actionHTML = "";
+  var actionHTML = '';
   if (!ex.correct && !ex.revealed) {
     actionHTML =
       '<div class="gb-input-row">' +
@@ -742,12 +704,12 @@ function renderGarisBilangan(container) {
       '">' +
       '<button type="button" class="btn btn--primary" id="gbCheckBtn">Periksa</button>' +
       '<button type="button" class="btn btn--ghost btn--small" id="gbHintBtn">💡 Petunjuk</button>' +
-      "</div>";
+      '</div>';
   } else if (!ex.correct && ex.revealed) {
-    actionHTML = "";
+    actionHTML = '';
   }
 
-  var navHTML = "";
+  var navHTML = '';
   if (ex.correct || ex.revealed) {
     if (idx < soal.length - 1) {
       navHTML =
@@ -768,49 +730,47 @@ function renderGarisBilangan(container) {
     '<div class="stage-head">' +
     '<span class="stage-head__kicker">TAHAP 3 — GARIS BILANGAN</span>' +
     '<p class="stage-head__goal">Tujuan: Membaca posisi bilangan bulat pada garis bilangan.</p>' +
-    "</div>" +
+    '</div>' +
     '<div class="panel">' +
     '<p style="font-size:0.88rem;color:var(--color-ink-muted);margin-bottom:var(--space-3);">' +
     esc(DATA.garisBilangan.instruction) +
-    "</p>" +
+    '</p>' +
     dotsHTML +
     '<div class="gb-exercise">' +
     '<p class="gb-question">Bilangan apakah yang ditunjukkan oleh titik merah pada garis bilangan di bawah ini?</p>' +
     '<div class="numberline-wrap">' +
     svgHTML +
-    "</div>" +
+    '</div>' +
     actionHTML +
-    (feedbackHTML
-      ? '<div style="margin-top:var(--space-3);">' + feedbackHTML + "</div>"
-      : "") +
-    "</div>" +
-    "</div>" +
+    (feedbackHTML ? '<div style="margin-top:var(--space-3);">' + feedbackHTML + '</div>' : '') +
+    '</div>' +
+    '</div>' +
     navHTML +
-    "</section>";
+    '</section>';
 
   /* Events */
-  var inp = document.getElementById("gbInput");
-  var checkBtn = document.getElementById("gbCheckBtn");
-  var hintBtn = document.getElementById("gbHintBtn");
-  var nextBtn = document.getElementById("gbNextBtn");
-  var finishBtn = document.getElementById("gbFinishBtn");
+  var inp = document.getElementById('gbInput');
+  var checkBtn = document.getElementById('gbCheckBtn');
+  var hintBtn = document.getElementById('gbHintBtn');
+  var nextBtn = document.getElementById('gbNextBtn');
+  var finishBtn = document.getElementById('gbFinishBtn');
 
   if (inp)
-    inp.addEventListener("keydown", function (e) {
-      if (e.key === "Enter" && checkBtn) checkBtn.click();
+    inp.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter' && checkBtn) checkBtn.click();
     });
 
   if (checkBtn)
-    checkBtn.addEventListener("click", function () {
+    checkBtn.addEventListener('click', function () {
       if (!inp) return;
       var val = inp.value;
       var parsed = parseInputInt(val);
-      if (parsed.error === "empty") {
-        showNotice("Masukkan bilangan terlebih dahulu.");
+      if (parsed.error === 'empty') {
+        showNotice('Masukkan bilangan terlebih dahulu.');
         return;
       }
-      if (parsed.error === "invalid") {
-        showNotice("Masukkan bilangan bulat yang valid (contoh: −3, 0, 7).");
+      if (parsed.error === 'invalid') {
+        showNotice('Masukkan bilangan bulat yang valid (contoh: −3, 0, 7).');
         return;
       }
       ex.userInput = val;
@@ -826,7 +786,7 @@ function renderGarisBilangan(container) {
     });
 
   if (hintBtn)
-    hintBtn.addEventListener("click", function () {
+    hintBtn.addEventListener('click', function () {
       if (ex.attempts === 0 || ex.hintShown) {
         ex.hintShown = true;
         saveState();
@@ -846,16 +806,16 @@ function renderGarisBilangan(container) {
     });
 
   if (nextBtn)
-    nextBtn.addEventListener("click", function () {
+    nextBtn.addEventListener('click', function () {
       State.garisBilanganIdx = idx + 1;
       saveState();
       renderGarisBilangan(container);
     });
 
   if (finishBtn)
-    finishBtn.addEventListener("click", function () {
-      completeStage("garisBilangan");
-      navigateTo("membandingkan");
+    finishBtn.addEventListener('click', function () {
+      completeStage('garisBilangan');
+      navigateTo('membandingkan');
     });
 }
 
@@ -875,61 +835,46 @@ function renderMembandingkan(container) {
     }).length === soal.length;
 
   var statuses = exArr.map(function (e) {
-    return e.correct ? "correct" : e.attempts > 0 ? "incorrect" : null;
+    return e.correct ? 'correct' : e.attempts > 0 ? 'incorrect' : null;
   });
   var dotsHTML = buildProgressDots(soal.length, idx, statuses);
 
   var aIsNeg = s.a < 0;
   var bIsNeg = s.b < 0;
-  var aClass = "compare-number" + (aIsNeg ? " compare-number--negative" : "");
-  var bClass = "compare-number" + (bIsNeg ? " compare-number--negative" : "");
+  var aClass = 'compare-number' + (aIsNeg ? ' compare-number--negative' : '');
+  var bClass = 'compare-number' + (bIsNeg ? ' compare-number--negative' : '');
 
-  var symbolDisplay = ex.chosen || "?";
-  var symbolCls = "compare-symbol-display";
-  if (ex.correct) symbolCls += " compare-symbol-display--correct";
+  var symbolDisplay = ex.chosen || '?';
+  var symbolCls = 'compare-symbol-display';
+  if (ex.correct) symbolCls += ' compare-symbol-display--correct';
   else if (ex.attempts > 0 && !ex.correct && ex.chosen)
-    symbolCls += " compare-symbol-display--incorrect";
+    symbolCls += ' compare-symbol-display--incorrect';
 
-  var btnDisabled = ex.correct ? " disabled" : "";
+  var btnDisabled = ex.correct ? ' disabled' : '';
 
-  var feedbackHTML = "";
+  var feedbackHTML = '';
   if (ex.correct) {
-    feedbackHTML = buildFeedbackBox(
-      "success",
-      "✓",
-      "<strong>Benar!</strong> " + s.explanation,
-    );
+    feedbackHTML = buildFeedbackBox('success', '✓', '<strong>Benar!</strong> ' + s.explanation);
   } else if (ex.hintShown && ex.attempts > 0) {
-    feedbackHTML = buildFeedbackBox(
-      "warning",
-      "💡",
-      "<strong>Petunjuk:</strong> " + s.hint,
-    );
+    feedbackHTML = buildFeedbackBox('warning', '💡', '<strong>Petunjuk:</strong> ' + s.hint);
   } else if (!ex.correct && ex.attempts > 0) {
     feedbackHTML = buildFeedbackBox(
-      "error",
-      "✗",
-      "Simbol <strong>" +
+      'error',
+      '✗',
+      'Simbol <strong>' +
         esc(ex.chosen) +
-        "</strong> belum tepat. Ingat: pada garis bilangan, bilangan di sebelah kiri selalu lebih kecil.",
+        '</strong> belum tepat. Ingat: pada garis bilangan, bilangan di sebelah kiri selalu lebih kecil.'
     );
     if (ex.attempts >= 2) {
       feedbackHTML = buildFeedbackBox(
-        "info",
-        "👁",
-        "<strong>Jawaban:</strong> " +
-          s.a +
-          " " +
-          s.answer +
-          " " +
-          s.b +
-          ". " +
-          s.explanation,
+        'info',
+        '👁',
+        '<strong>Jawaban:</strong> ' + s.a + ' ' + s.answer + ' ' + s.b + '. ' + s.explanation
       );
     }
   }
 
-  var navHTML = "";
+  var navHTML = '';
   if (ex.correct || ex.attempts >= 2) {
     if (idx < soal.length - 1) {
       navHTML =
@@ -945,24 +890,24 @@ function renderMembandingkan(container) {
     '<div class="stage-head">' +
     '<span class="stage-head__kicker">TAHAP 4 — MEMBANDINGKAN</span>' +
     '<p class="stage-head__goal">Tujuan: Membandingkan dua bilangan bulat menggunakan notasi &lt;, =, atau &gt;.</p>' +
-    "</div>" +
+    '</div>' +
     '<div class="panel">' +
     '<p style="font-size:0.88rem;color:var(--color-ink-muted);margin-bottom:var(--space-3);">' +
     esc(DATA.membandingkan.instruction) +
-    "</p>" +
+    '</p>' +
     dotsHTML +
     '<div class="compare-card">' +
     '<div class="' +
     aClass +
     '">' +
     s.a +
-    "</div>" +
+    '</div>' +
     '<div class="compare-symbol-area">' +
     '<div class="' +
     symbolCls +
     '" aria-label="simbol perbandingan">' +
     esc(symbolDisplay) +
-    "</div>" +
+    '</div>' +
     '<div class="compare-btn-group">' +
     '<button type="button" class="compare-btn" id="btnLt"' +
     btnDisabled +
@@ -973,25 +918,23 @@ function renderMembandingkan(container) {
     '<button type="button" class="compare-btn" id="btnGt"' +
     btnDisabled +
     ' aria-label="lebih dari">&gt;</button>' +
-    "</div>" +
-    "</div>" +
+    '</div>' +
+    '</div>' +
     '<div class="' +
     bClass +
     '">' +
     s.b +
-    "</div>" +
-    "</div>" +
-    (feedbackHTML
-      ? '<div style="margin-top:var(--space-3);">' + feedbackHTML + "</div>"
-      : "") +
+    '</div>' +
+    '</div>' +
+    (feedbackHTML ? '<div style="margin-top:var(--space-3);">' + feedbackHTML + '</div>' : '') +
     (!ex.correct && ex.attempts === 1
       ? '<div style="margin-top:var(--space-3);">' +
         '<button type="button" class="btn btn--ghost btn--small" id="mbHintBtn">💡 Lihat Petunjuk</button>' +
-        "</div>"
-      : "") +
-    "</div>" +
+        '</div>'
+      : '') +
+    '</div>' +
     navHTML +
-    "</section>";
+    '</section>';
 
   function handleChoice(sym) {
     if (ex.correct || ex.attempts >= 2) return;
@@ -1002,44 +945,44 @@ function renderMembandingkan(container) {
     renderMembandingkan(container);
   }
 
-  var btnLt = document.getElementById("btnLt");
-  var btnEq = document.getElementById("btnEq");
-  var btnGt = document.getElementById("btnGt");
-  var hintBtn = document.getElementById("mbHintBtn");
-  var nextBtn = document.getElementById("mbNextBtn");
-  var finishBtn = document.getElementById("mbFinishBtn");
+  var btnLt = document.getElementById('btnLt');
+  var btnEq = document.getElementById('btnEq');
+  var btnGt = document.getElementById('btnGt');
+  var hintBtn = document.getElementById('mbHintBtn');
+  var nextBtn = document.getElementById('mbNextBtn');
+  var finishBtn = document.getElementById('mbFinishBtn');
 
   if (btnLt)
-    btnLt.addEventListener("click", function () {
-      handleChoice("<");
+    btnLt.addEventListener('click', function () {
+      handleChoice('<');
     });
   if (btnEq)
-    btnEq.addEventListener("click", function () {
-      handleChoice("=");
+    btnEq.addEventListener('click', function () {
+      handleChoice('=');
     });
   if (btnGt)
-    btnGt.addEventListener("click", function () {
-      handleChoice(">");
+    btnGt.addEventListener('click', function () {
+      handleChoice('>');
     });
 
   if (hintBtn)
-    hintBtn.addEventListener("click", function () {
+    hintBtn.addEventListener('click', function () {
       ex.hintShown = true;
       saveState();
       renderMembandingkan(container);
     });
 
   if (nextBtn)
-    nextBtn.addEventListener("click", function () {
+    nextBtn.addEventListener('click', function () {
       State.membandingkanIdx = idx + 1;
       saveState();
       renderMembandingkan(container);
     });
 
   if (finishBtn)
-    finishBtn.addEventListener("click", function () {
-      completeStage("membandingkan");
-      navigateTo("mengurutkan");
+    finishBtn.addEventListener('click', function () {
+      completeStage('membandingkan');
+      navigateTo('mengurutkan');
     });
 }
 
@@ -1060,7 +1003,7 @@ function renderMengurutkan(container) {
 
   /* Dots */
   var statuses = exArr.map(function (e) {
-    return e.correct ? "correct" : e.revealed ? "incorrect" : null;
+    return e.correct ? 'correct' : e.revealed ? 'incorrect' : null;
   });
   var dotsHTML = buildProgressDots(soal.length, idx, statuses);
 
@@ -1077,34 +1020,32 @@ function renderMengurutkan(container) {
       var placed = currentOrder.indexOf(v) !== -1;
       var isNeg = v < 0;
       var chipCls =
-        "sort-chip" +
-        (isNeg ? " sort-chip--negative" : "") +
-        (placed ? " sort-chip--selected" : "");
+        'sort-chip' +
+        (isNeg ? ' sort-chip--negative' : '') +
+        (placed ? ' sort-chip--selected' : '');
       return (
         '<button type="button" class="' +
         chipCls +
         '" data-chip-val="' +
         v +
         '"' +
-        (placed || ex.correct || ex.revealed ? " disabled" : "") +
-        ">" +
+        (placed || ex.correct || ex.revealed ? ' disabled' : '') +
+        '>' +
         v +
-        "</button>"
+        '</button>'
       );
     })
-    .join("");
+    .join('');
 
   /* Slots HTML */
-  var slotsHTML = "";
+  var slotsHTML = '';
   for (var i = 0; i < s.angka.length; i++) {
     var filled = i < currentOrder.length;
     var val = filled ? currentOrder[i] : null;
     var isNegSlot = val !== null && val < 0;
-    var slotCls = "sort-slot";
+    var slotCls = 'sort-slot';
     if (filled)
-      slotCls += isNegSlot
-        ? " sort-slot--filled sort-slot--filled-negative"
-        : " sort-slot--filled";
+      slotCls += isNegSlot ? ' sort-slot--filled sort-slot--filled-negative' : ' sort-slot--filled';
     slotsHTML +=
       '<div class="' +
       slotCls +
@@ -1113,55 +1054,48 @@ function renderMengurutkan(container) {
       '">' +
       '<span class="sort-slot__num">' +
       (i + 1) +
-      "</span>" +
-      (filled ? String(val) : "&nbsp;") +
-      "</div>";
+      '</span>' +
+      (filled ? String(val) : '&nbsp;') +
+      '</div>';
   }
 
-  var feedbackHTML = "";
+  var feedbackHTML = '';
   if (ex.correct) {
     feedbackHTML = buildFeedbackBox(
-      "success",
-      "✓",
-      "<strong>Urutan benar!</strong> " + s.explanation,
+      'success',
+      '✓',
+      '<strong>Urutan benar!</strong> ' + s.explanation
     );
   } else if (ex.revealed) {
     feedbackHTML = buildFeedbackBox(
-      "info",
-      "👁",
-      "<strong>Urutan yang benar:</strong> " +
-        s.angka.join(", ") +
-        ". " +
-        s.explanation,
+      'info',
+      '👁',
+      '<strong>Urutan yang benar:</strong> ' + s.angka.join(', ') + '. ' + s.explanation
     );
   }
 
   var progressText =
     currentOrder.length === 0
-      ? "Klik angka di atas untuk menempatkannya dalam urutan."
-      : "Sudah " +
-        currentOrder.length +
-        " dari " +
-        s.angka.length +
-        " angka ditempatkan.";
+      ? 'Klik angka di atas untuk menempatkannya dalam urutan.'
+      : 'Sudah ' + currentOrder.length + ' dari ' + s.angka.length + ' angka ditempatkan.';
 
-  var checkBtnHTML = "";
+  var checkBtnHTML = '';
   if (!ex.correct && !ex.revealed && currentOrder.length === s.angka.length) {
     checkBtnHTML =
       '<button type="button" class="btn btn--primary" id="sortCheckBtn">Periksa Urutan</button>';
   }
-  var resetBtnHTML = "";
+  var resetBtnHTML = '';
   if (!ex.correct && !ex.revealed && currentOrder.length > 0) {
     resetBtnHTML =
       '<button type="button" class="btn btn--ghost btn--small" id="sortResetBtn">↺ Mulai Ulang</button>';
   }
-  var revealBtnHTML = "";
+  var revealBtnHTML = '';
   if (!ex.correct && !ex.revealed && ex.revealed === false) {
     revealBtnHTML =
       '<button type="button" class="btn btn--ghost btn--small" id="sortRevealBtn">👁 Lihat Jawaban</button>';
   }
 
-  var navHTML = "";
+  var navHTML = '';
   if (ex.correct || ex.revealed) {
     if (idx < soal.length - 1) {
       navHTML =
@@ -1177,59 +1111,55 @@ function renderMengurutkan(container) {
     '<div class="stage-head">' +
     '<span class="stage-head__kicker">TAHAP 5 — MENGURUTKAN</span>' +
     '<p class="stage-head__goal">Tujuan: Mengurutkan bilangan bulat dari yang terkecil ke terbesar.</p>' +
-    "</div>" +
+    '</div>' +
     '<div class="panel">' +
     '<p style="font-size:0.88rem;color:var(--color-ink-muted);margin-bottom:var(--space-3);">' +
     esc(DATA.mengurutkan.instruction) +
-    "</p>" +
+    '</p>' +
     dotsHTML +
     '<div class="panel panel--compact panel--hero" style="margin-bottom:var(--space-3);">' +
     '<span class="badge-chip">' +
     esc(s.badge) +
-    "</span>" +
+    '</span>' +
     '<p style="margin:var(--space-2) 0 0;font-size:0.92rem;">' +
     esc(s.story) +
-    "</p>" +
+    '</p>' +
     '<div style="display:flex;flex-wrap:wrap;gap:var(--space-2);margin-top:var(--space-3);">' +
     s.acak
       .map(function (v) {
         return (
           '<span style="font-family:var(--font-mono);font-size:1.05rem;font-weight:700;color:var(--color-primary-strong);">' +
           v +
-          (s.unit ? " " + s.unit : "") +
-          "</span>"
+          (s.unit ? ' ' + s.unit : '') +
+          '</span>'
         );
       })
-      .join(
-        '<span style="color:var(--color-ink-muted);padding:0 4px;">·</span>',
-      ) +
-    "</div></div>" +
+      .join('<span style="color:var(--color-ink-muted);padding:0 4px;">·</span>') +
+    '</div></div>' +
     '<p style="font-size:0.85rem;font-weight:600;margin-bottom:var(--space-2);">Kumpulan angka (klik untuk memilih):</p>' +
     '<div class="sort-chips-pool" id="sortPool">' +
     poolHTML +
-    "</div>" +
+    '</div>' +
     '<p style="font-size:0.85rem;font-weight:600;margin-bottom:var(--space-2);">Urutan dari terkecil ke terbesar:</p>' +
     '<div class="sort-answer-slots" id="sortSlots">' +
     slotsHTML +
-    "</div>" +
+    '</div>' +
     '<p class="sort-progress-text">' +
     esc(progressText) +
-    "</p>" +
-    (feedbackHTML
-      ? '<div style="margin-top:var(--space-3);">' + feedbackHTML + "</div>"
-      : "") +
+    '</p>' +
+    (feedbackHTML ? '<div style="margin-top:var(--space-3);">' + feedbackHTML + '</div>' : '') +
     '<div class="btn-group" style="margin-top:var(--space-3);">' +
     resetBtnHTML +
     revealBtnHTML +
     checkBtnHTML +
-    "</div>" +
-    "</div>" +
+    '</div>' +
+    '</div>' +
     navHTML +
-    "</section>";
+    '</section>';
 
   /* Chip click events */
-  container.querySelectorAll("[data-chip-val]").forEach(function (chip) {
-    chip.addEventListener("click", function () {
+  container.querySelectorAll('[data-chip-val]').forEach(function (chip) {
+    chip.addEventListener('click', function () {
       if (ex.correct || ex.revealed) return;
       var v = parseInt(chip.dataset.chipVal, 10);
       if (ex.order.indexOf(v) !== -1) return;
@@ -1240,8 +1170,8 @@ function renderMengurutkan(container) {
   });
 
   /* Slot click to remove */
-  container.querySelectorAll("[data-slot-idx]").forEach(function (slot) {
-    slot.addEventListener("click", function () {
+  container.querySelectorAll('[data-slot-idx]').forEach(function (slot) {
+    slot.addEventListener('click', function () {
       if (ex.correct || ex.revealed) return;
       var slotIdx = parseInt(slot.dataset.slotIdx, 10);
       if (slotIdx >= ex.order.length) return;
@@ -1251,14 +1181,14 @@ function renderMengurutkan(container) {
     });
   });
 
-  var checkBtn = document.getElementById("sortCheckBtn");
-  var resetBtn = document.getElementById("sortResetBtn");
-  var revealBtn = document.getElementById("sortRevealBtn");
-  var nextBtn = document.getElementById("sortNextBtn");
-  var finishBtn = document.getElementById("sortFinishBtn");
+  var checkBtn = document.getElementById('sortCheckBtn');
+  var resetBtn = document.getElementById('sortResetBtn');
+  var revealBtn = document.getElementById('sortRevealBtn');
+  var nextBtn = document.getElementById('sortNextBtn');
+  var finishBtn = document.getElementById('sortFinishBtn');
 
   if (checkBtn)
-    checkBtn.addEventListener("click", function () {
+    checkBtn.addEventListener('click', function () {
       var correct = true;
       for (var i = 0; i < s.angka.length; i++) {
         if (ex.order[i] !== s.angka[i]) {
@@ -1270,7 +1200,7 @@ function renderMengurutkan(container) {
       if (!correct) ex.revealed = false;
       saveState();
       if (!correct) {
-        showNotice("Urutan belum tepat. Coba cek kembali atau lihat jawaban.");
+        showNotice('Urutan belum tepat. Coba cek kembali atau lihat jawaban.');
         ex.order = [];
         saveState();
       }
@@ -1278,14 +1208,14 @@ function renderMengurutkan(container) {
     });
 
   if (resetBtn)
-    resetBtn.addEventListener("click", function () {
+    resetBtn.addEventListener('click', function () {
       ex.order = [];
       saveState();
       renderMengurutkan(container);
     });
 
   if (revealBtn)
-    revealBtn.addEventListener("click", function () {
+    revealBtn.addEventListener('click', function () {
       ex.revealed = true;
       ex.order = s.angka.slice();
       saveState();
@@ -1293,16 +1223,16 @@ function renderMengurutkan(container) {
     });
 
   if (nextBtn)
-    nextBtn.addEventListener("click", function () {
+    nextBtn.addEventListener('click', function () {
       State.mengurutkanIdx = idx + 1;
       saveState();
       renderMengurutkan(container);
     });
 
   if (finishBtn)
-    finishBtn.addEventListener("click", function () {
-      completeStage("mengurutkan");
-      navigateTo("situasiNyata");
+    finishBtn.addEventListener('click', function () {
+      completeStage('mengurutkan');
+      navigateTo('situasiNyata');
     });
 }
 
@@ -1322,18 +1252,18 @@ function renderSituasiNyata(container) {
     }).length === soal.length;
 
   var statuses = exArr.map(function (e) {
-    return e.correct ? "correct" : e.checked ? "incorrect" : null;
+    return e.correct ? 'correct' : e.checked ? 'incorrect' : null;
   });
   var dotsHTML = buildProgressDots(soal.length, idx, statuses);
 
-  var letters = ["A", "B", "C", "D"];
+  var letters = ['A', 'B', 'C', 'D'];
   var choicesHTML = s.options
     .map(function (opt, i) {
-      var cls = "choice-btn";
+      var cls = 'choice-btn';
       if (ex.checked) {
-        if (opt.id === s.correct) cls += " choice-btn--correct";
-        else if (opt.id === ex.chosen) cls += " choice-btn--incorrect";
-        else cls += " choice-btn--disabled";
+        if (opt.id === s.correct) cls += ' choice-btn--correct';
+        else if (opt.id === ex.chosen) cls += ' choice-btn--incorrect';
+        else cls += ' choice-btn--disabled';
       }
       return (
         '<button type="button" class="' +
@@ -1343,41 +1273,29 @@ function renderSituasiNyata(container) {
         '">' +
         '<span class="choice-letter">' +
         letters[i] +
-        "</span>" +
+        '</span>' +
         opt.label +
-        "</button>"
+        '</button>'
       );
     })
-    .join("");
+    .join('');
 
-  var feedbackHTML = "";
+  var feedbackHTML = '';
   if (ex.correct) {
-    feedbackHTML = buildFeedbackBox(
-      "success",
-      "✓",
-      "<strong>Benar!</strong> " + s.explanation,
-    );
+    feedbackHTML = buildFeedbackBox('success', '✓', '<strong>Benar!</strong> ' + s.explanation);
   } else if (ex.checked) {
-    feedbackHTML = buildFeedbackBox(
-      "error",
-      "✗",
-      "<strong>Belum tepat.</strong> " + s.explanation,
-    );
+    feedbackHTML = buildFeedbackBox('error', '✗', '<strong>Belum tepat.</strong> ' + s.explanation);
   }
 
-  var hintHTML = "";
+  var hintHTML = '';
   if (!ex.checked && ex.attempts > 0) {
     hintHTML =
       '<div style="margin-top:var(--space-3);">' +
-      buildFeedbackBox(
-        "warning",
-        "💡",
-        "<strong>Petunjuk:</strong> " + s.hint,
-      ) +
-      "</div>";
+      buildFeedbackBox('warning', '💡', '<strong>Petunjuk:</strong> ' + s.hint) +
+      '</div>';
   }
 
-  var navHTML = "";
+  var navHTML = '';
   if (ex.correct || ex.checked) {
     if (idx < soal.length - 1) {
       navHTML =
@@ -1393,41 +1311,39 @@ function renderSituasiNyata(container) {
     '<div class="stage-head">' +
     '<span class="stage-head__kicker">TAHAP 6 — SITUASI NYATA</span>' +
     '<p class="stage-head__goal">Tujuan: Menggunakan bilangan bulat untuk memodelkan dan menyelesaikan masalah dari situasi nyata.</p>' +
-    "</div>" +
+    '</div>' +
     '<div class="panel">' +
     '<p style="font-size:0.88rem;color:var(--color-ink-muted);margin-bottom:var(--space-3);">' +
     esc(DATA.situasiNyata.instruction) +
-    "</p>" +
+    '</p>' +
     dotsHTML +
     '<div class="panel panel--hero" style="margin-bottom:var(--space-3);">' +
     '<div style="display:flex;align-items:center;gap:var(--space-3);flex-wrap:wrap;margin-bottom:var(--space-3);">' +
     '<span style="font-size:1.8rem;">' +
     s.icon +
-    "</span>" +
+    '</span>' +
     '<span class="badge-chip">' +
     esc(s.badge) +
-    "</span>" +
-    "</div>" +
+    '</span>' +
+    '</div>' +
     '<p style="font-size:0.95rem;">' +
     s.story +
-    "</p>" +
+    '</p>' +
     '<p style="font-weight:600;font-size:1rem;margin-bottom:0;">' +
     s.question +
-    "</p>" +
-    "</div>" +
+    '</p>' +
+    '</div>' +
     '<div class="choice-list" id="snChoices">' +
     choicesHTML +
-    "</div>" +
-    (feedbackHTML
-      ? '<div style="margin-top:var(--space-3);">' + feedbackHTML + "</div>"
-      : "") +
+    '</div>' +
+    (feedbackHTML ? '<div style="margin-top:var(--space-3);">' + feedbackHTML + '</div>' : '') +
     hintHTML +
-    "</div>" +
+    '</div>' +
     navHTML +
-    "</section>";
+    '</section>';
 
-  container.querySelectorAll("[data-opt-id]").forEach(function (btn) {
-    btn.addEventListener("click", function () {
+  container.querySelectorAll('[data-opt-id]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
       if (ex.checked) return;
       var optId = btn.dataset.optId;
       ex.chosen = optId;
@@ -1439,20 +1355,20 @@ function renderSituasiNyata(container) {
     });
   });
 
-  var nextBtn = document.getElementById("snNextBtn");
-  var finishBtn = document.getElementById("snFinishBtn");
+  var nextBtn = document.getElementById('snNextBtn');
+  var finishBtn = document.getElementById('snFinishBtn');
 
   if (nextBtn)
-    nextBtn.addEventListener("click", function () {
+    nextBtn.addEventListener('click', function () {
       State.situasiNyataIdx = idx + 1;
       saveState();
       renderSituasiNyata(container);
     });
 
   if (finishBtn)
-    finishBtn.addEventListener("click", function () {
-      completeStage("situasiNyata");
-      navigateTo("refleksi");
+    finishBtn.addEventListener('click', function () {
+      completeStage('situasiNyata');
+      navigateTo('refleksi');
     });
 }
 
@@ -1465,72 +1381,72 @@ function renderRefleksi(container) {
 
   var fieldsHTML = soal
     .map(function (s, i) {
-      var saved = State.refleksiAnswers[s.id] || "";
+      var saved = State.refleksiAnswers[s.id] || '';
       return (
         '<div class="field-group">' +
         '<label for="refl_' +
         s.id +
         '">' +
         (i + 1) +
-        ". " +
+        '. ' +
         s.question +
-        "</label>" +
+        '</label>' +
         '<textarea id="refl_' +
         s.id +
         '" class="input-textarea" placeholder="' +
         esc(s.placeholder) +
         '" rows="3">' +
         esc(saved) +
-        "</textarea>" +
-        "</div>"
+        '</textarea>' +
+        '</div>'
       );
     })
-    .join("");
+    .join('');
 
   container.innerHTML =
     '<section aria-label="Refleksi">' +
     '<div class="stage-head">' +
     '<span class="stage-head__kicker">TAHAP 7 — REFLEKSI</span>' +
     '<p class="stage-head__goal">Tujuan: Merangkum dan mengkonsolidasikan pemahaman tentang bilangan bulat.</p>' +
-    "</div>" +
+    '</div>' +
     '<div class="panel">' +
     '<p style="font-size:0.9rem;color:var(--color-ink-muted);margin-bottom:var(--space-4);">' +
     DATA.refleksi.note +
-    "</p>" +
+    '</p>' +
     fieldsHTML +
     (State.refleksiSaved
       ? buildFeedbackBox(
-          "success",
-          "✓",
-          "Refleksimu sudah disimpan. Klik tombol di bawah untuk melanjutkan.",
+          'success',
+          '✓',
+          'Refleksimu sudah disimpan. Klik tombol di bawah untuk melanjutkan.'
         )
-      : "") +
+      : '') +
     '<div class="btn-group btn-group--end">' +
     '<button type="button" class="btn btn--ghost" id="saveReflBtn">Simpan Refleksi</button>' +
     '<button type="button" class="btn btn--primary btn--large" id="finishReflBtn"' +
-    (State.refleksiSaved ? "" : " disabled") +
-    ">Selesai ✓</button>" +
-    "</div></div></section>";
+    (State.refleksiSaved ? '' : ' disabled') +
+    '>Selesai ✓</button>' +
+    '</div></div></section>';
 
-  var saveBtn = document.getElementById("saveReflBtn");
-  var finishBtn = document.getElementById("finishReflBtn");
+  var saveBtn = document.getElementById('saveReflBtn');
+  var finishBtn = document.getElementById('finishReflBtn');
 
   if (saveBtn)
-    saveBtn.addEventListener("click", function () {
+    saveBtn.addEventListener('click', function () {
       soal.forEach(function (s) {
-        var el = document.getElementById("refl_" + s.id);
+        var el = document.getElementById('refl_' + s.id);
         if (el) State.refleksiAnswers[s.id] = el.value;
       });
       State.refleksiSaved = true;
       saveState();
       renderRefleksi(container);
-      showNotice("Refleksi tersimpan!");
+      showNotice('Refleksi tersimpan!');
     });
 
   if (finishBtn)
-    finishBtn.addEventListener("click", function () {
-      completeStage("refleksi");
-      navigateTo("selesai");
+    finishBtn.addEventListener('click', function () {
+      completeStage('refleksi');
+      navigateTo('selesai');
     });
 }
 
@@ -1560,62 +1476,58 @@ function renderSelesai(container) {
     '<section aria-label="Selesai">' +
     '<div class="stage-head">' +
     '<span class="stage-head__kicker">TAHAP 8 — SELESAI 🎉</span>' +
-    "</div>" +
+    '</div>' +
     '<div class="panel panel--hero">' +
-    "<h2>Kamu telah menyelesaikan pembelajaran Bilangan Bulat!</h2>" +
-    "<p>Luar biasa! Kamu telah menjelajahi bilangan bulat dari berbagai sudut pandang — mulai dari konteks nyata, garis bilangan, perbandingan, pengurutan, hingga pemodelan situasi.</p>" +
-    "</div>" +
+    '<h2>Kamu telah menyelesaikan pembelajaran Bilangan Bulat!</h2>' +
+    '<p>Luar biasa! Kamu telah menjelajahi bilangan bulat dari berbagai sudut pandang — mulai dari konteks nyata, garis bilangan, perbandingan, pengurutan, hingga pemodelan situasi.</p>' +
+    '</div>' +
     '<div class="panel">' +
-    "<h3>Ringkasan Pencapaianmu</h3>" +
+    '<h3>Ringkasan Pencapaianmu</h3>' +
     '<div class="achievement-grid">' +
     '<div class="achievement-card"><div class="achievement-card__icon">📖</div><div class="achievement-card__title">Kenali Bilangan Bulat</div><div class="achievement-card__desc">3 konteks dijelajahi</div></div>' +
     '<div class="achievement-card"><div class="achievement-card__icon">📏</div><div class="achievement-card__title">Garis Bilangan</div><div class="achievement-card__desc">' +
     gbDone +
-    "/" +
+    '/' +
     gbTotal +
-    " soal benar</div></div>" +
+    ' soal benar</div></div>' +
     '<div class="achievement-card"><div class="achievement-card__icon">⚖️</div><div class="achievement-card__title">Membandingkan</div><div class="achievement-card__desc">' +
     mbDone +
-    "/" +
+    '/' +
     mbTotal +
-    " soal benar</div></div>" +
+    ' soal benar</div></div>' +
     '<div class="achievement-card"><div class="achievement-card__icon">🔢</div><div class="achievement-card__title">Mengurutkan</div><div class="achievement-card__desc">' +
     urtDone +
-    "/" +
+    '/' +
     urtTotal +
-    " soal benar</div></div>" +
+    ' soal benar</div></div>' +
     '<div class="achievement-card"><div class="achievement-card__icon">🌍</div><div class="achievement-card__title">Situasi Nyata</div><div class="achievement-card__desc">' +
     snDone +
-    "/" +
+    '/' +
     snTotal +
-    " soal benar</div></div>" +
-    "</div></div>" +
+    ' soal benar</div></div>' +
+    '</div></div>' +
     '<div class="panel panel--compact">' +
-    "<h3>Yang Sudah Kamu Pelajari</h3>" +
-    "<ul>" +
-    "<li>Bilangan bulat terdiri dari bilangan <strong>negatif</strong> (…, −3, −2, −1), <strong>nol</strong> (0), dan bilangan <strong>positif</strong> (1, 2, 3, …).</li>" +
-    "<li>Pada <strong>garis bilangan</strong>, bilangan yang lebih ke kiri selalu bernilai lebih kecil.</li>" +
-    "<li>Untuk membandingkan dua bilangan, gunakan tanda <strong>&lt;</strong> (kurang dari), <strong>=</strong> (sama dengan), atau <strong>&gt;</strong> (lebih dari).</li>" +
-    "<li>Bilangan negatif yang <em>angkanya lebih besar</em> justru <em>nilainya lebih kecil</em>. Contoh: −10 &lt; −2.</li>" +
-    "<li>Bilangan bulat dapat digunakan untuk memodelkan situasi nyata seperti suhu, ketinggian, skor, dan saldo rekening.</li>" +
-    "</ul></div>" +
+    '<h3>Yang Sudah Kamu Pelajari</h3>' +
+    '<ul>' +
+    '<li>Bilangan bulat terdiri dari bilangan <strong>negatif</strong> (…, −3, −2, −1), <strong>nol</strong> (0), dan bilangan <strong>positif</strong> (1, 2, 3, …).</li>' +
+    '<li>Pada <strong>garis bilangan</strong>, bilangan yang lebih ke kiri selalu bernilai lebih kecil.</li>' +
+    '<li>Untuk membandingkan dua bilangan, gunakan tanda <strong>&lt;</strong> (kurang dari), <strong>=</strong> (sama dengan), atau <strong>&gt;</strong> (lebih dari).</li>' +
+    '<li>Bilangan negatif yang <em>angkanya lebih besar</em> justru <em>nilainya lebih kecil</em>. Contoh: −10 &lt; −2.</li>' +
+    '<li>Bilangan bulat dapat digunakan untuk memodelkan situasi nyata seperti suhu, ketinggian, skor, dan saldo rekening.</li>' +
+    '</ul></div>' +
     '<div class="btn-group btn-group--center">' +
     '<button type="button" class="btn btn--ghost" id="restartBtn">↺ Mulai Ulang</button>' +
     '<a href="../../index.html" class="btn btn--primary">← Kembali ke Beranda</a>' +
-    "</div></section>";
+    '</div></section>';
 
-  completeStage("selesai");
+  completeStage('selesai');
 
-  var restartBtn = document.getElementById("restartBtn");
+  var restartBtn = document.getElementById('restartBtn');
   if (restartBtn)
-    restartBtn.addEventListener("click", function () {
-      if (
-        confirm(
-          "Apakah kamu yakin ingin mengulang dari awal? Semua progress akan dihapus.",
-        )
-      ) {
+    restartBtn.addEventListener('click', function () {
+      if (confirm('Apakah kamu yakin ingin mengulang dari awal? Semua progress akan dihapus.')) {
         clearState();
-        navigateTo("orientasi");
+        navigateTo('orientasi');
       }
     });
 }
@@ -1627,13 +1539,13 @@ function renderSelesai(container) {
 var noticeTimer = null;
 
 function showNotice(msg) {
-  var el = document.getElementById("appNotice");
+  var el = document.getElementById('appNotice');
   if (!el) return;
   el.textContent = msg;
-  el.classList.add("app-notice--visible");
+  el.classList.add('app-notice--visible');
   if (noticeTimer) clearTimeout(noticeTimer);
   noticeTimer = setTimeout(function () {
-    el.classList.remove("app-notice--visible");
+    el.classList.remove('app-notice--visible');
   }, 3000);
 }
 
@@ -1648,17 +1560,15 @@ function init() {
   renderCurrentStage();
   updateProgress();
 
-  var resetBtn = document.getElementById("resetAppBtn");
+  var resetBtn = document.getElementById('resetAppBtn');
   if (resetBtn)
-    resetBtn.addEventListener("click", function () {
-      if (
-        confirm("Reset semua progress? Tindakan ini tidak dapat dibatalkan.")
-      ) {
+    resetBtn.addEventListener('click', function () {
+      if (confirm('Reset semua progress? Tindakan ini tidak dapat dibatalkan.')) {
         clearState();
-        navigateTo("orientasi");
-        showNotice("Progress telah direset.");
+        navigateTo('orientasi');
+        showNotice('Progress telah direset.');
       }
     });
 }
 
-document.addEventListener("DOMContentLoaded", init);
+document.addEventListener('DOMContentLoaded', init);

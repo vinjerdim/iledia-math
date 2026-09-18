@@ -39,7 +39,8 @@ var DATA = {
         pertanyaan: 'Berapa total lantai yang dinaiki lift?',
         penjelasan:
           'Naik 3 lantai sebanyak 4 kali = <strong>3 + 3 + 3 + 3 = 12 lantai</strong>. Dua bilangan positif dikalikan menghasilkan <strong>bilangan positif</strong>.',
-        ruleSummary: '<span style="color:var(--color-success-strong)">positif</span> × <span style="color:var(--color-success-strong)">positif</span> = <span style="color:var(--color-success-strong)">positif (+)</span>',
+        ruleSummary:
+          '<span style="color:var(--color-success-strong)">positif</span> × <span style="color:var(--color-success-strong)">positif</span> = <span style="color:var(--color-success-strong)">positif (+)</span>',
       },
       {
         id: 'kali_pn',
@@ -58,7 +59,8 @@ var DATA = {
         pertanyaan: 'Berapa total perubahan suhu setelah 5 jam?',
         penjelasan:
           '5 jam × (−2°C per jam) = <strong>(−2) + (−2) + (−2) + (−2) + (−2) = −10°C</strong>. Bilangan positif dikali bilangan negatif menghasilkan <strong>bilangan negatif</strong>.',
-        ruleSummary: '<span style="color:var(--color-success-strong)">positif</span> × <span style="color:var(--color-error-strong)">negatif</span> = <span style="color:var(--color-error-strong)">negatif (−)</span>',
+        ruleSummary:
+          '<span style="color:var(--color-success-strong)">positif</span> × <span style="color:var(--color-error-strong)">negatif</span> = <span style="color:var(--color-error-strong)">negatif (−)</span>',
       },
       {
         id: 'kali_nn',
@@ -78,7 +80,8 @@ var DATA = {
           'Jika "hutang" diwakili dengan bilangan negatif dan "menghapus" berarti ×(−1), berapakah perubahan keuangan pedagang itu?',
         penjelasan:
           'Menghapus 3 hutang × Rp 4.000 = <strong>+Rp 12.000</strong>. Dua bilangan negatif dikalikan menghasilkan <strong>bilangan positif</strong>. Ingat: "hilangnya hal negatif = hal positif".',
-        ruleSummary: '<span style="color:var(--color-error-strong)">negatif</span> × <span style="color:var(--color-error-strong)">negatif</span> = <span style="color:var(--color-success-strong)">positif (+)</span>',
+        ruleSummary:
+          '<span style="color:var(--color-error-strong)">negatif</span> × <span style="color:var(--color-error-strong)">negatif</span> = <span style="color:var(--color-success-strong)">positif (+)</span>',
       },
     ],
   },
@@ -236,7 +239,8 @@ var DATA = {
         bagi: '12 ÷ 3 = ?',
         hasil_bagi: 4,
         tanda: '+',
-        penjelasan: 'Karena 4 × 3 = 12, maka 12 ÷ 3 = <strong>4</strong>. Positif ÷ Positif = <strong>Positif</strong>.',
+        penjelasan:
+          'Karena 4 × 3 = 12, maka 12 ÷ 3 = <strong>4</strong>. Positif ÷ Positif = <strong>Positif</strong>.',
       },
       {
         id: 'bp2',
@@ -244,7 +248,8 @@ var DATA = {
         bagi: '(−12) ÷ 3 = ?',
         hasil_bagi: -4,
         tanda: '−',
-        penjelasan: 'Karena (−4) × 3 = −12, maka (−12) ÷ 3 = <strong>−4</strong>. Negatif ÷ Positif = <strong>Negatif</strong>.',
+        penjelasan:
+          'Karena (−4) × 3 = −12, maka (−12) ÷ 3 = <strong>−4</strong>. Negatif ÷ Positif = <strong>Negatif</strong>.',
       },
       {
         id: 'bp3',
@@ -252,7 +257,8 @@ var DATA = {
         bagi: '(−12) ÷ (−3) = ?',
         hasil_bagi: 4,
         tanda: '+',
-        penjelasan: 'Karena 4 × (−3) = −12, maka (−12) ÷ (−3) = <strong>4</strong>. Negatif ÷ Negatif = <strong>Positif</strong>.',
+        penjelasan:
+          'Karena 4 × (−3) = −12, maka (−12) ÷ (−3) = <strong>4</strong>. Negatif ÷ Negatif = <strong>Positif</strong>.',
       },
       {
         id: 'bp4',
@@ -260,7 +266,8 @@ var DATA = {
         bagi: '12 ÷ (−3) = ?',
         hasil_bagi: -4,
         tanda: '−',
-        penjelasan: 'Karena (−4) × (−3) = 12, maka 12 ÷ (−3) = <strong>−4</strong>. Positif ÷ Negatif = <strong>Negatif</strong>.',
+        penjelasan:
+          'Karena (−4) × (−3) = 12, maka 12 ÷ (−3) = <strong>−4</strong>. Positif ÷ Negatif = <strong>Negatif</strong>.',
       },
     ],
     ringkasan:
@@ -333,10 +340,7 @@ var DATA = {
         b: -4,
         op: '÷',
         answer: 20,
-        hints: [
-          'Tanda sama. Hasilnya positif.',
-          'Hitung: 80 ÷ 4 = 20.',
-        ],
+        hints: ['Tanda sama. Hasilnya positif.', 'Hitung: 80 ÷ 4 = 20.'],
         explanation: '(−80) ÷ (−4) = <strong>20</strong>. Negatif ÷ Negatif = Positif.',
       },
       {
@@ -379,7 +383,8 @@ var DATA = {
         toleransi: 0.25,
         unit: 'buku',
         hint: 'Hitung dulu buku per rak (8 × 12), lalu kalikan dengan jumlah rak (15).',
-        explanation: '8 × 12 = 96 buku per rak. 96 × 15 = <strong>1.440 buku</strong>. Estimasi sekitar 1.440–1.500 buku diterima.',
+        explanation:
+          '8 × 12 = 96 buku per rak. 96 × 15 = <strong>1.440 buku</strong>. Estimasi sekitar 1.440–1.500 buku diterima.',
       },
       {
         id: 'e2',
@@ -393,7 +398,7 @@ var DATA = {
           'Total = 75.000 × 30 = <strong>Rp 2.250.000</strong>',
         ],
         answer: 2250000,
-        toleransi: 0.20,
+        toleransi: 0.2,
         unit: 'rupiah',
         hint: 'Kalikan pengeluaran per hari (75.000) dengan jumlah hari dalam sebulan (30).',
         explanation: '75.000 × 30 = <strong>Rp 2.250.000</strong> per bulan.',
@@ -413,7 +418,8 @@ var DATA = {
         toleransi: 0,
         unit: '°C',
         hint: 'Hitung perubahan total: turun 3°C per jam × 4 jam. Lalu tambahkan ke suhu awal.',
-        explanation: 'Perubahan = (−3) × 4 = −12°C. Suhu akhir = 4 + (−12) = <strong>−8°C</strong>.',
+        explanation:
+          'Perubahan = (−3) × 4 = −12°C. Suhu akhir = 4 + (−12) = <strong>−8°C</strong>.',
       },
       {
         id: 'e4',
@@ -422,9 +428,7 @@ var DATA = {
         story:
           'Sebuah kelas harus memproduksi <strong>144 buah produk kerajinan</strong>. Jika tugas dibagi rata kepada <strong>12 siswa</strong>, berapa produk yang harus dibuat tiap siswa?',
         pertanyaan: 'Berapa produk yang harus dibuat setiap siswa?',
-        langkah: [
-          'Tugas tiap siswa = 144 ÷ 12 = <strong>12 produk</strong>',
-        ],
+        langkah: ['Tugas tiap siswa = 144 ÷ 12 = <strong>12 produk</strong>'],
         answer: 12,
         toleransi: 0,
         unit: 'produk',
@@ -468,7 +472,8 @@ var DATA = {
         ],
         correct: 'opt_a',
         hint: 'Perubahan posisi = (−4) × 9. Hitung hasilnya.',
-        explanation: '(−4) × 9 = <strong>−36 meter</strong>. Penyelam berada 36 meter di bawah permukaan.',
+        explanation:
+          '(−4) × 9 = <strong>−36 meter</strong>. Penyelam berada 36 meter di bawah permukaan.',
       },
       {
         id: 't3',
@@ -481,7 +486,8 @@ var DATA = {
         answer: -8000,
         unit: 'rupiah',
         hint: 'Bagi kerugian total dengan jumlah anggota: (−48.000) ÷ 6.',
-        explanation: '(−48.000) ÷ 6 = <strong>−Rp 8.000</strong> per anggota. Setiap anggota menanggung rugi Rp 8.000.',
+        explanation:
+          '(−48.000) ÷ 6 = <strong>−Rp 8.000</strong> per anggota. Setiap anggota menanggung rugi Rp 8.000.',
       },
       {
         id: 't4',

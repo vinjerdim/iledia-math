@@ -1618,10 +1618,6 @@ details.hint-reveal[open] summary::before {
   gap: var(--space-5);
 }
 
-.refleksi-item {
-  /* inherits panel structure */
-}
-
 .refleksi-item__num {
   font-family: var(--font-mono);
   font-size: 0.72rem;

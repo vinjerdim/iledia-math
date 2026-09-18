@@ -37,8 +37,7 @@ var DATA = {
         steps: [
           {
             id: 's1',
-            question:
-              'Hitung <strong>total belanja</strong> tim dekorasi.',
+            question: 'Hitung <strong>total belanja</strong> tim dekorasi.',
             hint: '85.000 + 48.000 + 127.000 + 35.000 = ? Jumlahkan satu per satu.',
             answer: 295000,
             explanation:
@@ -79,8 +78,7 @@ var DATA = {
           },
           {
             id: 's2',
-            question:
-              'Diskon 12,5% dari Rp 220.000 adalah berapa rupiah?',
+            question: 'Diskon 12,5% dari Rp 220.000 adalah berapa rupiah?',
             hint: '12,5% = 12,5/100 = 0,125. Jadi diskon = 220.000 × 0,125 = ?',
             answer: 27500,
             explanation:
@@ -88,8 +86,7 @@ var DATA = {
           },
           {
             id: 's3',
-            question:
-              'Berapa harga yang harus dibayar <strong>setelah diskon</strong>?',
+            question: 'Berapa harga yang harus dibayar <strong>setelah diskon</strong>?',
             hint: 'Harga akhir = harga asli − nilai diskon → 220.000 − 27.500 = ?',
             answer: 192500,
             explanation:
@@ -112,8 +109,7 @@ var DATA = {
         steps: [
           {
             id: 's1',
-            question:
-              'Berapa biaya sound system <strong>per kelompok</strong>? (Rp 240.000 ÷ 5)',
+            question: 'Berapa biaya sound system <strong>per kelompok</strong>? (Rp 240.000 ÷ 5)',
             hint: '240.000 ÷ 5 = ? Bagi total biaya dengan jumlah kelompok.',
             answer: 48000,
             explanation:
@@ -121,8 +117,7 @@ var DATA = {
           },
           {
             id: 's2',
-            question:
-              '<strong>1/4 dari total anggaran kelas</strong> (Rp 600.000) adalah berapa?',
+            question: '<strong>1/4 dari total anggaran kelas</strong> (Rp 600.000) adalah berapa?',
             hint: '1/4 × 600.000 = 600.000 ÷ 4 = ? Pecahan berarti membagi.',
             answer: 150000,
             explanation:
@@ -138,15 +133,13 @@ var DATA = {
      ---------------------------------------------------------- */
   menyusunRincian: {
     title: 'Menyusun Rincian Anggaran',
-    instruction:
-      'Hitung biaya setiap pos anggaran. Pilih dan gunakan operasi yang tepat!',
+    instruction: 'Hitung biaya setiap pos anggaran. Pilih dan gunakan operasi yang tepat!',
     soal: [
       {
         id: 'mr1',
         kategori: 'Konsumsi',
         icon: '🍱',
-        konteks:
-          '35 siswa masing-masing mendapat 1 porsi snack seharga Rp 4.000.',
+        konteks: '35 siswa masing-masing mendapat 1 porsi snack seharga Rp 4.000.',
         question: 'Berapa <strong>total biaya snack</strong> untuk seluruh siswa?',
         answer: 140000,
         hints: [
@@ -192,10 +185,8 @@ var DATA = {
         id: 'mr4',
         kategori: 'Dekorasi',
         icon: '🎨',
-        konteks:
-          'Backdrop panggung seharga Rp 90.000 mendapat diskon 10%.',
-        question:
-          'Berapa <strong>harga yang harus dibayar</strong> setelah diskon?',
+        konteks: 'Backdrop panggung seharga Rp 90.000 mendapat diskon 10%.',
+        question: 'Berapa <strong>harga yang harus dibayar</strong> setelah diskon?',
         answer: 81000,
         hints: [
           'Langkah 1: Hitung nilai diskon = 90.000 × 10% = 90.000 × 0,1 = 9.000.',
@@ -209,16 +200,14 @@ var DATA = {
         id: 'mr5',
         kategori: 'Konsumsi',
         icon: '🥤',
-        konteks:
-          'Minuman: 35 botol air mineral @ Rp 2.500 ditambah 2 galon air minum @ Rp 18.000.',
+        konteks: 'Minuman: 35 botol air mineral @ Rp 2.500 ditambah 2 galon air minum @ Rp 18.000.',
         question: 'Berapa <strong>total biaya minuman</strong>?',
         answer: 123500,
         hints: [
           'Hitung dua kelompok terpisah: (35 × 2.500) + (2 × 18.000).',
           '35 × 2.500 = 87.500 dan 2 × 18.000 = 36.000. Jumlahkan keduanya.',
         ],
-        explanation:
-          '(35 × 2.500) + (2 × 18.000) = 87.500 + 36.000 = <strong>Rp 123.500</strong>.',
+        explanation: '(35 × 2.500) + (2 × 18.000) = 87.500 + 36.000 = <strong>Rp 123.500</strong>.',
         operasi: '× dan +',
       },
       {
@@ -227,8 +216,7 @@ var DATA = {
         icon: '📋',
         konteks:
           'Rincian anggaran: dekorasi Rp 81.000, konsumsi Rp 263.500, penampilan Rp 114.000, teknis Rp 172.500, lain-lain Rp 35.000.',
-        question:
-          'Berapa <strong>total seluruh anggaran</strong> yang direncanakan?',
+        question: 'Berapa <strong>total seluruh anggaran</strong> yang direncanakan?',
         answer: 666000,
         hints: [
           'Jumlahkan semua pos: 81.000 + 263.500 + 114.000 + 172.500 + 35.000 = ?',
@@ -296,10 +284,7 @@ var DATA = {
           'Total belanja sudah <strong>Rp 487.500</strong> dari anggaran <strong>Rp 600.000</strong>. Berapa <strong>sisa anggaran</strong>?',
         type: 'input',
         answer: 112500,
-        hints: [
-          'Sisa = Anggaran − Total belanja.',
-          '600.000 − 487.500 = ?',
-        ],
+        hints: ['Sisa = Anggaran − Total belanja.', '600.000 − 487.500 = ?'],
         explanation:
           '600.000 − 487.500 = <strong>Rp 112.500</strong>. Masih ada sisa yang bisa dimanfaatkan.',
       },
@@ -322,12 +307,8 @@ var DATA = {
           'Biaya dekorasi Rp 156.000 ditanggung oleh <strong>4 orang panitia</strong>. Berapa iuran per orang?',
         type: 'input',
         answer: 39000,
-        hints: [
-          'Iuran per orang = total biaya ÷ jumlah orang.',
-          '156.000 ÷ 4 = ?',
-        ],
-        explanation:
-          '156.000 ÷ 4 = <strong>Rp 39.000</strong> per orang panitia dekorasi.',
+        hints: ['Iuran per orang = total biaya ÷ jumlah orang.', '156.000 ÷ 4 = ?'],
+        explanation: '156.000 ÷ 4 = <strong>Rp 39.000</strong> per orang panitia dekorasi.',
       },
     ],
   },

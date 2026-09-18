@@ -43,7 +43,9 @@ function parseInputInt(str) {
 
 function esc(str) {
   var m = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
-  return String(str).replace(/[&<>"']/g, function (ch) { return m[ch]; });
+  return String(str).replace(/[&<>"']/g, function (ch) {
+    return m[ch];
+  });
 }
 
 function formatNumber(n) {
@@ -133,7 +135,9 @@ var State = {
 function saveState() {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(State));
-  } catch (e) { /* ignore */ }
+  } catch (e) {
+    /* ignore */
+  }
 }
 
 function loadState() {
@@ -148,7 +152,11 @@ function loadState() {
 }
 
 function clearState() {
-  try { localStorage.removeItem(STORAGE_KEY); } catch (e) { /* ignore */ }
+  try {
+    localStorage.removeItem(STORAGE_KEY);
+  } catch (e) {
+    /* ignore */
+  }
   State.currentStage = 'orientasi';
   State.completedStages = {};
   State.eksplorasiKaliIdx = 0;
@@ -175,10 +183,16 @@ function initExerciseArrays() {
     return { attempts: 0, hintIdx: 0, correct: false, userInput: '', chosen: null };
   };
 
-  if (!State.latihanKaliExercises || State.latihanKaliExercises.length !== DATA.latihanKali.soal.length) {
+  if (
+    !State.latihanKaliExercises ||
+    State.latihanKaliExercises.length !== DATA.latihanKali.soal.length
+  ) {
     State.latihanKaliExercises = DATA.latihanKali.soal.map(emptyExercise);
   }
-  if (!State.latihanBagiExercises || State.latihanBagiExercises.length !== DATA.latihanBagi.soal.length) {
+  if (
+    !State.latihanBagiExercises ||
+    State.latihanBagiExercises.length !== DATA.latihanBagi.soal.length
+  ) {
     State.latihanBagiExercises = DATA.latihanBagi.soal.map(emptyExercise);
   }
   if (!State.estimasiExercises || State.estimasiExercises.length !== DATA.estimasi.soal.length) {
@@ -241,14 +255,20 @@ function buildStageNav() {
   if (!list) return;
   list.innerHTML = STAGES.map(function (sid, i) {
     return (
-      '<li><button type="button" class="stage-nav__item" data-stage="' + sid + '">' +
-      '<span class="stage-nav__num">' + (i + 1) + '</span>' +
+      '<li><button type="button" class="stage-nav__item" data-stage="' +
+      sid +
+      '">' +
+      '<span class="stage-nav__num">' +
+      (i + 1) +
+      '</span>' +
       esc(STAGE_LABELS[i]) +
       '</button></li>'
     );
   }).join('');
   list.querySelectorAll('.stage-nav__item').forEach(function (btn) {
-    btn.addEventListener('click', function () { navigateTo(btn.dataset.stage); });
+    btn.addEventListener('click', function () {
+      navigateTo(btn.dataset.stage);
+    });
   });
   updateStageNav();
 }
@@ -272,9 +292,15 @@ function updateProgress() {
 
 function buildFeedbackBox(type, icon, html) {
   return (
-    '<div class="feedback-box feedback-box--' + esc(type) + '" role="alert">' +
-    '<span class="feedback-box__icon" aria-hidden="true">' + icon + '</span>' +
-    '<div class="feedback-box__body">' + html + '</div>' +
+    '<div class="feedback-box feedback-box--' +
+    esc(type) +
+    '" role="alert">' +
+    '<span class="feedback-box__icon" aria-hidden="true">' +
+    icon +
+    '</span>' +
+    '<div class="feedback-box__body">' +
+    html +
+    '</div>' +
     '</div>'
   );
 }
@@ -291,7 +317,11 @@ function buildProgressDots(total, current, statuses) {
   return (
     '<div class="exercise-progress" aria-label="Progress soal">' +
     dots +
-    '<span class="exercise-label">Soal ' + (current + 1) + ' dari ' + total + '</span>' +
+    '<span class="exercise-label">Soal ' +
+    (current + 1) +
+    ' dari ' +
+    total +
+    '</span>' +
     '</div>'
   );
 }
@@ -336,18 +366,39 @@ function renderCurrentStage() {
   container.innerHTML = '';
   updateProgress();
   switch (State.currentStage) {
-    case 'orientasi': renderOrientasi(container); break;
-    case 'eksplorasiKali': renderEksplorasiKali(container); break;
-    case 'aturanTanda': renderAturanTanda(container); break;
-    case 'latihanKali': renderLatihanKali(container); break;
-    case 'eksplorasiBagi': renderEksplorasiBagi(container); break;
-    case 'latihanBagi': renderLatihanBagi(container); break;
-    case 'estimasi': renderEstimasi(container); break;
-    case 'tantangan': renderTantangan(container); break;
-    case 'refleksi': renderRefleksi(container); break;
-    case 'selesai': renderSelesai(container); break;
+    case 'orientasi':
+      renderOrientasi(container);
+      break;
+    case 'eksplorasiKali':
+      renderEksplorasiKali(container);
+      break;
+    case 'aturanTanda':
+      renderAturanTanda(container);
+      break;
+    case 'latihanKali':
+      renderLatihanKali(container);
+      break;
+    case 'eksplorasiBagi':
+      renderEksplorasiBagi(container);
+      break;
+    case 'latihanBagi':
+      renderLatihanBagi(container);
+      break;
+    case 'estimasi':
+      renderEstimasi(container);
+      break;
+    case 'tantangan':
+      renderTantangan(container);
+      break;
+    case 'refleksi':
+      renderRefleksi(container);
+      break;
+    case 'selesai':
+      renderSelesai(container);
+      break;
     default:
-      container.innerHTML = '<p style="padding:var(--space-5);color:var(--color-ink-muted);">Tahap tidak ditemukan.</p>';
+      container.innerHTML =
+        '<p style="padding:var(--space-5);color:var(--color-ink-muted);">Tahap tidak ditemukan.</p>';
   }
 }
 
@@ -357,7 +408,9 @@ function showNotice(msg) {
   el.textContent = msg;
   el.classList.add('is-visible');
   clearTimeout(showNotice._t);
-  showNotice._t = setTimeout(function () { el.classList.remove('is-visible'); }, 3000);
+  showNotice._t = setTimeout(function () {
+    el.classList.remove('is-visible');
+  }, 3000);
 }
 
 /* ============================================================
@@ -369,10 +422,14 @@ function renderOrientasi(container) {
     '<section aria-label="Orientasi">' +
     '<div class="stage-head">' +
     '<span class="stage-head__kicker">TAHAP 1 — MEMAHAMI KONTEKS</span>' +
-    '<p class="stage-head__goal">Tujuan: ' + esc(DATA.meta.goal) + '</p>' +
+    '<p class="stage-head__goal">Tujuan: ' +
+    esc(DATA.meta.goal) +
+    '</p>' +
     '</div>' +
     '<div class="panel panel--hero">' +
-    '<h2>' + esc(DATA.meta.title) + '</h2>' +
+    '<h2>' +
+    esc(DATA.meta.title) +
+    '</h2>' +
     '<p style="font-size:1.05rem;"><strong>Bilangan bulat ada di mana-mana!</strong> Suhu yang turun, saldo yang berkurang, lantai basement — semua bisa dinyatakan dengan bilangan negatif. Sekarang kita akan belajar <em>mengalikan</em> dan <em>membagi</em> bilangan-bilangan tersebut, serta menggunakannya untuk <strong>memperkirakan (estimasi)</strong>.</p>' +
     '<div class="panel panel--info" style="margin-bottom:0;">' +
     '<h3 style="margin-bottom:var(--space-2);">Dalam media ini kamu akan:</h3>' +
@@ -415,10 +472,14 @@ function renderEksplorasiKali(container) {
   var idx = State.eksplorasiKaliIdx;
   var ctx = d.konteks[idx];
   var total = d.konteks.length;
-  var allDone = State.eksplorasiKaliRevealed.every(function (v) { return v; });
+  var allDone = State.eksplorasiKaliRevealed.every(function (v) {
+    return v;
+  });
 
   /* Progress dots */
-  var statuses = State.eksplorasiKaliRevealed.map(function (v) { return v ? 'correct' : null; });
+  var statuses = State.eksplorasiKaliRevealed.map(function (v) {
+    return v ? 'correct' : null;
+  });
   var dotsHtml = buildProgressDots(total, idx, statuses);
 
   /* Array grid */
@@ -433,36 +494,65 @@ function renderEksplorasiKali(container) {
     '<section aria-label="Eksplorasi Perkalian">' +
     '<div class="stage-head">' +
     '<span class="stage-head__kicker">TAHAP 2 — EKSPLORASI PERKALIAN</span>' +
-    '<h2>' + esc(d.title) + '</h2>' +
-    '<p class="stage-head__instruction">' + d.instruction + '</p>' +
+    '<h2>' +
+    esc(d.title) +
+    '</h2>' +
+    '<p class="stage-head__instruction">' +
+    d.instruction +
+    '</p>' +
     '</div>' +
     dotsHtml +
     '<div class="eksplorasi-card">' +
     '<div class="eksplorasi-card__head">' +
-    '<span class="eksplorasi-card__icon">' + ctx.icon + '</span>' +
+    '<span class="eksplorasi-card__icon">' +
+    ctx.icon +
+    '</span>' +
     '<div class="eksplorasi-card__meta">' +
-    '<span class="eksplorasi-card__badge">' + esc(ctx.badge) + '</span>' +
-    '<p class="eksplorasi-card__title">' + ctx.ekspresi + ' = ?</p>' +
+    '<span class="eksplorasi-card__badge">' +
+    esc(ctx.badge) +
+    '</span>' +
+    '<p class="eksplorasi-card__title">' +
+    ctx.ekspresi +
+    ' = ?</p>' +
     '</div></div>' +
     '<div class="eksplorasi-card__body">' +
-    '<p class="eksplorasi-card__story">' + ctx.story + '</p>' +
+    '<p class="eksplorasi-card__story">' +
+    ctx.story +
+    '</p>' +
     '<div class="array-grid-wrap" id="arrayGridWrap">' +
-    '<div style="text-align:center;">' + gridHtml + '</div>' +
-    (isRevealed
-      ? '<p class="' + captionCls + '">' + ctx.ekspresi + ' = ' + formatNumber(ctx.hasil) + ' ' + esc(ctx.unit) + '</p>'
-      : '<p style="text-align:center;color:var(--color-ink-muted);font-size:0.9rem;margin:var(--space-3) 0 0;">Tekan tombol di bawah untuk mengungkap jawaban.</p>'
-    ) +
+    '<div style="text-align:center;">' +
+    gridHtml +
     '</div>' +
     (isRevealed
-      ? buildFeedbackBox('success', '✅', '<strong>' + ctx.pertanyaan + '</strong><br>' + ctx.penjelasan + '<br><br><em>' + ctx.ruleSummary + '</em>') +
+      ? '<p class="' +
+        captionCls +
+        '">' +
+        ctx.ekspresi +
+        ' = ' +
+        formatNumber(ctx.hasil) +
+        ' ' +
+        esc(ctx.unit) +
+        '</p>'
+      : '<p style="text-align:center;color:var(--color-ink-muted);font-size:0.9rem;margin:var(--space-3) 0 0;">Tekan tombol di bawah untuk mengungkap jawaban.</p>') +
+    '</div>' +
+    (isRevealed
+      ? buildFeedbackBox(
+          'success',
+          '✅',
+          '<strong>' +
+            ctx.pertanyaan +
+            '</strong><br>' +
+            ctx.penjelasan +
+            '<br><br><em>' +
+            ctx.ruleSummary +
+            '</em>'
+        ) +
         '<div class="btn-group btn-group--end">' +
         (idx < total - 1
           ? '<button type="button" class="btn btn--primary" id="nextCtxBtn">Konteks Berikutnya →</button>'
-          : '<button type="button" class="btn btn--primary" id="lanjutBtn">Lanjut ke Aturan Tanda →</button>'
-        ) +
+          : '<button type="button" class="btn btn--primary" id="lanjutBtn">Lanjut ke Aturan Tanda →</button>') +
         '</div>'
-      : '<div class="btn-group btn-group--end"><button type="button" class="btn btn--primary" id="revealBtn">Ungkap Visualisasi</button></div>'
-    ) +
+      : '<div class="btn-group btn-group--end"><button type="button" class="btn btn--primary" id="revealBtn">Ungkap Visualisasi</button></div>') +
     '</div></div>' +
     '</section>';
 
@@ -508,33 +598,53 @@ function renderEksplorasiKali(container) {
 function renderAturanTanda(container) {
   var d = DATA.aturanTanda;
   var revealed = State.aturanTandaRevealed;
-  var allRevealed = revealed.every(function (v) { return v; });
+  var allRevealed = revealed.every(function (v) {
+    return v;
+  });
 
-  var rowsHtml = d.baris.map(function (b, i) {
-    var isRev = revealed[i];
-    var signHtml;
-    if (isRev) {
-      var cls = 'sign-badge sign-badge--' + (b.mode === 'pos' ? 'pos' : 'neg');
-      signHtml = '<span class="' + cls + '">' + b.tanda + esc(String(Math.abs(b.hasil))) + '</span>';
-    } else {
-      signHtml = '<span class="sign-badge sign-badge--hidden" role="button" tabindex="0" data-idx="' + i + '" title="Klik untuk ungkap">?</span>';
-    }
-    return (
-      '<tr>' +
-      '<td class="sign-table__example">' + esc(b.faktor1) + '</td>' +
-      '<td class="sign-table__example">' + esc(b.faktor2) + '</td>' +
-      '<td class="sign-table__example">' + esc(b.contoh) + '</td>' +
-      '<td><span class="sign-table__result">' + signHtml + '</span></td>' +
-      '</tr>'
-    );
-  }).join('');
+  var rowsHtml = d.baris
+    .map(function (b, i) {
+      var isRev = revealed[i];
+      var signHtml;
+      if (isRev) {
+        var cls = 'sign-badge sign-badge--' + (b.mode === 'pos' ? 'pos' : 'neg');
+        signHtml =
+          '<span class="' + cls + '">' + b.tanda + esc(String(Math.abs(b.hasil))) + '</span>';
+      } else {
+        signHtml =
+          '<span class="sign-badge sign-badge--hidden" role="button" tabindex="0" data-idx="' +
+          i +
+          '" title="Klik untuk ungkap">?</span>';
+      }
+      return (
+        '<tr>' +
+        '<td class="sign-table__example">' +
+        esc(b.faktor1) +
+        '</td>' +
+        '<td class="sign-table__example">' +
+        esc(b.faktor2) +
+        '</td>' +
+        '<td class="sign-table__example">' +
+        esc(b.contoh) +
+        '</td>' +
+        '<td><span class="sign-table__result">' +
+        signHtml +
+        '</span></td>' +
+        '</tr>'
+      );
+    })
+    .join('');
 
   container.innerHTML =
     '<section aria-label="Aturan Tanda">' +
     '<div class="stage-head">' +
     '<span class="stage-head__kicker">TAHAP 3 — ATURAN TANDA</span>' +
-    '<h2>' + esc(d.title) + '</h2>' +
-    '<p class="stage-head__instruction">' + d.instruction + '</p>' +
+    '<h2>' +
+    esc(d.title) +
+    '</h2>' +
+    '<p class="stage-head__instruction">' +
+    d.instruction +
+    '</p>' +
     '</div>' +
     '<div class="panel panel--compact">' +
     '<div class="sign-table-wrap">' +
@@ -542,16 +652,24 @@ function renderAturanTanda(container) {
     '<thead><tr>' +
     '<th>Faktor 1</th><th>Faktor 2</th><th>Contoh</th><th>Hasil (tanda)</th>' +
     '</tr></thead>' +
-    '<tbody id="signTableBody">' + rowsHtml + '</tbody>' +
+    '<tbody id="signTableBody">' +
+    rowsHtml +
+    '</tbody>' +
     '</table>' +
     '</div>' +
-    '<div class="sign-rule-caption' + (allRevealed ? ' is-visible' : '') + '" id="ruleSummary">' +
-    '💡 <strong>Pola yang kamu temukan:</strong> ' + d.ringkasan +
+    '<div class="sign-rule-caption' +
+    (allRevealed ? ' is-visible' : '') +
+    '" id="ruleSummary">' +
+    '💡 <strong>Pola yang kamu temukan:</strong> ' +
+    d.ringkasan +
     '</div>' +
     (allRevealed
       ? '<div class="btn-group btn-group--end"><button type="button" class="btn btn--primary" id="lanjutBtn">Lanjut ke Latihan Perkalian →</button></div>'
-      : '<p style="font-size:0.9rem;color:var(--color-ink-muted);margin-top:var(--space-3);">Klik tiap sel abu-abu untuk mengungkap tanda hasilnya. (' + revealed.filter(function(v){return v;}).length + '/4 terungkap)</p>'
-    ) +
+      : '<p style="font-size:0.9rem;color:var(--color-ink-muted);margin-top:var(--space-3);">Klik tiap sel abu-abu untuk mengungkap tanda hasilnya. (' +
+        revealed.filter(function (v) {
+          return v;
+        }).length +
+        '/4 terungkap)</p>') +
     '</div></section>';
 
   /* Click handlers on hidden badges */
@@ -560,14 +678,19 @@ function renderAturanTanda(container) {
     var activate = function () {
       var i = parseInt(badge.dataset.idx, 10);
       State.aturanTandaRevealed[i] = true;
-      var allDone = State.aturanTandaRevealed.every(function (v) { return v; });
+      var allDone = State.aturanTandaRevealed.every(function (v) {
+        return v;
+      });
       if (allDone) State.aturanTandaSummaryShown = true;
       saveState();
       renderAturanTanda(container);
     };
     badge.addEventListener('click', activate);
     badge.addEventListener('keydown', function (e) {
-      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); activate(); }
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        activate();
+      }
     });
   });
 
@@ -603,40 +726,68 @@ function renderLatihanKali(container) {
 function renderEksplorasiBagi(container) {
   var d = DATA.eksplorasiBagi;
   var revealed = State.eksplorasiBagiRevealed;
-  var allRevealed = revealed.every(function (v) { return v; });
+  var allRevealed = revealed.every(function (v) {
+    return v;
+  });
 
-  var pairsHtml = d.pasangan.map(function (p, i) {
-    var isRev = revealed[i];
-    return (
-      '<div class="invers-pair">' +
-      '<span class="invers-pair__kali">' + esc(p.kali) + '</span>' +
-      '<span class="invers-pair__arrow">↕</span>' +
-      (isRev
-        ? '<span class="invers-pair__bagi" style="' + (p.tanda === '−' ? 'background:var(--color-error-soft);color:var(--color-error-strong);' : '') + '">' +
-          esc(p.bagi.replace('?', String(p.hasil_bagi))) + '</span>' +
-          '<div style="margin-top:var(--space-3);">' + buildFeedbackBox('info', 'ℹ️', p.penjelasan) + '</div>'
-        : '<button type="button" class="btn btn--primary btn--small" data-idx="' + i + '" id="revealPair' + i + '">Ungkap ' + esc(p.bagi) + '</button>'
-      ) +
-      '</div>'
-    );
-  }).join('');
+  var pairsHtml = d.pasangan
+    .map(function (p, i) {
+      var isRev = revealed[i];
+      return (
+        '<div class="invers-pair">' +
+        '<span class="invers-pair__kali">' +
+        esc(p.kali) +
+        '</span>' +
+        '<span class="invers-pair__arrow">↕</span>' +
+        (isRev
+          ? '<span class="invers-pair__bagi" style="' +
+            (p.tanda === '−'
+              ? 'background:var(--color-error-soft);color:var(--color-error-strong);'
+              : '') +
+            '">' +
+            esc(p.bagi.replace('?', String(p.hasil_bagi))) +
+            '</span>' +
+            '<div style="margin-top:var(--space-3);">' +
+            buildFeedbackBox('info', 'ℹ️', p.penjelasan) +
+            '</div>'
+          : '<button type="button" class="btn btn--primary btn--small" data-idx="' +
+            i +
+            '" id="revealPair' +
+            i +
+            '">Ungkap ' +
+            esc(p.bagi) +
+            '</button>') +
+        '</div>'
+      );
+    })
+    .join('');
 
   container.innerHTML =
     '<section aria-label="Eksplorasi Pembagian">' +
     '<div class="stage-head">' +
     '<span class="stage-head__kicker">TAHAP 5 — EKSPLORASI PEMBAGIAN</span>' +
-    '<h2>' + esc(d.title) + '</h2>' +
-    '<p class="stage-head__instruction">' + d.instruction + '</p>' +
+    '<h2>' +
+    esc(d.title) +
+    '</h2>' +
+    '<p class="stage-head__instruction">' +
+    d.instruction +
+    '</p>' +
     '</div>' +
     '<div class="panel panel--compact">' +
-    '<div class="invers-display" id="inversPairs">' + pairsHtml + '</div>' +
+    '<div class="invers-display" id="inversPairs">' +
+    pairsHtml +
+    '</div>' +
     (allRevealed
       ? '<div class="sign-rule-caption is-visible">' +
-        '💡 <strong>Kesimpulan:</strong> ' + d.ringkasan +
+        '💡 <strong>Kesimpulan:</strong> ' +
+        d.ringkasan +
         '</div>' +
         '<div class="btn-group btn-group--end"><button type="button" class="btn btn--primary" id="lanjutBtn">Lanjut ke Latihan Pembagian →</button></div>'
-      : '<p style="font-size:0.9rem;color:var(--color-ink-muted);margin-top:var(--space-3);">Ungkap semua pasangan untuk melanjutkan. (' + revealed.filter(function(v){return v;}).length + '/4 terungkap)</p>'
-    ) +
+      : '<p style="font-size:0.9rem;color:var(--color-ink-muted);margin-top:var(--space-3);">Ungkap semua pasangan untuk melanjutkan. (' +
+        revealed.filter(function (v) {
+          return v;
+        }).length +
+        '/4 terungkap)</p>') +
     '</div></section>';
 
   d.pasangan.forEach(function (p, i) {
@@ -644,7 +795,11 @@ function renderEksplorasiBagi(container) {
     if (btn) {
       btn.addEventListener('click', function () {
         State.eksplorasiBagiRevealed[i] = true;
-        if (State.eksplorasiBagiRevealed.every(function (v) { return v; })) {
+        if (
+          State.eksplorasiBagiRevealed.every(function (v) {
+            return v;
+          })
+        ) {
           State.eksplorasiBagiRingkasanShown = true;
         }
         saveState();
@@ -690,7 +845,9 @@ function renderExerciseStage(container, cfg) {
   var ex = exercises[idx];
   var total = d.soal.length;
 
-  var statuses = exercises.map(function (e) { return e.correct ? 'correct' : (e.attempts > 0 ? 'incorrect' : null); });
+  var statuses = exercises.map(function (e) {
+    return e.correct ? 'correct' : e.attempts > 0 ? 'incorrect' : null;
+  });
   var dotsHtml = buildProgressDots(total, idx, statuses);
 
   var aIsNeg = soal.a < 0;
@@ -698,59 +855,89 @@ function renderExerciseStage(container, cfg) {
   var exprHtml =
     '<div class="expr-display">' +
     buildExprNum(soal.a) +
-    '<span class="expr-op">' + esc(soal.op) + '</span>' +
+    '<span class="expr-op">' +
+    esc(soal.op) +
+    '</span>' +
     buildExprNum(soal.b) +
     '<span class="expr-eq">=</span>' +
-    '<input type="number" id="answerInput" class="input-text" style="max-width:120px;font-family:var(--font-mono);font-size:1.2rem;text-align:center;" placeholder="?" aria-label="Jawaban" value="' + esc(ex.userInput) + '">' +
+    '<input type="number" id="answerInput" class="input-text" style="max-width:120px;font-family:var(--font-mono);font-size:1.2rem;text-align:center;" placeholder="?" aria-label="Jawaban" value="' +
+    esc(ex.userInput) +
+    '">' +
     '</div>';
 
   var feedbackHtml = '';
   if (ex.correct) {
     feedbackHtml = buildFeedbackBox('success', '✅', '<strong>Benar!</strong> ' + soal.explanation);
   } else if (ex.attempts > 0) {
-    feedbackHtml = buildFeedbackBox('error', '❌', 'Belum tepat. Coba periksa tanda hasilnya. (Percobaan ke-' + ex.attempts + ')');
+    feedbackHtml = buildFeedbackBox(
+      'error',
+      '❌',
+      'Belum tepat. Coba periksa tanda hasilnya. (Percobaan ke-' + ex.attempts + ')'
+    );
   }
 
   var hintHtml = '';
   if (ex.hintIdx > 0) {
     var shownHints = soal.hints.slice(0, ex.hintIdx);
-    hintHtml = buildFeedbackBox('warning', '💡',
-      shownHints.map(function (h) { return '<p style="margin:0 0 var(--space-1)">' + h + '</p>'; }).join('')
+    hintHtml = buildFeedbackBox(
+      'warning',
+      '💡',
+      shownHints
+        .map(function (h) {
+          return '<p style="margin:0 0 var(--space-1)">' + h + '</p>';
+        })
+        .join('')
     );
   }
 
-  var allDone = exercises.every(function (e) { return e.correct; });
+  var allDone = exercises.every(function (e) {
+    return e.correct;
+  });
 
   container.innerHTML =
-    '<section aria-label="' + esc(cfg.kicker) + '">' +
+    '<section aria-label="' +
+    esc(cfg.kicker) +
+    '">' +
     '<div class="stage-head">' +
-    '<span class="stage-head__kicker">' + esc(cfg.kicker) + '</span>' +
-    '<h2>' + esc(d.title) + '</h2>' +
-    '<p class="stage-head__instruction">' + d.instruction + '</p>' +
+    '<span class="stage-head__kicker">' +
+    esc(cfg.kicker) +
+    '</span>' +
+    '<h2>' +
+    esc(d.title) +
+    '</h2>' +
+    '<p class="stage-head__instruction">' +
+    d.instruction +
+    '</p>' +
     '</div>' +
     dotsHtml +
     '<div class="panel panel--compact">' +
-    '<p style="font-size:0.95rem;margin-bottom:var(--space-3);"><strong>Soal ' + (idx + 1) + ':</strong> Hitung ' + esc(soal.ekspresi) + '</p>' +
+    '<p style="font-size:0.95rem;margin-bottom:var(--space-3);"><strong>Soal ' +
+    (idx + 1) +
+    ':</strong> Hitung ' +
+    esc(soal.ekspresi) +
+    '</p>' +
     exprHtml +
     hintHtml +
     feedbackHtml +
     '<div class="btn-group">' +
     (!ex.correct
       ? '<button type="button" class="btn btn--primary" id="checkBtn">Periksa</button>'
-      : ''
-    ) +
+      : '') +
     (ex.hintIdx < soal.hints.length && !ex.correct
-      ? '<button type="button" class="btn btn--ghost" id="hintBtn">Petunjuk ' + (ex.hintIdx + 1) + '/' + soal.hints.length + '</button>'
-      : ''
-    ) +
+      ? '<button type="button" class="btn btn--ghost" id="hintBtn">Petunjuk ' +
+        (ex.hintIdx + 1) +
+        '/' +
+        soal.hints.length +
+        '</button>'
+      : '') +
     (ex.correct && idx < total - 1
       ? '<button type="button" class="btn btn--primary" id="nextBtn">Soal Berikutnya →</button>'
-      : ''
-    ) +
+      : '') +
     (ex.correct && idx === total - 1
-      ? '<button type="button" class="btn btn--primary" id="lanjutBtn">' + esc(cfg.nextLabel) + '</button>'
-      : ''
-    ) +
+      ? '<button type="button" class="btn btn--primary" id="lanjutBtn">' +
+        esc(cfg.nextLabel) +
+        '</button>'
+      : '') +
     '</div></div>' +
     (allDone && idx === total - 1 ? '' : '') +
     '</section>';
@@ -766,8 +953,14 @@ function renderExerciseStage(container, cfg) {
   if (checkBtn) {
     var doCheck = function () {
       var parsed = parseInputInt(input ? input.value : '');
-      if (parsed.error === 'empty') { showNotice('Masukkan jawabanmu terlebih dahulu.'); return; }
-      if (parsed.error === 'invalid') { showNotice('Masukkan bilangan bulat yang valid.'); return; }
+      if (parsed.error === 'empty') {
+        showNotice('Masukkan jawabanmu terlebih dahulu.');
+        return;
+      }
+      if (parsed.error === 'invalid') {
+        showNotice('Masukkan bilangan bulat yang valid.');
+        return;
+      }
       ex.userInput = input ? input.value : '';
       ex.attempts++;
       if (parsed.value === soal.answer) {
@@ -821,7 +1014,9 @@ function renderEstimasi(container) {
   var ex = exercises[idx];
   var total = d.soal.length;
 
-  var statuses = exercises.map(function (e) { return e.correct ? 'correct' : (e.attempts > 0 ? 'incorrect' : null); });
+  var statuses = exercises.map(function (e) {
+    return e.correct ? 'correct' : e.attempts > 0 ? 'incorrect' : null;
+  });
   var dotsHtml = buildProgressDots(total, idx, statuses);
 
   var langkahHtml = '';
@@ -829,71 +1024,108 @@ function renderEstimasi(container) {
     langkahHtml =
       '<div class="estimation-steps">' +
       '<div class="estimation-steps__title">Langkah Estimasi</div>' +
-      soal.langkah.map(function (l, i) {
-        return '<div class="estimation-steps__step"><span class="estimation-steps__num">' + (i + 1) + '</span><span>' + l + '</span></div>';
-      }).join('') +
+      soal.langkah
+        .map(function (l, i) {
+          return (
+            '<div class="estimation-steps__step"><span class="estimation-steps__num">' +
+            (i + 1) +
+            '</span><span>' +
+            l +
+            '</span></div>'
+          );
+        })
+        .join('') +
       '</div>';
   }
 
   /* Tolerance for estimation */
   var tolAbs = soal.toleransi > 0 ? Math.ceil(Math.abs(soal.answer) * soal.toleransi) : 0;
-  var rangeText = tolAbs > 0
-    ? 'Jawaban antara ' + formatNumber(soal.answer - tolAbs) + ' – ' + formatNumber(soal.answer + tolAbs) + ' diterima.'
-    : 'Jawaban harus tepat.';
+  var rangeText =
+    tolAbs > 0
+      ? 'Jawaban antara ' +
+        formatNumber(soal.answer - tolAbs) +
+        ' – ' +
+        formatNumber(soal.answer + tolAbs) +
+        ' diterima.'
+      : 'Jawaban harus tepat.';
 
   var feedbackHtml = '';
   if (ex.correct) {
-    feedbackHtml = buildFeedbackBox('success', '✅', '<strong>Estimasimu tepat!</strong> ' + soal.explanation);
+    feedbackHtml = buildFeedbackBox(
+      'success',
+      '✅',
+      '<strong>Estimasimu tepat!</strong> ' + soal.explanation
+    );
   } else if (ex.attempts > 0) {
-    feedbackHtml = buildFeedbackBox('error', '❌', 'Belum tepat. Coba tinjau langkah estimasimu. Petunjuk: ' + soal.hint);
+    feedbackHtml = buildFeedbackBox(
+      'error',
+      '❌',
+      'Belum tepat. Coba tinjau langkah estimasimu. Petunjuk: ' + soal.hint
+    );
   }
 
-  var allDone = exercises.every(function (e) { return e.correct; });
+  var allDone = exercises.every(function (e) {
+    return e.correct;
+  });
 
   container.innerHTML =
     '<section aria-label="Estimasi">' +
     '<div class="stage-head">' +
     '<span class="stage-head__kicker">TAHAP 7 — ESTIMASI</span>' +
-    '<h2>' + esc(d.title) + '</h2>' +
-    '<p class="stage-head__instruction">' + d.instruction + '</p>' +
+    '<h2>' +
+    esc(d.title) +
+    '</h2>' +
+    '<p class="stage-head__instruction">' +
+    d.instruction +
+    '</p>' +
     '</div>' +
     dotsHtml +
     '<div class="eksplorasi-card">' +
     '<div class="eksplorasi-card__head">' +
-    '<span class="eksplorasi-card__icon">' + soal.icon + '</span>' +
+    '<span class="eksplorasi-card__icon">' +
+    soal.icon +
+    '</span>' +
     '<div class="eksplorasi-card__meta">' +
-    '<span class="eksplorasi-card__badge">' + esc(soal.badge) + '</span>' +
-    '<p class="eksplorasi-card__title">' + esc(soal.pertanyaan) + '</p>' +
+    '<span class="eksplorasi-card__badge">' +
+    esc(soal.badge) +
+    '</span>' +
+    '<p class="eksplorasi-card__title">' +
+    esc(soal.pertanyaan) +
+    '</p>' +
     '</div></div>' +
     '<div class="eksplorasi-card__body">' +
-    '<p class="eksplorasi-card__story">' + soal.story + '</p>' +
+    '<p class="eksplorasi-card__story">' +
+    soal.story +
+    '</p>' +
     langkahHtml +
     '<div class="estimation-box">' +
     '<div class="estimation-box__label">Jawabanmu</div>' +
     '<div class="expr-display">' +
-    '<input type="number" id="estInput" class="input-text" style="max-width:150px;font-family:var(--font-mono);font-size:1.2rem;text-align:center;" placeholder="?" aria-label="Estimasi jawaban" value="' + esc(ex.userInput) + '">' +
-    '<span style="font-size:0.9rem;color:var(--color-ink-muted);">' + esc(soal.unit) + '</span>' +
+    '<input type="number" id="estInput" class="input-text" style="max-width:150px;font-family:var(--font-mono);font-size:1.2rem;text-align:center;" placeholder="?" aria-label="Estimasi jawaban" value="' +
+    esc(ex.userInput) +
+    '">' +
+    '<span style="font-size:0.9rem;color:var(--color-ink-muted);">' +
+    esc(soal.unit) +
+    '</span>' +
     '</div>' +
-    '<div class="estimation-box__range">' + rangeText + '</div>' +
+    '<div class="estimation-box__range">' +
+    rangeText +
+    '</div>' +
     '</div>' +
     feedbackHtml +
     '<div class="btn-group">' +
     (!ex.correct
       ? '<button type="button" class="btn btn--primary" id="checkBtn">Periksa</button>'
-      : ''
-    ) +
+      : '') +
     (!ex.correct && ex.hintIdx === 0
       ? '<button type="button" class="btn btn--ghost" id="hintBtn">Lihat Langkah Estimasi</button>'
-      : ''
-    ) +
+      : '') +
     (ex.correct && idx < total - 1
       ? '<button type="button" class="btn btn--primary" id="nextBtn">Soal Berikutnya →</button>'
-      : ''
-    ) +
+      : '') +
     (ex.correct && idx === total - 1
       ? '<button type="button" class="btn btn--primary" id="lanjutBtn">Lanjut ke Tantangan →</button>'
-      : ''
-    ) +
+      : '') +
     '</div></div></div>' +
     '</section>';
 
@@ -904,8 +1136,14 @@ function renderEstimasi(container) {
   if (checkBtn) {
     var doCheck = function () {
       var parsed = parseInputInt(input ? input.value : '');
-      if (parsed.error === 'empty') { showNotice('Masukkan perkiraanmu terlebih dahulu.'); return; }
-      if (parsed.error === 'invalid') { showNotice('Masukkan bilangan bulat yang valid.'); return; }
+      if (parsed.error === 'empty') {
+        showNotice('Masukkan perkiraanmu terlebih dahulu.');
+        return;
+      }
+      if (parsed.error === 'invalid') {
+        showNotice('Masukkan bilangan bulat yang valid.');
+        return;
+      }
       ex.userInput = input ? input.value : '';
       ex.attempts++;
       var diff = Math.abs(parsed.value - soal.answer);
@@ -917,7 +1155,10 @@ function renderEstimasi(container) {
       renderEstimasi(container);
     };
     checkBtn.addEventListener('click', doCheck);
-    if (input) input.addEventListener('keydown', function (e) { if (e.key === 'Enter') doCheck(); });
+    if (input)
+      input.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter') doCheck();
+      });
   }
 
   var hintBtn = document.getElementById('hintBtn');
@@ -959,7 +1200,9 @@ function renderTantangan(container) {
   var ex = exercises[idx];
   var total = d.soal.length;
 
-  var statuses = exercises.map(function (e) { return e.correct ? 'correct' : (e.attempts > 0 ? 'incorrect' : null); });
+  var statuses = exercises.map(function (e) {
+    return e.correct ? 'correct' : e.attempts > 0 ? 'incorrect' : null;
+  });
   var dotsHtml = buildProgressDots(total, idx, statuses);
 
   var inputHtml = '';
@@ -970,26 +1213,43 @@ function renderTantangan(container) {
       '<div class="estimation-box">' +
       '<div class="estimation-box__label">Jawabanmu</div>' +
       '<div class="expr-display">' +
-      '<input type="number" id="tantInput" class="input-text" style="max-width:160px;font-family:var(--font-mono);font-size:1.2rem;text-align:center;" placeholder="?" aria-label="Jawaban tantangan" value="' + esc(ex.userInput) + '">' +
-      (soal.unit ? '<span style="font-size:0.9rem;color:var(--color-ink-muted);">' + esc(soal.unit) + '</span>' : '') +
+      '<input type="number" id="tantInput" class="input-text" style="max-width:160px;font-family:var(--font-mono);font-size:1.2rem;text-align:center;" placeholder="?" aria-label="Jawaban tantangan" value="' +
+      esc(ex.userInput) +
+      '">' +
+      (soal.unit
+        ? '<span style="font-size:0.9rem;color:var(--color-ink-muted);">' +
+          esc(soal.unit) +
+          '</span>'
+        : '') +
       '</div></div>';
   } else if (soal.type === 'choice') {
     inputHtml =
       '<div class="challenge-options" id="choiceList">' +
-      soal.options.map(function (opt) {
-        var cls = 'choice-btn';
-        var icon = '';
-        if (ex.correct && ex.chosen === opt.id) {
-          cls += ' is-correct';
-          icon = '<span class="choice-btn__icon">✓</span>';
-        } else if (!ex.correct && ex.chosen === opt.id) {
-          cls += ' is-incorrect';
-          icon = '<span class="choice-btn__icon">✗</span>';
-        } else {
-          icon = '<span class="choice-btn__icon"></span>';
-        }
-        return '<button type="button" class="' + cls + '" data-id="' + esc(opt.id) + '">' + icon + esc(opt.label) + '</button>';
-      }).join('') +
+      soal.options
+        .map(function (opt) {
+          var cls = 'choice-btn';
+          var icon = '';
+          if (ex.correct && ex.chosen === opt.id) {
+            cls += ' is-correct';
+            icon = '<span class="choice-btn__icon">✓</span>';
+          } else if (!ex.correct && ex.chosen === opt.id) {
+            cls += ' is-incorrect';
+            icon = '<span class="choice-btn__icon">✗</span>';
+          } else {
+            icon = '<span class="choice-btn__icon"></span>';
+          }
+          return (
+            '<button type="button" class="' +
+            cls +
+            '" data-id="' +
+            esc(opt.id) +
+            '">' +
+            icon +
+            esc(opt.label) +
+            '</button>'
+          );
+        })
+        .join('') +
       '</div>';
   }
 
@@ -1007,37 +1267,43 @@ function renderTantangan(container) {
     '<section aria-label="Tantangan">' +
     '<div class="stage-head">' +
     '<span class="stage-head__kicker">TAHAP 8 — TANTANGAN KONTEKSTUAL</span>' +
-    '<h2>' + esc(d.title) + '</h2>' +
+    '<h2>' +
+    esc(d.title) +
+    '</h2>' +
     '</div>' +
     dotsHtml +
     '<div class="eksplorasi-card">' +
     '<div class="eksplorasi-card__head">' +
-    '<span class="eksplorasi-card__icon">' + soal.icon + '</span>' +
+    '<span class="eksplorasi-card__icon">' +
+    soal.icon +
+    '</span>' +
     '<div class="eksplorasi-card__meta">' +
-    '<span class="eksplorasi-card__badge">' + esc(soal.badge) + '</span>' +
+    '<span class="eksplorasi-card__badge">' +
+    esc(soal.badge) +
+    '</span>' +
     '</div></div>' +
     '<div class="eksplorasi-card__body">' +
-    '<p class="eksplorasi-card__story">' + soal.story + '</p>' +
-    '<p><strong>' + soal.pertanyaan + '</strong></p>' +
+    '<p class="eksplorasi-card__story">' +
+    soal.story +
+    '</p>' +
+    '<p><strong>' +
+    soal.pertanyaan +
+    '</strong></p>' +
     inputHtml +
     feedbackHtml +
     '<div class="btn-group">' +
     (!ex.correct && soal.type === 'input'
       ? '<button type="button" class="btn btn--primary" id="checkBtn">Periksa</button>'
-      : ''
-    ) +
+      : '') +
     (!ex.correct && !hintShown
       ? '<button type="button" class="btn btn--ghost" id="hintBtn">Petunjuk</button>'
-      : ''
-    ) +
+      : '') +
     (ex.correct && idx < total - 1
       ? '<button type="button" class="btn btn--primary" id="nextBtn">Tantangan Berikutnya →</button>'
-      : ''
-    ) +
+      : '') +
     (ex.correct && idx === total - 1
       ? '<button type="button" class="btn btn--primary" id="lanjutBtn">Lanjut ke Refleksi →</button>'
-      : ''
-    ) +
+      : '') +
     '</div></div></div>' +
     '</section>';
 
@@ -1049,16 +1315,28 @@ function renderTantangan(container) {
     if (checkBtn) {
       var doCheck = function () {
         var parsed = parseInputInt(input ? input.value : '');
-        if (parsed.error === 'empty') { showNotice('Masukkan jawabanmu.'); return; }
-        if (parsed.error === 'invalid') { showNotice('Masukkan bilangan bulat yang valid.'); return; }
+        if (parsed.error === 'empty') {
+          showNotice('Masukkan jawabanmu.');
+          return;
+        }
+        if (parsed.error === 'invalid') {
+          showNotice('Masukkan bilangan bulat yang valid.');
+          return;
+        }
         ex.userInput = input ? input.value : '';
         ex.attempts++;
-        if (parsed.value === soal.answer) { ex.correct = true; showNotice('✅ Benar!'); }
+        if (parsed.value === soal.answer) {
+          ex.correct = true;
+          showNotice('✅ Benar!');
+        }
         saveState();
         renderTantangan(container);
       };
       checkBtn.addEventListener('click', doCheck);
-      if (input) input.addEventListener('keydown', function (e) { if (e.key === 'Enter') doCheck(); });
+      if (input)
+        input.addEventListener('keydown', function (e) {
+          if (e.key === 'Enter') doCheck();
+        });
     }
   } else if (soal.type === 'choice') {
     var choiceBtns = container.querySelectorAll('.choice-btn');
@@ -1068,7 +1346,10 @@ function renderTantangan(container) {
         var optId = btn.dataset.id;
         ex.chosen = optId;
         ex.attempts++;
-        if (optId === soal.correct) { ex.correct = true; showNotice('✅ Benar!'); }
+        if (optId === soal.correct) {
+          ex.correct = true;
+          showNotice('✅ Benar!');
+        }
         saveState();
         renderTantangan(container);
       });
@@ -1110,31 +1391,48 @@ function renderTantangan(container) {
 function renderRefleksi(container) {
   var d = DATA.refleksi;
 
-  var soalHtml = d.soal.map(function (s, i) {
-    return (
-      '<div class="refleksi-item" style="margin-bottom:var(--space-5);">' +
-      '<label style="display:block;font-weight:600;font-size:0.92rem;margin-bottom:var(--space-2);" for="refl' + i + '"><strong>' + (i + 1) + '.</strong> ' + s.question + '</label>' +
-      '<textarea id="refl' + i + '" class="input-textarea" rows="3" placeholder="' + esc(s.placeholder) + '" data-id="' + esc(s.id) + '">' +
-      esc(State.refleksiAnswers[s.id] || '') +
-      '</textarea>' +
-      '</div>'
-    );
-  }).join('');
+  var soalHtml = d.soal
+    .map(function (s, i) {
+      return (
+        '<div class="refleksi-item" style="margin-bottom:var(--space-5);">' +
+        '<label style="display:block;font-weight:600;font-size:0.92rem;margin-bottom:var(--space-2);" for="refl' +
+        i +
+        '"><strong>' +
+        (i + 1) +
+        '.</strong> ' +
+        s.question +
+        '</label>' +
+        '<textarea id="refl' +
+        i +
+        '" class="input-textarea" rows="3" placeholder="' +
+        esc(s.placeholder) +
+        '" data-id="' +
+        esc(s.id) +
+        '">' +
+        esc(State.refleksiAnswers[s.id] || '') +
+        '</textarea>' +
+        '</div>'
+      );
+    })
+    .join('');
 
   container.innerHTML =
     '<section aria-label="Refleksi">' +
     '<div class="stage-head">' +
     '<span class="stage-head__kicker">TAHAP 9 — REFLEKSI</span>' +
-    '<h2>' + esc(d.title) + '</h2>' +
-    '<p>' + d.note + '</p>' +
+    '<h2>' +
+    esc(d.title) +
+    '</h2>' +
+    '<p>' +
+    d.note +
+    '</p>' +
     '</div>' +
     '<div class="panel panel--compact">' +
     soalHtml +
     (State.refleksiSaved
       ? buildFeedbackBox('success', '✅', 'Refleksimu telah tersimpan di browser ini.') +
         '<div class="btn-group btn-group--end"><button type="button" class="btn btn--primary" id="lanjutBtn">Lihat Ringkasan →</button></div>'
-      : '<div class="btn-group btn-group--end"><button type="button" class="btn btn--primary" id="saveReflBtn">Simpan Refleksi</button></div>'
-    ) +
+      : '<div class="btn-group btn-group--end"><button type="button" class="btn btn--primary" id="saveReflBtn">Simpan Refleksi</button></div>') +
     '</div></section>';
 
   var saveBtn = document.getElementById('saveReflBtn');
@@ -1147,7 +1445,10 @@ function renderRefleksi(container) {
         State.refleksiAnswers[id] = ta.value;
         if (ta.value.trim()) hasAny = true;
       });
-      if (!hasAny) { showNotice('Isi setidaknya satu pertanyaan refleksi.'); return; }
+      if (!hasAny) {
+        showNotice('Isi setidaknya satu pertanyaan refleksi.');
+        return;
+      }
       State.refleksiSaved = true;
       saveState();
       renderRefleksi(container);
@@ -1169,10 +1470,18 @@ function renderRefleksi(container) {
 
 function renderSelesai(container) {
   var doneCount = Object.keys(State.completedStages).length;
-  var totalSoalKali = State.latihanKaliExercises.filter(function (e) { return e.correct; }).length;
-  var totalSoalBagi = State.latihanBagiExercises.filter(function (e) { return e.correct; }).length;
-  var totalSoalEst = State.estimasiExercises.filter(function (e) { return e.correct; }).length;
-  var totalSoalTant = State.tantanganExercises.filter(function (e) { return e.correct; }).length;
+  var totalSoalKali = State.latihanKaliExercises.filter(function (e) {
+    return e.correct;
+  }).length;
+  var totalSoalBagi = State.latihanBagiExercises.filter(function (e) {
+    return e.correct;
+  }).length;
+  var totalSoalEst = State.estimasiExercises.filter(function (e) {
+    return e.correct;
+  }).length;
+  var totalSoalTant = State.tantanganExercises.filter(function (e) {
+    return e.correct;
+  }).length;
 
   container.innerHTML =
     '<section aria-label="Selesai">' +
@@ -1182,15 +1491,35 @@ function renderSelesai(container) {
     '<div class="panel panel--hero" style="text-align:center;">' +
     '<div style="font-size:3rem;margin-bottom:var(--space-3);">🎉</div>' +
     '<h2>Selamat! Kamu telah menyelesaikan media ini.</h2>' +
-    '<p style="font-size:1.05rem;">Kamu berhasil menyelesaikan <strong>' + doneCount + ' dari ' + STAGES.length + ' tahap</strong> pembelajaran.</p>' +
+    '<p style="font-size:1.05rem;">Kamu berhasil menyelesaikan <strong>' +
+    doneCount +
+    ' dari ' +
+    STAGES.length +
+    ' tahap</strong> pembelajaran.</p>' +
     '</div>' +
     '<div class="panel panel--compact">' +
     '<h3>Ringkasan Pencapaian</h3>' +
     '<div class="hero-steps">' +
-    '<div class="hero-steps__item"><span class="hero-steps__num">×</span>Latihan Perkalian: <strong>' + totalSoalKali + '/' + DATA.latihanKali.soal.length + ' soal</strong></div>' +
-    '<div class="hero-steps__item"><span class="hero-steps__num">÷</span>Latihan Pembagian: <strong>' + totalSoalBagi + '/' + DATA.latihanBagi.soal.length + ' soal</strong></div>' +
-    '<div class="hero-steps__item"><span class="hero-steps__num">≈</span>Estimasi: <strong>' + totalSoalEst + '/' + DATA.estimasi.soal.length + ' soal</strong></div>' +
-    '<div class="hero-steps__item"><span class="hero-steps__num">🏆</span>Tantangan: <strong>' + totalSoalTant + '/' + DATA.tantangan.soal.length + ' soal</strong></div>' +
+    '<div class="hero-steps__item"><span class="hero-steps__num">×</span>Latihan Perkalian: <strong>' +
+    totalSoalKali +
+    '/' +
+    DATA.latihanKali.soal.length +
+    ' soal</strong></div>' +
+    '<div class="hero-steps__item"><span class="hero-steps__num">÷</span>Latihan Pembagian: <strong>' +
+    totalSoalBagi +
+    '/' +
+    DATA.latihanBagi.soal.length +
+    ' soal</strong></div>' +
+    '<div class="hero-steps__item"><span class="hero-steps__num">≈</span>Estimasi: <strong>' +
+    totalSoalEst +
+    '/' +
+    DATA.estimasi.soal.length +
+    ' soal</strong></div>' +
+    '<div class="hero-steps__item"><span class="hero-steps__num">🏆</span>Tantangan: <strong>' +
+    totalSoalTant +
+    '/' +
+    DATA.tantangan.soal.length +
+    ' soal</strong></div>' +
     '</div></div>' +
     '<div class="panel panel--compact">' +
     '<h3>Kesimpulan Penting</h3>' +

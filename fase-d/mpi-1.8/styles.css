@@ -324,7 +324,9 @@
   height: 100%;
   border-radius: 6px;
   background: var(--color-primary);
-  transition: width 0.25s ease, background-color 0.2s;
+  transition:
+    width 0.25s ease,
+    background-color 0.2s;
 }
 
 .budget-bar__fill--warn {

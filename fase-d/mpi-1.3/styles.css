@@ -39,7 +39,9 @@
   font-size: 0.75rem;
   font-weight: 700;
   border: 2px solid transparent;
-  transition: transform 0.15s, opacity 0.2s;
+  transition:
+    transform 0.15s,
+    opacity 0.2s;
   opacity: 0;
 }
 

@@ -272,7 +272,8 @@ var DATA = {
         type: 'input_ur',
         badge: 'Penjual Kain',
         icon: '🧵',
-        story: 'Bu Ani membeli kain batik seharga Rp600.000. Ia menjualnya dengan total pendapatan Rp780.000.',
+        story:
+          'Bu Ani membeli kain batik seharga Rp600.000. Ia menjualnya dengan total pendapatan Rp780.000.',
         modal: 600000,
         pendapatan: 780000,
         result_type: 'untung',
@@ -285,20 +286,23 @@ var DATA = {
         type: 'input_diskon',
         badge: 'Flash Sale',
         icon: '⚡',
-        story: 'Sebuah e-commerce mengadakan flash sale. Harga normal jaket Rp250.000, didiskon 40%. Berapa harga yang harus dibayar?',
+        story:
+          'Sebuah e-commerce mengadakan flash sale. Harga normal jaket Rp250.000, didiskon 40%. Berapa harga yang harus dibayar?',
         harga_awal: 250000,
         persen_diskon: 40,
         /* diskon = 100000, harga_akhir = 150000 */
         answer: 150000,
         hint: 'Diskon = 40/100 × Rp250.000 = Rp100.000. Harga akhir = Rp250.000 − Rp100.000 = ?',
-        explanation: 'Diskon = Rp100.000. Harga akhir = Rp250.000 − Rp100.000 = <strong>Rp150.000</strong>.',
+        explanation:
+          'Diskon = Rp100.000. Harga akhir = Rp250.000 − Rp100.000 = <strong>Rp150.000</strong>.',
       },
       {
         id: 'lg3',
         type: 'input_ur',
         badge: 'Penjual Laptop',
         icon: '💻',
-        story: 'Pak Budi membeli laptop bekas seharga Rp2.500.000 dan berhasil menjualnya seharga Rp2.200.000.',
+        story:
+          'Pak Budi membeli laptop bekas seharga Rp2.500.000 dan berhasil menjualnya seharga Rp2.200.000.',
         modal: 2500000,
         pendapatan: 2200000,
         result_type: 'rugi',
@@ -311,13 +315,15 @@ var DATA = {
         type: 'input_diskon_nominal',
         badge: 'Promo Akhir Tahun',
         icon: '🎉',
-        story: 'Toko buku mengadakan promo akhir tahun. Harga normal kamus Rp120.000, didiskon 25%. Berapa nominal diskonnya?',
+        story:
+          'Toko buku mengadakan promo akhir tahun. Harga normal kamus Rp120.000, didiskon 25%. Berapa nominal diskonnya?',
         harga_awal: 120000,
         persen_diskon: 25,
         /* diskon = 30000 */
         answer: 30000,
         hint: 'Nominal diskon = persen/100 × harga_awal = 25/100 × Rp120.000 = ?',
-        explanation: 'Nominal diskon = 25/100 × Rp120.000 = <strong>Rp30.000</strong>. (Harga bayar = Rp90.000.)',
+        explanation:
+          'Nominal diskon = 25/100 × Rp120.000 = <strong>Rp30.000</strong>. (Harga bayar = Rp90.000.)',
       },
       {
         id: 'lg5',
@@ -356,9 +362,9 @@ var DATA = {
         icon: '📊',
         story: 'Berikut laporan penjualan warung Bu Sari selama 3 hari:',
         table: [
-          { hari: 'Senin',  modal: 150000, pendapatan: 200000 },
+          { hari: 'Senin', modal: 150000, pendapatan: 200000 },
           { hari: 'Selasa', modal: 180000, pendapatan: 165000 },
-          { hari: 'Rabu',   modal: 200000, pendapatan: 280000 },
+          { hari: 'Rabu', modal: 200000, pendapatan: 280000 },
         ],
         /* Senin: untung 50000 | Selasa: rugi 15000 | Rabu: untung 80000 */
         /* Total pendapatan: 645000 | Total modal: 530000 | Untung bersih: 115000 */
@@ -425,10 +431,15 @@ var DATA = {
             'Langkah 1: Rp500.000 − 20% = Rp500.000 × 80% = <strong>Rp400.000</strong>. Langkah 2: Rp400.000 − 10% = Rp400.000 × 90% = <strong>Rp360.000</strong>.',
         },
         q2: {
-          question: 'Apakah "diskon 20% lalu 10%" menghasilkan harga yang sama dengan "diskon 30% langsung"?',
+          question:
+            'Apakah "diskon 20% lalu 10%" menghasilkan harga yang sama dengan "diskon 30% langsung"?',
           options: [
             { id: 'opt_a', label: 'Ya, hasilnya sama: Rp350.000.' },
-            { id: 'opt_b', label: 'Tidak, diskon bertingkat menghasilkan harga lebih tinggi (Rp360.000 > Rp350.000).' },
+            {
+              id: 'opt_b',
+              label:
+                'Tidak, diskon bertingkat menghasilkan harga lebih tinggi (Rp360.000 > Rp350.000).',
+            },
             { id: 'opt_c', label: 'Tidak, diskon bertingkat menghasilkan harga lebih rendah.' },
           ],
           correct: 'opt_b',
