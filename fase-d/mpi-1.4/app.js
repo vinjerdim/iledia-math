@@ -167,6 +167,8 @@ var State = {
   refleksiSaved: false,
 };
 
+var Store = createStore({ key: STORAGE_KEY, state: State });
+
 function saveState() {
   try {
     /* Set tidak bisa di-JSON, simpan sebagai array */
@@ -199,57 +201,29 @@ function loadState() {
 }
 
 function clearState() {
-  try {
-    localStorage.removeItem(STORAGE_KEY);
-  } catch (e) {}
-  State.currentStage = 'orientasi';
-  State.completedStages = {};
-  State.explorationSelected = null;
-  State.explorationData = {};
-  State.konversiIdx = 0;
-  State.konversiExercises = [];
-  State.bandingkanIdx = 0;
-  State.bandingkanExercises = [];
-  State.urutkanOrder = [];
-  State.urutkanAttempts = 0;
-  State.urutkanFeedback = null;
-  State.urutkanDone = false;
-  State.tantanganIdx = 0;
-  State.tantanganExercises = [];
-  State.refleksiAnswers = {};
-  State.refleksiSaved = false;
+  Store.reset();
   initExerciseArrays();
 }
 
 function initExerciseArrays() {
-  /* Inisialisasi hanya jika belum ada data */
-  if (!State.konversiExercises || State.konversiExercises.length !== DATA.konversi.soal.length) {
-    State.konversiExercises = DATA.konversi.soal.map(function () {
-      return { attempts: 0, hintLevel: 0, correct: false, userInput: '', revealed: false };
-    });
-  }
-  if (
-    !State.bandingkanExercises ||
-    State.bandingkanExercises.length !== DATA.bandingkan.soal.length
-  ) {
-    State.bandingkanExercises = DATA.bandingkan.soal.map(function () {
-      return { attempts: 0, correct: false, chosen: null, checked: false };
-    });
-  }
+  ensureExerciseArray(State, 'konversiExercises', DATA.konversi.soal, function () {
+    return { attempts: 0, hintLevel: 0, correct: false, userInput: '', revealed: false };
+  });
+  ensureExerciseArray(State, 'bandingkanExercises', DATA.bandingkan.soal, function () {
+    return { attempts: 0, correct: false, chosen: null, checked: false };
+  });
   if (!State.urutkanOrder || State.urutkanOrder.length === 0) {
     State.urutkanOrder = DATA.urutkan.initialOrder.slice();
   }
-  if (!State.tantanganExercises || State.tantanganExercises.length !== DATA.tantangan.soal.length) {
-    State.tantanganExercises = DATA.tantangan.soal.map(function (soal) {
-      return {
-        attempts: 0,
-        correct: false,
-        chosen: null,
-        order: soal.type === 'ordering' ? soal.initialOrder.slice() : null,
-        checked: false,
-      };
-    });
-  }
+  ensureExerciseArray(State, 'tantanganExercises', DATA.tantangan.soal, function (soal) {
+    return {
+      attempts: 0,
+      correct: false,
+      chosen: null,
+      order: soal.type === 'ordering' ? soal.initialOrder.slice() : null,
+      checked: false,
+    };
+  });
   if (!State.explorationData || Object.keys(State.explorationData).length === 0) {
     State.explorationData = {};
     DATA.eksplorasi.fractions.forEach(function (f) {

@@ -118,112 +118,56 @@ var State = {
   refleksiSaved: false,
 };
 
-function saveState() {
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(State));
-  } catch (e) {
-    /* ignore */
-  }
-}
-
-function loadState() {
-  try {
-    var raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return false;
-    Object.assign(State, JSON.parse(raw));
-    return true;
-  } catch (e) {
-    return false;
-  }
-}
+var Store = createStore({ key: STORAGE_KEY, state: State });
+var saveState = Store.save;
+var loadState = Store.load;
 
 function clearState() {
-  try {
-    localStorage.removeItem(STORAGE_KEY);
-  } catch (e) {
-    /* ignore */
-  }
-  var nCtx = DATA.eksplorasiTransaksi.konteks.length;
-  State.currentStage = 'orientasi';
-  State.completedStages = {};
-  State.eksplorasiCtxIdx = 0;
-  State.eksplorasiRowDone = new Array(nCtx).fill(false);
-  State.eksplorasiResultDone = new Array(nCtx).fill(false);
-  State.eksplorasiDone = new Array(nCtx).fill(false);
-  State.untungRugiIdx = 0;
-  State.untungRugiExercises = [];
-  State.diskonIdx = 0;
-  State.diskonExercises = [];
-  State.latihanIdx = 0;
-  State.latihanExercises = [];
-  State.tantanganIdx = 0;
-  State.tantangan1Q1Chosen = null;
-  State.tantangan1Q1Done = false;
-  State.tantangan1Q2Input = '';
-  State.tantangan1Q2HintShown = false;
-  State.tantangan1Q2Done = false;
-  State.tantangan2Input = '';
-  State.tantangan2HintShown = false;
-  State.tantangan2Done = false;
-  State.tantangan3Q1Chosen = null;
-  State.tantangan3Q1Done = false;
-  State.tantangan3Q2Chosen = null;
-  State.tantangan3Q2Done = false;
-  State.refleksiAnswers = {};
-  State.refleksiSaved = false;
+  Store.reset();
   initExerciseArrays();
 }
 
 function initExerciseArrays() {
-  var nCtx = DATA.eksplorasiTransaksi.konteks.length;
-  if (!State.eksplorasiRowDone || State.eksplorasiRowDone.length !== nCtx) {
-    State.eksplorasiRowDone = new Array(nCtx).fill(false);
-  }
-  if (!State.eksplorasiResultDone || State.eksplorasiResultDone.length !== nCtx) {
-    State.eksplorasiResultDone = new Array(nCtx).fill(false);
-  }
-  if (!State.eksplorasiDone || State.eksplorasiDone.length !== nCtx) {
-    State.eksplorasiDone = new Array(nCtx).fill(false);
-  }
+  var ctx = DATA.eksplorasiTransaksi.konteks;
+  ensureExerciseArray(State, 'eksplorasiRowDone', ctx, function () {
+    return false;
+  });
+  ensureExerciseArray(State, 'eksplorasiResultDone', ctx, function () {
+    return false;
+  });
+  ensureExerciseArray(State, 'eksplorasiDone', ctx, function () {
+    return false;
+  });
 
-  var ur = DATA.untungRugi.soal;
-  if (!State.untungRugiExercises || State.untungRugiExercises.length !== ur.length) {
-    State.untungRugiExercises = ur.map(function () {
-      return { attempts: 0, hintShown: false, correct: false, userInput: '', revealed: false };
-    });
-  }
+  ensureExerciseArray(State, 'untungRugiExercises', DATA.untungRugi.soal, function () {
+    return { attempts: 0, hintShown: false, correct: false, userInput: '', revealed: false };
+  });
 
-  var ds = DATA.diskon.soal;
-  if (!State.diskonExercises || State.diskonExercises.length !== ds.length) {
-    State.diskonExercises = ds.map(function () {
-      return {
-        attempts1: 0,
-        correct1: false,
-        input1: '',
-        revealed1: false,
-        attempts2: 0,
-        correct2: false,
-        input2: '',
-        revealed2: false,
-        hintShown: false,
-      };
-    });
-  }
+  ensureExerciseArray(State, 'diskonExercises', DATA.diskon.soal, function () {
+    return {
+      attempts1: 0,
+      correct1: false,
+      input1: '',
+      revealed1: false,
+      attempts2: 0,
+      correct2: false,
+      input2: '',
+      revealed2: false,
+      hintShown: false,
+    };
+  });
 
-  var lt = DATA.latihanGabungan.soal;
-  if (!State.latihanExercises || State.latihanExercises.length !== lt.length) {
-    State.latihanExercises = lt.map(function () {
-      return {
-        attempts: 0,
-        hintShown: false,
-        correct: false,
-        userInput: '',
-        chosen: null,
-        checked: false,
-        revealed: false,
-      };
-    });
-  }
+  ensureExerciseArray(State, 'latihanExercises', DATA.latihanGabungan.soal, function () {
+    return {
+      attempts: 0,
+      hintShown: false,
+      correct: false,
+      userInput: '',
+      chosen: null,
+      checked: false,
+      revealed: false,
+    };
+  });
 }
 
 /* ============================================================

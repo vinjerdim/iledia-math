@@ -182,13 +182,8 @@ function initProblemStates() {
   State.problemStates = ps;
 }
 
-function saveState() {
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(State));
-  } catch (e) {
-    /* simpan gagal, lanjutkan tanpa crash */
-  }
-}
+var Store = createStore({ key: STORAGE_KEY, state: State });
+var saveState = Store.save;
 
 function loadState() {
   try {
@@ -207,17 +202,7 @@ function loadState() {
 }
 
 function clearState() {
-  try {
-    localStorage.removeItem(STORAGE_KEY);
-  } catch (e) {}
-  State.currentStage = 'orientasi';
-  State.completedStages = {};
-  State.contohStepIdx = 0;
-  State.contohStepResults = {};
-  State.contohDone = false;
-  State.currentProblemIdx = 0;
-  State.refleksiAnswers = {};
-  State.refleksiSaved = false;
+  Store.reset();
   initProblemStates();
 }
 

@@ -114,49 +114,12 @@ var State = {
   refleksiSaved: false,
 };
 
-function saveState() {
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(State));
-  } catch (e) {
-    /* ignore */
-  }
-}
-
-function loadState() {
-  try {
-    var raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return false;
-    Object.assign(State, JSON.parse(raw));
-    return true;
-  } catch (e) {
-    return false;
-  }
-}
+var Store = createStore({ key: STORAGE_KEY, state: State });
+var saveState = Store.save;
+var loadState = Store.load;
 
 function clearState() {
-  try {
-    localStorage.removeItem(STORAGE_KEY);
-  } catch (e) {
-    /* ignore */
-  }
-  State.currentStage = 'orientasi';
-  State.completedStages = {};
-  State.eksplorasiKaliIdx = 0;
-  State.eksplorasiKaliRevealed = [false, false, false];
-  State.aturanTandaRevealed = [false, false, false, false];
-  State.aturanTandaSummaryShown = false;
-  State.latihanKaliIdx = 0;
-  State.latihanKaliExercises = [];
-  State.eksplorasiBagiRevealed = [false, false, false, false];
-  State.eksplorasiBagiRingkasanShown = false;
-  State.latihanBagiIdx = 0;
-  State.latihanBagiExercises = [];
-  State.estimasiIdx = 0;
-  State.estimasiExercises = [];
-  State.tantanganIdx = 0;
-  State.tantanganExercises = [];
-  State.refleksiAnswers = {};
-  State.refleksiSaved = false;
+  Store.reset();
   initExerciseArrays();
 }
 
@@ -165,24 +128,10 @@ function initExerciseArrays() {
     return { attempts: 0, hintIdx: 0, correct: false, userInput: '', chosen: null };
   };
 
-  if (
-    !State.latihanKaliExercises ||
-    State.latihanKaliExercises.length !== DATA.latihanKali.soal.length
-  ) {
-    State.latihanKaliExercises = DATA.latihanKali.soal.map(emptyExercise);
-  }
-  if (
-    !State.latihanBagiExercises ||
-    State.latihanBagiExercises.length !== DATA.latihanBagi.soal.length
-  ) {
-    State.latihanBagiExercises = DATA.latihanBagi.soal.map(emptyExercise);
-  }
-  if (!State.estimasiExercises || State.estimasiExercises.length !== DATA.estimasi.soal.length) {
-    State.estimasiExercises = DATA.estimasi.soal.map(emptyExercise);
-  }
-  if (!State.tantanganExercises || State.tantanganExercises.length !== DATA.tantangan.soal.length) {
-    State.tantanganExercises = DATA.tantangan.soal.map(emptyExercise);
-  }
+  ensureExerciseArray(State, 'latihanKaliExercises', DATA.latihanKali.soal, emptyExercise);
+  ensureExerciseArray(State, 'latihanBagiExercises', DATA.latihanBagi.soal, emptyExercise);
+  ensureExerciseArray(State, 'estimasiExercises', DATA.estimasi.soal, emptyExercise);
+  ensureExerciseArray(State, 'tantanganExercises', DATA.tantangan.soal, emptyExercise);
 }
 
 /* ============================================================

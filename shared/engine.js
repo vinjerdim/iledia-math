@@ -15,6 +15,7 @@
     4. Mesin Navigasi Tahap
     5. Tipe Soal: Isian Numerik
     6. Tipe Soal: Pilihan Ganda
+    7. State Persistence
    ============================================================ */
 
 /* ============================================================
@@ -728,4 +729,86 @@ function createMultipleChoiceExercise(cfg) {
   }
 
   return { render: render };
+}
+
+/* ============================================================
+   7. STATE PERSISTENCE
+   ============================================================ */
+
+/*
+ * Membuat penyimpanan localStorage untuk objek State satu modul — pola
+ * saveState/loadState/clearState yang identik di setiap modul (simpan
+ * JSON, muat balik dengan Object.assign, atau kembalikan ke bentuk awal).
+ *
+ * "Bentuk awal" diambil dari `state` itu sendiri pada saat createStore()
+ * dipanggil (segera setelah `var State = {...}` dideklarasikan, sebelum
+ * ada mutasi) — jadi field default State tidak perlu ditulis ulang di
+ * tempat lain untuk reset.
+ *
+ * opts:
+ *   key      kunci localStorage (mis. STORAGE_KEY)
+ *   state    objek State milik modul (wajib, dimutasi langsung — never
+ *            diganti, supaya referensi lain ke `state` tetap valid)
+ *
+ * Mengembalikan { save(), load(), reset() }. `reset()` hanya mengembalikan
+ * field ke nilai awal dan menghapus data localStorage; pemanggil tetap
+ * bertanggung jawab memanggil initExerciseArrays() (atau sejenisnya)
+ * setelahnya bila diperlukan, sama seperti clearState() sebelumnya.
+ */
+function createStore(opts) {
+  var key = opts.key;
+  var state = opts.state;
+  var defaults = JSON.parse(JSON.stringify(state));
+
+  function save() {
+    try {
+      localStorage.setItem(key, JSON.stringify(state));
+    } catch (e) {
+      /* ignore */
+    }
+  }
+
+  function load() {
+    try {
+      var raw = localStorage.getItem(key);
+      if (!raw) return false;
+      Object.assign(state, JSON.parse(raw));
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  function reset() {
+    try {
+      localStorage.removeItem(key);
+    } catch (e) {
+      /* ignore */
+    }
+    Object.keys(state).forEach(function (k) {
+      delete state[k];
+    });
+    Object.assign(state, JSON.parse(JSON.stringify(defaults)));
+  }
+
+  return { save: save, load: load, reset: reset };
+}
+
+/*
+ * Memastikan array state per-soal (mis. State.garisBilanganExercises)
+ * ada dan panjangnya sesuai jumlah soal — jika belum, (re)buat dari
+ * `makeDefault(s)` untuk tiap soal `s` (berguna saat bentuk default
+ * bergantung pada field soal itu, mis. `s.type`). Pola berulang di
+ * setiap initExerciseArrays() modul.
+ *
+ *   ensureExerciseArray(State, 'garisBilanganExercises', DATA.garisBilangan.soal, function () {
+ *     return { attempts: 0, hintShown: false, correct: false, userInput: '', revealed: false };
+ *   });
+ */
+function ensureExerciseArray(state, key, soal, makeDefault) {
+  if (!state[key] || state[key].length !== soal.length) {
+    state[key] = soal.map(function (s) {
+      return makeDefault(s);
+    });
+  }
 }

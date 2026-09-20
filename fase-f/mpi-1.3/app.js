@@ -122,117 +122,51 @@ var State = {
   refleksiSaved: false,
 };
 
-function saveState() {
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(State));
-  } catch (e) {
-    /* abaikan */
-  }
-}
-
-function loadState() {
-  try {
-    var raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return false;
-    Object.assign(State, JSON.parse(raw));
-    return true;
-  } catch (e) {
-    return false;
-  }
-}
+var Store = createStore({ key: STORAGE_KEY, state: State });
+var saveState = Store.save;
+var loadState = Store.load;
 
 function clearState() {
-  try {
-    localStorage.removeItem(STORAGE_KEY);
-  } catch (e) {
-    /* abaikan */
-  }
-  State.currentStage = 'orientasi';
-  State.completedStages = {};
-  State.btCtxIdx = 0;
-  State.btRevealCount = [0, 0];
-  State.btInputA = [null, null];
-  State.btInputB = [null, null];
-  State.btDone = [false, false];
-  State.rumusBTStep = 0;
-  State.rumusBTStepInputs = ['', ''];
-  State.rumusBTStepDone = [false, false];
-  State.rumusBTFormulaShown = false;
-  State.bmCtxIdx = 0;
-  State.bmRevealCount = [0, 0];
-  State.bmInputA = [null, null];
-  State.bmInputR = [null, null];
-  State.bmDone = [false, false];
-  State.rumusBMStep = 0;
-  State.rumusBMStepInputs = ['', ''];
-  State.rumusBMStepDone = [false, false];
-  State.rumusBMFormulaShown = false;
-  State.calcM0 = '';
-  State.calcI = '';
-  State.calcN = '';
-  State.calcDone = false;
-  State.latihanIdx = 0;
-  State.latihanExercises = [];
-  State.refleksiAnswers = {};
-  State.refleksiSaved = false;
+  Store.reset();
   initExerciseArrays();
 }
 
 function initExerciseArrays() {
-  var n = DATA.latihan.soal.length;
-  if (!State.latihanExercises || State.latihanExercises.length !== n) {
-    State.latihanExercises = DATA.latihan.soal.map(function (s) {
-      return {
-        attempts: 0,
-        hintLevel: 0,
-        correct: false,
-        userInput: '',
-        chosen: null,
-        checked: false,
-        revealed: false,
-      };
-    });
-  }
-  if (!State.btRevealCount || State.btRevealCount.length !== DATA.eksplorasiBT.konteks.length) {
-    State.btRevealCount = DATA.eksplorasiBT.konteks.map(function () {
-      return 0;
-    });
-  }
-  if (!State.btDone || State.btDone.length !== DATA.eksplorasiBT.konteks.length) {
-    State.btDone = DATA.eksplorasiBT.konteks.map(function () {
-      return false;
-    });
-  }
-  if (!State.bmRevealCount || State.bmRevealCount.length !== DATA.eksplorasiBM.konteks.length) {
-    State.bmRevealCount = DATA.eksplorasiBM.konteks.map(function () {
-      return 0;
-    });
-  }
-  if (!State.bmDone || State.bmDone.length !== DATA.eksplorasiBM.konteks.length) {
-    State.bmDone = DATA.eksplorasiBM.konteks.map(function () {
-      return false;
-    });
-  }
-  if (!State.rumusBTStepInputs || State.rumusBTStepInputs.length !== DATA.rumusBT.steps.length) {
-    State.rumusBTStepInputs = DATA.rumusBT.steps.map(function () {
-      return '';
-    });
-  }
-  if (!State.rumusBTStepDone || State.rumusBTStepDone.length !== DATA.rumusBT.steps.length) {
-    State.rumusBTStepDone = DATA.rumusBT.steps.map(function () {
-      return false;
-    });
-  }
-  if (!State.rumusBMStepInputs || State.rumusBMStepInputs.length !== DATA.rumusBM.steps.length) {
-    State.rumusBMStepInputs = DATA.rumusBM.steps.map(function () {
-      return '';
-    });
-  }
-  if (!State.rumusBMStepDone || State.rumusBMStepDone.length !== DATA.rumusBM.steps.length) {
-    State.rumusBMStepDone = DATA.rumusBM.steps.map(function () {
-      return false;
-    });
-  }
+  ensureExerciseArray(State, 'latihanExercises', DATA.latihan.soal, function () {
+    return {
+      attempts: 0,
+      hintLevel: 0,
+      correct: false,
+      userInput: '',
+      chosen: null,
+      checked: false,
+      revealed: false,
+    };
+  });
+  ensureExerciseArray(State, 'btRevealCount', DATA.eksplorasiBT.konteks, function () {
+    return 0;
+  });
+  ensureExerciseArray(State, 'btDone', DATA.eksplorasiBT.konteks, function () {
+    return false;
+  });
+  ensureExerciseArray(State, 'bmRevealCount', DATA.eksplorasiBM.konteks, function () {
+    return 0;
+  });
+  ensureExerciseArray(State, 'bmDone', DATA.eksplorasiBM.konteks, function () {
+    return false;
+  });
+  ensureExerciseArray(State, 'rumusBTStepInputs', DATA.rumusBT.steps, function () {
+    return '';
+  });
+  ensureExerciseArray(State, 'rumusBTStepDone', DATA.rumusBT.steps, function () {
+    return false;
+  });
+  ensureExerciseArray(State, 'rumusBMStepInputs', DATA.rumusBM.steps, function () {
+    return '';
+  });
+  ensureExerciseArray(State, 'rumusBMStepDone', DATA.rumusBM.steps, function () {
+    return false;
+  });
 }
 
 /* ============================================================
