@@ -4,51 +4,26 @@
    app.js — Logika aplikasi media pembelajaran
    Matematika: Bilangan Bulat pada Garis Bilangan — Fase D SMP
 
+   Utilitas bersama (esc, parseInputInt, showNotice, builder render,
+   mesin navigasi tahap) berada di shared/engine.js.
+
    Bagian:
-    1. Utilitas
-    2. Konstanta
-    3. State & Storage
-    4. Navigasi
-    5. Utilitas Render
-    6. Stage: Orientasi
-    7. Stage: Kenali Bilangan Bulat
-    8. Stage: Garis Bilangan
-    9. Stage: Membandingkan
-   10. Stage: Mengurutkan
-   11. Stage: Situasi Nyata
-   12. Stage: Refleksi
-   13. Stage: Selesai
-   14. Init
+    1. Konstanta
+    2. State & Storage
+    3. Navigasi
+    4. Stage: Orientasi
+    5. Stage: Kenali Bilangan Bulat
+    6. Stage: Garis Bilangan
+    7. Stage: Membandingkan
+    8. Stage: Mengurutkan
+    9. Stage: Situasi Nyata
+   10. Stage: Refleksi
+   11. Stage: Selesai
+   12. Init
    ============================================================ */
 
 /* ============================================================
-   1. UTILITAS
-   ============================================================ */
-
-function parseInputInt(str) {
-  if (!str || str.trim() === '') return { value: null, error: 'empty' };
-  var trimmed = str.trim().replace(/\s/g, '');
-  if (!/^-?\d+$/.test(trimmed)) return { value: null, error: 'invalid' };
-  var v = parseInt(trimmed, 10);
-  if (isNaN(v)) return { value: null, error: 'invalid' };
-  return { value: v, error: null };
-}
-
-function esc(str) {
-  var m = {
-    '&': '&amp;',
-    '<': '&lt;',
-    '>': '&gt;',
-    '"': '&quot;',
-    "'": '&#39;',
-  };
-  return String(str).replace(/[&<>"']/g, function (ch) {
-    return m[ch];
-  });
-}
-
-/* ============================================================
-   2. KONSTANTA
+   1. KONSTANTA
    ============================================================ */
 
 var STAGES = [
@@ -76,7 +51,7 @@ var STAGE_LABELS = [
 var STORAGE_KEY = 'mpi-d-1-1-bilbulat-v1';
 
 /* ============================================================
-   3. STATE & STORAGE
+   2. STATE & STORAGE
    ============================================================ */
 
 var State = {
@@ -197,236 +172,22 @@ function initExerciseArrays() {
 }
 
 /* ============================================================
-   4. NAVIGASI
+   3. NAVIGASI
    ============================================================ */
 
-function navigateTo(stageId) {
-  var targetIdx = STAGES.indexOf(stageId);
-  var currentIdx = STAGES.indexOf(State.currentStage);
-  if (targetIdx === -1) return;
+var StageMachine = createStageMachine({
+  stages: STAGES,
+  stageLabels: STAGE_LABELS,
+  state: State,
+  save: saveState,
+  render: renderCurrentStage,
+});
 
-  if (targetIdx > currentIdx) {
-    for (var i = currentIdx; i < targetIdx; i++) {
-      if (!State.completedStages[STAGES[i]]) {
-        showNotice('Selesaikan tahap "' + STAGE_LABELS[i] + '" terlebih dahulu.');
-        return;
-      }
-    }
-  }
-
-  State.currentStage = stageId;
-  saveState();
-  updateStageNav();
-  renderCurrentStage();
-  window.scrollTo({ top: 0, behavior: 'smooth' });
-}
-
-function completeStage(stageId) {
-  State.completedStages[stageId] = true;
-  saveState();
-  updateStageNav();
-  updateProgress();
-}
-
-function updateStageNav() {
-  var items = document.querySelectorAll('.stage-nav__item');
-  var currentIdx = STAGES.indexOf(State.currentStage);
-  items.forEach(function (item) {
-    var sid = item.dataset.stage;
-    var idx = STAGES.indexOf(sid);
-    item.removeAttribute('aria-current');
-    item.classList.remove('is-complete');
-    item.disabled = false;
-    if (sid === State.currentStage) item.setAttribute('aria-current', 'step');
-    else if (State.completedStages[sid]) item.classList.add('is-complete');
-    if (idx > currentIdx && !State.completedStages[STAGES[idx - 1]]) item.disabled = true;
-  });
-}
-
-function buildStageNav() {
-  var list = document.getElementById('stageNavList');
-  if (!list) return;
-  list.innerHTML = STAGES.map(function (sid, i) {
-    return (
-      '<li>' +
-      '<button type="button" class="stage-nav__item" data-stage="' +
-      sid +
-      '">' +
-      '<span class="stage-nav__num">' +
-      (i + 1) +
-      '</span>' +
-      esc(STAGE_LABELS[i]) +
-      '</button></li>'
-    );
-  }).join('');
-  list.querySelectorAll('.stage-nav__item').forEach(function (btn) {
-    btn.addEventListener('click', function () {
-      navigateTo(btn.dataset.stage);
-    });
-  });
-  updateStageNav();
-}
-
-function updateProgress() {
-  var total = STAGES.length;
-  var done = Object.keys(State.completedStages).length;
-  var pct = Math.round((done / total) * 100);
-  var fill = document.getElementById('progressFill');
-  var label = document.getElementById('progressLabel');
-  if (fill) {
-    fill.style.width = pct + '%';
-    fill.parentElement.setAttribute('aria-valuenow', pct);
-  }
-  if (label) label.textContent = done + ' dari ' + total + ' tahap selesai';
-}
-
-/* ============================================================
-   5. UTILITAS RENDER
-   ============================================================ */
-
-function buildFeedbackBox(type, icon, html) {
-  return (
-    '<div class="feedback-box feedback-box--' +
-    esc(type) +
-    '" role="alert">' +
-    '<span class="feedback-box__icon" aria-hidden="true">' +
-    icon +
-    '</span>' +
-    '<div class="feedback-box__body">' +
-    html +
-    '</div>' +
-    '</div>'
-  );
-}
-
-function buildProgressDots(total, current, statuses) {
-  var dots = '';
-  for (var i = 0; i < total; i++) {
-    var cls = 'exercise-progress__dot';
-    if (i === current) cls += ' exercise-progress__dot--current';
-    else if (statuses && statuses[i] === 'correct') cls += ' exercise-progress__dot--done';
-    else if (statuses && statuses[i] === 'incorrect') cls += ' exercise-progress__dot--incorrect';
-    dots += '<span class="' + cls + '" title="Soal ' + (i + 1) + '">' + (i + 1) + '</span>';
-  }
-  return (
-    '<div class="exercise-progress" aria-label="Progress soal">' +
-    dots +
-    '<span class="exercise-label">Soal ' +
-    (current + 1) +
-    ' dari ' +
-    total +
-    '</span>' +
-    '</div>'
-  );
-}
-
-/* Build an SVG number line from min to max, with a point at value */
-function buildNumberLineSVG(value, min, max) {
-  var W = 600;
-  var H = 80;
-  var padX = 40;
-  var axisY = 40;
-  var tickH = 10;
-  var majorH = 16;
-
-  function xOf(v) {
-    return padX + ((v - min) / (max - min)) * (W - 2 * padX);
-  }
-
-  var ticks = '';
-  var labels = '';
-  for (var v = min; v <= max; v++) {
-    var x = xOf(v);
-    var isMajor = v % 5 === 0;
-    var h = isMajor ? majorH : tickH;
-    ticks +=
-      '<line class="nl-tick' +
-      (isMajor ? ' nl-tick--major' : '') +
-      '" x1="' +
-      x +
-      '" y1="' +
-      (axisY - h / 2) +
-      '" x2="' +
-      x +
-      '" y2="' +
-      (axisY + h / 2) +
-      '"/>';
-    if (isMajor || v === 0) {
-      var lCls = v === 0 ? 'nl-label nl-label--zero' : 'nl-label';
-      labels +=
-        '<text class="' + lCls + '" x="' + x + '" y="' + (axisY + h / 2 + 4) + '">' + v + '</text>';
-    }
-  }
-
-  var px = xOf(value);
-  var point = '<circle class="nl-point" cx="' + px + '" cy="' + axisY + '" r="8"/>';
-  var isNeg = value < 0;
-  var ptLabel =
-    '<text class="nl-point-label" x="' +
-    px +
-    '" y="' +
-    (axisY - 14) +
-    '">' +
-    (isNeg ? value : '+' + value === '+0' ? '0' : value) +
-    '</text>';
-
-  var arrowL = padX - 10;
-  var arrowR = W - padX + 10;
-  var arrowHead =
-    '<polygon class="nl-arrow" points="' +
-    arrowR +
-    ',' +
-    axisY +
-    ' ' +
-    (arrowR - 8) +
-    ',' +
-    (axisY - 4) +
-    ' ' +
-    (arrowR - 8) +
-    ',' +
-    (axisY + 4) +
-    '"/>' +
-    '<polygon class="nl-arrow" points="' +
-    arrowL +
-    ',' +
-    axisY +
-    ' ' +
-    (arrowL + 8) +
-    ',' +
-    (axisY - 4) +
-    ' ' +
-    (arrowL + 8) +
-    ',' +
-    (axisY + 4) +
-    '"/>';
-
-  return (
-    '<svg class="numberline-svg" viewBox="0 0 ' +
-    W +
-    ' ' +
-    H +
-    '" xmlns="http://www.w3.org/2000/svg" aria-label="Garis bilangan dari ' +
-    min +
-    ' hingga ' +
-    max +
-    '">' +
-    '<line class="nl-axis" x1="' +
-    (padX - 10) +
-    '" y1="' +
-    axisY +
-    '" x2="' +
-    (W - padX + 10) +
-    '" y2="' +
-    axisY +
-    '"/>' +
-    ticks +
-    labels +
-    point +
-    ptLabel +
-    arrowHead +
-    '</svg>'
-  );
-}
+var navigateTo = StageMachine.navigateTo;
+var completeStage = StageMachine.completeStage;
+var updateStageNav = StageMachine.updateStageNav;
+var buildStageNav = StageMachine.buildStageNav;
+var updateProgress = StageMachine.updateProgress;
 
 function renderCurrentStage() {
   var container = document.getElementById('stageContainer');
@@ -465,7 +226,7 @@ function renderCurrentStage() {
 }
 
 /* ============================================================
-   6. STAGE: ORIENTASI
+   4. STAGE: ORIENTASI
    ============================================================ */
 
 function renderOrientasi(container) {
@@ -525,7 +286,7 @@ function renderOrientasi(container) {
 }
 
 /* ============================================================
-   7. STAGE: KENALI BILANGAN BULAT
+   5. STAGE: KENALI BILANGAN BULAT
    ============================================================ */
 
 function renderKenaliBulat(container) {
@@ -653,7 +414,7 @@ function renderKenaliBulat(container) {
 }
 
 /* ============================================================
-   8. STAGE: GARIS BILANGAN
+   6. STAGE: GARIS BILANGAN
    ============================================================ */
 
 function renderGarisBilangan(container) {
@@ -820,7 +581,7 @@ function renderGarisBilangan(container) {
 }
 
 /* ============================================================
-   9. STAGE: MEMBANDINGKAN
+   7. STAGE: MEMBANDINGKAN
    ============================================================ */
 
 function renderMembandingkan(container) {
@@ -987,7 +748,7 @@ function renderMembandingkan(container) {
 }
 
 /* ============================================================
-   10. STAGE: MENGURUTKAN
+   8. STAGE: MENGURUTKAN
    ============================================================ */
 
 function renderMengurutkan(container) {
@@ -1237,7 +998,7 @@ function renderMengurutkan(container) {
 }
 
 /* ============================================================
-   11. STAGE: SITUASI NYATA
+   9. STAGE: SITUASI NYATA
    ============================================================ */
 
 function renderSituasiNyata(container) {
@@ -1373,7 +1134,7 @@ function renderSituasiNyata(container) {
 }
 
 /* ============================================================
-   12. STAGE: REFLEKSI
+   10. STAGE: REFLEKSI
    ============================================================ */
 
 function renderRefleksi(container) {
@@ -1451,7 +1212,7 @@ function renderRefleksi(container) {
 }
 
 /* ============================================================
-   13. STAGE: SELESAI
+   11. STAGE: SELESAI
    ============================================================ */
 
 function renderSelesai(container) {
@@ -1533,24 +1294,7 @@ function renderSelesai(container) {
 }
 
 /* ============================================================
-   14. NOTICE (TOAST)
-   ============================================================ */
-
-var noticeTimer = null;
-
-function showNotice(msg) {
-  var el = document.getElementById('appNotice');
-  if (!el) return;
-  el.textContent = msg;
-  el.classList.add('app-notice--visible');
-  if (noticeTimer) clearTimeout(noticeTimer);
-  noticeTimer = setTimeout(function () {
-    el.classList.remove('app-notice--visible');
-  }, 3000);
-}
-
-/* ============================================================
-   15. INIT
+   12. INIT
    ============================================================ */
 
 function init() {
