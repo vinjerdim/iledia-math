@@ -13,6 +13,8 @@
     2. Notifikasi (Toast)
     3. Utilitas Render
     4. Mesin Navigasi Tahap
+    5. Tipe Soal: Isian Numerik
+    6. Tipe Soal: Pilihan Ganda
    ============================================================ */
 
 /* ============================================================
@@ -330,4 +332,400 @@ function createStageMachine(opts) {
     buildStageNav: buildStageNav,
     updateProgress: updateProgress,
   };
+}
+
+/* ============================================================
+   5. TIPE SOAL: ISIAN NUMERIK
+   ============================================================ */
+
+/*
+ * Membuat satu tahap latihan "ketik sebuah bilangan, lalu periksa" — pola
+ * yang berulang di banyak modul (garis bilangan, hasil operasi, dsb).
+ * Menangani state per-soal {attempts, hintShown, correct, userInput, revealed},
+ * progress dots, kotak umpan balik, alur petunjuk → jawaban (setelah
+ * `revealAfterAttempts` percobaan salah), serta tombol Soal Berikutnya /
+ * Lanjut. Bagian yang unik per soal (visualisasi/pertanyaan) datang dari
+ * `renderPrompt`.
+ *
+ * cfg:
+ *   soal                   array soal dari DATA (tidak pernah diganti, aman direferensikan)
+ *   getExercises()         array state per-soal saat ini (State) — HARUS berupa
+ *                          function, karena initExerciseArrays()/loadState()
+ *                          mengganti (bukan memutasi) array ini
+ *   getIndex, setIndex     accessor indeks soal aktif (mis. field di State)
+ *   save                   function() — simpan State
+ *   checkValue(s)          nilai jawaban benar untuk soal s
+ *   renderPrompt(s)        HTML unik untuk soal (visual/pertanyaan)
+ *   revealText(s)          HTML isi kotak "jawaban diungkap"
+ *   idPrefix               awalan id elemen DOM (mis. 'gb' → gbInput, gbCheckBtn, ...)
+ *   sectionLabel, kicker, goal, instruction   teks kepala tahap
+ *   nextStageId, completeStageId, nextButtonLabel   tujuan setelah semua soal selesai
+ *   wrapClass, inputRowClass   (opsional) nama class pembungkus, default 'ex-exercise'/'ex-input-row'
+ *   inputAriaLabel, inputPlaceholder   (opsional)
+ *   stripPunctuation       (opsional) diteruskan ke parseInputInt
+ *   revealAfterAttempts    (opsional, default 2)
+ *   revealButtonStyle      (opsional) 'combined' (default) — satu tombol Petunjuk
+ *                          yang berubah menjadi pengungkap jawaban setelah
+ *                          `revealAfterAttempts` percobaan; atau 'separate' —
+ *                          tombol Petunjuk terpisah dari tombol "Lihat Jawaban"
+ *                          yang baru muncul setelah `revealAfterAttempts` percobaan
+ *   countAttemptOnInvalid  (opsional, default false) saat true, input kosong/tidak
+ *                          valid tetap dihitung sebagai percobaan (dan disimpan)
+ *   emptyMessage, invalidMessage   (opsional) pesan notice untuk input kosong/tidak valid
+ *
+ * Mengembalikan { render(container) }.
+ */
+function createNumericInputExercise(cfg) {
+  var soal = cfg.soal;
+  var prefix = cfg.idPrefix;
+  var wrapClass = cfg.wrapClass || 'ex-exercise';
+  var inputRowClass = cfg.inputRowClass || 'ex-input-row';
+  var revealAfter = cfg.revealAfterAttempts || 2;
+  var revealStyle = cfg.revealButtonStyle || 'combined';
+  var countAttemptOnInvalid = !!cfg.countAttemptOnInvalid;
+  var emptyMessage = cfg.emptyMessage || 'Masukkan bilangan terlebih dahulu.';
+  var invalidMessage =
+    cfg.invalidMessage || 'Masukkan bilangan bulat yang valid (contoh: −3, 0, 7).';
+
+  function render(container) {
+    /* Dibaca ulang setiap render: initExerciseArrays()/loadState() mengganti
+       (bukan memutasi) array ini, jadi tidak boleh disimpan di closure. */
+    var exArr = cfg.getExercises();
+    var idx = cfg.getIndex();
+    var s = soal[idx];
+    var ex = exArr[idx];
+    var allDone =
+      exArr.filter(function (e) {
+        return e.correct || e.revealed;
+      }).length === soal.length;
+
+    var statuses = exArr.map(function (e) {
+      return e.correct ? 'correct' : e.attempts > 0 ? 'incorrect' : null;
+    });
+    var dotsHTML = buildProgressDots(soal.length, idx, statuses);
+
+    var feedbackHTML = '';
+    if (ex.correct) {
+      feedbackHTML = buildFeedbackBox('success', '✓', '<strong>Tepat!</strong> ' + s.explanation);
+    } else if (ex.revealed) {
+      feedbackHTML = buildFeedbackBox('info', '👁', cfg.revealText(s));
+    } else if (ex.hintShown) {
+      feedbackHTML = buildFeedbackBox('warning', '💡', '<strong>Petunjuk:</strong> ' + s.hint);
+    } else if (ex.attempts > 0) {
+      feedbackHTML = buildFeedbackBox(
+        'error',
+        '✗',
+        'Jawabanmu <strong>' +
+          esc(ex.userInput) +
+          '</strong> belum tepat. Coba lagi atau lihat petunjuk.'
+      );
+    }
+
+    var actionHTML = '';
+    if (!ex.correct && !ex.revealed) {
+      var revealBtnHTML = '';
+      if (revealStyle === 'separate' && ex.attempts >= revealAfter) {
+        revealBtnHTML =
+          '<button type="button" class="btn btn--ghost btn--small" id="' +
+          prefix +
+          'RevealBtn">Lihat Jawaban</button>';
+      }
+      actionHTML =
+        '<div class="' +
+        inputRowClass +
+        '">' +
+        '<input type="text" inputmode="numeric" id="' +
+        prefix +
+        'Input" class="input-text" placeholder="' +
+        esc(cfg.inputPlaceholder || '...') +
+        '" aria-label="' +
+        esc(cfg.inputAriaLabel || 'Jawaban') +
+        '" value="' +
+        esc(ex.userInput) +
+        '">' +
+        '<button type="button" class="btn btn--primary" id="' +
+        prefix +
+        'CheckBtn">Periksa</button>' +
+        '<button type="button" class="btn btn--ghost btn--small" id="' +
+        prefix +
+        'HintBtn">💡 Petunjuk</button>' +
+        revealBtnHTML +
+        '</div>';
+    }
+
+    var navHTML = '';
+    if (ex.correct || ex.revealed) {
+      if (idx < soal.length - 1) {
+        navHTML =
+          '<div class="btn-group btn-group--end"><button type="button" class="btn btn--primary" id="' +
+          prefix +
+          'NextBtn">Soal Berikutnya →</button></div>';
+      } else if (allDone) {
+        navHTML =
+          '<div class="btn-group btn-group--end"><button type="button" class="btn btn--primary btn--large" id="' +
+          prefix +
+          'FinishBtn">' +
+          esc(cfg.nextButtonLabel) +
+          '</button></div>';
+      }
+    }
+
+    container.innerHTML =
+      '<section aria-label="' +
+      esc(cfg.sectionLabel) +
+      '">' +
+      '<div class="stage-head">' +
+      '<span class="stage-head__kicker">' +
+      esc(cfg.kicker) +
+      '</span>' +
+      '<p class="stage-head__goal">Tujuan: ' +
+      esc(cfg.goal) +
+      '</p>' +
+      '</div>' +
+      '<div class="panel">' +
+      '<p style="font-size:0.88rem;color:var(--color-ink-muted);margin-bottom:var(--space-3);">' +
+      esc(cfg.instruction) +
+      '</p>' +
+      dotsHTML +
+      '<div class="' +
+      wrapClass +
+      '">' +
+      cfg.renderPrompt(s) +
+      actionHTML +
+      (feedbackHTML ? '<div style="margin-top:var(--space-3);">' + feedbackHTML + '</div>' : '') +
+      '</div>' +
+      '</div>' +
+      navHTML +
+      '</section>';
+
+    var inp = document.getElementById(prefix + 'Input');
+    var checkBtn = document.getElementById(prefix + 'CheckBtn');
+    var hintBtn = document.getElementById(prefix + 'HintBtn');
+    var revealBtn = document.getElementById(prefix + 'RevealBtn');
+    var nextBtn = document.getElementById(prefix + 'NextBtn');
+    var finishBtn = document.getElementById(prefix + 'FinishBtn');
+
+    if (inp) {
+      inp.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter' && checkBtn) checkBtn.click();
+      });
+    }
+
+    if (checkBtn) {
+      checkBtn.addEventListener('click', function () {
+        if (!inp) return;
+        var val = inp.value;
+        var parsed = parseInputInt(val, cfg.stripPunctuation);
+        if (parsed.error) {
+          if (countAttemptOnInvalid) {
+            ex.userInput = val;
+            ex.attempts += 1;
+            cfg.save();
+          }
+          showNotice(parsed.error === 'empty' ? emptyMessage : invalidMessage);
+          return;
+        }
+        ex.userInput = val;
+        ex.attempts += 1;
+        ex.correct = parsed.value === cfg.checkValue(s);
+        cfg.save();
+        render(container);
+      });
+    }
+
+    if (hintBtn) {
+      hintBtn.addEventListener('click', function () {
+        if (revealStyle === 'separate') {
+          ex.hintShown = true;
+        } else if (ex.attempts === 0 || ex.hintShown) {
+          ex.hintShown = true;
+        } else if (ex.attempts >= revealAfter) {
+          ex.revealed = true;
+        } else {
+          ex.hintShown = true;
+        }
+        cfg.save();
+        render(container);
+      });
+    }
+
+    if (revealBtn) {
+      revealBtn.addEventListener('click', function () {
+        ex.revealed = true;
+        cfg.save();
+        render(container);
+      });
+    }
+
+    if (nextBtn) {
+      nextBtn.addEventListener('click', function () {
+        cfg.setIndex(idx + 1);
+        cfg.save();
+        render(container);
+      });
+    }
+
+    if (finishBtn) {
+      finishBtn.addEventListener('click', function () {
+        completeStage(cfg.completeStageId);
+        navigateTo(cfg.nextStageId);
+      });
+    }
+  }
+
+  return { render: render };
+}
+
+/* ============================================================
+   6. TIPE SOAL: PILIHAN GANDA
+   ============================================================ */
+
+/*
+ * Membuat satu tahap latihan pilihan ganda sekali-pilih (klik salah satu
+ * opsi langsung memberi umpan balik benar/salah, tanpa percobaan ulang).
+ * Menangani state per-soal {attempts, correct, chosen}, progress dots,
+ * kotak umpan balik, serta tombol Soal Berikutnya / Lanjut. Bagian yang
+ * unik per soal (cerita/pertanyaan) datang dari `renderPrompt`.
+ *
+ * cfg: sama seperti createNumericInputExercise, minus checkValue/revealText/
+ *   stripPunctuation/revealAfterAttempts/wrapClass/inputRowClass/input*, plus:
+ *   listClass   (opsional) class pembungkus daftar pilihan, default 'choice-list'
+ *   letters     (opsional) label huruf pilihan, default ['A','B','C','D','E']
+ *
+ * Soal (cfg.soal[i]) wajib punya `.options` (array {id, label}) dan `.correct`
+ * (id opsi yang benar). Mengembalikan { render(container) }.
+ */
+function createMultipleChoiceExercise(cfg) {
+  var soal = cfg.soal;
+  var prefix = cfg.idPrefix;
+  var listClass = cfg.listClass || 'choice-list';
+  var letters = cfg.letters || ['A', 'B', 'C', 'D', 'E'];
+
+  function render(container) {
+    /* Dibaca ulang setiap render: initExerciseArrays()/loadState() mengganti
+       (bukan memutasi) array ini, jadi tidak boleh disimpan di closure. */
+    var exArr = cfg.getExercises();
+    var idx = cfg.getIndex();
+    var s = soal[idx];
+    var ex = exArr[idx];
+    var allAnswered =
+      exArr.filter(function (e) {
+        return e.chosen !== null;
+      }).length === soal.length;
+
+    var statuses = exArr.map(function (e) {
+      return e.correct ? 'correct' : e.chosen !== null ? 'incorrect' : null;
+    });
+    var dotsHTML = buildProgressDots(soal.length, idx, statuses);
+
+    var choicesHTML = s.options
+      .map(function (opt, i) {
+        var cls = 'choice-btn';
+        if (ex.chosen !== null) {
+          if (opt.id === s.correct) cls += ' choice-btn--correct';
+          else if (opt.id === ex.chosen) cls += ' choice-btn--incorrect';
+          else cls += ' choice-btn--disabled';
+        }
+        return (
+          '<button type="button" class="' +
+          cls +
+          '" data-opt-id="' +
+          esc(opt.id) +
+          '">' +
+          '<span class="choice-letter">' +
+          letters[i] +
+          '</span>' +
+          opt.label +
+          '</button>'
+        );
+      })
+      .join('');
+
+    var feedbackHTML = '';
+    if (ex.chosen !== null) {
+      feedbackHTML = ex.correct
+        ? buildFeedbackBox('success', '✓', '<strong>Benar!</strong> ' + s.explanation)
+        : buildFeedbackBox('error', '✗', '<strong>Belum tepat.</strong> ' + s.explanation);
+    }
+
+    var navHTML = '';
+    if (ex.chosen !== null) {
+      if (idx < soal.length - 1) {
+        navHTML =
+          '<div class="btn-group btn-group--end"><button type="button" class="btn btn--primary" id="' +
+          prefix +
+          'NextBtn">Soal Berikutnya →</button></div>';
+      } else if (allAnswered) {
+        navHTML =
+          '<div class="btn-group btn-group--end"><button type="button" class="btn btn--primary btn--large" id="' +
+          prefix +
+          'FinishBtn">' +
+          esc(cfg.nextButtonLabel) +
+          '</button></div>';
+      }
+    }
+
+    container.innerHTML =
+      '<section aria-label="' +
+      esc(cfg.sectionLabel) +
+      '">' +
+      '<div class="stage-head">' +
+      '<span class="stage-head__kicker">' +
+      esc(cfg.kicker) +
+      '</span>' +
+      '<p class="stage-head__goal">Tujuan: ' +
+      esc(cfg.goal) +
+      '</p>' +
+      '</div>' +
+      '<div class="panel">' +
+      '<p style="font-size:0.88rem;color:var(--color-ink-muted);margin-bottom:var(--space-3);">' +
+      esc(cfg.instruction) +
+      '</p>' +
+      dotsHTML +
+      cfg.renderPrompt(s) +
+      '<div class="' +
+      listClass +
+      '" id="' +
+      prefix +
+      'Choices">' +
+      choicesHTML +
+      '</div>' +
+      (feedbackHTML ? '<div style="margin-top:var(--space-3);">' + feedbackHTML + '</div>' : '') +
+      '</div>' +
+      navHTML +
+      '</section>';
+
+    container.querySelectorAll('[data-opt-id]').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        if (ex.chosen !== null) return;
+        var optId = btn.dataset.optId;
+        ex.chosen = optId;
+        ex.attempts += 1;
+        ex.correct = optId === s.correct;
+        ex.checked = true;
+        cfg.save();
+        render(container);
+      });
+    });
+
+    var nextBtn = document.getElementById(prefix + 'NextBtn');
+    var finishBtn = document.getElementById(prefix + 'FinishBtn');
+
+    if (nextBtn) {
+      nextBtn.addEventListener('click', function () {
+        cfg.setIndex(idx + 1);
+        cfg.save();
+        render(container);
+      });
+    }
+
+    if (finishBtn) {
+      finishBtn.addEventListener('click', function () {
+        completeStage(cfg.completeStageId);
+        navigateTo(cfg.nextStageId);
+      });
+    }
+  }
+
+  return { render: render };
 }

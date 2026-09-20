@@ -3,7 +3,8 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "prepare": "husky install"
+    "prepare": "husky install",
+    "build:pages": "node scripts/build-pages.js"
   },
   "lint-staged": {
     "*.{js,jsx,ts,tsx,css,html}": [

@@ -816,158 +816,48 @@ function renderPolaOperasi(container) {
    9. STAGE: LATIHAN OPERASI
    ============================================================ */
 
+var latihanOperasiExercise = createNumericInputExercise({
+  soal: DATA.latihanOperasi.soal,
+  getExercises: function () {
+    return State.latihanExercises;
+  },
+  getIndex: function () {
+    return State.latihanIdx;
+  },
+  setIndex: function (i) {
+    State.latihanIdx = i;
+  },
+  save: saveState,
+  checkValue: function (s) {
+    return s.answer;
+  },
+  renderPrompt: function (s) {
+    return '<div class="ex-expr">' + esc(s.ekspresi) + ' = ?</div>';
+  },
+  revealText: function (s) {
+    return '<strong>Jawaban:</strong> ' + s.answer + '. ' + s.explanation;
+  },
+  idPrefix: 'latihan',
+  wrapClass: 'ex-row',
+  inputPlaceholder: 'Jawabanmu…',
+  inputAriaLabel: 'Hasil operasi',
+  stripPunctuation: true,
+  revealButtonStyle: 'separate',
+  countAttemptOnInvalid: true,
+  emptyMessage: 'Masukkan bilangan bulat yang valid.',
+  invalidMessage: 'Masukkan bilangan bulat yang valid.',
+  sectionLabel: 'Latihan Operasi',
+  kicker: 'TAHAP 4 — LATIHAN OPERASI',
+  goal: 'Menghitung operasi penjumlahan dan pengurangan bilangan bulat dengan tepat.',
+  instruction: DATA.latihanOperasi.instruction,
+  nextStageId: 'masalahKontekstual',
+  completeStageId: 'latihanOperasi',
+  nextButtonLabel: 'Lanjut: Masalah Kontekstual →',
+});
+
 function renderLatihanOperasi(container) {
-  var soal = DATA.latihanOperasi.soal;
-  var idx = State.latihanIdx;
-  var exArr = State.latihanExercises;
-  var s = soal[idx];
-  var ex = exArr[idx];
-
-  var allDoneOrRevealed =
-    exArr.filter(function (e) {
-      return e.correct || e.revealed;
-    }).length === soal.length;
-
-  var statuses = exArr.map(function (e) {
-    if (e.correct) return 'correct';
-    if (e.attempts > 0 && !e.correct) return 'incorrect';
-    return null;
-  });
-  var dotsHTML = buildProgressDots(soal.length, idx, statuses);
-
-  /* Feedback */
-  var feedbackHTML = '';
-  if (ex.correct) {
-    feedbackHTML = buildFeedbackBox('success', '✓', '<strong>Tepat!</strong> ' + s.explanation);
-  } else if (ex.revealed) {
-    feedbackHTML = buildFeedbackBox(
-      'info',
-      '👁',
-      '<strong>Jawaban:</strong> ' + s.answer + '. ' + s.explanation
-    );
-  } else if (ex.hintShown) {
-    feedbackHTML = buildFeedbackBox('warning', '💡', '<strong>Petunjuk:</strong> ' + s.hint);
-  } else if (ex.attempts > 0) {
-    feedbackHTML = buildFeedbackBox(
-      'error',
-      '✗',
-      'Jawabanmu <strong>' +
-        esc(ex.userInput) +
-        '</strong> belum tepat. Coba lagi atau lihat petunjuk.'
-    );
-  }
-
-  /* Action area */
-  var actionHTML = '';
-  if (!ex.correct && !ex.revealed) {
-    actionHTML =
-      '<div class="ex-input-row">' +
-      '<input type="text" inputmode="numeric" id="latihanInput" class="input-text" placeholder="Jawabanmu…" aria-label="Hasil operasi" value="' +
-      esc(ex.userInput) +
-      '">' +
-      '<button type="button" class="btn btn--primary" id="latihanCheckBtn">Periksa</button>' +
-      '<button type="button" class="btn btn--ghost btn--small" id="latihanHintBtn">💡 Petunjuk</button>' +
-      (ex.attempts >= 2
-        ? '<button type="button" class="btn btn--ghost btn--small" id="latihanRevealBtn">Lihat Jawaban</button>'
-        : '') +
-      '</div>';
-  }
-
-  /* Navigation */
-  var navHTML = '';
-  if ((ex.correct || ex.revealed) && idx < soal.length - 1) {
-    navHTML =
-      '<div class="btn-group btn-group--end"><button type="button" class="btn btn--primary" id="latihanNextBtn">Soal Berikutnya →</button></div>';
-  } else if (allDoneOrRevealed) {
-    navHTML =
-      '<div class="btn-group btn-group--end" style="margin-top:var(--space-4);">' +
-      '<button type="button" class="btn btn--primary btn--large" id="latihanFinishBtn">Lanjut: Masalah Kontekstual →</button>' +
-      '</div>';
-  }
-
-  container.innerHTML =
-    '<section aria-label="Latihan Operasi">' +
-    '<div class="stage-head">' +
-    '<span class="stage-head__kicker">TAHAP 4 — LATIHAN OPERASI</span>' +
-    '<p class="stage-head__goal">Tujuan: Menghitung operasi penjumlahan dan pengurangan bilangan bulat dengan tepat.</p>' +
-    '</div>' +
-    '<div class="panel">' +
-    '<p style="font-size:0.88rem;color:var(--color-ink-muted);margin-bottom:var(--space-3);">' +
-    DATA.latihanOperasi.instruction +
-    '</p>' +
-    dotsHTML +
-    '<div class="ex-row">' +
-    '<div class="ex-expr">' +
-    esc(s.ekspresi) +
-    ' = ?' +
-    '</div>' +
-    actionHTML +
-    (feedbackHTML ? '<div style="margin-top:var(--space-3);">' + feedbackHTML + '</div>' : '') +
-    '</div>' +
-    '</div>' +
-    navHTML +
-    '</section>';
-
-  /* Events */
+  latihanOperasiExercise.render(container);
   var inp = document.getElementById('latihanInput');
-  var checkBtn = document.getElementById('latihanCheckBtn');
-  var hintBtn = document.getElementById('latihanHintBtn');
-  var revealBtn = document.getElementById('latihanRevealBtn');
-  var nextBtn = document.getElementById('latihanNextBtn');
-  var finBtn = document.getElementById('latihanFinishBtn');
-
-  if (inp && checkBtn) {
-    inp.addEventListener('keydown', function (e) {
-      if (e.key === 'Enter') checkBtn.click();
-    });
-    checkBtn.addEventListener('click', function () {
-      var parsed = parseInputInt(inp.value, true);
-      ex.userInput = inp.value;
-      ex.attempts++;
-      if (parsed.error) {
-        showNotice('Masukkan bilangan bulat yang valid.');
-        saveState();
-        return;
-      }
-      if (parsed.value === s.answer) {
-        ex.correct = true;
-      }
-      saveState();
-      renderLatihanOperasi(container);
-    });
-  }
-
-  if (hintBtn) {
-    hintBtn.addEventListener('click', function () {
-      ex.hintShown = true;
-      saveState();
-      renderLatihanOperasi(container);
-    });
-  }
-
-  if (revealBtn) {
-    revealBtn.addEventListener('click', function () {
-      ex.revealed = true;
-      saveState();
-      renderLatihanOperasi(container);
-    });
-  }
-
-  if (nextBtn) {
-    nextBtn.addEventListener('click', function () {
-      State.latihanIdx++;
-      saveState();
-      renderLatihanOperasi(container);
-    });
-  }
-
-  if (finBtn) {
-    finBtn.addEventListener('click', function () {
-      completeStage('latihanOperasi');
-      navigateTo('masalahKontekstual');
-    });
-  }
-
   if (inp) inp.focus();
 }
 

@@ -417,167 +417,47 @@ function renderKenaliBulat(container) {
    6. STAGE: GARIS BILANGAN
    ============================================================ */
 
+var garisBilanganExercise = createNumericInputExercise({
+  soal: DATA.garisBilangan.soal,
+  getExercises: function () {
+    return State.garisBilanganExercises;
+  },
+  getIndex: function () {
+    return State.garisBilanganIdx;
+  },
+  setIndex: function (i) {
+    State.garisBilanganIdx = i;
+  },
+  save: saveState,
+  checkValue: function (s) {
+    return s.nilai;
+  },
+  renderPrompt: function (s) {
+    return (
+      '<p class="gb-question">Bilangan apakah yang ditunjukkan oleh titik merah pada garis bilangan di bawah ini?</p>' +
+      '<div class="numberline-wrap">' +
+      buildNumberLineSVG(s.nilai, -10, 10) +
+      '</div>'
+    );
+  },
+  revealText: function (s) {
+    return '<strong>Jawaban:</strong> ' + s.nilai + '. ' + s.explanation;
+  },
+  idPrefix: 'gb',
+  wrapClass: 'gb-exercise',
+  inputRowClass: 'gb-input-row',
+  inputAriaLabel: 'Nilai bilangan pada titik merah',
+  sectionLabel: 'Garis Bilangan',
+  kicker: 'TAHAP 3 — GARIS BILANGAN',
+  goal: 'Membaca posisi bilangan bulat pada garis bilangan.',
+  instruction: DATA.garisBilangan.instruction,
+  nextStageId: 'membandingkan',
+  completeStageId: 'garisBilangan',
+  nextButtonLabel: 'Lanjut: Membandingkan →',
+});
+
 function renderGarisBilangan(container) {
-  var soal = DATA.garisBilangan.soal;
-  var idx = State.garisBilanganIdx;
-  var exArr = State.garisBilanganExercises;
-  var s = soal[idx];
-  var ex = exArr[idx];
-  var allDone =
-    exArr.filter(function (e) {
-      return e.correct;
-    }).length === soal.length;
-
-  var statuses = exArr.map(function (e) {
-    return e.correct ? 'correct' : e.attempts > 0 ? 'incorrect' : null;
-  });
-  var dotsHTML = buildProgressDots(soal.length, idx, statuses);
-
-  var svgHTML = buildNumberLineSVG(s.nilai, -10, 10);
-
-  var feedbackHTML = '';
-  if (ex.correct) {
-    feedbackHTML = buildFeedbackBox('success', '✓', '<strong>Tepat!</strong> ' + s.explanation);
-  } else if (ex.revealed) {
-    feedbackHTML = buildFeedbackBox(
-      'info',
-      '👁',
-      '<strong>Jawaban:</strong> ' + s.nilai + '. ' + s.explanation
-    );
-  } else if (ex.hintShown) {
-    feedbackHTML = buildFeedbackBox('warning', '💡', '<strong>Petunjuk:</strong> ' + s.hint);
-  } else if (ex.attempts > 0) {
-    feedbackHTML = buildFeedbackBox(
-      'error',
-      '✗',
-      'Jawabanmu <strong>' +
-        esc(ex.userInput) +
-        '</strong> belum tepat. Coba lagi atau lihat petunjuk.'
-    );
-  }
-
-  var actionHTML = '';
-  if (!ex.correct && !ex.revealed) {
-    actionHTML =
-      '<div class="gb-input-row">' +
-      '<input type="text" inputmode="numeric" id="gbInput" class="input-text" placeholder="..." aria-label="Nilai bilangan pada titik merah" value="' +
-      esc(ex.userInput) +
-      '">' +
-      '<button type="button" class="btn btn--primary" id="gbCheckBtn">Periksa</button>' +
-      '<button type="button" class="btn btn--ghost btn--small" id="gbHintBtn">💡 Petunjuk</button>' +
-      '</div>';
-  } else if (!ex.correct && ex.revealed) {
-    actionHTML = '';
-  }
-
-  var navHTML = '';
-  if (ex.correct || ex.revealed) {
-    if (idx < soal.length - 1) {
-      navHTML =
-        '<div class="btn-group btn-group--end"><button type="button" class="btn btn--primary" id="gbNextBtn">Soal Berikutnya →</button></div>';
-    } else if (
-      allDone ||
-      exArr.filter(function (e) {
-        return e.correct || e.revealed;
-      }).length === soal.length
-    ) {
-      navHTML =
-        '<div class="btn-group btn-group--end"><button type="button" class="btn btn--primary btn--large" id="gbFinishBtn">Lanjut: Membandingkan →</button></div>';
-    }
-  }
-
-  container.innerHTML =
-    '<section aria-label="Garis Bilangan">' +
-    '<div class="stage-head">' +
-    '<span class="stage-head__kicker">TAHAP 3 — GARIS BILANGAN</span>' +
-    '<p class="stage-head__goal">Tujuan: Membaca posisi bilangan bulat pada garis bilangan.</p>' +
-    '</div>' +
-    '<div class="panel">' +
-    '<p style="font-size:0.88rem;color:var(--color-ink-muted);margin-bottom:var(--space-3);">' +
-    esc(DATA.garisBilangan.instruction) +
-    '</p>' +
-    dotsHTML +
-    '<div class="gb-exercise">' +
-    '<p class="gb-question">Bilangan apakah yang ditunjukkan oleh titik merah pada garis bilangan di bawah ini?</p>' +
-    '<div class="numberline-wrap">' +
-    svgHTML +
-    '</div>' +
-    actionHTML +
-    (feedbackHTML ? '<div style="margin-top:var(--space-3);">' + feedbackHTML + '</div>' : '') +
-    '</div>' +
-    '</div>' +
-    navHTML +
-    '</section>';
-
-  /* Events */
-  var inp = document.getElementById('gbInput');
-  var checkBtn = document.getElementById('gbCheckBtn');
-  var hintBtn = document.getElementById('gbHintBtn');
-  var nextBtn = document.getElementById('gbNextBtn');
-  var finishBtn = document.getElementById('gbFinishBtn');
-
-  if (inp)
-    inp.addEventListener('keydown', function (e) {
-      if (e.key === 'Enter' && checkBtn) checkBtn.click();
-    });
-
-  if (checkBtn)
-    checkBtn.addEventListener('click', function () {
-      if (!inp) return;
-      var val = inp.value;
-      var parsed = parseInputInt(val);
-      if (parsed.error === 'empty') {
-        showNotice('Masukkan bilangan terlebih dahulu.');
-        return;
-      }
-      if (parsed.error === 'invalid') {
-        showNotice('Masukkan bilangan bulat yang valid (contoh: −3, 0, 7).');
-        return;
-      }
-      ex.userInput = val;
-      ex.attempts += 1;
-      if (parsed.value === s.nilai) {
-        ex.correct = true;
-        saveState();
-        renderGarisBilangan(container);
-      } else {
-        saveState();
-        renderGarisBilangan(container);
-      }
-    });
-
-  if (hintBtn)
-    hintBtn.addEventListener('click', function () {
-      if (ex.attempts === 0 || ex.hintShown) {
-        ex.hintShown = true;
-        saveState();
-        renderGarisBilangan(container);
-      } else {
-        /* Show answer after 2+ wrong attempts */
-        if (ex.attempts >= 2) {
-          ex.revealed = true;
-          saveState();
-          renderGarisBilangan(container);
-        } else {
-          ex.hintShown = true;
-          saveState();
-          renderGarisBilangan(container);
-        }
-      }
-    });
-
-  if (nextBtn)
-    nextBtn.addEventListener('click', function () {
-      State.garisBilanganIdx = idx + 1;
-      saveState();
-      renderGarisBilangan(container);
-    });
-
-  if (finishBtn)
-    finishBtn.addEventListener('click', function () {
-      completeStage('garisBilangan');
-      navigateTo('membandingkan');
-    });
+  garisBilanganExercise.render(container);
 }
 
 /* ============================================================
@@ -1001,136 +881,50 @@ function renderMengurutkan(container) {
    9. STAGE: SITUASI NYATA
    ============================================================ */
 
+var situasiNyataExercise = createMultipleChoiceExercise({
+  soal: DATA.situasiNyata.soal,
+  getExercises: function () {
+    return State.situasiNyataExercises;
+  },
+  getIndex: function () {
+    return State.situasiNyataIdx;
+  },
+  setIndex: function (i) {
+    State.situasiNyataIdx = i;
+  },
+  save: saveState,
+  renderPrompt: function (s) {
+    return (
+      '<div class="panel panel--hero" style="margin-bottom:var(--space-3);">' +
+      '<div style="display:flex;align-items:center;gap:var(--space-3);flex-wrap:wrap;margin-bottom:var(--space-3);">' +
+      '<span style="font-size:1.8rem;">' +
+      s.icon +
+      '</span>' +
+      '<span class="badge-chip">' +
+      esc(s.badge) +
+      '</span>' +
+      '</div>' +
+      '<p style="font-size:0.95rem;">' +
+      s.story +
+      '</p>' +
+      '<p style="font-weight:600;font-size:1rem;margin-bottom:0;">' +
+      s.question +
+      '</p>' +
+      '</div>'
+    );
+  },
+  idPrefix: 'sn',
+  sectionLabel: 'Situasi Nyata',
+  kicker: 'TAHAP 6 — SITUASI NYATA',
+  goal: 'Menggunakan bilangan bulat untuk memodelkan dan menyelesaikan masalah dari situasi nyata.',
+  instruction: DATA.situasiNyata.instruction,
+  nextStageId: 'refleksi',
+  completeStageId: 'situasiNyata',
+  nextButtonLabel: 'Lanjut: Refleksi →',
+});
+
 function renderSituasiNyata(container) {
-  var soal = DATA.situasiNyata.soal;
-  var idx = State.situasiNyataIdx;
-  var exArr = State.situasiNyataExercises;
-  var s = soal[idx];
-  var ex = exArr[idx];
-  var allAnswered =
-    exArr.filter(function (e) {
-      return e.correct || e.checked;
-    }).length === soal.length;
-
-  var statuses = exArr.map(function (e) {
-    return e.correct ? 'correct' : e.checked ? 'incorrect' : null;
-  });
-  var dotsHTML = buildProgressDots(soal.length, idx, statuses);
-
-  var letters = ['A', 'B', 'C', 'D'];
-  var choicesHTML = s.options
-    .map(function (opt, i) {
-      var cls = 'choice-btn';
-      if (ex.checked) {
-        if (opt.id === s.correct) cls += ' choice-btn--correct';
-        else if (opt.id === ex.chosen) cls += ' choice-btn--incorrect';
-        else cls += ' choice-btn--disabled';
-      }
-      return (
-        '<button type="button" class="' +
-        cls +
-        '" data-opt-id="' +
-        opt.id +
-        '">' +
-        '<span class="choice-letter">' +
-        letters[i] +
-        '</span>' +
-        opt.label +
-        '</button>'
-      );
-    })
-    .join('');
-
-  var feedbackHTML = '';
-  if (ex.correct) {
-    feedbackHTML = buildFeedbackBox('success', '✓', '<strong>Benar!</strong> ' + s.explanation);
-  } else if (ex.checked) {
-    feedbackHTML = buildFeedbackBox('error', '✗', '<strong>Belum tepat.</strong> ' + s.explanation);
-  }
-
-  var hintHTML = '';
-  if (!ex.checked && ex.attempts > 0) {
-    hintHTML =
-      '<div style="margin-top:var(--space-3);">' +
-      buildFeedbackBox('warning', '💡', '<strong>Petunjuk:</strong> ' + s.hint) +
-      '</div>';
-  }
-
-  var navHTML = '';
-  if (ex.correct || ex.checked) {
-    if (idx < soal.length - 1) {
-      navHTML =
-        '<div class="btn-group btn-group--end"><button type="button" class="btn btn--primary" id="snNextBtn">Soal Berikutnya →</button></div>';
-    } else if (allAnswered) {
-      navHTML =
-        '<div class="btn-group btn-group--end"><button type="button" class="btn btn--primary btn--large" id="snFinishBtn">Lanjut: Refleksi →</button></div>';
-    }
-  }
-
-  container.innerHTML =
-    '<section aria-label="Situasi Nyata">' +
-    '<div class="stage-head">' +
-    '<span class="stage-head__kicker">TAHAP 6 — SITUASI NYATA</span>' +
-    '<p class="stage-head__goal">Tujuan: Menggunakan bilangan bulat untuk memodelkan dan menyelesaikan masalah dari situasi nyata.</p>' +
-    '</div>' +
-    '<div class="panel">' +
-    '<p style="font-size:0.88rem;color:var(--color-ink-muted);margin-bottom:var(--space-3);">' +
-    esc(DATA.situasiNyata.instruction) +
-    '</p>' +
-    dotsHTML +
-    '<div class="panel panel--hero" style="margin-bottom:var(--space-3);">' +
-    '<div style="display:flex;align-items:center;gap:var(--space-3);flex-wrap:wrap;margin-bottom:var(--space-3);">' +
-    '<span style="font-size:1.8rem;">' +
-    s.icon +
-    '</span>' +
-    '<span class="badge-chip">' +
-    esc(s.badge) +
-    '</span>' +
-    '</div>' +
-    '<p style="font-size:0.95rem;">' +
-    s.story +
-    '</p>' +
-    '<p style="font-weight:600;font-size:1rem;margin-bottom:0;">' +
-    s.question +
-    '</p>' +
-    '</div>' +
-    '<div class="choice-list" id="snChoices">' +
-    choicesHTML +
-    '</div>' +
-    (feedbackHTML ? '<div style="margin-top:var(--space-3);">' + feedbackHTML + '</div>' : '') +
-    hintHTML +
-    '</div>' +
-    navHTML +
-    '</section>';
-
-  container.querySelectorAll('[data-opt-id]').forEach(function (btn) {
-    btn.addEventListener('click', function () {
-      if (ex.checked) return;
-      var optId = btn.dataset.optId;
-      ex.chosen = optId;
-      ex.attempts += 1;
-      ex.correct = optId === s.correct;
-      ex.checked = true;
-      saveState();
-      renderSituasiNyata(container);
-    });
-  });
-
-  var nextBtn = document.getElementById('snNextBtn');
-  var finishBtn = document.getElementById('snFinishBtn');
-
-  if (nextBtn)
-    nextBtn.addEventListener('click', function () {
-      State.situasiNyataIdx = idx + 1;
-      saveState();
-      renderSituasiNyata(container);
-    });
-
-  if (finishBtn)
-    finishBtn.addEventListener('click', function () {
-      completeStage('situasiNyata');
-      navigateTo('refleksi');
-    });
+  situasiNyataExercise.render(container);
 }
 
 /* ============================================================
