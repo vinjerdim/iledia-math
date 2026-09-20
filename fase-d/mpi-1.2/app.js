@@ -5,6 +5,9 @@
    Matematika: Penjumlahan dan Pengurangan Bilangan Bulat
    Fase D — SMP Kelas 7
 
+   Utilitas bersama (esc, parseInputInt, showNotice, builder render,
+   mesin navigasi tahap) berada di shared/engine.js.
+
    Bagian:
     1. Utilitas
     2. Konstanta
@@ -25,28 +28,6 @@
 /* ============================================================
    1. UTILITAS
    ============================================================ */
-
-function parseInputInt(str) {
-  if (!str || str.trim() === '') return { value: null, error: 'empty' };
-  var trimmed = str.trim().replace(/[\s.,]/g, '');
-  if (!/^-?\d+$/.test(trimmed)) return { value: null, error: 'invalid' };
-  var v = parseInt(trimmed, 10);
-  if (isNaN(v)) return { value: null, error: 'invalid' };
-  return { value: v, error: null };
-}
-
-function esc(str) {
-  var m = {
-    '&': '&amp;',
-    '<': '&lt;',
-    '>': '&gt;',
-    '"': '&quot;',
-    "'": '&#39;',
-  };
-  return String(str).replace(/[&<>"']/g, function (ch) {
-    return m[ch];
-  });
-}
 
 function fmtNum(v) {
   if (v === 0) return '0';
@@ -196,102 +177,23 @@ function initStateArrays() {
    4. NAVIGASI
    ============================================================ */
 
-function navigateTo(stageId) {
-  var targetIdx = STAGES.indexOf(stageId);
-  var currentIdx = STAGES.indexOf(State.currentStage);
-  if (targetIdx === -1) return;
-  if (targetIdx > currentIdx) {
-    for (var i = currentIdx; i < targetIdx; i++) {
-      if (!State.completedStages[STAGES[i]]) {
-        showNotice('Selesaikan tahap "' + STAGE_LABELS[i] + '" terlebih dahulu.');
-        return;
-      }
-    }
-  }
-  State.currentStage = stageId;
-  saveState();
-  updateStageNav();
-  renderCurrentStage();
-  window.scrollTo({ top: 0, behavior: 'smooth' });
-}
+var StageMachine = createStageMachine({
+  stages: STAGES,
+  stageLabels: STAGE_LABELS,
+  state: State,
+  save: saveState,
+  render: renderCurrentStage,
+});
 
-function completeStage(stageId) {
-  State.completedStages[stageId] = true;
-  saveState();
-  updateStageNav();
-  updateProgress();
-}
-
-function updateStageNav() {
-  var items = document.querySelectorAll('.stage-nav__item');
-  var currentIdx = STAGES.indexOf(State.currentStage);
-  items.forEach(function (item) {
-    var sid = item.dataset.stage;
-    var idx = STAGES.indexOf(sid);
-    item.removeAttribute('aria-current');
-    item.classList.remove('is-complete');
-    item.disabled = false;
-    if (sid === State.currentStage) item.setAttribute('aria-current', 'step');
-    else if (State.completedStages[sid]) item.classList.add('is-complete');
-    if (idx > currentIdx && !State.completedStages[STAGES[idx - 1]]) item.disabled = true;
-  });
-}
-
-function buildStageNav() {
-  var list = document.getElementById('stageNavList');
-  if (!list) return;
-  list.innerHTML = STAGES.map(function (sid, i) {
-    return (
-      '<li>' +
-      '<button type="button" class="stage-nav__item" data-stage="' +
-      sid +
-      '">' +
-      '<span class="stage-nav__num">' +
-      (i + 1) +
-      '</span>' +
-      esc(STAGE_LABELS[i]) +
-      '</button></li>'
-    );
-  }).join('');
-  list.querySelectorAll('.stage-nav__item').forEach(function (btn) {
-    btn.addEventListener('click', function () {
-      navigateTo(btn.dataset.stage);
-    });
-  });
-  updateStageNav();
-}
-
-function updateProgress() {
-  var total = STAGES.length;
-  var done = Object.keys(State.completedStages).length;
-  var pct = Math.round((done / total) * 100);
-  var fill = document.getElementById('progressFill');
-  var label = document.getElementById('progressLabel');
-  if (fill) {
-    fill.style.width = pct + '%';
-    fill.parentElement.setAttribute('aria-valuenow', pct);
-  }
-  if (label) label.textContent = done + ' dari ' + total + ' tahap selesai';
-}
+var navigateTo = StageMachine.navigateTo;
+var completeStage = StageMachine.completeStage;
+var updateStageNav = StageMachine.updateStageNav;
+var buildStageNav = StageMachine.buildStageNav;
+var updateProgress = StageMachine.updateProgress;
 
 /* ============================================================
    5. UTILITAS RENDER
    ============================================================ */
-
-function buildFeedbackBox(type, icon, html) {
-  return (
-    '<div class="feedback-box feedback-box--' +
-    esc(type) +
-    '" role="alert">' +
-    '<span class="feedback-box__icon" aria-hidden="true">' +
-    icon +
-    '</span>' +
-    '<div class="feedback-box__body">' +
-    html +
-    '</div>' +
-    '</div>'
-  );
-}
 
 function buildProgressDots(total, current, statuses) {
   var dots = '';
@@ -507,16 +409,6 @@ function buildStepsHTML(langkah) {
     })
     .join('');
   return '<div class="steps-list" aria-label="Langkah penyelesaian">' + items + '</div>';
-}
-
-function showNotice(msg) {
-  var el = document.getElementById('appNotice');
-  if (!el) return;
-  el.textContent = msg;
-  el.classList.add('is-visible');
-  setTimeout(function () {
-    el.classList.remove('is-visible');
-  }, 2800);
 }
 
 function renderCurrentStage() {
@@ -1029,7 +921,7 @@ function renderLatihanOperasi(container) {
       if (e.key === 'Enter') checkBtn.click();
     });
     checkBtn.addEventListener('click', function () {
-      var parsed = parseInputInt(inp.value);
+      var parsed = parseInputInt(inp.value, true);
       ex.userInput = inp.value;
       ex.attempts++;
       if (parsed.error) {
@@ -1253,7 +1145,7 @@ function renderMasalah(container) {
       if (e.key === 'Enter') checkBtn.click();
     });
     checkBtn.addEventListener('click', function () {
-      var parsed = parseInputInt(inp.value);
+      var parsed = parseInputInt(inp.value, true);
       ex.userInput = inp.value;
       ex.attempts++;
       if (parsed.error) {
@@ -1497,7 +1389,7 @@ function renderTantangan(container) {
       if (e.key === 'Enter') checkBtn.click();
     });
     checkBtn.addEventListener('click', function () {
-      var parsed = parseInputInt(inp.value);
+      var parsed = parseInputInt(inp.value, true);
       ex.userInput = inp.value;
       ex.attempts++;
       if (parsed.error) {

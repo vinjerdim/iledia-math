@@ -19,9 +19,14 @@
    1. UTILITAS TEKS & INPUT
    ============================================================ */
 
-function parseInputInt(str) {
+/*
+ * stripPunctuation: saat true, tanda titik dan koma (pemisah ribuan pada
+ * beberapa soal, mis. nominal uang) turut dibuang selain spasi.
+ */
+function parseInputInt(str, stripPunctuation) {
   if (!str || str.trim() === '') return { value: null, error: 'empty' };
-  var trimmed = str.trim().replace(/\s/g, '');
+  var pattern = stripPunctuation ? /[\s.,]/g : /\s/g;
+  var trimmed = str.trim().replace(pattern, '');
   if (!/^-?\d+$/.test(trimmed)) return { value: null, error: 'invalid' };
   var v = parseInt(trimmed, 10);
   if (isNaN(v)) return { value: null, error: 'invalid' };
@@ -51,10 +56,10 @@ function showNotice(msg, elementId) {
   var el = document.getElementById(elementId || 'appNotice');
   if (!el) return;
   el.textContent = msg;
-  el.classList.add('app-notice--visible');
+  el.classList.add('is-visible');
   if (noticeTimer) clearTimeout(noticeTimer);
   noticeTimer = setTimeout(function () {
-    el.classList.remove('app-notice--visible');
+    el.classList.remove('is-visible');
   }, 3000);
 }
 
@@ -265,7 +270,7 @@ function createStageMachine(opts) {
   }
 
   function updateStageNav() {
-    var items = document.querySelectorAll('.stage-nav__item');
+    var items = document.querySelectorAll('.stage-nav__item[data-stage]');
     var currentIdx = stages.indexOf(state.currentStage);
     items.forEach(function (item) {
       var sid = item.dataset.stage;

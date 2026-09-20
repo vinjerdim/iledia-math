@@ -4,6 +4,9 @@
    app.js — Logika aplikasi media pembelajaran
    Matematika: Perkalian dan Pembagian Bilangan Bulat — Fase D SMP
 
+   Utilitas bersama (esc, parseInputInt, showNotice, builder render,
+   mesin navigasi tahap) berada di shared/engine.js.
+
    Bagian:
     1. Utilitas
     2. Konstanta
@@ -26,27 +29,6 @@
 /* ============================================================
    1. UTILITAS
    ============================================================ */
-
-function parseInputInt(str) {
-  if (!str || str.trim() === '') return { value: null, error: 'empty' };
-  var trimmed = str.trim();
-  var clean = '';
-  for (var i = 0; i < trimmed.length; i++) {
-    var ch = trimmed.charAt(i);
-    if (ch !== '.' && ch !== ',' && ch !== ' ') clean += ch;
-  }
-  if (!/^-?\d+$/.test(clean)) return { value: null, error: 'invalid' };
-  var v = parseInt(clean, 10);
-  if (isNaN(v)) return { value: null, error: 'invalid' };
-  return { value: v, error: null };
-}
-
-function esc(str) {
-  var m = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
-  return String(str).replace(/[&<>"']/g, function (ch) {
-    return m[ch];
-  });
-}
 
 function formatNumber(n) {
   var s = String(Math.abs(n));
@@ -207,103 +189,23 @@ function initExerciseArrays() {
    4. NAVIGASI
    ============================================================ */
 
-function navigateTo(stageId) {
-  var targetIdx = STAGES.indexOf(stageId);
-  var currentIdx = STAGES.indexOf(State.currentStage);
-  if (targetIdx === -1) return;
+var StageMachine = createStageMachine({
+  stages: STAGES,
+  stageLabels: STAGE_LABELS,
+  state: State,
+  save: saveState,
+  render: renderCurrentStage,
+});
 
-  if (targetIdx > currentIdx) {
-    for (var i = currentIdx; i < targetIdx; i++) {
-      if (!State.completedStages[STAGES[i]]) {
-        showNotice('Selesaikan tahap "' + STAGE_LABELS[i] + '" terlebih dahulu.');
-        return;
-      }
-    }
-  }
-
-  State.currentStage = stageId;
-  saveState();
-  updateStageNav();
-  renderCurrentStage();
-  window.scrollTo({ top: 0, behavior: 'smooth' });
-}
-
-function completeStage(stageId) {
-  State.completedStages[stageId] = true;
-  saveState();
-  updateStageNav();
-  updateProgress();
-}
-
-function updateStageNav() {
-  var items = document.querySelectorAll('.stage-nav__item');
-  var currentIdx = STAGES.indexOf(State.currentStage);
-  items.forEach(function (item) {
-    var sid = item.dataset.stage;
-    var idx = STAGES.indexOf(sid);
-    item.removeAttribute('aria-current');
-    item.classList.remove('is-complete');
-    item.disabled = false;
-    if (sid === State.currentStage) item.setAttribute('aria-current', 'step');
-    else if (State.completedStages[sid]) item.classList.add('is-complete');
-    if (idx > currentIdx && !State.completedStages[STAGES[idx - 1]]) item.disabled = true;
-  });
-}
-
-function buildStageNav() {
-  var list = document.getElementById('stageNavList');
-  if (!list) return;
-  list.innerHTML = STAGES.map(function (sid, i) {
-    return (
-      '<li><button type="button" class="stage-nav__item" data-stage="' +
-      sid +
-      '">' +
-      '<span class="stage-nav__num">' +
-      (i + 1) +
-      '</span>' +
-      esc(STAGE_LABELS[i]) +
-      '</button></li>'
-    );
-  }).join('');
-  list.querySelectorAll('.stage-nav__item').forEach(function (btn) {
-    btn.addEventListener('click', function () {
-      navigateTo(btn.dataset.stage);
-    });
-  });
-  updateStageNav();
-}
-
-function updateProgress() {
-  var total = STAGES.length;
-  var done = Object.keys(State.completedStages).length;
-  var pct = Math.round((done / total) * 100);
-  var fill = document.getElementById('progressFill');
-  var label = document.getElementById('progressLabel');
-  if (fill) {
-    fill.style.width = pct + '%';
-    fill.parentElement.setAttribute('aria-valuenow', pct);
-  }
-  if (label) label.textContent = done + ' dari ' + total + ' tahap selesai';
-}
+var navigateTo = StageMachine.navigateTo;
+var completeStage = StageMachine.completeStage;
+var updateStageNav = StageMachine.updateStageNav;
+var buildStageNav = StageMachine.buildStageNav;
+var updateProgress = StageMachine.updateProgress;
 
 /* ============================================================
    5. UTILITAS RENDER
    ============================================================ */
-
-function buildFeedbackBox(type, icon, html) {
-  return (
-    '<div class="feedback-box feedback-box--' +
-    esc(type) +
-    '" role="alert">' +
-    '<span class="feedback-box__icon" aria-hidden="true">' +
-    icon +
-    '</span>' +
-    '<div class="feedback-box__body">' +
-    html +
-    '</div>' +
-    '</div>'
-  );
-}
 
 function buildProgressDots(total, current, statuses) {
   var dots = '';
@@ -400,17 +302,6 @@ function renderCurrentStage() {
       container.innerHTML =
         '<p style="padding:var(--space-5);color:var(--color-ink-muted);">Tahap tidak ditemukan.</p>';
   }
-}
-
-function showNotice(msg) {
-  var el = document.getElementById('appNotice');
-  if (!el) return;
-  el.textContent = msg;
-  el.classList.add('is-visible');
-  clearTimeout(showNotice._t);
-  showNotice._t = setTimeout(function () {
-    el.classList.remove('is-visible');
-  }, 3000);
 }
 
 /* ============================================================
@@ -952,7 +843,7 @@ function renderExerciseStage(container, cfg) {
 
   if (checkBtn) {
     var doCheck = function () {
-      var parsed = parseInputInt(input ? input.value : '');
+      var parsed = parseInputInt(input ? input.value : '', true);
       if (parsed.error === 'empty') {
         showNotice('Masukkan jawabanmu terlebih dahulu.');
         return;
@@ -1135,7 +1026,7 @@ function renderEstimasi(container) {
   var checkBtn = document.getElementById('checkBtn');
   if (checkBtn) {
     var doCheck = function () {
-      var parsed = parseInputInt(input ? input.value : '');
+      var parsed = parseInputInt(input ? input.value : '', true);
       if (parsed.error === 'empty') {
         showNotice('Masukkan perkiraanmu terlebih dahulu.');
         return;
@@ -1314,7 +1205,7 @@ function renderTantangan(container) {
     var checkBtn = document.getElementById('checkBtn');
     if (checkBtn) {
       var doCheck = function () {
-        var parsed = parseInputInt(input ? input.value : '');
+        var parsed = parseInputInt(input ? input.value : '', true);
         if (parsed.error === 'empty') {
           showNotice('Masukkan jawabanmu.');
           return;
