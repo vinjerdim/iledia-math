@@ -117,38 +117,23 @@ var State = {
 };
 
 function initExerciseArrays() {
-  if (
-    !State.menyusunExercises ||
-    State.menyusunExercises.length !== DATA.menyusunRincian.soal.length
-  ) {
-    State.menyusunExercises = DATA.menyusunRincian.soal.map(function () {
-      return { attempts: 0, hintLevel: 0, correct: false, userInput: '', revealed: false };
-    });
-  }
-  if (
-    !State.analisisExercises ||
-    State.analisisExercises.length !== DATA.analisisAnggaran.soal.length
-  ) {
-    State.analisisExercises = DATA.analisisAnggaran.soal.map(function () {
-      return {
-        attempts: 0,
-        hintLevel: 0,
-        correct: false,
-        userInput: '',
-        revealed: false,
-        chosen: null,
-        checked: false,
-      };
-    });
-  }
-  if (
-    !State.finalisasiItems ||
-    State.finalisasiItems.length !== DATA.finalisasiRancangan.kategori.length
-  ) {
-    State.finalisasiItems = DATA.finalisasiRancangan.kategori.map(function () {
-      return { qty: '', harga: '', total: 0 };
-    });
-  }
+  ensureExerciseArray(State, 'menyusunExercises', DATA.menyusunRincian.soal, function () {
+    return { attempts: 0, hintLevel: 0, correct: false, userInput: '', revealed: false };
+  });
+  ensureExerciseArray(State, 'analisisExercises', DATA.analisisAnggaran.soal, function () {
+    return {
+      attempts: 0,
+      hintLevel: 0,
+      correct: false,
+      userInput: '',
+      revealed: false,
+      chosen: null,
+      checked: false,
+    };
+  });
+  ensureExerciseArray(State, 'finalisasiItems', DATA.finalisasiRancangan.kategori, function () {
+    return { qty: '', harga: '', total: 0 };
+  });
   if (!State.presentasiAnswers || State.presentasiAnswers.length !== 2) {
     State.presentasiAnswers = [
       { input: '', done: false },
@@ -163,51 +148,12 @@ function initExerciseArrays() {
   }
 }
 
-function saveState() {
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(State));
-  } catch (e) {
-    /* ignore */
-  }
-}
-
-function loadState() {
-  try {
-    var raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return false;
-    Object.assign(State, JSON.parse(raw));
-    return true;
-  } catch (e) {
-    return false;
-  }
-}
+var Store = createStore({ key: STORAGE_KEY, state: State });
+var saveState = Store.save;
+var loadState = Store.load;
 
 function clearState() {
-  try {
-    localStorage.removeItem(STORAGE_KEY);
-  } catch (e) {
-    /* ignore */
-  }
-  State.currentStage = 'orientasi';
-  State.completedStages = {};
-  State.eksplorasiCtxIdx = 0;
-  State.eksplorasiCtxStep = [0, 0, 0];
-  State.eksplorasiCtxDone = [false, false, false];
-  State.menyusunIdx = 0;
-  State.menyusunExercises = [];
-  State.analisisIdx = 0;
-  State.analisisExercises = [];
-  State.finalisasiItems = null;
-  State.finalisasiDone = false;
-  State.presentasiNarasi = '';
-  State.presentasiAnswers = [
-    { input: '', done: false },
-    { input: '', done: false },
-  ];
-  State.presentasiRefleksi = '';
-  State.presentasiDone = false;
-  State.refleksiAnswers = {};
-  State.refleksiSaved = false;
+  Store.reset();
   initExerciseArrays();
 }
 

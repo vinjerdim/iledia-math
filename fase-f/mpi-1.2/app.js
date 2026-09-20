@@ -116,92 +116,37 @@ var State = {
   refleksiSaved: false,
 };
 
-function saveState() {
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(State));
-  } catch (e) {
-    /* Abaikan. */
-  }
-}
-
-function loadState() {
-  try {
-    var raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return false;
-    Object.assign(State, JSON.parse(raw));
-    return true;
-  } catch (e) {
-    return false;
-  }
-}
+var Store = createStore({ key: STORAGE_KEY, state: State });
+var saveState = Store.save;
+var loadState = Store.load;
 
 function clearState() {
-  try {
-    localStorage.removeItem(STORAGE_KEY);
-  } catch (e) {
-    /* Abaikan. */
-  }
-  State.currentStage = 'orientasi';
-  State.completedStages = {};
-  State.eksplorasiCtxIdx = 0;
-  State.eksplorasiRevealCount = [0, 0, 0];
-  State.eksplorasiDone = [false, false, false];
-  State.rumusUnStep = 0;
-  State.rumusUnStepInputs = ['', ''];
-  State.rumusUnStepDone = [false, false];
-  State.rumusUnFormulaShown = false;
-  State.latihanUnIdx = 0;
-  State.latihanUnExercises = [];
-  State.ekspSnStep = 0;
-  State.ekspSnFormulaShown = false;
-  State.ekspSnVerifInput = '';
-  State.ekspSnVerifDone = false;
-  State.latihanSnIdx = 0;
-  State.latihanSnExercises = [];
-  State.tantanganIdx = 0;
-  State.tantanganExercises = [];
-  State.refleksiAnswers = {};
-  State.refleksiSaved = false;
+  Store.reset();
   initExerciseArrays();
 }
 
 function initExerciseArrays() {
-  if (!State.latihanUnExercises || State.latihanUnExercises.length !== DATA.latihanUn.soal.length) {
-    State.latihanUnExercises = DATA.latihanUn.soal.map(function () {
-      return { attempts: 0, hintLevel: 0, correct: false, userInput: '', revealed: false };
-    });
-  }
-  if (!State.latihanSnExercises || State.latihanSnExercises.length !== DATA.latihanSn.soal.length) {
-    State.latihanSnExercises = DATA.latihanSn.soal.map(function () {
-      return { attempts: 0, hintLevel: 0, correct: false, userInput: '', revealed: false };
-    });
-  }
-  if (!State.tantanganExercises || State.tantanganExercises.length !== DATA.tantangan.soal.length) {
-    State.tantanganExercises = DATA.tantangan.soal.map(function () {
-      return { attempts: 0, correct: false, chosen: null, checked: false, userInput: '' };
-    });
-  }
-  var nCtx = DATA.eksplorasi.konteks.length;
-  if (!State.eksplorasiRevealCount || State.eksplorasiRevealCount.length !== nCtx) {
-    State.eksplorasiRevealCount = DATA.eksplorasi.konteks.map(function () {
-      return 0;
-    });
-  }
-  if (!State.eksplorasiDone || State.eksplorasiDone.length !== nCtx) {
-    State.eksplorasiDone = DATA.eksplorasi.konteks.map(function () {
-      return false;
-    });
-  }
-  if (!State.rumusUnStepInputs || State.rumusUnStepInputs.length !== DATA.rumusUn.steps.length) {
-    State.rumusUnStepInputs = DATA.rumusUn.steps.map(function () {
-      return '';
-    });
-  }
-  if (!State.rumusUnStepDone || State.rumusUnStepDone.length !== DATA.rumusUn.steps.length) {
-    State.rumusUnStepDone = DATA.rumusUn.steps.map(function () {
-      return false;
-    });
-  }
+  ensureExerciseArray(State, 'latihanUnExercises', DATA.latihanUn.soal, function () {
+    return { attempts: 0, hintLevel: 0, correct: false, userInput: '', revealed: false };
+  });
+  ensureExerciseArray(State, 'latihanSnExercises', DATA.latihanSn.soal, function () {
+    return { attempts: 0, hintLevel: 0, correct: false, userInput: '', revealed: false };
+  });
+  ensureExerciseArray(State, 'tantanganExercises', DATA.tantangan.soal, function () {
+    return { attempts: 0, correct: false, chosen: null, checked: false, userInput: '' };
+  });
+  ensureExerciseArray(State, 'eksplorasiRevealCount', DATA.eksplorasi.konteks, function () {
+    return 0;
+  });
+  ensureExerciseArray(State, 'eksplorasiDone', DATA.eksplorasi.konteks, function () {
+    return false;
+  });
+  ensureExerciseArray(State, 'rumusUnStepInputs', DATA.rumusUn.steps, function () {
+    return '';
+  });
+  ensureExerciseArray(State, 'rumusUnStepDone', DATA.rumusUn.steps, function () {
+    return false;
+  });
 }
 
 /* ============================================================

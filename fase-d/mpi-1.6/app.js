@@ -183,69 +183,35 @@ var State = {
   },
 };
 
-function saveState() {
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(State));
-  } catch (e) {
-    /* simpan gagal — lanjutkan */
-  }
-}
-
-function loadState() {
-  try {
-    var raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return false;
-    var saved = JSON.parse(raw);
-    Object.assign(State, saved);
-    return true;
-  } catch (e) {
-    return false;
-  }
-}
+var Store = createStore({ key: STORAGE_KEY, state: State });
+var saveState = Store.save;
+var loadState = Store.load;
 
 function clearState() {
-  try {
-    localStorage.removeItem(STORAGE_KEY);
-  } catch (e) {}
-  State.currentStage = 'orientasi';
-  State.completedStages = {};
-  State.pb = { idx: 0, results: [] };
-  State.es = { idx: 0, data: [] };
-  State.tn = { idx: 0, data: [] };
-  State.as = { idx: 0, answers: {} };
-  State.rf = { answers: {}, saved: false };
+  Store.reset();
   initStateArrays();
 }
 
 function initStateArrays() {
   /* Pembulatan */
-  var pbLen = DATA.pembulatan.soal.length;
-  if (!State.pb.results || State.pb.results.length !== pbLen) {
-    State.pb.results = DATA.pembulatan.soal.map(function () {
-      return { chosen: null, isCorrect: false };
-    });
-  }
+  ensureExerciseArray(State.pb, 'results', DATA.pembulatan.soal, function () {
+    return { chosen: null, isCorrect: false };
+  });
 
   /* Estimasi */
-  var esLen = DATA.estimasi.scenarios.length;
-  if (!State.es.data || State.es.data.length !== esLen) {
-    State.es.data = DATA.estimasi.scenarios.map(function () {
-      return {
-        phase: 'select-strategy' /* 'select-strategy' | 'rounding' | 'decide' | 'revealed' */,
-        strategy: null /* level: 1000 | 5000 | 10000 */,
-        itemRounded: {} /* {itemIdx: chosenValue} */,
-        decision: null /* 'cukup' | 'tidak' */,
-      };
-    });
-  }
+  ensureExerciseArray(State.es, 'data', DATA.estimasi.scenarios, function () {
+    return {
+      phase: 'select-strategy' /* 'select-strategy' | 'rounding' | 'decide' | 'revealed' */,
+      strategy: null /* level: 1000 | 5000 | 10000 */,
+      itemRounded: {} /* {itemIdx: chosenValue} */,
+      decision: null /* 'cukup' | 'tidak' */,
+    };
+  });
 
   /* Tantangan */
-  var tnLen = DATA.tantangan.challenges.length;
-  if (!State.tn.data || State.tn.data.length !== tnLen) {
-    State.tn.data = DATA.tantangan.challenges.map(function () {
-      return { selected: [], locked: false };
-    });
-  }
+  ensureExerciseArray(State.tn, 'data', DATA.tantangan.challenges, function () {
+    return { selected: [], locked: false };
+  });
 }
 
 /* ============================================================

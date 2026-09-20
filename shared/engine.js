@@ -797,8 +797,9 @@ function createStore(opts) {
 /*
  * Memastikan array state per-soal (mis. State.garisBilanganExercises)
  * ada dan panjangnya sesuai jumlah soal — jika belum, (re)buat dari
- * `makeDefault()` untuk tiap soal. Pola berulang di setiap
- * initExerciseArrays() modul.
+ * `makeDefault(s)` untuk tiap soal `s` (berguna saat bentuk default
+ * bergantung pada field soal itu, mis. `s.type`). Pola berulang di
+ * setiap initExerciseArrays() modul.
  *
  *   ensureExerciseArray(State, 'garisBilanganExercises', DATA.garisBilangan.soal, function () {
  *     return { attempts: 0, hintShown: false, correct: false, userInput: '', revealed: false };
@@ -806,8 +807,8 @@ function createStore(opts) {
  */
 function ensureExerciseArray(state, key, soal, makeDefault) {
   if (!state[key] || state[key].length !== soal.length) {
-    state[key] = soal.map(function () {
-      return makeDefault();
+    state[key] = soal.map(function (s) {
+      return makeDefault(s);
     });
   }
 }
