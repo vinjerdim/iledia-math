@@ -83,92 +83,31 @@ var State = {
   refleksiSaved: false,
 };
 
-function saveState() {
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(State));
-  } catch (e) {
-    /* ignore */
-  }
-}
-
-function loadState() {
-  try {
-    var raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return false;
-    Object.assign(State, JSON.parse(raw));
-    return true;
-  } catch (e) {
-    return false;
-  }
-}
+var Store = createStore({ key: STORAGE_KEY, state: State });
+var saveState = Store.save;
+var loadState = Store.load;
 
 function clearState() {
-  try {
-    localStorage.removeItem(STORAGE_KEY);
-  } catch (e) {
-    /* ignore */
-  }
-  State.currentStage = 'orientasi';
-  State.completedStages = {};
-  State.kenaliCtxIdx = 0;
-  State.kenaliSeen = [];
-  State.garisBilanganIdx = 0;
-  State.garisBilanganExercises = [];
-  State.membandingkanIdx = 0;
-  State.membandingkanExercises = [];
-  State.mengurutkanIdx = 0;
-  State.mengurutkanExercises = [];
-  State.situasiNyataIdx = 0;
-  State.situasiNyataExercises = [];
-  State.refleksiAnswers = {};
-  State.refleksiSaved = false;
+  Store.reset();
   initExerciseArrays();
 }
 
 function initExerciseArrays() {
-  if (!State.kenaliSeen || State.kenaliSeen.length !== DATA.kenaliBulat.konteks.length) {
-    State.kenaliSeen = DATA.kenaliBulat.konteks.map(function () {
-      return false;
-    });
-  }
-  if (
-    !State.garisBilanganExercises ||
-    State.garisBilanganExercises.length !== DATA.garisBilangan.soal.length
-  ) {
-    State.garisBilanganExercises = DATA.garisBilangan.soal.map(function () {
-      return {
-        attempts: 0,
-        hintShown: false,
-        correct: false,
-        userInput: '',
-        revealed: false,
-      };
-    });
-  }
-  if (
-    !State.membandingkanExercises ||
-    State.membandingkanExercises.length !== DATA.membandingkan.soal.length
-  ) {
-    State.membandingkanExercises = DATA.membandingkan.soal.map(function () {
-      return { attempts: 0, hintShown: false, correct: false, chosen: null };
-    });
-  }
-  if (
-    !State.mengurutkanExercises ||
-    State.mengurutkanExercises.length !== DATA.mengurutkan.soal.length
-  ) {
-    State.mengurutkanExercises = DATA.mengurutkan.soal.map(function () {
-      return { correct: false, order: [], revealed: false };
-    });
-  }
-  if (
-    !State.situasiNyataExercises ||
-    State.situasiNyataExercises.length !== DATA.situasiNyata.soal.length
-  ) {
-    State.situasiNyataExercises = DATA.situasiNyata.soal.map(function () {
-      return { attempts: 0, correct: false, chosen: null, checked: false };
-    });
-  }
+  ensureExerciseArray(State, 'kenaliSeen', DATA.kenaliBulat.konteks, function () {
+    return false;
+  });
+  ensureExerciseArray(State, 'garisBilanganExercises', DATA.garisBilangan.soal, function () {
+    return { attempts: 0, hintShown: false, correct: false, userInput: '', revealed: false };
+  });
+  ensureExerciseArray(State, 'membandingkanExercises', DATA.membandingkan.soal, function () {
+    return { attempts: 0, hintShown: false, correct: false, chosen: null };
+  });
+  ensureExerciseArray(State, 'mengurutkanExercises', DATA.mengurutkan.soal, function () {
+    return { correct: false, order: [], revealed: false };
+  });
+  ensureExerciseArray(State, 'situasiNyataExercises', DATA.situasiNyata.soal, function () {
+    return { attempts: 0, correct: false, chosen: null, checked: false };
+  });
 }
 
 /* ============================================================
