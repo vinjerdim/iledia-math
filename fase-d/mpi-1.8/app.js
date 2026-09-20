@@ -4,6 +4,9 @@
    app.js — Logika aplikasi media pembelajaran
    Matematika: Rancangan Anggaran Belanja — Fase D SMP
 
+   Utilitas bersama (esc, parseInputInt, showNotice, buildFeedbackBox,
+   mesin navigasi tahap) berada di shared/engine.js.
+
    Bagian:
     1. Utilitas
     2. Konstanta
@@ -25,28 +28,6 @@
 /* ============================================================
    1. UTILITAS
    ============================================================ */
-
-function parseInputInt(str) {
-  if (!str || str.trim() === '') return { value: null, error: 'empty' };
-  var trimmed = str.trim();
-  var chars = [];
-  for (var i = 0; i < trimmed.length; i++) {
-    var ch = trimmed.charAt(i);
-    if (ch !== '.' && ch !== ',' && ch !== ' ') chars.push(ch);
-  }
-  var s = chars.join('');
-  if (!/^-?\d+$/.test(s)) return { value: null, error: 'invalid' };
-  var v = parseInt(s, 10);
-  if (isNaN(v)) return { value: null, error: 'invalid' };
-  return { value: v, error: null };
-}
-
-function esc(str) {
-  var m = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
-  return String(str).replace(/[&<>"']/g, function (c) {
-    return m[c];
-  });
-}
 
 function formatNumber(n) {
   var s = String(Math.round(n));
@@ -234,108 +215,23 @@ function clearState() {
    4. NAVIGASI
    ============================================================ */
 
-function navigateTo(stageId) {
-  var targetIdx = STAGES.indexOf(stageId);
-  var currentIdx = STAGES.indexOf(State.currentStage);
-  if (targetIdx === -1) return;
+var StageMachine = createStageMachine({
+  stages: STAGES,
+  stageLabels: STAGE_LABELS,
+  state: State,
+  save: saveState,
+  render: renderCurrentStage,
+});
 
-  if (targetIdx > currentIdx) {
-    for (var i = currentIdx; i < targetIdx; i++) {
-      if (!State.completedStages[STAGES[i]]) {
-        showNotice('Selesaikan tahap "' + STAGE_LABELS[i] + '" terlebih dahulu.');
-        return;
-      }
-    }
-  }
-
-  State.currentStage = stageId;
-  saveState();
-  updateStageNav();
-  renderCurrentStage();
-  window.scrollTo({ top: 0, behavior: 'smooth' });
-}
-
-function completeStage(stageId) {
-  State.completedStages[stageId] = true;
-  saveState();
-  updateStageNav();
-  updateProgress();
-}
-
-function buildStageNav() {
-  var list = document.getElementById('stageNavList');
-  if (!list) return;
-  list.innerHTML = STAGES.map(function (sid, i) {
-    return (
-      '<li>' +
-      '<button type="button" class="stage-nav__item" data-stage="' +
-      sid +
-      '">' +
-      '<span class="stage-nav__num">' +
-      (i + 1) +
-      '</span>' +
-      esc(STAGE_LABELS[i]) +
-      '</button></li>'
-    );
-  }).join('');
-  list.querySelectorAll('.stage-nav__item').forEach(function (btn) {
-    btn.addEventListener('click', function () {
-      navigateTo(btn.dataset.stage);
-    });
-  });
-  updateStageNav();
-}
-
-function updateStageNav() {
-  var currentIdx = STAGES.indexOf(State.currentStage);
-  document.querySelectorAll('.stage-nav__item').forEach(function (btn) {
-    var sid = btn.dataset.stage;
-    var idx = STAGES.indexOf(sid);
-    btn.removeAttribute('aria-current');
-    btn.classList.remove('is-complete');
-    btn.disabled = false;
-    if (sid === State.currentStage) {
-      btn.setAttribute('aria-current', 'step');
-    } else if (State.completedStages[sid]) {
-      btn.classList.add('is-complete');
-    }
-    if (idx > currentIdx && !State.completedStages[STAGES[idx - 1]]) {
-      btn.disabled = true;
-    }
-  });
-}
-
-function updateProgress() {
-  var total = STAGES.length;
-  var done = Object.keys(State.completedStages).length;
-  var pct = Math.round((done / total) * 100);
-  var fill = document.getElementById('progressFill');
-  var label = document.getElementById('progressLabel');
-  if (fill) {
-    fill.style.width = pct + '%';
-    fill.parentElement.setAttribute('aria-valuenow', pct);
-  }
-  if (label) label.textContent = done + ' dari ' + total + ' tahap selesai';
-}
+var navigateTo = StageMachine.navigateTo;
+var completeStage = StageMachine.completeStage;
+var updateStageNav = StageMachine.updateStageNav;
+var buildStageNav = StageMachine.buildStageNav;
+var updateProgress = StageMachine.updateProgress;
 
 /* ============================================================
    5. UTILITAS RENDER
    ============================================================ */
-
-function buildFeedbackBox(type, icon, html) {
-  return (
-    '<div class="feedback-box feedback-box--' +
-    esc(type) +
-    '" role="alert">' +
-    '<span class="feedback-box__icon" aria-hidden="true">' +
-    icon +
-    '</span>' +
-    '<div class="feedback-box__body">' +
-    html +
-    '</div>' +
-    '</div>'
-  );
-}
 
 function buildProgressDots(total, current, statuses) {
   var dots = '';
@@ -693,7 +589,7 @@ function handleEksplorasiCheck(container, ctxIdx, stepIdx) {
   var input = document.getElementById('stepInput');
   var fb = document.getElementById('stepFeedback');
   if (!input || !fb) return;
-  var parsed = parseInputInt(input.value);
+  var parsed = parseInputInt(input.value, true);
   var ctx = DATA.eksplorasiOperasi.konteks[ctxIdx];
   var step = ctx.steps[stepIdx];
 
@@ -887,7 +783,7 @@ function handleMenyusunCheck(container, idx) {
   if (!inp) return;
   var val = inp.value;
   ex.userInput = val;
-  var parsed = parseInputInt(val);
+  var parsed = parseInputInt(val, true);
 
   if (parsed.error === 'empty') {
     if (fb)
@@ -1139,7 +1035,7 @@ function handleAnalisisCheck(container, idx) {
   if (!inp) return;
   var val = inp.value;
   ex.userInput = val;
-  var parsed = parseInputInt(val);
+  var parsed = parseInputInt(val, true);
   if (parsed.error === 'empty') {
     if (fb)
       fb.innerHTML = buildFeedbackBox('error', '&#9888;', 'Masukkan jawaban terlebih dahulu.');
@@ -1169,8 +1065,8 @@ function handleAnalisisCheck(container, idx) {
 function calcFinalisasiTotals() {
   var grand = 0;
   State.finalisasiItems.forEach(function (item) {
-    var q = parseInputInt(item.qty);
-    var h = parseInputInt(item.harga);
+    var q = parseInputInt(item.qty, true);
+    var h = parseInputInt(item.harga, true);
     var t =
       q.error === null && h.error === null && q.value > 0 && h.value > 0 ? q.value * h.value : 0;
     item.total = t;
@@ -1248,8 +1144,8 @@ function renderFinalisasiRancangan(container) {
   var confirmHTML = '';
   if (!State.finalisasiDone) {
     var allFilled = State.finalisasiItems.every(function (item) {
-      var q = parseInputInt(item.qty);
-      var h = parseInputInt(item.harga);
+      var q = parseInputInt(item.qty, true);
+      var h = parseInputInt(item.harga, true);
       return q.error === null && h.error === null && q.value > 0 && h.value > 0;
     });
     confirmHTML =
@@ -1426,8 +1322,8 @@ function updateFinalisasiLive(container) {
   var konfBtn = document.getElementById('konfirmasiBtn');
   if (konfBtn) {
     var allFilled = State.finalisasiItems.every(function (item) {
-      var q = parseInputInt(item.qty);
-      var h = parseInputInt(item.harga);
+      var q = parseInputInt(item.qty, true);
+      var h = parseInputInt(item.harga, true);
       return q.error === null && h.error === null && q.value > 0 && h.value > 0;
     });
     konfBtn.disabled = !allFilled || overBudget;
@@ -1489,7 +1385,7 @@ function renderPresentasiRancangan(container) {
       'Benar! ' + formatRupiah(grand) + ' ÷ 600.000 × 100 = <strong>' + pctExpected + '%</strong>'
     );
   } else if (ans1.input) {
-    var p = parseInputInt(ans1.input);
+    var p = parseInputInt(ans1.input, true);
     if (p.error === null && Math.abs(p.value - pctExpected) <= 1) {
       soal1FB = '';
     }
@@ -1694,7 +1590,7 @@ function renderPresentasiRancangan(container) {
       var fb = document.getElementById('persen1Feedback');
       if (!inp2) return;
       State.presentasiAnswers[0].input = inp2.value;
-      var parsed = parseInputInt(inp2.value);
+      var parsed = parseInputInt(inp2.value, true);
       if (parsed.error === 'empty') {
         if (fb)
           fb.innerHTML = buildFeedbackBox('error', '&#9888;', 'Masukkan jawaban terlebih dahulu.');
@@ -1728,7 +1624,7 @@ function renderPresentasiRancangan(container) {
       var fb2 = document.getElementById('iuran2Feedback');
       if (!inp3) return;
       State.presentasiAnswers[1].input = inp3.value;
-      var parsed2 = parseInputInt(inp3.value);
+      var parsed2 = parseInputInt(inp3.value, true);
       if (parsed2.error === 'empty') {
         if (fb2)
           fb2.innerHTML = buildFeedbackBox('error', '&#9888;', 'Masukkan jawaban terlebih dahulu.');
@@ -2045,19 +1941,6 @@ function attachNavRowListeners(
       navigateTo(nextStage);
     });
   }
-}
-
-var noticeTimer = null;
-
-function showNotice(msg) {
-  var el = document.getElementById('appNotice');
-  if (!el) return;
-  el.textContent = msg;
-  el.classList.add('is-visible');
-  if (noticeTimer) clearTimeout(noticeTimer);
-  noticeTimer = setTimeout(function () {
-    el.classList.remove('is-visible');
-  }, 3500);
 }
 
 /* ============================================================

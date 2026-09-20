@@ -4,6 +4,9 @@
    app.js — Logika aplikasi media pembelajaran
    Matematika: Membandingkan dan Mengubah Representasi Bilangan Rasional
 
+   Utilitas bersama (esc, parseInputInt, showNotice, builder render,
+   mesin navigasi tahap) berada di shared/engine.js.
+
    Bagian:
     1. Utilitas Matematika
     2. Konstanta
@@ -259,81 +262,23 @@ function initExerciseArrays() {
    4. NAVIGASI
    ============================================================ */
 
-function navigateTo(stageId) {
-  var targetIdx = STAGES.indexOf(stageId);
-  var currentIdx = STAGES.indexOf(State.currentStage);
-  if (targetIdx === -1) return;
+var StageMachine = createStageMachine({
+  stages: STAGES,
+  stageLabels: STAGE_LABELS,
+  state: State,
+  save: saveState,
+  render: renderCurrentStage,
+});
 
-  /* Navigasi mundur bebas; maju: cek apakah tahap sebelumnya selesai */
-  if (targetIdx > currentIdx) {
-    for (var i = currentIdx; i < targetIdx; i++) {
-      if (!State.completedStages[STAGES[i]]) {
-        showNotice('Selesaikan tahap "' + STAGE_LABELS[i] + '" terlebih dahulu.');
-        return;
-      }
-    }
-  }
-
-  State.currentStage = stageId;
-  saveState();
-  updateStageNav();
-  renderCurrentStage();
-  window.scrollTo({ top: 0, behavior: 'smooth' });
-}
-
-function completeStage(stageId) {
-  State.completedStages[stageId] = true;
-  saveState();
-  updateStageNav();
-  updateProgress();
-}
-
-function updateStageNav() {
-  var items = document.querySelectorAll('.stage-nav__item');
-  var currentIdx = STAGES.indexOf(State.currentStage);
-
-  items.forEach(function (item) {
-    var sid = item.dataset.stage;
-    var idx = STAGES.indexOf(sid);
-    item.removeAttribute('aria-current');
-    item.classList.remove('is-complete');
-    item.disabled = false;
-
-    if (sid === State.currentStage) {
-      item.setAttribute('aria-current', 'step');
-    } else if (State.completedStages[sid]) {
-      item.classList.add('is-complete');
-    }
-
-    if (idx > currentIdx && !State.completedStages[STAGES[idx - 1]]) {
-      item.disabled = true;
-    }
-  });
-}
-
-function updateProgress() {
-  var total = STAGES.length;
-  var done = Object.keys(State.completedStages).length;
-  var pct = Math.round((done / total) * 100);
-  var fill = document.getElementById('progressFill');
-  var label = document.getElementById('progressLabel');
-  if (fill) fill.style.width = pct + '%';
-  if (label) label.textContent = done + ' dari ' + total + ' tahap selesai';
-}
+var navigateTo = StageMachine.navigateTo;
+var completeStage = StageMachine.completeStage;
+var updateStageNav = StageMachine.updateStageNav;
+var buildStageNav = StageMachine.buildStageNav;
+var updateProgress = StageMachine.updateProgress;
 
 /* ============================================================
    5. UTILITAS RENDER
    ============================================================ */
-
-/** Escape HTML aman */
-function esc(str) {
-  return String(str)
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#39;');
-}
 
 /** Render frac-block HTML */
 function buildFracBlock(num, den, whole, size) {
@@ -2412,48 +2357,8 @@ function renderSelesai(container) {
 }
 
 /* ============================================================
-   14. HELPER UI
-   ============================================================ */
-
-var noticeTimer = null;
-
-function showNotice(msg) {
-  var el = document.getElementById('appNotice');
-  if (!el) return;
-  el.textContent = msg;
-  el.classList.add('is-visible');
-  clearTimeout(noticeTimer);
-  noticeTimer = setTimeout(function () {
-    el.classList.remove('is-visible');
-  }, 3000);
-}
-
-/* ============================================================
    15. INIT
    ============================================================ */
-
-function buildStageNav() {
-  var list = document.getElementById('stageNavList');
-  if (!list) return;
-  list.innerHTML = STAGES.map(function (sid, i) {
-    return (
-      '<li><button type="button" class="stage-nav__item" data-stage="' +
-      sid +
-      '">' +
-      '<span class="stage-nav__num">' +
-      (i + 1) +
-      '</span>' +
-      esc(STAGE_LABELS[i]) +
-      '</button></li>'
-    );
-  }).join('');
-
-  list.querySelectorAll('.stage-nav__item').forEach(function (btn) {
-    btn.addEventListener('click', function () {
-      navigateTo(btn.dataset.stage);
-    });
-  });
-}
 
 function init() {
   var loaded = loadState();

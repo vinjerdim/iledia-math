@@ -5,6 +5,9 @@
    Matematika: Menyelesaikan Masalah Operasi Aritmatika Campuran
    Bilangan Rasional dan Desimal
 
+   Utilitas bersama (esc, parseInputInt, showNotice, builder render,
+   mesin navigasi tahap) berada di shared/engine.js.
+
    Bagian:
     1. Utilitas Matematika
     2. Konstanta & Konfigurasi
@@ -222,84 +225,23 @@ function clearState() {
    4. NAVIGASI TAHAP
    ============================================================ */
 
-function navigateTo(stageId) {
-  var targetIdx = STAGES.indexOf(stageId);
-  var currentIdx = STAGES.indexOf(State.currentStage);
-  if (targetIdx === -1) return;
+var StageMachine = createStageMachine({
+  stages: STAGES,
+  stageLabels: STAGE_LABELS,
+  state: State,
+  save: saveState,
+  render: renderCurrentStage,
+});
 
-  /* Maju: pastikan tahap sebelumnya sudah selesai */
-  if (targetIdx > currentIdx) {
-    for (var i = currentIdx; i < targetIdx; i++) {
-      if (!State.completedStages[STAGES[i]]) {
-        showNotice('Selesaikan tahap "' + STAGE_LABELS[i] + '" terlebih dahulu.');
-        return;
-      }
-    }
-  }
-
-  State.currentStage = stageId;
-  saveState();
-  updateStageNav();
-  renderCurrentStage();
-  window.scrollTo({ top: 0, behavior: 'smooth' });
-}
-
-function completeStage(stageId) {
-  State.completedStages[stageId] = true;
-  saveState();
-  updateStageNav();
-  updateProgress();
-}
-
-function updateStageNav() {
-  var items = document.querySelectorAll('.stage-nav__item');
-  var currentIdx = STAGES.indexOf(State.currentStage);
-
-  items.forEach(function (item) {
-    var sid = item.dataset.stage;
-    var idx = STAGES.indexOf(sid);
-    item.removeAttribute('aria-current');
-    item.classList.remove('is-complete');
-    item.disabled = false;
-
-    if (sid === State.currentStage) {
-      item.setAttribute('aria-current', 'step');
-    } else if (State.completedStages[sid]) {
-      item.classList.add('is-complete');
-    }
-
-    /* Kunci tahap depan yang belum bisa diakses */
-    if (idx > currentIdx && idx > 0 && !State.completedStages[STAGES[idx - 1]]) {
-      item.disabled = true;
-    }
-  });
-}
-
-function updateProgress() {
-  var total = STAGES.length;
-  var done = Object.keys(State.completedStages).length;
-  var pct = Math.round((done / total) * 100);
-  var fill = document.getElementById('progressFill');
-  var label = document.getElementById('progressLabel');
-  if (fill) {
-    fill.style.width = pct + '%';
-    fill.parentElement.setAttribute('aria-valuenow', pct);
-  }
-  if (label) label.textContent = done + ' dari ' + total + ' tahap selesai';
-}
+var navigateTo = StageMachine.navigateTo;
+var completeStage = StageMachine.completeStage;
+var updateStageNav = StageMachine.updateStageNav;
+var buildStageNav = StageMachine.buildStageNav;
+var updateProgress = StageMachine.updateProgress;
 
 /* ============================================================
    5. UTILITAS RENDER HTML
    ============================================================ */
-
-function esc(str) {
-  return String(str)
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#39;');
-}
 
 /** Buat frac-block HTML (inline fraction display) */
 function buildFracBlock(num, den, whole, size) {
@@ -323,22 +265,6 @@ function buildFracBlock(num, den, whole, size) {
     esc(String(den)) +
     '</span>' +
     '</span></span>'
-  );
-}
-
-/** Buat feedback box HTML */
-function buildFeedbackBox(type, icon, html) {
-  return (
-    '<div class="feedback-box feedback-box--' +
-    esc(type) +
-    '" role="alert" aria-live="polite">' +
-    '<span class="feedback-box__icon" aria-hidden="true">' +
-    icon +
-    '</span>' +
-    '<div class="feedback-box__body">' +
-    html +
-    '</div>' +
-    '</div>'
   );
 }
 
@@ -2123,19 +2049,6 @@ function renderRefleksi(container) {
    11. HELPER UI
    ============================================================ */
 
-var noticeTimer = null;
-
-function showNotice(msg) {
-  var el = document.getElementById('appNotice');
-  if (!el) return;
-  el.textContent = msg;
-  el.classList.add('is-visible');
-  if (noticeTimer) clearTimeout(noticeTimer);
-  noticeTimer = setTimeout(function () {
-    el.classList.remove('is-visible');
-  }, 3000);
-}
-
 function showResetModal() {
   var modal = document.getElementById('resetModal');
   if (modal) modal.style.display = 'flex';
@@ -2144,28 +2057,6 @@ function showResetModal() {
 function hideResetModal() {
   var modal = document.getElementById('resetModal');
   if (modal) modal.style.display = 'none';
-}
-
-/* Bangun stage nav HTML */
-function buildStageNav() {
-  var list = document.getElementById('stageNavList');
-  if (!list) return;
-  var html = '';
-  STAGES.forEach(function (sid, i) {
-    html += '<li>';
-    html += '<button type="button" class="stage-nav__item" data-stage="' + esc(sid) + '">';
-    html += '<span class="stage-nav__num">' + (i + 1) + '</span>';
-    html += esc(STAGE_LABELS[i]);
-    html += '</button>';
-    html += '</li>';
-  });
-  list.innerHTML = html;
-
-  list.querySelectorAll('.stage-nav__item').forEach(function (btn) {
-    btn.addEventListener('click', function () {
-      navigateTo(this.dataset.stage);
-    });
-  });
 }
 
 /* ============================================================
