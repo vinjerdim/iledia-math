@@ -5,5 +5,76 @@
     "kicker": "Matematika — Fase D (SMP)",
     "h1": "Bilangan Bulat pada Garis Bilangan",
     "stageCount": 8
+  },
+  "fase-d/mpi-1.2": {
+    "title": "Penjumlahan dan Pengurangan Bilangan Bulat — Matematika Fase D",
+    "description": "Media pembelajaran interaktif untuk menerapkan operasi penjumlahan dan pengurangan pada bilangan bulat dalam menyelesaikan masalah kontekstual perubahan nilai.",
+    "kicker": "Matematika — Fase D (SMP)",
+    "h1": "Penjumlahan dan Pengurangan Bilangan Bulat",
+    "stageCount": 8
+  },
+  "fase-d/mpi-1.3": {
+    "title": "Perkalian dan Pembagian Bilangan Bulat — Matematika Fase D",
+    "description": "Media pembelajaran interaktif untuk menerapkan operasi perkalian dan pembagian pada bilangan bulat serta menggunakannya dalam penyelesaian masalah estimasi sederhana.",
+    "kicker": "Matematika — Fase D (SMP)",
+    "h1": "Perkalian dan Pembagian Bilangan Bulat",
+    "stageCount": 10
+  },
+  "fase-d/mpi-1.4": {
+    "title": "Eksplorasi Bilangan Rasional — Matematika Fase D",
+    "description": "Media pembelajaran interaktif untuk membandingkan dan mengubah representasi bilangan rasional: pecahan biasa, pecahan campuran, dan desimal.",
+    "kicker": "Matematika — Fase D (SMP)",
+    "h1": "Eksplorasi Bilangan Rasional",
+    "stageCount": 8
+  },
+  "fase-d/mpi-1.5": {
+    "title": "Operasi Aritmatika Campuran — Matematika Fase D",
+    "description": "Media pembelajaran interaktif untuk menyelesaikan masalah operasi aritmatika campuran bilangan rasional dan desimal bagi peserta didik SMP.",
+    "kicker": "Matematika — Fase D (SMP)",
+    "h1": "Operasi Aritmatika Campuran",
+    "stageCount": 5,
+    "extraBody": "partials/reset-modal.html"
+  },
+  "fase-d/mpi-1.6": {
+    "title": "Estimasi & Pembulatan Transaksi Belanja — Matematika Fase D",
+    "description": "Media pembelajaran interaktif: merumuskan solusi transaksi belanja dengan teknik estimasi dan pembulatan untuk peserta didik SMP Kelas 7.",
+    "kicker": "Matematika — Fase D (SMP Kelas 7)",
+    "h1": "Estimasi & Pembulatan Transaksi Belanja",
+    "stageCount": 7
+  },
+  "fase-d/mpi-1.7": {
+    "title": "Literasi Finansial: Untung, Rugi & Diskon — Matematika Fase D",
+    "description": "Media pembelajaran interaktif untuk menganalisis masalah literasi finansial: menghitung pendapatan, pengeluaran, keuntungan, kerugian, dan diskon.",
+    "kicker": "Matematika — Fase D (SMP)",
+    "h1": "Literasi Finansial: Untung, Rugi & Diskon",
+    "stageCount": 8
+  },
+  "fase-d/mpi-1.8": {
+    "title": "Rancangan Anggaran Belanja — Matematika Fase D (SMP)",
+    "description": "Media pembelajaran interaktif untuk menyusun dan mempresentasikan rancangan anggaran belanja yang rasional menggunakan seluruh operasi aritmatika bilangan bulat, rasional, dan desimal.",
+    "kicker": "Matematika — Fase D (SMP) · Materi 1.8",
+    "h1": "Rancangan Anggaran Belanja",
+    "stageCount": 8
+  },
+  "fase-f/mpi-1.1": {
+    "title": "Barisan dan Deret Aritmetika — Matematika Fase F",
+    "description": "Media pembelajaran interaktif untuk mengidentifikasi pola, menentukan rumus suku ke-n, dan menghitung jumlah n suku pertama pada barisan dan deret aritmetika.",
+    "kicker": "Matematika — Fase F (SMK)",
+    "h1": "Barisan dan Deret Aritmetika",
+    "stageCount": 9
+  },
+  "fase-f/mpi-1.2": {
+    "title": "Barisan dan Deret Geometri — Matematika Fase F",
+    "description": "Media pembelajaran interaktif untuk menentukan rasio, rumus suku ke-n, dan jumlah n suku pertama pada barisan dan deret geometri melalui analisis masalah pertumbuhan nilai.",
+    "kicker": "Matematika — Fase F (SMK)",
+    "h1": "Barisan dan Deret Geometri",
+    "stageCount": 9
+  },
+  "fase-f/mpi-1.3": {
+    "title": "Bunga Tunggal dan Bunga Majemuk — Matematika Fase F",
+    "description": "Media pembelajaran interaktif untuk menjelaskan konsep bunga tunggal dan bunga majemuk serta membedakan karakteristik keduanya berdasarkan keterkaitannya dengan pola barisan aritmetika dan geometri.",
+    "kicker": "Matematika — Fase F (SMK RPL)",
+    "h1": "Bunga Tunggal dan Bunga Majemuk",
+    "stageCount": 9
   }
 }
