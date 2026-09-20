@@ -364,6 +364,14 @@ function createStageMachine(opts) {
  *   inputAriaLabel, inputPlaceholder   (opsional)
  *   stripPunctuation       (opsional) diteruskan ke parseInputInt
  *   revealAfterAttempts    (opsional, default 2)
+ *   revealButtonStyle      (opsional) 'combined' (default) — satu tombol Petunjuk
+ *                          yang berubah menjadi pengungkap jawaban setelah
+ *                          `revealAfterAttempts` percobaan; atau 'separate' —
+ *                          tombol Petunjuk terpisah dari tombol "Lihat Jawaban"
+ *                          yang baru muncul setelah `revealAfterAttempts` percobaan
+ *   countAttemptOnInvalid  (opsional, default false) saat true, input kosong/tidak
+ *                          valid tetap dihitung sebagai percobaan (dan disimpan)
+ *   emptyMessage, invalidMessage   (opsional) pesan notice untuk input kosong/tidak valid
  *
  * Mengembalikan { render(container) }.
  */
@@ -373,6 +381,11 @@ function createNumericInputExercise(cfg) {
   var wrapClass = cfg.wrapClass || 'ex-exercise';
   var inputRowClass = cfg.inputRowClass || 'ex-input-row';
   var revealAfter = cfg.revealAfterAttempts || 2;
+  var revealStyle = cfg.revealButtonStyle || 'combined';
+  var countAttemptOnInvalid = !!cfg.countAttemptOnInvalid;
+  var emptyMessage = cfg.emptyMessage || 'Masukkan bilangan terlebih dahulu.';
+  var invalidMessage =
+    cfg.invalidMessage || 'Masukkan bilangan bulat yang valid (contoh: −3, 0, 7).';
 
   function render(container) {
     /* Dibaca ulang setiap render: initExerciseArrays()/loadState() mengganti
@@ -410,6 +423,13 @@ function createNumericInputExercise(cfg) {
 
     var actionHTML = '';
     if (!ex.correct && !ex.revealed) {
+      var revealBtnHTML = '';
+      if (revealStyle === 'separate' && ex.attempts >= revealAfter) {
+        revealBtnHTML =
+          '<button type="button" class="btn btn--ghost btn--small" id="' +
+          prefix +
+          'RevealBtn">Lihat Jawaban</button>';
+      }
       actionHTML =
         '<div class="' +
         inputRowClass +
@@ -429,6 +449,7 @@ function createNumericInputExercise(cfg) {
         '<button type="button" class="btn btn--ghost btn--small" id="' +
         prefix +
         'HintBtn">💡 Petunjuk</button>' +
+        revealBtnHTML +
         '</div>';
     }
 
@@ -480,6 +501,7 @@ function createNumericInputExercise(cfg) {
     var inp = document.getElementById(prefix + 'Input');
     var checkBtn = document.getElementById(prefix + 'CheckBtn');
     var hintBtn = document.getElementById(prefix + 'HintBtn');
+    var revealBtn = document.getElementById(prefix + 'RevealBtn');
     var nextBtn = document.getElementById(prefix + 'NextBtn');
     var finishBtn = document.getElementById(prefix + 'FinishBtn');
 
@@ -494,12 +516,13 @@ function createNumericInputExercise(cfg) {
         if (!inp) return;
         var val = inp.value;
         var parsed = parseInputInt(val, cfg.stripPunctuation);
-        if (parsed.error === 'empty') {
-          showNotice('Masukkan bilangan terlebih dahulu.');
-          return;
-        }
-        if (parsed.error === 'invalid') {
-          showNotice('Masukkan bilangan bulat yang valid (contoh: −3, 0, 7).');
+        if (parsed.error) {
+          if (countAttemptOnInvalid) {
+            ex.userInput = val;
+            ex.attempts += 1;
+            cfg.save();
+          }
+          showNotice(parsed.error === 'empty' ? emptyMessage : invalidMessage);
           return;
         }
         ex.userInput = val;
@@ -512,13 +535,23 @@ function createNumericInputExercise(cfg) {
 
     if (hintBtn) {
       hintBtn.addEventListener('click', function () {
-        if (ex.attempts === 0 || ex.hintShown) {
+        if (revealStyle === 'separate') {
+          ex.hintShown = true;
+        } else if (ex.attempts === 0 || ex.hintShown) {
           ex.hintShown = true;
         } else if (ex.attempts >= revealAfter) {
           ex.revealed = true;
         } else {
           ex.hintShown = true;
         }
+        cfg.save();
+        render(container);
+      });
+    }
+
+    if (revealBtn) {
+      revealBtn.addEventListener('click', function () {
+        ex.revealed = true;
         cfg.save();
         render(container);
       });
