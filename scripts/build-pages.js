@@ -33,6 +33,13 @@ function renderPage(template, entry) {
   var extraBody = entry.extraBody
     ? fs.readFileSync(path.join(ROOT, 'shared', entry.extraBody), 'utf8')
     : '';
+  var extraScripts = entry.extraScripts
+    ? entry.extraScripts
+        .map(function (src) {
+          return '<script src="' + escapeHtml(src) + '"></script>';
+        })
+        .join('\n    ')
+    : '';
 
   return template
     .replace(/\{\{TITLE\}\}/g, escapeHtml(entry.title))
@@ -40,7 +47,8 @@ function renderPage(template, entry) {
     .replace(/\{\{KICKER\}\}/g, escapeHtml(entry.kicker))
     .replace(/\{\{H1\}\}/g, escapeHtml(entry.h1))
     .replace(/\{\{STAGE_COUNT\}\}/g, String(entry.stageCount))
-    .replace(/\{\{EXTRA_BODY\}\}/g, extraBody);
+    .replace(/\{\{EXTRA_BODY\}\}/g, extraBody)
+    .replace(/\{\{EXTRA_SCRIPTS\}\}/g, extraScripts);
 }
 
 function main() {
