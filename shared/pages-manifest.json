@@ -25,7 +25,18 @@
     "description": "Media pembelajaran interaktif untuk membandingkan dan mengubah representasi bilangan rasional: pecahan biasa, pecahan campuran, dan desimal.",
     "kicker": "Matematika — Fase D (SMP)",
     "h1": "Eksplorasi Bilangan Rasional",
-    "stageCount": 8
+    "stageCount": 8,
+    "extraScripts": [
+      "app-core.js",
+      "app-stage-orientasi.js",
+      "app-stage-eksplorasi.js",
+      "app-stage-konversi.js",
+      "app-stage-bandingkan.js",
+      "app-stage-urutkan.js",
+      "app-stage-tantangan.js",
+      "app-stage-refleksi.js",
+      "app-stage-selesai.js"
+    ]
   },
   "fase-d/mpi-1.5": {
     "title": "Operasi Aritmatika Campuran — Matematika Fase D",
