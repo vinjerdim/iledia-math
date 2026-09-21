@@ -87,5 +87,12 @@
     "kicker": "Matematika — Fase F (SMK RPL)",
     "h1": "Bunga Tunggal dan Bunga Majemuk",
     "stageCount": 9
+  },
+  "fase-f/mpi-1.4": {
+    "title": "Bunga Tunggal pada Transaksi Simpan Pinjam — Matematika Fase F",
+    "description": "Media pembelajaran interaktif berbasis Problem-Based Learning untuk menerapkan rumus barisan dan deret aritmetika dalam memecahkan masalah kontekstual bunga tunggal pada transaksi simpan pinjam.",
+    "kicker": "Matematika — Fase F (SMK RPL)",
+    "h1": "Bunga Tunggal pada Transaksi Simpan Pinjam",
+    "stageCount": 9
   }
 }

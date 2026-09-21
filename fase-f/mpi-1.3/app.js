@@ -8,45 +8,24 @@
    mesin navigasi tahap) berada di shared/engine.js.
 
    Bagian:
-    1. Utilitas
-    2. Konstanta
-    3. State & Storage
-    4. Navigasi
-    5. Utilitas Render
-    6. Stage: Orientasi
-    7. Stage: Eksplorasi Bunga Tunggal
-    8. Stage: Rumus Bunga Tunggal
-    9. Stage: Eksplorasi Bunga Majemuk
-   10. Stage: Rumus Bunga Majemuk
-   11. Stage: Perbandingan Interaktif
-   12. Stage: Latihan Campuran
-   13. Stage: Refleksi
-   14. Stage: Selesai
-   15. Init
+    1. Konstanta
+    2. State & Storage
+    3. Navigasi
+    4. Utilitas Render
+    5. Stage: Orientasi
+    6. Stage: Eksplorasi Bunga Tunggal
+    7. Stage: Rumus Bunga Tunggal
+    8. Stage: Eksplorasi Bunga Majemuk
+    9. Stage: Rumus Bunga Majemuk
+   10. Stage: Perbandingan Interaktif
+   11. Stage: Latihan Campuran
+   12. Stage: Refleksi
+   13. Stage: Selesai
+   14. Init
    ============================================================ */
 
 /* ============================================================
-   1. UTILITAS
-   ============================================================ */
-
-function formatRp(n) {
-  var str = String(Math.round(n));
-  var sign = '';
-  if (str.startsWith('-')) {
-    sign = '-';
-    str = str.slice(1);
-  }
-  var parts = [];
-  while (str.length > 3) {
-    parts.unshift(str.slice(str.length - 3));
-    str = str.slice(0, str.length - 3);
-  }
-  if (str) parts.unshift(str);
-  return sign + parts.join('.');
-}
-
-/* ============================================================
-   2. KONSTANTA
+   1. KONSTANTA
    ============================================================ */
 
 var STAGES = [
@@ -74,7 +53,7 @@ var STAGE_LABELS = [
 var STORAGE_KEY = 'mpi-1-3-bunga-v1';
 
 /* ============================================================
-   3. STATE & STORAGE
+   2. STATE & STORAGE
    ============================================================ */
 
 var State = {
@@ -170,7 +149,7 @@ function initExerciseArrays() {
 }
 
 /* ============================================================
-   4. NAVIGASI
+   3. NAVIGASI
    ============================================================ */
 
 var StageMachine = createStageMachine({
@@ -188,7 +167,7 @@ var buildStageNav = StageMachine.buildStageNav;
 var updateProgress = StageMachine.updateProgress;
 
 /* ============================================================
-   5. UTILITAS RENDER
+   4. UTILITAS RENDER
    ============================================================ */
 
 function buildProgressDots(total, current, statuses) {
@@ -251,7 +230,7 @@ function renderCurrentStage() {
 }
 
 /* ============================================================
-   6. STAGE: ORIENTASI
+   5. STAGE: ORIENTASI
    ============================================================ */
 
 function renderOrientasi(container) {
@@ -318,7 +297,7 @@ function renderOrientasi(container) {
 }
 
 /* ============================================================
-   7. STAGE: EKSPLORASI BUNGA TUNGGAL
+   6. STAGE: EKSPLORASI BUNGA TUNGGAL
    ============================================================ */
 
 function buildBTSeqHTML(ctx, revealCount) {
@@ -333,7 +312,7 @@ function buildBTSeqHTML(ctx, revealCount) {
       '<div class="' +
       valCls +
       '">' +
-      (revealed ? formatRp(ctx.terms[i]) : '?') +
+      (revealed ? formatNumber(ctx.terms[i]) : '?') +
       '</div>' +
       '<div class="seq-term__label">' +
       esc(ctx.labels[i]) +
@@ -343,7 +322,7 @@ function buildBTSeqHTML(ctx, revealCount) {
       var nextRevealed = i + 1 === 0 || i + 1 < revealCount + 1;
       if (revealed && nextRevealed) {
         var diff = ctx.terms[i + 1] - ctx.terms[i];
-        html += '<div class="seq-beda-badge">+' + formatRp(diff) + '</div>';
+        html += '<div class="seq-beda-badge">+' + formatNumber(diff) + '</div>';
       } else {
         html += '<div class="seq-arrow">→</div>';
       }
@@ -385,10 +364,10 @@ function buildBTIdentifyPanel(ctx, revealCount, isDone, idx) {
         '✓',
         '<strong>Barisan aritmetika teridentifikasi!</strong><br>' +
           'Modal awal <strong>a = ' +
-          formatRp(ctx.a) +
+          formatNumber(ctx.a) +
           '</strong> rupiah, ' +
           'kenaikan tetap <strong>b = ' +
-          formatRp(ctx.b) +
+          formatNumber(ctx.b) +
           '</strong> rupiah/tahun.<br>' +
           '<em>Ini adalah pola BUNGA TUNGGAL: bunga selalu dihitung dari modal awal → beda konstan.</em>'
       ) +
@@ -576,7 +555,7 @@ function checkBTAnswer(container, idx) {
 }
 
 /* ============================================================
-   8. STAGE: RUMUS BUNGA TUNGGAL
+   7. STAGE: RUMUS BUNGA TUNGGAL
    ============================================================ */
 
 function renderRumusBT(container) {
@@ -590,7 +569,7 @@ function renderRumusBT(container) {
       var expandedCell = '<td>' + esc(row.expanded) + '</td>';
       var mnCell =
         row.Mn !== null
-          ? '<td class="cell-highlight">' + formatRp(row.Mn) + '</td>'
+          ? '<td class="cell-highlight">' + formatNumber(row.Mn) + '</td>'
           : '<td style="font-style:italic;color:var(--color-primary);">Mₙ</td>';
       return '<tr>' + nCell + bentukCell + expandedCell + mnCell + '</tr>';
     })
@@ -753,7 +732,7 @@ function checkRumusBTStep(container, step) {
 }
 
 /* ============================================================
-   9. STAGE: EKSPLORASI BUNGA MAJEMUK
+   8. STAGE: EKSPLORASI BUNGA MAJEMUK
    ============================================================ */
 
 function buildBMSeqHTML(ctx, revealCount) {
@@ -770,7 +749,7 @@ function buildBMSeqHTML(ctx, revealCount) {
       '" style="' +
       (revealed ? 'border-color:var(--color-orange);color:var(--color-orange-strong);' : '') +
       '">' +
-      (revealed ? formatRp(ctx.terms[i]) : '?') +
+      (revealed ? formatNumber(ctx.terms[i]) : '?') +
       '</div>' +
       '<div class="seq-term__label">' +
       esc(ctx.labels[i]) +
@@ -823,7 +802,7 @@ function buildBMIdentifyPanel(ctx, revealCount, isDone) {
         '✓',
         '<strong>Barisan geometri teridentifikasi!</strong><br>' +
           'Suku pertama <strong>a = ' +
-          formatRp(ctx.a) +
+          formatNumber(ctx.a) +
           '</strong> ' +
           esc(ctx.unit) +
           ', ' +
@@ -1016,7 +995,7 @@ function checkBMAnswer(container, idx) {
 }
 
 /* ============================================================
-   10. STAGE: RUMUS BUNGA MAJEMUK
+   9. STAGE: RUMUS BUNGA MAJEMUK
    ============================================================ */
 
 function renderRumusBM(container) {
@@ -1030,7 +1009,7 @@ function renderRumusBM(container) {
       var expandedCell = '<td>' + esc(row.expanded) + '</td>';
       var mnCell =
         row.Mn !== null
-          ? '<td class="cell-highlight">' + formatRp(row.Mn) + '</td>'
+          ? '<td class="cell-highlight">' + formatNumber(row.Mn) + '</td>'
           : '<td style="font-style:italic;color:var(--color-orange-strong);">Mₙ</td>';
       return '<tr>' + nCell + bentukCell + expandedCell + mnCell + '</tr>';
     })
@@ -1191,7 +1170,7 @@ function checkRumusBMStep(container, step) {
 }
 
 /* ============================================================
-   11. STAGE: PERBANDINGAN INTERAKTIF
+   10. STAGE: PERBANDINGAN INTERAKTIF
    ============================================================ */
 
 function renderPerbandingan(container) {
@@ -1213,7 +1192,7 @@ function renderPerbandingan(container) {
         barBTW +
         'px;"></div>' +
         '<span>Rp ' +
-        formatRp(row.bt) +
+        formatNumber(row.bt) +
         '</span></div>' +
         '</td>' +
         '<td class="td-bm">' +
@@ -1221,11 +1200,11 @@ function renderPerbandingan(container) {
         barBMW +
         'px;"></div>' +
         '<span>Rp ' +
-        formatRp(row.bm) +
+        formatNumber(row.bm) +
         '</span></div>' +
         '</td>' +
         '<td class="td-diff">+Rp ' +
-        formatRp(diff) +
+        formatNumber(diff) +
         '</td>' +
         '</tr>'
       );
@@ -1242,7 +1221,7 @@ function renderPerbandingan(container) {
       var resBM = m0 * Math.pow(1 + i, n);
       var winner =
         resBM > resBT
-          ? 'Bunga Majemuk lebih menguntungkan sebesar Rp ' + formatRp(resBM - resBT) + '!'
+          ? 'Bunga Majemuk lebih menguntungkan sebesar Rp ' + formatNumber(resBM - resBT) + '!'
           : resBM === resBT
             ? 'Hasilnya sama (periode pertama).'
             : 'Bunga Tunggal lebih besar (tidak mungkin untuk n > 1 dengan i > 0).';
@@ -1251,7 +1230,7 @@ function renderPerbandingan(container) {
         '<div class="interest-calc__result-card interest-calc__result-card--bt">' +
         '<div class="interest-calc__result-card__label">Bunga Tunggal</div>' +
         '<div class="interest-calc__result-card__value">Rp ' +
-        formatRp(resBT) +
+        formatNumber(resBT) +
         '</div>' +
         '<div class="interest-calc__result-card__formula">M₀×(1 + ' +
         n +
@@ -1262,7 +1241,7 @@ function renderPerbandingan(container) {
         '<div class="interest-calc__result-card interest-calc__result-card--bm">' +
         '<div class="interest-calc__result-card__label">Bunga Majemuk</div>' +
         '<div class="interest-calc__result-card__value">Rp ' +
-        formatRp(resBM) +
+        formatNumber(resBM) +
         '</div>' +
         '<div class="interest-calc__result-card__formula">M₀×(1+' +
         i * 100 +
@@ -1417,7 +1396,7 @@ function runCalc(container) {
 }
 
 /* ============================================================
-   12. STAGE: LATIHAN CAMPURAN
+   11. STAGE: LATIHAN CAMPURAN
    ============================================================ */
 
 function renderLatihan(container) {
@@ -1676,7 +1655,7 @@ function checkLatihanChoice(container, idx) {
 }
 
 /* ============================================================
-   13. STAGE: REFLEKSI
+   12. STAGE: REFLEKSI
    ============================================================ */
 
 function renderRefleksi(container) {
@@ -1766,7 +1745,7 @@ function renderRefleksi(container) {
 }
 
 /* ============================================================
-   14. STAGE: SELESAI
+   13. STAGE: SELESAI
    ============================================================ */
 
 function renderSelesai(container) {
@@ -1836,7 +1815,7 @@ function renderSelesai(container) {
 }
 
 /* ============================================================
-   16. INIT
+   15. INIT
    ============================================================ */
 
 function init() {

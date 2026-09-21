@@ -45,12 +45,7 @@ function roundTo(value, unit) {
 
 /** Format angka sebagai string rupiah: "Rp24.750" */
 function formatRupiah(value) {
-  return 'Rp' + String(Math.round(value)).replace(/\B(?=(\d{3})+(?!\d))/g, '.');
-}
-
-/** Format angka tanpa prefix: "24.750" */
-function formatAngka(value) {
-  return String(Math.round(value)).replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+  return 'Rp' + formatNumber(value);
 }
 
 /**

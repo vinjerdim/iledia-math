@@ -29,21 +29,6 @@ function isTerminating(num, den) {
   return d === 1;
 }
 
-/** Parse input angka dari user: menerima koma atau titik sebagai pemisah desimal */
-function parseInputDecimal(str) {
-  if (!str || str.trim() === '') return { value: null, error: 'empty' };
-  var normalized = str.trim().replace(/\s/g, '');
-  /* Tolak jika ada lebih dari satu koma atau titik */
-  var commaCount = (normalized.match(/,/g) || []).length;
-  var dotCount = (normalized.match(/\./g) || []).length;
-  if (commaCount + dotCount > 1) return { value: null, error: 'invalid' };
-  normalized = normalized.replace(',', '.');
-  if (!/^-?\d*\.?\d+$/.test(normalized)) return { value: null, error: 'invalid' };
-  var val = parseFloat(normalized);
-  if (isNaN(val)) return { value: null, error: 'invalid' };
-  return { value: val, error: null };
-}
-
 /** Format nilai desimal untuk tampilan Indonesia (koma sebagai pemisah) */
 function formatDec(val, maxDigits) {
   if (typeof maxDigits === 'undefined') maxDigits = 6;

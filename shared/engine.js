@@ -9,13 +9,12 @@
    memanggilnya langsung tanpa perubahan pada kode stage-render.
 
    Bagian:
-    1. Utilitas Teks & Input
+    1. Utilitas Teks, Input & Format Angka
     2. Notifikasi (Toast)
     3. Utilitas Render
     4. Mesin Navigasi Tahap
-    5. Tipe Soal: Isian Numerik
-    6. Tipe Soal: Pilihan Ganda
-    7. State Persistence
+    5. Tahap Latihan Soal (isian numerik & pilihan ganda)
+    6. State Persistence
    ============================================================ */
 
 /* ============================================================
@@ -34,6 +33,65 @@ function parseInputInt(str, stripPunctuation) {
   var v = parseInt(trimmed, 10);
   if (isNaN(v)) return { value: null, error: 'invalid' };
   return { value: v, error: null };
+}
+
+/*
+ * Melengkapi parseInputInt untuk kolom yang boleh berisi pecahan desimal
+ * (mis. suku bunga 1,5%). Koma maupun titik diterima sebagai pemisah
+ * desimal, bentuk ".5" tanpa angka depan juga diterima, dan bentuk
+ * kembaliannya sama seperti parseInputInt: { value, error }.
+ */
+function parseInputDecimal(str) {
+  if (!str || String(str).trim() === '') return { value: null, error: 'empty' };
+  var normalized = String(str).trim().replace(/\s/g, '');
+  /* Tolak bila ada lebih dari satu pemisah, mis. "1.2.3" atau "1,2,3". */
+  var separators = (normalized.match(/[.,]/g) || []).length;
+  if (separators > 1) return { value: null, error: 'invalid' };
+  normalized = normalized.replace(',', '.');
+  if (!/^-?\d*\.?\d+$/.test(normalized)) return { value: null, error: 'invalid' };
+  var v = parseFloat(normalized);
+  if (isNaN(v)) return { value: null, error: 'invalid' };
+  return { value: v, error: null };
+}
+
+/* Membandingkan dua bilangan pecahan dengan toleransi, untuk memeriksa
+   jawaban desimal tanpa terjebak galat pembulatan biner. */
+function hampirSama(a, b) {
+  return Math.abs(a - b) < 0.0001;
+}
+
+/*
+ * Menulis bilangan bulat dengan pemisah ribuan bergaya Indonesia
+ * (1234567 -> "1.234.567"). Satu-satunya pemformat untuk semua modul.
+ *
+ * minusSign opsional, default '-'. Modul bilangan bulat (fase-d/mpi-1.3)
+ * memakai lambang minus tipografis '−' (U+2212).
+ *
+ * Nilai pecahan dibulatkan lebih dulu: seluruh pemanggil di repo ini
+ * mengirim bilangan bulat, dan tanpa pembulatan loop pengelompokan di
+ * bawah akan merusak pecahan ("1234.5" menjadi "123.4.5").
+ */
+function formatNumber(n, minusSign) {
+  var str = String(Math.round(n));
+  var sign = '';
+  if (str.charAt(0) === '-') {
+    sign = minusSign || '-';
+    str = str.slice(1);
+  }
+  var parts = [];
+  while (str.length > 3) {
+    parts.unshift(str.slice(str.length - 3));
+    str = str.slice(0, str.length - 3);
+  }
+  if (str) parts.unshift(str);
+  return sign + parts.join('.');
+}
+
+/* Menulis bilangan desimal dengan koma, gaya Indonesia (1.5 -> "1,5"). */
+function formatDesimal(n, maksDesimal) {
+  var digits = typeof maksDesimal === 'number' ? maksDesimal : 2;
+  var faktor = Math.pow(10, digits);
+  return String(Math.round(n * faktor) / faktor).replace('.', ',');
 }
 
 function esc(str) {
@@ -336,33 +394,43 @@ function createStageMachine(opts) {
 }
 
 /* ============================================================
-   5. TIPE SOAL: ISIAN NUMERIK
+   5. TAHAP LATIHAN SOAL
    ============================================================ */
 
 /*
- * Membuat satu tahap latihan "ketik sebuah bilangan, lalu periksa" — pola
- * yang berulang di banyak modul (garis bilangan, hasil operasi, dsb).
- * Menangani state per-soal {attempts, hintShown, correct, userInput, revealed},
- * progress dots, kotak umpan balik, alur petunjuk → jawaban (setelah
- * `revealAfterAttempts` percobaan salah), serta tombol Soal Berikutnya /
- * Lanjut. Bagian yang unik per soal (visualisasi/pertanyaan) datang dari
+ * Membuat satu tahap latihan soal — pola yang berulang di hampir semua
+ * modul MPI. Menangani state per-soal, progress dots, kotak umpan balik,
+ * alur petunjuk → jawaban, serta tombol Soal Berikutnya / Lanjut. Bagian
+ * yang unik per soal (visualisasi/cerita/pertanyaan) datang dari
  * `renderPrompt`.
  *
- * cfg:
+ * Dua tipe soal didukung dan BOLEH BERCAMPUR dalam satu tahap, karena
+ * tipenya dibaca per soal dari `s.type`:
+ *   'input'  — ketik sebuah bilangan, lalu periksa (boleh berkali-kali)
+ *   'choice' — pilihan ganda sekali-pilih
+ *
+ * cfg (umum):
  *   soal                   array soal dari DATA (tidak pernah diganti, aman direferensikan)
  *   getExercises()         array state per-soal saat ini (State) — HARUS berupa
  *                          function, karena initExerciseArrays()/loadState()
  *                          mengganti (bukan memutasi) array ini
  *   getIndex, setIndex     accessor indeks soal aktif (mis. field di State)
  *   save                   function() — simpan State
- *   checkValue(s)          nilai jawaban benar untuk soal s
- *   renderPrompt(s)        HTML unik untuk soal (visual/pertanyaan)
- *   revealText(s)          HTML isi kotak "jawaban diungkap"
+ *   renderPrompt(s)        HTML unik untuk soal (visual/cerita/pertanyaan)
  *   idPrefix               awalan id elemen DOM (mis. 'gb' → gbInput, gbCheckBtn, ...)
  *   sectionLabel, kicker, goal, instruction   teks kepala tahap
  *   nextStageId, completeStageId, nextButtonLabel   tujuan setelah semua soal selesai
- *   wrapClass, inputRowClass   (opsional) nama class pembungkus, default 'ex-exercise'/'ex-input-row'
+ *   defaultType            (opsional) tipe untuk soal tanpa `s.type`, default 'input'
+ *   buildHead()            (opsional) mengganti markup kepala tahap seluruhnya —
+ *                          dipakai modul yang memakai penanda sendiri (mis. pbl-badge)
+ *
+ * cfg (khusus soal 'input'):
+ *   checkValue(s)          nilai jawaban benar untuk soal s
+ *   revealText(s)          HTML isi kotak "jawaban diungkap"
+ *   wrapClass, inputRowClass   (opsional) default 'ex-exercise'/'ex-input-row'
  *   inputAriaLabel, inputPlaceholder   (opsional)
+ *   inputSuffix(s)         (opsional) HTML tepat di samping kotak isian,
+ *                          mis. satuan jawaban
  *   stripPunctuation       (opsional) diteruskan ke parseInputInt
  *   revealAfterAttempts    (opsional, default 2)
  *   revealButtonStyle      (opsional) 'combined' (default) — satu tombol Petunjuk
@@ -373,53 +441,117 @@ function createStageMachine(opts) {
  *   countAttemptOnInvalid  (opsional, default false) saat true, input kosong/tidak
  *                          valid tetap dihitung sebagai percobaan (dan disimpan)
  *   emptyMessage, invalidMessage   (opsional) pesan notice untuk input kosong/tidak valid
+ *   showAttemptErrorWithHint  (opsional, default false) saat true, kotak "jawabanmu
+ *                          belum tepat" tetap tampil berdampingan dengan petunjuk
  *
- * Mengembalikan { render(container) }.
+ * Petunjuk berjenjang: soal boleh memakai `s.hints` (array) alih-alih `s.hint`
+ * (string tunggal). Tombol Petunjuk lalu membuka satu tingkat per klik dan
+ * menampilkan jumlahnya, mis. "💡 Petunjuk (2/3)".
+ *
+ * cfg (khusus soal 'choice'):
+ *   listClass              (opsional) class pembungkus daftar pilihan, default 'choice-list'
+ *   letters                (opsional) label huruf pilihan, default ['A','B','C','D','E']
+ *   choiceClassStyle       (opsional) 'modifier' (default) memancarkan
+ *                          `choice-btn--correct` (kelas per-modul), atau 'state'
+ *                          memancarkan `.is-correct` sesuai shared/base.css
+ *   buildChoiceFeedback(s, ex)   (opsional) mengganti isi kotak umpan balik pilihan ganda
+ *
+ * Soal 'choice' wajib punya `.options` (array {id, label}) dan `.correct`
+ * (id opsi yang benar). Mengembalikan { render(container) }.
  */
-function createNumericInputExercise(cfg) {
+function createExerciseStage(cfg) {
   var soal = cfg.soal;
   var prefix = cfg.idPrefix;
   var wrapClass = cfg.wrapClass || 'ex-exercise';
   var inputRowClass = cfg.inputRowClass || 'ex-input-row';
+  var listClass = cfg.listClass || 'choice-list';
+  var letters = cfg.letters || ['A', 'B', 'C', 'D', 'E'];
   var revealAfter = cfg.revealAfterAttempts || 2;
   var revealStyle = cfg.revealButtonStyle || 'combined';
+  var stateStyle = cfg.choiceClassStyle === 'state';
   var countAttemptOnInvalid = !!cfg.countAttemptOnInvalid;
   var emptyMessage = cfg.emptyMessage || 'Masukkan bilangan terlebih dahulu.';
   var invalidMessage =
     cfg.invalidMessage || 'Masukkan bilangan bulat yang valid (contoh: −3, 0, 7).';
 
-  function render(container) {
-    /* Dibaca ulang setiap render: initExerciseArrays()/loadState() mengganti
-       (bukan memutasi) array ini, jadi tidak boleh disimpan di closure. */
-    var exArr = cfg.getExercises();
-    var idx = cfg.getIndex();
-    var s = soal[idx];
-    var ex = exArr[idx];
-    var allDone =
-      exArr.filter(function (e) {
-        return e.correct || e.revealed;
-      }).length === soal.length;
+  function typeOf(s) {
+    return s.type || cfg.defaultType || 'input';
+  }
 
-    var statuses = exArr.map(function (e) {
-      return e.correct ? 'correct' : e.attempts > 0 ? 'incorrect' : null;
-    });
-    var dotsHTML = buildProgressDots(soal.length, idx, statuses);
+  /* `s.hints` (berjenjang) maupun `s.hint` (tunggal) sama-sama diterima. */
+  function hintsOf(s) {
+    if (Array.isArray(s.hints)) return s.hints;
+    return s.hint ? [s.hint] : [];
+  }
+
+  /* State lama menyimpan hintShown (boolean); yang baru hintLevel (angka). */
+  function hintLevelOf(ex) {
+    if (typeof ex.hintLevel === 'number') return ex.hintLevel;
+    return ex.hintShown ? 1 : 0;
+  }
+
+  function setHintLevel(ex, level) {
+    ex.hintLevel = level;
+    ex.hintShown = level > 0;
+  }
+
+  function isAnswered(s, ex) {
+    if (typeOf(s) === 'choice') return ex.chosen !== null && ex.chosen !== undefined;
+    return !!(ex.correct || ex.revealed);
+  }
+
+  function statusOf(s, ex) {
+    if (ex.correct) return 'correct';
+    if (typeOf(s) === 'choice') {
+      return ex.chosen !== null && ex.chosen !== undefined ? 'incorrect' : null;
+    }
+    return ex.attempts > 0 ? 'incorrect' : null;
+  }
+
+  function buildHead() {
+    if (cfg.buildHead) return cfg.buildHead();
+    return (
+      '<div class="stage-head">' +
+      '<span class="stage-head__kicker">' +
+      esc(cfg.kicker) +
+      '</span>' +
+      '<p class="stage-head__goal">Tujuan: ' +
+      esc(cfg.goal) +
+      '</p>' +
+      '</div>'
+    );
+  }
+
+  function buildInputBody(s, ex) {
+    var hints = hintsOf(s);
+    var level = hintLevelOf(ex);
 
     var feedbackHTML = '';
     if (ex.correct) {
       feedbackHTML = buildFeedbackBox('success', '✓', '<strong>Tepat!</strong> ' + s.explanation);
     } else if (ex.revealed) {
       feedbackHTML = buildFeedbackBox('info', '👁', cfg.revealText(s));
-    } else if (ex.hintShown) {
-      feedbackHTML = buildFeedbackBox('warning', '💡', '<strong>Petunjuk:</strong> ' + s.hint);
-    } else if (ex.attempts > 0) {
-      feedbackHTML = buildFeedbackBox(
-        'error',
-        '✗',
-        'Jawabanmu <strong>' +
-          esc(ex.userInput) +
-          '</strong> belum tepat. Coba lagi atau lihat petunjuk.'
-      );
+    } else {
+      var errorHTML =
+        ex.attempts > 0
+          ? buildFeedbackBox(
+              'error',
+              '✗',
+              'Jawabanmu <strong>' +
+                esc(ex.userInput) +
+                '</strong> belum tepat. Coba lagi atau lihat petunjuk.'
+            )
+          : '';
+      var hintHTML = hints
+        .slice(0, level)
+        .map(function (h, i) {
+          var label = hints.length > 1 ? 'Petunjuk ' + (i + 1) : 'Petunjuk';
+          return buildFeedbackBox('warning', '💡', '<strong>' + label + ':</strong> ' + h);
+        })
+        .join('');
+      /* Default lama: petunjuk menggantikan kotak galat. */
+      if (hintHTML && !cfg.showAttemptErrorWithHint) errorHTML = '';
+      feedbackHTML = errorHTML + hintHTML;
     }
 
     var actionHTML = '';
@@ -431,6 +563,18 @@ function createNumericInputExercise(cfg) {
           prefix +
           'RevealBtn">Lihat Jawaban</button>';
       }
+      var hintLabel =
+        hints.length > 1
+          ? '💡 Petunjuk (' + Math.min(level + 1, hints.length) + '/' + hints.length + ')'
+          : '💡 Petunjuk';
+      var hintBtnHTML =
+        hints.length > 1 && level >= hints.length
+          ? ''
+          : '<button type="button" class="btn btn--ghost btn--small" id="' +
+            prefix +
+            'HintBtn">' +
+            hintLabel +
+            '</button>';
       actionHTML =
         '<div class="' +
         inputRowClass +
@@ -444,18 +588,99 @@ function createNumericInputExercise(cfg) {
         '" value="' +
         esc(ex.userInput) +
         '">' +
+        (cfg.inputSuffix ? cfg.inputSuffix(s) : '') +
         '<button type="button" class="btn btn--primary" id="' +
         prefix +
         'CheckBtn">Periksa</button>' +
-        '<button type="button" class="btn btn--ghost btn--small" id="' +
-        prefix +
-        'HintBtn">💡 Petunjuk</button>' +
+        hintBtnHTML +
         revealBtnHTML +
         '</div>';
     }
 
+    return (
+      '<div class="' +
+      wrapClass +
+      '">' +
+      cfg.renderPrompt(s) +
+      actionHTML +
+      (feedbackHTML ? '<div style="margin-top:var(--space-3);">' + feedbackHTML + '</div>' : '') +
+      '</div>'
+    );
+  }
+
+  function buildChoiceBody(s, ex) {
+    var answered = ex.chosen !== null && ex.chosen !== undefined;
+
+    var choicesHTML = s.options
+      .map(function (opt, i) {
+        var cls = 'choice-btn';
+        if (answered) {
+          if (opt.id === s.correct) cls += stateStyle ? ' is-correct' : ' choice-btn--correct';
+          else if (opt.id === ex.chosen)
+            cls += stateStyle ? ' is-incorrect' : ' choice-btn--incorrect';
+          else if (!stateStyle) cls += ' choice-btn--disabled';
+        }
+        return (
+          '<button type="button" class="' +
+          cls +
+          '" data-opt-id="' +
+          esc(opt.id) +
+          '"' +
+          (answered && stateStyle ? ' disabled' : '') +
+          '>' +
+          '<span class="' +
+          (stateStyle ? 'choice-btn__icon' : 'choice-letter') +
+          '">' +
+          letters[i] +
+          '</span>' +
+          opt.label +
+          '</button>'
+        );
+      })
+      .join('');
+
+    var feedbackHTML = '';
+    if (answered) {
+      feedbackHTML = cfg.buildChoiceFeedback
+        ? cfg.buildChoiceFeedback(s, ex)
+        : ex.correct
+          ? buildFeedbackBox('success', '✓', '<strong>Benar!</strong> ' + s.explanation)
+          : buildFeedbackBox('error', '✗', '<strong>Belum tepat.</strong> ' + s.explanation);
+    }
+
+    return (
+      cfg.renderPrompt(s) +
+      '<div class="' +
+      listClass +
+      '" id="' +
+      prefix +
+      'Choices">' +
+      choicesHTML +
+      '</div>' +
+      (feedbackHTML ? '<div style="margin-top:var(--space-3);">' + feedbackHTML + '</div>' : '')
+    );
+  }
+
+  function render(container) {
+    /* Dibaca ulang setiap render: initExerciseArrays()/loadState() mengganti
+       (bukan memutasi) array ini, jadi tidak boleh disimpan di closure. */
+    var exArr = cfg.getExercises();
+    var idx = cfg.getIndex();
+    var s = soal[idx];
+    var ex = exArr[idx];
+    var isChoice = typeOf(s) === 'choice';
+
+    var allDone =
+      exArr.filter(function (e, i) {
+        return isAnswered(soal[i], e);
+      }).length === soal.length;
+
+    var statuses = exArr.map(function (e, i) {
+      return statusOf(soal[i], e);
+    });
+
     var navHTML = '';
-    if (ex.correct || ex.revealed) {
+    if (isAnswered(s, ex)) {
       if (idx < soal.length - 1) {
         navHTML =
           '<div class="btn-group btn-group--end"><button type="button" class="btn btn--primary" id="' +
@@ -475,26 +700,13 @@ function createNumericInputExercise(cfg) {
       '<section aria-label="' +
       esc(cfg.sectionLabel) +
       '">' +
-      '<div class="stage-head">' +
-      '<span class="stage-head__kicker">' +
-      esc(cfg.kicker) +
-      '</span>' +
-      '<p class="stage-head__goal">Tujuan: ' +
-      esc(cfg.goal) +
-      '</p>' +
-      '</div>' +
+      buildHead() +
       '<div class="panel">' +
       '<p style="font-size:0.88rem;color:var(--color-ink-muted);margin-bottom:var(--space-3);">' +
       esc(cfg.instruction) +
       '</p>' +
-      dotsHTML +
-      '<div class="' +
-      wrapClass +
-      '">' +
-      cfg.renderPrompt(s) +
-      actionHTML +
-      (feedbackHTML ? '<div style="margin-top:var(--space-3);">' + feedbackHTML + '</div>' : '') +
-      '</div>' +
+      buildProgressDots(soal.length, idx, statuses) +
+      (isChoice ? buildChoiceBody(s, ex) : buildInputBody(s, ex)) +
       '</div>' +
       navHTML +
       '</section>';
@@ -529,6 +741,7 @@ function createNumericInputExercise(cfg) {
         ex.userInput = val;
         ex.attempts += 1;
         ex.correct = parsed.value === cfg.checkValue(s);
+        if (ex.correct) ex.checked = true;
         cfg.save();
         render(container);
       });
@@ -536,14 +749,14 @@ function createNumericInputExercise(cfg) {
 
     if (hintBtn) {
       hintBtn.addEventListener('click', function () {
-        if (revealStyle === 'separate') {
-          ex.hintShown = true;
-        } else if (ex.attempts === 0 || ex.hintShown) {
-          ex.hintShown = true;
-        } else if (ex.attempts >= revealAfter) {
-          ex.revealed = true;
+        var hints = hintsOf(s);
+        var level = hintLevelOf(ex);
+        if (hints.length > 1) {
+          setHintLevel(ex, Math.min(level + 1, hints.length));
+        } else if (revealStyle === 'separate' || level === 0 || ex.attempts < revealAfter) {
+          setHintLevel(ex, 1);
         } else {
-          ex.hintShown = true;
+          ex.revealed = true;
         }
         cfg.save();
         render(container);
@@ -558,147 +771,9 @@ function createNumericInputExercise(cfg) {
       });
     }
 
-    if (nextBtn) {
-      nextBtn.addEventListener('click', function () {
-        cfg.setIndex(idx + 1);
-        cfg.save();
-        render(container);
-      });
-    }
-
-    if (finishBtn) {
-      finishBtn.addEventListener('click', function () {
-        completeStage(cfg.completeStageId);
-        navigateTo(cfg.nextStageId);
-      });
-    }
-  }
-
-  return { render: render };
-}
-
-/* ============================================================
-   6. TIPE SOAL: PILIHAN GANDA
-   ============================================================ */
-
-/*
- * Membuat satu tahap latihan pilihan ganda sekali-pilih (klik salah satu
- * opsi langsung memberi umpan balik benar/salah, tanpa percobaan ulang).
- * Menangani state per-soal {attempts, correct, chosen}, progress dots,
- * kotak umpan balik, serta tombol Soal Berikutnya / Lanjut. Bagian yang
- * unik per soal (cerita/pertanyaan) datang dari `renderPrompt`.
- *
- * cfg: sama seperti createNumericInputExercise, minus checkValue/revealText/
- *   stripPunctuation/revealAfterAttempts/wrapClass/inputRowClass/input*, plus:
- *   listClass   (opsional) class pembungkus daftar pilihan, default 'choice-list'
- *   letters     (opsional) label huruf pilihan, default ['A','B','C','D','E']
- *
- * Soal (cfg.soal[i]) wajib punya `.options` (array {id, label}) dan `.correct`
- * (id opsi yang benar). Mengembalikan { render(container) }.
- */
-function createMultipleChoiceExercise(cfg) {
-  var soal = cfg.soal;
-  var prefix = cfg.idPrefix;
-  var listClass = cfg.listClass || 'choice-list';
-  var letters = cfg.letters || ['A', 'B', 'C', 'D', 'E'];
-
-  function render(container) {
-    /* Dibaca ulang setiap render: initExerciseArrays()/loadState() mengganti
-       (bukan memutasi) array ini, jadi tidak boleh disimpan di closure. */
-    var exArr = cfg.getExercises();
-    var idx = cfg.getIndex();
-    var s = soal[idx];
-    var ex = exArr[idx];
-    var allAnswered =
-      exArr.filter(function (e) {
-        return e.chosen !== null;
-      }).length === soal.length;
-
-    var statuses = exArr.map(function (e) {
-      return e.correct ? 'correct' : e.chosen !== null ? 'incorrect' : null;
-    });
-    var dotsHTML = buildProgressDots(soal.length, idx, statuses);
-
-    var choicesHTML = s.options
-      .map(function (opt, i) {
-        var cls = 'choice-btn';
-        if (ex.chosen !== null) {
-          if (opt.id === s.correct) cls += ' choice-btn--correct';
-          else if (opt.id === ex.chosen) cls += ' choice-btn--incorrect';
-          else cls += ' choice-btn--disabled';
-        }
-        return (
-          '<button type="button" class="' +
-          cls +
-          '" data-opt-id="' +
-          esc(opt.id) +
-          '">' +
-          '<span class="choice-letter">' +
-          letters[i] +
-          '</span>' +
-          opt.label +
-          '</button>'
-        );
-      })
-      .join('');
-
-    var feedbackHTML = '';
-    if (ex.chosen !== null) {
-      feedbackHTML = ex.correct
-        ? buildFeedbackBox('success', '✓', '<strong>Benar!</strong> ' + s.explanation)
-        : buildFeedbackBox('error', '✗', '<strong>Belum tepat.</strong> ' + s.explanation);
-    }
-
-    var navHTML = '';
-    if (ex.chosen !== null) {
-      if (idx < soal.length - 1) {
-        navHTML =
-          '<div class="btn-group btn-group--end"><button type="button" class="btn btn--primary" id="' +
-          prefix +
-          'NextBtn">Soal Berikutnya →</button></div>';
-      } else if (allAnswered) {
-        navHTML =
-          '<div class="btn-group btn-group--end"><button type="button" class="btn btn--primary btn--large" id="' +
-          prefix +
-          'FinishBtn">' +
-          esc(cfg.nextButtonLabel) +
-          '</button></div>';
-      }
-    }
-
-    container.innerHTML =
-      '<section aria-label="' +
-      esc(cfg.sectionLabel) +
-      '">' +
-      '<div class="stage-head">' +
-      '<span class="stage-head__kicker">' +
-      esc(cfg.kicker) +
-      '</span>' +
-      '<p class="stage-head__goal">Tujuan: ' +
-      esc(cfg.goal) +
-      '</p>' +
-      '</div>' +
-      '<div class="panel">' +
-      '<p style="font-size:0.88rem;color:var(--color-ink-muted);margin-bottom:var(--space-3);">' +
-      esc(cfg.instruction) +
-      '</p>' +
-      dotsHTML +
-      cfg.renderPrompt(s) +
-      '<div class="' +
-      listClass +
-      '" id="' +
-      prefix +
-      'Choices">' +
-      choicesHTML +
-      '</div>' +
-      (feedbackHTML ? '<div style="margin-top:var(--space-3);">' + feedbackHTML + '</div>' : '') +
-      '</div>' +
-      navHTML +
-      '</section>';
-
     container.querySelectorAll('[data-opt-id]').forEach(function (btn) {
       btn.addEventListener('click', function () {
-        if (ex.chosen !== null) return;
+        if (ex.chosen !== null && ex.chosen !== undefined) return;
         var optId = btn.dataset.optId;
         ex.chosen = optId;
         ex.attempts += 1;
@@ -709,14 +784,12 @@ function createMultipleChoiceExercise(cfg) {
       });
     });
 
-    var nextBtn = document.getElementById(prefix + 'NextBtn');
-    var finishBtn = document.getElementById(prefix + 'FinishBtn');
-
     if (nextBtn) {
       nextBtn.addEventListener('click', function () {
         cfg.setIndex(idx + 1);
         cfg.save();
         render(container);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
       });
     }
 
@@ -731,8 +804,24 @@ function createMultipleChoiceExercise(cfg) {
   return { render: render };
 }
 
+/*
+ * Pembungkus tipis createExerciseStage untuk tahap yang seluruh soalnya
+ * berupa isian numerik. Dipertahankan agar pemanggil lama tidak berubah.
+ */
+function createNumericInputExercise(cfg) {
+  return createExerciseStage(Object.assign({}, cfg, { defaultType: 'input' }));
+}
+
+/*
+ * Pembungkus tipis createExerciseStage untuk tahap yang seluruh soalnya
+ * berupa pilihan ganda. Dipertahankan agar pemanggil lama tidak berubah.
+ */
+function createMultipleChoiceExercise(cfg) {
+  return createExerciseStage(Object.assign({}, cfg, { defaultType: 'choice' }));
+}
+
 /* ============================================================
-   7. STATE PERSISTENCE
+   6. STATE PERSISTENCE
    ============================================================ */
 
 /*

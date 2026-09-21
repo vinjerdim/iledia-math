@@ -30,15 +30,10 @@
    1. UTILITAS
    ============================================================ */
 
-function formatNumber(n) {
-  var s = String(Math.abs(n));
-  var parts = [];
-  while (s.length > 3) {
-    parts.unshift(s.slice(s.length - 3));
-    s = s.slice(0, s.length - 3);
-  }
-  if (s) parts.unshift(s);
-  return (n < 0 ? '−' : '') + parts.join('.');
+/* Modul bilangan bulat memakai lambang minus tipografis (−, U+2212),
+   berbeda dari default formatNumber() di shared/engine.js. */
+function formatBulat(n) {
+  return formatNumber(n, '−');
 }
 
 /* ============================================================
@@ -179,7 +174,7 @@ function buildProgressDots(total, current, statuses) {
 
 function buildExprNum(val) {
   var isNeg = val < 0;
-  var display = isNeg ? '(' + formatNumber(val) + ')' : esc(String(val));
+  var display = isNeg ? '(' + formatBulat(val) + ')' : esc(String(val));
   return '<span class="expr-num' + (isNeg ? ' expr-num--neg' : '') + '">' + display + '</span>';
 }
 
@@ -369,7 +364,7 @@ function renderEksplorasiKali(container) {
         '">' +
         ctx.ekspresi +
         ' = ' +
-        formatNumber(ctx.hasil) +
+        formatBulat(ctx.hasil) +
         ' ' +
         esc(ctx.unit) +
         '</p>'
@@ -883,9 +878,9 @@ function renderEstimasi(container) {
   var rangeText =
     tolAbs > 0
       ? 'Jawaban antara ' +
-        formatNumber(soal.answer - tolAbs) +
+        formatBulat(soal.answer - tolAbs) +
         ' – ' +
-        formatNumber(soal.answer + tolAbs) +
+        formatBulat(soal.answer + tolAbs) +
         ' diterima.'
       : 'Jawaban harus tepat.';
 
