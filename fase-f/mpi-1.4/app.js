@@ -13,69 +13,23 @@
    komentar kepala pada data.js untuk pemetaannya.
 
    Bagian:
-    1. Utilitas
-    2. Konstanta
-    3. State & Storage
-    4. Navigasi
-    5. Utilitas Render
-    6. Model Perhitungan (dipakai bersama tahap 4, 5, dan 6)
-    7. Stage: Orientasi Masalah        (PBL fase 1)
-    8. Stage: Rencana Penyelidikan     (PBL fase 2)
-    9. Stage: Penyelidikan Terbimbing  (PBL fase 3 — 3 tahap)
-   10. Stage: Simulator & Hasil Karya  (PBL fase 4)
-   11. Stage: Uji Terap                (PBL fase 5)
-   12. Stage: Refleksi                 (PBL fase 5)
-   13. Stage: Selesai
-   14. Init
+    1. Konstanta
+    2. State & Storage
+    3. Navigasi
+    4. Utilitas Render
+    5. Model Perhitungan (dipakai bersama tahap 4, 5, dan 6)
+    6. Stage: Orientasi Masalah        (PBL fase 1)
+    7. Stage: Rencana Penyelidikan     (PBL fase 2)
+    8. Stage: Penyelidikan Terbimbing  (PBL fase 3 — 3 tahap)
+    9. Stage: Simulator & Hasil Karya  (PBL fase 4)
+   10. Stage: Uji Terap                (PBL fase 5)
+   11. Stage: Refleksi                 (PBL fase 5)
+   12. Stage: Selesai
+   13. Init
    ============================================================ */
 
 /* ============================================================
-   1. UTILITAS
-   ============================================================ */
-
-function formatRp(n) {
-  var str = String(Math.round(n));
-  var sign = '';
-  if (str.startsWith('-')) {
-    sign = '-';
-    str = str.slice(1);
-  }
-  var parts = [];
-  while (str.length > 3) {
-    parts.unshift(str.slice(str.length - 3));
-    str = str.slice(0, str.length - 3);
-  }
-  if (str) parts.unshift(str);
-  return sign + parts.join('.');
-}
-
-/* Menulis bilangan desimal dengan koma, gaya Indonesia (1.5 -> "1,5"). */
-function formatDesimal(n, maksDesimal) {
-  var digits = typeof maksDesimal === 'number' ? maksDesimal : 2;
-  var str = String(Math.round(n * Math.pow(10, digits)) / Math.pow(10, digits));
-  return str.replace('.', ',');
-}
-
-/*
- * Melengkapi parseInputInt dari engine untuk kolom yang boleh berisi
- * pecahan desimal (mis. suku bunga 1,5%). Koma dan titik sama-sama
- * diterima sebagai pemisah desimal.
- */
-function parseInputDecimal(str) {
-  if (!str || String(str).trim() === '') return { value: null, error: 'empty' };
-  var trimmed = String(str).trim().replace(/\s/g, '').replace(',', '.');
-  if (!/^-?\d+(\.\d+)?$/.test(trimmed)) return { value: null, error: 'invalid' };
-  var v = parseFloat(trimmed);
-  if (isNaN(v)) return { value: null, error: 'invalid' };
-  return { value: v, error: null };
-}
-
-function hampirSama(a, b) {
-  return Math.abs(a - b) < 0.0001;
-}
-
-/* ============================================================
-   2. KONSTANTA
+   1. KONSTANTA
    ============================================================ */
 
 var STAGES = [
@@ -110,7 +64,7 @@ var PENYELIDIKAN = [
 ];
 
 /* ============================================================
-   3. STATE & STORAGE
+   2. STATE & STORAGE
    ============================================================ */
 
 var State = {
@@ -234,7 +188,7 @@ function initExerciseArrays() {
 }
 
 /* ============================================================
-   4. NAVIGASI
+   3. NAVIGASI
    ============================================================ */
 
 var StageMachine = createStageMachine({
@@ -252,7 +206,7 @@ var buildStageNav = StageMachine.buildStageNav;
 var updateProgress = StageMachine.updateProgress;
 
 /* ============================================================
-   5. UTILITAS RENDER
+   4. UTILITAS RENDER
    ============================================================ */
 
 /* Kepala tahap dengan penanda fase PBL — dipakai semua tahap. */
@@ -317,7 +271,7 @@ function renderCurrentStage() {
 }
 
 /* ============================================================
-   6. MODEL PERHITUNGAN
+   5. MODEL PERHITUNGAN
 
    Satu-satunya tempat rumus kedua skema dituliskan. Dipakai
    bersama oleh tahap Skema A, Skema B, dan Simulator supaya
@@ -370,7 +324,7 @@ function bungaMenurunBulanKe(hasil, k) {
 }
 
 /* ============================================================
-   7. STAGE: ORIENTASI MASALAH (PBL FASE 1)
+   6. STAGE: ORIENTASI MASALAH (PBL FASE 1)
    ============================================================ */
 
 function buildSchemeCards(skemaList) {
@@ -563,7 +517,7 @@ function renderOrientasi(container) {
 }
 
 /* ============================================================
-   8. STAGE: RENCANA PENYELIDIKAN (PBL FASE 2)
+   7. STAGE: RENCANA PENYELIDIKAN (PBL FASE 2)
    ============================================================ */
 
 function nilaiEkstraksi(soal, raw) {
@@ -791,7 +745,7 @@ function renderOrganisasi(container) {
 }
 
 /* ============================================================
-   9. STAGE: PENYELIDIKAN TERBIMBING (PBL FASE 3)
+   8. STAGE: PENYELIDIKAN TERBIMBING (PBL FASE 3)
 
    Satu perender untuk tiga tahap (Simpan, Skema A, Skema B).
    Alur tiap kasus: ungkap tabel baris demi baris → kerjakan
@@ -1140,7 +1094,7 @@ function renderPenyelidikan(container, meta) {
 }
 
 /* ============================================================
-   10. STAGE: SIMULATOR & HASIL KARYA (PBL FASE 4)
+   9. STAGE: SIMULATOR & HASIL KARYA (PBL FASE 4)
    ============================================================ */
 
 function bacaInputSimulator() {
@@ -1191,13 +1145,13 @@ function buildAmortTable(hasil) {
       k +
       '</td>' +
       '<td class="td-flat">' +
-      formatRp(hasil.angsuranFlat) +
+      formatNumber(hasil.angsuranFlat) +
       '</td>' +
       '<td class="td-menurun">' +
-      formatRp(bungaB) +
+      formatNumber(bungaB) +
       '</td>' +
       '<td class="td-menurun">' +
-      formatRp(angsuranB) +
+      formatNumber(angsuranB) +
       '</td>' +
       '<td><div class="amort-bar">' +
       '<div class="amort-bar__pokok" style="width:' +
@@ -1236,12 +1190,12 @@ function buildHasilSimulator(hasil) {
   if (menurunMenang) {
     verdict =
       '<div class="sim-verdict">🏆 <strong>Skema B (bunga menurun)</strong> lebih hemat <strong>Rp ' +
-      formatRp(hasil.selisih) +
+      formatNumber(hasil.selisih) +
       '</strong> untuk kondisi ini.</div>';
   } else if (flatMenang) {
     verdict =
       '<div class="sim-verdict">🏆 <strong>Skema A (bunga flat)</strong> lebih hemat <strong>Rp ' +
-      formatRp(-hasil.selisih) +
+      formatNumber(-hasil.selisih) +
       '</strong> untuk kondisi ini.</div>';
   } else {
     verdict =
@@ -1255,40 +1209,40 @@ function buildHasilSimulator(hasil) {
     '">' +
     '<div class="sim-card__label">Skema A — Bunga Flat</div>' +
     '<div class="sim-card__value">Rp ' +
-    formatRp(hasil.totalBayarFlat) +
+    formatNumber(hasil.totalBayarFlat) +
     '</div>' +
     '<div class="sim-card__meta">' +
     'Bunga tetap Rp ' +
-    formatRp(hasil.bungaFlatPerBulan) +
+    formatNumber(hasil.bungaFlatPerBulan) +
     '/bln<br>' +
     'Total bunga Rp ' +
-    formatRp(hasil.totalBungaFlat) +
+    formatNumber(hasil.totalBungaFlat) +
     '<br>' +
     'Angsuran tetap Rp ' +
-    formatRp(hasil.angsuranFlat) +
+    formatNumber(hasil.angsuranFlat) +
     '</div></div>' +
     '<div class="sim-card sim-card--menurun' +
     (menurunMenang ? ' sim-card--winner' : '') +
     '">' +
     '<div class="sim-card__label">Skema B — Bunga Menurun</div>' +
     '<div class="sim-card__value">Rp ' +
-    formatRp(hasil.totalBayarMenurun) +
+    formatNumber(hasil.totalBayarMenurun) +
     '</div>' +
     '<div class="sim-card__meta">' +
     'U₁ = Rp ' +
-    formatRp(hasil.bungaAwal) +
+    formatNumber(hasil.bungaAwal) +
     ', b = −Rp ' +
-    formatRp(-hasil.bedaBunga) +
+    formatNumber(-hasil.bedaBunga) +
     '<br>' +
     'S<sub>' +
     hasil.n +
     '</sub> = Rp ' +
-    formatRp(hasil.totalBungaMenurun) +
+    formatNumber(hasil.totalBungaMenurun) +
     '<br>' +
     'Angsuran Rp ' +
-    formatRp(hasil.pokokPerBulan + hasil.bungaAwal) +
+    formatNumber(hasil.pokokPerBulan + hasil.bungaAwal) +
     ' → Rp ' +
-    formatRp(hasil.pokokPerBulan + hasil.bungaAkhir) +
+    formatNumber(hasil.pokokPerBulan + hasil.bungaAkhir) +
     '</div></div>' +
     '</div>' +
     verdict +
@@ -1523,239 +1477,92 @@ function renderSimulator(container) {
 }
 
 /* ============================================================
-   11. STAGE: UJI TERAP (PBL FASE 5)
+   10. STAGE: UJI TERAP (PBL FASE 5)
+
+   Memakai createExerciseStage dari shared/engine.js: tahap ini
+   mencampur soal isian numerik dan pilihan ganda dalam satu
+   rangkaian, dengan petunjuk berjenjang (s.hints).
    ============================================================ */
 
-function renderEvaluasi(container) {
-  var data = DATA.evaluasi;
-  var soalList = data.soal;
-  var idx = State.evaluasiIdx;
-  var soal = soalList[idx];
-  var ex = State.evaluasiExercises[idx];
-  var semuaSelesai = State.evaluasiExercises.every(function (e) {
-    return e.correct || e.revealed || e.checked;
-  });
+var evaluasiExercise = createExerciseStage({
+  soal: DATA.evaluasi.soal,
+  getExercises: function () {
+    return State.evaluasiExercises;
+  },
+  getIndex: function () {
+    return State.evaluasiIdx;
+  },
+  setIndex: function (i) {
+    State.evaluasiIdx = i;
+  },
+  save: saveState,
+  idPrefix: 'eval',
 
-  var statuses = State.evaluasiExercises.map(function (e) {
-    return e.correct ? 'correct' : e.checked || e.revealed ? 'incorrect' : null;
-  });
+  checkValue: function (s) {
+    return s.answer;
+  },
+  revealText: function (s) {
+    return '<strong>Jawaban:</strong> ' + s.explanation;
+  },
+  inputSuffix: function (s) {
+    return s.unit ? '<span class="step-card__unit">' + esc(s.unit) + '</span>' : '';
+  },
 
-  var konteksHTML = soal.konteks
-    ? '<div class="konteks-box">' +
-      '<span class="konteks-box__label">KONTEKS</span>' +
+  buildHead: function () {
+    return buildStageHead(DATA.evaluasi.kicker, DATA.evaluasi.goal);
+  },
+  renderPrompt: function (s) {
+    return (
+      '<span class="type-badge type-badge--' +
+      esc(s.tipe) +
+      '">' +
+      esc(s.tipeBadge) +
+      '</span>' +
+      (s.konteks
+        ? '<div class="konteks-box">' +
+          '<span class="konteks-box__label">KONTEKS</span>' +
+          '<p>' +
+          s.konteks +
+          '</p></div>'
+        : '') +
       '<p>' +
-      soal.konteks +
-      '</p></div>'
-    : '';
+      s.question +
+      '</p>'
+    );
+  },
+  buildChoiceFeedback: function (s, ex) {
+    return buildFeedbackBox(
+      ex.correct ? 'success' : 'info',
+      ex.correct ? '✓' : '💡',
+      (ex.correct ? '<strong>Benar!</strong> ' : '<strong>Jawaban tepat:</strong> ') + s.explanation
+    );
+  },
 
-  var bodyHTML = '';
-  if (soal.type === 'input') {
-    if (ex.correct) {
-      bodyHTML = buildFeedbackBox('success', '✓', '<strong>Benar!</strong> ' + soal.explanation);
-    } else if (ex.revealed) {
-      bodyHTML = buildFeedbackBox('info', '👁', '<strong>Jawaban:</strong> ' + soal.explanation);
-    } else {
-      var hints = soal.hints || [];
-      var hintHTML = '';
-      if (ex.hintLevel > 0) {
-        hintHTML = hints
-          .slice(0, ex.hintLevel)
-          .map(function (h, i) {
-            return buildFeedbackBox(
-              'warning',
-              '💡',
-              '<strong>Petunjuk ' + (i + 1) + ':</strong> ' + h
-            );
-          })
-          .join('');
-      }
-      bodyHTML =
-        '<div class="answer-row">' +
-        '<input type="text" inputmode="numeric" id="evalInput" class="input-text" value="' +
-        esc(ex.userInput) +
-        '" placeholder="Jawaban..." aria-label="Jawaban soal ' +
-        (idx + 1) +
-        '">' +
-        (soal.unit ? '<span class="step-card__unit">' + esc(soal.unit) + '</span>' : '') +
-        '</div>' +
-        '<div class="btn-group">' +
-        '<button type="button" class="btn btn--primary" id="evalCheckBtn">Periksa</button>' +
-        (ex.hintLevel < hints.length
-          ? '<button type="button" class="btn btn--ghost btn--small" id="evalHintBtn">💡 Petunjuk (' +
-            (ex.hintLevel + 1) +
-            '/' +
-            hints.length +
-            ')</button>'
-          : '') +
-        (ex.attempts >= 2
-          ? '<button type="button" class="btn btn--ghost btn--small" id="evalRevealBtn">Lihat Jawaban</button>'
-          : '') +
-        '</div>' +
-        (ex.attempts > 0 && !ex.correct
-          ? '<div style="margin-top:var(--space-3);">' +
-            buildFeedbackBox(
-              'error',
-              '✗',
-              'Jawaban <strong>' + esc(ex.userInput) + '</strong> belum tepat. Coba periksa lagi.'
-            ) +
-            '</div>'
-          : '') +
-        (hintHTML ? '<div style="margin-top:var(--space-3);">' + hintHTML + '</div>' : '');
-    }
-  } else {
-    var choicesHTML = soal.options
-      .map(function (opt, i) {
-        var cls = 'choice-btn';
-        if (ex.checked) {
-          if (opt.id === soal.correct) cls += ' is-correct';
-          else if (opt.id === ex.chosen) cls += ' is-incorrect';
-        }
-        return (
-          '<button type="button" class="' +
-          cls +
-          '" data-opt="' +
-          esc(opt.id) +
-          '"' +
-          (ex.checked ? ' disabled' : '') +
-          '>' +
-          '<span class="choice-btn__icon" aria-hidden="true">' +
-          String.fromCharCode(65 + i) +
-          '</span>' +
-          opt.label +
-          '</button>'
-        );
-      })
-      .join('');
-    bodyHTML =
-      '<div class="challenge-options">' +
-      choicesHTML +
-      '</div>' +
-      (ex.checked
-        ? buildFeedbackBox(
-            ex.correct ? 'success' : 'info',
-            ex.correct ? '✓' : '💡',
-            (ex.correct ? '<strong>Benar!</strong> ' : '<strong>Jawaban tepat:</strong> ') +
-              soal.explanation
-          )
-        : '');
-  }
+  inputRowClass: 'answer-row',
+  listClass: 'challenge-options',
+  choiceClassStyle: 'state',
+  revealButtonStyle: 'separate',
+  revealAfterAttempts: 2,
+  showAttemptErrorWithHint: true,
+  stripPunctuation: true,
+  inputPlaceholder: 'Jawaban...',
+  inputAriaLabel: 'Jawaban soal uji terap',
+  emptyMessage: 'Isi jawabanmu terlebih dahulu.',
+  invalidMessage: 'Tulis bilangan tanpa huruf, contoh: 891000 atau 891.000.',
 
-  var navHTML = '';
-  var selesaiSoalIni = ex.correct || ex.revealed || ex.checked;
-  if (selesaiSoalIni) {
-    if (idx < soalList.length - 1) {
-      navHTML =
-        '<div class="btn-group btn-group--end">' +
-        '<button type="button" class="btn btn--primary" id="evalNextBtn">Soal Berikutnya →</button></div>';
-    } else if (semuaSelesai) {
-      navHTML = buildNextButton('evalFinishBtn', 'Lanjut: Refleksi →');
-    }
-  }
+  sectionLabel: 'Uji terap',
+  instruction: DATA.evaluasi.instruction,
+  nextStageId: 'refleksi',
+  completeStageId: 'evaluasi',
+  nextButtonLabel: 'Lanjut: Refleksi →',
+});
 
-  container.innerHTML =
-    '<section aria-label="Uji terap">' +
-    buildStageHead(data.kicker, data.goal) +
-    '<div class="panel">' +
-    '<p style="font-size:0.88rem;color:var(--color-ink-muted);margin-bottom:var(--space-3);">' +
-    esc(data.instruction) +
-    '</p>' +
-    buildProgressDots(soalList.length, idx, statuses) +
-    '<span class="type-badge type-badge--' +
-    esc(soal.tipe) +
-    '">' +
-    esc(soal.tipeBadge) +
-    '</span>' +
-    konteksHTML +
-    '<p>' +
-    soal.question +
-    '</p>' +
-    bodyHTML +
-    '</div>' +
-    navHTML +
-    '</section>';
-
-  var evalInput = document.getElementById('evalInput');
-  var checkBtn = document.getElementById('evalCheckBtn');
-
-  if (evalInput && checkBtn) {
-    evalInput.addEventListener('keydown', function (e) {
-      if (e.key === 'Enter') checkBtn.click();
-    });
-  }
-
-  if (checkBtn) {
-    checkBtn.addEventListener('click', function () {
-      var raw = evalInput ? evalInput.value : '';
-      var parsed = parseInputInt(raw, true);
-      ex.userInput = raw;
-      if (parsed.error) {
-        saveState();
-        showNotice(
-          parsed.error === 'empty'
-            ? 'Isi jawabanmu terlebih dahulu.'
-            : 'Tulis bilangan tanpa huruf, contoh: 891000 atau 891.000.'
-        );
-        return;
-      }
-      ex.attempts += 1;
-      ex.correct = parsed.value === soal.answer;
-      if (ex.correct) ex.checked = true;
-      saveState();
-      renderEvaluasi(container);
-    });
-  }
-
-  var hintBtn = document.getElementById('evalHintBtn');
-  if (hintBtn) {
-    hintBtn.addEventListener('click', function () {
-      ex.hintLevel += 1;
-      saveState();
-      renderEvaluasi(container);
-    });
-  }
-
-  var revealBtn = document.getElementById('evalRevealBtn');
-  if (revealBtn) {
-    revealBtn.addEventListener('click', function () {
-      ex.revealed = true;
-      saveState();
-      renderEvaluasi(container);
-    });
-  }
-
-  container.querySelectorAll('[data-opt]').forEach(function (btn) {
-    btn.addEventListener('click', function () {
-      if (ex.checked) return;
-      ex.chosen = btn.dataset.opt;
-      ex.attempts += 1;
-      ex.correct = ex.chosen === soal.correct;
-      ex.checked = true;
-      saveState();
-      renderEvaluasi(container);
-    });
-  });
-
-  var nextBtn = document.getElementById('evalNextBtn');
-  if (nextBtn) {
-    nextBtn.addEventListener('click', function () {
-      State.evaluasiIdx = idx + 1;
-      saveState();
-      renderEvaluasi(container);
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    });
-  }
-
-  var finishBtn = document.getElementById('evalFinishBtn');
-  if (finishBtn) {
-    finishBtn.addEventListener('click', function () {
-      completeStage('evaluasi');
-      navigateTo('refleksi');
-    });
-  }
+function renderEvaluasi(container) {
+  evaluasiExercise.render(container);
 }
 
 /* ============================================================
-   12. STAGE: REFLEKSI (PBL FASE 5)
+   11. STAGE: REFLEKSI (PBL FASE 5)
    ============================================================ */
 
 function buildPredictRecall() {
@@ -1859,7 +1666,7 @@ function renderRefleksi(container) {
 }
 
 /* ============================================================
-   13. STAGE: SELESAI
+   12. STAGE: SELESAI
    ============================================================ */
 
 function renderSelesai(container) {
@@ -1948,7 +1755,7 @@ function renderSelesai(container) {
 }
 
 /* ============================================================
-   14. INIT
+   13. INIT
    ============================================================ */
 
 function init() {

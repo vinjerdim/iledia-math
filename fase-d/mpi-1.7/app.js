@@ -29,17 +29,6 @@
    1. UTILITAS
    ============================================================ */
 
-function formatNumber(n) {
-  var abs = String(Math.abs(Math.round(n)));
-  var parts = [];
-  while (abs.length > 3) {
-    parts.unshift(abs.slice(abs.length - 3));
-    abs = abs.slice(0, abs.length - 3);
-  }
-  if (abs) parts.unshift(abs);
-  return (n < 0 ? '-' : '') + parts.join('.');
-}
-
 function rp(n) {
   return 'Rp' + formatNumber(n);
 }

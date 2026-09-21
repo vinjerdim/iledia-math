@@ -8,46 +8,25 @@
    mesin navigasi tahap) berada di shared/engine.js.
 
    Bagian:
-    1. Utilitas
-    2. Konstanta
-    3. State & Storage
-    4. Navigasi
-    5. Utilitas Render
-    6. Stage: Orientasi
-    7. Stage: Eksplorasi Pola
-    8. Stage: Temukan Rumus Uₙ
-    9. Stage: Latihan Uₙ
-   10. Stage: Eksplorasi Sₙ
-   11. Stage: Latihan Sₙ
-   12. Stage: Tantangan
-   13. Stage: Refleksi
-   14. Stage: Selesai
-   15. Helper UI
-   16. Init
+    1. Konstanta
+    2. State & Storage
+    3. Navigasi
+    4. Utilitas Render
+    5. Stage: Orientasi
+    6. Stage: Eksplorasi Pola
+    7. Stage: Temukan Rumus Uₙ
+    8. Stage: Latihan Uₙ
+    9. Stage: Eksplorasi Sₙ
+   10. Stage: Latihan Sₙ
+   11. Stage: Tantangan
+   12. Stage: Refleksi
+   13. Stage: Selesai
+   14. Helper UI
+   15. Init
    ============================================================ */
 
 /* ============================================================
-   1. UTILITAS
-   ============================================================ */
-
-function formatNumber(n) {
-  var str = String(n);
-  var sign = '';
-  var parts = [];
-  if (str.startsWith('-')) {
-    sign = '-';
-    str = str.slice(1);
-  }
-  while (str.length > 3) {
-    parts.unshift(str.slice(str.length - 3));
-    str = str.slice(0, str.length - 3);
-  }
-  if (str) parts.unshift(str);
-  return sign + parts.join('.');
-}
-
-/* ============================================================
-   2. KONSTANTA
+   1. KONSTANTA
    ============================================================ */
 
 var STAGES = [
@@ -75,7 +54,7 @@ var STAGE_LABELS = [
 var STORAGE_KEY = 'mpi-1-1-aritmetika-v1';
 
 /* ============================================================
-   3. STATE & STORAGE
+   2. STATE & STORAGE
    ============================================================ */
 
 var State = {
@@ -154,7 +133,7 @@ function initExerciseArrays() {
 }
 
 /* ============================================================
-   4. NAVIGASI
+   3. NAVIGASI
    ============================================================ */
 
 var StageMachine = createStageMachine({
@@ -172,7 +151,7 @@ var buildStageNav = StageMachine.buildStageNav;
 var updateProgress = StageMachine.updateProgress;
 
 /* ============================================================
-   5. UTILITAS RENDER
+   4. UTILITAS RENDER
    ============================================================ */
 
 function buildProgressDots(total, current, statuses) {
@@ -236,7 +215,7 @@ function renderCurrentStage() {
 }
 
 /* ============================================================
-   6. STAGE: ORIENTASI
+   5. STAGE: ORIENTASI
    ============================================================ */
 
 function renderOrientasi(container) {
@@ -296,7 +275,7 @@ function renderOrientasi(container) {
 }
 
 /* ============================================================
-   7. STAGE: EKSPLORASI POLA
+   6. STAGE: EKSPLORASI POLA
    ============================================================ */
 
 function buildSeqTermClass(revealed, idx, revealCount) {
@@ -580,7 +559,7 @@ function checkAbAnswer(container, idx) {
 }
 
 /* ============================================================
-   8. STAGE: TEMUKAN RUMUS Uₙ
+   7. STAGE: TEMUKAN RUMUS Uₙ
    ============================================================ */
 
 function renderRumusUn(container) {
@@ -746,7 +725,7 @@ function checkRumusUnStep(container, step) {
 }
 
 /* ============================================================
-   9. STAGE: LATIHAN Uₙ
+   8. STAGE: LATIHAN Uₙ
    ============================================================ */
 
 function renderLatihanUn(container) {
@@ -1045,7 +1024,7 @@ function renderLatihanUnSummary(container) {
 }
 
 /* ============================================================
-   10. STAGE: EKSPLORASI Sₙ
+   9. STAGE: EKSPLORASI Sₙ
    ============================================================ */
 
 function renderEkspSn(container) {
@@ -1261,7 +1240,7 @@ function renderEkspSn(container) {
 }
 
 /* ============================================================
-   11. STAGE: LATIHAN Sₙ
+   10. STAGE: LATIHAN Sₙ
    ============================================================ */
 
 function renderLatihanSn(container) {
@@ -1434,7 +1413,7 @@ function renderLatihanSnSummary(container) {
 }
 
 /* ============================================================
-   12. STAGE: TANTANGAN
+   11. STAGE: TANTANGAN
    ============================================================ */
 
 function renderTantangan(container) {
@@ -1702,7 +1681,7 @@ function renderTantanganSummary(container) {
 }
 
 /* ============================================================
-   13. STAGE: REFLEKSI
+   12. STAGE: REFLEKSI
    ============================================================ */
 
 function renderRefleksi(container) {
@@ -1795,7 +1774,7 @@ function renderRefleksi(container) {
 }
 
 /* ============================================================
-   14. STAGE: SELESAI
+   13. STAGE: SELESAI
    ============================================================ */
 
 function renderSelesai(container) {
@@ -1865,7 +1844,7 @@ function renderSelesai(container) {
 }
 
 /* ============================================================
-   16. INIT
+   15. INIT
    ============================================================ */
 
 document.addEventListener('DOMContentLoaded', function () {

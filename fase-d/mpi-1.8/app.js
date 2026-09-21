@@ -29,22 +29,6 @@
    1. UTILITAS
    ============================================================ */
 
-function formatNumber(n) {
-  var s = String(Math.round(n));
-  var sign = '';
-  if (s.charAt(0) === '-') {
-    sign = '-';
-    s = s.slice(1);
-  }
-  var parts = [];
-  while (s.length > 3) {
-    parts.unshift(s.slice(s.length - 3));
-    s = s.slice(0, s.length - 3);
-  }
-  if (s) parts.unshift(s);
-  return sign + parts.join('.');
-}
-
 function formatRupiah(n) {
   return 'Rp\u00a0' + formatNumber(n);
 }
