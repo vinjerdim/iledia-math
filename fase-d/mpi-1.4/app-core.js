@@ -9,17 +9,6 @@
    1. UTILITAS MATEMATIKA
    ============================================================ */
 
-function gcd(a, b) {
-  a = Math.abs(Math.round(a));
-  b = Math.abs(Math.round(b));
-  while (b > 0) {
-    var t = b;
-    b = a % b;
-    a = t;
-  }
-  return a;
-}
-
 /** Apakah pecahan p/q menghasilkan desimal berhenti? */
 function isTerminating(num, den) {
   var g = gcd(Math.abs(num), Math.abs(den));

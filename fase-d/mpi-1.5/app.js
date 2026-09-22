@@ -27,18 +27,6 @@
    1. UTILITAS MATEMATIKA
    ============================================================ */
 
-/** GCD untuk validasi pecahan */
-function gcd(a, b) {
-  a = Math.abs(Math.round(a));
-  b = Math.abs(Math.round(b));
-  while (b > 0) {
-    var t = b;
-    b = a % b;
-    a = t;
-  }
-  return a;
-}
-
 /**
  * Parse input angka dari user.
  * Menerima koma atau titik sebagai pemisah desimal.

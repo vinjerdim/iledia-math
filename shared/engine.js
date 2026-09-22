@@ -9,7 +9,7 @@
    memanggilnya langsung tanpa perubahan pada kode stage-render.
 
    Bagian:
-    1. Utilitas Teks, Input & Format Angka
+    1. Utilitas Teks, Input, Format Angka & Acak
     2. Notifikasi (Toast)
     3. Utilitas Render
     4. Mesin Navigasi Tahap
@@ -18,7 +18,7 @@
    ============================================================ */
 
 /* ============================================================
-   1. UTILITAS TEKS & INPUT
+   1. UTILITAS TEKS, INPUT & ACAK
    ============================================================ */
 
 /*
@@ -58,6 +58,44 @@ function parseInputDecimal(str) {
    jawaban desimal tanpa terjebak galat pembulatan biner. */
 function hampirSama(a, b) {
   return Math.abs(a - b) < 0.0001;
+}
+
+/*
+ * FPB (faktor persekutuan terbesar) dua bilangan dengan algoritma Euclid.
+ * Dipakai modul pecahan (fase-d/mpi-1.4, mpi-1.5) untuk memeriksa bentuk
+ * paling sederhana, dan modul rasio (fase-d/mpi-2.1) untuk menyederhanakan
+ * perbandingan. Nilai dibulatkan dan diambil nilai mutlaknya lebih dulu.
+ */
+function gcd(a, b) {
+  a = Math.abs(Math.round(a));
+  b = Math.abs(Math.round(b));
+  while (b > 0) {
+    var t = b;
+    b = a % b;
+    a = t;
+  }
+  return a;
+}
+
+/*
+ * Mengacak urutan isi sebuah array (Fisher-Yates) dan mengembalikan array
+ * BARU — array asal tidak pernah disentuh, sehingga aman dipakai langsung
+ * pada array milik DATA.
+ *
+ * Dipakai untuk memenuhi ketentuan "pilihan jawaban selalu diacak". Agar
+ * pilihan tidak melompat-lompat setiap kali tahap dirender ulang, panggil
+ * sekali saat menyiapkan State (mis. di initExerciseArrays()) lalu simpan
+ * hasilnya di State — bukan saat render.
+ */
+function shuffleArray(arr) {
+  var out = arr.slice();
+  for (var i = out.length - 1; i > 0; i--) {
+    var j = Math.floor(Math.random() * (i + 1));
+    var tmp = out[i];
+    out[i] = out[j];
+    out[j] = tmp;
+  }
+  return out;
 }
 
 /*
@@ -457,7 +495,21 @@ function createStageMachine(opts) {
  *   buildChoiceFeedback(s, ex)   (opsional) mengganti isi kotak umpan balik pilihan ganda
  *
  * Soal 'choice' wajib punya `.options` (array {id, label}) dan `.correct`
- * (id opsi yang benar). Mengembalikan { render(container) }.
+ * (id opsi yang benar).
+ *
+ * Pengacakan pilihan: bila state per-soal memuat `optionOrder` (array id opsi),
+ * opsi dirender menurut urutan itu. Isi sekali saat menyiapkan state agar
+ * urutan teracak namun stabil lintas render/reload, mis.
+ *
+ *   ensureExerciseArray(State, 'terapkanExercises', DATA.terapkan.soal, function (s) {
+ *     return {
+ *       attempts: 0, hintLevel: 0, correct: false, userInput: '', revealed: false,
+ *       chosen: null,
+ *       optionOrder: s.options ? shuffleArray(s.options.map(function (o) { return o.id; })) : null,
+ *     };
+ *   });
+ *
+ * Mengembalikan { render(container) }.
  */
 function createExerciseStage(cfg) {
   var soal = cfg.soal;
@@ -608,10 +660,34 @@ function createExerciseStage(cfg) {
     );
   }
 
+  /*
+   * Urutan tampil pilihan ganda. Bila State per-soal menyimpan `optionOrder`
+   * (array id opsi, dibuat sekali dengan shuffleArray saat menyiapkan State),
+   * opsi dirender menurut urutan itu sehingga teracak tetapi stabil lintas
+   * render dan reload. Tanpa `optionOrder` — atau bila isinya tidak lagi
+   * cocok dengan `s.options` — urutan DATA dipakai apa adanya, sehingga modul
+   * lama tidak berubah perilakunya.
+   */
+  function orderedOptions(s, ex) {
+    if (!ex || !Array.isArray(ex.optionOrder)) return s.options;
+    if (ex.optionOrder.length !== s.options.length) return s.options;
+    var byId = {};
+    s.options.forEach(function (opt) {
+      byId[opt.id] = opt;
+    });
+    var out = [];
+    for (var i = 0; i < ex.optionOrder.length; i++) {
+      var opt = byId[ex.optionOrder[i]];
+      if (!opt) return s.options;
+      out.push(opt);
+    }
+    return out;
+  }
+
   function buildChoiceBody(s, ex) {
     var answered = ex.chosen !== null && ex.chosen !== undefined;
 
-    var choicesHTML = s.options
+    var choicesHTML = orderedOptions(s, ex)
       .map(function (opt, i) {
         var cls = 'choice-btn';
         if (answered) {
