@@ -83,7 +83,7 @@ function generateRoundingOptions(harga, level) {
   if (opts.length < 4) addOpt(above + level);
   if (opts.length < 4) addOpt(above + 2 * level);
 
-  return { options: shuffleArr(opts.slice(0, 4)), correct: correct };
+  return { options: shuffleArray(opts.slice(0, 4)), correct: correct };
 }
 
 /** Hitung deviasi absolut (rupiah) */
@@ -109,18 +109,6 @@ function calcTotalBelanja(items) {
   return items.reduce(function (s, it) {
     return s + it.harga;
   }, 0);
-}
-
-/** Fisher-Yates shuffle — kembalikan array baru */
-function shuffleArr(arr) {
-  var a = arr.slice();
-  for (var i = a.length - 1; i > 0; i--) {
-    var j = Math.floor(Math.random() * (i + 1));
-    var tmp = a[i];
-    a[i] = a[j];
-    a[j] = tmp;
-  }
-  return a;
 }
 
 /* ============================================================

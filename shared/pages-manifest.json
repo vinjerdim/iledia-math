@@ -67,6 +67,14 @@
     "h1": "Rancangan Anggaran Belanja",
     "stageCount": 8
   },
+  "fase-d/mpi-2.1": {
+    "title": "Konsep Rasio dan Menyederhanakan Perbandingan — Matematika Fase D",
+    "description": "Media pembelajaran interaktif berbasis Discovery Learning untuk menjelaskan konsep rasio serta menyederhanakan perbandingan dua besaran sejenis dan berbeda satuan dalam masalah kontekstual sehari-hari.",
+    "kicker": "Matematika — Fase D (SMP)",
+    "h1": "Konsep Rasio & Menyederhanakan Perbandingan",
+    "stageCount": 10,
+    "extraBody": "partials/reset-modal.html"
+  },
   "fase-f/mpi-1.1": {
     "title": "Barisan dan Deret Aritmetika — Matematika Fase F",
     "description": "Media pembelajaran interaktif untuk mengidentifikasi pola, menentukan rumus suku ke-n, dan menghitung jumlah n suku pertama pada barisan dan deret aritmetika.",
