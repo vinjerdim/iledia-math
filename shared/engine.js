@@ -29,6 +29,8 @@
        komponen urut-ketuk
    15. Pecahan: membandingkan & mengurutkan (pita pecahan, garis
        bilangan 0–1, papan urutan, kartu & label peran kelompok)
+   16. Penerapan kontekstual: pecahan campuran ↔ biasa, isian pecahan
+       berdiagnosis, termometer bilangan bulat, papan info hasil karya
    ============================================================ */
 
 /* ============================================================
@@ -807,8 +809,8 @@ function createExerciseStage(cfg) {
       feedbackHTML = cfg.buildChoiceFeedback
         ? cfg.buildChoiceFeedback(s, ex)
         : ex.correct
-        ? buildFeedbackBox('success', '✓', '<strong>Benar!</strong> ' + s.explanation)
-        : buildFeedbackBox('error', '✗', '<strong>Belum tepat.</strong> ' + s.explanation);
+          ? buildFeedbackBox('success', '✓', '<strong>Benar!</strong> ' + s.explanation)
+          : buildFeedbackBox('error', '✗', '<strong>Belum tepat.</strong> ' + s.explanation);
     }
 
     return (
@@ -1422,8 +1424,8 @@ function readDlNumber(val, rational) {
       parsed.error === 'empty'
         ? 'Isi jawabanmu terlebih dahulu.'
         : rational
-        ? 'Tulis jawaban berupa bilangan, pecahan, atau desimal, mis. 3, 1/2, atau 0,5.'
-        : 'Tulis jawaban berupa bilangan bulat, mis. 12 atau −40.'
+          ? 'Tulis jawaban berupa bilangan, pecahan, atau desimal, mis. 3, 1/2, atau 0,5.'
+          : 'Tulis jawaban berupa bilangan bulat, mis. 12 atau −40.'
     );
     return null;
   }
@@ -3804,5 +3806,202 @@ function buildRoleTag(role, name) {
     esc(role.nama) +
     (name ? ': <strong>' + esc(name) + '</strong>' : '') +
     '</span>'
+  );
+}
+
+/* ============================================================
+   16. PENERAPAN KONTEKSTUAL — PECAHAN CAMPURAN, TERMOMETER &
+       PAPAN INFO
+   Dipakai modul penerapan bilangan bulat & pecahan dalam masalah
+   sehari-hari (fase-d/mpi-1.6). Gaya .thermo*, .info-poster* ada
+   di shared/base.css.
+   ============================================================ */
+
+/* Pecahan campuran → pecahan biasa: 1 3/4 → { num: 7, den: 4 }. */
+function mixedToImproper(whole, num, den) {
+  return { num: (whole || 0) * den + num, den: den };
+}
+
+/* Pecahan biasa → pecahan campuran: 7/4 → { whole: 1, num: 3, den: 4 }. */
+function improperToMixed(num, den) {
+  return { whole: Math.floor(num / den), num: num % den, den: den };
+}
+
+/*
+ * Memeriksa isian pecahan (value dari readFractionInput) terhadap
+ * jawaban { whole?, num, den } dan mendiagnosis kesalahannya.
+ *   bentuk  'tepat'    notasi harus sama persis (menulis dari kata-kata)
+ *           'campuran' senilai DAN berbentuk campuran (bulat ≥ 1,
+ *                      pembilang < penyebut)
+ *           'biasa'    senilai DAN tanpa bilangan bulat
+ * Mengembalikan 'ok' | 'tidak-senilai' | 'bukan-campuran' | 'bukan-biasa'
+ * | 'terbalik' (pembilang & penyebut tertukar) | 'beda-notasi'
+ * (senilai, tetapi bukan notasi yang diminta).
+ */
+function diagnosaPecahan(v, jawab, bentuk) {
+  var a = mixedToImproper(v.whole, v.num, v.den);
+  var b = mixedToImproper(jawab.whole, jawab.num, jawab.den);
+  if (!pecahanSetara(a, b)) {
+    return v.num === jawab.den && v.den === jawab.num ? 'terbalik' : 'tidak-senilai';
+  }
+  if (bentuk === 'campuran') {
+    return v.whole && v.num > 0 && v.num < v.den ? 'ok' : 'bukan-campuran';
+  }
+  if (bentuk === 'biasa') return v.whole ? 'bukan-biasa' : 'ok';
+  var sama = (v.whole || 0) === (jawab.whole || 0) && v.num === jawab.num && v.den === jawab.den;
+  return sama ? 'ok' : 'beda-notasi';
+}
+
+/*
+ * Termometer SVG untuk membaca suhu bilangan bulat (°C).
+ *   value        suhu yang ditunjukkan
+ *   opts.min, max  rentang skala (default −10 … 10)
+ *   opts.step    jarak label skala (default 2)
+ *   opts.caption teks di bawah termometer (mis. pukul pencatatan)
+ *   opts.small   true → ukuran ringkas untuk deretan termometer
+ * Cairan di bawah 0 berwarna biru, di atas 0 berwarna oranye, dan garis
+ * 0 ditebalkan sebagai titik acuan.
+ */
+function buildThermometer(value, opts) {
+  opts = opts || {};
+  var min = typeof opts.min === 'number' ? opts.min : -10;
+  var max = typeof opts.max === 'number' ? opts.max : 10;
+  var step = opts.step || 2;
+  var top = 12;
+  var bottom = 150;
+  function yOf(v) {
+    return bottom - ((v - min) / (max - min)) * (bottom - top);
+  }
+  var ticks = '';
+  for (var t = min; t <= max; t++) {
+    var y = yOf(t).toFixed(1);
+    var berlabel = t % step === 0 || t === 0;
+    ticks +=
+      '<line class="thermo__tick' +
+      (t === 0 ? ' thermo__tick--zero' : '') +
+      '" x1="' +
+      (berlabel ? 40 : 44) +
+      '" x2="52" y1="' +
+      y +
+      '" y2="' +
+      y +
+      '"/>';
+    if (berlabel) {
+      ticks +=
+        '<text class="thermo__label' +
+        (t === 0 ? ' thermo__label--zero' : '') +
+        '" x="36" y="' +
+        (yOf(t) + 3.5).toFixed(1) +
+        '" text-anchor="end">' +
+        formatNumber(t, '−') +
+        '</text>';
+    }
+  }
+  var v = Math.max(min, Math.min(max, value));
+  var yv = yOf(v);
+  var tone = value < 0 ? 'cold' : 'warm';
+  var baca = bacaBilanganBulat(value) + ' derajat Celsius';
+  return (
+    '<figure class="thermo' +
+    (opts.small ? ' thermo--small' : '') +
+    '" role="img" aria-label="' +
+    esc('Termometer menunjukkan ' + baca + (opts.caption ? ', ' + opts.caption : '')) +
+    '">' +
+    '<svg class="thermo__svg" viewBox="0 0 96 184" aria-hidden="true">' +
+    '<rect class="thermo__tube" x="52" y="4" width="16" height="152" rx="8"/>' +
+    '<circle class="thermo__bulb thermo__bulb--' +
+    tone +
+    '" cx="60" cy="166" r="14"/>' +
+    '<rect class="thermo__fluid thermo__fluid--' +
+    tone +
+    '" x="56" y="' +
+    yv.toFixed(1) +
+    '" width="8" height="' +
+    (166 - yv).toFixed(1) +
+    '"/>' +
+    ticks +
+    '<line class="thermo__marker" x1="68" x2="80" y1="' +
+    yv.toFixed(1) +
+    '" y2="' +
+    yv.toFixed(1) +
+    '"/>' +
+    '</svg>' +
+    '<figcaption class="thermo__cap">' +
+    '<strong class="thermo__value thermo__value--' +
+    tone +
+    '">' +
+    formatNumber(value, '−') +
+    ' °C</strong>' +
+    (opts.caption ? '<span>' + esc(opts.caption) + '</span>' : '') +
+    '</figcaption>' +
+    '</figure>'
+  );
+}
+
+/*
+ * Deretan termometer kecil (mis. suhu per jam).
+ *   readings  [{ value, caption }]
+ *   opts      diteruskan ke buildThermometer (min, max, step)
+ */
+function buildThermometerRow(readings, opts) {
+  opts = opts || {};
+  return (
+    '<div class="thermo-row">' +
+    readings
+      .map(function (r) {
+        return buildThermometer(r.value, {
+          min: opts.min,
+          max: opts.max,
+          step: opts.step,
+          caption: r.caption,
+          small: true,
+        });
+      })
+      .join('') +
+    '</div>'
+  );
+}
+
+/*
+ * Papan info / poster hasil karya kelompok yang siap dipresentasikan.
+ *   opts.judul   judul papan
+ *   opts.ikon    emoji di samping judul (opsional)
+ *   opts.rows    [{ ikon, label, nilai }] — `nilai` berupa HTML
+ *   opts.pesan   pesan penutup kelompok (teks biasa, opsional)
+ *   opts.footer  catatan kecil di bagian bawah (teks biasa, opsional)
+ */
+function buildInfoPoster(opts) {
+  opts = opts || {};
+  return (
+    '<article class="info-poster">' +
+    '<header class="info-poster__head">' +
+    (opts.ikon
+      ? '<span class="info-poster__icon" aria-hidden="true">' + opts.ikon + '</span>'
+      : '') +
+    '<h3 class="info-poster__title">' +
+    esc(opts.judul || '') +
+    '</h3>' +
+    '</header>' +
+    '<dl class="info-poster__rows">' +
+    (opts.rows || [])
+      .map(function (r) {
+        return (
+          '<div class="info-poster__row">' +
+          '<dt><span aria-hidden="true">' +
+          (r.ikon || '•') +
+          '</span> ' +
+          esc(r.label) +
+          '</dt>' +
+          '<dd>' +
+          r.nilai +
+          '</dd>' +
+          '</div>'
+        );
+      })
+      .join('') +
+    '</dl>' +
+    (opts.pesan ? '<p class="info-poster__msg">“' + esc(opts.pesan) + '”</p>' : '') +
+    (opts.footer ? '<footer class="info-poster__foot">' + esc(opts.footer) + '</footer>' : '') +
+    '</article>'
   );
 }

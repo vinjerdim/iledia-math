@@ -53,11 +53,25 @@
     "extraBody": "partials/reset-modal.html"
   },
   "fase-d/mpi-1.6": {
-    "title": "Estimasi & Pembulatan Transaksi Belanja — Matematika Fase D",
-    "description": "Media pembelajaran interaktif: merumuskan solusi transaksi belanja dengan teknik estimasi dan pembulatan untuk peserta didik SMP Kelas 7.",
-    "kicker": "Matematika — Fase D (SMP Kelas 7)",
-    "h1": "Estimasi & Pembulatan Transaksi Belanja",
-    "stageCount": 7
+    "title": "Bilangan Bulat & Pecahan dalam Kehidupan Sehari-hari — Matematika Fase D",
+    "description": "Media pembelajaran interaktif berbasis Problem-Based Learning untuk menerapkan pembacaan, penulisan, dan perbandingan bilangan bulat serta pecahan dalam menyelesaikan masalah kontekstual sehari-hari.",
+    "kicker": "Matematika — Fase D (SMP)",
+    "h1": "Bilangan Bulat & Pecahan dalam Kehidupan Sehari-hari",
+    "stageCount": 10,
+    "extraBody": "partials/reset-modal.html",
+    "extraScripts": [
+      "app-core.js",
+      "app-stage-orientasi.js",
+      "app-stage-organisasi.js",
+      "app-stage-selidik-bulat.js",
+      "app-stage-latih-bulat.js",
+      "app-stage-selidik-pecahan.js",
+      "app-stage-latih-pecahan.js",
+      "app-stage-karya.js",
+      "app-stage-evaluasi.js",
+      "app-stage-refleksi.js",
+      "app-stage-selesai.js"
+    ]
   },
   "fase-d/mpi-1.7": {
     "title": "Literasi Finansial: Untung, Rugi & Diskon — Matematika Fase D",
