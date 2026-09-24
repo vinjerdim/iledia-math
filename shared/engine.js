@@ -31,6 +31,8 @@
        bilangan 0–1, papan urutan, kartu & label peran kelompok)
    16. Penerapan kontekstual: pecahan campuran ↔ biasa, isian pecahan
        berdiagnosis, termometer bilangan bulat, papan info hasil karya
+   17. Bilangan bulat: operasi penjumlahan & pengurangan (garis
+       bilangan berlompatan, simulator operasi, stepper bilangan)
    ============================================================ */
 
 /* ============================================================
@@ -4004,4 +4006,489 @@ function buildInfoPoster(opts) {
     (opts.footer ? '<footer class="info-poster__foot">' + esc(opts.footer) + '</footer>' : '') +
     '</article>'
   );
+}
+
+/* ============================================================
+   17. BILANGAN BULAT — OPERASI PENJUMLAHAN & PENGURANGAN
+   Dipakai modul penjumlahan & pengurangan bilangan bulat
+   (fase-d/mpi-2.1): garis bilangan dengan busur lompatan,
+   simulator operasi (titik awal, tanda operasi, bilangan kedua),
+   dan stepper bilangan bulat ramah sentuh. Gaya .nlj-*, .int-sim*,
+   .int-stepper* ada di shared/base.css.
+   ============================================================ */
+
+/* Notasi baku bilangan bulat dengan minus tipografis: −3, 12. */
+function fmtBulat(n) {
+  return formatNumber(n, '−');
+}
+
+/*
+ * Menuliskan operasi a op b dalam notasi baku; bilangan kedua yang
+ * negatif diberi kurung: fmtOperasiBulat(5, '-', -2) → "5 − (−2)".
+ *   op  '+' atau '-'
+ */
+function fmtOperasiBulat(a, op, b) {
+  return (
+    fmtBulat(a) +
+    ' ' +
+    (op === '-' ? '−' : '+') +
+    ' ' +
+    (b < 0 ? '(' + fmtBulat(b) + ')' : fmtBulat(b))
+  );
+}
+
+/*
+ * Menguraikan a op b menjadi satu lompatan pada garis bilangan.
+ * Pengurangan diubah menjadi penjumlahan dengan lawan bilangannya
+ * (a − b = a + (−b)), sehingga arah lompatan selalu ditentukan oleh
+ * tanda `by`: positif → kanan, negatif → kiri.
+ * Mengembalikan { start, by, hasil, setara } — `setara` berupa teks
+ * penjumlahan setara, mis. "5 + 2" untuk 5 − (−2).
+ */
+function integerJumps(a, op, b) {
+  var by = op === '-' ? -b : b;
+  return { start: a, by: by, hasil: a + by, setara: fmtOperasiBulat(a, '+', by) };
+}
+
+/* Arah lompatan untuk `by`: 'kanan' | 'kiri' | 'diam'. */
+function arahLompatan(by) {
+  if (by > 0) return 'kanan';
+  if (by < 0) return 'kiri';
+  return 'diam';
+}
+
+/*
+ * Garis bilangan statis (SVG) dengan busur lompatan.
+ *   id              id elemen <svg>
+ *   opts.min, max   rentang (default −10 … 10)
+ *   opts.labelEvery label angka setiap kelipatan ini (default 1)
+ *   opts.start      titik awal (default 0)
+ *   opts.jumps      [{ by, label }] lompatan berurutan; `label` default
+ *                   notasi baku bertanda (+5 / −3)
+ *   opts.unitHops   true → setiap lompatan digambar sebagai lompatan
+ *                   kecil satu-satuan (membantu murid menghitung langkah)
+ *   opts.showEnd    false → titik akhir ditandai "?" (hasil belum dibuka)
+ *   opts.startLabel label titik awal (default "mulai")
+ *   opts.aria       label aksesibel
+ * Busur ke kanan berwarna oranye (positif), ke kiri biru (negatif).
+ * Dibungkus .nlp-wrap; atribut data-zero diisi posisi tengah lompatan
+ * sehingga centerNumberLines() memusatkan layar sempit pada lompatannya.
+ */
+function buildNumberLineJumps(id, opts) {
+  opts = opts || {};
+  var min = typeof opts.min === 'number' ? opts.min : -10;
+  var max = typeof opts.max === 'number' ? opts.max : 10;
+  var every = opts.labelEvery || 1;
+  var start = typeof opts.start === 'number' ? opts.start : 0;
+  var jumps = opts.jumps || [];
+  var showEnd = opts.showEnd !== false;
+  var unit = 40;
+  var padX = 34;
+  var axisY = 104;
+  var H = 150;
+  var W = padX * 2 + (max - min) * unit;
+  function xOf(v) {
+    return padX + (Math.max(min, Math.min(max, v)) - min) * unit;
+  }
+  function toneOf(v) {
+    if (v < 0) return 'neg';
+    if (v > 0) return 'pos';
+    return 'zero';
+  }
+
+  var html =
+    '<defs>' +
+    ['pos', 'neg']
+      .map(function (t) {
+        return (
+          '<marker id="' +
+          id +
+          '-mk-' +
+          t +
+          '" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">' +
+          '<path class="nlj-head nlj-head--' +
+          t +
+          '" d="M0,0 L10,5 L0,10 z"/>' +
+          '</marker>'
+        );
+      })
+      .join('') +
+    '</defs>';
+
+  var x0 = xOf(min) - 22;
+  var x1 = xOf(max) + 22;
+  html +=
+    '<line class="nlp-axis" x1="' +
+    x0 +
+    '" y1="' +
+    axisY +
+    '" x2="' +
+    x1 +
+    '" y2="' +
+    axisY +
+    '"/>' +
+    '<polygon class="nlp-arrow" points="' +
+    (x0 - 4) +
+    ',' +
+    axisY +
+    ' ' +
+    (x0 + 8) +
+    ',' +
+    (axisY - 6) +
+    ' ' +
+    (x0 + 8) +
+    ',' +
+    (axisY + 6) +
+    '"/>' +
+    '<polygon class="nlp-arrow" points="' +
+    (x1 + 4) +
+    ',' +
+    axisY +
+    ' ' +
+    (x1 - 8) +
+    ',' +
+    (axisY - 6) +
+    ' ' +
+    (x1 - 8) +
+    ',' +
+    (axisY + 6) +
+    '"/>';
+
+  for (var v = min; v <= max; v++) {
+    var x = xOf(v);
+    var major = v === 0 || v % 5 === 0;
+    var h = major ? 12 : 8;
+    html +=
+      '<line class="nlp-tick' +
+      (major ? ' nlp-tick--major' : '') +
+      '" x1="' +
+      x +
+      '" y1="' +
+      (axisY - h) +
+      '" x2="' +
+      x +
+      '" y2="' +
+      (axisY + h) +
+      '"/>';
+    if (v === 0 || v === min || v === max || v % every === 0) {
+      html +=
+        '<text class="nlp-num nlp-num--' +
+        toneOf(v) +
+        '" x="' +
+        x +
+        '" y="' +
+        (axisY + 34) +
+        '">' +
+        fmtBulat(v) +
+        '</text>';
+    }
+  }
+
+  /* Busur lompatan. */
+  var pos = start;
+  var arcs = '';
+  var desc = [];
+  jumps.forEach(function (j) {
+    var tone = j.by >= 0 ? 'pos' : 'neg';
+    var from = pos;
+    var to = pos + j.by;
+    var xa = xOf(from);
+    var xb = xOf(to);
+    var label = j.label !== undefined ? j.label : (j.by > 0 ? '+' : '') + fmtBulat(j.by);
+    var peak;
+    if (opts.unitHops && j.by !== 0) {
+      var step = j.by > 0 ? 1 : -1;
+      for (var k = 0; k < Math.abs(j.by); k++) {
+        var ha = xOf(from + k * step);
+        var hb = xOf(from + (k + 1) * step);
+        arcs +=
+          '<path class="nlj-arc nlj-arc--' +
+          tone +
+          ' nlj-arc--hop" d="M' +
+          ha +
+          ',' +
+          (axisY - 8) +
+          ' Q' +
+          (ha + hb) / 2 +
+          ',' +
+          (axisY - 40) +
+          ' ' +
+          hb +
+          ',' +
+          (axisY - 8) +
+          '"' +
+          (k === Math.abs(j.by) - 1 ? ' marker-end="url(#' + id + '-mk-' + tone + ')"' : '') +
+          '/>';
+      }
+      peak = axisY - 48;
+    } else if (j.by !== 0) {
+      var tinggi = Math.min(70, 26 + Math.abs(xb - xa) * 0.12);
+      arcs +=
+        '<path class="nlj-arc nlj-arc--' +
+        tone +
+        '" d="M' +
+        xa +
+        ',' +
+        (axisY - 8) +
+        ' Q' +
+        (xa + xb) / 2 +
+        ',' +
+        (axisY - 8 - tinggi * 2) +
+        ' ' +
+        xb +
+        ',' +
+        (axisY - 8) +
+        '" marker-end="url(#' +
+        id +
+        '-mk-' +
+        tone +
+        ')"/>';
+      peak = axisY - 14 - tinggi;
+    }
+    if (j.by !== 0) {
+      arcs +=
+        '<text class="nlj-label nlj-label--' +
+        tone +
+        '" x="' +
+        (xa + xb) / 2 +
+        '" y="' +
+        Math.max(16, peak - 6) +
+        '">' +
+        esc(label) +
+        '</text>';
+    }
+    desc.push(j.by >= 0 ? 'melompat ' + j.by + ' ke kanan' : 'melompat ' + -j.by + ' ke kiri');
+    pos = to;
+  });
+  html += arcs;
+
+  /* Titik awal (cincin) & titik akhir. */
+  html +=
+    '<g class="nlj-start"><circle cx="' +
+    xOf(start) +
+    '" cy="' +
+    axisY +
+    '" r="9"/>' +
+    '<text class="nlj-start__label" x="' +
+    xOf(start) +
+    '" y="' +
+    (axisY + 54) +
+    '">' +
+    esc(opts.startLabel || 'mulai') +
+    '</text></g>';
+  if (jumps.length) {
+    html +=
+      '<g class="nlp-mark nlp-mark--' +
+      (showEnd ? toneOf(pos) : 'target') +
+      '"><circle cx="' +
+      xOf(pos) +
+      '" cy="' +
+      axisY +
+      '" r="9"/>' +
+      '<text class="nlj-end__label" x="' +
+      xOf(pos) +
+      '" y="' +
+      (axisY + 54) +
+      '">' +
+      (showEnd ? 'hasil' : '?') +
+      '</text></g>';
+  }
+
+  var lo = Math.min(start, pos);
+  var hi = Math.max(start, pos);
+  var fokus = (xOf((lo + hi) / 2) / W).toFixed(4);
+  var aria =
+    opts.aria ||
+    'Garis bilangan: mulai dari ' +
+      fmtBulat(start) +
+      (desc.length ? ', ' + desc.join(', ') : '') +
+      (jumps.length
+        ? showEnd
+          ? ', berhenti di ' + fmtBulat(pos)
+          : ', hasilnya belum ditampilkan'
+        : '');
+
+  return (
+    '<div class="nlp-wrap nlj-wrap">' +
+    '<svg class="nlp nlj" id="' +
+    id +
+    '" data-zero="' +
+    fokus +
+    '" viewBox="0 0 ' +
+    W +
+    ' ' +
+    H +
+    '" style="min-width:' +
+    Math.round(W * 0.62) +
+    'px" role="img" aria-label="' +
+    esc(aria) +
+    '">' +
+    html +
+    '</svg>' +
+    '</div>'
+  );
+}
+
+/*
+ * Stepper bilangan bulat ramah sentuh: [−] nilai [+].
+ *   id           awalan id (tombol: <id>Dec / <id>Inc)
+ *   label        teks label di atas stepper
+ *   value        nilai saat ini
+ *   opts.min/max batas (default −10 … 10)
+ * Pasang event dengan bindIntegerStepper().
+ */
+function buildIntegerStepper(id, label, value, opts) {
+  opts = opts || {};
+  var min = typeof opts.min === 'number' ? opts.min : -10;
+  var max = typeof opts.max === 'number' ? opts.max : 10;
+  return (
+    '<div class="int-stepper" role="group" aria-label="' +
+    esc(label) +
+    '">' +
+    '<span class="int-stepper__label">' +
+    esc(label) +
+    '</span>' +
+    '<div class="int-stepper__row">' +
+    '<button type="button" class="int-stepper__btn" id="' +
+    id +
+    'Dec" aria-label="Kurangi 1"' +
+    (value <= min ? ' disabled' : '') +
+    '>−</button>' +
+    '<output class="int-stepper__val int-stepper__val--' +
+    (value < 0 ? 'neg' : value > 0 ? 'pos' : 'zero') +
+    '" aria-live="polite">' +
+    fmtBulat(value) +
+    '</output>' +
+    '<button type="button" class="int-stepper__btn" id="' +
+    id +
+    'Inc" aria-label="Tambah 1"' +
+    (value >= max ? ' disabled' : '') +
+    '>+</button>' +
+    '</div>' +
+    '</div>'
+  );
+}
+
+/* onChange(delta) dipanggil dengan −1 atau +1. */
+function bindIntegerStepper(root, id, onChange) {
+  var dec = root.querySelector('#' + id + 'Dec');
+  var inc = root.querySelector('#' + id + 'Inc');
+  if (dec)
+    dec.addEventListener('click', function () {
+      onChange(-1);
+    });
+  if (inc)
+    inc.addEventListener('click', function () {
+      onChange(1);
+    });
+}
+
+/*
+ * Simulator operasi bilangan bulat: murid mengatur titik awal (a),
+ * tanda operasi (+ / −), dan bilangan kedua (b); media menggambar
+ * lompatannya pada garis bilangan beserta hasil dan bentuk setaranya.
+ *   id    id elemen pembungkus simulator
+ *   sim   { a, op, b } — state simulator (disimpan modul di State)
+ *   opts  { min, max, rangeA, rangeB, showResult }
+ *         rangeA/rangeB: {min,max} batas stepper (default −8 … 8)
+ *         showResult false → titik akhir "?" (murid menebak dulu)
+ * Pasang event dengan bindIntegerOpSimulator(); simulator merender
+ * ulang dirinya sendiri sehingga tahap tidak perlu dirender ulang.
+ */
+function buildIntegerOpSimulator(id, sim, opts) {
+  opts = opts || {};
+  var ra = opts.rangeA || { min: -8, max: 8 };
+  var rb = opts.rangeB || { min: -8, max: 8 };
+  var r = integerJumps(sim.a, sim.op, sim.b);
+  var showResult = opts.showResult !== false;
+  return (
+    '<div class="int-sim" id="' +
+    id +
+    '">' +
+    '<div class="int-sim__controls">' +
+    buildIntegerStepper(id + 'A', 'Titik awal', sim.a, ra) +
+    '<div class="int-stepper" role="group" aria-label="Operasi">' +
+    '<span class="int-stepper__label">Operasi</span>' +
+    '<div class="int-sim__ops">' +
+    '<button type="button" class="int-sim__op' +
+    (sim.op === '+' ? ' is-active' : '') +
+    '" data-sim-op="+" aria-pressed="' +
+    (sim.op === '+') +
+    '">+</button>' +
+    '<button type="button" class="int-sim__op' +
+    (sim.op === '-' ? ' is-active' : '') +
+    '" data-sim-op="-" aria-pressed="' +
+    (sim.op === '-') +
+    '">−</button>' +
+    '</div>' +
+    '</div>' +
+    buildIntegerStepper(id + 'B', 'Bilangan kedua', sim.b, rb) +
+    '</div>' +
+    '<p class="int-sim__expr">' +
+    '<span>' +
+    esc(fmtOperasiBulat(sim.a, sim.op, sim.b)) +
+    '</span>' +
+    (sim.op === '-' ? '<span class="int-sim__eq">= ' + esc(r.setara) + '</span>' : '') +
+    '<span class="int-sim__eq">= <strong>' +
+    (showResult ? fmtBulat(r.hasil) : '?') +
+    '</strong></span>' +
+    '</p>' +
+    buildNumberLineJumps(id + 'Line', {
+      min: opts.min,
+      max: opts.max,
+      start: sim.a,
+      jumps: [{ by: r.by }],
+      unitHops: true,
+      showEnd: showResult,
+    }) +
+    '<p class="int-sim__note">' +
+    (r.by > 0
+      ? 'Lompatan <strong>' + r.by + ' langkah ke kanan</strong>.'
+      : r.by < 0
+        ? 'Lompatan <strong>' + -r.by + ' langkah ke kiri</strong>.'
+        : 'Tidak ada lompatan — titiknya diam.') +
+    '</p>' +
+    '</div>'
+  );
+}
+
+/*
+ * Memasang event simulator. onChange(sim) dipanggil setelah nilai
+ * berubah (mis. untuk menyimpan State). Simulator merender ulang
+ * dirinya dan memulihkan fokus pada tombol yang sama.
+ */
+function bindIntegerOpSimulator(root, id, sim, opts, onChange) {
+  opts = opts || {};
+  var ra = opts.rangeA || { min: -8, max: 8 };
+  var rb = opts.rangeB || { min: -8, max: 8 };
+  var el = root.querySelector('#' + id);
+  if (!el) return;
+  function clamp(v, r) {
+    return Math.max(r.min, Math.min(r.max, v));
+  }
+  function refresh(focusSel) {
+    var wrap = document.createElement('div');
+    wrap.innerHTML = buildIntegerOpSimulator(id, sim, opts);
+    var baru = wrap.firstChild;
+    el.parentNode.replaceChild(baru, el);
+    if (onChange) onChange(sim);
+    bindIntegerOpSimulator(root, id, sim, opts, onChange);
+    centerNumberLines(baru);
+    var f = focusSel && baru.querySelector(focusSel);
+    if (f && !f.disabled) f.focus({ preventScroll: true });
+  }
+  bindIntegerStepper(el, id + 'A', function (d) {
+    sim.a = clamp(sim.a + d, ra);
+    refresh('#' + id + (d < 0 ? 'ADec' : 'AInc'));
+  });
+  bindIntegerStepper(el, id + 'B', function (d) {
+    sim.b = clamp(sim.b + d, rb);
+    refresh('#' + id + (d < 0 ? 'BDec' : 'BInc'));
+  });
+  el.querySelectorAll('[data-sim-op]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      sim.op = btn.getAttribute('data-sim-op');
+      refresh('[data-sim-op="' + sim.op + '"]');
+    });
+  });
 }

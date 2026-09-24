@@ -1,622 +1,287 @@
 /* =========================================================================
    fase-d/mpi-2.1/styles.css
-   Konsep Rasio & Menyederhanakan Perbandingan — Fase D (SMP)
+   Penjumlahan & Pengurangan Bilangan Bulat — Fase D (SMP)
 
-   Hanya memuat gaya yang KHAS modul ini. Seluruh dasar design system
-   (panel, tombol, kotak umpan balik, pilihan ganda, kartu ringkasan,
-   navigasi tahap, modal) berasal dari shared/base.css.
+   Hanya memuat gaya yang KHAS modul ini. Garis bilangan berlompatan,
+   simulator operasi, termometer, pilihan ganda, langkah isian, dan
+   komponen Discovery Learning lainnya berasal dari shared/base.css.
    ========================================================================= */
 
 /* -------------------------------------------------------------------------
-   Takaran es jeruk — bulatan gula & air
+   Stimulasi — cerita, termometer, dan kartu masalah serupa
    ------------------------------------------------------------------------- */
 
-.gelas-grid {
+.stimulasi-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-  gap: var(--space-4);
-  margin: var(--space-4) 0 var(--space-3);
-}
-
-.gelas-card {
-  background: var(--color-surface);
-  border: 2px solid var(--color-border);
-  border-radius: var(--radius-md);
-  padding: var(--space-4);
-}
-
-.gelas-card__title {
-  margin: 0 0 var(--space-3);
-  font-family: var(--font-display);
-  font-size: 1rem;
-}
-
-.gelas-card__ratio {
-  margin: var(--space-3) 0 0;
-  padding-top: var(--space-3);
-  border-top: 1px dashed var(--color-border);
-  font-family: var(--font-mono);
-  font-size: 1.15rem;
-  font-weight: 700;
-  text-align: center;
-  color: var(--color-primary-strong);
-}
-
-.takaran-row {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-  margin-bottom: var(--space-2);
-  flex-wrap: wrap;
-}
-
-.takaran-row__label {
-  flex: 0 0 38px;
-  font-size: 0.8rem;
-  font-weight: 600;
-  color: var(--color-ink-muted);
-}
-
-.takaran-row__count {
-  font-family: var(--font-mono);
-  font-size: 0.85rem;
-  font-weight: 700;
-  color: var(--color-ink-muted);
-}
-
-.takaran-dots {
-  display: inline-flex;
-  flex-wrap: wrap;
-  gap: var(--space-2);
+  grid-template-columns: 1fr auto;
+  gap: var(--space-5);
   align-items: center;
 }
 
-.takaran-group {
-  display: inline-flex;
-  gap: 3px;
-  padding: 2px 4px;
-  border: 1px dashed var(--color-border-strong);
-  border-radius: var(--radius-sm);
-}
-
-.takaran-dot {
-  display: inline-block;
-  width: 14px;
-  height: 14px;
-  border-radius: 50%;
-  flex-shrink: 0;
-}
-
-.takaran-dot--gula {
-  background: var(--color-orange);
-}
-
-.takaran-dot--air {
-  background: var(--color-blue);
-}
-
-.takaran-legend {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-  flex-wrap: wrap;
+.stimulasi-cerita {
   margin: 0;
-  font-size: 0.82rem;
-  color: var(--color-ink-muted);
-}
-
-/* -------------------------------------------------------------------------
-   Lencana rasio
-   ------------------------------------------------------------------------- */
-
-.rasio-badge {
-  display: inline-flex;
-  align-items: baseline;
-  gap: var(--space-1);
-  padding: var(--space-2) var(--space-4);
-  border-radius: var(--radius-md);
-  background: var(--color-primary-soft);
-  border: 2px solid var(--color-primary);
-  font-family: var(--font-mono);
-  font-size: 1.1rem;
-  font-weight: 700;
-  color: var(--color-primary-strong);
-  white-space: nowrap;
-}
-
-.rasio-badge__sep {
-  color: var(--color-ink-muted);
-}
-
-.rasio-badge--muted {
-  background: var(--color-bg-grid);
-  border-color: var(--color-border-strong);
-  color: var(--color-ink-muted);
-  font-size: 0.98rem;
-}
-
-.rasio-badge--hero {
-  background: var(--color-success-soft);
-  border-color: var(--color-success);
-  color: var(--color-success-strong);
-  font-size: 1.3rem;
-}
-
-/* -------------------------------------------------------------------------
-   Tahap 3 — tabel pengumpulan data
-   ------------------------------------------------------------------------- */
-
-.data-row {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--space-3);
-  padding: var(--space-3);
-  border: 2px solid var(--color-border);
-  border-radius: var(--radius-md);
-  margin-bottom: var(--space-3);
-  background: var(--color-surface);
-}
-
-.data-row--correct {
-  border-color: var(--color-success);
-  background: var(--color-success-soft);
-}
-
-.data-row--incorrect {
-  border-color: var(--color-error);
-  background: var(--color-error-soft);
-}
-
-.data-row__info {
-  flex: 1 1 220px;
-  min-width: 0;
-}
-
-.data-row__title {
-  margin: 0 0 2px;
-  font-family: var(--font-display);
-  font-size: 0.95rem;
-}
-
-.data-row__text {
-  margin: 0;
-  font-size: 0.85rem;
-  color: var(--color-ink-muted);
-}
-
-.data-row__fields {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-  flex-wrap: wrap;
-}
-
-.data-row__minta {
-  font-size: 0.78rem;
-  font-weight: 600;
-  color: var(--color-ink-muted);
-  background: var(--color-bg-grid);
-  padding: 2px var(--space-2);
-  border-radius: var(--radius-sm);
-}
-
-.data-row__input,
-.olah-pair .input-text,
-.konversi-row .input-text {
-  max-width: 88px;
-  font-family: var(--font-mono);
   font-size: 1.05rem;
-  text-align: center;
+  line-height: 1.6;
 }
 
-.data-row__sep,
-.olah-pair__sep {
-  font-family: var(--font-mono);
-  font-size: 1.2rem;
-  font-weight: 700;
-  color: var(--color-ink-muted);
+.stimulasi-thermo {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
 }
 
-.data-row__mark {
-  font-size: 1.2rem;
-  font-weight: 700;
-}
-
-.data-row__mark--ok {
-  color: var(--color-success);
-}
-
-.data-row__mark--no {
-  color: var(--color-error);
-}
-
-/* Tiga bentuk penulisan rasio */
-.bentuk-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-  gap: var(--space-3);
-}
-
-.bentuk-card {
+.suhu-tanya {
   display: flex;
   flex-direction: column;
-  gap: var(--space-1);
-  padding: var(--space-3);
-  background: var(--color-surface);
-  border: 2px solid var(--color-primary);
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-4);
+  border: 2px dashed var(--color-orange);
   border-radius: var(--radius-md);
-  text-align: center;
+  background: var(--color-surface);
 }
 
-.bentuk-card__form {
-  font-family: var(--font-mono);
-  font-size: 1.3rem;
-  font-weight: 700;
-  color: var(--color-primary-strong);
-}
-
-.bentuk-card__name {
+.suhu-tanya__naik {
   font-size: 0.85rem;
-  font-weight: 600;
+  font-weight: 700;
+  color: var(--color-orange-strong);
 }
 
-.bentuk-card__note {
-  font-size: 0.78rem;
+.suhu-tanya__val {
+  font-family: var(--font-mono);
+  font-size: 1.6rem;
+  font-weight: 700;
+}
+
+.suhu-tanya__cap {
+  font-size: 0.8rem;
   color: var(--color-ink-muted);
 }
 
-/* Butir pencocokan / uji konsep */
-.cocok-item {
-  padding-top: var(--space-4);
-  margin-top: var(--space-4);
-  border-top: 1px dashed var(--color-border);
+.teaser-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: var(--space-3);
 }
 
-.cocok-item:first-of-type {
-  padding-top: 0;
-  margin-top: 0;
-  border-top: none;
+.teaser-card {
+  display: flex;
+  gap: var(--space-3);
+  align-items: flex-start;
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-bg);
 }
 
-.cocok-item__q {
-  margin: 0 0 var(--space-3);
+.teaser-card p {
+  margin: 0;
   font-size: 0.95rem;
-  font-weight: 600;
-  line-height: 1.5;
+}
+
+.teaser-card__icon {
+  font-size: 1.6rem;
+  line-height: 1;
 }
 
 /* -------------------------------------------------------------------------
-   Tahap 4 & 5 — kasus penyederhanaan
+   Ekspresi operasi & kartu kasus
    ------------------------------------------------------------------------- */
 
-.olah-kasus {
-  border-left: 4px solid var(--color-border-strong);
+.op-expr {
+  margin: 0 0 var(--space-2);
+  font-family: var(--font-mono);
+  font-size: 1.4rem;
+  font-weight: 700;
+  text-align: center;
 }
 
 .olah-kasus--done {
-  border-left-color: var(--color-success);
+  border-color: var(--color-success);
 }
 
-.olah-kasus__head {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  gap: var(--space-2) var(--space-3);
+.banding-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: var(--space-3);
   margin-bottom: var(--space-3);
 }
 
-.olah-kasus__title {
-  margin: 0;
-  font-family: var(--font-display);
-  font-size: 1rem;
+.hitung-item + .hitung-item {
+  margin-top: var(--space-4);
 }
 
-.olah-kasus__konteks {
-  font-family: var(--font-mono);
-  font-size: 0.85rem;
-  color: var(--color-ink-muted);
-  background: var(--color-bg-grid);
-  padding: 2px var(--space-2);
-  border-radius: var(--radius-sm);
+.verif-grid {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: var(--space-5);
+  align-items: start;
 }
 
-.olah-kasus__teks {
-  margin: 0 0 var(--space-4);
-  font-size: 0.92rem;
-  line-height: 1.6;
-}
-
-.olah-form {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-4);
-  align-items: flex-end;
-}
-
-.olah-field {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-2);
-}
-
-.olah-field label {
-  font-size: 0.82rem;
-  font-weight: 600;
-  color: var(--color-ink-muted);
-}
-
-.olah-pair {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-}
-
-.olah-hasil {
-  margin-top: var(--space-2);
-}
-
-.olah-hasil__row {
-  display: flex;
-  align-items: center;
-  gap: var(--space-3);
-  flex-wrap: wrap;
-}
-
-.olah-hasil__arrow {
-  font-family: var(--font-mono);
-  font-size: 0.9rem;
-  font-weight: 700;
-  color: var(--color-ink-muted);
-}
-
-.olah-hasil__dots {
-  display: flex;
-  align-items: center;
-  gap: var(--space-3);
-  flex-wrap: wrap;
-  margin-top: var(--space-3);
-}
-
-.olah-hasil__dotlabel {
-  font-size: 0.8rem;
-  color: var(--color-ink-muted);
-}
-
-.olah-hasil__makna {
-  margin: var(--space-3) 0 0;
-  font-size: 0.88rem;
-  font-style: italic;
-  color: var(--color-success-strong);
-}
-
-/* Langkah bernomor pada tahap penyamaan satuan */
-.langkah {
-  display: flex;
-  gap: var(--space-3);
-  padding: var(--space-3) 0;
-  border-top: 1px dashed var(--color-border);
-}
-
-.langkah:first-of-type {
-  border-top: none;
-  padding-top: 0;
-}
-
-.langkah__num {
-  flex: 0 0 26px;
-  height: 26px;
-  border-radius: 50%;
-  background: var(--color-primary);
-  color: #fff;
-  font-size: 0.8rem;
-  font-weight: 700;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.langkah--done .langkah__num {
-  background: var(--color-success);
-}
-
-.langkah__body {
-  flex: 1 1 auto;
+.verif-grid__main {
   min-width: 0;
 }
 
-.langkah__label {
-  margin: 0 0 var(--space-2);
-  font-size: 0.9rem;
+.konteks-chip {
+  display: inline-block;
+  margin-bottom: var(--space-2);
+  padding: 2px var(--space-3);
+  border-radius: 999px;
+  background: var(--color-primary-soft);
+  color: var(--color-primary-strong);
+  font-size: 0.8rem;
   font-weight: 700;
 }
 
-.langkah__hint {
-  margin: 0 0 var(--space-3);
-  font-family: var(--font-mono);
-  font-size: 0.82rem;
-  color: var(--color-ink-muted);
-}
-
-.langkah__done-text {
-  margin: 0;
-  font-size: 0.9rem;
-}
-
-.konversi-row {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-  flex-wrap: wrap;
-  font-size: 0.92rem;
-}
-
 /* -------------------------------------------------------------------------
-   Tahap 6 — kartu pembuktian
+   Tabel percobaan & tabel pola pengurangan
    ------------------------------------------------------------------------- */
 
-.uji-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: var(--space-4);
+.table-scroll {
+  max-width: 100%;
+  overflow-x: auto;
 }
 
-.uji-card {
-  padding: var(--space-4);
-  border: 2px solid var(--color-border);
-  border-radius: var(--radius-md);
-  background: var(--color-surface);
-  text-align: center;
-}
-
-.uji-card--done {
-  border-color: var(--color-success);
-  background: var(--color-success-soft);
-}
-
-.uji-card__title {
-  margin: 0 0 var(--space-2);
-  font-family: var(--font-display);
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
   font-size: 0.95rem;
 }
 
-.uji-card__awal {
-  margin: 0 0 var(--space-3);
-  font-family: var(--font-mono);
-  font-size: 1.1rem;
+.data-table th,
+.data-table td {
+  padding: var(--space-2) var(--space-3);
+  border-bottom: 1px solid var(--color-border);
+  text-align: left;
+  vertical-align: middle;
+}
+
+.data-table th {
+  background: var(--color-bg);
+  font-size: 0.85rem;
   color: var(--color-ink-muted);
 }
 
-.uji-card__hasil {
-  margin: 0;
+.percobaan-table__op,
+.pola-table__op,
+.pola-table__hasil {
+  font-family: var(--font-mono);
+  font-size: 1.05rem;
+  font-weight: 700;
+  white-space: nowrap;
 }
 
-.uji-card .olah-pair {
-  justify-content: center;
+.percobaan-table__cell {
+  white-space: nowrap;
 }
 
-/* -------------------------------------------------------------------------
-   Tahap 7 — menyusun kalimat kesimpulan
-   ------------------------------------------------------------------------- */
-
-.simpulan-item {
-  display: flex;
-  gap: var(--space-3);
-  padding: var(--space-3);
-  border: 2px solid var(--color-border);
-  border-radius: var(--radius-md);
-  margin-bottom: var(--space-3);
+.percobaan-table__input {
+  width: 5.5rem;
+  text-align: center;
+  font-family: var(--font-mono);
 }
 
-.simpulan-item--correct {
+.percobaan-table__cell.sel--ok .percobaan-table__input {
   border-color: var(--color-success);
   background: var(--color-success-soft);
 }
 
-.simpulan-item--incorrect {
+.percobaan-table__cell.sel--no .percobaan-table__input {
   border-color: var(--color-error);
   background: var(--color-error-soft);
 }
 
-.simpulan-item__num {
-  flex: 0 0 26px;
-  height: 26px;
-  border-radius: 50%;
-  background: var(--color-purple);
-  color: #fff;
-  font-size: 0.8rem;
+.percobaan-table__mark {
+  margin-left: var(--space-2);
   font-weight: 700;
-  display: flex;
-  align-items: center;
-  justify-content: center;
 }
 
-.simpulan-item__body {
-  flex: 1 1 auto;
-  min-width: 0;
+.percobaan-table__mark--ok,
+.pola-table__ok {
+  color: var(--color-success);
 }
 
-.simpulan-item__awal {
-  display: block;
-  margin-bottom: var(--space-2);
-  font-size: 0.95rem;
-  font-weight: 600;
-  line-height: 1.5;
+.percobaan-table__mark--no {
+  color: var(--color-error);
 }
 
-.simpulan-item__note {
-  margin: var(--space-2) 0 0;
-  font-size: 0.82rem;
-  color: var(--color-error-strong);
+.pola-table .dl-step {
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.pola-table .dl-step__label:empty {
+  display: none;
+}
+
+.pola-table__row--done td {
+  background: var(--color-success-soft);
 }
 
 /* -------------------------------------------------------------------------
-   Tahap 8 — soal uji terap (dirender createExerciseStage)
+   Selesai — kartu aturan
    ------------------------------------------------------------------------- */
 
-.ex-exercise {
-  margin-top: var(--space-2);
-}
-
-.ex-input-row {
-  display: flex;
-  align-items: center;
+.aturan-duo {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
   gap: var(--space-3);
-  flex-wrap: wrap;
+  max-width: 640px;
+  margin: 0 auto var(--space-5);
 }
 
-.ex-input-row .input-text {
-  max-width: 140px;
+.aturan-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  padding: var(--space-3) var(--space-4);
+  border: 2px solid var(--color-border-strong);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
   font-family: var(--font-mono);
-  font-size: 1.15rem;
-  text-align: center;
+  font-size: 1.05rem;
+  font-weight: 700;
 }
 
-.terap-prompt {
-  margin-bottom: var(--space-4);
+.aturan-card--pos {
+  border-color: var(--color-orange);
+  color: var(--color-orange-strong);
 }
 
-.terap-prompt__cerita {
-  margin: 0 0 var(--space-2);
-  font-size: 0.92rem;
-  line-height: 1.6;
+.aturan-card--neg {
+  border-color: var(--color-blue);
+  color: var(--color-blue-strong);
+}
+
+.aturan-card__label {
+  font-family: var(--font-display);
+  font-size: 0.78rem;
   color: var(--color-ink-muted);
 }
 
-.terap-prompt__tanya {
-  margin: 0;
-  font-size: 1rem;
-  font-weight: 600;
-  line-height: 1.55;
-}
-
 /* -------------------------------------------------------------------------
-   Layar kecil
+   Responsif
    ------------------------------------------------------------------------- */
 
-@media (max-width: 560px) {
-  .data-row,
-  .data-row__fields {
-    justify-content: flex-start;
+@media (max-width: 640px) {
+  .stimulasi-grid,
+  .verif-grid {
+    grid-template-columns: 1fr;
   }
 
-  .data-row__info {
-    flex: 1 1 100%;
+  .stimulasi-thermo,
+  .verif-grid > .thermo {
+    justify-content: center;
+    margin: 0 auto;
   }
 
-  .olah-form {
-    flex-direction: column;
-    align-items: stretch;
-    gap: var(--space-3);
+  .op-expr {
+    font-size: 1.2rem;
   }
 
-  .olah-hasil__row {
-    gap: var(--space-2);
-  }
-
-  .takaran-dot {
-    width: 12px;
-    height: 12px;
+  .data-table th,
+  .data-table td {
+    padding: var(--space-2);
   }
 }
