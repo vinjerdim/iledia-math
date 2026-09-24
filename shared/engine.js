@@ -48,6 +48,9 @@
        tabungan, format rupiah/persen, isian angka gaya Indonesia)
    23. Bunga majemuk: barisan & deret geometri pada modal (nilai
        akhir, konversi periode, simulator bunga majemuk)
+   24. Perbandingan bunga tunggal & majemuk (saldo berdampingan,
+       periode menyalip, tawaran terbaik untuk menabung/meminjam,
+       duel tawaran)
    ============================================================ */
 
 /* ============================================================
@@ -6631,6 +6634,247 @@ function bindCompoundSimulator(root, id, st, opts, save, rerender) {
   root.querySelectorAll('[data-sim-id="' + id + '"][data-sim-key]').forEach(function (btn) {
     btn.addEventListener('click', function () {
       if (ubahCompoundSim(st, btn.dataset.simKey, +btn.dataset.simStep, opts)) {
+        save();
+        rerender();
+      }
+    });
+  });
+}
+
+/* ============================================================
+   24. PERBANDINGAN BUNGA TUNGGAL & BUNGA MAJEMUK
+   Membandingkan dua tawaran dengan modal awal sama:
+     • bunga tunggal  Mₙ = M₀(1 + n × i)  → saldo naik tetap
+       (barisan aritmetika),
+     • bunga majemuk  Mₙ = M₀(1 + i)ⁿ     → saldo naik makin cepat
+       (barisan geometri).
+   Suku bunga tunggal yang lebih tinggi bisa unggul di awal, tetapi
+   bunga majemuk akhirnya menyalip. Tawaran "terbaik" bergantung pada
+   tujuan: menabung → saldo terbesar, meminjam → total bayar terkecil.
+   Juga memuat komponen "duel tawaran" (tombol −/+ banyak periode,
+   dua kartu saldo berdampingan, penanda unggul, selisih, grafik
+   opsional). Gaya .interest-duel* ada di shared/base.css.
+   ============================================================ */
+
+/* Saldo kedua jenis bunga pada periode n beserta selisih & yang unggul. */
+function bandingTawaran(M0, iTunggal, iMajemuk, n) {
+  var t = nilaiAkhirBungaTunggal(M0, iTunggal, n);
+  var m = nilaiAkhirBungaMajemuk(M0, iMajemuk, n);
+  var sama = hampirSama(t, m);
+  return {
+    tunggal: t,
+    majemuk: m,
+    selisih: sama ? 0 : bulatkanUang(Math.abs(m - t)),
+    unggul: sama ? 'sama' : m > t ? 'majemuk' : 'tunggal',
+  };
+}
+
+/* Periode pertama (1..maxN) saat saldo majemuk > saldo tunggal; null bila belum. */
+function periodeMenyalip(M0, iTunggal, iMajemuk, maxN) {
+  for (var n = 1; n <= maxN; n++) {
+    if (bandingTawaran(M0, iTunggal, iMajemuk, n).unggul === 'majemuk') return n;
+  }
+  return null;
+}
+
+/* Saldo akhir (atau total pinjaman) satu tawaran { jenis, M0, i } setelah n periode. */
+function nilaiTawaran(t, n) {
+  return t.jenis === 'majemuk'
+    ? nilaiAkhirBungaMajemuk(t.M0, t.i, n)
+    : nilaiAkhirBungaTunggal(t.M0, t.i, n);
+}
+
+/*
+ * Tawaran terbaik setelah n periode.
+ *   list    [{ id, jenis: 'tunggal'|'majemuk', M0, i }]
+ *   tujuan  'simpan' → nilai terbesar (menabung/investasi),
+ *           'pinjam' → nilai terkecil (total yang harus dibayar)
+ * Mengembalikan { id, nilai }.
+ */
+function tawaranTerbaik(list, n, tujuan) {
+  var best = null;
+  list.forEach(function (t) {
+    var v = nilaiTawaran(t, n);
+    var lebihBaik = !best || (tujuan === 'pinjam' ? v < best.nilai : v > best.nilai);
+    if (lebihBaik) best = { id: t.id, nilai: v };
+  });
+  return best;
+}
+
+/*
+ * Duel tawaran: bunga tunggal vs bunga majemuk dengan modal sama.
+ *   opts.M0       modal awal (rupiah)
+ *   opts.tunggal  { nama, i } tawaran bunga tunggal (i desimal)
+ *   opts.majemuk  { nama, i } tawaran bunga majemuk
+ *   opts.maxN     banyak periode terbesar (default 8)
+ *   opts.periode  nama satuan periode (default 'Tahun')
+ *   opts.grafik   true → sertakan grafik batang saldo periode 1..n
+ * State (makeInterestDuelState): { n, ubah, maks } — `ubah` menghitung
+ * perubahan yang benar-benar terjadi dan `maks` periode terbesar yang
+ * pernah dilihat, sehingga app dapat mensyaratkan eksplorasi.
+ */
+function makeInterestDuelState() {
+  return { n: 1, ubah: 0, maks: 1 };
+}
+
+/* Mengubah banyak periode sebesar `step`; mengembalikan true bila berubah. */
+function ubahInterestDuel(st, step, opts) {
+  var maxN = opts.maxN || 8;
+  var baru = Math.min(maxN, Math.max(1, st.n + step));
+  if (baru === st.n) return false;
+  st.n = baru;
+  st.ubah = (st.ubah || 0) + 1;
+  st.maks = Math.max(st.maks || 1, baru);
+  return true;
+}
+
+function buildInterestDuel(id, st, opts) {
+  var maxN = opts.maxN || 8;
+  var periode = opts.periode || 'Tahun';
+  var n = st.n;
+  var b = bandingTawaran(opts.M0, opts.tunggal.i, opts.majemuk.i, n);
+
+  function tombol(step, simbol, aria) {
+    var mentok = step < 0 ? n <= 1 : n >= maxN;
+    return (
+      '<button type="button" class="compound-sim__btn" data-duel-id="' +
+      esc(id) +
+      '" data-duel-step="' +
+      step +
+      '" aria-label="' +
+      esc(aria) +
+      '"' +
+      (mentok ? ' disabled' : '') +
+      '>' +
+      simbol +
+      '</button>'
+    );
+  }
+
+  function kartu(jenis, t, saldo, rumus) {
+    var menang = b.unggul === jenis;
+    return (
+      '<div class="interest-duel__card interest-duel__card--' +
+      jenis +
+      (menang ? ' interest-duel__card--win' : '') +
+      '">' +
+      '<span class="interest-duel__name">' +
+      esc(t.nama) +
+      '</span>' +
+      '<span class="interest-duel__rule">Bunga ' +
+      jenis +
+      ' ' +
+      esc(formatPersen(t.i)) +
+      '</span>' +
+      '<span class="interest-duel__formula">' +
+      rumus +
+      '</span>' +
+      '<strong class="interest-duel__saldo">' +
+      esc(formatRupiah(saldo)) +
+      '</strong>' +
+      (menang ? '<span class="interest-duel__badge">🏆 Unggul</span>' : '') +
+      '</div>'
+    );
+  }
+
+  var M0 = formatRupiah(opts.M0);
+  var sub = subskrip(n);
+  var hasil =
+    b.unggul === 'sama'
+      ? 'Saldo kedua tawaran sama besar.'
+      : '<strong>' +
+        esc(b.unggul === 'tunggal' ? opts.tunggal.nama : opts.majemuk.nama) +
+        '</strong> unggul ' +
+        esc(formatRupiah(b.selisih)) +
+        '.';
+
+  var grafik = '';
+  if (opts.grafik) {
+    var sT = [];
+    var sM = [];
+    for (var k = 1; k <= n; k++) {
+      sT.push(nilaiAkhirBungaTunggal(opts.M0, opts.tunggal.i, k));
+      sM.push(nilaiAkhirBungaMajemuk(opts.M0, opts.majemuk.i, k));
+    }
+    grafik = buildCompareBarChart(
+      [
+        { label: opts.tunggal.nama + ' (tunggal)', values: sT },
+        { label: opts.majemuk.nama + ' (majemuk)', values: sM },
+      ],
+      {
+        format: function (v) {
+          return formatDesimal(v / 1000000, 1) + ' jt';
+        },
+        highlight: n - 1,
+        caption: 'Grafik saldo kedua tawaran dari ' + periode.toLowerCase() + ' 1 sampai ' + n,
+      }
+    );
+  }
+
+  return (
+    '<div class="interest-duel" id="' +
+    esc(id) +
+    '">' +
+    '<div class="compound-sim__ctrl interest-duel__ctrl">' +
+    '<span class="compound-sim__ctrl-label">Banyak periode n (' +
+    esc(periode.toLowerCase()) +
+    ')</span>' +
+    '<div class="compound-sim__stepper">' +
+    tombol(-1, '−', 'Kurangi banyak periode') +
+    '<span class="compound-sim__val">' +
+    esc(periode + ' ' + n) +
+    '</span>' +
+    tombol(1, '+', 'Tambah banyak periode') +
+    '</div>' +
+    '</div>' +
+    '<div class="interest-duel__arena" aria-live="polite">' +
+    kartu(
+      'tunggal',
+      opts.tunggal,
+      b.tunggal,
+      'M' +
+        sub +
+        ' = ' +
+        esc(M0) +
+        ' × (1 + ' +
+        n +
+        ' × ' +
+        esc(formatDesimal(opts.tunggal.i, 4)) +
+        ')'
+    ) +
+    '<span class="interest-duel__vs" aria-hidden="true">VS</span>' +
+    kartu(
+      'majemuk',
+      opts.majemuk,
+      b.majemuk,
+      'M' +
+        sub +
+        ' = ' +
+        esc(M0) +
+        ' × ' +
+        esc(formatRatio(1 + opts.majemuk.i)) +
+        '<sup>' +
+        n +
+        '</sup>'
+    ) +
+    '<p class="interest-duel__result">' +
+    esc(periode) +
+    ' ke-' +
+    n +
+    ': ' +
+    hasil +
+    '</p>' +
+    '</div>' +
+    grafik +
+    '</div>'
+  );
+}
+
+/* Memasang tombol −/+ duel tawaran; `save` lalu `rerender` dipanggil setelah berubah. */
+function bindInterestDuel(root, id, st, opts, save, rerender) {
+  root.querySelectorAll('[data-duel-id="' + id + '"][data-duel-step]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      if (ubahInterestDuel(st, +btn.dataset.duelStep, opts)) {
         save();
         rerender();
       }

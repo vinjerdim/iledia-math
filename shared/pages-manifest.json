@@ -152,5 +152,13 @@
     "h1": "Bunga Majemuk dengan Barisan & Deret Geometri",
     "stageCount": 11,
     "extraBody": "partials/reset-modal.html"
+  },
+  "fase-f/mpi-3.3": {
+    "title": "Membandingkan Bunga Tunggal & Bunga Majemuk — Matematika Fase F",
+    "description": "Media pembelajaran interaktif berbasis Problem Based Learning untuk membandingkan bunga tunggal dan bunga majemuk serta menyelesaikan masalah keuangan kontekstual yang melibatkan keduanya secara tepat.",
+    "kicker": "Matematika — Fase F (SMK RPL)",
+    "h1": "Membandingkan Bunga Tunggal & Bunga Majemuk",
+    "stageCount": 9,
+    "extraBody": "partials/reset-modal.html"
   }
 }
