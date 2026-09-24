@@ -53,6 +53,9 @@
        duel tawaran)
    25. Relasi antara dua himpunan (pasangan berurutan, diagram
        panah interaktif, tabel silang & tabel daftar, chip pasangan)
+   26. Kekongruenan bangun datar (ukur sisi & sudut, kertas jiplak
+       putar/balik, korespondensi titik bersesuaian, kongruen vs
+       sebangun, papan ukur, tabel perbandingan)
    ============================================================ */
 
 /* ============================================================
@@ -7490,4 +7493,1009 @@ function bindPairChips(root, id, st, onChange) {
     });
   });
   relFokusKembali(root, id, 'data-rel-chip');
+}
+
+/* ============================================================
+   26. KEKONGRUENAN BANGUN DATAR
+   Bangun datar = { id, nama, titik: ['A','B',…], pts: [[x,y],…] }
+   dengan koordinat dalam cm (sumbu y ke bawah, seperti layar).
+   Titik didaftar berurutan mengelilingi bangun; sisi ke-i adalah
+   ruas titik i → titik i+1, sudut ke-i adalah sudut dalam di titik i.
+     • ukur        sisiPoligon, sudutPoligon, kelilingPoligon
+     • jiplak      transformPoligon, posisiJiplak, jiplakBerimpit,
+                   cariPosisiBerimpit, jiplakAksi, perbaruiBerimpit
+     • bersesuaian cariKorespondensi, klasifikasiBangun,
+                   barisBersesuaian, notasiBersesuaian
+     • komponen    buildShapeSVG, buildShapePair, buildTracingBoard,
+                   buildMeasureBoard, buildCompareTable
+   Fungsi murni diuji di tests/engine-kongruen.test.js.
+   Gaya .kgr-* ada di shared/base.css.
+   ============================================================ */
+
+var KGR_TOL_SISI = 0.001; /* toleransi relatif perbandingan panjang */
+var KGR_TOL_SUDUT = 0.5; /* toleransi derajat perbandingan sudut */
+var KGR_SKALA = 26; /* px per cm pada gambar */
+
+function jarakTitik(a, b) {
+  return Math.sqrt((a[0] - b[0]) * (a[0] - b[0]) + (a[1] - b[1]) * (a[1] - b[1]));
+}
+
+/* Panjang setiap sisi: sisi ke-i = titik i → titik i+1. */
+function sisiPoligon(pts) {
+  return pts.map(function (p, i) {
+    return jarakTitik(p, pts[(i + 1) % pts.length]);
+  });
+}
+
+function kelilingPoligon(pts) {
+  return sisiPoligon(pts).reduce(function (s, v) {
+    return s + v;
+  }, 0);
+}
+
+/* Luas bertanda (rumus tali sepatu); tandanya menunjukkan arah keliling. */
+function luasBertanda(pts) {
+  var s = 0;
+  pts.forEach(function (p, i) {
+    var q = pts[(i + 1) % pts.length];
+    s += p[0] * q[1] - q[0] * p[1];
+  });
+  return s / 2;
+}
+
+/* Sudut dalam (derajat) di setiap titik sudut; aman untuk sudut refleks. */
+function sudutPoligon(pts) {
+  var n = pts.length;
+  var orientasi = luasBertanda(pts) >= 0 ? 1 : -1;
+  return pts.map(function (v, i) {
+    var a = pts[(i - 1 + n) % n];
+    var b = pts[(i + 1) % n];
+    var u = [a[0] - v[0], a[1] - v[1]];
+    var w = [b[0] - v[0], b[1] - v[1]];
+    var cos = (u[0] * w[0] + u[1] * w[1]) / (Math.hypot(u[0], u[1]) * Math.hypot(w[0], w[1]));
+    var deg = (Math.acos(Math.max(-1, Math.min(1, cos))) * 180) / Math.PI;
+    /* cross(w, u) searah orientasi keliling → sudut cembung */
+    var cross = w[0] * u[1] - w[1] * u[0];
+    return cross * orientasi < -1e-12 ? 360 - deg : deg;
+  });
+}
+
+function pusatPoligon(pts) {
+  var sx = 0;
+  var sy = 0;
+  pts.forEach(function (p) {
+    sx += p[0];
+    sy += p[1];
+  });
+  return [sx / pts.length, sy / pts.length];
+}
+
+function bulatKgr(v) {
+  return Math.round(v * 1e9) / 1e9;
+}
+
+/*
+ * Transformasi jiplakan terhadap pusat bangun: t.cermin (balik kiri-kanan),
+ * lalu t.rotasi (derajat, searah jarum jam di layar), lalu t.geser [dx, dy].
+ */
+function transformPoligon(pts, t) {
+  t = t || {};
+  var c = pusatPoligon(pts);
+  var rad = ((t.rotasi || 0) * Math.PI) / 180;
+  var cos = Math.cos(rad);
+  var sin = Math.sin(rad);
+  var g = t.geser || [0, 0];
+  return pts.map(function (p) {
+    var x = t.cermin ? 2 * c[0] - p[0] : p[0];
+    var dx = x - c[0];
+    var dy = p[1] - c[1];
+    return [
+      bulatKgr(c[0] + dx * cos - dy * sin + g[0]),
+      bulatKgr(c[1] + dx * sin + dy * cos + g[1]),
+    ];
+  });
+}
+
+/* Dua poligon berimpit bila himpunan titik sudutnya sama (urutan bebas). */
+function poligonBerimpit(p, q, tol) {
+  var t = typeof tol === 'number' ? tol : 0.01;
+  if (p.length !== q.length) return false;
+  var dipakai = [];
+  return p.every(function (a) {
+    for (var j = 0; j < q.length; j++) {
+      if (!dipakai[j] && jarakTitik(a, q[j]) <= t) {
+        dipakai[j] = true;
+        return true;
+      }
+    }
+    return false;
+  });
+}
+
+/*
+ * Mencari pemetaan titik sudut p → q sehingga sudut bersesuaian sama
+ * besar dan sisi bersesuaian sebanding. Mengembalikan
+ *   { map, skala, arah }   map[i] = indeks titik q yang bersesuaian
+ *                          dengan titik i pada p; skala = sisi q ÷ sisi p;
+ *                          arah = 1 (searah) atau −1 (bayangan cermin)
+ * atau null. opts.kongruen → hanya pemetaan dengan skala 1.
+ */
+function cariKorespondensi(p, q, opts) {
+  opts = opts || {};
+  var n = p.length;
+  if (!n || q.length !== n) return null;
+  var sp = sisiPoligon(p);
+  var ap = sudutPoligon(p);
+  var aq = sudutPoligon(q);
+  var arah = luasBertanda(p) * luasBertanda(q) < 0 ? -1 : 1;
+  var dirs = [1, -1];
+  for (var di = 0; di < 2; di++) {
+    for (var k = 0; k < n; k++) {
+      var map = [];
+      for (var i = 0; i < n; i++) map.push((((k + dirs[di] * i) % n) + n) % n);
+      var cocok = map.every(function (j, i2) {
+        return Math.abs(ap[i2] - aq[j]) <= KGR_TOL_SUDUT;
+      });
+      if (!cocok) continue;
+      var skala = jarakTitik(q[map[0]], q[map[1 % n]]) / sp[0];
+      cocok = map.every(function (j, i2) {
+        var r = jarakTitik(q[j], q[map[(i2 + 1) % n]]) / sp[i2];
+        return Math.abs(r - skala) <= KGR_TOL_SISI * skala;
+      });
+      if (!cocok) continue;
+      if (opts.kongruen && Math.abs(skala - 1) > KGR_TOL_SISI) continue;
+      return { map: map, skala: skala, arah: arah };
+    }
+  }
+  return null;
+}
+
+/* 'kongruen' | 'sebangun' (sebangun tetapi tidak kongruen) | 'tidak' */
+function klasifikasiBangun(p, q) {
+  if (cariKorespondensi(p, q, { kongruen: true })) return 'kongruen';
+  if (cariKorespondensi(p, q)) return 'sebangun';
+  return 'tidak';
+}
+
+/* Posisi jiplakan bangun asal yang ditempel di pusat bangun sasaran. */
+function posisiJiplak(asal, target, rotasi, cermin) {
+  var c1 = pusatPoligon(asal);
+  var c2 = pusatPoligon(target);
+  return transformPoligon(asal, {
+    rotasi: rotasi,
+    cermin: cermin,
+    geser: [c2[0] - c1[0], c2[1] - c1[1]],
+  });
+}
+
+function jiplakBerimpit(asal, target, rotasi, cermin) {
+  return poligonBerimpit(posisiJiplak(asal, target, rotasi, cermin), target);
+}
+
+/* Putaran (kelipatan `langkah`) & balik yang membuat jiplakan berimpit; null bila mustahil. */
+function cariPosisiBerimpit(asal, target, langkah) {
+  var step = langkah || 90;
+  var cermin = [false, true];
+  for (var c = 0; c < 2; c++) {
+    for (var r = 0; r < 360; r += step) {
+      if (jiplakBerimpit(asal, target, r, cermin[c])) return { rotasi: r, cermin: cermin[c] };
+    }
+  }
+  return null;
+}
+
+function makeJiplakState() {
+  return { dijiplak: false, target: null, rotasi: 0, cermin: false, berimpit: {} };
+}
+
+/* Memastikan state[key] berbentuk state kertas jiplak yang sah. */
+function ensureJiplakState(state, key, ids) {
+  var st = state[key] && typeof state[key] === 'object' ? state[key] : makeJiplakState();
+  var base = makeJiplakState();
+  st.dijiplak = !!st.dijiplak;
+  st.cermin = !!st.cermin;
+  st.rotasi = typeof st.rotasi === 'number' ? ((st.rotasi % 360) + 360) % 360 : 0;
+  if (st.target !== 'asal' && (ids || []).indexOf(st.target) === -1) st.target = null;
+  if (st.dijiplak && !st.target) st.target = 'asal';
+  if (!st.berimpit || typeof st.berimpit !== 'object') st.berimpit = base.berimpit;
+  state[key] = st;
+  return st;
+}
+
+/*
+ * Logika tombol kertas jiplak.
+ *   'jiplak'  menjiplak bangun asal (jiplakan di atas bangun asal)
+ *   'kiri' / 'kanan'  memutar jiplakan sebesar `langkah` derajat
+ *   'balik'   membalik jiplakan (cermin)
+ *   'tempel'  memindahkan jiplakan ke bangun `target`
+ *   'kembali' mengembalikan jiplakan ke bangun asal tanpa putar/balik
+ */
+function jiplakAksi(st, aksi, langkah, target) {
+  var step = langkah || 90;
+  if (aksi === 'jiplak') {
+    st.dijiplak = true;
+    st.target = 'asal';
+    return st;
+  }
+  if (!st.dijiplak) return st;
+  if (aksi === 'kiri') st.rotasi = (st.rotasi - step + 360) % 360;
+  else if (aksi === 'kanan') st.rotasi = (st.rotasi + step) % 360;
+  else if (aksi === 'balik') st.cermin = !st.cermin;
+  else if (aksi === 'tempel' && target) st.target = target;
+  else if (aksi === 'kembali') {
+    st.target = 'asal';
+    st.rotasi = 0;
+    st.cermin = false;
+  }
+  return st;
+}
+
+/*
+ * Memeriksa apakah jiplakan saat ini berimpit dengan bangun sasarannya
+ * (`cari` memetakan id → bangun) dan mencatatnya di st.berimpit.
+ */
+function perbaruiBerimpit(st, asal, cari) {
+  var tb = st.target === 'asal' ? asal : cari[st.target];
+  if (!st.dijiplak || !tb) return false;
+  var b = jiplakBerimpit(asal.pts, tb.pts, st.rotasi, st.cermin);
+  if (b && st.target !== 'asal') st.berimpit[st.target] = true;
+  return b;
+}
+
+function formatPanjang(v) {
+  return formatDesimal(v, 1) + ' cm';
+}
+
+function formatSudut(v) {
+  return Math.round(v) + '°';
+}
+
+function namaSisi(titik, i) {
+  return titik[i] + titik[(i + 1) % titik.length];
+}
+
+function namaSudut(titik, i) {
+  return '∠' + titik[i];
+}
+
+/* Daftar hal yang bisa diukur: sisi (s0, s1, …) lalu sudut (a0, a1, …). */
+function ukurItems(bangun) {
+  var sisi = sisiPoligon(bangun.pts);
+  var sudut = sudutPoligon(bangun.pts);
+  return sisi
+    .map(function (v, i) {
+      return { id: 's' + i, jenis: 'sisi', idx: i, nama: namaSisi(bangun.titik, i), nilai: v };
+    })
+    .concat(
+      sudut.map(function (v, i) {
+        return { id: 'a' + i, jenis: 'sudut', idx: i, nama: namaSudut(bangun.titik, i), nilai: v };
+      })
+    );
+}
+
+function makeUkurState() {
+  return { terukur: {}, terakhir: null };
+}
+
+function ensureUkurState(state, key) {
+  var st = state[key] && typeof state[key] === 'object' ? state[key] : makeUkurState();
+  if (!st.terukur || typeof st.terukur !== 'object') st.terukur = {};
+  if (typeof st.terakhir !== 'string') st.terakhir = null;
+  state[key] = st;
+  return st;
+}
+
+function ukurItem(st, id) {
+  st.terukur[id] = true;
+  st.terakhir = id;
+  return st;
+}
+
+function banyakTerukur(bangun, st) {
+  return ukurItems(bangun).filter(function (it) {
+    return !!st.terukur[it.id];
+  }).length;
+}
+
+function ukurSelesai(bangun, st) {
+  return banyakTerukur(bangun, st) === bangun.pts.length * 2;
+}
+
+/* Baris sisi & sudut bersesuaian p ↔ q menurut pemetaan `map`. */
+function barisBersesuaian(p, q, map) {
+  var n = p.pts.length;
+  var sp = sisiPoligon(p.pts);
+  var ap = sudutPoligon(p.pts);
+  var aq = sudutPoligon(q.pts);
+  var rows = [];
+  for (var i = 0; i < n; i++) {
+    var j1 = map[i];
+    var j2 = map[(i + 1) % n];
+    var lq = jarakTitik(q.pts[j1], q.pts[j2]);
+    rows.push({
+      jenis: 'sisi',
+      namaP: namaSisi(p.titik, i),
+      nilaiP: sp[i],
+      namaQ: q.titik[j1] + q.titik[j2],
+      nilaiQ: lq,
+      rasio: lq / sp[i],
+    });
+  }
+  for (var k = 0; k < n; k++) {
+    rows.push({
+      jenis: 'sudut',
+      namaP: namaSudut(p.titik, k),
+      nilaiP: ap[k],
+      namaQ: namaSudut(q.titik, map[k]),
+      nilaiQ: aq[map[k]],
+      rasio: aq[map[k]] / ap[k],
+    });
+  }
+  return rows;
+}
+
+/* Penulisan dengan urutan titik bersesuaian, mis. 'ABCD ≅ LMNK'. */
+function notasiBersesuaian(p, q, map, simbol) {
+  return (
+    p.titik.join('') +
+    ' ' +
+    simbol +
+    ' ' +
+    map
+      .map(function (j) {
+        return q.titik[j];
+      })
+      .join('')
+  );
+}
+
+/* ---------- Komponen gambar ---------- */
+
+function kgrNum(v) {
+  return String(Math.round(v * 10) / 10);
+}
+
+function kgrUnit(v) {
+  var len = Math.hypot(v[0], v[1]) || 1;
+  return [v[0] / len, v[1] / len];
+}
+
+/* Setengah sisi kotak gambar yang memuat semua bangun bila dipusatkan. */
+function kgrRadius(list) {
+  var r = 0;
+  list.forEach(function (b) {
+    var c = pusatPoligon(b.pts);
+    b.pts.forEach(function (p) {
+      r = Math.max(r, jarakTitik(p, c));
+    });
+  });
+  return r;
+}
+
+/* Pengali huruf agar nama titik tetap terbaca pada kotak gambar yang diperkecil. */
+function kgrBesarHurufKotak(r) {
+  return Math.max(1, (2 * r * KGR_SKALA) / 260);
+}
+
+function kgrDipilih(list, i) {
+  if (list === 'semua') return true;
+  return Array.isArray(list) && list.indexOf(i) !== -1;
+}
+
+/*
+ * Gambar SVG sebuah bangun datar.
+ *   opts.skala        px per cm (default 26)
+ *   opts.kotak        { cx, cy, r } (cm) → kotak gambar persegi berpusat di
+ *                     (cx, cy); default: kotak pembatas bangun + tepi
+ *   opts.warna        'a' | 'b' | 'c' | 'd' (warna isian)
+ *   opts.tampilSisi   'semua' | [indeks] — tulis panjang sisi
+ *   opts.tampilSudut  'semua' | [indeks] — gambar busur & besar sudut
+ *   opts.tanyaSisi, opts.tanyaSudut   indeks yang ditulis '?'
+ *   opts.labelSisi, opts.labelSudut   { indeks: teks } pengganti label
+ *   opts.sorot        id ukur ('s1', 'a2') yang disorot
+ *   opts.interaktif   id papan ukur → sisi & sudut bisa diketuk
+ *   opts.jiplak       { pts, titik, berimpit } lapisan jiplakan
+ *   opts.tanpaTitik   true → tanpa nama titik sudut
+ *   opts.besarHuruf   pengali ukuran & jarak nama titik (gambar yang diperkecil)
+ *   opts.judul        teks aksesibel
+ */
+function buildShapeSVG(bangun, opts) {
+  opts = opts || {};
+  var s = opts.skala || KGR_SKALA;
+  var fz = opts.besarHuruf || 1;
+  var fzAttr = fz === 1 ? '' : ' style="font-size:' + kgrNum(14 * fz) + 'px"';
+  var pts = bangun.pts;
+  var n = pts.length;
+  var c = pusatPoligon(pts);
+  var sisi = sisiPoligon(pts);
+  var sudut = sudutPoligon(pts);
+  var px = function (p) {
+    return [p[0] * s, p[1] * s];
+  };
+  var P = pts.map(px);
+  var C = px(c);
+  var vb;
+  if (opts.kotak) {
+    var r = opts.kotak.r * s;
+    vb = [opts.kotak.cx * s - r, opts.kotak.cy * s - r, 2 * r, 2 * r];
+  } else {
+    var xs = P.map(function (p) {
+      return p[0];
+    });
+    var ys = P.map(function (p) {
+      return p[1];
+    });
+    var pad = 30;
+    var x0 = Math.min.apply(null, xs) - pad;
+    var y0 = Math.min.apply(null, ys) - pad;
+    vb = [x0, y0, Math.max.apply(null, xs) + pad - x0, Math.max.apply(null, ys) + pad - y0];
+  }
+  var poly = function (arr) {
+    return arr
+      .map(function (p) {
+        return kgrNum(p[0]) + ',' + kgrNum(p[1]);
+      })
+      .join(' ');
+  };
+
+  var out = [];
+  out.push(
+    '<polygon class="kgr-poly kgr-poly--' + (opts.warna || 'a') + '" points="' + poly(P) + '"/>'
+  );
+
+  /* sisi yang disorot */
+  if (opts.sorot && opts.sorot.charAt(0) === 's') {
+    var si = parseInt(opts.sorot.slice(1), 10);
+    if (si >= 0 && si < n) {
+      var a1 = P[si];
+      var a2 = P[(si + 1) % n];
+      out.push(
+        '<line class="kgr-sorot" x1="' +
+          kgrNum(a1[0]) +
+          '" y1="' +
+          kgrNum(a1[1]) +
+          '" x2="' +
+          kgrNum(a2[0]) +
+          '" y2="' +
+          kgrNum(a2[1]) +
+          '"/>'
+      );
+    }
+  }
+
+  /* busur sudut & labelnya */
+  P.forEach(function (v, i) {
+    var tampil = kgrDipilih(opts.tampilSudut, i);
+    var tanya = opts.tanyaSudut === i;
+    var custom = opts.labelSudut && opts.labelSudut[i] !== undefined;
+    var sorot = opts.sorot === 'a' + i;
+    if (!tampil && !tanya && !custom && !sorot) return;
+    var u1 = kgrUnit([P[(i - 1 + n) % n][0] - v[0], P[(i - 1 + n) % n][1] - v[1]]);
+    var u2 = kgrUnit([P[(i + 1) % n][0] - v[0], P[(i + 1) % n][1] - v[1]]);
+    var ra = Math.min(16, 0.3 * Math.min(sisi[i] * s, sisi[(i - 1 + n) % n] * s));
+    var cls = 'kgr-arc' + (sorot ? ' kgr-arc--sorot' : '');
+    if (Math.abs(sudut[i] - 90) < 0.5) {
+      var q1 = [v[0] + u1[0] * ra * 0.8, v[1] + u1[1] * ra * 0.8];
+      var q2 = [q1[0] + u2[0] * ra * 0.8, q1[1] + u2[1] * ra * 0.8];
+      var q3 = [v[0] + u2[0] * ra * 0.8, v[1] + u2[1] * ra * 0.8];
+      out.push('<polyline class="' + cls + '" points="' + poly([q1, q2, q3]) + '"/>');
+    } else {
+      var b1 = [v[0] + u1[0] * ra, v[1] + u1[1] * ra];
+      var b2 = [v[0] + u2[0] * ra, v[1] + u2[1] * ra];
+      var sweep = u1[0] * u2[1] - u1[1] * u2[0] > 0 ? 1 : 0;
+      out.push(
+        '<path class="' +
+          cls +
+          '" d="M' +
+          kgrNum(b1[0]) +
+          ' ' +
+          kgrNum(b1[1]) +
+          ' A' +
+          kgrNum(ra) +
+          ' ' +
+          kgrNum(ra) +
+          ' 0 0 ' +
+          sweep +
+          ' ' +
+          kgrNum(b2[0]) +
+          ' ' +
+          kgrNum(b2[1]) +
+          '"/>'
+      );
+    }
+    if (tampil || tanya || custom) {
+      var bis = kgrUnit([u1[0] + u2[0], u1[1] + u2[1]]);
+      var jarak = ra + 14;
+      var teks = custom ? opts.labelSudut[i] : tanya ? '?' : formatSudut(sudut[i]);
+      out.push(
+        '<text class="kgr-label kgr-label--sudut' +
+          (tanya ? ' kgr-label--tanya' : '') +
+          '" x="' +
+          kgrNum(v[0] + bis[0] * jarak) +
+          '" y="' +
+          kgrNum(v[1] + bis[1] * jarak) +
+          '">' +
+          esc(teks) +
+          '</text>'
+      );
+    }
+  });
+
+  /* label panjang sisi, di luar bangun */
+  P.forEach(function (a, i) {
+    var tampil = kgrDipilih(opts.tampilSisi, i);
+    var tanya = opts.tanyaSisi === i;
+    var custom = opts.labelSisi && opts.labelSisi[i] !== undefined;
+    if (!tampil && !tanya && !custom) return;
+    var b = P[(i + 1) % n];
+    var m = [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2];
+    var nrm = kgrUnit([-(b[1] - a[1]), b[0] - a[0]]);
+    if (nrm[0] * (m[0] - C[0]) + nrm[1] * (m[1] - C[1]) < 0) nrm = [-nrm[0], -nrm[1]];
+    var teks = custom ? opts.labelSisi[i] : tanya ? '?' : formatPanjang(sisi[i]);
+    out.push(
+      '<text class="kgr-label kgr-label--sisi' +
+        (tanya ? ' kgr-label--tanya' : '') +
+        '" x="' +
+        kgrNum(m[0] + nrm[0] * 13) +
+        '" y="' +
+        kgrNum(m[1] + nrm[1] * 13) +
+        '">' +
+        esc(teks) +
+        '</text>'
+    );
+  });
+
+  /* nama titik sudut */
+  if (!opts.tanpaTitik && bangun.titik) {
+    P.forEach(function (v, i) {
+      var u = kgrUnit([v[0] - C[0], v[1] - C[1]]);
+      out.push(
+        '<text class="kgr-titik"' +
+          fzAttr +
+          ' x="' +
+          kgrNum(v[0] + u[0] * 14 * fz) +
+          '" y="' +
+          kgrNum(v[1] + u[1] * 14 * fz) +
+          '">' +
+          esc(bangun.titik[i]) +
+          '</text>'
+      );
+    });
+  }
+
+  /* lapisan jiplakan */
+  if (opts.jiplak) {
+    var J = opts.jiplak.pts.map(px);
+    var CJ = px(pusatPoligon(opts.jiplak.pts));
+    out.push(
+      '<polygon class="kgr-jiplak' +
+        (opts.jiplak.berimpit ? ' kgr-jiplak--berimpit' : '') +
+        '" points="' +
+        poly(J) +
+        '"/>'
+    );
+    if (opts.jiplak.titik) {
+      J.forEach(function (v, i) {
+        var u = kgrUnit([CJ[0] - v[0], CJ[1] - v[1]]);
+        out.push(
+          '<text class="kgr-jiplak__titik"' +
+            fzAttr +
+            ' x="' +
+            kgrNum(v[0] + u[0] * 13 * fz) +
+            '" y="' +
+            kgrNum(v[1] + u[1] * 13 * fz) +
+            '">' +
+            esc(opts.jiplak.titik[i]) +
+            '</text>'
+        );
+      });
+    }
+  }
+
+  /* bidang ketuk untuk alat ukur */
+  if (opts.interaktif) {
+    P.forEach(function (a, i) {
+      var b = P[(i + 1) % n];
+      out.push(
+        '<line class="kgr-hit" data-ukur-svg="' +
+          esc(opts.interaktif) +
+          '" data-ukur-id="s' +
+          i +
+          '" x1="' +
+          kgrNum(a[0]) +
+          '" y1="' +
+          kgrNum(a[1]) +
+          '" x2="' +
+          kgrNum(b[0]) +
+          '" y2="' +
+          kgrNum(b[1]) +
+          '"><title>Ukur sisi ' +
+          esc(namaSisi(bangun.titik, i)) +
+          '</title></line>'
+      );
+    });
+    P.forEach(function (v, i) {
+      var u = kgrUnit([C[0] - v[0], C[1] - v[1]]);
+      out.push(
+        '<circle class="kgr-hit kgr-hit--sudut" data-ukur-svg="' +
+          esc(opts.interaktif) +
+          '" data-ukur-id="a' +
+          i +
+          '" cx="' +
+          kgrNum(v[0] + u[0] * 12) +
+          '" cy="' +
+          kgrNum(v[1] + u[1] * 12) +
+          '" r="14"><title>Ukur ' +
+          esc(namaSudut(bangun.titik, i)) +
+          '</title></circle>'
+      );
+    });
+  }
+
+  var judul = opts.judul || (bangun.titik ? 'Bangun ' + bangun.titik.join('') : 'Bangun datar');
+  return (
+    '<svg class="kgr-svg" viewBox="' +
+    vb.map(kgrNum).join(' ') +
+    '" width="' +
+    kgrNum(vb[2]) +
+    '" role="img" aria-label="' +
+    esc(judul) +
+    '">' +
+    out.join('') +
+    '</svg>'
+  );
+}
+
+/*
+ * Dua bangun berdampingan dengan skala yang sama, untuk soal & pemilahan.
+ *   opts.p, opts.q  opsi buildShapeSVG untuk masing-masing bangun
+ *   opts.skala      px per cm untuk keduanya
+ */
+function buildShapePair(p, q, opts) {
+  opts = opts || {};
+  var sk = opts.skala || 20;
+  var fig = function (b, o, warna) {
+    return (
+      '<figure class="kgr-pair__item">' +
+      buildShapeSVG(b, Object.assign({ skala: sk, warna: warna }, o || {})) +
+      (b.nama ? '<figcaption>' + esc(b.nama) + '</figcaption>' : '') +
+      '</figure>'
+    );
+  };
+  return '<div class="kgr-pair">' + fig(p, opts.p, 'a') + fig(q, opts.q, 'b') + '</div>';
+}
+
+var KGR_LAST_FOCUS = {};
+
+function kgrFokusKembali(root, id) {
+  var sel = KGR_LAST_FOCUS[id];
+  if (!sel) return;
+  var el = root.querySelector(sel);
+  if (el && typeof el.focus === 'function' && !el.disabled) el.focus();
+}
+
+/*
+ * Papan kertas jiplak: bangun asal + bangun-bangun calon dalam kotak
+ * berukuran sama (skala sama), jiplakan transparan yang bisa ditempel,
+ * diputar, dan dibalik. `st` dari makeJiplakState()/ensureJiplakState().
+ *   opts.langkah   besar satu putaran (default 90)
+ *   opts.namaAsal  keterangan kartu bangun asal
+ */
+function buildTracingBoard(id, asal, calon, st, opts) {
+  opts = opts || {};
+  var step = opts.langkah || 90;
+  var semua = [asal].concat(calon);
+  var r = kgrRadius(semua) + 1.3;
+  var namaAsal = asal.titik.join('');
+  var sasaran = st.target === 'asal' ? asal : null;
+  calon.forEach(function (b) {
+    if (b.id === st.target) sasaran = b;
+  });
+  var berimpit =
+    st.dijiplak && sasaran ? jiplakBerimpit(asal.pts, sasaran.pts, st.rotasi, st.cermin) : false;
+  var btn = function (aksi, label, extra, disabled) {
+    return (
+      '<button type="button" class="btn btn--ghost btn--small kgr-btn" data-jiplak="' +
+      esc(id) +
+      '" data-jiplak-aksi="' +
+      aksi +
+      '"' +
+      (extra || '') +
+      (disabled ? ' disabled' : '') +
+      '>' +
+      label +
+      '</button>'
+    );
+  };
+
+  var cell = function (b, cellId, warna, label) {
+    var target = st.dijiplak && st.target === cellId;
+    var c = pusatPoligon(b.pts);
+    var jiplak = target
+      ? {
+          pts: posisiJiplak(asal.pts, b.pts, st.rotasi, st.cermin),
+          titik: asal.titik,
+          berimpit: berimpit,
+        }
+      : null;
+    var aksi =
+      cellId === 'asal'
+        ? st.dijiplak
+          ? btn(
+              'kembali',
+              '↩ Kembalikan ke sini',
+              '',
+              st.target === 'asal' && !st.rotasi && !st.cermin
+            )
+          : btn('jiplak', '✏️ Jiplak bangun ini', ' data-utama="1"')
+        : btn(
+            'tempel',
+            target ? '📌 Jiplakan di sini' : '📌 Tempel di sini',
+            ' data-jiplak-tempel="' + esc(cellId) + '"',
+            !st.dijiplak || target
+          );
+    return (
+      '<figure class="kgr-cell' +
+      (target ? ' is-target' : '') +
+      (st.berimpit[cellId] ? ' is-berimpit' : '') +
+      '">' +
+      '<figcaption class="kgr-cell__nama">' +
+      esc(label) +
+      (st.berimpit[cellId] ? ' <span class="kgr-cell__badge">✓ pernah berimpit</span>' : '') +
+      '</figcaption>' +
+      buildShapeSVG(b, {
+        kotak: { cx: c[0], cy: c[1], r: r },
+        warna: warna,
+        jiplak: jiplak,
+        besarHuruf: kgrBesarHurufKotak(r),
+      }) +
+      aksi +
+      '</figure>'
+    );
+  };
+
+  var status;
+  if (!st.dijiplak) {
+    status =
+      '✏️ Ketuk <strong>Jiplak</strong> untuk menjiplak bangun ' +
+      esc(namaAsal) +
+      ' pada kertas transparan.';
+  } else if (st.target === 'asal') {
+    status =
+      '📄 Jiplakan ' + esc(namaAsal) + ' masih di tempat asalnya. Tempelkan pada bangun lain.';
+  } else if (berimpit) {
+    status =
+      '✅ <strong>Berimpit!</strong> Jiplakan menutupi bangun ' +
+      esc(sasaran.titik.join('')) +
+      ' dengan tepat.';
+  } else {
+    status =
+      '🔄 Belum berimpit dengan bangun ' +
+      esc(sasaran ? sasaran.titik.join('') : '') +
+      '. Coba putar atau balik jiplakannya.';
+  }
+  var posisi = 'Putaran: ' + st.rotasi + '° searah jarum jam' + (st.cermin ? ' · dibalik' : '');
+
+  return (
+    '<div class="kgr-board" data-kgr-board="' +
+    esc(id) +
+    '">' +
+    '<div class="kgr-board__grid">' +
+    cell(asal, 'asal', 'a', opts.namaAsal || 'Bangun ' + namaAsal) +
+    calon
+      .map(function (b, i) {
+        return cell(
+          b,
+          b.id,
+          ['b', 'c', 'd', 'b', 'c'][i % 5],
+          b.nama || 'Bangun ' + b.titik.join('')
+        );
+      })
+      .join('') +
+    '</div>' +
+    '<div class="kgr-controls">' +
+    '<div class="kgr-toolbar" role="group" aria-label="Alat kertas jiplak">' +
+    btn('kiri', '↺ Putar kiri ' + step + '°', '', !st.dijiplak) +
+    btn('kanan', '↻ Putar kanan ' + step + '°', '', !st.dijiplak) +
+    btn('balik', '⇋ Balik jiplakan', '', !st.dijiplak) +
+    '</div>' +
+    '<p class="kgr-status' +
+    (berimpit && st.target !== 'asal' ? ' kgr-status--ok' : '') +
+    '" aria-live="polite">' +
+    status +
+    (st.dijiplak ? '<br><span class="kgr-status__pos">' + posisi + '</span>' : '') +
+    '</p>' +
+    '</div>' +
+    '</div>'
+  );
+}
+
+/* Memasang tombol papan jiplak; onChange(berimpitSekarang) setelah setiap aksi. */
+function bindTracingBoard(root, id, asal, calon, st, opts, onChange) {
+  opts = opts || {};
+  var cari = {};
+  calon.forEach(function (b) {
+    cari[b.id] = b;
+  });
+  root.querySelectorAll('[data-jiplak="' + id + '"]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var aksi = btn.dataset.jiplakAksi;
+      jiplakAksi(st, aksi, opts.langkah || 90, btn.dataset.jiplakTempel);
+      var b = perbaruiBerimpit(st, asal, cari);
+      KGR_LAST_FOCUS[id] =
+        aksi === 'tempel' || aksi === 'jiplak' || aksi === 'kembali'
+          ? '[data-jiplak="' + id + '"][data-jiplak-aksi="kanan"]'
+          : '[data-jiplak="' + id + '"][data-jiplak-aksi="' + aksi + '"]';
+      onChange(b);
+    });
+  });
+  kgrFokusKembali(root, id);
+}
+
+/*
+ * Papan ukur: penggaris (sisi) & busur (sudut) virtual. Ketuk sisi/sudut
+ * pada gambar atau tombolnya untuk membaca ukurannya.
+ * `st` dari makeUkurState()/ensureUkurState().
+ *   opts.warna, opts.judul, opts.skala
+ */
+function buildMeasureBoard(id, bangun, st, opts) {
+  opts = opts || {};
+  var items = ukurItems(bangun);
+  var sisiIdx = [];
+  var sudutIdx = [];
+  items.forEach(function (it) {
+    if (!st.terukur[it.id]) return;
+    (it.jenis === 'sisi' ? sisiIdx : sudutIdx).push(it.idx);
+  });
+  var akhir = null;
+  items.forEach(function (it) {
+    if (it.id === st.terakhir) akhir = it;
+  });
+  var chip = function (it) {
+    var done = !!st.terukur[it.id];
+    return (
+      '<button type="button" class="kgr-chip' +
+      (done ? ' is-done' : '') +
+      (it.id === st.terakhir ? ' is-last' : '') +
+      '" data-ukur="' +
+      esc(id) +
+      '" data-ukur-id="' +
+      it.id +
+      '" aria-label="Ukur ' +
+      (it.jenis === 'sisi' ? 'sisi ' : 'sudut ') +
+      esc(it.nama) +
+      (done
+        ? ', ' + esc(it.jenis === 'sisi' ? formatPanjang(it.nilai) : formatSudut(it.nilai))
+        : '') +
+      '">' +
+      esc(it.nama) +
+      (done
+        ? ' = <strong>' +
+          esc(it.jenis === 'sisi' ? formatPanjang(it.nilai) : formatSudut(it.nilai)) +
+          '</strong>'
+        : '') +
+      '</button>'
+    );
+  };
+  var jumlah = banyakTerukur(bangun, st);
+  var status = akhir
+    ? akhir.jenis === 'sisi'
+      ? '📏 Penggaris: panjang <strong>' +
+        esc(akhir.nama) +
+        ' = ' +
+        esc(formatPanjang(akhir.nilai)) +
+        '</strong>'
+      : '📐 Busur: besar <strong>' +
+        esc(akhir.nama) +
+        ' = ' +
+        esc(formatSudut(akhir.nilai)) +
+        '</strong>'
+    : '👆 Ketuk sebuah sisi atau sudut untuk mengukurnya.';
+  return (
+    '<div class="kgr-measure" data-kgr-measure="' +
+    esc(id) +
+    '">' +
+    (opts.judul ? '<h4 class="kgr-measure__judul">' + esc(opts.judul) + '</h4>' : '') +
+    '<div class="kgr-measure__gambar">' +
+    buildShapeSVG(bangun, {
+      skala: opts.skala,
+      warna: opts.warna,
+      tampilSisi: sisiIdx,
+      tampilSudut: sudutIdx,
+      sorot: st.terakhir,
+      interaktif: id,
+    }) +
+    '</div>' +
+    '<p class="kgr-status" aria-live="polite">' +
+    status +
+    '</p>' +
+    '<div class="kgr-chips" role="group" aria-label="Sisi">' +
+    '<span class="kgr-chips__label">📏 Sisi</span>' +
+    items
+      .filter(function (it) {
+        return it.jenis === 'sisi';
+      })
+      .map(chip)
+      .join('') +
+    '</div>' +
+    '<div class="kgr-chips" role="group" aria-label="Sudut">' +
+    '<span class="kgr-chips__label">📐 Sudut</span>' +
+    items
+      .filter(function (it) {
+        return it.jenis === 'sudut';
+      })
+      .map(chip)
+      .join('') +
+    '</div>' +
+    '<p class="kgr-measure__count">Terukur ' +
+    jumlah +
+    ' dari ' +
+    items.length +
+    '</p>' +
+    '</div>'
+  );
+}
+
+function bindMeasureBoard(root, id, st, onChange) {
+  var handler = function (el) {
+    el.addEventListener('click', function () {
+      ukurItem(st, el.dataset.ukurId);
+      KGR_LAST_FOCUS[id] = '[data-ukur="' + id + '"][data-ukur-id="' + el.dataset.ukurId + '"]';
+      onChange();
+    });
+  };
+  root.querySelectorAll('[data-ukur="' + id + '"]').forEach(handler);
+  root.querySelectorAll('[data-ukur-svg="' + id + '"]').forEach(handler);
+  kgrFokusKembali(root, id);
+}
+
+/*
+ * Tabel sisi & sudut bersesuaian p ↔ q.
+ *   opts.namaP, opts.namaQ  judul kolom (default nama titik)
+ *   opts.rasio              true → kolom perbandingan sisi (q ÷ p)
+ */
+function buildCompareTable(p, q, map, opts) {
+  opts = opts || {};
+  var rows = barisBersesuaian(p, q, map);
+  var namaP = opts.namaP || p.titik.join('');
+  var namaQ = opts.namaQ || q.titik.join('');
+  var ket = function (r) {
+    var sama = Math.abs(r.nilaiP - r.nilaiQ) <= (r.jenis === 'sisi' ? 0.01 : KGR_TOL_SUDUT);
+    if (sama) return '<span class="kgr-ket kgr-ket--sama">= sama</span>';
+    if (opts.rasio && r.jenis === 'sisi') {
+      return '<span class="kgr-ket kgr-ket--rasio">× ' + esc(formatDesimal(r.rasio, 2)) + '</span>';
+    }
+    return '<span class="kgr-ket kgr-ket--beda">≠ beda</span>';
+  };
+  var fmt = function (r, v) {
+    return r.jenis === 'sisi' ? formatPanjang(v) : formatSudut(v);
+  };
+  return (
+    '<div class="kgr-table-wrap"><table class="kgr-table">' +
+    '<thead><tr><th scope="col">' +
+    esc(namaP) +
+    '</th><th scope="col">Ukuran</th><th scope="col">' +
+    esc(namaQ) +
+    '</th><th scope="col">Ukuran</th><th scope="col">Keterangan</th></tr></thead><tbody>' +
+    rows
+      .map(function (r) {
+        return (
+          '<tr class="kgr-table__row--' +
+          r.jenis +
+          '"><th scope="row">' +
+          esc(r.namaP) +
+          '</th><td>' +
+          esc(fmt(r, r.nilaiP)) +
+          '</td><td><strong>' +
+          esc(r.namaQ) +
+          '</strong></td><td>' +
+          esc(fmt(r, r.nilaiQ)) +
+          '</td><td>' +
+          ket(r) +
+          '</td></tr>'
+        );
+      })
+      .join('') +
+    '</tbody></table></div>'
+  );
 }

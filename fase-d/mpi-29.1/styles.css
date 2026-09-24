@@ -1,0 +1,129 @@
+/* =========================================================================
+   fase-d/mpi-29.1/styles.css
+   Bangun Kongruen & Sifat-sifatnya — Fase D (SMP Kelas IX)
+
+   Hanya memuat gaya yang KHAS modul ini. Gambar bangun, papan kertas
+   jiplak, papan ukur, tabel perbandingan (.kgr-*), pilihan ganda, chip
+   konteks, dan komponen Discovery Learning lainnya berasal dari
+   shared/base.css.
+   ========================================================================= */
+
+/* -------------------------------------------------------------------------
+   Stimulasi — cerita & galeri ubin
+   ------------------------------------------------------------------------- */
+
+.stimulasi-cerita {
+  margin: 0 0 var(--space-4);
+  font-size: 1.05rem;
+  line-height: 1.6;
+}
+
+.kgr-cell.ubin-pecah {
+  border-style: dashed;
+  border-color: var(--color-error);
+}
+
+/* -------------------------------------------------------------------------
+   Mengukur & pembuktian — gambar acuan berimpit, bukti ukuran
+   ------------------------------------------------------------------------- */
+
+.kgr-ref-wrap {
+  max-width: 260px;
+  margin: 0 auto var(--space-4);
+}
+
+.kgr-bukti {
+  margin: calc(-1 * var(--space-2)) 0 var(--space-4);
+  padding: var(--space-2);
+  border-radius: var(--radius-md);
+  background: var(--color-bg);
+}
+
+.kgr-details summary {
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.kgr-details h4 {
+  margin: var(--space-3) 0 var(--space-1);
+}
+
+/* -------------------------------------------------------------------------
+   Kesimpulan — rangkuman kongruen vs sebangun
+   ------------------------------------------------------------------------- */
+
+.kgr-rangkum {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: var(--space-4);
+  margin-bottom: var(--space-4);
+}
+
+.kgr-rangkum h4 {
+  margin: 0 0 var(--space-2);
+  font-family: var(--font-display);
+  text-align: center;
+}
+
+/* -------------------------------------------------------------------------
+   Uji terap — gambar soal, satuan isian, petunjuk soal pilihan
+   ------------------------------------------------------------------------- */
+
+.kgr-soal-visual {
+  margin: var(--space-3) 0;
+}
+
+.kgr-suffix {
+  align-self: center;
+  font-weight: 700;
+  color: var(--color-ink-muted);
+}
+
+.soal-hint {
+  margin-top: var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-md);
+  background: var(--color-warning-soft);
+  color: var(--color-warning-strong);
+}
+
+.soal-hint summary {
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.soal-hint ul {
+  margin: var(--space-2) 0 0;
+  padding-left: var(--space-5);
+}
+
+/* -------------------------------------------------------------------------
+   Selesai — tiga ciri kongruen
+   ------------------------------------------------------------------------- */
+
+.sajian-trio {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--space-3);
+  margin: var(--space-4) 0;
+}
+
+.sajian-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-1);
+  min-width: 140px;
+  max-width: 200px;
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-md);
+  background: var(--color-primary-soft);
+  color: var(--color-primary-strong);
+  font-weight: 700;
+  text-align: center;
+}
+
+.sajian-card__ikon {
+  font-size: 1.4rem;
+}
