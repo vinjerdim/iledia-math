@@ -3,8 +3,10 @@
    Penjumlahan & Pengurangan Bilangan Bulat — Fase D (SMP)
 
    Hanya memuat gaya yang KHAS modul ini. Garis bilangan berlompatan,
-   simulator operasi, termometer, pilihan ganda, langkah isian, dan
-   komponen Discovery Learning lainnya berasal dari shared/base.css.
+   simulator operasi, termometer, pilihan ganda, langkah isian, kartu
+   masalah serupa (.teaser-*), ekspresi operasi (.op-expr), chip konteks,
+   tabel data, dan komponen Discovery Learning lainnya berasal dari
+   shared/base.css.
    ========================================================================= */
 
 /* -------------------------------------------------------------------------
@@ -58,43 +60,9 @@
   color: var(--color-ink-muted);
 }
 
-.teaser-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-  gap: var(--space-3);
-}
-
-.teaser-card {
-  display: flex;
-  gap: var(--space-3);
-  align-items: flex-start;
-  padding: var(--space-3) var(--space-4);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
-  background: var(--color-bg);
-}
-
-.teaser-card p {
-  margin: 0;
-  font-size: 0.95rem;
-}
-
-.teaser-card__icon {
-  font-size: 1.6rem;
-  line-height: 1;
-}
-
 /* -------------------------------------------------------------------------
    Ekspresi operasi & kartu kasus
    ------------------------------------------------------------------------- */
-
-.op-expr {
-  margin: 0 0 var(--space-2);
-  font-family: var(--font-mono);
-  font-size: 1.4rem;
-  font-weight: 700;
-  text-align: center;
-}
 
 .olah-kasus--done {
   border-color: var(--color-success);
@@ -122,45 +90,9 @@
   min-width: 0;
 }
 
-.konteks-chip {
-  display: inline-block;
-  margin-bottom: var(--space-2);
-  padding: 2px var(--space-3);
-  border-radius: 999px;
-  background: var(--color-primary-soft);
-  color: var(--color-primary-strong);
-  font-size: 0.8rem;
-  font-weight: 700;
-}
-
 /* -------------------------------------------------------------------------
    Tabel percobaan & tabel pola pengurangan
    ------------------------------------------------------------------------- */
-
-.table-scroll {
-  max-width: 100%;
-  overflow-x: auto;
-}
-
-.data-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 0.95rem;
-}
-
-.data-table th,
-.data-table td {
-  padding: var(--space-2) var(--space-3);
-  border-bottom: 1px solid var(--color-border);
-  text-align: left;
-  vertical-align: middle;
-}
-
-.data-table th {
-  background: var(--color-bg);
-  font-size: 0.85rem;
-  color: var(--color-ink-muted);
-}
 
 .percobaan-table__op,
 .pola-table__op,
@@ -274,14 +206,5 @@
   .verif-grid > .thermo {
     justify-content: center;
     margin: 0 auto;
-  }
-
-  .op-expr {
-    font-size: 1.2rem;
-  }
-
-  .data-table th,
-  .data-table td {
-    padding: var(--space-2);
   }
 }

@@ -33,6 +33,9 @@
        berdiagnosis, termometer bilangan bulat, papan info hasil karya
    17. Bilangan bulat: operasi penjumlahan & pengurangan (garis
        bilangan berlompatan, simulator operasi, stepper bilangan)
+   18. Bilangan bulat: perkalian, pembagian & urutan pengerjaan
+       (penjumlahan berulang, tabel aturan tanda, langkah operasi
+       campuran)
    ============================================================ */
 
 /* ============================================================
@@ -811,8 +814,8 @@ function createExerciseStage(cfg) {
       feedbackHTML = cfg.buildChoiceFeedback
         ? cfg.buildChoiceFeedback(s, ex)
         : ex.correct
-          ? buildFeedbackBox('success', '✓', '<strong>Benar!</strong> ' + s.explanation)
-          : buildFeedbackBox('error', '✗', '<strong>Belum tepat.</strong> ' + s.explanation);
+        ? buildFeedbackBox('success', '✓', '<strong>Benar!</strong> ' + s.explanation)
+        : buildFeedbackBox('error', '✗', '<strong>Belum tepat.</strong> ' + s.explanation);
     }
 
     return (
@@ -1426,8 +1429,8 @@ function readDlNumber(val, rational) {
       parsed.error === 'empty'
         ? 'Isi jawabanmu terlebih dahulu.'
         : rational
-          ? 'Tulis jawaban berupa bilangan, pecahan, atau desimal, mis. 3, 1/2, atau 0,5.'
-          : 'Tulis jawaban berupa bilangan bulat, mis. 12 atau −40.'
+        ? 'Tulis jawaban berupa bilangan, pecahan, atau desimal, mis. 3, 1/2, atau 0,5.'
+        : 'Tulis jawaban berupa bilangan bulat, mis. 12 atau −40.'
     );
     return null;
   }
@@ -4025,13 +4028,18 @@ function fmtBulat(n) {
 /*
  * Menuliskan operasi a op b dalam notasi baku; bilangan kedua yang
  * negatif diberi kurung: fmtOperasiBulat(5, '-', -2) → "5 − (−2)".
- *   op  '+' atau '-'
+ *   op  '+', '-', '×' (atau '*'), ':' (atau '/')
+ * Pada perkalian dan pembagian, bilangan pertama yang negatif juga
+ * diberi kurung agar tanda bilangan dan tanda operasi tidak tertukar:
+ * fmtOperasiBulat(-3, '×', -4) → "(−3) × (−4)".
  */
 function fmtOperasiBulat(a, op, b) {
+  var simbol = { '+': '+', '-': '−', '×': '×', '*': '×', ':': ':', '/': ':' }[op] || '+';
+  var kaliBagi = simbol === '×' || simbol === ':';
   return (
-    fmtBulat(a) +
+    (kaliBagi && a < 0 ? '(' + fmtBulat(a) + ')' : fmtBulat(a)) +
     ' ' +
-    (op === '-' ? '−' : '+') +
+    simbol +
     ' ' +
     (b < 0 ? '(' + fmtBulat(b) + ')' : fmtBulat(b))
   );
@@ -4445,8 +4453,8 @@ function buildIntegerOpSimulator(id, sim, opts) {
     (r.by > 0
       ? 'Lompatan <strong>' + r.by + ' langkah ke kanan</strong>.'
       : r.by < 0
-        ? 'Lompatan <strong>' + -r.by + ' langkah ke kiri</strong>.'
-        : 'Tidak ada lompatan — titiknya diam.') +
+      ? 'Lompatan <strong>' + -r.by + ' langkah ke kiri</strong>.'
+      : 'Tidak ada lompatan — titiknya diam.') +
     '</p>' +
     '</div>'
   );
@@ -4490,5 +4498,254 @@ function bindIntegerOpSimulator(root, id, sim, opts, onChange) {
       sim.op = btn.getAttribute('data-sim-op');
       refresh('[data-sim-op="' + sim.op + '"]');
     });
+  });
+}
+
+/* ============================================================
+   18. BILANGAN BULAT — PERKALIAN, PEMBAGIAN & URUTAN PENGERJAAN
+   Dipakai modul perkalian & pembagian bilangan bulat
+   (fase-d/mpi-2.2): hasil & tanda operasi, perkalian sebagai
+   penjumlahan berulang pada garis bilangan, tabel aturan tanda
+   (dugaan maupun perbandingan dugaan–data), dan pengerjaan
+   operasi campuran langkah demi langkah. Gaya .sign-grid* dan
+   .expr-steps* ada di shared/base.css.
+   ============================================================ */
+
+/* Hasil a op b untuk op '+', '-', '×'/'*', ':'/'/'. */
+function hasilOperasiBulat(a, op, b) {
+  if (op === '-') return a - b;
+  if (op === '×' || op === '*') return a * b;
+  if (op === ':' || op === '/') return a / b;
+  return a + b;
+}
+
+/* Tanda bilangan: 'positif' | 'negatif' | 'nol'. */
+function tandaBilangan(n) {
+  if (n > 0) return 'positif';
+  if (n < 0) return 'negatif';
+  return 'nol';
+}
+
+/*
+ * Penjumlahan berulang untuk n × b (n ≥ 1): fmtPenjumlahanBerulang(3, -2)
+ * → "(−2) + (−2) + (−2)".
+ */
+function fmtPenjumlahanBerulang(n, b) {
+  var suku = b < 0 ? '(' + fmtBulat(b) + ')' : fmtBulat(b);
+  var out = [];
+  for (var i = 0; i < n; i++) out.push(suku);
+  return out.join(' + ');
+}
+
+/*
+ * Garis bilangan untuk n × b sebagai n lompatan sejauh b dari 0.
+ *   opts.min, max   rentang (default −12 … 12)
+ *   opts.showEnd    false → titik akhir ditandai "?"
+ *   opts.aria       label aksesibel
+ */
+function buildRepeatedAddJumps(id, n, b, opts) {
+  opts = opts || {};
+  var jumps = [];
+  for (var i = 0; i < n; i++) jumps.push({ by: b });
+  return buildNumberLineJumps(id, {
+    min: typeof opts.min === 'number' ? opts.min : -12,
+    max: typeof opts.max === 'number' ? opts.max : 12,
+    start: 0,
+    jumps: jumps,
+    showEnd: opts.showEnd,
+    startLabel: '0',
+    aria:
+      opts.aria ||
+      fmtBulat(n) +
+        ' × ' +
+        (b < 0 ? '(' + fmtBulat(b) + ')' : fmtBulat(b)) +
+        ' sebagai ' +
+        n +
+        ' lompatan ' +
+        fmtBulat(b),
+  });
+}
+
+/*
+ * Tabel aturan tanda. Setiap sel memuat satu pola tanda, mis.
+ * { id, label: '(−) × (−)', contoh: '(−3) × (−4)', correct: 'positif' }.
+ * State tiap sel { chosen, correct, optionOrder } disiapkan dengan
+ * ensureSortStates() sehingga urutan opsi tiap sel DIACAK sekali lalu
+ * disimpan.
+ *   opts.mode     'pilih'   → murid memilih tanda (dugaan, tidak dinilai,
+ *                              boleh diubah); pasang bindSignRuleGrid()
+ *                 'banding' → hanya-baca: dugaan murid dibandingkan
+ *                              dengan tanda hasil data (✓ cocok / ✗ beda)
+ *   opts.options  [{ id, label }] opsi tanda, mis. positif/negatif
+ *   opts.dugaanLabel, opts.dataLabel   judul baris pada mode 'banding'
+ */
+function buildSignRuleGrid(id, cells, states, opts) {
+  opts = opts || {};
+  var options = opts.options || [];
+  var banding = opts.mode === 'banding';
+  return (
+    '<div class="sign-grid" id="' +
+    id +
+    '">' +
+    cells
+      .map(function (c) {
+        var st = states[c.id] || {};
+        var cls = 'sign-grid__cell';
+        var body;
+        if (banding) {
+          var cocok = st.chosen === c.correct;
+          cls += cocok ? ' sign-grid__cell--match' : ' sign-grid__cell--miss';
+          body =
+            '<dl class="sign-grid__compare">' +
+            '<dt>' +
+            esc(opts.dugaanLabel || 'Dugaanmu') +
+            '</dt><dd>' +
+            (st.chosen ? findOptionLabel(options, st.chosen) : '—') +
+            '</dd>' +
+            '<dt>' +
+            esc(opts.dataLabel || 'Hasil data') +
+            '</dt><dd class="sign-grid__val sign-grid__val--' +
+            esc(c.correct) +
+            '">' +
+            findOptionLabel(options, c.correct) +
+            '</dd>' +
+            '</dl>' +
+            '<span class="sign-grid__mark">' +
+            (cocok ? '✓ Dugaan cocok' : '✗ Dugaan perlu direvisi') +
+            '</span>';
+        } else {
+          body = buildChoiceGroup(options, st.optionOrder, {
+            chosen: st.chosen,
+            group: c.id,
+            attr: 'data-sign-opt',
+          });
+        }
+        return (
+          '<div class="' +
+          cls +
+          '">' +
+          '<span class="sign-grid__rule">' +
+          esc(c.label) +
+          '</span>' +
+          (c.contoh ? '<span class="sign-grid__contoh">contoh: ' + esc(c.contoh) + '</span>' : '') +
+          body +
+          '</div>'
+        );
+      })
+      .join('') +
+    '</div>'
+  );
+}
+
+/* Memasang event buildSignRuleGrid mode 'pilih' (pilihan boleh diubah). */
+function bindSignRuleGrid(root, id, cells, states, save, rerender) {
+  var el = root.querySelector('#' + id);
+  if (!el) return;
+  var byId = {};
+  cells.forEach(function (c) {
+    byId[c.id] = c;
+  });
+  el.querySelectorAll('[data-sign-opt]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var c = byId[btn.dataset.group];
+      var st = c && states[c.id];
+      if (!st) return;
+      st.chosen = btn.dataset.signOpt;
+      st.correct = st.chosen === c.correct;
+      save();
+      rerender();
+    });
+  });
+}
+
+function signGridAllChosen(cells, states) {
+  return cells.every(function (c) {
+    return !!(states[c.id] && states[c.id].chosen);
+  });
+}
+
+function signGridMatchCount(cells, states) {
+  return cells.filter(function (c) {
+    return states[c.id] && states[c.id].chosen === c.correct;
+  }).length;
+}
+
+/*
+ * Menandai bagian ekspresi yang sedang dikerjakan. Teks di antara [[ dan ]]
+ * dibungkus <mark>; sisanya di-escape.
+ */
+function renderExprMarks(str) {
+  return esc(str).replace(/\[\[(.+?)\]\]/g, '<mark class="expr-steps__mark">$1</mark>');
+}
+
+/*
+ * Pengerjaan operasi campuran langkah demi langkah.
+ *   soal  { ekspresi, langkah: [{ label, jawab, sesudah, hints }] }
+ *         `ekspresi` dan `sesudah` memakai penanda [[…]] untuk bagian yang
+ *         dikerjakan pada langkah berikutnya; `sesudah` langkah terakhir
+ *         berupa hasil akhir tanpa penanda.
+ *   states  array state langkah (makeDlStep), satu per langkah
+ * Setiap langkah baru terbuka setelah langkah sebelumnya benar; baris
+ * "= …" bertambah seiring langkah yang selesai.
+ */
+function buildExprSteps(id, soal, states) {
+  var html =
+    '<div class="expr-steps" id="' +
+    id +
+    '">' +
+    '<p class="expr-steps__line">' +
+    renderExprMarks(soal.ekspresi) +
+    '</p>';
+  for (var i = 0; i < soal.langkah.length; i++) {
+    var step = soal.langkah[i];
+    var st = states[i];
+    var akhir = i === soal.langkah.length - 1;
+    if (st.done) {
+      html +=
+        '<p class="expr-steps__line' +
+        (akhir ? ' expr-steps__line--final' : '') +
+        '"><span class="expr-steps__eq">=</span> ' +
+        renderExprMarks(step.sesudah) +
+        '</p>';
+      continue;
+    }
+    html +=
+      '<div class="expr-steps__work">' +
+      buildDlStep(
+        id + 's' + i,
+        st,
+        {
+          label:
+            '<span class="expr-steps__stepno">Langkah ' + (i + 1) + '</span> ' + esc(step.label),
+          jawab: step.jawab,
+          hints: step.hints,
+          allowNegative: true,
+        },
+        null
+      ) +
+      '</div>';
+    break;
+  }
+  return html + '</div>';
+}
+
+/* Memasang event langkah aktif buildExprSteps. */
+function bindExprSteps(id, soal, states, save, rerender) {
+  for (var i = 0; i < soal.langkah.length; i++) {
+    if (states[i].done) continue;
+    bindDlStep(
+      id + 's' + i,
+      states[i],
+      { jawab: soal.langkah[i].jawab, hints: soal.langkah[i].hints },
+      save,
+      rerender
+    );
+    return;
+  }
+}
+
+function exprStepsDone(states) {
+  return states.every(function (s) {
+    return s.done;
   });
 }
