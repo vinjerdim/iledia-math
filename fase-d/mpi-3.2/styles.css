@@ -1,0 +1,277 @@
+/* =========================================================================
+   fase-d/mpi-3.2/styles.css
+   Membandingkan & Mengurutkan Bilangan Desimal — Fase D (SMP)
+
+   Hanya memuat gaya yang KHAS modul ini. Tabel nilai tempat berdampingan
+   (.dec-cmp*), garis bilangan desimal (.nlp--dec), kalimat & tombol
+   lambang (.cmp-*), kartu urut-ketuk (.tap-order*), pilihan ganda,
+   pertanyaan penuntun, dan komponen inkuiri lainnya berasal dari
+   shared/base.css.
+   ========================================================================= */
+
+/* -------------------------------------------------------------------------
+   Orientasi — cerita & papan hasil lomba
+   ------------------------------------------------------------------------- */
+
+.orientasi-grid {
+  display: grid;
+  grid-template-columns: 1fr minmax(220px, 280px);
+  gap: var(--space-5);
+  align-items: center;
+}
+
+.orientasi-cerita {
+  margin: 0;
+  font-size: 1.05rem;
+  line-height: 1.6;
+}
+
+.scoreboard {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: var(--space-3);
+  border-radius: 14px;
+  background: #1f2a33;
+  color: #ffffff;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.18);
+}
+
+.scoreboard__head,
+.scoreboard__row {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-4);
+  padding: var(--space-2) var(--space-3);
+}
+
+.scoreboard__head {
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #c7d2da;
+}
+
+.scoreboard__row {
+  border-radius: var(--radius-sm);
+  background: #2b3945;
+  font-weight: 600;
+}
+
+.scoreboard__time {
+  font-family: var(--font-mono);
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: #ffd76a;
+}
+
+/* -------------------------------------------------------------------------
+   Hipotesis & uji — kartu pasangan lambang
+   ------------------------------------------------------------------------- */
+
+.dugaan-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: var(--space-4);
+}
+
+.dugaan-card {
+  padding: var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+}
+
+.dugaan-card .cmp-sentence {
+  margin-top: 0;
+}
+
+/* Dugaan dipilih tetapi belum dinilai: kotak lambang kuning, bukan hijau. */
+.cmp-sentence__sym.is-guess {
+  border-style: solid;
+  border-color: var(--color-warning);
+  background: var(--color-warning-soft);
+}
+
+.pair-title {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-top: 0;
+}
+
+.pair-done {
+  border-color: var(--color-success);
+}
+
+.pad-note {
+  margin: 0 0 var(--space-3);
+  text-align: center;
+}
+
+.hipotesis-quote {
+  margin: 0 0 var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  border-left: 4px solid var(--color-warning);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+  font-weight: 600;
+}
+
+.uji-table {
+  margin: var(--space-4) 0;
+  background: var(--color-surface);
+}
+
+.uji-table__sym {
+  font-family: var(--font-mono);
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.uji-ok {
+  color: var(--color-success-strong);
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.uji-no {
+  color: var(--color-error-strong);
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+/* -------------------------------------------------------------------------
+   Mengurutkan — isi kartu & bantuan tabel nilai tempat
+   ------------------------------------------------------------------------- */
+
+.dec-card__val {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 1.2rem;
+  font-weight: 700;
+}
+
+.dec-card__nama {
+  display: block;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--color-ink-muted);
+}
+
+.dec-help {
+  margin-top: var(--space-4);
+  padding: var(--space-2) var(--space-3);
+  border: 1px dashed var(--color-border-strong);
+  border-radius: var(--radius-md);
+  background: var(--color-bg);
+}
+
+.dec-help summary {
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  font-weight: 700;
+  color: var(--color-primary-strong);
+}
+
+/* -------------------------------------------------------------------------
+   Uji terap — nomor soal
+   ------------------------------------------------------------------------- */
+
+.terap-dots {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--space-2);
+  margin: 0 0 var(--space-4);
+}
+
+.terap-dot {
+  width: 44px;
+  height: 44px;
+  border: 2px solid var(--color-border-strong);
+  border-radius: 50%;
+  background: var(--color-surface);
+  color: var(--color-ink);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.terap-dot.is-done {
+  border-color: var(--color-success);
+  background: var(--color-success-soft);
+  color: var(--color-success-strong);
+}
+
+.terap-dot.is-current {
+  box-shadow: 0 0 0 3px var(--color-primary);
+}
+
+.terap-dot:focus-visible {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+/* -------------------------------------------------------------------------
+   Selesai — kartu ringkasan
+   ------------------------------------------------------------------------- */
+
+.aturan-duo {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: var(--space-3);
+  max-width: 640px;
+  margin: 0 auto var(--space-5);
+}
+
+.aturan-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  padding: var(--space-3) var(--space-4);
+  border: 2px solid var(--color-border-strong);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  font-family: var(--font-mono);
+  font-size: 1.05rem;
+  font-weight: 700;
+}
+
+.aturan-card mark {
+  padding: 0 2px;
+  border-radius: var(--radius-sm);
+  background: var(--color-warning-soft);
+  color: var(--color-warning-strong);
+}
+
+.aturan-card__label {
+  font-family: var(--font-display);
+  font-size: 0.78rem;
+  color: var(--color-ink-muted);
+}
+
+/* -------------------------------------------------------------------------
+   Responsif
+   ------------------------------------------------------------------------- */
+
+@media (max-width: 640px) {
+  .orientasi-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .orientasi-cerita {
+    font-size: 1rem;
+  }
+
+  .dugaan-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .uji-table th,
+  .uji-table td {
+    padding: var(--space-2);
+  }
+}

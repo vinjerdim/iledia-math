@@ -4644,3 +4644,68 @@ details.hint-reveal[open] summary::before {
     font-size: 2.1rem;
   }
 }
+
+/* =========================================================================
+   20. Bilangan desimal — membandingkan & mengurutkan: tabel nilai tempat
+   berdampingan (.dec-cmp*) dan garis bilangan desimal (.nlp--dec,
+   .nlp-zoom). Lihat engine.js bagian 20.
+   ========================================================================= */
+
+.dec-cmp .dec-pv__table {
+  border-spacing: 4px;
+}
+
+.dec-cmp__corner {
+  min-width: 0;
+}
+
+.dec-cmp__label {
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-md);
+  background: var(--color-purple-soft);
+  color: var(--color-purple-strong);
+  font-family: var(--font-mono);
+  font-size: 1.05rem;
+  font-weight: 700;
+  text-align: right;
+  white-space: nowrap;
+}
+
+/* Angka 0 tambahan (0,8 → 0,80): tampil samar & miring agar murid tahu
+   angka itu ditambahkan, bukan bagian penulisan aslinya. */
+.dec-pv__table td.dec-cmp__pad {
+  border-style: dashed;
+  color: var(--color-ink-muted);
+  font-style: italic;
+}
+
+.nlp--dec .nlp-num {
+  font-size: 18px;
+}
+
+.nlp-num--dec {
+  fill: var(--color-ink-muted);
+}
+
+.nlp-num--major {
+  fill: var(--color-ink);
+  font-size: 17px;
+}
+
+.nlp--dec .nlp-num--major {
+  font-size: 20px;
+}
+
+.nlp-zoom {
+  fill: var(--color-warning-soft);
+  stroke: var(--color-warning);
+  stroke-width: 2;
+  stroke-dasharray: 6 4;
+}
+
+@media (max-width: 640px) {
+  .dec-cmp__label {
+    font-size: 0.9rem;
+    padding: var(--space-1);
+  }
+}
