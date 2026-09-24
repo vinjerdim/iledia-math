@@ -3,10 +3,10 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Perkalian dan Pembagian Bilangan Bulat — Matematika Fase D</title>
+    <title>Membaca &amp; Menulis Pecahan Biasa dan Pecahan Campuran — Matematika Fase D</title>
     <meta
       name="description"
-      content="Media pembelajaran interaktif untuk menerapkan operasi perkalian dan pembagian pada bilangan bulat serta menggunakannya dalam penyelesaian masalah estimasi sederhana."
+      content="Media pembelajaran interaktif berbasis Direct Instruction untuk membaca dan menuliskan pecahan biasa dan pecahan campuran sesuai notasi baku."
     />
     <link rel="stylesheet" href="../../shared/base.css" />
     <link rel="stylesheet" href="styles.css" />
@@ -18,7 +18,7 @@
     <header class="app-header">
       <div class="app-header__brand">
         <span class="app-header__kicker">Matematika — Fase D (SMP)</span>
-        <h1 class="app-header__title">Perkalian dan Pembagian Bilangan Bulat</h1>
+        <h1 class="app-header__title">Membaca &amp; Menulis Pecahan Biasa dan Campuran</h1>
       </div>
       <div class="app-header__actions">
         <button type="button" id="resetAppBtn" class="btn btn--ghost btn--small">Reset</button>
@@ -35,7 +35,7 @@
     <main id="konten-utama">
       <div class="progress-bar-wrap">
         <div class="progress-bar-label">
-          <span id="progressLabel">0 dari 10 tahap selesai</span>
+          <span id="progressLabel">0 dari 9 tahap selesai</span>
           <span style="font-size: 0.78rem; color: var(--color-ink-muted)">
             Progress disimpan otomatis
           </span>
@@ -60,6 +60,34 @@
     </main>
 
     <div class="app-notice" id="appNotice" role="status" aria-live="polite"></div>
+    <!-- Reset confirmation modal -->
+    <div
+      class="modal-backdrop"
+      id="resetModal"
+      style="display: none"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="resetModalTitle"
+    >
+      <div class="modal">
+        <h3 id="resetModalTitle">Reset Progress?</h3>
+        <p>
+          Semua progress, jawaban, dan data latihan akan dihapus. Tindakan ini tidak dapat
+          dibatalkan.
+        </p>
+        <div class="btn-group btn-group--end">
+          <button type="button" class="btn btn--ghost" id="resetCancelBtn">Batal</button>
+          <button
+            type="button"
+            class="btn btn--primary"
+            id="resetConfirmBtn"
+            style="background: var(--color-error); border-color: var(--color-error)"
+          >
+            Ya, Reset
+          </button>
+        </div>
+      </div>
+    </div>
 
     <script src="../../shared/engine.js"></script>
     <script src="data.js"></script>
