@@ -5175,3 +5175,331 @@ details.hint-reveal[open] summary::before {
     justify-self: center;
   }
 }
+
+/* =========================================================================
+   Relasi antara dua himpunan (engine.js seksi 25): diagram panah SVG
+   (.rel-arrow*, .rel-node*), tabel silang (.rel-table*), tabel daftar
+   (.rel-list), chip pasangan berurutan (.rel-chip*).
+   Warna himpunan: A biru, B oranye; panah salah merah.
+   ========================================================================= */
+
+.rel-arrow {
+  margin: var(--space-3) auto;
+  max-width: 460px;
+}
+
+.rel-arrow__svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+
+.rel-arrow__name {
+  font-family: var(--font-display);
+  font-size: 15px;
+  font-style: italic;
+  font-weight: 700;
+  fill: var(--color-purple);
+}
+
+.rel-arrow__set {
+  font-family: var(--font-display);
+  font-size: 14px;
+  font-weight: 700;
+  fill: var(--color-ink-muted);
+}
+
+.rel-arrow__oval {
+  stroke-width: 2;
+}
+
+.rel-arrow__oval--a {
+  fill: var(--color-blue-soft);
+  stroke: var(--color-blue);
+}
+
+.rel-arrow__oval--b {
+  fill: var(--color-orange-soft);
+  stroke: var(--color-orange);
+}
+
+.rel-arrow__line {
+  stroke: var(--color-ink);
+  stroke-width: 2.5;
+  stroke-linecap: round;
+}
+
+.rel-arrow__head {
+  fill: var(--color-ink);
+}
+
+.rel-arrow__line--salah {
+  stroke: var(--color-error);
+  stroke-dasharray: 6 4;
+}
+
+.rel-arrow__head--salah {
+  fill: var(--color-error);
+}
+
+.rel-node__pill {
+  fill: var(--color-surface);
+  stroke-width: 2;
+}
+
+.rel-node--a .rel-node__pill {
+  stroke: var(--color-blue);
+}
+
+.rel-node--b .rel-node__pill {
+  stroke: var(--color-orange);
+}
+
+.rel-node__text {
+  font-family: var(--font-body);
+  font-size: 15px;
+  font-weight: 600;
+  fill: var(--color-ink);
+  pointer-events: none;
+}
+
+.rel-arrow--interactive .rel-node {
+  cursor: pointer;
+}
+
+.rel-arrow--interactive .rel-node:hover .rel-node__pill {
+  stroke-width: 3;
+}
+
+.rel-arrow--interactive .rel-node:focus {
+  outline: none;
+}
+
+.rel-arrow--interactive .rel-node:focus-visible .rel-node__pill {
+  stroke: var(--color-focus);
+  stroke-width: 4;
+}
+
+.rel-node--selected .rel-node__pill {
+  fill: var(--color-blue);
+  stroke: var(--color-blue-strong);
+  stroke-width: 3;
+}
+
+.rel-node--selected .rel-node__text {
+  fill: #ffffff;
+}
+
+.rel-status {
+  margin: var(--space-2) 0 0;
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-md);
+  background: var(--color-primary-soft);
+  font-size: 0.95rem;
+}
+
+/* Tabel silang & tabel daftar: tabel boleh bergulir di dalam wadahnya
+   pada layar sempit, halaman tidak ikut bergulir ke samping. */
+.rel-table-wrap {
+  position: relative; /* menahan .sr-only di dalam sel agar tidak keluar wadah gulir */
+  max-width: 100%;
+  overflow-x: auto;
+  margin: var(--space-3) 0;
+}
+
+.rel-table,
+.rel-list {
+  border-collapse: collapse;
+  margin: 0 auto;
+  font-size: 0.95rem;
+  background: var(--color-surface);
+}
+
+.rel-table caption {
+  caption-side: top;
+  padding-bottom: var(--space-2);
+  color: var(--color-ink-muted);
+  font-size: 0.85rem;
+}
+
+.rel-table th,
+.rel-table td,
+.rel-list th,
+.rel-list td {
+  border: 1px solid var(--color-border-strong);
+  padding: var(--space-2) var(--space-3);
+  text-align: center;
+}
+
+.rel-table thead th {
+  background: var(--color-orange-soft);
+  color: var(--color-orange-strong);
+}
+
+.rel-table tbody th {
+  background: var(--color-blue-soft);
+  color: var(--color-blue-strong);
+  text-align: left;
+  white-space: nowrap;
+}
+
+.rel-table__corner {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--color-ink-muted);
+  white-space: nowrap;
+}
+
+.rel-table__cell {
+  min-width: 48px;
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--color-success-strong);
+}
+
+.rel-table__cell--on {
+  background: var(--color-success-soft);
+}
+
+.rel-table__cell--salah {
+  background: var(--color-error-soft);
+  color: var(--color-error-strong);
+}
+
+.rel-table--interactive td {
+  padding: 3px;
+}
+
+.rel-table__btn {
+  display: block;
+  width: 100%;
+  min-width: 44px;
+  min-height: 44px;
+  border: 2px dashed var(--color-border);
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+.rel-table__btn:hover {
+  border-color: var(--color-primary);
+}
+
+.rel-table__btn:focus-visible {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 1px;
+}
+
+.rel-table__btn[aria-pressed='true'] {
+  border-style: solid;
+  border-color: var(--color-success);
+}
+
+.rel-list thead th {
+  background: var(--color-primary-soft);
+}
+
+.rel-list tbody th {
+  background: var(--color-blue-soft);
+  text-align: left;
+}
+
+.rel-list td {
+  text-align: left;
+}
+
+.rel-list__none {
+  color: var(--color-ink-muted);
+}
+
+/* Chip pasangan berurutan */
+.rel-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.rel-chip {
+  min-height: 44px;
+  padding: var(--space-2) var(--space-4);
+  border: 2px solid var(--color-border-strong);
+  border-radius: 999px;
+  background: var(--color-surface);
+  color: var(--color-ink);
+  font-family: var(--font-mono);
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.rel-chip:hover:not(:disabled) {
+  border-color: var(--color-primary);
+}
+
+.rel-chip:focus-visible {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+.rel-chip[aria-pressed='true'] {
+  border-color: var(--color-primary);
+  background: var(--color-primary-soft);
+  color: var(--color-primary-strong);
+}
+
+.rel-chip:disabled {
+  cursor: default;
+}
+
+.rel-chip--benar,
+.rel-chip--benar[aria-pressed='true'] {
+  border-color: var(--color-success);
+  background: var(--color-success-soft);
+  color: var(--color-success-strong);
+}
+
+.rel-chip--salah,
+.rel-chip--salah[aria-pressed='true'] {
+  border-color: var(--color-error);
+  background: var(--color-error-soft);
+  color: var(--color-error-strong);
+  text-decoration: line-through;
+}
+
+.rel-chip--terlewat {
+  border-style: dashed;
+  border-color: var(--color-warning);
+}
+
+.rel-chip--benar::before {
+  content: '✓ ';
+}
+
+.rel-chip--salah::before {
+  content: '✗ ';
+}
+
+@media (max-width: 480px) {
+  .rel-table,
+  .rel-list {
+    font-size: 0.85rem;
+  }
+
+  .rel-table th,
+  .rel-table td,
+  .rel-list th,
+  .rel-list td {
+    padding: var(--space-1) var(--space-2);
+  }
+
+  .rel-table--interactive td {
+    padding: 2px;
+  }
+
+  .rel-table__btn {
+    min-width: 40px;
+  }
+}

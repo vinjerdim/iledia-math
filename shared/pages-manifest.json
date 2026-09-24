@@ -160,5 +160,13 @@
     "h1": "Membandingkan Bunga Tunggal & Bunga Majemuk",
     "stageCount": 9,
     "extraBody": "partials/reset-modal.html"
+  },
+  "fase-d/mpi-16.1": {
+    "title": "Relasi Antara Dua Himpunan — Matematika Fase D",
+    "description": "Media pembelajaran interaktif berbasis Discovery Learning untuk mengidentifikasi konsep relasi antara dua himpunan dan menyajikannya dalam bentuk diagram panah, tabel, dan himpunan pasangan berurutan pada berbagai situasi kehidupan sehari-hari.",
+    "kicker": "Matematika — Fase D (SMP)",
+    "h1": "Relasi Antara Dua Himpunan",
+    "stageCount": 10,
+    "extraBody": "partials/reset-modal.html"
   }
 }

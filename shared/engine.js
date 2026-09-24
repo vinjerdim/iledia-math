@@ -51,6 +51,8 @@
    24. Perbandingan bunga tunggal & majemuk (saldo berdampingan,
        periode menyalip, tawaran terbaik untuk menabung/meminjam,
        duel tawaran)
+   25. Relasi antara dua himpunan (pasangan berurutan, diagram
+       panah interaktif, tabel silang & tabel daftar, chip pasangan)
    ============================================================ */
 
 /* ============================================================
@@ -6880,4 +6882,612 @@ function bindInterestDuel(root, id, st, opts, save, rerender) {
       }
     });
   });
+}
+
+/* ============================================================
+   25. RELASI ANTARA DUA HIMPUNAN
+   Relasi dari himpunan A ke himpunan B disimpan sebagai array
+   pasangan berurutan [[a, b], …] — anggota A selalu di depan.
+   Tiga cara penyajian yang setara:
+     • diagram panah   buildArrowDiagram / bindArrowDiagram
+     • tabel           buildRelationTable (silang A × B, bisa
+                       diisi) & buildRelationListTable (dua kolom)
+     • pasangan        formatRelasiPasangan, buildPairChips
+   Fungsi murni (aturan, normalisasi, diagnosa, logika ketuk) diuji
+   di tests/engine-relasi.test.js. Gaya .rel-* ada di shared/base.css.
+   ============================================================ */
+
+/* Kunci unik pasangan (a, b); urutan anggota membedakan kunci. */
+function kunciPasangan(a, b) {
+  return JSON.stringify([String(a), String(b)]);
+}
+
+function adaPasangan(pairs, a, b) {
+  var k = kunciPasangan(a, b);
+  return pairs.some(function (p) {
+    return kunciPasangan(p[0], p[1]) === k;
+  });
+}
+
+/* Semua pasangan (a, b) dari A × B yang memenuhi aturan fn(a, b). */
+function relasiDariAturan(A, B, fn) {
+  var out = [];
+  A.forEach(function (a) {
+    B.forEach(function (b) {
+      if (fn(a, b)) out.push([a, b]);
+    });
+  });
+  return out;
+}
+
+function indeksAnggota(list, x) {
+  for (var i = 0; i < list.length; i++) {
+    if (String(list[i]) === String(x)) return i;
+  }
+  return -1;
+}
+
+/*
+ * Membuang pasangan ganda. Bila A dan B diberikan, pasangan diurutkan
+ * menurut posisi anggota di A lalu di B; bila tidak, urutan kemunculan
+ * pertama dipertahankan.
+ */
+function normalisasiRelasi(pairs, A, B) {
+  var seen = {};
+  var out = [];
+  pairs.forEach(function (p) {
+    var k = kunciPasangan(p[0], p[1]);
+    if (seen[k]) return;
+    seen[k] = true;
+    out.push([p[0], p[1]]);
+  });
+  if (A && B) {
+    out.sort(function (p, q) {
+      return (
+        indeksAnggota(A, p[0]) - indeksAnggota(A, q[0]) ||
+        indeksAnggota(B, p[1]) - indeksAnggota(B, q[1])
+      );
+    });
+  }
+  return out;
+}
+
+/* Dua relasi sama bila himpunan pasangannya sama (urutan daftar bebas). */
+function relasiSama(p, q) {
+  var a = normalisasiRelasi(p);
+  var b = normalisasiRelasi(q);
+  return (
+    a.length === b.length &&
+    a.every(function (x) {
+      return adaPasangan(b, x[0], x[1]);
+    })
+  );
+}
+
+/* Menambah panah (a, b) bila belum ada, menghapusnya bila sudah ada. */
+function togglePasangan(pairs, a, b) {
+  if (adaPasangan(pairs, a, b)) {
+    var k = kunciPasangan(a, b);
+    return pairs.filter(function (p) {
+      return kunciPasangan(p[0], p[1]) !== k;
+    });
+  }
+  return pairs.concat([[a, b]]);
+}
+
+/*
+ * Daerah hasil (range): anggota B yang menerima panah. Diurutkan
+ * menurut kodomain B bila diberikan, selain itu urutan kemunculan.
+ */
+function rangeRelasi(pairs, B) {
+  var hasil = normalisasiRelasi(
+    pairs.map(function (p) {
+      return [p[1], ''];
+    })
+  ).map(function (p) {
+    return p[0];
+  });
+  if (!B) return hasil;
+  return B.filter(function (b) {
+    return indeksAnggota(hasil, b) !== -1;
+  });
+}
+
+/* Anggota A yang tidak punya pasangan (tidak ada panah keluar). */
+function anggotaTanpaPasangan(A, pairs) {
+  return A.filter(function (a) {
+    return banyakPanahDari(pairs, a) === 0;
+  });
+}
+
+function banyakPanahDari(pairs, a) {
+  return normalisasiRelasi(pairs).filter(function (p) {
+    return String(p[0]) === String(a);
+  }).length;
+}
+
+/* [2, 3, 4] → '{2, 3, 4}'; himpunan kosong → '{ }'. */
+function formatHimpunan(list) {
+  return list.length ? '{' + list.join(', ') + '}' : '{ }';
+}
+
+/* ('Nadia', 'Futsal') → '(Nadia, Futsal)' */
+function formatPasangan(a, b) {
+  return '(' + a + ', ' + b + ')';
+}
+
+/* [[2, 4], [3, 6]] → '{(2, 4), (3, 6)}' */
+function formatRelasiPasangan(pairs) {
+  return formatHimpunan(
+    pairs.map(function (p) {
+      return formatPasangan(p[0], p[1]);
+    })
+  );
+}
+
+/*
+ * Membandingkan jawaban dengan relasi target:
+ *   kurang   pasangan target yang belum ada di jawaban
+ *   terbalik pasangan jawaban yang urutannya tertukar, mis. (Futsal, Nadia)
+ *   lebih    pasangan jawaban lain yang tidak ada di target
+ *   tepat    true bila ketiganya kosong
+ */
+function diagnosaRelasi(target, jawab) {
+  var j = normalisasiRelasi(jawab);
+  var kurang = normalisasiRelasi(target).filter(function (p) {
+    return !adaPasangan(j, p[0], p[1]);
+  });
+  var terbalik = [];
+  var lebih = [];
+  j.forEach(function (p) {
+    if (adaPasangan(target, p[0], p[1])) return;
+    if (adaPasangan(target, p[1], p[0])) terbalik.push(p);
+    else lebih.push(p);
+  });
+  return {
+    kurang: kurang,
+    terbalik: terbalik,
+    lebih: lebih,
+    tepat: kurang.length + terbalik.length + lebih.length === 0,
+  };
+}
+
+/*
+ * Logika ketuk perakit diagram panah. st = { pairs, selected }.
+ *   side 'a' → memilih (atau membatalkan) anggota A ke-idx
+ *   side 'b' → menambah/menghapus panah dari anggota A terpilih
+ * Anggota A tetap terpilih setelah menarik panah, agar satu anggota
+ * mudah diberi lebih dari satu panah. Mengembalikan 'pilih' | 'batal'
+ * | 'tambah' | 'hapus' | 'perluPilih', atau null bila idx tidak sah.
+ */
+function ketukDiagramPanah(st, A, B, side, idx) {
+  var list = side === 'a' ? A : B;
+  if (!(idx >= 0 && idx < list.length)) return null;
+  if (side === 'a') {
+    if (st.selected === idx) {
+      st.selected = null;
+      return 'batal';
+    }
+    st.selected = idx;
+    return 'pilih';
+  }
+  if (st.selected === null || st.selected === undefined || !A[st.selected]) {
+    return 'perluPilih';
+  }
+  var a = A[st.selected];
+  var ada = adaPasangan(st.pairs, a, B[idx]);
+  st.pairs = togglePasangan(st.pairs, a, B[idx]);
+  return ada ? 'hapus' : 'tambah';
+}
+
+/* Elemen terakhir yang diketuk per diagram/tabel, untuk memulihkan fokus. */
+var REL_LAST_FOCUS = {};
+
+function relFokusKembali(root, id, attr) {
+  var sel = REL_LAST_FOCUS[id];
+  if (!sel) return;
+  var el = root.querySelector('[' + attr + '="' + id + '"]' + sel);
+  if (el && typeof el.focus === 'function') el.focus();
+}
+
+/*
+ * Diagram panah (SVG) relasi dari A ke B.
+ *   opts.labelA, opts.labelB   nama himpunan di atas elips (default 'A', 'B')
+ *   opts.namaRelasi            nama relasi di atas diagram, mis. 'faktor dari'
+ *   opts.interactive           true → anggota bisa diketuk/difokus
+ *                              (pasang dengan bindArrowDiagram)
+ *   opts.selected              indeks anggota A yang sedang dipilih
+ *   opts.salah                 pasangan yang panahnya ditandai merah
+ *   opts.caption               teks aksesibel diagram
+ */
+function buildArrowDiagram(id, A, B, pairs, opts) {
+  opts = opts || {};
+  var W = 360;
+  var ROW = 54;
+  var TOP = 66;
+  var PILL_W = 112;
+  var PILL_H = 40;
+  var CX_A = 82;
+  var CX_B = 278;
+  var n = Math.max(A.length, B.length, 1);
+  var H = TOP + n * ROW + 18;
+  var cy = TOP + (n * ROW) / 2;
+  var ry = (n * ROW) / 2 + 12;
+  var salah = opts.salah || [];
+  var inter = !!opts.interactive;
+
+  function yOf(k, i) {
+    return TOP + ((n - k) * ROW) / 2 + ROW * (i + 0.5);
+  }
+
+  function node(side, v, i, k, cx) {
+    var y = yOf(k, i);
+    var selected = side === 'a' && opts.selected === i;
+    var label =
+      side === 'a'
+        ? selected
+          ? 'Batalkan pilihan ' + v
+          : 'Pilih ' + v
+        : 'Tarik atau hapus panah ke ' + v;
+    return (
+      '<g class="rel-node rel-node--' +
+      side +
+      (selected ? ' rel-node--selected' : '') +
+      '" data-rel-id="' +
+      esc(id) +
+      '" data-rel-side="' +
+      side +
+      '" data-rel-idx="' +
+      i +
+      '"' +
+      (inter
+        ? ' role="button" tabindex="0" aria-label="' +
+          esc(label) +
+          '"' +
+          (side === 'a' ? ' aria-pressed="' + (selected ? 'true' : 'false') + '"' : '')
+        : '') +
+      '>' +
+      '<rect class="rel-node__pill" x="' +
+      (cx - PILL_W / 2) +
+      '" y="' +
+      (y - PILL_H / 2) +
+      '" width="' +
+      PILL_W +
+      '" height="' +
+      PILL_H +
+      '" rx="20" />' +
+      '<text class="rel-node__text" x="' +
+      cx +
+      '" y="' +
+      (y + 5) +
+      '" text-anchor="middle">' +
+      esc(v) +
+      '</text>' +
+      '</g>'
+    );
+  }
+
+  var arrows = normalisasiRelasi(pairs)
+    .map(function (p) {
+      var i = indeksAnggota(A, p[0]);
+      var j = indeksAnggota(B, p[1]);
+      if (i === -1 || j === -1) return '';
+      var x1 = CX_A + PILL_W / 2 + 2;
+      var y1 = yOf(A.length, i);
+      var x2 = CX_B - PILL_W / 2 - 3;
+      var y2 = yOf(B.length, j);
+      var dx = x2 - x1;
+      var dy = y2 - y1;
+      var len = Math.sqrt(dx * dx + dy * dy);
+      var ux = dx / len;
+      var uy = dy / len;
+      var bx = x2 - ux * 11;
+      var by = y2 - uy * 11;
+      var head = [
+        [x2, y2],
+        [bx - uy * 5.5, by + ux * 5.5],
+        [bx + uy * 5.5, by - ux * 5.5],
+      ]
+        .map(function (pt) {
+          return pt[0].toFixed(1) + ',' + pt[1].toFixed(1);
+        })
+        .join(' ');
+      var bad = adaPasangan(salah, p[0], p[1]);
+      return (
+        '<g>' +
+        '<line class="rel-arrow__line' +
+        (bad ? ' rel-arrow__line--salah' : '') +
+        '" x1="' +
+        x1 +
+        '" y1="' +
+        y1.toFixed(1) +
+        '" x2="' +
+        bx.toFixed(1) +
+        '" y2="' +
+        by.toFixed(1) +
+        '" />' +
+        '<polygon class="rel-arrow__head' +
+        (bad ? ' rel-arrow__head--salah' : '') +
+        '" points="' +
+        head +
+        '" />' +
+        '</g>'
+      );
+    })
+    .join('');
+
+  var caption =
+    opts.caption ||
+    'Diagram panah relasi ' +
+      (opts.namaRelasi ? '“' + opts.namaRelasi + '” ' : '') +
+      'dari himpunan ' +
+      (opts.labelA || 'A') +
+      ' ke himpunan ' +
+      (opts.labelB || 'B') +
+      ': ' +
+      (pairs.length ? formatRelasiPasangan(normalisasiRelasi(pairs, A, B)) : 'belum ada panah');
+
+  return (
+    '<figure class="rel-arrow' +
+    (inter ? ' rel-arrow--interactive' : '') +
+    '">' +
+    '<svg class="rel-arrow__svg" viewBox="0 0 ' +
+    W +
+    ' ' +
+    H +
+    '" ' +
+    (inter ? 'role="group"' : 'role="img"') +
+    ' aria-label="' +
+    esc(caption) +
+    '">' +
+    (opts.namaRelasi
+      ? '<text class="rel-arrow__name" x="' +
+        W / 2 +
+        '" y="20" text-anchor="middle">' +
+        esc(opts.namaRelasi) +
+        '</text>'
+      : '') +
+    '<text class="rel-arrow__set" x="' +
+    CX_A +
+    '" y="44" text-anchor="middle">' +
+    esc(opts.labelA || 'A') +
+    '</text>' +
+    '<text class="rel-arrow__set" x="' +
+    CX_B +
+    '" y="44" text-anchor="middle">' +
+    esc(opts.labelB || 'B') +
+    '</text>' +
+    '<ellipse class="rel-arrow__oval rel-arrow__oval--a" cx="' +
+    CX_A +
+    '" cy="' +
+    cy +
+    '" rx="76" ry="' +
+    ry +
+    '" />' +
+    '<ellipse class="rel-arrow__oval rel-arrow__oval--b" cx="' +
+    CX_B +
+    '" cy="' +
+    cy +
+    '" rx="76" ry="' +
+    ry +
+    '" />' +
+    arrows +
+    A.map(function (v, i) {
+      return node('a', v, i, A.length, CX_A);
+    }).join('') +
+    B.map(function (v, i) {
+      return node('b', v, i, B.length, CX_B);
+    }).join('') +
+    '</svg>' +
+    '</figure>'
+  );
+}
+
+/*
+ * Memasang ketuk/Enter/Spasi pada diagram panah interaktif.
+ * st = { pairs, selected } dimutasi lewat ketukDiagramPanah();
+ * onChange(hasil) dipanggil dengan hasil ketukan (lihat di atas).
+ */
+function bindArrowDiagram(root, id, A, B, st, onChange) {
+  root.querySelectorAll('[data-rel-id="' + id + '"][data-rel-side]').forEach(function (el) {
+    function ketuk() {
+      var side = el.getAttribute('data-rel-side');
+      var idx = +el.getAttribute('data-rel-idx');
+      var hasil = ketukDiagramPanah(st, A, B, side, idx);
+      if (hasil === null) return;
+      REL_LAST_FOCUS[id] = '[data-rel-side="' + side + '"][data-rel-idx="' + idx + '"]';
+      onChange(hasil);
+    }
+    el.addEventListener('click', ketuk);
+    el.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        ketuk();
+      }
+    });
+  });
+  relFokusKembali(root, id, 'data-rel-id');
+}
+
+/*
+ * Tabel silang relasi: baris = anggota A, kolom = anggota B, tanda ✓
+ * pada sel pasangan yang berelasi.
+ *   opts.labelA, opts.labelB   judul sudut tabel
+ *   opts.interactive           true → setiap sel berupa tombol ✓
+ *                              (pasang dengan bindRelationTable)
+ *   opts.salah                 pasangan yang selnya ditandai merah
+ *   opts.caption               keterangan tabel (<caption>)
+ */
+function buildRelationTable(id, A, B, pairs, opts) {
+  opts = opts || {};
+  var salah = opts.salah || [];
+  return (
+    '<div class="rel-table-wrap">' +
+    '<table class="rel-table' +
+    (opts.interactive ? ' rel-table--interactive' : '') +
+    '">' +
+    (opts.caption ? '<caption>' + esc(opts.caption) + '</caption>' : '') +
+    '<thead><tr><td class="rel-table__corner">' +
+    esc(opts.labelA || 'A') +
+    ' ╲ ' +
+    esc(opts.labelB || 'B') +
+    '</td>' +
+    B.map(function (b) {
+      return '<th scope="col">' + esc(b) + '</th>';
+    }).join('') +
+    '</tr></thead><tbody>' +
+    A.map(function (a, i) {
+      return (
+        '<tr><th scope="row">' +
+        esc(a) +
+        '</th>' +
+        B.map(function (b, j) {
+          var on = adaPasangan(pairs, a, b);
+          var cls =
+            'rel-table__cell' +
+            (on ? ' rel-table__cell--on' : '') +
+            (adaPasangan(salah, a, b) ? ' rel-table__cell--salah' : '');
+          if (!opts.interactive) {
+            return (
+              '<td class="' +
+              cls +
+              '">' +
+              (on ? '<span aria-label="berelasi">✓</span>' : '<span class="sr-only">tidak</span>') +
+              '</td>'
+            );
+          }
+          return (
+            '<td class="' +
+            cls +
+            '"><button type="button" class="rel-table__btn" data-rel-cell="' +
+            esc(id) +
+            '" data-ai="' +
+            i +
+            '" data-bj="' +
+            j +
+            '" aria-pressed="' +
+            (on ? 'true' : 'false') +
+            '" aria-label="' +
+            esc(a + ' dan ' + b) +
+            '">' +
+            (on ? '✓' : '') +
+            '</button></td>'
+          );
+        }).join('') +
+        '</tr>'
+      );
+    }).join('') +
+    '</tbody></table></div>'
+  );
+}
+
+/* Memasang tombol sel tabel silang: ketuk → togglePasangan pada st.pairs. */
+function bindRelationTable(root, id, A, B, st, onChange) {
+  root.querySelectorAll('[data-rel-cell="' + id + '"]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var i = +btn.dataset.ai;
+      var j = +btn.dataset.bj;
+      if (A[i] === undefined || B[j] === undefined) return;
+      st.pairs = togglePasangan(st.pairs, A[i], B[j]);
+      REL_LAST_FOCUS[id] = '[data-ai="' + i + '"][data-bj="' + j + '"]';
+      onChange();
+    });
+  });
+  relFokusKembali(root, id, 'data-rel-cell');
+}
+
+/*
+ * Tabel dua kolom: anggota A | pasangannya di B (dipisah koma);
+ * anggota tanpa pasangan ditulis "—".
+ */
+function buildRelationListTable(A, pairs, opts) {
+  opts = opts || {};
+  return (
+    '<div class="rel-table-wrap">' +
+    '<table class="rel-list">' +
+    '<thead><tr><th scope="col">' +
+    esc(opts.labelA || 'A') +
+    '</th><th scope="col">' +
+    esc(opts.labelB || 'B') +
+    '</th></tr></thead><tbody>' +
+    A.map(function (a) {
+      var pas = normalisasiRelasi(pairs)
+        .filter(function (p) {
+          return String(p[0]) === String(a);
+        })
+        .map(function (p) {
+          return esc(p[1]);
+        });
+      return (
+        '<tr><th scope="row">' +
+        esc(a) +
+        '</th><td>' +
+        (pas.length ? pas.join(', ') : '<span class="rel-list__none">—</span>') +
+        '</td></tr>'
+      );
+    }).join('') +
+    '</tbody></table></div>'
+  );
+}
+
+/*
+ * Chip pasangan berurutan yang bisa dipilih (lebih dari satu).
+ *   chips     [{ id, a, b }]
+ *   order     urutan acak id chip (disimpan di State)
+ *   terpilih  array id chip yang dipilih
+ *   opts.periksa  true → tandai hasil: benar / salah / terlewat
+ *   opts.terlewat false → chip benar yang belum dipilih TIDAK ditandai
+ *                 (agar pemeriksaan pertama tidak membocorkan kunci)
+ *   opts.benar    array id chip yang seharusnya dipilih
+ *   opts.locked   true → chip tidak bisa diubah lagi
+ */
+function buildPairChips(id, chips, order, terpilih, opts) {
+  opts = opts || {};
+  var benar = opts.benar || [];
+  return (
+    '<div class="rel-chips" role="group">' +
+    orderByIds(chips, order)
+      .map(function (c) {
+        var on = terpilih.indexOf(c.id) !== -1;
+        var cls = 'rel-chip';
+        if (opts.periksa) {
+          var harus = benar.indexOf(c.id) !== -1;
+          if (on && harus) cls += ' rel-chip--benar';
+          else if (on) cls += ' rel-chip--salah';
+          else if (harus && opts.terlewat !== false) cls += ' rel-chip--terlewat';
+        }
+        return (
+          '<button type="button" class="' +
+          cls +
+          '" data-rel-chip="' +
+          esc(id) +
+          '" data-chip-id="' +
+          esc(c.id) +
+          '" aria-pressed="' +
+          (on ? 'true' : 'false') +
+          '"' +
+          (opts.locked ? ' disabled' : '') +
+          '>' +
+          esc(formatPasangan(c.a, c.b)) +
+          '</button>'
+        );
+      })
+      .join('') +
+    '</div>'
+  );
+}
+
+/* Memasang chip: ketuk menambah/menghapus id dari st.terpilih. */
+function bindPairChips(root, id, st, onChange) {
+  root.querySelectorAll('[data-rel-chip="' + id + '"]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var cid = btn.dataset.chipId;
+      var k = st.terpilih.indexOf(cid);
+      if (k === -1) st.terpilih.push(cid);
+      else st.terpilih.splice(k, 1);
+      REL_LAST_FOCUS[id] = '[data-chip-id="' + cid + '"]';
+      onChange();
+    });
+  });
+  relFokusKembali(root, id, 'data-rel-chip');
 }
