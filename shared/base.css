@@ -4971,3 +4971,93 @@ details.hint-reveal[open] summary::before {
     padding: var(--space-2) var(--space-1);
   }
 }
+
+/* =========================================================================
+   23. SIMULATOR BUNGA MAJEMUK (buildCompoundSimulator, shared/engine.js)
+   Pengatur −/+ bertombol besar (ramah sentuh) untuk modal awal, suku
+   bunga, dan banyak periode, di atas tabel buku tabungan (.passbook*).
+   ========================================================================= */
+
+.compound-sim {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.compound-sim__controls {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: var(--space-3);
+}
+
+.compound-sim__ctrl {
+  display: grid;
+  gap: var(--space-1);
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-primary-soft);
+}
+
+.compound-sim__ctrl-label {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--color-ink-muted);
+}
+
+.compound-sim__stepper {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+.compound-sim__btn {
+  flex: none;
+  width: 44px;
+  height: 44px;
+  border: 2px solid var(--color-primary);
+  border-radius: 50%;
+  background: #fff;
+  color: var(--color-primary-strong);
+  font-size: 1.3rem;
+  font-weight: 700;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.compound-sim__btn:hover:not(:disabled),
+.compound-sim__btn:focus-visible {
+  background: var(--color-primary);
+  color: #fff;
+}
+
+.compound-sim__btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.compound-sim__val {
+  font-family: var(--font-mono);
+  font-weight: 700;
+  font-size: 1.05rem;
+  text-align: center;
+}
+
+.compound-sim__ratio {
+  color: var(--color-orange-strong);
+}
+
+.compound-sim__tunggal {
+  color: var(--color-ink-muted);
+}
+
+.compound-sim__summary {
+  margin: 0;
+  padding: var(--space-2) var(--space-3);
+  border-left: 4px solid var(--color-orange);
+  border-radius: var(--radius-sm);
+  background: var(--color-orange-soft);
+  color: var(--color-orange-strong);
+  font-family: var(--font-mono);
+  overflow-wrap: anywhere;
+}

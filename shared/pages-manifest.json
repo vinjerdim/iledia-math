@@ -144,5 +144,13 @@
     "h1": "Bunga Tunggal dengan Barisan & Deret Aritmetika",
     "stageCount": 10,
     "extraBody": "partials/reset-modal.html"
+  },
+  "fase-f/mpi-3.2": {
+    "title": "Bunga Majemuk dengan Barisan & Deret Geometri — Matematika Fase F",
+    "description": "Media pembelajaran interaktif berbasis Inquiry Learning untuk menerapkan konsep barisan dan deret geometri dalam menentukan nilai akhir modal pada masalah bunga majemuk.",
+    "kicker": "Matematika — Fase F (SMK RPL)",
+    "h1": "Bunga Majemuk dengan Barisan & Deret Geometri",
+    "stageCount": 11,
+    "extraBody": "partials/reset-modal.html"
   }
 }

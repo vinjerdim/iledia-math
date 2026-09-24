@@ -44,6 +44,10 @@
    21. Deret aritmetika & geometri: suku & jumlah n suku (tabel
        isian deret, grid "kalikan r, geser, kurangkan", tabel uji
        rumus)
+   22. Bunga tunggal: barisan & deret aritmetika pada modal (buku
+       tabungan, format rupiah/persen, isian angka gaya Indonesia)
+   23. Bunga majemuk: barisan & deret geometri pada modal (nilai
+       akhir, konversi periode, simulator bunga majemuk)
    ============================================================ */
 
 /* ============================================================
@@ -6424,4 +6428,212 @@ function buildBukuTabungan(rows, opts) {
     body +
     '</tbody></table></div></div>'
   );
+}
+
+/* ============================================================
+   23. BUNGA MAJEMUK: BARISAN & DERET GEOMETRI PADA MODAL
+   Bunga majemuk dihitung dari saldo periode sebelumnya
+   (bunga berbunga), sehingga
+     • saldo M₀, M₁, M₂, … barisan geometri dengan a = M₀ dan
+       r = 1 + i, sehingga Mₙ = U₍ₙ₊₁₎ = M₀(1 + i)ⁿ,
+     • bunga tiap periode M₀i, M₀i(1 + i), … juga barisan geometri,
+       dan total bunga = deret geometri = Mₙ − M₀.
+   Pemajemukan m kali setahun: i = p% : m dan n = t × m.
+   Juga memuat simulator bunga majemuk (tombol −/+ untuk modal,
+   suku bunga, dan banyak periode). Gaya .compound-sim* ada di
+   shared/base.css.
+   ============================================================ */
+
+/* Mₙ = M₀(1 + i)ⁿ */
+function nilaiAkhirBungaMajemuk(M0, i, n) {
+  return bulatkanUang(M0 * Math.pow(1 + i, n));
+}
+
+/* Total bunga n periode = Mₙ − M₀ */
+function bungaMajemuk(M0, i, n) {
+  return bulatkanUang(M0 * Math.pow(1 + i, n) - M0);
+}
+
+/*
+ * Barisan saldo [M₀, M₁, …, Mₙ] (n + 1 suku). Ditulis lewat
+ * sukuGeometri(M₀, 1 + i, k + 1) agar kaitannya dengan barisan
+ * geometri (a = M₀, r = 1 + i) terlihat jelas.
+ */
+function saldoBungaMajemuk(M0, i, n) {
+  var out = [];
+  for (var k = 0; k <= n; k++) out.push(bulatkanUang(sukuGeometri(M0, 1 + i, k + 1)));
+  return out;
+}
+
+/* Bunga periode ke-1 … ke-n: barisan geometri a = M₀·i, r = 1 + i. */
+function bungaPeriodeMajemuk(M0, i, n) {
+  var out = [];
+  for (var k = 1; k <= n; k++) out.push(bulatkanUang(sukuGeometri(M0 * i, 1 + i, k)));
+  return out;
+}
+
+/*
+ * Pemajemukan `kaliSetahun` kali per tahun selama `tahun` tahun:
+ * suku bunga per periode i = persenTahun% : kaliSetahun dan
+ * banyak periode n = tahun × kaliSetahun.
+ */
+function konversiPeriode(persenTahun, kaliSetahun, tahun) {
+  return { i: persenTahun / 100 / kaliSetahun, n: tahun * kaliSetahun };
+}
+
+/* Nilai uang dibulatkan ke rupiah terdekat. */
+function bulatkanRupiah(v) {
+  return Math.round(v);
+}
+
+/*
+ * Simulator bunga majemuk.
+ *   opts.modal          [M₀ …] pilihan modal awal (rupiah)
+ *   opts.persen         [p …]  pilihan suku bunga per periode (persen)
+ *   opts.maxN           banyak periode terbesar (default 8)
+ *   opts.periode        nama satuan periode (default 'Tahun')
+ *   opts.bandingTunggal true → tambah kolom saldo bunga tunggal
+ * State (makeCompoundSimState): { mIdx, pIdx, n, ubah } — `ubah`
+ * menghitung perubahan yang benar-benar terjadi, sehingga app dapat
+ * mensyaratkan murid bereksplorasi sebelum lanjut.
+ */
+function makeCompoundSimState() {
+  return { mIdx: 0, pIdx: 0, n: 1, ubah: 0 };
+}
+
+function compoundSimBatas(key, opts) {
+  if (key === 'm') return { min: 0, max: opts.modal.length - 1 };
+  if (key === 'p') return { min: 0, max: opts.persen.length - 1 };
+  return { min: 1, max: opts.maxN || 8 };
+}
+
+function compoundSimField(key) {
+  return key === 'm' ? 'mIdx' : key === 'p' ? 'pIdx' : 'n';
+}
+
+/* Mengubah satu pengatur sebesar `step`; mengembalikan true bila berubah. */
+function ubahCompoundSim(st, key, step, opts) {
+  var b = compoundSimBatas(key, opts);
+  var f = compoundSimField(key);
+  var baru = Math.min(b.max, Math.max(b.min, st[f] + step));
+  if (baru === st[f]) return false;
+  st[f] = baru;
+  st.ubah = (st.ubah || 0) + 1;
+  return true;
+}
+
+function buildCompoundSimulator(id, st, opts) {
+  var M0 = opts.modal[st.mIdx];
+  var persen = opts.persen[st.pIdx];
+  var i = persen / 100;
+  var periode = opts.periode || 'Tahun';
+
+  function pengatur(key, label, teks) {
+    var b = compoundSimBatas(key, opts);
+    var v = st[compoundSimField(key)];
+    function tombol(step, simbol, aria) {
+      var mentok = step < 0 ? v <= b.min : v >= b.max;
+      return (
+        '<button type="button" class="compound-sim__btn" data-sim-id="' +
+        esc(id) +
+        '" data-sim-key="' +
+        key +
+        '" data-sim-step="' +
+        step +
+        '" aria-label="' +
+        esc(aria) +
+        '"' +
+        (mentok ? ' disabled' : '') +
+        '>' +
+        simbol +
+        '</button>'
+      );
+    }
+    return (
+      '<div class="compound-sim__ctrl">' +
+      '<span class="compound-sim__ctrl-label">' +
+      esc(label) +
+      '</span>' +
+      '<div class="compound-sim__stepper">' +
+      tombol(-1, '−', 'Kurangi ' + label) +
+      '<span class="compound-sim__val">' +
+      esc(teks) +
+      '</span>' +
+      tombol(1, '+', 'Tambah ' + label) +
+      '</div>' +
+      '</div>'
+    );
+  }
+
+  var saldo = saldoBungaMajemuk(M0, i, st.n);
+  var bunga = bungaPeriodeMajemuk(M0, i, st.n);
+  var rows = '';
+  for (var k = 0; k <= st.n; k++) {
+    rows +=
+      '<tr' +
+      (k === st.n ? ' class="passbook__row--hl"' : '') +
+      '><th scope="row">' +
+      esc(periode + ' ' + k) +
+      '</th>' +
+      (k === 0
+        ? '<td class="passbook__muted">—</td>'
+        : '<td>' + esc(formatRupiah(bulatkanRupiah(bunga[k - 1]))) + '</td>') +
+      '<td>' +
+      esc(formatRupiah(bulatkanRupiah(saldo[k]))) +
+      '</td>' +
+      (k === 0
+        ? '<td class="passbook__muted">—</td>'
+        : '<td class="compound-sim__ratio">×' + esc(formatRatio(1 + i)) + '</td>') +
+      (opts.bandingTunggal
+        ? '<td class="compound-sim__tunggal">' +
+          esc(formatRupiah(bulatkanRupiah(nilaiAkhirBungaTunggal(M0, i, k)))) +
+          '</td>'
+        : '') +
+      '</tr>';
+  }
+
+  return (
+    '<div class="compound-sim" id="' +
+    esc(id) +
+    '">' +
+    '<div class="compound-sim__controls">' +
+    pengatur('m', 'Modal awal M₀', formatRupiah(M0)) +
+    pengatur('p', 'Suku bunga i', formatDesimal(persen, 2) + '%') +
+    pengatur('n', 'Banyak periode n', String(st.n)) +
+    '</div>' +
+    '<div class="passbook compound-sim__book" aria-live="polite">' +
+    '<div class="passbook__scroll"><table class="passbook__table" aria-label="' +
+    esc('Simulasi bunga majemuk ' + formatDesimal(persen, 2) + '% selama ' + st.n + ' periode') +
+    '"><thead><tr><th scope="col">Periode</th><th scope="col">Bunga (majemuk)</th>' +
+    '<th scope="col">Saldo Mₙ</th><th scope="col">Mₙ : Mₙ₋₁</th>' +
+    (opts.bandingTunggal ? '<th scope="col">Saldo jika bunga tunggal</th>' : '') +
+    '</tr></thead><tbody>' +
+    rows +
+    '</tbody></table></div></div>' +
+    '<p class="compound-sim__summary">M' +
+    subskrip(st.n) +
+    ' = ' +
+    esc(formatRupiah(M0)) +
+    ' × (1 + ' +
+    esc(formatDesimal(i, 4)) +
+    ')' +
+    '<sup>' +
+    st.n +
+    '</sup> ≈ <strong>' +
+    esc(formatRupiah(bulatkanRupiah(saldo[st.n]))) +
+    '</strong></p>' +
+    '</div>'
+  );
+}
+
+/* Memasang tombol −/+ simulator; `save` lalu `rerender` dipanggil setelah berubah. */
+function bindCompoundSimulator(root, id, st, opts, save, rerender) {
+  root.querySelectorAll('[data-sim-id="' + id + '"][data-sim-key]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      if (ubahCompoundSim(st, btn.dataset.simKey, +btn.dataset.simStep, opts)) {
+        save();
+        rerender();
+      }
+    });
+  });
 }
