@@ -691,7 +691,27 @@
       <main class="main">
         <div class="nav-picker" data-fase="fase-e"></div>
         <p class="placeholder" hidden></p>
-        <div class="card-grid" role="list"></div>
+        <div class="card-grid" role="list">
+          <a
+            href="fase-e/mpi-1.1/index.html"
+            class="card"
+            role="listitem"
+            data-kelas="X"
+            data-topik="1"
+            aria-label="MPI 1.1 Sifat-sifat Eksponen Bulat (Discovery Learning) — Matematika SMK RPL"
+          >
+            <div class="card__stripe"></div>
+            <div class="card__body">
+              <span class="card__badge">Materi 1.1</span>
+              <h3 class="card__title">Sifat-sifat Eksponen Bulat</h3>
+              <p class="card__desc">
+                Menemukan sifat-sifat eksponen bulat lewat zoom aplikasi PixelKu, tangga pangkat,
+                dan ubin faktor, lalu menalar makna a⁰ = 1 dan a⁻ⁿ = 1/aⁿ (Discovery Learning).
+              </p>
+              <span class="card__cta">Buka media</span>
+            </div>
+          </a>
+        </div>
       </main>
     </div>
 
@@ -869,7 +889,10 @@
             { id: 'IX', topik: { 29: 'Kekongruenan' } },
           ],
         },
-        'fase-e': { nama: 'Fase E', kelas: [] },
+        'fase-e': {
+          nama: 'Fase E',
+          kelas: [{ id: 'X', topik: { 1: 'Bilangan Berpangkat Bulat' } }],
+        },
         'fase-f': {
           nama: 'Fase F',
           kelas: [

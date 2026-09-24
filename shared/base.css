@@ -5935,3 +5935,402 @@ details.hint-reveal[open] summary::before {
     padding: var(--space-1);
   }
 }
+
+/* =========================================================================
+   Eksponen bulat (engine.js seksi 27): tangga pangkat (.pw-ladder*),
+   ubin faktor (.fx-*), lab uji sifat eksponen (.xlab*).
+   Warna: pangkat positif biru, pangkat nol ungu, pangkat negatif oranye.
+   ========================================================================= */
+
+.pw-ladder {
+  list-style: none;
+  margin: var(--space-3) auto;
+  padding: 0;
+  max-width: 460px;
+}
+
+.pw-ladder__row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  border: 2px solid var(--color-blue);
+  border-radius: var(--radius-md);
+  background: var(--color-blue-soft);
+}
+
+.pw-ladder__row--nol {
+  border-color: var(--color-purple);
+  background: var(--color-purple-soft);
+}
+
+.pw-ladder__row--neg {
+  border-color: var(--color-orange);
+  background: var(--color-orange-soft);
+}
+
+.pw-ladder__pow {
+  min-width: 3.4ch;
+  font-family: var(--font-mono);
+  font-size: 1.25rem;
+  font-weight: 700;
+}
+
+.pw-ladder__eq {
+  font-weight: 700;
+  color: var(--color-ink-muted);
+}
+
+.pw-ladder__val {
+  min-width: 4ch;
+  font-family: var(--font-mono);
+  font-size: 1.2rem;
+  font-weight: 700;
+}
+
+.pw-ladder__val--tanya {
+  color: var(--color-orange-strong);
+}
+
+.pw-ladder__input.input-text {
+  width: 96px;
+  min-height: 40px;
+  font-family: var(--font-mono);
+  font-size: 1.05rem;
+  text-align: center;
+}
+
+.pw-ladder__mark {
+  font-weight: 700;
+}
+
+.pw-ladder__mark--ok {
+  color: var(--color-success);
+}
+
+.pw-ladder__mark--no {
+  color: var(--color-error);
+}
+
+.pw-ladder__faktor {
+  margin-left: auto;
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+  color: var(--color-ink-muted);
+}
+
+.pw-ladder__step {
+  padding: 2px 0 2px var(--space-5);
+  font-family: var(--font-mono);
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--color-ink-muted);
+}
+
+.pw-ladder__arrow {
+  color: var(--color-primary);
+}
+
+.pw-ladder-duo {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: var(--space-4);
+  align-items: start;
+}
+
+.pw-ladder-duo > * {
+  min-width: 0;
+}
+
+/* Ubin faktor */
+.fx-tiles {
+  margin: var(--space-3) 0;
+  text-align: center;
+}
+
+.fx-tiles__body {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.fx-group {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding: 4px;
+  border-radius: var(--radius-md);
+  border: 2px dashed var(--color-blue);
+}
+
+.fx-group--b {
+  border-color: var(--color-orange);
+}
+
+.fx-tile {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 34px;
+  height: 34px;
+  padding: 0 4px;
+  border-radius: var(--radius-sm);
+  background: var(--color-blue);
+  color: #fff;
+  font-family: var(--font-mono);
+  font-weight: 700;
+}
+
+.fx-group--b .fx-tile,
+.fx-tile--b {
+  background: var(--color-orange);
+}
+
+.fx-tile--coret {
+  position: relative;
+  opacity: 0.45;
+}
+
+.fx-tile--coret::after {
+  content: '';
+  position: absolute;
+  left: 3px;
+  right: 3px;
+  top: 50%;
+  border-top: 3px solid var(--color-error-strong);
+  transform: rotate(-35deg);
+}
+
+.fx-op {
+  font-family: var(--font-mono);
+  font-size: 1.2rem;
+  font-weight: 700;
+}
+
+.fx-one {
+  font-family: var(--font-mono);
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--color-purple-strong);
+}
+
+.fx-frac {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.fx-frac__row {
+  display: flex;
+  justify-content: center;
+}
+
+.fx-frac__bar {
+  align-self: stretch;
+  border-top: 3px solid var(--color-ink);
+}
+
+/* Lab uji sifat eksponen */
+.xlab__pilih {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: var(--space-2);
+  margin-bottom: var(--space-4);
+}
+
+.xlab__sifat {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-height: 44px;
+  padding: var(--space-2) var(--space-3);
+  border: 2px solid var(--color-border-strong);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  color: var(--color-ink);
+  text-align: left;
+  cursor: pointer;
+}
+
+.xlab__sifat:hover {
+  border-color: var(--color-primary);
+}
+
+.xlab__sifat:focus-visible {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+.xlab__sifat[aria-pressed='true'] {
+  border-color: var(--color-primary);
+  background: var(--color-primary-soft);
+}
+
+.xlab__sifat--dugaan {
+  border-style: dashed;
+}
+
+.xlab__sifat-nama {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--color-ink-muted);
+}
+
+.xlab__sifat-rumus {
+  font-family: var(--font-mono);
+  font-weight: 700;
+}
+
+.xlab__stepper {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--space-4);
+  margin-bottom: var(--space-4);
+}
+
+.xlab__hasil {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: var(--space-3);
+  padding: var(--space-4);
+  border: 2px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-bg);
+}
+
+.xlab__ruas {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: var(--space-2);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+  min-width: 0;
+}
+
+.xlab__ruas-label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-ink-muted);
+}
+
+.xlab__ruas-teks,
+.xlab__ruas-nilai {
+  font-family: var(--font-mono);
+  font-size: 1.2rem;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+.xlab__catatan,
+.xlab__vonis {
+  grid-column: 1 / -1;
+  margin: 0;
+  text-align: center;
+}
+
+.xlab__catatan {
+  font-family: var(--font-mono);
+  color: var(--color-ink-muted);
+}
+
+.xlab__vonis {
+  padding: var(--space-2);
+  border-radius: var(--radius-sm);
+  font-weight: 700;
+}
+
+.xlab__vonis--ok {
+  background: var(--color-success-soft);
+  color: var(--color-success-strong);
+}
+
+.xlab__vonis--no {
+  background: var(--color-error-soft);
+  color: var(--color-error-strong);
+}
+
+.xlab__vonis--undef {
+  background: var(--color-warning-soft);
+  color: var(--color-warning-strong);
+}
+
+.xlab__cek {
+  list-style: none;
+  margin: var(--space-4) 0 var(--space-3);
+  padding: 0;
+  display: grid;
+  gap: var(--space-1);
+}
+
+.xlab__cek-item {
+  font-size: 0.92rem;
+}
+
+.xlab__cek-item--done {
+  color: var(--color-success-strong);
+}
+
+.xlab__cek-ket {
+  color: var(--color-ink-muted);
+}
+
+.xlab__log-wrap {
+  overflow-x: auto;
+}
+
+.xlab__log {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: var(--font-mono);
+  font-size: 0.9rem;
+}
+
+.xlab__log th,
+.xlab__log td {
+  padding: var(--space-1) var(--space-2);
+  border-bottom: 1px solid var(--color-border);
+  text-align: left;
+}
+
+.xlab__tag {
+  display: inline-block;
+  padding: 0 var(--space-2);
+  border-radius: var(--radius-sm);
+  font-family: var(--font-body);
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.xlab__tag--ok {
+  background: var(--color-success-soft);
+  color: var(--color-success-strong);
+}
+
+.xlab__tag--no {
+  background: var(--color-error-soft);
+  color: var(--color-error-strong);
+}
+
+@media (max-width: 480px) {
+  .pw-ladder__faktor {
+    display: none;
+  }
+
+  .xlab__stepper {
+    gap: var(--space-2);
+  }
+
+  .fx-tile {
+    min-width: 28px;
+    height: 28px;
+  }
+}
