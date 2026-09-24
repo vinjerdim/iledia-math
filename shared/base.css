@@ -41,11 +41,11 @@
   --color-warning-strong: #6a4c00;
   --color-focus: #2563eb;
 
-  --font-display:
-    'Avenir Next', 'Segoe UI Semibold', 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+  --font-display: 'Avenir Next', 'Segoe UI Semibold', 'Segoe UI', 'Helvetica Neue', Arial,
+    sans-serif;
   --font-body: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
-  --font-mono:
-    ui-monospace, 'Cascadia Mono', 'Segoe UI Mono', Consolas, 'Liberation Mono', monospace;
+  --font-mono: ui-monospace, 'Cascadia Mono', 'Segoe UI Mono', Consolas, 'Liberation Mono',
+    monospace;
 
   --space-1: 4px;
   --space-2: 8px;
@@ -79,8 +79,7 @@ body {
   font-family: var(--font-body);
   color: var(--color-ink);
   background-color: var(--color-bg);
-  background-image:
-    linear-gradient(var(--color-bg-grid) 1px, transparent 1px),
+  background-image: linear-gradient(var(--color-bg-grid) 1px, transparent 1px),
     linear-gradient(90deg, var(--color-bg-grid) 1px, transparent 1px);
   background-size: 28px 28px;
   line-height: 1.6;
@@ -3265,4 +3264,389 @@ details.hint-reveal[open] summary::before {
 .quiz-item--guided .exercise-label .dl-step__num {
   margin-right: var(--space-2);
   vertical-align: middle;
+}
+
+/* =========================================================================
+   Pecahan — membandingkan & mengurutkan
+   (buildFracStripCompare, buildFracNumberLine, buildOrderBoard,
+   buildRoleCards, buildRoleTag di engine.js)
+   ========================================================================= */
+
+.frac-strip {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin: var(--space-3) 0;
+}
+
+.frac-strip__row {
+  display: grid;
+  grid-template-columns: minmax(84px, 9rem) 1fr;
+  align-items: center;
+  gap: var(--space-3);
+  padding: 4px;
+  border-radius: var(--radius-md);
+  --strip-fill: var(--color-orange);
+  --strip-line: var(--color-orange-strong);
+}
+
+.frac-strip__row--1 {
+  --strip-fill: var(--color-blue);
+  --strip-line: var(--color-blue-strong);
+}
+
+.frac-strip__row--2 {
+  --strip-fill: var(--color-purple);
+  --strip-line: var(--color-purple-strong);
+}
+
+.frac-strip__row--3 {
+  --strip-fill: var(--color-success);
+  --strip-line: var(--color-success-strong);
+}
+
+.frac-strip__row.is-hl {
+  background: var(--color-warning-soft);
+  outline: 2px solid var(--color-warning);
+}
+
+.frac-strip__label {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+  font-size: 1.05rem;
+  font-weight: 700;
+}
+
+.frac-strip__name {
+  width: 100%;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--color-ink-muted);
+}
+
+.frac-strip__eq {
+  font-size: 0.9rem;
+  color: var(--color-ink-muted);
+}
+
+.frac-strip__bar {
+  position: relative;
+  display: grid;
+  gap: 2px;
+  height: 36px;
+  padding: 3px;
+  border: 2px solid var(--strip-line);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+}
+
+.frac-strip__cell {
+  border-radius: 2px;
+  background: var(--color-bg-grid);
+  transition: background-color 0.2s;
+}
+
+.frac-strip__cell.is-on {
+  background: var(--strip-fill);
+}
+
+.frac-strip__cell.is-edge {
+  box-shadow: 3px 0 0 var(--strip-line);
+}
+
+/* Patokan ½: garis putus-putus di tengah setiap pita. */
+.frac-strip--half .frac-strip__bar::after {
+  content: '';
+  position: absolute;
+  top: -6px;
+  bottom: -6px;
+  left: 50%;
+  border-left: 2px dashed var(--color-ink);
+  pointer-events: none;
+}
+
+.frac-strip__caption {
+  font-size: 0.82rem;
+  color: var(--color-ink-muted);
+}
+
+.frac-nl-wrap {
+  margin: var(--space-3) 0;
+}
+
+.frac-nl {
+  display: block;
+  width: 100%;
+  max-width: 560px;
+  margin: 0 auto;
+  height: auto;
+  min-height: 90px;
+}
+
+.frac-nl__axis {
+  stroke: var(--color-ink);
+  stroke-width: 2.5;
+}
+
+.frac-nl__tick {
+  stroke: var(--color-border-strong);
+  stroke-width: 1.5;
+}
+
+.frac-nl__tick--major {
+  stroke: var(--color-ink);
+  stroke-width: 2.5;
+}
+
+.frac-nl__end {
+  font-size: 19px;
+  font-weight: 700;
+  text-anchor: middle;
+  fill: var(--color-ink);
+}
+
+.frac-nl__mark {
+  --mark: var(--color-orange);
+}
+
+.frac-nl__mark--1 {
+  --mark: var(--color-blue);
+}
+
+.frac-nl__mark--2 {
+  --mark: var(--color-purple);
+}
+
+.frac-nl__mark--3 {
+  --mark: var(--color-success);
+}
+
+.frac-nl__mark circle {
+  fill: var(--mark);
+  stroke: #fff;
+  stroke-width: 2;
+}
+
+.frac-nl__stem,
+.frac-nl__bar {
+  stroke: var(--mark);
+  stroke-width: 2;
+}
+
+.frac-nl__num {
+  font-size: 19px;
+  font-weight: 700;
+  text-anchor: middle;
+  fill: var(--mark);
+}
+
+/* Papan urutan: slot hasil + kartu yang diketuk */
+.order-board {
+  margin: var(--space-3) 0;
+}
+
+.order-board__ends {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--color-ink-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.order-board__slots {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(76px, 1fr));
+  gap: var(--space-2);
+  margin: var(--space-2) 0 var(--space-3);
+  padding: 0;
+  list-style: none;
+}
+
+.order-board__slot {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 76px;
+  border: 2px dashed var(--color-border-strong);
+  border-radius: var(--radius-md);
+  background: var(--color-bg-grid);
+  font-size: 1.3rem;
+  font-weight: 700;
+}
+
+.order-board__slot.is-filled {
+  border-style: solid;
+  border-color: var(--color-primary);
+  background: var(--color-primary-soft);
+}
+
+.order-board__slot.is-ok {
+  border-color: var(--color-success);
+  background: var(--color-success-soft);
+}
+
+.order-board__slot.is-bad {
+  border-color: var(--color-error);
+  background: var(--color-error-soft);
+}
+
+.order-board__pos {
+  position: absolute;
+  top: 4px;
+  left: 6px;
+  font-size: 0.7rem;
+  color: var(--color-ink-muted);
+}
+
+.order-board__val {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+.order-board__empty {
+  color: var(--color-border-strong);
+}
+
+.order-board__hint {
+  margin: 0 0 var(--space-2);
+  font-size: 0.85rem;
+  color: var(--color-ink-muted);
+}
+
+.order-board__pool {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.order-board__card {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  min-width: 76px;
+  min-height: 64px;
+  padding: var(--space-2) var(--space-3);
+  border: 2px solid var(--color-orange);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  box-shadow: 0 3px 0 var(--color-orange-soft);
+  font-family: var(--font-body);
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: var(--color-ink);
+  cursor: pointer;
+  transition:
+    transform 0.1s,
+    background-color 0.12s;
+}
+
+.order-board__card:hover:not(:disabled) {
+  background: var(--color-orange-soft);
+  transform: translateY(-2px);
+}
+
+.order-board__card:focus-visible {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+.order-board__card:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+
+.order-board__controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-top: var(--space-3);
+}
+
+/* Kartu peran kerja kelompok */
+.role-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+  gap: var(--space-3);
+  margin: var(--space-3) 0;
+}
+
+.role-card {
+  display: flex;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  border: 2px solid var(--color-purple-soft);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+}
+
+.role-card__icon {
+  flex: 0 0 auto;
+  font-size: 1.9rem;
+  line-height: 1;
+}
+
+.role-card__body {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.role-card__name {
+  margin: 0;
+  font-weight: 700;
+  color: var(--color-purple-strong);
+}
+
+.role-card__task {
+  margin: 2px 0 var(--space-2);
+  font-size: 0.84rem;
+  color: var(--color-ink-muted);
+}
+
+.role-card__who {
+  margin: 0;
+  font-weight: 600;
+}
+
+.role-card__input {
+  width: 100%;
+}
+
+.role-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px var(--space-2);
+  border-radius: 999px;
+  background: var(--color-purple-soft);
+  color: var(--color-purple-strong);
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+@media (max-width: 480px) {
+  .frac-strip__row {
+    grid-template-columns: 1fr;
+    gap: 4px;
+  }
+
+  .order-board__slots {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .frac-strip__cell,
+  .order-board__card {
+    transition: none;
+  }
 }

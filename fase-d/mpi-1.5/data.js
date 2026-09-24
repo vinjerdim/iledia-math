@@ -1,988 +1,590 @@
 'use strict';
 
 /* ============================================================
-   data.js — Konten pembelajaran
-   Matematika: Menyelesaikan Masalah Operasi Aritmatika Campuran
-   Bilangan Rasional dan Desimal — Fase D (SMP)
+   data.js — Konten media pembelajaran
+   Matematika: Membandingkan & Mengurutkan Pecahan Berpenyebut Berbeda
+   Fase D — SMP Kelas 7
 
-   Pisahkan dari app.js agar mudah dikustomisasi guru.
+   Tujuan Pembelajaran:
+   Membandingkan dan mengurutkan pecahan dengan penyebut berbeda.
 
-   Cara menambah/mengubah soal:
-   - Tambahkan objek ke array DATA.problems
-   - Ikuti struktur yang sama (lihat komentar per properti)
-   - Pastikan answer dan calcSteps benar secara matematis
+   Penulisan pecahan di dalam teks memakai token {a/b}, mis. "{3/4}";
+   app.js mengubahnya menjadi pecahan bersusun dengan renderFracText()
+   dari shared/engine.js.
+
+   Model pembelajaran: COOPERATIVE LEARNING (tipe STAD dengan
+   pembagian peran; enam fase menurut Arends). Pemetaan fase ke
+   tahap media:
+
+     Fase 1 — Menyampaikan tujuan & memotivasi ..... tahap 'orientasi'
+     Fase 2 — Menyajikan informasi ................. tahap 'sajian'
+     Fase 3 — Mengorganisasikan murid ke dalam
+              kelompok belajar ..................... tahap 'kelompok'
+     Fase 4 — Membimbing kelompok bekerja &
+              belajar ............................... tahap 'bandingkan' & 'urutkan'
+     Fase 5 — Evaluasi (kuis individu) ............. tahap 'kuis'
+     Fase 6 — Memberikan penghargaan ............... tahap 'penghargaan'
+     Penutup ...................................... 'refleksi', 'selesai'
+
+   Prinsip pembelajaran mendalam:
+     • Berkesadaran (mindful) — tujuan & aturan kerja kelompok
+       dinyatakan di awal; setiap langkah LKPD menyebut peran yang
+       bertugas; murid merefleksikan strategi dan kerja samanya.
+     • Bermakna (meaningful) — pecahan dijumpai dalam konteks lomba
+       menghias kue, pita, lari pagi, resep, dan botol minum; pita
+       pecahan & garis bilangan selalu menyertai perhitungan.
+     • Menggembirakan (joyful) — kerja tim dengan peran, papan urutan
+       yang bisa diketuk, poin kelompok, dan predikat tim.
+
+   Rangkaian aktivitas (± 2 × 40 menit, kelompok heterogen 4 murid,
+   satu perangkat per kelompok; kuis dikerjakan tiap murid):
+     1. Orientasi   (7')  — masalah "Lomba Menghias Kue": {2/3}, {3/4},
+                            atau {5/8} kue, mana paling luas? Dugaan
+                            awal, tujuan, dan aturan kerja kelompok.
+     2. Sajian      (15') — guru menyajikan 3 strategi: pita pecahan,
+                            menyamakan penyebut (KPK) + kali silang,
+                            dan patokan ½; cek cepat tiap strategi;
+                            dugaan awal dibuktikan.
+     3. Kelompok    (5')  — nama tim, pembagian peran (Pembaca,
+                            Penghitung, Pemeriksa, Pelapor), kesepakatan.
+     4. Bandingkan  (15') — LKPD kelompok: 5 pasang pecahan; KPK →
+                            pecahan senilai → tanda <, >, =.
+     5. Urutkan     (13') — LKPD kelompok: 3 kumpulan pecahan diurutkan
+                            dengan papan ketuk; pembahasan garis bilangan.
+     6. Kuis        (10') — 6 soal individu, tanpa bantuan teman.
+     7. Penghargaan (5')  — skor tim (LKPD) + skor individu (kuis) →
+                            predikat tim; apresiasi antaranggota.
+     8. Refleksi    (5')  — cek pernyataan, refleksi strategi & kerja
+                            sama, keyakinan diri.
+     9. Selesai           — ringkasan capaian & catatan guru.
+
+   Seluruh pilihan jawaban (dugaan, cek cepat, tanda perbandingan,
+   kartu urutan, kuis, pemilahan, refleksi) DIACAK di app.js.
    ============================================================ */
 
-const DATA = {
-  meta: {
-    title: 'Operasi Aritmatika Campuran',
-    subject: 'Matematika — Fase D (SMP)',
-    goal: 'Saya dapat menyelesaikan masalah kontekstual yang melibatkan operasi aritmatika campuran bilangan rasional dan desimal.',
-  },
-
-  /* ----------------------------------------------------------
-       CONTOH TERBIMBING
-       Masalah sederhana dengan panduan penuh
-       ---------------------------------------------------------- */
-  guidedExample: {
-    title: 'Contoh Terbimbing',
-    context:
-      'Ayah memiliki dua potongan kawat. Potongan pertama panjangnya <strong>½ m</strong> dan potongan kedua panjangnya <strong>¼ m</strong>.',
-    question: 'Berapa meter total panjang kawat yang dimiliki Ayah?',
-    /* steps: array langkah-langkah interaktif di contoh */
-    steps: [
-      {
-        id: 'ce0',
-        type: 'read',
-        title: 'Langkah 1 — Baca dan Pahami Masalah',
-        body: 'Sebelum menghitung, pahami dulu:<ul><li>Apa yang <strong>diketahui</strong>? Dua panjang kawat: ½ m dan ¼ m.</li><li>Apa yang <strong>ditanya</strong>? Total panjang kawat.</li><li>Apa artinya "total"? Gabungan semua bagian.</li></ul>',
-        cta: 'Lanjut ke Langkah 2',
-      },
-      {
-        id: 'ce1',
-        type: 'mc',
-        title: 'Langkah 2 — Tentukan Operasi',
-        prompt:
-          'Kita ingin menghitung <strong>total</strong> panjang dua kawat. Operasi matematika apa yang tepat untuk mencari total?',
-        options: [
-          {
-            id: 'a',
-            label: 'Penjumlahan (+)',
-            correct: true,
-            feedback: 'Benar! Penjumlahan digunakan untuk menggabungkan nilai menjadi total.',
-          },
-          {
-            id: 'b',
-            label: 'Pengurangan (−)',
-            correct: false,
-            feedback: 'Pengurangan digunakan saat mencari selisih atau sisa, bukan total.',
-          },
-          {
-            id: 'c',
-            label: 'Perkalian (×)',
-            correct: false,
-            feedback:
-              'Perkalian digunakan untuk kasus "berapa kali lipat". Kita ingin total, bukan hasil kali.',
-          },
-          {
-            id: 'd',
-            label: 'Pembagian (÷)',
-            correct: false,
-            feedback: 'Pembagian digunakan untuk membagi rata. Kita ingin total.',
-          },
-        ],
-        hint: 'Kata kunci: "total panjang". Operasi apa yang kamu gunakan saat ingin menjumlahkan dua hal?',
-      },
-      {
-        id: 'ce2',
-        type: 'input',
-        title: 'Langkah 3 — Samakan Penyebut',
-        instruction:
-          'Untuk menjumlahkan pecahan, penyebut harus sama. Kita akan mengubah ½ menjadi pecahan dengan penyebut 4.',
-        prompt: '½ = ?/4',
-        inputLabel: 'Isi pembilang: ½ = ___/4',
-        inputPlaceholder: '2',
-        /* answerType: numerator — hanya periksa pembilang (integer) */
-        answerType: 'numerator',
-        answer: 2,
-        correctDisplay: '2/4',
-        hints: [
-          'Tanya: 2 × ? = 4 (penyebut baru)? Jawab: 2. Maka pembilang juga dikali 2: 1 × 2 = ?',
-          '1 × 2 = 2. Jadi ½ = 2/4. Pembilang dan penyebut sama-sama dikali 2, nilainya tidak berubah.',
-        ],
-        feedbackCorrect: 'Tepat! ½ = 2/4. Pembilang dan penyebut sama-sama dikali 2.',
-        feedbackWrong:
-          'Belum tepat. Coba pikirkan: untuk mengubah penyebut dari 2 menjadi 4, kita kalikan dengan 2. Maka pembilang juga harus dikali 2.',
-      },
-      {
-        id: 'ce3',
-        type: 'input',
-        title: 'Langkah 4 — Hitung Penjumlahan',
-        instruction: 'Sekarang penyebut sudah sama (4). Jumlahkan pembilangnya.',
-        prompt: '2/4 + 1/4 = ?',
-        inputLabel: 'Hasil (boleh desimal atau pecahan, mis. 0,75)',
-        inputPlaceholder: '0,75',
-        /* answerType: decimal — bandingkan nilai desimal */
-        answerType: 'decimal',
-        answer: 0.75,
-        tolerance: 0.01,
-        correctDisplay: '3/4 = 0,75',
-        hints: [
-          'Saat penyebut sama, jumlahkan hanya pembilangnya: 2 + 1 = ?. Penyebutnya tetap 4.',
-          '2/4 + 1/4 = (2+1)/4 = 3/4. Ubah ke desimal: 3 ÷ 4 = 0,75.',
-        ],
-        feedbackCorrect: 'Benar! 2/4 + 1/4 = 3/4 = 0,75.',
-        feedbackWrong:
-          'Belum tepat. Ingat: penyebut sudah sama (4), jadi jumlahkan pembilangnya saja: 2 + 1 = 3. Penyebut tetap 4, hasilnya 3/4 = 0,75.',
-      },
-      {
-        id: 'ce4',
-        type: 'summary',
-        title: 'Langkah 5 — Rangkuman Penyelesaian',
-        steps: [
-          'Diketahui: kawat pertama = ½ m, kawat kedua = ¼ m',
-          'Ditanya: total panjang kawat',
-          'Operasi: penjumlahan (½ + ¼)',
-          'Samakan penyebut: ½ = 2/4',
-          'Hitung: 2/4 + 1/4 = 3/4',
-          'Ubah ke desimal: 3 ÷ 4 = 0,75',
-          'Jawaban: Total kawat = ¾ m = 0,75 m',
-        ],
-        note: 'Perhatikan bahwa ½ dan ¼ memiliki penyebut berbeda (2 dan 4). Kita harus menyamakan penyebut sebelum menjumlahkan. Penyebut persekutuan terkecil dari 2 dan 4 adalah 4.',
-      },
-    ],
-  },
-
-  /* ----------------------------------------------------------
-       SOAL-SOAL LATIHAN
-       5 soal dengan tingkat kesulitan bertahap
-       ---------------------------------------------------------- */
-  problems: [
-    /* ---- SOAL 1: Belanja Buah (Mudah, +, pecahan beda penyebut) ---- */
+var DATA = {
+  /* Peran kerja kelompok (dipakai tahap 3–7). */
+  peran: [
     {
-      id: 'p1',
-      title: 'Belanja Buah',
-      difficulty: 1,
-      context:
-        'Ibu pergi ke pasar dan membeli <strong>½ kg apel</strong> serta <strong>¾ kg jeruk</strong>.',
-      question: 'Berapa kilogram buah yang dibeli Ibu seluruhnya?',
-      unit: 'kg',
-
-      identify: {
-        instruction: 'Centang semua informasi yang diperlukan untuk menjawab pertanyaan.',
-        items: [
-          { id: 'i1', text: 'Berat apel: ½ kg', relevant: true },
-          { id: 'i2', text: 'Berat jeruk: ¾ kg', relevant: true },
-          { id: 'i3', text: 'Ibu pergi ke pasar', relevant: false },
-        ],
-        hints: [
-          'Pertanyaan: total berat buah. Informasi apa yang berhubungan dengan berat?',
-          'Pilih hanya informasi tentang berat masing-masing buah.',
-        ],
-        feedbackCorrect:
-          'Tepat! Kita memerlukan berat apel (½ kg) dan berat jeruk (¾ kg) untuk menghitung total.',
-        feedbackWrong:
-          'Belum tepat. Pilih semua informasi yang menyebutkan berat buah, dan jangan pilih yang tidak berhubungan dengan berat.',
-      },
-
-      model: {
-        instruction: 'Pilih ekspresi matematika yang sesuai dengan masalah ini.',
-        options: [
-          {
-            id: 'm1',
-            expr: '½ + ¾',
-            correct: true,
-            feedback: 'Benar! Kita menjumlahkan berat apel dan berat jeruk untuk mendapat total.',
-          },
-          {
-            id: 'm2',
-            expr: '¾ − ½',
-            correct: false,
-            feedback:
-              'Pengurangan (−) digunakan untuk mencari selisih, bukan total. Di sini kita ingin menggabungkan dua berat.',
-          },
-          {
-            id: 'm3',
-            expr: '½ × ¾',
-            correct: false,
-            feedback:
-              'Perkalian (×) digunakan untuk kasus seperti "berapa kali lipat dari". Kita tidak ingin mengalikan berat.',
-          },
-          {
-            id: 'm4',
-            expr: '½ ÷ ¾',
-            correct: false,
-            feedback:
-              'Pembagian (÷) digunakan untuk membagi rata. Kita ingin total, bukan hasil pembagian.',
-          },
-        ],
-        hints: [
-          'Kita ingin tahu TOTAL berat. Operasi mana yang menggabungkan dua nilai menjadi satu total?',
-          'Penjumlahan (+) digunakan ketika ingin mencari total atau gabungan dari beberapa nilai.',
-        ],
-      },
-
-      /* null = tidak ada langkah urutan operasi untuk soal ini */
-      order: null,
-
-      calc: {
-        instruction: 'Selesaikan perhitungan langkah demi langkah.',
-        steps: [
-          {
-            id: 'cs1',
-            instruction: 'Agar bisa dijumlahkan, penyebut harus sama. Ubah ½ ke penyebut 4:',
-            prompt: '½ = ___/4',
-            inputLabel: 'Masukkan pembilangnya: ½ = ___/4',
-            inputPlaceholder: '2',
-            answerType: 'numerator',
-            answer: 2,
-            denominator: 4,
-            correctDisplay: '2/4',
-            hints: [
-              'Tanya: penyebut 2 harus jadi 4. 2 × ? = 4? Kalikan pembilang juga dengan angka yang sama.',
-              '2 × 2 = 4. Jadi kalikan juga pembilang: 1 × 2 = 2. Hasilnya: ½ = 2/4.',
-            ],
-            feedbackCorrect: 'Benar! ½ = 2/4 karena 1×2=2 dan 2×2=4.',
-            feedbackWrong:
-              'Belum tepat. Penyebut baru adalah 4. Untuk mengubah 2 menjadi 4, kalikan 2. Maka pembilang juga dikali 2: 1 × 2 = ?',
-          },
-          {
-            id: 'cs2',
-            instruction: 'Penyebut sudah sama (4). Jumlahkan pembilangnya:',
-            prompt: '2/4 + 3/4 = ?',
-            inputLabel: 'Masukkan hasilnya (desimal atau pecahan)',
-            inputPlaceholder: '1,25',
-            answerType: 'decimal',
-            answer: 1.25,
-            tolerance: 0.01,
-            correctDisplay: '5/4 = 1¼ = 1,25',
-            hints: [
-              'Penyebut sudah sama: jumlahkan hanya pembilang: 2 + 3 = ?. Penyebutnya tetap 4.',
-              '2 + 3 = 5. Hasilnya 5/4. Ubah ke desimal: 5 ÷ 4 = 1,25.',
-            ],
-            feedbackCorrect: 'Benar! 2/4 + 3/4 = 5/4 = 1,25.',
-            feedbackWrong:
-              'Belum tepat. Saat penyebut sama, jumlah pembilangnya saja: 2 + 3 = 5. Penyebut tetap 4. Hasilnya 5/4 = 1,25.',
-          },
-        ],
-      },
-
-      answer: {
-        prompt: 'Jadi, berapa kilogram buah yang dibeli Ibu seluruhnya?',
-        inputLabel: 'Total buah (kg)',
-        inputPlaceholder: '1,25',
-        answer: 1.25,
-        tolerance: 0.01,
-        unit: 'kg',
-        correctDisplay: '1¼ kg = 1,25 kg',
-        hints: [
-          'Gunakan hasil dari langkah perhitungan terakhir.',
-          'Dari langkah sebelumnya: 2/4 + 3/4 = 5/4 = 1,25 kg.',
-        ],
-        feedbackCorrect: 'Benar! Total buah yang dibeli Ibu adalah 1,25 kg.',
-        feedbackWrong: 'Belum tepat. Periksa kembali hasil langkah perhitungan di atas.',
-      },
-
-      verify: {
-        question:
-          'Ibu membeli ½ kg (= 0,5 kg) dan ¾ kg (= 0,75 kg) buah. Apakah hasil 1,25 kg masuk akal?',
-        options: [
-          { id: 'v1', text: 'Ya, masuk akal. 0,5 + 0,75 = 1,25 kg sesuai.', correct: true },
-          { id: 'v2', text: 'Tidak, seharusnya lebih dari 2 kg.', correct: false },
-          { id: 'v3', text: 'Tidak, seharusnya kurang dari ½ kg.', correct: false },
-        ],
-        feedbackCorrect: 'Tepat! ½ = 0,5 dan ¾ = 0,75. Dijumlahkan = 1,25 kg. Hasil masuk akal.',
-        feedbackWrong:
-          'Perhatikan: ½ = 0,5 dan ¾ = 0,75. Keduanya kurang dari 1 kg, jadi totalnya antara 1 dan 2 kg. Hasil 1,25 kg sangat masuk akal.',
-      },
-
-      solution: {
-        steps: [
-          'Diketahui: apel = ½ kg, jeruk = ¾ kg',
-          'Ditanya: total berat buah',
-          'Operasi: penjumlahan (½ + ¾)',
-          'Samakan penyebut: ½ = 2/4',
-          'Hitung: 2/4 + 3/4 = 5/4',
-          'Ubah ke desimal: 5 ÷ 4 = 1,25',
-          'Jawaban: 1¼ kg = 1,25 kg',
-        ],
-      },
+      id: 'pembaca',
+      ikon: '📖',
+      nama: 'Pembaca Soal',
+      tugas: 'Membacakan soal dengan lantang dan memastikan semua anggota paham yang ditanyakan.',
     },
-
-    /* ---- SOAL 2: Tali Pramuka (Mudah-Sedang, −, desimal − pecahan) ---- */
     {
-      id: 'p2',
-      title: 'Tali Pramuka',
-      difficulty: 1,
-      context:
-        'Dani memiliki tali sepanjang <strong>2,5 m</strong>. Untuk kegiatan pramuka, ia memotong <strong>¾ m</strong> dari tali tersebut.',
-      question: 'Berapa meter sisa tali Dani?',
-      unit: 'm',
-
-      identify: {
-        instruction: 'Centang semua informasi yang diperlukan untuk menjawab pertanyaan.',
-        items: [
-          { id: 'i1', text: 'Panjang tali awal: 2,5 m', relevant: true },
-          { id: 'i2', text: 'Panjang yang dipotong: ¾ m', relevant: true },
-          { id: 'i3', text: 'Tali digunakan untuk kegiatan pramuka', relevant: false },
-        ],
-        hints: [
-          'Kita ingin tahu sisa tali. Informasi apa yang dibutuhkan: panjang awal dan panjang yang diambil.',
-          'Pilih informasi tentang panjang tali, bukan tentang kegiatannya.',
-        ],
-        feedbackCorrect: 'Tepat! Kita perlu panjang awal (2,5 m) dan panjang yang dipotong (¾ m).',
-        feedbackWrong:
-          'Belum tepat. Pilih informasi yang menyebutkan panjang tali (awal dan yang dipotong).',
-      },
-
-      model: {
-        instruction: 'Pilih ekspresi matematika yang sesuai untuk mencari sisa tali.',
-        options: [
-          {
-            id: 'm1',
-            expr: '2,5 − ¾',
-            correct: true,
-            feedback:
-              'Benar! Kita kurangi panjang yang dipotong (¾) dari panjang awal (2,5) untuk mendapat sisa.',
-          },
-          {
-            id: 'm2',
-            expr: '2,5 + ¾',
-            correct: false,
-            feedback:
-              'Penjumlahan digunakan untuk total. Tali dipotong (dikurangi), bukan ditambah.',
-          },
-          {
-            id: 'm3',
-            expr: '¾ − 2,5',
-            correct: false,
-            feedback:
-              'Urutan operan penting! Sisa = panjang awal − yang dipotong, bukan sebaliknya.',
-          },
-          {
-            id: 'm4',
-            expr: '2,5 × ¾',
-            correct: false,
-            feedback:
-              'Perkalian tidak sesuai di sini. Kita ingin mengetahui sisa setelah pemotongan.',
-          },
-        ],
-        hints: [
-          'Kata kunci: "sisa" → artinya ada pengurangan. Apa yang dikurangi dari apa?',
-          'Sisa = panjang awal − panjang yang diambil = 2,5 − ¾.',
-        ],
-      },
-
-      order: null,
-
-      calc: {
-        instruction: 'Selesaikan perhitungan langkah demi langkah.',
-        steps: [
-          {
-            id: 'cs1',
-            instruction: 'Agar mudah dihitung, ubah ¾ ke bentuk desimal:',
-            prompt: '¾ = ?',
-            inputLabel: 'Nilai desimal dari ¾',
-            inputPlaceholder: '0,75',
-            answerType: 'decimal',
-            answer: 0.75,
-            tolerance: 0.005,
-            correctDisplay: '0,75',
-            hints: [
-              '¾ artinya 3 dibagi 4. Hitung: 3 ÷ 4 = ?',
-              '3 ÷ 4 = 0,75. Cara lain: ¾ = 75/100 (kalikan dengan 25/25).',
-            ],
-            feedbackCorrect: 'Benar! ¾ = 0,75.',
-            feedbackWrong: 'Belum tepat. Ingat: ¾ berarti 3 dibagi 4. Hitung: 3 ÷ 4 = 0,75.',
-          },
-          {
-            id: 'cs2',
-            instruction: 'Sekarang hitung sisanya:',
-            prompt: '2,5 − 0,75 = ?',
-            inputLabel: 'Sisa tali (m)',
-            inputPlaceholder: '1,75',
-            answerType: 'decimal',
-            answer: 1.75,
-            tolerance: 0.01,
-            correctDisplay: '1,75',
-            hints: [
-              '2,5 − 0,75: kurangi bagian persepuluhan dan perseratusannya.',
-              '2,50 − 0,75: 2,50 − 0,75 = 1,75. Hati-hati dengan penempatan koma desimal.',
-            ],
-            feedbackCorrect: 'Benar! 2,5 − 0,75 = 1,75.',
-            feedbackWrong:
-              'Belum tepat. Hitung: 2,5 − 0,75. Ingat: 2,5 = 2,50. Kurangi: 2,50 − 0,75 = 1,75.',
-          },
-        ],
-      },
-
-      answer: {
-        prompt: 'Jadi, berapa meter sisa tali Dani?',
-        inputLabel: 'Sisa tali (m)',
-        inputPlaceholder: '1,75',
-        answer: 1.75,
-        tolerance: 0.01,
-        unit: 'm',
-        correctDisplay: '1,75 m',
-        hints: ['Gunakan hasil dari langkah terakhir.', '2,5 − 0,75 = 1,75 m.'],
-        feedbackCorrect: 'Benar! Sisa tali Dani adalah 1,75 m.',
-        feedbackWrong: 'Belum tepat. Periksa kembali hasil langkah perhitungan.',
-      },
-
-      verify: {
-        question: 'Tali awal 2,5 m, dipotong 0,75 m. Apakah sisa 1,75 m masuk akal?',
-        options: [
-          {
-            id: 'v1',
-            text: 'Ya. 2,5 − 0,75 = 1,75, lebih kecil dari 2,5 m tapi lebih dari 0.',
-            correct: true,
-          },
-          { id: 'v2', text: 'Tidak. Sisanya seharusnya lebih dari 2,5 m.', correct: false },
-          { id: 'v3', text: 'Tidak. Sisanya seharusnya negatif.', correct: false },
-        ],
-        feedbackCorrect:
-          'Tepat! Sisa pasti lebih kecil dari panjang awal (2,5 m) dan harus positif. Hasil 1,75 m masuk akal.',
-        feedbackWrong:
-          'Perhatikan: kita memotong dari 2,5 m, jadi sisa harus lebih kecil dari 2,5 m dan harus positif (¾ m < 2,5 m). Hasil 1,75 m sudah benar.',
-      },
-
-      solution: {
-        steps: [
-          'Diketahui: tali awal = 2,5 m, dipotong = ¾ m',
-          'Ditanya: sisa tali',
-          'Operasi: pengurangan (2,5 − ¾)',
-          'Ubah ¾ ke desimal: 3 ÷ 4 = 0,75',
-          'Hitung: 2,5 − 0,75 = 1,75',
-          'Jawaban: Sisa tali = 1,75 m',
-        ],
-      },
+      id: 'penghitung',
+      ikon: '🧮',
+      nama: 'Penghitung',
+      tugas: 'Memimpin menghitung KPK dan pecahan senilai; anggota lain ikut menghitung di buku.',
     },
-
-    /* ---- SOAL 3: Resep Kue (Sedang, ×, pecahan × desimal) ---- */
     {
-      id: 'p3',
-      title: 'Resep Kue',
-      difficulty: 2,
-      context:
-        'Sebuah resep kue membutuhkan <strong>⅔ cangkir gula</strong> untuk satu porsi. Dina ingin membuat <strong>1,5 porsi</strong>.',
-      question: 'Berapa cangkir gula yang dibutuhkan Dina?',
-      unit: 'cangkir',
-
-      identify: {
-        instruction: 'Centang semua informasi yang diperlukan untuk menjawab pertanyaan.',
-        items: [
-          { id: 'i1', text: 'Gula per porsi: ⅔ cangkir', relevant: true },
-          { id: 'i2', text: 'Jumlah porsi yang dibuat: 1,5 porsi', relevant: true },
-          { id: 'i3', text: 'Ini adalah resep kue', relevant: false },
-        ],
-        hints: [
-          'Kita ingin tahu total gula untuk 1,5 porsi. Informasi apa yang berhubungan dengan jumlah gula dan porsi?',
-          'Pilih informasi tentang gula per porsi dan jumlah porsi.',
-        ],
-        feedbackCorrect: 'Tepat! Kita perlu gula per porsi (⅔ cangkir) dan jumlah porsi (1,5).',
-        feedbackWrong:
-          'Belum tepat. Pilih informasi tentang berapa gula per porsi dan berapa porsi yang dibuat.',
-      },
-
-      model: {
-        instruction: 'Pilih ekspresi matematika yang sesuai.',
-        options: [
-          {
-            id: 'm1',
-            expr: '⅔ × 1,5',
-            correct: true,
-            feedback: 'Benar! Gula per porsi dikali jumlah porsi = total gula.',
-          },
-          {
-            id: 'm2',
-            expr: '⅔ + 1,5',
-            correct: false,
-            feedback:
-              'Penjumlahan tidak tepat. Kita ingin tahu gula untuk 1,5 porsi, bukan menjumlahkan keduanya.',
-          },
-          {
-            id: 'm3',
-            expr: '⅔ ÷ 1,5',
-            correct: false,
-            feedback:
-              'Pembagian tidak tepat di sini. Kita ingin mengalikan karena membuat 1,5 porsi berarti butuh 1,5× lebih banyak.',
-          },
-          {
-            id: 'm4',
-            expr: '1,5 − ⅔',
-            correct: false,
-            feedback:
-              'Pengurangan tidak tepat. Kita tidak sedang mencari selisih, melainkan total kebutuhan gula.',
-          },
-        ],
-        hints: [
-          'Kita membuat 1,5 porsi. Jika 1 porsi butuh ⅔ cangkir, maka 1,5 porsi butuh 1,5 × ⅔ cangkir.',
-          'Perkalian digunakan untuk menghitung "sekian kali lipat dari sesuatu".',
-        ],
-      },
-
-      order: null,
-
-      calc: {
-        instruction: 'Selesaikan perhitungan langkah demi langkah.',
-        steps: [
-          {
-            id: 'cs1',
-            instruction: 'Ubah 1,5 menjadi pecahan biasa:',
-            prompt: '1,5 = ?/2',
-            inputLabel: 'Pembilang: 1,5 = ___/2',
-            inputPlaceholder: '3',
-            answerType: 'numerator',
-            answer: 3,
-            denominator: 2,
-            correctDisplay: '3/2',
-            hints: [
-              '1,5 = 1 + 0,5 = 1 + ½. Ubah ke pecahan tunggal: 1½ = ?/2.',
-              '1½ = 3/2 karena 1 = 2/2, dan 2/2 + 1/2 = 3/2.',
-            ],
-            feedbackCorrect: 'Benar! 1,5 = 3/2.',
-            feedbackWrong:
-              'Belum tepat. 1,5 = 1,5/1 = 15/10 = 3/2. Cara lain: 1,5 = 1 + ½ = 2/2 + 1/2 = 3/2.',
-          },
-          {
-            id: 'cs2',
-            instruction: 'Sekarang kalikan dua pecahan:',
-            prompt: '⅔ × 3/2 = ?',
-            inputLabel: 'Hasil perkalian',
-            inputPlaceholder: '1',
-            answerType: 'decimal',
-            answer: 1.0,
-            tolerance: 0.01,
-            correctDisplay: '6/6 = 1',
-            hints: [
-              'Kalikan pembilang × pembilang dan penyebut × penyebut: (2×3)/(3×2) = ?',
-              '(2×3)/(3×2) = 6/6 = 1. Pecahan yang pembilang = penyebutnya nilainya 1.',
-            ],
-            feedbackCorrect: 'Benar! 2/3 × 3/2 = 6/6 = 1.',
-            feedbackWrong: 'Belum tepat. Kalikan: (2×3)/(3×2) = 6/6 = 1.',
-          },
-        ],
-      },
-
-      answer: {
-        prompt: 'Jadi, berapa cangkir gula yang dibutuhkan Dina?',
-        inputLabel: 'Total gula (cangkir)',
-        inputPlaceholder: '1',
-        answer: 1.0,
-        tolerance: 0.01,
-        unit: 'cangkir',
-        correctDisplay: '1 cangkir',
-        hints: ['Gunakan hasil dari langkah terakhir.', '2/3 × 3/2 = 6/6 = 1 cangkir.'],
-        feedbackCorrect: 'Benar! Dina membutuhkan 1 cangkir gula.',
-        feedbackWrong: 'Belum tepat. Periksa kembali langkah perhitungan di atas.',
-      },
-
-      verify: {
-        question:
-          'Resep butuh ⅔ cangkir untuk 1 porsi. Dina buat 1,5 porsi. Apakah hasil 1 cangkir masuk akal?',
-        options: [
-          {
-            id: 'v1',
-            text: 'Ya. 1,5 porsi butuh lebih dari ⅔ (0,67) tapi tidak terlalu banyak.',
-            correct: true,
-          },
-          { id: 'v2', text: 'Tidak. Seharusnya lebih dari 3 cangkir.', correct: false },
-          { id: 'v3', text: 'Tidak. Seharusnya kurang dari ⅔ cangkir.', correct: false },
-        ],
-        feedbackCorrect:
-          'Tepat! 1 porsi = ⅔ ≈ 0,67 cangkir. 1,5 porsi = 1,5 × 0,67 ≈ 1 cangkir. Masuk akal.',
-        feedbackWrong:
-          'Perhatikan: 1 porsi butuh ⅔ ≈ 0,67 cangkir. Untuk 1,5 porsi (lebih dari 1 porsi), dibutuhkan lebih dari 0,67 tapi tidak jauh berbeda. Hasil 1 cangkir masuk akal.',
-      },
-
-      solution: {
-        steps: [
-          'Diketahui: gula per porsi = ⅔ cangkir, jumlah porsi = 1,5',
-          'Ditanya: total gula',
-          'Operasi: perkalian (⅔ × 1,5)',
-          'Ubah 1,5 ke pecahan: 1,5 = 3/2',
-          'Hitung: ⅔ × 3/2 = (2×3)/(3×2) = 6/6 = 1',
-          'Jawaban: 1 cangkir gula',
-        ],
-      },
+      id: 'pemeriksa',
+      ikon: '🔍',
+      nama: 'Pemeriksa',
+      tugas: 'Mengecek jawaban dengan cara lain (pita pecahan atau patokan ½) sebelum dipilih.',
     },
-
-    /* ---- SOAL 4: Nilai Ujian (Sedang, × dan +, urutan operasi) ---- */
     {
-      id: 'p4',
-      title: 'Nilai Ujian',
-      difficulty: 2,
-      context:
-        'Nilai ujian Budi dihitung dengan rumus: <strong>¾ dari skor pilihan ganda</strong> ditambah <strong>½ dari skor esai</strong>. Skor pilihan ganda Budi adalah <strong>80</strong> dan skor esainya adalah <strong>60</strong>.',
-      question: 'Berapa nilai ujian Budi?',
-      unit: '',
-
-      identify: {
-        instruction: 'Centang semua informasi yang diperlukan untuk menghitung nilai Budi.',
-        items: [
-          { id: 'i1', text: 'Bobot pilihan ganda: ¾ dari skor PG', relevant: true },
-          { id: 'i2', text: 'Skor pilihan ganda: 80', relevant: true },
-          { id: 'i3', text: 'Bobot esai: ½ dari skor esai', relevant: true },
-          { id: 'i4', text: 'Skor esai: 60', relevant: true },
-        ],
-        hints: [
-          'Untuk menghitung nilai, kita perlu semua bobot dan semua skor.',
-          'Gunakan semua empat informasi: dua bobot dan dua skor.',
-        ],
-        feedbackCorrect:
-          'Tepat! Semua empat informasi diperlukan: dua bobot (¾ dan ½) dan dua skor (80 dan 60).',
-        feedbackWrong:
-          'Belum tepat. Untuk menghitung nilai dengan rumus bobot×skor, kita perlu SEMUA bobot dan SEMUA skor.',
-      },
-
-      model: {
-        instruction: 'Pilih ekspresi matematika yang sesuai.',
-        options: [
-          {
-            id: 'm1',
-            expr: '¾ × 80 + ½ × 60',
-            correct: true,
-            feedback: 'Benar! Nilai = (¾ × skor PG) + (½ × skor esai) = ¾×80 + ½×60.',
-          },
-          {
-            id: 'm2',
-            expr: '(¾ + ½) × (80 + 60)',
-            correct: false,
-            feedback:
-              'Tidak tepat. Bobot dan skor masing-masing harus dikalikan terpisah, bukan dijumlahkan dulu.',
-          },
-          {
-            id: 'm3',
-            expr: '¾ × 60 + ½ × 80',
-            correct: false,
-            feedback:
-              'Perhatikan! Bobot ¾ untuk pilihan ganda (80) dan bobot ½ untuk esai (60), bukan sebaliknya.',
-          },
-          {
-            id: 'm4',
-            expr: '¾ + 80 + ½ + 60',
-            correct: false,
-            feedback: 'Tidak tepat. Bobot harus DIKALI dengan skornya, bukan dijumlahkan.',
-          },
-        ],
-        hints: [
-          'Rumus: nilai = (bobot PG × skor PG) + (bobot esai × skor esai).',
-          'Nilai = ¾ × 80 + ½ × 60. Isi angka yang sesuai.',
-        ],
-      },
-
-      /* Soal ini memiliki urutan operasi: × sebelum + */
-      order: {
-        instruction:
-          'Dalam ekspresi ¾ × 80 + ½ × 60, operasi mana yang harus dikerjakan TERLEBIH DAHULU?',
-        options: [
-          {
-            id: 'o1',
-            label: 'Perkalian (×) dulu, baru penjumlahan (+)',
-            correct: true,
-            feedback:
-              'Benar! Dalam urutan operasi, perkalian (×) selalu dikerjakan sebelum penjumlahan (+).',
-          },
-          {
-            id: 'o2',
-            label: 'Penjumlahan (+) dulu, baru perkalian (×)',
-            correct: false,
-            feedback:
-              'Tidak tepat! Jika kita jumlahkan dulu (¾ + ½ = 5/4, lalu 80 + 60 = 140), hasilnya akan berbeda dan salah. Perkalian harus lebih dulu.',
-          },
-          {
-            id: 'o3',
-            label: 'Dari kiri ke kanan saja, tidak ada urutan khusus',
-            correct: false,
-            feedback:
-              'Tidak tepat. Kiri-ke-kanan hanya berlaku untuk operasi dengan prioritas SAMA. Perkalian dan penjumlahan memiliki prioritas berbeda!',
-          },
-          {
-            id: 'o4',
-            label: 'Tidak ada urutan — hasilnya sama saja',
-            correct: false,
-            feedback:
-              'Tidak tepat. Coba hitung: jika + dulu: (¾+½)×(80+60) = 175. Jika × dulu: ¾×80 + ½×60 = 90. Hasilnya berbeda!',
-          },
-        ],
-        hints: [
-          'Ingat aturan BODMAS/PEMDAS: Perkalian dan Pembagian dikerjakan SEBELUM Penjumlahan dan Pengurangan.',
-          'Dalam ¾ × 80 + ½ × 60: kerjakan ¾×80 = 60 dan ½×60 = 30 terlebih dahulu, BARU jumlahkan 60 + 30.',
-        ],
-        feedbackCorrect:
-          'Tepat! Perkalian (×) selalu dikerjakan sebelum penjumlahan (+) dalam urutan operasi.',
-      },
-
-      calc: {
-        instruction: 'Hitung setiap bagian secara berurutan.',
-        steps: [
-          {
-            id: 'cs1',
-            instruction: 'Hitung bagian pertama (perkalian pertama):',
-            prompt: '¾ × 80 = ?',
-            inputLabel: 'Hasil ¾ × 80',
-            inputPlaceholder: '60',
-            answerType: 'decimal',
-            answer: 60,
-            tolerance: 0.1,
-            correctDisplay: '60',
-            hints: [
-              '¾ × 80 = 3/4 × 80. Cara: (3 × 80) ÷ 4 = ?',
-              '3 × 80 = 240. Kemudian 240 ÷ 4 = 60.',
-            ],
-            feedbackCorrect: 'Benar! ¾ × 80 = 60.',
-            feedbackWrong: 'Belum tepat. Hitung: 3/4 × 80 = (3×80)/4 = 240/4 = 60.',
-          },
-          {
-            id: 'cs2',
-            instruction: 'Hitung bagian kedua (perkalian kedua):',
-            prompt: '½ × 60 = ?',
-            inputLabel: 'Hasil ½ × 60',
-            inputPlaceholder: '30',
-            answerType: 'decimal',
-            answer: 30,
-            tolerance: 0.1,
-            correctDisplay: '30',
-            hints: ['½ × 60 = 60 ÷ 2 = ?', '60 ÷ 2 = 30.'],
-            feedbackCorrect: 'Benar! ½ × 60 = 30.',
-            feedbackWrong: 'Belum tepat. ½ × 60 = 60/2 = 30.',
-          },
-          {
-            id: 'cs3',
-            instruction: 'Sekarang jumlahkan kedua hasil:',
-            prompt: '60 + 30 = ?',
-            inputLabel: 'Nilai akhir',
-            inputPlaceholder: '90',
-            answerType: 'decimal',
-            answer: 90,
-            tolerance: 0.1,
-            correctDisplay: '90',
-            hints: ['Jumlahkan hasil perkalian pertama dan kedua: 60 + 30 = ?', '60 + 30 = 90.'],
-            feedbackCorrect: 'Benar! 60 + 30 = 90.',
-            feedbackWrong: 'Belum tepat. Jumlahkan: 60 + 30 = 90.',
-          },
-        ],
-      },
-
-      answer: {
-        prompt: 'Jadi, berapa nilai ujian Budi?',
-        inputLabel: 'Nilai ujian Budi',
-        inputPlaceholder: '90',
-        answer: 90,
-        tolerance: 0.1,
-        unit: '',
-        correctDisplay: '90',
-        hints: ['Gunakan hasil penjumlahan terakhir.', '¾×80 + ½×60 = 60 + 30 = 90.'],
-        feedbackCorrect: 'Benar! Nilai ujian Budi adalah 90.',
-        feedbackWrong: 'Belum tepat. Periksa kembali langkah perhitungan.',
-      },
-
-      verify: {
-        question:
-          'Skor PG Budi 80, skor esai 60. Bobot PG adalah ¾ (=0,75) dan bobot esai ½ (=0,5). Apakah nilai 90 masuk akal?',
-        options: [
-          { id: 'v1', text: 'Ya. 0,75×80 + 0,5×60 = 60 + 30 = 90. Masuk akal.', correct: true },
-          { id: 'v2', text: 'Tidak. Nilainya seharusnya lebih dari 140.', correct: false },
-          { id: 'v3', text: 'Tidak. Nilainya seharusnya kurang dari 50.', correct: false },
-        ],
-        feedbackCorrect:
-          'Tepat! ¾×80 = 60 dan ½×60 = 30. Total 90. Nilai ini masuk akal: tidak melebihi total skor (80+60=140) dan tidak terlalu kecil.',
-        feedbackWrong:
-          'Perhatikan: Nilai max teoritis = 1×80 + 1×60 = 140. Dengan bobot ¾ dan ½, nilai wajarnya adalah 60+30=90. Masuk akal.',
-      },
-
-      solution: {
-        steps: [
-          'Diketahui: skor PG=80 (bobot ¾), skor esai=60 (bobot ½)',
-          'Ditanya: nilai ujian',
-          'Operasi: ¾ × 80 + ½ × 60',
-          'Urutan: perkalian dulu (× sebelum +)',
-          'Hitung: ¾ × 80 = 60',
-          'Hitung: ½ × 60 = 30',
-          'Jumlahkan: 60 + 30 = 90',
-          'Jawaban: Nilai Budi = 90',
-        ],
-      },
-    },
-
-    /* ---- SOAL 5: Persediaan Jus (Sulit, − berturut, pecahan + desimal) ---- */
-    {
-      id: 'p5',
-      title: 'Persediaan Jus',
-      difficulty: 3,
-      context:
-        'Sebuah termos berisi <strong>1,8 liter</strong> jus. Siswa kelas A meminum <strong>¼ liter</strong> dan siswa kelas B meminum <strong>0,6 liter</strong>.',
-      question: 'Berapa liter jus yang tersisa di termos?',
-      unit: 'liter',
-
-      identify: {
-        instruction: 'Centang semua informasi yang diperlukan untuk menjawab pertanyaan.',
-        items: [
-          { id: 'i1', text: 'Volume jus awal: 1,8 liter', relevant: true },
-          { id: 'i2', text: 'Volume diminum kelas A: ¼ liter', relevant: true },
-          { id: 'i3', text: 'Volume diminum kelas B: 0,6 liter', relevant: true },
-          { id: 'i4', text: 'Jus disimpan dalam termos', relevant: false },
-        ],
-        hints: [
-          'Kita ingin tahu sisa jus. Butuh volume awal dan semua yang diminum.',
-          'Pilih informasi tentang volume jus (awal, kelas A, kelas B).',
-        ],
-        feedbackCorrect:
-          'Tepat! Kita perlu volume awal (1,8 L), yang diminum kelas A (¼ L), dan kelas B (0,6 L).',
-        feedbackWrong:
-          'Belum tepat. Pilih ketiga informasi volume jus. Informasi tentang termos tidak diperlukan.',
-      },
-
-      model: {
-        instruction: 'Pilih ekspresi matematika yang sesuai.',
-        options: [
-          {
-            id: 'm1',
-            expr: '1,8 − ¼ − 0,6',
-            correct: true,
-            feedback:
-              'Benar! Kurangi volume yang diminum kelas A, lalu kurangi lagi yang diminum kelas B.',
-          },
-          {
-            id: 'm2',
-            expr: '1,8 − (¼ + 0,6)',
-            correct: true,
-            feedback:
-              'Benar juga! Menjumlahkan yang diminum dulu, lalu mengurangi dari awal. Hasilnya sama.',
-          },
-          {
-            id: 'm3',
-            expr: '1,8 + ¼ + 0,6',
-            correct: false,
-            feedback: 'Penjumlahan tidak tepat. Jus diminum (berkurang), bukan ditambah.',
-          },
-          {
-            id: 'm4',
-            expr: '¼ + 0,6 − 1,8',
-            correct: false,
-            feedback:
-              'Urutan tidak tepat. Kita kurangi dari volume awal (1,8), bukan mengurangi 1,8 dari yang diminum.',
-          },
-        ],
-        hints: [
-          'Sisa = awal − yang diambil. Dua kelompok minum, jadi ada dua pengurangan.',
-          'Sisa = 1,8 − ¼ − 0,6, atau sama hasilnya: 1,8 − (¼ + 0,6).',
-        ],
-      },
-
-      order: null,
-
-      calc: {
-        instruction: 'Selesaikan perhitungan langkah demi langkah.',
-        steps: [
-          {
-            id: 'cs1',
-            instruction: 'Ubah ¼ ke desimal:',
-            prompt: '¼ = ?',
-            inputLabel: 'Nilai desimal dari ¼',
-            inputPlaceholder: '0,25',
-            answerType: 'decimal',
-            answer: 0.25,
-            tolerance: 0.005,
-            correctDisplay: '0,25',
-            hints: [
-              '¼ berarti 1 dibagi 4. Hitung: 1 ÷ 4 = ?',
-              '1 ÷ 4 = 0,25. Atau: ¼ = 25/100 = 0,25.',
-            ],
-            feedbackCorrect: 'Benar! ¼ = 0,25.',
-            feedbackWrong: 'Belum tepat. ¼ = 1 ÷ 4 = 0,25.',
-          },
-          {
-            id: 'cs2',
-            instruction: 'Kurangi yang diminum kelas A:',
-            prompt: '1,8 − 0,25 = ?',
-            inputLabel: 'Sisa setelah kelas A minum (liter)',
-            inputPlaceholder: '1,55',
-            answerType: 'decimal',
-            answer: 1.55,
-            tolerance: 0.01,
-            correctDisplay: '1,55',
-            hints: [
-              '1,8 − 0,25: perhatikan nilai tempat. 1,80 − 0,25 = ?',
-              '1,80 − 0,25 = 1,55. Kurangi: 80 per-seratus minus 25 per-seratus = 55 per-seratus.',
-            ],
-            feedbackCorrect: 'Benar! 1,8 − 0,25 = 1,55.',
-            feedbackWrong: 'Belum tepat. Hitung: 1,80 − 0,25 = 1,55.',
-          },
-          {
-            id: 'cs3',
-            instruction: 'Kurangi yang diminum kelas B:',
-            prompt: '1,55 − 0,6 = ?',
-            inputLabel: 'Sisa akhir (liter)',
-            inputPlaceholder: '0,95',
-            answerType: 'decimal',
-            answer: 0.95,
-            tolerance: 0.01,
-            correctDisplay: '0,95',
-            hints: ['1,55 − 0,6 = 1,55 − 0,60 = ?', '1,55 − 0,60 = 0,95.'],
-            feedbackCorrect: 'Benar! 1,55 − 0,6 = 0,95.',
-            feedbackWrong: 'Belum tepat. Hitung: 1,55 − 0,60 = 0,95.',
-          },
-        ],
-      },
-
-      answer: {
-        prompt: 'Jadi, berapa liter jus yang tersisa di termos?',
-        inputLabel: 'Sisa jus (liter)',
-        inputPlaceholder: '0,95',
-        answer: 0.95,
-        tolerance: 0.01,
-        unit: 'liter',
-        correctDisplay: '0,95 liter',
-        hints: [
-          'Gunakan hasil dari langkah terakhir.',
-          '1,8 − 0,25 − 0,6 = 1,55 − 0,6 = 0,95 liter.',
-        ],
-        feedbackCorrect: 'Benar! Sisa jus di termos adalah 0,95 liter.',
-        feedbackWrong: 'Belum tepat. Periksa kembali langkah perhitungan.',
-      },
-
-      verify: {
-        question:
-          'Jus awal 1,8 L. Diminum 0,25 + 0,6 = 0,85 L. Sisa = 1,8 − 0,85 = 0,95 L. Masuk akal?',
-        options: [
-          {
-            id: 'v1',
-            text: 'Ya. Sisa harus lebih kecil dari 1,8 L dan positif. 0,95 L sesuai.',
-            correct: true,
-          },
-          { id: 'v2', text: 'Tidak. Sisanya seharusnya lebih dari 1,8 L.', correct: false },
-          {
-            id: 'v3',
-            text: 'Tidak. Sisanya seharusnya negatif karena lebih banyak yang diminum.',
-            correct: false,
-          },
-        ],
-        feedbackCorrect:
-          'Tepat! Total yang diminum: 0,25 + 0,6 = 0,85 L. Karena 0,85 < 1,8, masih ada sisa positif: 1,8 − 0,85 = 0,95 L.',
-        feedbackWrong:
-          'Perhatikan: total yang diminum = ¼ + 0,6 = 0,25 + 0,6 = 0,85 L. Karena 0,85 < 1,8, sisa pasti positif dan lebih kecil dari 1,8. Hasil 0,95 L masuk akal.',
-      },
-
-      solution: {
-        steps: [
-          'Diketahui: jus awal = 1,8 L, kelas A minum = ¼ L, kelas B minum = 0,6 L',
-          'Ditanya: sisa jus',
-          'Operasi: 1,8 − ¼ − 0,6',
-          'Ubah ¼ ke desimal: ¼ = 0,25',
-          'Kurangi kelas A: 1,8 − 0,25 = 1,55',
-          'Kurangi kelas B: 1,55 − 0,6 = 0,95',
-          'Jawaban: Sisa jus = 0,95 liter',
-        ],
-      },
+      id: 'pelapor',
+      ikon: '📣',
+      nama: 'Pelapor',
+      tugas: 'Mencatat jawaban tim dan menjelaskan strategi tim kepada kelas.',
     },
   ],
 
-  /* ----------------------------------------------------------
-       REFLEKSI
-       ---------------------------------------------------------- */
-  refleksi: {
-    title: 'Refleksi Pembelajaran',
-    questions: [
+  /* ---------- Tahap 1: Orientasi (CL Fase 1) ---------- */
+  orientasi: {
+    kicker: 'Tahap 1 · Orientasi',
+    syntax: 'Cooperative Learning · Fase 1',
+    goal: 'Mengenali masalah membandingkan pecahan berpenyebut berbeda dan tujuan belajar hari ini.',
+    guru: 'Bacakan cerita lomba kue dengan antusias. Minta setiap murid menuliskan dugaan di buku lebih dulu sebelum menekan pilihan. Tekankan: dugaan tidak dinilai — nanti dibuktikan bersama. Sampaikan tujuan dan aturan kerja kelompok.',
+    ikon: '🎂',
+    judul: 'Lomba Menghias Kue Kelas 7',
+    cerita:
+      'Tiga kelompok mendapat kue bolu yang sama besar untuk dihias krim. Sampai waktu habis, Tim Melati menghias {2/3} permukaan kue, Tim Mawar {3/4} bagian, dan Tim Anggrek {5/8} bagian. Juri ingin tahu tim mana yang menghias paling luas.',
+    kue: [
+      { nama: 'Tim Melati', num: 2, den: 3 },
+      { nama: 'Tim Mawar', num: 3, den: 4 },
+      { nama: 'Tim Anggrek', num: 5, den: 8 },
+    ],
+    dugaan: {
+      tanya: 'Dugaan awalmu: tim mana yang menghias kue paling luas?',
+      opsi: [
+        { id: 'melati', label: 'Tim Melati ({2/3} kue)' },
+        { id: 'mawar', label: 'Tim Mawar ({3/4} kue)' },
+        { id: 'anggrek', label: 'Tim Anggrek ({5/8} kue) — penyebutnya paling besar' },
+        { id: 'tidak', label: 'Tidak bisa dibandingkan karena penyebutnya berbeda' },
+      ],
+      correct: 'mawar',
+      umpan:
+        'Dugaanmu sudah tercatat. Kita akan membuktikannya bersama di tahap Sajian — simpan alasanmu!',
+    },
+    tujuan: [
+      'Membandingkan dua pecahan berpenyebut berbeda dan menuliskan tanda <, >, atau = dengan tepat.',
+      'Mengurutkan beberapa pecahan berpenyebut berbeda dari yang terkecil atau dari yang terbesar.',
+      'Menjelaskan strategi membandingkan pecahan kepada teman sekelompok.',
+    ],
+    aturan: [
       {
-        id: 'r1',
-        prompt: 'Pada bagian mana kamu paling sering melakukan kesalahan? (pilih satu)',
-        type: 'mc',
-        options: [
-          'Menentukan operasi yang tepat (+, −, ×, ÷)',
-          'Menyamakan penyebut pecahan',
-          'Mengubah pecahan ke desimal',
-          'Menentukan urutan operasi (mana yang dikerjakan dulu)',
-          'Menghitung desimal (letak koma)',
-          'Tidak terlalu banyak kesalahan',
+        ikon: '🤝',
+        teks: 'Tim berhasil bila <strong>semua anggota</strong> paham, bukan hanya satu orang.',
+      },
+      { ikon: '💬', teks: 'Saling menjelaskan dan bertanya — <strong>bukan menyalin</strong>.' },
+      {
+        ikon: '🎭',
+        teks: 'Setiap anggota memegang <strong>peran</strong> dan bertanggung jawab atas tugasnya.',
+      },
+      {
+        ikon: '🏅',
+        teks: 'Skor tim = kerja LKPD + kuis <strong>individu</strong> setiap anggota.',
+      },
+    ],
+    nextLabel: 'Siap! Lanjut ke Sajian Materi →',
+  },
+
+  /* ---------- Tahap 2: Sajian (CL Fase 2) ---------- */
+  sajian: {
+    kicker: 'Tahap 2 · Sajian Materi',
+    syntax: 'Cooperative Learning · Fase 2',
+    goal: 'Memahami tiga strategi membandingkan pecahan berpenyebut berbeda.',
+    guru: 'Sajikan satu strategi pada satu waktu secara klasikal (proyektor). Setelah setiap strategi, beri waktu 30 detik agar murid menjawab cek cepat secara individu di buku, lalu satu murid menekan jawaban. Bahas mengapa pilihan pengecoh keliru.',
+    strategi: [
+      {
+        id: 'pita',
+        ikon: '📏',
+        judul: 'Strategi 1 — Pita pecahan',
+        inti: 'Gambarkan setiap pecahan pada pita yang <strong>sama panjang</strong> (sama-sama 1 utuh). Pecahan yang arsirannya <strong>lebih panjang</strong> adalah pecahan yang <strong>lebih besar</strong>.',
+        contoh: [
+          { num: 2, den: 3 },
+          { num: 3, den: 4 },
+        ],
+        kesimpulan: 'Arsiran {3/4} lebih panjang daripada {2/3}, jadi {2/3} &lt; {3/4}.',
+        catatan:
+          'Ingat: pita harus sama panjang. Membandingkan {1/2} kue kecil dengan {1/3} kue besar tidak adil!',
+        cek: {
+          tanya: 'Perhatikan pita {3/5} dan {1/2} di bawah. Pernyataan yang benar adalah …',
+          pita: [
+            { num: 3, den: 5 },
+            { num: 1, den: 2 },
+          ],
+          opsi: [
+            { id: 'a', label: '{3/5} &gt; {1/2}' },
+            { id: 'b', label: '{3/5} &lt; {1/2}' },
+            { id: 'c', label: '{3/5} = {1/2}' },
+          ],
+          correct: 'a',
+          umpan: {
+            a: 'Tepat! Arsiran {3/5} melewati garis tengah pita, sedangkan {1/2} tepat di tengah.',
+            b: 'Coba lihat lagi: arsiran mana yang lebih panjang? Pita {3/5} melewati garis tengah.',
+            c: 'Kedua arsiran tidak sama panjang. Bandingkan ujung arsirannya.',
+          },
+        },
+      },
+      {
+        id: 'kpk',
+        ikon: '🧮',
+        judul: 'Strategi 2 — Samakan penyebut dengan KPK',
+        inti: 'Ubah kedua pecahan menjadi pecahan <strong>senilai</strong> yang penyebutnya sama, yaitu <strong>KPK</strong> kedua penyebut. Setelah penyebut sama, cukup bandingkan <strong>pembilangnya</strong>.',
+        contoh: [
+          { num: 2, den: 3 },
+          { num: 3, den: 4 },
+        ],
+        langkah: [
+          'KPK dari 3 dan 4 adalah <strong>12</strong>.',
+          '{2/3} = {8/12} (pembilang dan penyebut dikali 4).',
+          '{3/4} = {9/12} (pembilang dan penyebut dikali 3).',
+          'Karena 8 &lt; 9, maka {8/12} &lt; {9/12}, jadi <strong>{2/3} &lt; {3/4}</strong>.',
+        ],
+        catatan:
+          '<strong>Cara cepat (kali silang):</strong> untuk {a/b} dan {c/d}, bandingkan a × d dengan c × b. Pada {2/3} dan {3/4}: 2 × 4 = 8 dan 3 × 3 = 9, karena 8 &lt; 9 maka {2/3} &lt; {3/4}.',
+        cek: {
+          tanya:
+            'Untuk membandingkan {5/6} dan {7/9}, penyebut bersama <strong>terkecil</strong> (KPK) yang dipakai adalah …',
+          opsi: [
+            { id: 'a', label: '18' },
+            { id: 'b', label: '54' },
+            { id: 'c', label: '15' },
+            { id: 'd', label: '36' },
+          ],
+          correct: 'a',
+          umpan: {
+            a: 'Tepat! 18 adalah kelipatan 6 dan 9 yang terkecil: {5/6} = {15/18} dan {7/9} = {14/18}, jadi {5/6} &gt; {7/9}.',
+            b: '54 memang kelipatan bersama (6 × 9), tetapi bukan yang terkecil. Coba daftar kelipatan 9: 9, 18, …',
+            c: '15 adalah hasil 6 + 9, bukan kelipatan. KPK harus habis dibagi 6 dan 9.',
+            d: '36 kelipatan bersama, tetapi masih ada yang lebih kecil. Cek kelipatan 9: 9, 18, …',
+          },
+        },
+      },
+      {
+        id: 'patokan',
+        ikon: '🎯',
+        judul: 'Strategi 3 — Patokan ½',
+        inti: 'Bandingkan setiap pecahan dengan <strong>½</strong>. Pecahan lebih dari ½ bila pembilangnya <strong>lebih dari setengah</strong> penyebutnya. Jika satu pecahan kurang dari ½ dan yang lain lebih dari ½, jawabannya langsung terlihat.',
+        contoh: [
+          { num: 3, den: 7 },
+          { num: 5, den: 8 },
+        ],
+        langkah: [
+          '{3/7}: setengah dari 7 adalah 3½, dan 3 &lt; 3½, jadi {3/7} <strong>kurang dari ½</strong>.',
+          '{5/8}: setengah dari 8 adalah 4, dan 5 &gt; 4, jadi {5/8} <strong>lebih dari ½</strong>.',
+          'Maka <strong>{3/7} &lt; {5/8}</strong> — tanpa menghitung KPK!',
+        ],
+        catatan:
+          'Patokan ½ paling cepat bila kedua pecahan berada di sisi yang berbeda dari ½. Jika keduanya di sisi yang sama, gunakan Strategi 2.',
+        cek: {
+          tanya: 'Dari pecahan {4/9} dan {6/11}, manakah yang <strong>lebih dari ½</strong>?',
+          opsi: [
+            { id: 'a', label: 'Hanya {6/11}' },
+            { id: 'b', label: 'Hanya {4/9}' },
+            { id: 'c', label: 'Keduanya' },
+            { id: 'd', label: 'Tidak keduanya' },
+          ],
+          correct: 'a',
+          umpan: {
+            a: 'Tepat! Setengah dari 11 adalah 5½ dan 6 &gt; 5½; setengah dari 9 adalah 4½ dan 4 &lt; 4½. Jadi {4/9} &lt; {6/11}.',
+            b: 'Setengah dari 9 adalah 4½. Apakah 4 lebih dari 4½?',
+            c: 'Periksa {4/9}: setengah dari 9 adalah 4½, sedangkan pembilangnya 4.',
+            d: 'Periksa {6/11}: setengah dari 11 adalah 5½, sedangkan pembilangnya 6.',
+          },
+        },
+      },
+    ],
+    bukti: {
+      judul: 'Membuktikan dugaan: Lomba Menghias Kue',
+      teks: 'KPK dari 3, 4, dan 8 adalah 24. {2/3} = {16/24}, {3/4} = {18/24}, {5/8} = {15/24}. Jadi <strong>Tim Mawar</strong> menghias paling luas, dan urutan dari yang terkecil: {5/8} &lt; {2/3} &lt; {3/4}.',
+      kpk: 24,
+    },
+    nextLabel: 'Bentuk Kelompok →',
+  },
+
+  /* ---------- Tahap 3: Kelompok (CL Fase 3) ---------- */
+  kelompok: {
+    kicker: 'Tahap 3 · Bentuk Kelompok',
+    syntax: 'Cooperative Learning · Fase 3',
+    goal: 'Membentuk tim, membagi peran, dan menyepakati cara kerja.',
+    guru: 'Bentuk kelompok heterogen berisi 4 murid (campur kemampuan dan jenis kelamin). Bila kelompok bertiga, satu murid merangkap dua peran. Peran boleh digilir di tengah LKPD. Pastikan setiap murid membaca tugas perannya.',
+    namaLabel: 'Nama tim',
+    namaPlaceholder: 'mis. Tim Pecahan Juara',
+    kesepakatanJudul: 'Kesepakatan tim (centang semua):',
+    kesepakatan: [
+      'Kami menunggu sampai semua anggota paham sebelum memilih jawaban.',
+      'Kami menjelaskan alasan, bukan hanya menyebut jawaban.',
+      'Kami menghargai pendapat setiap anggota.',
+    ],
+    nextLabel: 'Mulai LKPD: Bandingkan →',
+  },
+
+  /* ---------- Tahap 4: Bandingkan (CL Fase 4) ---------- */
+  bandingkan: {
+    kicker: 'Tahap 4 · LKPD Tim — Bandingkan',
+    syntax: 'Cooperative Learning · Fase 4',
+    goal: 'Membandingkan dua pecahan berpenyebut berbeda dengan menyamakan penyebut.',
+    guru: 'Berkeliling dari tim ke tim. Ajukan pertanyaan pancingan, bukan jawaban: "Kelipatan 8 berapa saja?", "Pembilangnya dikali berapa?". Pastikan Pemeriksa benar-benar mengecek dengan patokan ½ atau pita sebelum tanda dipilih.',
+    tandaOpsi: [
+      { id: '<', label: '&lt; (kurang dari)' },
+      { id: '>', label: '&gt; (lebih dari)' },
+      { id: '=', label: '= (sama dengan)' },
+    ],
+    soal: [
+      {
+        id: 'b1',
+        konteks: 'Pita Rani panjangnya {3/4} m, pita Dodi {5/6} m.',
+        a: { num: 3, den: 4, nama: 'Pita Rani' },
+        b: { num: 5, den: 6, nama: 'Pita Dodi' },
+      },
+      {
+        id: 'b2',
+        konteks: 'Kebun Pak Tani ditanami jagung {5/8} bagian dan kebun Bu Tani {7/12} bagian.',
+        a: { num: 5, den: 8, nama: 'Kebun Pak Tani' },
+        b: { num: 7, den: 12, nama: 'Kebun Bu Tani' },
+      },
+      {
+        id: 'b3',
+        konteks: 'Adi memakan {4/6} pizza, Beni memakan {6/9} pizza yang sama besar.',
+        a: { num: 4, den: 6, nama: 'Adi' },
+        b: { num: 6, den: 9, nama: 'Beni' },
+      },
+      {
+        id: 'b4',
+        konteks: 'Tangki A terisi {2/5} bagian, tangki B terisi {3/7} bagian.',
+        a: { num: 2, den: 5, nama: 'Tangki A' },
+        b: { num: 3, den: 7, nama: 'Tangki B' },
+      },
+      {
+        id: 'b5',
+        konteks: 'Siti sudah membaca {5/6} buku, Lala {7/10} buku yang sama tebalnya.',
+        a: { num: 5, den: 6, nama: 'Siti' },
+        b: { num: 7, den: 10, nama: 'Lala' },
+      },
+    ],
+    nextLabel: 'Lanjut LKPD: Urutkan →',
+  },
+
+  /* ---------- Tahap 5: Urutkan (CL Fase 4) ---------- */
+  urutkan: {
+    kicker: 'Tahap 5 · LKPD Tim — Urutkan',
+    syntax: 'Cooperative Learning · Fase 4',
+    goal: 'Mengurutkan beberapa pecahan berpenyebut berbeda.',
+    guru: 'Minta Penghitung menuliskan semua pecahan senilai di kertas sebelum kartu diketuk. Setelah urutan benar, minta Pelapor menjelaskan urutan dengan menunjuk garis bilangan. Tim yang selesai lebih dulu membantu tim lain (tanpa memberi jawaban).',
+    soal: [
+      {
+        id: 'u1',
+        judul: 'Lari Pagi',
+        ikon: '🏃',
+        konteks:
+          'Empat sahabat lari pagi. Urutkan jarak lari mereka dari yang <strong>terdekat</strong> ke yang <strong>terjauh</strong>.',
+        arah: 'naik',
+        items: [
+          { id: 'ani', nama: 'Ani', num: 3, den: 4, satuan: 'km' },
+          { id: 'budi', nama: 'Budi', num: 2, den: 3, satuan: 'km' },
+          { id: 'citra', nama: 'Citra', num: 5, den: 6, satuan: 'km' },
+          { id: 'dewi', nama: 'Dewi', num: 7, den: 12, satuan: 'km' },
+        ],
+        hints: [
+          'Penyebutnya 4, 3, 6, dan 12. Cari KPK-nya — coba cek apakah 12 habis dibagi semuanya.',
+          'Dengan penyebut 12: {3/4} = {9/12}, {2/3} = {8/12}, {5/6} = {10/12}. Urutkan pembilangnya.',
         ],
       },
       {
-        id: 'r2',
-        prompt: 'Apa yang paling penting diperhatikan sebelum menghitung operasi campuran?',
-        type: 'text',
-        placeholder: 'Tuliskan jawabanmu di sini...',
+        id: 'u2',
+        judul: 'Resep Kue',
+        ikon: '🧁',
+        konteks:
+          'Bahan kue diukur dalam cangkir. Urutkan takaran bahan dari yang <strong>terbanyak</strong> ke yang <strong>paling sedikit</strong>.',
+        arah: 'turun',
+        items: [
+          { id: 'gula', nama: 'Gula', num: 1, den: 2, satuan: 'cangkir' },
+          { id: 'tepung', nama: 'Tepung', num: 3, den: 5, satuan: 'cangkir' },
+          { id: 'susu', nama: 'Susu', num: 3, den: 10, satuan: 'cangkir' },
+          { id: 'mentega', nama: 'Mentega', num: 2, den: 5, satuan: 'cangkir' },
+        ],
+        hints: [
+          'Perhatikan arahnya: dari yang TERBANYAK. KPK dari 2, 5, dan 10 adalah 10.',
+          '{1/2} = {5/10}, {3/5} = {6/10}, {2/5} = {4/10}. Urutkan pembilang dari yang terbesar.',
+        ],
       },
+      {
+        id: 'u3',
+        judul: 'Botol Minum',
+        ikon: '🧴',
+        konteks:
+          'Empat botol minum sama besar terisi air. Urutkan isi botol dari yang <strong>paling sedikit</strong> ke yang <strong>paling banyak</strong>.',
+        arah: 'naik',
+        items: [
+          { id: 'merah', nama: 'Botol merah', num: 5, den: 8, satuan: 'botol' },
+          { id: 'biru', nama: 'Botol biru', num: 3, den: 4, satuan: 'botol' },
+          { id: 'hijau', nama: 'Botol hijau', num: 7, den: 12, satuan: 'botol' },
+          { id: 'kuning', nama: 'Botol kuning', num: 2, den: 3, satuan: 'botol' },
+        ],
+        hints: [
+          'Penyebutnya 8, 4, 12, dan 3. Kelipatan 12: 12, 24, … Mana yang juga habis dibagi 8?',
+          'KPK-nya 24: {5/8} = {15/24}, {3/4} = {18/24}, {7/12} = {14/24}, {2/3} = {16/24}.',
+        ],
+      },
+    ],
+    nextLabel: 'Lanjut ke Kuis Individu →',
+  },
+
+  /* ---------- Tahap 6: Kuis individu (CL Fase 5) ---------- */
+  kuis: {
+    kicker: 'Tahap 6 · Kuis Individu',
+    syntax: 'Cooperative Learning · Fase 5',
+    goal: 'Menunjukkan pemahaman membandingkan dan mengurutkan pecahan secara mandiri.',
+    instruction:
+      'Kerjakan sendiri tanpa bantuan teman. Setiap soal hanya bisa dijawab sekali. Skormu menyumbang poin untuk timmu!',
+    guru: 'Kuis dikerjakan individu. Bila perangkat terbatas, gilir perangkat antaranggota atau bacakan soal lalu murid menjawab di kertas. Hasil ini menjadi skor individu yang disumbangkan ke tim (model STAD).',
+    soal: [
+      {
+        id: 'k1',
+        type: 'choice',
+        tanya: 'Tanda yang tepat untuk mengisi titik-titik: {4/7} … {3/5}',
+        options: [
+          { id: 'lt', label: '&lt;' },
+          { id: 'gt', label: '&gt;' },
+          { id: 'eq', label: '=' },
+        ],
+        correct: 'lt',
+        explanation:
+          'KPK 7 dan 5 adalah 35: {4/7} = {20/35} dan {3/5} = {21/35}. Karena 20 &lt; 21, maka {4/7} &lt; {3/5}.',
+      },
+      {
+        id: 'k2',
+        type: 'choice',
+        tanya:
+          'Pecahan <strong>terbesar</strong> di antara {2/3}, {5/9}, {7/12}, dan {3/4} adalah …',
+        options: [
+          { id: 'a', label: '{3/4}' },
+          { id: 'b', label: '{2/3}' },
+          { id: 'c', label: '{7/12}' },
+          { id: 'd', label: '{5/9}' },
+        ],
+        correct: 'a',
+        explanation:
+          'Dengan KPK 36: {2/3} = {24/36}, {5/9} = {20/36}, {7/12} = {21/36}, {3/4} = {27/36}. Pembilang terbesar 27, jadi {3/4} terbesar.',
+      },
+      {
+        id: 'k3',
+        type: 'choice',
+        tanya:
+          'Pecahan <strong>terkecil</strong> di antara {3/8}, {2/5}, {1/3}, dan {5/12} adalah …',
+        options: [
+          { id: 'a', label: '{1/3}' },
+          { id: 'b', label: '{3/8}' },
+          { id: 'c', label: '{2/5}' },
+          { id: 'd', label: '{5/12}' },
+        ],
+        correct: 'a',
+        explanation:
+          'Dengan KPK 120: {3/8} = {45/120}, {2/5} = {48/120}, {1/3} = {40/120}, {5/12} = {50/120}. Jadi {1/3} terkecil.',
+      },
+      {
+        id: 'k4',
+        type: 'choice',
+        tanya:
+          'Urutan pecahan {5/6}, {1/2}, dan {2/3} dari yang <strong>terkecil</strong> adalah …',
+        options: [
+          { id: 'a', label: '{1/2}, {2/3}, {5/6}' },
+          { id: 'b', label: '{5/6}, {2/3}, {1/2}' },
+          { id: 'c', label: '{1/2}, {5/6}, {2/3}' },
+          { id: 'd', label: '{2/3}, {1/2}, {5/6}' },
+        ],
+        correct: 'a',
+        explanation:
+          'Dengan penyebut 6: {1/2} = {3/6}, {2/3} = {4/6}, {5/6} = {5/6}. Urutan pembilang 3, 4, 5.',
+      },
+      {
+        id: 'k5',
+        type: 'choice',
+        tanya:
+          'Tono berkata, "{5/12} lebih besar daripada {3/4} karena 12 lebih besar daripada 4." Pendapat yang tepat tentang pernyataan Tono adalah …',
+        options: [
+          {
+            id: 'a',
+            label: 'Tono keliru; {3/4} = {9/12}, jadi {5/12} &lt; {3/4}.',
+          },
+          { id: 'b', label: 'Tono benar; penyebut lebih besar berarti pecahan lebih besar.' },
+          { id: 'c', label: 'Tono benar; pembilang 5 lebih besar daripada 3.' },
+          { id: 'd', label: 'Tidak dapat ditentukan karena penyebutnya berbeda.' },
+        ],
+        correct: 'a',
+        explanation:
+          'Penyebut yang lebih besar berarti potongannya lebih kecil. Setelah disamakan, {3/4} = {9/12} dan 5 &lt; 9, jadi {5/12} &lt; {3/4}.',
+      },
+      {
+        id: 'k6',
+        type: 'choice',
+        tanya:
+          'Sari sudah membaca {3/5} novel, sedangkan Lina {5/8} novel yang sama. Siapa yang sudah membaca lebih banyak?',
+        options: [
+          { id: 'lina', label: 'Lina' },
+          { id: 'sari', label: 'Sari' },
+          { id: 'sama', label: 'Sama banyak' },
+          { id: 'tidak', label: 'Tidak dapat ditentukan' },
+        ],
+        correct: 'lina',
+        explanation:
+          'Kali silang: 3 × 8 = 24 dan 5 × 5 = 25. Karena 24 &lt; 25, maka {3/5} &lt; {5/8}, jadi Lina membaca lebih banyak.',
+      },
+    ],
+    nextLabel: 'Lihat Penghargaan Tim →',
+  },
+
+  /* ---------- Tahap 7: Penghargaan (CL Fase 6) ---------- */
+  penghargaan: {
+    kicker: 'Tahap 7 · Penghargaan Tim',
+    syntax: 'Cooperative Learning · Fase 6',
+    goal: 'Merayakan hasil kerja tim dan menghargai kontribusi setiap anggota.',
+    guru: 'Umumkan predikat setiap tim di depan kelas. Minta Pelapor setiap tim menyebutkan satu strategi yang paling membantu timnya. Penghargaan bersifat kelompok, sehingga keberhasilan anggota adalah keberhasilan tim.',
+    predikat: [
+      {
+        min: 85,
+        ikon: '🏆',
+        nama: 'Tim Super',
+        teks: 'Luar biasa! Tim kalian sangat kompak dan teliti.',
+      },
+      { min: 70, ikon: '🥇', nama: 'Tim Hebat', teks: 'Hebat! Sedikit lagi menjadi Tim Super.' },
+      { min: 0, ikon: '🌟', nama: 'Tim Baik', teks: 'Kerja bagus! Terus berlatih bersama, ya.' },
+    ],
+    apresiasiLabel: 'Siapa anggota yang paling banyak membantu timmu hari ini?',
+    apresiasiUmpan: 'Terima kasih! Sampaikan apresiasimu secara langsung kepadanya, ya. 👏',
+    nextLabel: 'Lanjut ke Refleksi →',
+  },
+
+  /* ---------- Tahap 8: Refleksi ---------- */
+  refleksi: {
+    kicker: 'Tahap 8 · Refleksi',
+    syntax: 'Penutup',
+    goal: 'Memeriksa kembali pemahaman dan merefleksikan kerja sama tim.',
+    guru: 'Beri waktu hening 3 menit untuk refleksi pribadi. Undang 2–3 murid membagikan jawabannya. Luruskan miskonsepsi "penyebut besar berarti pecahan besar" bila masih muncul.',
+    opsi: [
+      { id: 'benar', label: 'Benar' },
+      { id: 'keliru', label: 'Keliru' },
+    ],
+    pernyataan: [
+      {
+        id: 'p1',
+        teks: 'Pecahan dengan penyebut lebih besar selalu bernilai lebih besar.',
+        correct: 'keliru',
+        explanation: 'Contohnya {1/8} &lt; {1/2}. Penyebut besar berarti potongannya lebih kecil.',
+      },
+      {
+        id: 'p2',
+        teks: 'Setelah penyebutnya disamakan, pecahan dengan pembilang lebih besar bernilai lebih besar.',
+        correct: 'benar',
+        explanation: 'Misalnya {9/12} &gt; {8/12} karena 9 &gt; 8 dan penyebutnya sama.',
+      },
+      {
+        id: 'p3',
+        teks: '{4/6} dan {6/9} bernilai sama.',
+        correct: 'benar',
+        explanation: 'Keduanya senilai dengan {2/3}: {4/6} = {12/18} = {6/9}.',
+      },
+      {
+        id: 'p4',
+        teks: 'Bila {a/b} kurang dari ½ dan {c/d} lebih dari ½, maka {a/b} &lt; {c/d}.',
+        correct: 'benar',
+        explanation:
+          'Itulah strategi patokan ½: pecahan di bawah ½ pasti lebih kecil dari pecahan di atas ½.',
+      },
+      {
+        id: 'p5',
+        teks: 'Mengurutkan dari yang terbesar berarti menulis pecahan terkecil lebih dulu.',
+        correct: 'keliru',
+        explanation:
+          'Dari yang terbesar berarti pecahan TERBESAR ditulis paling depan (urutan turun).',
+      },
+    ],
+    pertanyaan: [
+      {
+        id: 'strategi',
+        teks: 'Strategi mana yang paling kamu sukai untuk membandingkan pecahan? Mengapa?',
+        placeholder: 'Contoh: Saya suka menyamakan penyebut karena …',
+      },
+      {
+        id: 'tim',
+        teks: 'Apa yang dilakukan timmu agar semua anggota paham? Apa yang bisa ditingkatkan?',
+        placeholder: 'Contoh: Kami saling menjelaskan cara mencari KPK …',
+      },
+    ],
+    diriLabel:
+      'Seberapa yakin kamu sekarang membandingkan dan mengurutkan pecahan berpenyebut berbeda?',
+    diriOpsi: [
+      { id: 'sangat', label: '😄 Sangat yakin — aku bisa menjelaskan ke teman' },
+      { id: 'yakin', label: '🙂 Yakin — aku bisa mengerjakan sendiri' },
+      { id: 'ragu', label: '🤔 Masih ragu — perlu latihan lagi' },
+      { id: 'bingung', label: '😟 Masih bingung — perlu dibimbing' },
+    ],
+    nextLabel: 'Selesai →',
+  },
+
+  /* ---------- Tahap 9: Selesai ---------- */
+  selesai: {
+    judul: 'Kerja tim yang hebat!',
+    teks: 'Kalian telah belajar membandingkan dan mengurutkan pecahan berpenyebut berbeda bersama-sama.',
+    capaian: [
+      'Membandingkan pecahan dengan pita pecahan yang sama panjang.',
+      'Menyamakan penyebut dengan KPK, lalu membandingkan pembilang.',
+      'Memakai patokan ½ dan kali silang sebagai cara cepat.',
+      'Mengurutkan pecahan dari yang terkecil maupun dari yang terbesar.',
     ],
   },
 };
