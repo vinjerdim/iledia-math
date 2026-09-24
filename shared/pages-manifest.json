@@ -73,20 +73,6 @@
       "app-stage-selesai.js"
     ]
   },
-  "fase-d/mpi-1.7": {
-    "title": "Literasi Finansial: Untung, Rugi & Diskon — Matematika Fase D",
-    "description": "Media pembelajaran interaktif untuk menganalisis masalah literasi finansial: menghitung pendapatan, pengeluaran, keuntungan, kerugian, dan diskon.",
-    "kicker": "Matematika — Fase D (SMP)",
-    "h1": "Literasi Finansial: Untung, Rugi & Diskon",
-    "stageCount": 8
-  },
-  "fase-d/mpi-1.8": {
-    "title": "Rancangan Anggaran Belanja — Matematika Fase D (SMP)",
-    "description": "Media pembelajaran interaktif untuk menyusun dan mempresentasikan rancangan anggaran belanja yang rasional menggunakan seluruh operasi aritmatika bilangan bulat, rasional, dan desimal.",
-    "kicker": "Matematika — Fase D (SMP) · Materi 1.8",
-    "h1": "Rancangan Anggaran Belanja",
-    "stageCount": 8
-  },
   "fase-d/mpi-2.1": {
     "title": "Penjumlahan & Pengurangan Bilangan Bulat — Matematika Fase D",
     "description": "Media pembelajaran interaktif berbasis Discovery Learning untuk merepresentasikan bilangan bulat pada garis bilangan serta menjumlah dan mengurangkan bilangan bulat dalam masalah kontekstual suhu, saldo, dan ketinggian.",
