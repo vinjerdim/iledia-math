@@ -5061,3 +5061,117 @@ details.hint-reveal[open] summary::before {
   font-family: var(--font-mono);
   overflow-wrap: anywhere;
 }
+
+/* =========================================================================
+   Duel tawaran — perbandingan bunga tunggal vs bunga majemuk
+   (buildInterestDuel, shared/engine.js seksi 24). Tombol −/+ memakai
+   gaya .compound-sim__* di atas.
+   ========================================================================= */
+
+.interest-duel {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.interest-duel__ctrl {
+  max-width: 320px;
+}
+
+.interest-duel__arena {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  gap: var(--space-3);
+  align-items: stretch;
+}
+
+.interest-duel__card {
+  display: grid;
+  gap: var(--space-1);
+  align-content: start;
+  min-width: 0;
+  padding: var(--space-3);
+  border: 2px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.interest-duel__card--tunggal {
+  border-top: 6px solid var(--color-blue);
+}
+
+.interest-duel__card--majemuk {
+  border-top: 6px solid var(--color-orange);
+}
+
+.interest-duel__card--win {
+  border-color: var(--color-success);
+  box-shadow: 0 0 0 3px var(--color-success-soft);
+}
+
+.interest-duel__name {
+  font-weight: 800;
+}
+
+.interest-duel__rule {
+  font-size: 0.82rem;
+  color: var(--color-ink-muted);
+}
+
+.interest-duel__formula {
+  font-family: var(--font-mono);
+  font-size: 0.82rem;
+  overflow-wrap: anywhere;
+}
+
+.interest-duel__saldo {
+  font-family: var(--font-mono);
+  font-size: 1.2rem;
+  overflow-wrap: anywhere;
+}
+
+.interest-duel__card--tunggal .interest-duel__saldo {
+  color: var(--color-blue-strong);
+}
+
+.interest-duel__card--majemuk .interest-duel__saldo {
+  color: var(--color-orange-strong);
+}
+
+.interest-duel__badge {
+  justify-self: start;
+  padding: 2px var(--space-2);
+  border-radius: 999px;
+  background: var(--color-success-soft);
+  color: var(--color-success-strong);
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.interest-duel__vs {
+  align-self: center;
+  font-weight: 800;
+  color: var(--color-ink-muted);
+}
+
+.interest-duel__result {
+  grid-column: 1 / -1;
+  margin: 0;
+  padding: var(--space-2) var(--space-3);
+  border-left: 4px solid var(--color-success);
+  border-radius: var(--radius-sm);
+  background: var(--color-success-soft);
+  color: var(--color-success-strong);
+}
+
+@media (max-width: 480px) {
+  .interest-duel__arena {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .interest-duel__vs {
+    justify-self: center;
+  }
+}
