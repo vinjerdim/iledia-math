@@ -104,5 +104,13 @@
     "kicker": "Matematika — Fase F (SMK RPL)",
     "h1": "Bunga Tunggal pada Transaksi Simpan Pinjam",
     "stageCount": 9
+  },
+  "fase-f/mpi-2.1": {
+    "title": "Jumlah n Suku Pertama Deret Aritmetika — Matematika Fase F",
+    "description": "Media pembelajaran interaktif berbasis Discovery Learning untuk menemukan dan membuktikan rumus jumlah n suku pertama deret aritmetika (Sₙ) secara visual dan aljabar, serta menggunakannya untuk menyelesaikan masalah sederhana.",
+    "kicker": "Matematika — Fase F (SMK RPL)",
+    "h1": "Jumlah n Suku Pertama Deret Aritmetika",
+    "stageCount": 10,
+    "extraBody": "partials/reset-modal.html"
   }
 }

@@ -1,0 +1,254 @@
+/* =========================================================================
+   fase-f/mpi-2.1/styles.css
+   Jumlah n Suku Pertama Deret Aritmetika (Sₙ) — Fase F (SMK RPL),
+   Discovery Learning
+
+   Hanya memuat gaya yang KHAS modul ini (tangga piksel SVG, slider n,
+   tabel Uₙ & Sₙ, grid pasangan maju–mundur). Dasar design system — panel,
+   tombol, umpan balik, pilihan ganda, petunjuk, deret suku, catatan guru,
+   langkah isian, pemilahan, tabel pola, kartu rumus, perbandingan dugaan,
+   kartu ringkasan, navigasi tahap, modal — berasal dari shared/base.css.
+   ========================================================================= */
+
+/* -------------------------------------------------------------------------
+   Tahap 1 — tata letak tangga + deret suku
+   ------------------------------------------------------------------------- */
+
+.stimulasi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: var(--space-4);
+  align-items: center;
+}
+
+.stimulasi-grid > * {
+  min-width: 0;
+}
+
+/* -------------------------------------------------------------------------
+   Tangga piksel (tahap 1, 3, 4)
+   ------------------------------------------------------------------------- */
+
+.tangga {
+  margin: var(--space-3) 0;
+  text-align: center;
+}
+
+.tangga__svg {
+  display: block;
+  max-width: 100%;
+  max-height: 320px;
+  height: auto;
+  margin: 0 auto;
+}
+
+.tangga__blok--a {
+  fill: var(--color-blue);
+  stroke: var(--color-blue-soft);
+  stroke-width: 1;
+}
+
+.tangga__blok--b {
+  fill: var(--color-orange);
+  stroke: var(--color-orange-soft);
+  stroke-width: 1;
+}
+
+.tangga__blok--b.is-fresh {
+  animation: blok-turun 0.6s ease-out both;
+}
+
+@keyframes blok-turun {
+  from {
+    opacity: 0;
+    transform: translateY(-24px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tangga__blok--b.is-fresh {
+    animation: none;
+  }
+}
+
+.tangga__label {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.tangga__label--a {
+  fill: var(--color-blue-strong);
+}
+
+.tangga__label--b {
+  fill: var(--color-orange-strong);
+}
+
+.tangga__legend {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--space-2) var(--space-4);
+  margin-top: var(--space-2);
+  font-size: 0.82rem;
+  color: var(--color-ink-muted);
+}
+
+.tangga__key {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.tangga__swatch {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border-radius: 3px;
+}
+
+.tangga__swatch--a {
+  background: var(--color-blue);
+}
+
+.tangga__swatch--b {
+  background: var(--color-orange);
+}
+
+.tangga-slider {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2) var(--space-4);
+  font-size: 0.9rem;
+}
+
+.tangga-slider input[type='range'] {
+  flex: 1 1 200px;
+  min-height: 44px;
+  accent-color: var(--color-primary);
+}
+
+.tangga-readout {
+  margin: 0 0 var(--space-3);
+  font-family: var(--font-mono);
+  font-size: 0.9rem;
+  font-weight: 700;
+  text-align: center;
+}
+
+/* -------------------------------------------------------------------------
+   Tahap 3 — tabel Uₙ & Sₙ
+   ------------------------------------------------------------------------- */
+
+.tabel-sn th,
+.tabel-sn td {
+  white-space: normal;
+}
+
+.tabel-sn td.sel--ok {
+  background: var(--color-success-soft);
+}
+
+.tabel-sn td.sel--no {
+  background: var(--color-error-soft);
+}
+
+.tabel-sn .un-row__input.input-text {
+  width: 72px;
+}
+
+/* -------------------------------------------------------------------------
+   Tahap 5 — grid pasangan maju–mundur
+   ------------------------------------------------------------------------- */
+
+.pair-grid {
+  overflow-x: auto;
+  margin: var(--space-4) 0;
+  padding-bottom: var(--space-2);
+}
+
+.pair-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  width: max-content;
+  min-width: 100%;
+  padding: var(--space-1) 0;
+}
+
+.pair-row--sum {
+  margin-top: var(--space-1);
+  padding-top: var(--space-2);
+  border-top: 2px solid var(--color-ink);
+}
+
+.pair-row__label {
+  flex: 0 0 64px;
+  font-family: var(--font-mono);
+  font-weight: 700;
+}
+
+.pair-plus {
+  color: var(--color-ink-muted);
+  font-weight: 700;
+}
+
+.pair-cell {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 92px;
+  min-height: 44px;
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-md);
+  font-family: var(--font-mono);
+  font-size: 0.92rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.pair-cell--a {
+  background: var(--color-blue-soft);
+  color: var(--color-blue-strong);
+}
+
+.pair-cell--b {
+  background: var(--color-orange-soft);
+  color: var(--color-orange-strong);
+}
+
+.pair-cell--sum {
+  background: var(--color-surface);
+  border: 2px dashed var(--color-border-strong);
+}
+
+.pair-cell--sum.is-open {
+  border-style: solid;
+  border-color: var(--color-success);
+  background: var(--color-success-soft);
+  color: var(--color-success-strong);
+}
+
+.pair-cell--btn {
+  border: 2px solid var(--color-primary);
+  background: var(--color-primary-soft);
+  color: var(--color-primary-strong);
+  font-family: var(--font-body);
+  font-size: 0.82rem;
+  cursor: pointer;
+}
+
+.pair-cell--btn:hover {
+  background: var(--color-surface);
+}
+
+.pair-cell--btn:focus-visible {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 2px;
+}
