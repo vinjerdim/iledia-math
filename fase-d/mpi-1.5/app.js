@@ -216,30 +216,7 @@ var updateProgress = StageMachine.updateProgress;
    5. UTILITAS RENDER HTML
    ============================================================ */
 
-/** Buat frac-block HTML (inline fraction display) */
-function buildFracBlock(num, den, whole, size) {
-  size = size || '';
-  var cls = 'frac-block' + (size ? ' frac-block--' + size : '');
-  var ariaLabel = (whole != null ? esc(whole) + ' dan ' : '') + esc(num) + ' per ' + esc(den);
-  var wholeHTML =
-    whole != null ? '<span class="frac-block__whole">' + esc(String(whole)) + '</span>' : '';
-  return (
-    '<span class="' +
-    cls +
-    '" role="img" aria-label="' +
-    ariaLabel +
-    '">' +
-    wholeHTML +
-    '<span class="frac-block__frac">' +
-    '<span class="frac-block__num">' +
-    esc(String(num)) +
-    '</span>' +
-    '<span class="frac-block__den">' +
-    esc(String(den)) +
-    '</span>' +
-    '</span></span>'
-  );
-}
+/* buildFracBlock berada di shared/engine.js. */
 
 /** Buat hint items HTML */
 function buildHints(hints, level) {
@@ -1594,8 +1571,8 @@ function checkMCPhase(problem, pstate, phase) {
     phase === 'model'
       ? problem.model.options
       : phase === 'order'
-        ? problem.order.options
-        : problem.verify.options;
+      ? problem.order.options
+      : problem.verify.options;
 
   var selOpt = source.find(function (o) {
     return o.id === ph.selected;

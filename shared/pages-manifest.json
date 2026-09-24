@@ -15,11 +15,12 @@
     "stageCount": 8
   },
   "fase-d/mpi-1.3": {
-    "title": "Perkalian dan Pembagian Bilangan Bulat — Matematika Fase D",
-    "description": "Media pembelajaran interaktif untuk menerapkan operasi perkalian dan pembagian pada bilangan bulat serta menggunakannya dalam penyelesaian masalah estimasi sederhana.",
+    "title": "Membaca & Menulis Pecahan Biasa dan Pecahan Campuran — Matematika Fase D",
+    "description": "Media pembelajaran interaktif berbasis Direct Instruction untuk membaca dan menuliskan pecahan biasa dan pecahan campuran sesuai notasi baku.",
     "kicker": "Matematika — Fase D (SMP)",
-    "h1": "Perkalian dan Pembagian Bilangan Bulat",
-    "stageCount": 10
+    "h1": "Membaca & Menulis Pecahan Biasa dan Campuran",
+    "stageCount": 9,
+    "extraBody": "partials/reset-modal.html"
   },
   "fase-d/mpi-1.4": {
     "title": "Eksplorasi Bilangan Rasional — Matematika Fase D",

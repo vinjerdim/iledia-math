@@ -781,8 +781,8 @@ function createExerciseStage(cfg) {
       feedbackHTML = cfg.buildChoiceFeedback
         ? cfg.buildChoiceFeedback(s, ex)
         : ex.correct
-          ? buildFeedbackBox('success', '✓', '<strong>Benar!</strong> ' + s.explanation)
-          : buildFeedbackBox('error', '✗', '<strong>Belum tepat.</strong> ' + s.explanation);
+        ? buildFeedbackBox('success', '✓', '<strong>Benar!</strong> ' + s.explanation)
+        : buildFeedbackBox('error', '✗', '<strong>Belum tepat.</strong> ' + s.explanation);
     }
 
     return (
@@ -1396,8 +1396,8 @@ function readDlNumber(val, rational) {
       parsed.error === 'empty'
         ? 'Isi jawabanmu terlebih dahulu.'
         : rational
-          ? 'Tulis jawaban berupa bilangan, pecahan, atau desimal, mis. 3, 1/2, atau 0,5.'
-          : 'Tulis jawaban berupa bilangan bulat, mis. 12 atau −40.'
+        ? 'Tulis jawaban berupa bilangan, pecahan, atau desimal, mis. 3, 1/2, atau 0,5.'
+        : 'Tulis jawaban berupa bilangan bulat, mis. 12 atau −40.'
     );
     return null;
   }
@@ -2096,4 +2096,282 @@ function centerNumberLines(root) {
     if (isNaN(ratio)) return;
     wrap.scrollLeft = Math.max(0, ratio * svg.clientWidth - wrap.clientWidth / 2);
   });
+}
+
+/* ============================================================
+   10. PECAHAN — NOTASI BAKU, CARA BACA & MODEL VISUAL
+   Dipakai modul pecahan (fase-d/mpi-1.3, mpi-1.4, mpi-1.5).
+   Gaya .frac-block/.frac-inline/.frac-model/.frac-input ada di
+   shared/base.css.
+   ============================================================ */
+
+function isBulat(v) {
+  return typeof v === 'number' && isFinite(v) && Math.floor(v) === v;
+}
+
+/*
+ * Cara baca baku pecahan: pembilang, kata "per", lalu penyebut.
+ *   bacaPecahan(3, 4)     → "tiga per empat"
+ *   bacaPecahan(3, 4, 2)  → "dua tiga per empat"  (pecahan campuran:
+ *                            bilangan bulat dibaca lebih dulu)
+ * Sebutan sehari-hari seperti "setengah" (1/2) dan "seperempat" (1/4)
+ * sengaja tidak dipakai di sini karena bukan pola baku yang berlaku
+ * untuk semua pecahan.
+ */
+function bacaPecahan(num, den, whole) {
+  var biasa = terbilang(num) + ' per ' + terbilang(den);
+  return whole ? terbilang(whole) + ' ' + biasa : biasa;
+}
+
+/* Label aksesibel pecahan: cara baca baku bila bilangan bulat. */
+function fracAriaLabel(num, den, whole) {
+  var w = whole != null && whole !== '' ? whole : null;
+  if (isBulat(num) && isBulat(den) && (w === null || isBulat(w))) {
+    return bacaPecahan(num, den, w);
+  }
+  return (w !== null ? w + ' dan ' : '') + num + ' per ' + den;
+}
+
+/*
+ * Pecahan bersusun (pembilang di atas garis, penyebut di bawah) dengan
+ * bilangan bulat opsional di kiri untuk pecahan campuran.
+ *   size  '' | 'small' | 'large' | 'hero'
+ */
+function buildFracBlock(num, den, whole, size) {
+  var cls = size ? ' frac-block--' + size : '';
+  var wholeHTML =
+    whole != null ? '<span class="frac-block__whole">' + esc(String(whole)) + '</span>' : '';
+  return (
+    '<span class="frac-block' +
+    cls +
+    '" role="img" aria-label="' +
+    esc(fracAriaLabel(num, den, whole)) +
+    '">' +
+    wholeHTML +
+    '<span class="frac-block__frac">' +
+    '<span class="frac-block__num">' +
+    esc(String(num)) +
+    '</span>' +
+    '<span class="frac-block__den">' +
+    esc(String(den)) +
+    '</span>' +
+    '</span></span>'
+  );
+}
+
+/* Pecahan bersusun kecil untuk di dalam kalimat. */
+function buildFracInline(num, den, whole) {
+  return (
+    '<span class="frac-mixed" role="img" aria-label="' +
+    esc(fracAriaLabel(num, den, whole)) +
+    '">' +
+    (whole != null ? '<span class="frac-mixed__whole">' + esc(String(whole)) + '</span>' : '') +
+    '<span class="frac-inline" aria-hidden="true">' +
+    '<span class="frac-num">' +
+    esc(String(num)) +
+    '</span>' +
+    '<span class="frac-den">' +
+    esc(String(den)) +
+    '</span>' +
+    '</span></span>'
+  );
+}
+
+/*
+ * Model visual pecahan: sejumlah bangun utuh yang dibagi `den` bagian
+ * sama besar, dengan (whole × den + num) bagian diarsir. Pecahan
+ * campuran tampil sebagai beberapa bangun penuh ditambah satu bangun
+ * yang terarsir sebagian.
+ *   opts.shape    'bar' (default, pita/cokelat batang) | 'circle' (pizza/martabak)
+ *   opts.caption  teks kecil di bawah model (opsional)
+ *   opts.aria     label aksesibel (default dibuat otomatis)
+ *   opts.small    true → ukuran ringkas
+ */
+function buildFractionModel(num, den, whole, opts) {
+  opts = opts || {};
+  whole = whole || 0;
+  den = Math.max(1, Math.round(den));
+  var sisa = whole * den + Math.max(0, Math.round(num));
+  var banyakBangun = Math.max(1, Math.ceil(sisa / den));
+  var shapes = '';
+
+  for (var b = 0; b < banyakBangun; b++) {
+    var arsir = Math.min(den, sisa);
+    sisa -= arsir;
+    if (opts.shape === 'circle') {
+      var r = 46;
+      var c = 50;
+      var parts = '';
+      if (den === 1) {
+        parts =
+          '<circle class="frac-model__part' +
+          (arsir ? ' is-on' : '') +
+          '" cx="' +
+          c +
+          '" cy="' +
+          c +
+          '" r="' +
+          r +
+          '"/>';
+      } else {
+        for (var i = 0; i < den; i++) {
+          var a0 = ((i / den) * 360 - 90) * (Math.PI / 180);
+          var a1 = (((i + 1) / den) * 360 - 90) * (Math.PI / 180);
+          var x0 = (c + r * Math.cos(a0)).toFixed(2);
+          var y0 = (c + r * Math.sin(a0)).toFixed(2);
+          var x1 = (c + r * Math.cos(a1)).toFixed(2);
+          var y1 = (c + r * Math.sin(a1)).toFixed(2);
+          parts +=
+            '<path class="frac-model__part' +
+            (i < arsir ? ' is-on' : '') +
+            '" d="M' +
+            c +
+            ' ' +
+            c +
+            ' L' +
+            x0 +
+            ' ' +
+            y0 +
+            ' A' +
+            r +
+            ' ' +
+            r +
+            ' 0 ' +
+            (1 / den > 0.5 ? 1 : 0) +
+            ' 1 ' +
+            x1 +
+            ' ' +
+            y1 +
+            ' Z"/>';
+        }
+      }
+      shapes +=
+        '<svg class="frac-model__circle" viewBox="0 0 100 100" aria-hidden="true">' +
+        parts +
+        '</svg>';
+    } else {
+      var cells = '';
+      for (var j = 0; j < den; j++) {
+        cells += '<span class="frac-model__cell' + (j < arsir ? ' is-on' : '') + '"></span>';
+      }
+      shapes +=
+        '<span class="frac-model__bar" style="grid-template-columns:repeat(' +
+        den +
+        ',1fr)" aria-hidden="true">' +
+        cells +
+        '</span>';
+    }
+  }
+
+  var aria =
+    opts.aria ||
+    (whole ? whole + ' bangun utuh terarsir penuh dan ' : '') +
+      'satu bangun dibagi ' +
+      den +
+      ' bagian sama besar dengan ' +
+      Math.round(num) +
+      ' bagian terarsir';
+
+  return (
+    '<figure class="frac-model frac-model--' +
+    (opts.shape === 'circle' ? 'circle' : 'bar') +
+    (opts.small ? ' frac-model--small' : '') +
+    '" role="img" aria-label="' +
+    esc(aria) +
+    '">' +
+    '<div class="frac-model__shapes">' +
+    shapes +
+    '</div>' +
+    (opts.caption
+      ? '<figcaption class="frac-model__caption">' + opts.caption + '</figcaption>'
+      : '') +
+    '</figure>'
+  );
+}
+
+/*
+ * Kotak isian pecahan bersusun: bilangan bulat (opsional, di kiri),
+ * pembilang di atas garis, penyebut di bawah garis — meniru cara murid
+ * menulis pecahan di buku.
+ *   id              awalan id DOM → <id>Whole, <id>Num, <id>Den
+ *   value           { whole, num, den } berupa string (isian terakhir)
+ *   opts.mixed      true → tampilkan kotak bilangan bulat
+ *   opts.disabled   true → kunci isian
+ *   opts.status     'ok' | 'bad' | '' → warna bingkai
+ *   opts.aria       awalan label aksesibel (default 'Jawaban')
+ */
+function buildFractionInput(id, value, opts) {
+  opts = opts || {};
+  value = value || {};
+  var dis = opts.disabled ? ' disabled' : '';
+  var aria = opts.aria || 'Jawaban';
+  function box(suffix, val, label, extra) {
+    return (
+      '<input type="text" inputmode="numeric" autocomplete="off" maxlength="3" class="frac-input__box' +
+      (extra || '') +
+      '" id="' +
+      id +
+      suffix +
+      '" value="' +
+      esc(val || '') +
+      '" aria-label="' +
+      esc(aria + ': ' + label) +
+      '"' +
+      dis +
+      '/>'
+    );
+  }
+  return (
+    '<div class="frac-input' +
+    (opts.status ? ' frac-input--' + opts.status : '') +
+    '">' +
+    (opts.mixed
+      ? '<div class="frac-input__whole">' +
+        box(
+          'Whole',
+          value.whole,
+          'bilangan bulat (kosongkan bila tidak ada)',
+          ' frac-input__box--whole'
+        ) +
+        '<span class="frac-input__cap">bulat</span>' +
+        '</div>'
+      : '') +
+    '<div class="frac-input__stack">' +
+    box('Num', value.num, 'pembilang') +
+    '<span class="frac-input__line" aria-hidden="true"></span>' +
+    box('Den', value.den, 'penyebut') +
+    '</div>' +
+    '</div>'
+  );
+}
+
+/*
+ * Membaca kotak isian buildFractionInput di dalam `root`.
+ * Mengembalikan { raw, value, error }:
+ *   raw    { whole, num, den } string apa adanya (untuk disimpan di State)
+ *   value  { whole, num, den } bilangan cacah (whole null bila kosong)
+ *   error  null | 'empty' (pembilang/penyebut kosong) | 'invalid' | 'zero-den'
+ */
+function readFractionInput(root, id) {
+  function get(suffix) {
+    var el = root.querySelector('#' + id + suffix);
+    return el ? el.value.trim() : '';
+  }
+  var raw = { whole: get('Whole'), num: get('Num'), den: get('Den') };
+  if (raw.num === '' || raw.den === '') return { raw: raw, value: null, error: 'empty' };
+  var cacah = /^\d+$/;
+  if (
+    !cacah.test(raw.num) ||
+    !cacah.test(raw.den) ||
+    (raw.whole !== '' && !cacah.test(raw.whole))
+  ) {
+    return { raw: raw, value: null, error: 'invalid' };
+  }
+  var value = {
+    whole: raw.whole === '' ? null : parseInt(raw.whole, 10),
+    num: parseInt(raw.num, 10),
+    den: parseInt(raw.den, 10),
+  };
+  if (value.den === 0) return { raw: raw, value: value, error: 'zero-den' };
+  return { raw: raw, value: value, error: null };
 }
