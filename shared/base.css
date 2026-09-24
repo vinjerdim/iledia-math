@@ -4882,3 +4882,92 @@ details.hint-reveal[open] summary::before {
   font-family: var(--font-mono);
   font-weight: 700;
 }
+
+/* -------------------------------------------------------------------------
+   Buku tabungan (bunga tunggal) — buildBukuTabungan() di engine.js seksi 22
+   ------------------------------------------------------------------------- */
+
+.passbook {
+  margin: var(--space-3) 0;
+  border: 2px solid var(--color-blue);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  overflow: hidden;
+}
+
+.passbook__head {
+  padding: var(--space-2) var(--space-3);
+  background: var(--color-blue);
+  color: #fff;
+  font-weight: 700;
+}
+
+.passbook__scroll {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.passbook__table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.95rem;
+}
+
+.passbook__table th,
+.passbook__table td {
+  padding: var(--space-2) var(--space-3);
+  border-bottom: 1px dashed var(--color-border);
+  text-align: right;
+  white-space: nowrap;
+}
+
+.passbook__table th[scope='row'],
+.passbook__table thead th:first-child {
+  text-align: left;
+}
+
+.passbook__table thead th {
+  font-size: 0.78rem;
+  color: var(--color-ink-muted);
+  background: var(--color-blue-soft);
+}
+
+.passbook__table td {
+  font-family: var(--font-mono);
+  font-weight: 700;
+}
+
+.passbook__muted {
+  color: var(--color-ink-muted);
+}
+
+.passbook__hidden {
+  display: inline-block;
+  min-width: 3em;
+  padding: 0 var(--space-2);
+  border-radius: 6px;
+  background: var(--color-warning-soft);
+  color: var(--color-warning-strong);
+  text-align: center;
+}
+
+.passbook__row--gap td {
+  text-align: center;
+  color: var(--color-ink-muted);
+  font-family: inherit;
+}
+
+.passbook__row--hl {
+  background: var(--color-success-soft);
+}
+
+@media (max-width: 480px) {
+  .passbook__table {
+    font-size: 0.8rem;
+  }
+
+  .passbook__table th,
+  .passbook__table td {
+    padding: var(--space-2) var(--space-1);
+  }
+}

@@ -6000,19 +6000,21 @@ function subskrip(n) {
 
 /*
  * Tabel isian deret: kolom pertama n = 1, 2, …; kolom lain dari `columns`.
- *   columns  [{ id, label, values: [..], editable }] — kolom editable
- *            diisi murid (jawaban benar = values[i]); lainnya ditampilkan
+ *   columns  [{ id, label, values: [..], editable, parse }] — kolom editable
+ *            diisi murid (jawaban benar = values[i]); lainnya ditampilkan.
+ *            `parse` opsional: pembaca isian pengganti, mis. parseInputAngka
+ *            agar 'Rp2.120.000' diterima
  *   inputs   { <colId>: ['isian', …] } — isian murid per kolom editable
  *   opts.checked  true → tandai sel terisi dengan ✓/✗
  *   opts.locked   true → isian dinonaktifkan (mis. setelah semua benar)
  *   opts.format   function(v) → teks nilai tetap (default formatNumber)
  *   opts.caption  teks aksesibel tabel
- * Isian dibaca dengan parseInputInt(…, true) sehingga pemisah ribuan
+ * Tanpa `parse`, isian dibaca dengan parseInputInt(…, true) sehingga pemisah ribuan
  * (6.200.000) diterima.
  */
 function seriesFillCellCorrect(col, inputs, i) {
   var val = inputs && inputs[col.id] ? inputs[col.id][i] : '';
-  var parsed = parseInputInt(String(val || ''), true);
+  var parsed = col.parse ? col.parse(String(val || '')) : parseInputInt(String(val || ''), true);
   return !parsed.error && hampirSama(parsed.value, col.values[i]);
 }
 
@@ -6278,5 +6280,148 @@ function buildSeriesCheckTable(rows, opts) {
       })
       .join('') +
     '</tbody></table></div>'
+  );
+}
+
+/* ============================================================
+   22. BUNGA TUNGGAL: BARISAN & DERET ARITMETIKA PADA MODAL
+   Bunga tunggal selalu dihitung dari modal awal M₀, sehingga
+     • bunga tiap periode tetap: M₀ × i,
+     • total bunga n periode (deret aritmetika dengan b = 0):
+       Bₙ = M₀ × i × n,
+     • saldo M₀, M₁, M₂, … barisan aritmetika dengan a = M₀ dan
+       b = M₀ × i, sehingga Mₙ = U₍ₙ₊₁₎ = M₀(1 + n × i).
+   Suku bunga i ditulis dalam desimal (6% → 0,06). Juga memuat
+   format persen/rupiah, pembaca isian angka gaya Indonesia, dan
+   tabel "buku tabungan". Gaya .passbook* ada di shared/base.css.
+   ============================================================ */
+
+/* Nilai uang yang hampir bulat (galat biner i desimal) dibulatkan. */
+function bulatkanUang(v) {
+  var bulat = Math.round(v);
+  return hampirSama(v, bulat) ? bulat : v;
+}
+
+/* Bₙ = M₀ × i × n */
+function bungaTunggal(M0, i, n) {
+  return bulatkanUang(M0 * i * n);
+}
+
+/* Mₙ = M₀ + Bₙ = M₀(1 + n × i) */
+function nilaiAkhirBungaTunggal(M0, i, n) {
+  return bulatkanUang(M0 + M0 * i * n);
+}
+
+/*
+ * Barisan saldo [M₀, M₁, …, Mₙ] (n + 1 suku). Ditulis lewat
+ * sukuAritmetika(M₀, M₀·i, k + 1) agar kaitannya dengan barisan
+ * aritmetika (a = M₀, b = M₀·i) terlihat jelas.
+ */
+function saldoBungaTunggal(M0, i, n) {
+  var out = [];
+  for (var k = 0; k <= n; k++) out.push(bulatkanUang(sukuAritmetika(M0, M0 * i, k + 1)));
+  return out;
+}
+
+/* 6 → 0,06 */
+function persenKeDesimal(p) {
+  return p / 100;
+}
+
+/* 0,005 → '0,5%' */
+function formatPersen(i) {
+  return formatDesimal(i * 100, 3) + '%';
+}
+
+/* 2120000 → 'Rp2.120.000'; nilai negatif → '−Rp50.000'. */
+function formatRupiah(n) {
+  return (n < 0 ? '−' : '') + 'Rp' + formatNumber(Math.abs(n));
+}
+
+/*
+ * Membaca isian angka gaya Indonesia untuk soal uang & persen:
+ *   '2.600.000', 'Rp2.600.000', '120 000' → bilangan bulat (titik = ribuan)
+ *   '0,5', '1,5%', '1.234,5'              → desimal (koma = desimal)
+ *   '0.5'                                  → 0,5 (titik tanpa pola ribuan)
+ * Awalan 'Rp' dan akhiran '%' diabaikan. Kembalian { value, error }
+ * seperti parseInputInt.
+ */
+function parseInputAngka(str) {
+  if (!str || String(str).trim() === '') return { value: null, error: 'empty' };
+  var s = String(str)
+    .trim()
+    .replace(/^rp\.?/i, '')
+    .replace(/%$/, '')
+    .replace(/\s/g, '')
+    .replace(/−/g, '-');
+  if (s === '') return { value: null, error: 'invalid' };
+  if (s.indexOf(',') !== -1) {
+    if ((s.match(/,/g) || []).length > 1) return { value: null, error: 'invalid' };
+    if (!/^-?\d{1,3}(\.\d{3})*,\d+$/.test(s) && !/^-?\d*,\d+$/.test(s)) {
+      return { value: null, error: 'invalid' };
+    }
+    s = s.replace(/\./g, '').replace(',', '.');
+  } else if (/^-?\d{1,3}(\.\d{3})+$/.test(s)) {
+    s = s.replace(/\./g, '');
+  }
+  if (!/^-?\d*\.?\d+$/.test(s)) return { value: null, error: 'invalid' };
+  var v = parseFloat(s);
+  if (isNaN(v)) return { value: null, error: 'invalid' };
+  return { value: v, error: null };
+}
+
+/*
+ * Tabel "buku tabungan": kolom Periode, Bunga, dan Saldo.
+ *   rows  [{ label, bunga, saldo, sorot }] — bunga/saldo berupa angka,
+ *         null (ditulis '—'), atau teks (mis. '?' → sel tersembunyi);
+ *         { jeda: true } → baris '⋮' penanda periode yang dilewati
+ *   opts.judul        judul kartu (teks)
+ *   opts.caption      teks aksesibel tabel
+ *   opts.format       function(v) → teks nilai (default formatRupiah)
+ *   opts.periodeLabel judul kolom periode (default 'Periode')
+ */
+function buildBukuTabungan(rows, opts) {
+  opts = opts || {};
+  var fmtV = opts.format || formatRupiah;
+
+  function sel(v) {
+    if (v === null || v === undefined) return '<td class="passbook__muted">—</td>';
+    if (typeof v !== 'number')
+      return '<td><span class="passbook__hidden">' + esc(v) + '</span></td>';
+    return '<td>' + esc(fmtV(v)) + '</td>';
+  }
+
+  var body = rows
+    .map(function (r) {
+      if (r.jeda) {
+        return '<tr class="passbook__row--gap"><td colspan="3" aria-label="periode berikutnya dilewati">⋮</td></tr>';
+      }
+      return (
+        '<tr' +
+        (r.sorot ? ' class="passbook__row--hl"' : '') +
+        '><th scope="row">' +
+        esc(r.label) +
+        '</th>' +
+        sel(r.bunga) +
+        sel(r.saldo) +
+        '</tr>'
+      );
+    })
+    .join('');
+
+  return (
+    '<div class="passbook">' +
+    (opts.judul
+      ? '<div class="passbook__head"><span aria-hidden="true">📒</span> ' +
+        esc(opts.judul) +
+        '</div>'
+      : '') +
+    '<div class="passbook__scroll"><table class="passbook__table"' +
+    (opts.caption ? ' aria-label="' + esc(opts.caption) + '"' : '') +
+    '><thead><tr><th scope="col">' +
+    esc(opts.periodeLabel || 'Periode') +
+    '</th><th scope="col">Bunga</th><th scope="col">Saldo</th></tr></thead><tbody>' +
+    body +
+    '</tbody></table></div></div>'
   );
 }

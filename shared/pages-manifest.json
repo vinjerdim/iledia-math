@@ -136,5 +136,13 @@
     "h1": "Membandingkan & Mengurutkan Bilangan Desimal",
     "stageCount": 11,
     "extraBody": "partials/reset-modal.html"
+  },
+  "fase-f/mpi-3.1": {
+    "title": "Bunga Tunggal dengan Barisan & Deret Aritmetika — Matematika Fase F",
+    "description": "Media pembelajaran interaktif berbasis Discovery Learning untuk menerapkan konsep barisan dan deret aritmetika dalam menentukan bunga dan nilai akhir modal pada masalah bunga tunggal.",
+    "kicker": "Matematika — Fase F (SMK RPL)",
+    "h1": "Bunga Tunggal dengan Barisan & Deret Aritmetika",
+    "stageCount": 10,
+    "extraBody": "partials/reset-modal.html"
   }
 }
