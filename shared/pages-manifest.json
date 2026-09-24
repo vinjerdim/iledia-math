@@ -89,6 +89,14 @@
     "stageCount": 11,
     "extraBody": "partials/reset-modal.html"
   },
+  "fase-d/mpi-3.1": {
+    "title": "Membaca & Menulis Bilangan Desimal — Matematika Fase D",
+    "description": "Media pembelajaran interaktif berbasis Discovery Learning untuk membaca dan menulis bilangan desimal dengan benar menggunakan konsep nilai tempat (persepuluhan, perseratusan, perseribuan) melalui pengamatan konteks nyata dan model visual.",
+    "kicker": "Matematika — Fase D (SMP)",
+    "h1": "Membaca & Menulis Bilangan Desimal",
+    "stageCount": 10,
+    "extraBody": "partials/reset-modal.html"
+  },
   "fase-f/mpi-1.1": {
     "title": "Barisan dan Deret Aritmetika — Matematika Fase F",
     "description": "Media pembelajaran interaktif berbasis Discovery Learning untuk menjelaskan pola barisan aritmetika, menurunkan rumus suku ke-n dan jumlah n suku deret aritmetika, serta menerapkannya dalam menyelesaikan masalah kontekstual.",
