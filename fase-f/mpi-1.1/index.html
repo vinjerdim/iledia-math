@@ -6,7 +6,7 @@
     <title>Barisan dan Deret Aritmetika — Matematika Fase F</title>
     <meta
       name="description"
-      content="Media pembelajaran interaktif untuk mengidentifikasi pola, menentukan rumus suku ke-n, dan menghitung jumlah n suku pertama pada barisan dan deret aritmetika."
+      content="Media pembelajaran interaktif berbasis Discovery Learning untuk menjelaskan pola barisan aritmetika, menurunkan rumus suku ke-n dan jumlah n suku deret aritmetika, serta menerapkannya dalam menyelesaikan masalah kontekstual."
     />
     <link rel="stylesheet" href="../../shared/base.css" />
     <link rel="stylesheet" href="styles.css" />
@@ -17,7 +17,7 @@
 
     <header class="app-header">
       <div class="app-header__brand">
-        <span class="app-header__kicker">Matematika — Fase F (SMK)</span>
+        <span class="app-header__kicker">Matematika — Fase F (SMK RPL)</span>
         <h1 class="app-header__title">Barisan dan Deret Aritmetika</h1>
       </div>
       <div class="app-header__actions">
@@ -35,7 +35,7 @@
     <main id="konten-utama">
       <div class="progress-bar-wrap">
         <div class="progress-bar-label">
-          <span id="progressLabel">0 dari 9 tahap selesai</span>
+          <span id="progressLabel">0 dari 10 tahap selesai</span>
           <span style="font-size: 0.78rem; color: var(--color-ink-muted)">
             Progress disimpan otomatis
           </span>
@@ -60,6 +60,34 @@
     </main>
 
     <div class="app-notice" id="appNotice" role="status" aria-live="polite"></div>
+    <!-- Reset confirmation modal -->
+    <div
+      class="modal-backdrop"
+      id="resetModal"
+      style="display: none"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="resetModalTitle"
+    >
+      <div class="modal">
+        <h3 id="resetModalTitle">Reset Progress?</h3>
+        <p>
+          Semua progress, jawaban, dan data latihan akan dihapus. Tindakan ini tidak dapat
+          dibatalkan.
+        </p>
+        <div class="btn-group btn-group--end">
+          <button type="button" class="btn btn--ghost" id="resetCancelBtn">Batal</button>
+          <button
+            type="button"
+            class="btn btn--primary"
+            id="resetConfirmBtn"
+            style="background: var(--color-error); border-color: var(--color-error)"
+          >
+            Ya, Reset
+          </button>
+        </div>
+      </div>
+    </div>
 
     <script src="../../shared/engine.js"></script>
     <script src="data.js"></script>

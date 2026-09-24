@@ -15,6 +15,8 @@
     4. Mesin Navigasi Tahap
     5. Tahap Latihan Soal (isian numerik & pilihan ganda)
     6. State Persistence
+    7. Komponen Discovery Learning (pilihan acak, petunjuk
+       berjenjang, kepala tahap, catatan guru, deret suku)
    ============================================================ */
 
 /* ============================================================
@@ -28,7 +30,11 @@
 function parseInputInt(str, stripPunctuation) {
   if (!str || str.trim() === '') return { value: null, error: 'empty' };
   var pattern = stripPunctuation ? /[\s.,]/g : /\s/g;
-  var trimmed = str.trim().replace(pattern, '');
+  /* Lambang minus tipografis '−' (U+2212) diterima sama seperti '-'. */
+  var trimmed = str
+    .trim()
+    .replace(pattern, '')
+    .replace(/\u2212/g, '-');
   if (!/^-?\d+$/.test(trimmed)) return { value: null, error: 'invalid' };
   var v = parseInt(trimmed, 10);
   if (isNaN(v)) return { value: null, error: 'invalid' };
@@ -976,4 +982,263 @@ function ensureExerciseArray(state, key, soal, makeDefault) {
       return makeDefault(s);
     });
   }
+}
+
+/* ============================================================
+   7. KOMPONEN DISCOVERY LEARNING
+   Blok bangun kecil untuk tahap-tahap penemuan terbimbing:
+   pilihan yang diacak sekali lalu disimpan di State, petunjuk
+   berjenjang, kepala tahap bertanda sintaks, catatan peran guru,
+   dan visual deret suku dengan "busur" selisih.
+   ============================================================ */
+
+/* Daftar id dari array opsi {id, ...}. */
+function optionIds(options) {
+  return options.map(function (o) {
+    return o.id;
+  });
+}
+
+/*
+ * Memastikan state[key] berisi urutan acak id opsi yang masih cocok
+ * dengan `options`; bila belum ada atau sudah tidak cocok (DATA berubah),
+ * urutan baru diacak dengan shuffleArray(). Panggil di initExerciseArrays()
+ * — bukan saat render — agar urutan stabil lintas render/reload namun
+ * teracak ulang setiap kali progress direset.
+ */
+function ensureShuffledOrder(state, key, options) {
+  var order = state[key];
+  var ids = optionIds(options);
+  var cocok =
+    Array.isArray(order) &&
+    order.length === ids.length &&
+    ids.every(function (id) {
+      return order.indexOf(id) !== -1;
+    });
+  if (!cocok) state[key] = shuffleArray(ids);
+  return state[key];
+}
+
+/*
+ * Menyusun opsi menurut urutan id tersimpan. Bila urutan tidak ada atau
+ * tidak cocok, urutan DATA dipakai apa adanya agar tampilan tetap aman.
+ */
+function orderByIds(options, order) {
+  if (!Array.isArray(order) || order.length !== options.length) return options;
+  var byId = {};
+  options.forEach(function (o) {
+    byId[o.id] = o;
+  });
+  var out = [];
+  for (var i = 0; i < order.length; i++) {
+    if (!byId[order[i]]) return options;
+    out.push(byId[order[i]]);
+  }
+  return out;
+}
+
+/*
+ * Kepala tahap bergaya shared (.stage-head). `syntax` opsional menandai
+ * sintaks model pembelajaran, mis. "Discovery Learning · Sintaks 3".
+ */
+function buildDiscoveryHead(kicker, goal, syntax) {
+  return (
+    '<div class="stage-head">' +
+    '<span class="stage-head__kicker">' +
+    esc(kicker) +
+    '</span>' +
+    (syntax ? '<span class="dl-syntax-chip">' + esc(syntax) + '</span>' : '') +
+    '<p class="stage-head__goal">Tujuan: ' +
+    esc(goal) +
+    '</p>' +
+    '</div>'
+  );
+}
+
+/*
+ * Catatan peran guru yang bisa dibuka-tutup (<details>), sehingga media
+ * sekaligus menjadi panduan fasilitasi tanpa mengganggu murid.
+ */
+function buildTeacherNote(text) {
+  if (!text) return '';
+  return (
+    '<details class="teacher-note">' +
+    '<summary>👩‍🏫 Peran guru di tahap ini</summary>' +
+    '<p>' +
+    text +
+    '</p>' +
+    '</details>'
+  );
+}
+
+/*
+ * Tombol pilihan ganda (.choice-btn + .is-*) dalam urutan `order`.
+ *   opts.chosen     id opsi yang sudah dipilih (atau null)
+ *   opts.correctId  id opsi benar untuk ditandai hijau; null bila jawaban
+ *                   benar belum boleh dibocorkan (masih boleh coba lagi)
+ *   opts.grade      true → tandai benar/salah; false → hanya .is-selected
+ *                   (untuk dugaan/penilaian diri yang tidak dinilai)
+ *   opts.locked     true → matikan semua tombol setelah dijawab
+ *   opts.attr       nama atribut data untuk id opsi (default 'data-opt-id')
+ *   opts.group      nilai data-group opsional untuk membedakan beberapa
+ *                   kelompok pilihan dalam satu tahap
+ */
+function buildChoiceGroup(options, order, opts) {
+  opts = opts || {};
+  var letters = ['A', 'B', 'C', 'D', 'E', 'F'];
+  var chosen = opts.chosen;
+  var answered = chosen !== null && chosen !== undefined && chosen !== '';
+  var attr = opts.attr || 'data-opt-id';
+  return (
+    '<div class="challenge-options"' +
+    (opts.group ? ' role="group" data-group="' + esc(opts.group) + '"' : ' role="group"') +
+    '>' +
+    orderByIds(options, order)
+      .map(function (opt, i) {
+        var cls = 'choice-btn';
+        if (answered) {
+          if (opts.grade) {
+            if (opts.correctId && opt.id === opts.correctId) cls += ' is-correct';
+            else if (opt.id === chosen) cls += ' is-incorrect';
+          } else if (opt.id === chosen) {
+            cls += ' is-selected';
+          }
+        }
+        return (
+          '<button type="button" class="' +
+          cls +
+          '" ' +
+          attr +
+          '="' +
+          esc(opt.id) +
+          '"' +
+          (opts.group ? ' data-group="' + esc(opts.group) + '"' : '') +
+          (answered && opts.locked ? ' disabled' : '') +
+          ' aria-pressed="' +
+          (opt.id === chosen ? 'true' : 'false') +
+          '">' +
+          '<span class="choice-btn__icon">' +
+          letters[i] +
+          '</span>' +
+          '<span>' +
+          opt.label +
+          '</span>' +
+          '</button>'
+        );
+      })
+      .join('') +
+    '</div>'
+  );
+}
+
+/* Kotak petunjuk berjenjang: menampilkan `level` petunjuk pertama. */
+function buildHintStack(hints, level) {
+  if (!hints || !level || level < 1) return '';
+  return hints
+    .slice(0, level)
+    .map(function (h, i) {
+      return (
+        '<div class="hint-box">' +
+        '<span class="hint-box__label">' +
+        (hints.length > 1 ? 'Petunjuk ' + (i + 1) : 'Petunjuk') +
+        '</span>' +
+        h +
+        '</div>'
+      );
+    })
+    .join('');
+}
+
+/* Tombol pembuka petunjuk berikutnya; '' bila semua petunjuk terbuka. */
+function buildHintToggle(id, hints, level) {
+  if (!hints || level >= hints.length) return '';
+  var label =
+    hints.length > 1 ? '💡 Petunjuk (' + (level + 1) + '/' + hints.length + ')' : '💡 Petunjuk';
+  return (
+    '<button type="button" class="btn btn--ghost btn--small" id="' + id + '">' + label + '</button>'
+  );
+}
+
+/*
+ * Visual deret suku: kotak-kotak suku dengan "busur" selisih di antaranya.
+ *   terms          array nilai suku
+ *   opts.labels    label di atas tiap kotak (mis. 'Baris 1'); default 'U₁', 'U₂', ...
+ *   opts.reveal    banyak suku yang terlihat (sisanya '?'); default semua
+ *   opts.showDiff  true → tampilkan selisih (+b) pada busur; false → '?'
+ *   opts.format    function(n) → teks nilai suku (default formatNumber dengan '−')
+ *   opts.more      true → tambahkan kotak '…' di akhir
+ *   opts.tail      {label, value} opsional: kotak suku jauh (mis. U₂₀ = ?)
+ */
+function buildSequenceTiles(terms, opts) {
+  opts = opts || {};
+  var reveal = typeof opts.reveal === 'number' ? opts.reveal : terms.length;
+  var fmt =
+    opts.format ||
+    function (n) {
+      return formatNumber(n, '−');
+    };
+  var subs = ['₀', '₁', '₂', '₃', '₄', '₅', '₆', '₇', '₈', '₉'];
+  function sub(n) {
+    return String(n)
+      .split('')
+      .map(function (d) {
+        return subs[+d];
+      })
+      .join('');
+  }
+  var html = '';
+  for (var i = 0; i < terms.length; i++) {
+    var shown = i < reveal;
+    if (i > 0) {
+      var diff = terms[i] - terms[i - 1];
+      var diffText = opts.showDiff && shown ? (diff >= 0 ? '+' : '−') + fmt(Math.abs(diff)) : '?';
+      html +=
+        '<span class="seq-gap' +
+        (opts.showDiff && shown ? ' seq-gap--known' : '') +
+        '" aria-hidden="true"><span class="seq-gap__val">' +
+        diffText +
+        '</span></span>';
+    }
+    var label = opts.labels ? opts.labels[i] : 'U' + sub(i + 1);
+    html +=
+      '<span class="seq-tile' +
+      (shown ? '' : ' seq-tile--hidden') +
+      (shown && i === reveal - 1 && opts.highlightLast ? ' seq-tile--new' : '') +
+      '">' +
+      '<span class="seq-tile__label">' +
+      esc(label) +
+      '</span>' +
+      '<span class="seq-tile__val">' +
+      (shown ? fmt(terms[i]) : '?') +
+      '</span>' +
+      '</span>';
+  }
+  if (opts.more) {
+    html += '<span class="seq-gap seq-gap--dots" aria-hidden="true">…</span>';
+  }
+  if (opts.tail) {
+    html +=
+      '<span class="seq-tile seq-tile--tail">' +
+      '<span class="seq-tile__label">' +
+      esc(opts.tail.label) +
+      '</span>' +
+      '<span class="seq-tile__val">' +
+      esc(opts.tail.value) +
+      '</span>' +
+      '</span>';
+  }
+  var aria = terms
+    .slice(0, reveal)
+    .map(function (t) {
+      return fmt(t);
+    })
+    .join(', ');
+  return (
+    '<div class="seq-tiles" role="img" aria-label="Barisan: ' +
+    esc(aria) +
+    (reveal < terms.length || opts.more ? ', …' : '') +
+    '">' +
+    html +
+    '</div>'
+  );
 }
