@@ -85,10 +85,11 @@
   },
   "fase-f/mpi-1.2": {
     "title": "Barisan dan Deret Geometri — Matematika Fase F",
-    "description": "Media pembelajaran interaktif untuk menentukan rasio, rumus suku ke-n, dan jumlah n suku pertama pada barisan dan deret geometri melalui analisis masalah pertumbuhan nilai.",
-    "kicker": "Matematika — Fase F (SMK)",
+    "description": "Media pembelajaran interaktif berbasis Discovery Learning untuk menjelaskan pola barisan geometri, menurunkan rumus suku ke-n dan jumlah n suku deret geometri, serta membandingkan karakteristiknya dengan pola aritmetika dalam menyelesaikan masalah kontekstual.",
+    "kicker": "Matematika — Fase F (SMK RPL)",
     "h1": "Barisan dan Deret Geometri",
-    "stageCount": 9
+    "stageCount": 11,
+    "extraBody": "partials/reset-modal.html"
   },
   "fase-f/mpi-1.3": {
     "title": "Bunga Tunggal dan Bunga Majemuk — Matematika Fase F",
