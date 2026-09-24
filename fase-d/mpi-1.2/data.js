@@ -1,472 +1,656 @@
 'use strict';
 
 /* ============================================================
-   data.js — Konten pembelajaran
-   Matematika: Penjumlahan dan Pengurangan Bilangan Bulat
-   Fase D — SMP (Kelas 7)
+   data.js — Konten media pembelajaran
+   Matematika: Membandingkan & Mengurutkan Bilangan Bulat
+   Fase D — SMP Kelas 7
+
+   Tujuan Pembelajaran:
+   Membandingkan dan mengurutkan bilangan bulat menggunakan garis
+   bilangan sebagai alat bantu.
+
+   Gagasan kunci yang dibangun sepanjang modul:
+     • pada garis bilangan mendatar, bilangan di sebelah KANAN selalu
+       lebih besar daripada bilangan di sebelah kirinya;
+     • setiap bilangan negatif < 0 < setiap bilangan positif;
+     • di antara dua bilangan negatif, yang lebih dekat ke 0 lebih besar
+       (−2 > −7), meskipun angka tanpa tandanya lebih kecil;
+     • mengurutkan naik = membaca titik dari kiri ke kanan; mengurutkan
+       turun = dari kanan ke kiri.
+
+   Model pembelajaran: COOPERATIVE LEARNING (tipe STAD).
+   Pemetaan sintaks ke tahap media:
+
+     Fase 1 — Menyampaikan tujuan & memotivasi ...... tahap 'orientasi'
+     Fase 2 — Menyajikan informasi ................... tahap 'informasi'
+     Fase 3 — Mengorganisasikan kelompok belajar ..... tahap 'tim'
+     Fase 4 — Membimbing kelompok bekerja & belajar .. tahap 'misi'
+     Fase 5 — Evaluasi ............................... tahap 'evaluasi'
+     Fase 6 — Memberikan penghargaan ................. tahap 'penghargaan'
+     Refleksi proses kelompok & penutup .............. 'refleksi', 'selesai'
+
+   Unsur kooperatif yang dirancang di media:
+     • saling ketergantungan positif — empat peran (Pembaca Soal,
+       Penempat Garis, Pemeriksa, Juru Bicara) diacak lalu DIROTASI
+       setiap misi, sehingga semua anggota memegang semua peran;
+     • tanggung jawab individu — kuis tahap 5 dikerjakan sendiri dan
+       skornya menyumbang poin tim;
+     • interaksi tatap muka & keterampilan sosial — setiap misi
+       menuntut kesepakatan tim sebelum mengetuk jawaban;
+     • evaluasi proses kelompok — refleksi kerja sama di tahap 7.
+
+   Rangkaian aktivitas (± 2 × 40 menit, kelompok heterogen 3–4 murid,
+   satu perangkat per kelompok; kuis individu boleh di perangkat
+   masing-masing):
+     1. Orientasi     (7')  — "Laporan Cuaca Pagi": menduga tempat
+                              paling dingin; mengenal tujuan & kriteria.
+     2. Informasi     (13') — menjelajah garis bilangan (ketuk dua
+                              titik → bandingkan), pertanyaan penuntun,
+                              dan kartu aturan membandingkan.
+     3. Bentuk Tim    (5')  — nama tim, anggota, kesepakatan, acak peran.
+     4. Misi Tim      (30') — Misi 1 Bandingkan (<, >, =), Misi 2
+                              Urutkan (naik & turun), Misi 3 Diskusi
+                              Kesalahan (Benar/Salah beserta alasan).
+     5. Kuis Individu (12') — delapan soal, dikerjakan sendiri.
+     6. Penghargaan   (5')  — skor tim + skor individu → predikat STAD.
+     7. Refleksi      (8')  — refleksi pribadi & kerja sama kelompok.
+
+   Catatan: seluruh daftar pilihan jawaban di berkas ini ditulis dalam
+   urutan "wajar". Pengacakan dilakukan app.js memakai
+   ensureShuffledOrder()/ensureSortStates()/ensureTapOrderState()/
+   shuffleArray() dari shared/engine.js, satu kali saat state
+   disiapkan, sehingga tiap kelompok (dan tiap Reset) mendapat urutan
+   pilihan, kartu, pasangan bilangan, dan soal kuis yang berbeda.
    ============================================================ */
 
+var CL = 'Cooperative Learning';
+
 var DATA = {
-  meta: {
-    title: 'Penjumlahan dan Pengurangan Bilangan Bulat',
-    subject: 'Matematika — Fase D (SMP)',
-    goal: 'Saya dapat menerapkan operasi penjumlahan dan pengurangan pada bilangan bulat untuk menyelesaikan masalah kontekstual perubahan nilai secara tepat.',
+  /* ----------------------------------------------------------
+     TAHAP 1 — ORIENTASI (Fase 1)
+     Dugaan TIDAK dinilai; diuji lagi di akhir tahap Informasi
+     dan pada soal pertama kuis individu.
+     ---------------------------------------------------------- */
+  orientasi: {
+    kicker: 'Tahap 1 · Orientasi',
+    syntax: CL + ' · Fase 1',
+    goal: 'Mengetahui tujuan belajar hari ini dan menyampaikan dugaan awal.',
+    guru: 'Bacakan laporan cuaca seperti penyiar radio. Minta murid menduga sendiri dulu (10 detik), baru berdiskusi dengan teman sebangku. Jangan membenarkan dugaan apa pun — dugaan ini akan diuji di akhir tahap Informasi. Sampaikan tujuan dan kriteria keberhasilan dengan bahasa sederhana.',
+    tujuan:
+      'Hari ini kita belajar membandingkan dan mengurutkan bilangan bulat dengan bantuan garis bilangan — lalu menyelesaikan misi bersama tim.',
+    kriteria: [
+      'Aku bisa menentukan bilangan mana yang lebih besar atau lebih kecil dengan melihat letaknya pada garis bilangan.',
+      'Aku bisa menuliskan perbandingan dengan lambang <, >, atau =.',
+      'Aku bisa mengurutkan beberapa bilangan bulat dari yang terkecil maupun dari yang terbesar.',
+      'Aku bisa menjelaskan alasanku kepada teman satu tim.',
+    ],
+    judul: 'Laporan Cuaca Pagi',
+    cerita:
+      'Selamat pagi, pendengar Radio Sekolah! Berikut suhu udara pukul 05.00 di empat tempat wisata pegunungan di Indonesia:',
+    tempat: [
+      { id: 'dieng', nama: 'Dieng', ikon: '🌫️', suhu: -3 },
+      { id: 'jaya', nama: 'Puncak Jaya', ikon: '🏔️', suhu: -8 },
+      { id: 'ranu', nama: 'Ranu Kumbolo', ikon: '🏕️', suhu: -1 },
+      { id: 'bromo', nama: 'Bromo', ikon: '🌋', suhu: 4 },
+    ],
+    pertanyaan: 'Menurut dugaanmu, tempat mana yang paling dingin pagi itu?',
+    opsi: [
+      { id: 'dieng', label: 'Dieng (−3 °C)' },
+      { id: 'jaya', label: 'Puncak Jaya (−8 °C)' },
+      { id: 'ranu', label: 'Ranu Kumbolo (−1 °C)' },
+      { id: 'bromo', label: 'Bromo (4 °C)' },
+    ],
+    dugaanBenar: 'jaya',
+    alasanLabel: 'Mengapa kamu menduga begitu? (boleh singkat)',
+    alasanPlaceholder: 'Menurutku tempat itu paling dingin karena …',
+    catatan:
+      'Belum ada jawaban benar atau salah. Simpan dugaanmu — kamu akan mengujinya dengan garis bilangan di tahap berikutnya.',
+    nextLabel: 'Lanjut: Temukan Aturannya →',
   },
 
   /* ----------------------------------------------------------
-     TAHAP 2 — EKSPLORASI VISUAL
-     Setiap konteks: situasi nyata → garis bilangan interaktif
+     TAHAP 2 — MENYAJIKAN INFORMASI (Fase 2)
      ---------------------------------------------------------- */
-  eksplorasi: {
-    title: 'Perubahan Nilai di Garis Bilangan',
-    instruction:
-      'Amati situasi nyata berikut. Tentukan ke arah mana nilai berubah, lalu klik tombol untuk melihat perubahan tersebut pada garis bilangan.',
-    konteks: [
+  informasi: {
+    kicker: 'Tahap 2 · Temukan Aturan',
+    syntax: CL + ' · Fase 2',
+    goal: 'Menemukan cara membandingkan dua bilangan bulat dari letaknya pada garis bilangan.',
+    guru: 'Peragakan satu contoh di papan tulis (mis. 3 dan 5), lalu biarkan murid menjelajah sendiri. Tekankan kata kunci "letak": yang di kanan lebih besar. Saat membahas pertanyaan penuntun, minta satu murid menjelaskan dengan menunjuk garis bilangan, bukan menghafal aturan.',
+    min: -10,
+    max: 10,
+    jelajahJudul: 'Jelajah: bandingkan dua titik',
+    jelajahInstruksi:
+      'Ketuk dua titik mana saja pada garis bilangan. Media akan menunjukkan bilangan mana yang lebih besar. Coba pasangan positif–positif, negatif–negatif, dan negatif–positif!',
+    jelajahMin: 3,
+    tanyaJudul: 'Pertanyaan penuntun',
+    tanya: [
       {
-        id: 'suhu',
-        badge: 'Perubahan Suhu',
-        icon: '🌡️',
-        story:
-          'Pagi hari suhu di Lembang tercatat <strong>3°C</strong>. Saat malam tiba, suhu <strong>turun 7°C</strong>.',
-        awal: 3,
-        op: '-',
-        nilai: 7,
-        akhir: -4,
-        nlMin: -10,
-        nlMax: 10,
-        unit: '°C',
-        ekspresi: '3 − 7 = −4',
-        kalimat: 'Suhu malam hari',
-        pertanyaan: 'Berapa suhu di Lembang saat malam hari?',
-        penjelasan:
-          'Turun 7°C = bergerak <strong>7 langkah ke kiri</strong> dari +3 pada garis bilangan. Melintasi titik 0, hasilnya: <strong>3 − 7 = −4°C</strong>.',
+        id: 'kanan',
+        tanya:
+          'Dari jelajahmu: pada garis bilangan mendatar, makin ke <strong>kanan</strong> letak suatu bilangan, nilainya makin …',
+        opsi: [
+          { id: 'besar', label: 'besar' },
+          { id: 'kecil', label: 'kecil' },
+          { id: 'sama', label: 'sama saja, letak tidak berpengaruh' },
+          { id: 'tentu', label: 'tergantung tanda positif atau negatifnya' },
+        ],
+        correct: 'besar',
+        umpan: {
+          besar:
+            'Tepat! Letak menentukan nilai: bilangan di sebelah kanan <strong>selalu</strong> lebih besar, baik positif maupun negatif.',
+          kecil:
+            'Coba lihat 2 dan 6: 6 di sebelah kanan 2, dan 6 lebih besar. Jadi makin ke kanan, makin …?',
+          sama: 'Letak justru sangat berpengaruh. Bandingkan 1 dan 8 pada garis bilangan: mana yang lebih kanan dan mana yang lebih besar?',
+          tentu:
+            'Aturan letak berlaku untuk semua bilangan bulat. Coba ketuk −6 dan −2: −2 lebih kanan, dan −2 &gt; −6.',
+        },
       },
       {
-        id: 'saldo',
-        badge: 'Saldo Rekening',
-        icon: '💳',
-        story:
-          'Saldo rekening Rama adalah <strong>−Rp 15.000</strong> (berhutang). Ia menerima transfer uang saku <strong>+Rp 25.000</strong>.',
-        awal: -15,
-        op: '+',
-        nilai: 25,
-        akhir: 10,
-        nlMin: -20,
-        nlMax: 15,
-        unit: 'ribu rupiah',
-        ekspresi: '−15 + 25 = 10',
-        kalimat: 'Saldo setelah transfer',
-        pertanyaan: 'Berapa saldo rekening Rama setelah menerima transfer?',
-        penjelasan:
-          'Menerima Rp 25.000 = bergerak <strong>25 langkah ke kanan</strong> dari −15. Melewati titik 0, hasilnya: <strong>−15 + 25 = +10 (ribu rupiah)</strong>.',
+        id: 'negneg',
+        tanya:
+          'Mana yang <strong>lebih besar</strong>: <span class="num-chip">−2</span> atau <span class="num-chip">−7</span>?',
+        opsi: [
+          { id: 'm2', label: '−2, karena letaknya di sebelah kanan −7' },
+          { id: 'm7', label: '−7, karena 7 lebih besar daripada 2' },
+          { id: 'sama', label: 'Sama besar, karena keduanya negatif' },
+          { id: 'tak', label: 'Tidak bisa dibandingkan' },
+        ],
+        correct: 'm2',
+        umpan: {
+          m2: 'Benar! −2 lebih dekat ke 0 sehingga berada di kanan −7. Jadi <strong>−2 &gt; −7</strong>.',
+          m7: 'Hati-hati! Jangan membandingkan angkanya saja. Ketuk −2 dan −7: mana yang lebih kanan?',
+          sama: 'Keduanya negatif, tetapi letaknya berbeda. Mana yang lebih dekat ke 0?',
+          tak: 'Semua bilangan bulat bisa dibandingkan lewat letaknya pada garis bilangan. Coba lagi.',
+        },
       },
       {
-        id: 'penyelam',
-        badge: 'Penyelam Laut',
-        icon: '🤿',
-        story:
-          'Seorang penyelam berada di kedalaman <strong>−5 meter</strong> (5 m di bawah permukaan). Ia menyelam <strong>4 meter lebih dalam</strong>.',
-        awal: -5,
-        op: '-',
-        nilai: 4,
-        akhir: -9,
-        nlMin: -14,
-        nlMax: 4,
-        unit: 'meter',
-        ekspresi: '−5 − 4 = −9',
-        kalimat: 'Kedalaman penyelam',
-        pertanyaan: 'Berapa kedalaman penyelam sekarang?',
-        penjelasan:
-          'Turun 4 m = bergerak <strong>4 langkah ke kiri</strong> dari −5. Hasilnya: <strong>−5 − 4 = −9 meter</strong>.',
+        id: 'nol',
+        tanya: 'Bagaimana setiap bilangan <strong>negatif</strong> jika dibandingkan dengan 0?',
+        opsi: [
+          { id: 'kecil', label: 'Selalu lebih kecil daripada 0' },
+          { id: 'besar', label: 'Selalu lebih besar daripada 0' },
+          { id: 'kadang', label: 'Kadang lebih besar, kadang lebih kecil' },
+          { id: 'sama', label: 'Sama dengan 0' },
+        ],
+        correct: 'kecil',
+        umpan: {
+          kecil:
+            'Tepat! Semua bilangan negatif berada di kiri 0, jadi selalu lebih kecil daripada 0 — dan juga lebih kecil daripada semua bilangan positif.',
+          besar: 'Lihat garis bilangan: di sisi mana bilangan negatif berada terhadap 0?',
+          kadang:
+            'Coba beberapa bilangan negatif (−1, −5, −10). Apakah ada yang berada di kanan 0?',
+          sama: 'Hanya 0 yang sama dengan 0. Bilangan negatif berada di sisi kiri 0.',
+        },
       },
       {
-        id: 'skor',
-        badge: 'Skor Kuis',
-        icon: '🎯',
-        story:
-          'Skor Nara dalam kuis interaktif saat ini <strong>8 poin</strong>. Ia menjawab 6 soal salah; setiap salah mendapat <strong>−2 poin</strong>.',
-        awal: 8,
-        op: '+',
-        nilai: -12,
-        akhir: -4,
-        nlMin: -10,
-        nlMax: 14,
-        unit: 'poin',
-        ekspresi: '8 + (−12) = −4',
-        kalimat: 'Skor akhir Nara',
-        pertanyaan: 'Berapa skor akhir Nara?',
-        penjelasan:
-          '6 soal × (−2) = −12 poin. Menambahkan bilangan negatif = bergerak <strong>12 langkah ke kiri</strong> dari 8. Melewati 0, hasilnya: <strong>8 + (−12) = −4 poin</strong>.',
+        id: 'lambang',
+        tanya:
+          'Tim Laut menulis perbandingan <span class="num-chip">−9</span> dan <span class="num-chip">4</span>. Tulisan mana yang benar?',
+        opsi: [
+          { id: 'a', label: '−9 &lt; 4' },
+          { id: 'b', label: '−9 &gt; 4' },
+          { id: 'c', label: '4 &lt; −9' },
+          { id: 'd', label: '−9 = 4' },
+        ],
+        correct: 'a',
+        umpan: {
+          a: 'Benar! −9 di kiri 4, jadi −9 <strong>kurang dari</strong> 4. Ujung lancip lambang &lt; selalu menunjuk bilangan yang lebih kecil.',
+          b: 'Lambang &gt; berarti "lebih dari". Apakah −9 lebih besar daripada 4? Lihat letaknya.',
+          c: '"4 &lt; −9" berarti 4 lebih kecil daripada −9. Padahal 4 berada di sebelah kanan.',
+          d: 'Keduanya menempati titik yang berbeda, jadi tidak sama.',
+        },
       },
     ],
-  },
-
-  /* ----------------------------------------------------------
-     TAHAP 3 — POLA OPERASI
-     Kartu dengan contoh → klik untuk lihat aturan
-     ---------------------------------------------------------- */
-  polaOperasi: {
-    title: 'Menemukan Pola Operasi Bilangan Bulat',
-    instruction:
-      'Amati contoh-contoh dalam setiap kartu, lalu temukan polanya. Klik <strong>Lihat Aturan</strong> untuk melihat penjelasannya.',
-    pola: [
-      {
-        id: 'p1',
-        warna: 'orange',
-        icon: '➕',
-        judul: 'Positif + Positif',
-        contoh: ['3 + 5 = 8', '7 + 4 = 11', '12 + 6 = 18'],
-        formula: '(+a) + (+b) = +(a+b)',
-        aturan:
-          'Hasilnya selalu <strong>positif</strong>. Kedua nilai positif dijumlahkan dan hasilnya lebih besar dari keduanya.',
-        arah: '→ Bergerak ke kanan',
-        ingatan: 'Ibaratkan menambah saldo: semakin banyak ditambah, semakin besar nilainya.',
-      },
-      {
-        id: 'p2',
-        warna: 'blue',
-        icon: '➖',
-        judul: 'Negatif + Negatif',
-        contoh: ['(−3) + (−5) = −8', '(−7) + (−4) = −11', '(−12) + (−6) = −18'],
-        formula: '(−a) + (−b) = −(a+b)',
-        aturan:
-          'Hasilnya selalu <strong>negatif</strong>. Nilai absolutnya dijumlahkan, tanda negatif dipertahankan.',
-        arah: '← Bergerak ke kiri',
-        ingatan: 'Ibaratkan bertambah hutang: makin banyak hutang, makin dalam nilainya.',
-      },
-      {
-        id: 'p3',
-        warna: 'primary',
-        icon: '↔️',
-        judul: 'Berbeda Tanda',
-        contoh: ['5 + (−3) = 2', '(−6) + 10 = 4', '8 + (−8) = 0'],
-        formula: 'a + (−b) = a − b',
-        aturan:
-          'Kurangkan nilai absolutnya. Tanda hasilnya mengikuti bilangan yang nilai absolutnya lebih <strong>besar</strong>.',
-        arah: '← atau → tergantung nilai mana lebih besar',
-        ingatan:
-          'Ibaratkan "tarik-menarik" — yang lebih kuat (nilai absolut lebih besar) yang menentukan arahnya.',
-      },
-      {
-        id: 'p4',
-        warna: 'warning',
-        icon: '🔄',
-        judul: 'Mengurangi Bilangan Negatif',
-        contoh: ['5 − (−3) = 5 + 3 = 8', '(−2) − (−7) = −2 + 7 = 5', '4 − (−4) = 4 + 4 = 8'],
-        formula: 'a − (−b) = a + b',
-        aturan:
-          '<strong>Mengurangi bilangan negatif sama dengan menambahkan kebalikannya.</strong> Dua tanda negatif menghasilkan positif.',
-        arah: '→ Selalu bergerak ke kanan',
-        ingatan:
-          'Ibaratkan "menghapus hutang": jika hutang dihapus, artinya saldo bertambah (bergerak ke kanan).',
-      },
+    aturanJudul: 'Kartu Aturan Tim',
+    aturan: [
+      'Pada garis bilangan mendatar, bilangan di sebelah <strong>kanan</strong> lebih besar daripada bilangan di sebelah kirinya.',
+      'Setiap bilangan negatif &lt; 0 &lt; setiap bilangan positif.',
+      'Di antara dua bilangan negatif, yang <strong>lebih dekat ke 0</strong> lebih besar: −2 &gt; −7.',
+      'Lambang: <strong>&lt;</strong> "kurang dari", <strong>&gt;</strong> "lebih dari", <strong>=</strong> "sama dengan". Ujung lancipnya menunjuk bilangan yang lebih kecil.',
+      '<strong>Urutan naik</strong> (terkecil → terbesar) = baca titik dari kiri ke kanan; <strong>urutan turun</strong> (terbesar → terkecil) = dari kanan ke kiri.',
     ],
+    dugaanJudul: 'Cek dugaanmu di tahap 1',
+    nextLabel: 'Lanjut: Bentuk Tim →',
   },
 
   /* ----------------------------------------------------------
-     TAHAP 4 — LATIHAN OPERASI
+     TAHAP 3 — MENGORGANISASIKAN KELOMPOK (Fase 3)
      ---------------------------------------------------------- */
-  latihanOperasi: {
-    title: 'Latihan Operasi Bilangan Bulat',
-    instruction:
-      'Hitung nilai dari setiap operasi. Gunakan garis bilangan mental atau aturan pola yang sudah dipelajari.',
+  tim: {
+    kicker: 'Tahap 3 · Bentuk Tim',
+    syntax: CL + ' · Fase 3',
+    goal: 'Membentuk tim, menyepakati aturan kerja, dan membagi peran secara adil.',
+    guru: 'Bentuk kelompok heterogen 3–4 murid (campuran kemampuan & jenis kelamin) sebelum pelajaran. Satu perangkat per kelompok. Jelaskan bahwa peran akan diacak lalu bergiliran di setiap misi sehingga semua anggota mendapat kesempatan yang sama. Keliling kelas memastikan setiap tim menulis nama anggotanya.',
+    maksAnggota: 4,
+    minAnggota: 2,
+    namaTimLabel: 'Nama tim',
+    namaTimPlaceholder: 'mis. Tim Pinguin',
+    anggotaLabel: 'Nama anggota (2–4 orang)',
+    kesepakatanJudul: 'Kesepakatan tim',
+    kesepakatan: [
+      { id: 'dengar', teks: 'Kami mendengarkan pendapat setiap anggota sebelum menjawab.' },
+      { id: 'sepakat', teks: 'Kami baru mengetuk jawaban setelah semua anggota setuju.' },
+      { id: 'bantu', teks: 'Kami menjelaskan, bukan sekadar memberi tahu jawaban, kepada teman.' },
+    ],
+    acakLabel: '🎲 Acak Peran',
+    acakUlangLabel: '🎲 Acak Ulang',
+    peranJudul: 'Peran awal tim kalian',
+    peranCatatan:
+      'Peran bergeser satu orang setiap misi, jadi setiap anggota akan mencoba peran yang berbeda.',
+    nextLabel: 'Mulai Misi Tim →',
+  },
+
+  /* ----------------------------------------------------------
+     TAHAP 4 — MEMBIMBING KELOMPOK (Fase 4)
+     ---------------------------------------------------------- */
+  misi: {
+    kicker: 'Tahap 4 · Misi Tim',
+    syntax: CL + ' · Fase 4',
+    goal: 'Bekerja sama membandingkan dan mengurutkan bilangan bulat menggunakan garis bilangan.',
+    guru: 'Berkeliling ke setiap tim. Pastikan Penempat Garis tidak mengetuk sebelum tim sepakat dan Juru Bicara bisa menjelaskan alasannya. Ajukan pertanyaan penuntun ("Mana yang lebih dekat ke 0?", "Titik mana yang paling kiri?") alih-alih memberi jawaban. Skor tim dihitung dari jawaban yang benar pada percobaan pertama.',
+    min: -10,
+    max: 10,
+
+    /* Misi 1 — Bandingkan: 4 pasangan diambil acak dari bank */
+    m1: {
+      judul: 'Misi 1 · Bandingkan',
+      tab: '1 · Bandingkan',
+      instruksi:
+        'Tempatkan kedua bilangan pada garis bilangan, lalu pilih lambang yang tepat untuk mengisi kotak.',
+      banyak: 4,
+      bank: [
+        {
+          id: 'suhu',
+          ikon: '🌡️',
+          konteks: 'Suhu pagi di Wamena −2 °C, sedangkan di Dieng −5 °C.',
+          a: -2,
+          b: -5,
+          ta: 'Wamena',
+          tb: 'Dieng',
+          simpulan: 'Jadi, Dieng lebih dingin daripada Wamena.',
+        },
+        {
+          id: 'selam',
+          ikon: '🤿',
+          konteks: 'Ayu menyelam sampai kedalaman −8 m, Bima sampai −3 m.',
+          a: -8,
+          b: -3,
+          ta: 'Ayu',
+          tb: 'Bima',
+          simpulan: 'Jadi, Ayu menyelam lebih dalam daripada Bima.',
+        },
+        {
+          id: 'lift',
+          ikon: '🛗',
+          konteks: 'Lift berhenti di lantai parkir B2 (−2), lalu di lantai 3 (3).',
+          a: -2,
+          b: 3,
+          ta: 'Parkir B2',
+          tb: 'Lantai 3',
+          simpulan: 'Jadi, lantai 3 lebih tinggi daripada lantai parkir B2.',
+        },
+        {
+          id: 'kuis',
+          ikon: '🏅',
+          konteks: 'Pada lomba cerdas cermat, skor Tim Merah −4, skor Tim Biru 0.',
+          a: 0,
+          b: -4,
+          ta: 'Tim Biru',
+          tb: 'Tim Merah',
+          simpulan: 'Jadi, skor Tim Biru lebih tinggi daripada Tim Merah.',
+        },
+        {
+          id: 'gim',
+          ikon: '🎮',
+          konteks: 'Dalam sebuah gim, poin Raka −6 dan poin Sinta −9.',
+          a: -9,
+          b: -6,
+          ta: 'Sinta',
+          tb: 'Raka',
+          simpulan: 'Jadi, poin Raka lebih besar daripada poin Sinta.',
+        },
+        {
+          id: 'tinggi',
+          ikon: '⛰️',
+          konteks:
+            'Sebuah bukit kecil setinggi 7 m di atas permukaan laut; dasar kolam 7 m di bawahnya (−7).',
+          a: 7,
+          b: -7,
+          ta: 'Bukit',
+          tb: 'Dasar kolam',
+          simpulan: 'Jadi, 7 dan −7 berjarak sama dari 0 tetapi 7 jauh lebih besar.',
+        },
+        {
+          id: 'kulkas',
+          ikon: '🧊',
+          konteks: 'Freezer kecil Lina bersuhu −4 °C; freezer Doni juga −4 °C.',
+          a: -4,
+          b: -4,
+          ta: 'Freezer Lina',
+          tb: 'Freezer Doni',
+          simpulan: 'Jadi, kedua freezer sama dinginnya.',
+        },
+      ],
+    },
+
+    /* Misi 2 — Urutkan */
+    m2: {
+      judul: 'Misi 2 · Urutkan',
+      tab: '2 · Urutkan',
+      instruksi:
+        'Tempatkan kelima bilangan pada garis bilangan, lalu susun kartu sesuai perintah. Gunakan letak titik sebagai petunjuk!',
+      set: [
+        {
+          id: 'penyelam',
+          ikon: '🐠',
+          judul: 'Kedalaman Penyelam',
+          cerita:
+            'Lima penyelam berhenti di kedalaman berbeda (0 = permukaan laut). Urutkan dari yang <strong>paling dalam</strong> ke yang <strong>paling dangkal</strong>.',
+          arah: 'naik',
+          startLabel: 'Paling dalam',
+          endLabel: 'Paling dangkal',
+          separator: '<',
+          satuan: 'm',
+          data: [
+            { id: 'citra', nama: 'Citra', nilai: -9 },
+            { id: 'ayu', nama: 'Ayu', nilai: -6 },
+            { id: 'eko', nama: 'Eko', nilai: -4 },
+            { id: 'bima', nama: 'Bima', nilai: -2 },
+            { id: 'dewi', nama: 'Dewi', nilai: 0 },
+          ],
+          temuan:
+            'Urutan <strong>naik</strong> (terkecil → terbesar) sama dengan membaca titik dari <strong>kiri ke kanan</strong>.',
+        },
+        {
+          id: 'kota',
+          ikon: '🌍',
+          judul: 'Suhu Kota Dunia',
+          cerita:
+            'Suhu pagi di lima kota pada bulan Januari. Urutkan dari kota yang <strong>paling hangat</strong> ke yang <strong>paling dingin</strong>.',
+          arah: 'turun',
+          startLabel: 'Paling hangat',
+          endLabel: 'Paling dingin',
+          separator: '>',
+          satuan: '°C',
+          data: [
+            { id: 'jakarta', nama: 'Jakarta', nilai: 9 },
+            { id: 'tokyo', nama: 'Tokyo', nilai: 3 },
+            { id: 'seoul', nama: 'Seoul', nilai: -1 },
+            { id: 'oslo', nama: 'Oslo', nilai: -4 },
+            { id: 'moskow', nama: 'Moskow', nilai: -7 },
+          ],
+          temuan:
+            'Urutan <strong>turun</strong> (terbesar → terkecil) sama dengan membaca titik dari <strong>kanan ke kiri</strong>.',
+        },
+      ],
+    },
+
+    /* Misi 3 — Diskusi Kesalahan */
+    m3: {
+      judul: 'Misi 3 · Diskusi Kesalahan',
+      tab: '3 · Diskusi',
+      instruksi:
+        'Murid lain menulis pernyataan berikut. Diskusikan dalam tim: benar atau salah? Pemeriksa memastikan semua setuju sebelum memilih.',
+      opsi: [
+        { id: 'benar', label: 'Benar' },
+        { id: 'salah', label: 'Salah' },
+      ],
+      pernyataan: [
+        {
+          id: 'p1',
+          teks: '"−8 &gt; −3, karena 8 lebih besar daripada 3."',
+          correct: 'salah',
+          explanation:
+            'Tanda negatif tidak boleh diabaikan. −8 berada di kiri −3, jadi <strong>−8 &lt; −3</strong>.',
+        },
+        {
+          id: 'p2',
+          teks: '"0 lebih besar daripada setiap bilangan negatif."',
+          correct: 'benar',
+          explanation: 'Semua bilangan negatif berada di sebelah kiri 0.',
+        },
+        {
+          id: 'p3',
+          teks: '"−1 adalah bilangan bulat negatif yang terbesar."',
+          correct: 'benar',
+          explanation:
+            '−1 adalah bilangan negatif yang paling dekat ke 0, jadi paling kanan di antara bilangan negatif.',
+        },
+        {
+          id: 'p4',
+          teks: '"Urutan dari yang terkecil: −2, −5, 0, 3."',
+          correct: 'salah',
+          explanation:
+            '−5 berada di kiri −2, jadi −5 lebih kecil. Urutan yang benar: <strong>−5, −2, 0, 3</strong>.',
+        },
+        {
+          id: 'p5',
+          teks: '"Jika titik a berada di sebelah kiri titik b pada garis bilangan, maka a &lt; b."',
+          correct: 'benar',
+          explanation: 'Inilah aturan utama: yang lebih kiri lebih kecil.',
+        },
+        {
+          id: 'p6',
+          teks: '"−10 &lt; −12, karena −10 lebih dekat ke 0."',
+          correct: 'salah',
+          explanation:
+            'Alasannya benar, tetapi kesimpulannya terbalik. Karena −10 lebih dekat ke 0, −10 berada di kanan −12, jadi <strong>−10 &gt; −12</strong>.',
+        },
+      ],
+      jubirLabel:
+        'Juru Bicara: tuliskan penjelasan tim untuk salah satu pernyataan yang SALAH (akan dibacakan di depan kelas).',
+      jubirPlaceholder: 'Pernyataan … salah karena pada garis bilangan …',
+    },
+    nextLabel: 'Lanjut: Kuis Individu →',
+  },
+
+  /* ----------------------------------------------------------
+     TAHAP 5 — EVALUASI (Fase 5): kuis individu
+     createExerciseStage; urutan soal dan urutan opsi diacak.
+     ---------------------------------------------------------- */
+  evaluasi: {
+    kicker: 'Tahap 5 · Kuis Individu',
+    syntax: CL + ' · Fase 5',
+    goal: 'Menunjukkan kemampuan membandingkan dan mengurutkan bilangan bulat secara mandiri.',
+    guru: 'Kuis dikerjakan SENDIRI tanpa bantuan teman (tanggung jawab individu). Bila perangkat terbatas, anggota bergiliran; anggota lain menunggu di luar layar. Skor setiap anggota menyumbang poin tim di tahap Penghargaan.',
+    instruksi:
+      'Kerjakan sendiri, ya! Gunakan garis bilangan pada soal sebagai alat bantu. Skormu akan menyumbang poin tim.',
+    nextLabel: 'Lihat Penghargaan Tim →',
     soal: [
       {
-        id: 'o1',
-        ekspresi: '8 + (−3)',
-        answer: 5,
-        hint: '8 + (−3) = 8 − 3. Bergerak 3 langkah ke kiri dari 8.',
+        id: 'e1',
+        type: 'choice',
+        cerita:
+          'Ingat laporan cuaca pagi: Dieng −3 °C, Puncak Jaya −8 °C, Ranu Kumbolo −1 °C, Bromo 4 °C.',
+        pertanyaan: 'Tempat mana yang paling dingin?',
+        garis: { min: -10, max: 5 },
+        options: [
+          { id: 'jaya', label: 'Puncak Jaya' },
+          { id: 'dieng', label: 'Dieng' },
+          { id: 'ranu', label: 'Ranu Kumbolo' },
+          { id: 'bromo', label: 'Bromo' },
+        ],
+        correct: 'jaya',
+        explanation: '−8 berada paling kiri, jadi Puncak Jaya paling dingin.',
+      },
+      {
+        id: 'e2',
+        type: 'choice',
+        cerita: 'Isilah kotak dengan lambang yang tepat.',
+        pertanyaan:
+          '<span class="num-chip num-chip--lg">−6</span> ☐ <span class="num-chip num-chip--lg">−2</span>',
+        garis: { min: -8, max: 2 },
+        options: [
+          { id: 'lt', label: '&lt; (kurang dari)' },
+          { id: 'gt', label: '&gt; (lebih dari)' },
+          { id: 'eq', label: '= (sama dengan)' },
+        ],
+        correct: 'lt',
+        explanation: '−6 di kiri −2, jadi −6 &lt; −2.',
+      },
+      {
+        id: 'e3',
+        type: 'input',
+        cerita: 'Perhatikan garis bilangan di bawah.',
+        pertanyaan:
+          'Bilangan bulat <strong>terbesar</strong> yang <strong>kurang dari −3</strong> adalah …',
+        garis: { min: -8, max: 2 },
+        jawab: -4,
+        hints: [
+          'Bilangan yang kurang dari −3 berada di sebelah kiri −3.',
+          'Di antara titik-titik di kiri −3, pilih yang paling dekat dengan −3.',
+        ],
         explanation:
-          '8 + (−3) = 8 − 3 = <strong>5</strong>. Menambahkan negatif = bergerak ke kiri.',
+          '−4 adalah titik pertama di sebelah kiri −3, jadi −4 &lt; −3 dan paling dekat dengan −3.',
+        reveal: 'Titik pertama di kiri −3 adalah <strong>−4</strong>.',
       },
       {
-        id: 'o2',
-        ekspresi: '−6 + 10',
-        answer: 4,
-        hint: 'Bergerak 10 langkah ke kanan dari −6. Kamu akan melewati titik 0.',
-        explanation:
-          '−6 + 10 = <strong>4</strong>. Bergerak ke kanan melewati 0, hasilnya positif.',
+        id: 'e4',
+        type: 'choice',
+        cerita: 'Bilangan: 4, −7, 0, −2, 1.',
+        pertanyaan:
+          'Urutan dari yang <strong>terkecil</strong> ke yang <strong>terbesar</strong> adalah …',
+        garis: { min: -8, max: 5 },
+        options: [
+          { id: 'a', label: '−7, −2, 0, 1, 4' },
+          { id: 'b', label: '−2, −7, 0, 1, 4' },
+          { id: 'c', label: '0, 1, −2, 4, −7' },
+          { id: 'd', label: '4, 1, 0, −2, −7' },
+        ],
+        correct: 'a',
+        explanation: 'Dari kiri ke kanan: −7, −2, 0, 1, 4.',
       },
       {
-        id: 'o3',
-        ekspresi: '(−4) + (−7)',
-        answer: -11,
-        hint: 'Keduanya negatif. Jumlahkan nilai absolutnya, tanda tetap negatif: −(4+7).',
-        explanation:
-          '(−4) + (−7) = −(4+7) = <strong>−11</strong>. Dua negatif dijumlahkan → semakin negatif.',
+        id: 'e5',
+        type: 'choice',
+        cerita: 'Bilangan: −3, 5, −8, 2.',
+        pertanyaan:
+          'Urutan dari yang <strong>terbesar</strong> ke yang <strong>terkecil</strong> adalah …',
+        garis: { min: -9, max: 6 },
+        options: [
+          { id: 'a', label: '5, 2, −3, −8' },
+          { id: 'b', label: '5, 2, −8, −3' },
+          { id: 'c', label: '−8, −3, 2, 5' },
+          { id: 'd', label: '−3, −8, 2, 5' },
+        ],
+        correct: 'a',
+        explanation: 'Dari kanan ke kiri: 5, 2, −3, −8.',
       },
       {
-        id: 'o4',
-        ekspresi: '5 − 9',
-        answer: -4,
-        hint: 'Bergerak 9 langkah ke kiri dari 5. Kamu akan melewati titik 0.',
-        explanation: '5 − 9 = <strong>−4</strong>. Bergerak ke kiri melewati 0, hasilnya negatif.',
+        id: 'e6',
+        type: 'input',
+        cerita: 'Perhatikan garis bilangan di bawah.',
+        pertanyaan:
+          'Ada berapa bilangan bulat yang <strong>lebih dari −5</strong> dan <strong>kurang dari 2</strong>?',
+        garis: { min: -7, max: 4 },
+        jawab: 6,
+        hints: [
+          'Titik-titik itu berada di antara −5 dan 2, tanpa −5 dan 2 sendiri.',
+          'Tuliskan satu per satu: −4, −3, … lalu hitung banyaknya.',
+        ],
+        explanation: 'Bilangannya −4, −3, −2, −1, 0, 1 — ada 6 bilangan bulat.',
+        reveal: 'Bilangannya −4, −3, −2, −1, 0, 1 — ada <strong>6</strong> bilangan bulat.',
       },
       {
-        id: 'o5',
-        ekspresi: '(−3) − 6',
-        answer: -9,
-        hint: '(−3) − 6 = (−3) + (−6). Keduanya negatif, jumlahkan nilai absolutnya.',
-        explanation: '(−3) − 6 = (−3) + (−6) = −(3+6) = <strong>−9</strong>.',
+        id: 'e7',
+        type: 'choice',
+        cerita:
+          'Tiga kapal selam berada di kedalaman −120 m, −85 m, dan −200 m di bawah permukaan laut.',
+        pertanyaan: 'Kapal selam yang paling dekat ke permukaan laut berada di kedalaman …',
+        options: [
+          { id: 'a', label: '−85 m' },
+          { id: 'b', label: '−120 m' },
+          { id: 'c', label: '−200 m' },
+          { id: 'd', label: 'Ketiganya sama dekat' },
+        ],
+        correct: 'a',
+        explanation: '−85 paling dekat ke 0, jadi −85 &gt; −120 &gt; −200.',
       },
       {
-        id: 'o6',
-        ekspresi: '7 − (−4)',
-        answer: 11,
-        hint: 'Ingat pola: a − (−b) = a + b. Jadi 7 − (−4) = 7 + 4.',
-        explanation:
-          '7 − (−4) = 7 + 4 = <strong>11</strong>. Mengurangi negatif = menambahkan kebalikannya.',
-      },
-      {
-        id: 'o7',
-        ekspresi: '(−8) − (−3)',
-        answer: -5,
-        hint: '(−8) − (−3) = −8 + 3. Bergerak 3 langkah ke kanan dari −8.',
-        explanation: '(−8) − (−3) = −8 + 3 = <strong>−5</strong>.',
-      },
-      {
-        id: 'o8',
-        ekspresi: '(−5) + 5',
-        answer: 0,
-        hint: 'Bilangan ini adalah lawan satu sama lain. Saling menghapuskan.',
-        explanation:
-          '(−5) + 5 = <strong>0</strong>. Suatu bilangan ditambah lawannya selalu sama dengan 0.',
+        id: 'e8',
+        type: 'choice',
+        cerita: 'Periksa setiap pernyataan dengan membayangkan garis bilangan.',
+        pertanyaan: 'Pernyataan mana yang <strong>benar</strong>?',
+        options: [
+          { id: 'a', label: '−7 &lt; −3' },
+          { id: 'b', label: '−15 &gt; −11' },
+          { id: 'c', label: '−4 &lt; −9' },
+          { id: 'd', label: '0 &lt; −1' },
+        ],
+        correct: 'a',
+        explanation: '−7 berada di kiri −3, jadi −7 &lt; −3 benar.',
       },
     ],
   },
 
   /* ----------------------------------------------------------
-     TAHAP 5 — MASALAH KONTEKSTUAL
+     TAHAP 6 — PENGHARGAAN (Fase 6)
      ---------------------------------------------------------- */
-  masalahKontekstual: {
-    title: 'Masalah Kontekstual Perubahan Nilai',
-    instruction:
-      'Selesaikan setiap masalah berikut. Identifikasi nilai awal, jenis perubahan, dan nilai akhirnya.',
-    soal: [
-      {
-        id: 'm1',
-        badge: 'Perubahan Suhu',
-        icon: '🌡️',
-        story:
-          'Suhu di kota Malang pagi hari <strong>18°C</strong>. Sore hari suhu <strong>naik 5°C</strong>. Malam hari suhu <strong>turun 12°C</strong> dari suhu sore.',
-        question: 'Berapa suhu di Malang pada <strong>malam hari</strong>?',
-        type: 'input',
-        answer: 11,
-        unit: '°C',
-        hint: 'Langkah 1: Suhu sore = 18 + 5 = ? Langkah 2: Suhu malam = hasil langkah 1 − 12.',
-        explanation: 'Suhu sore: 18 + 5 = 23°C. Suhu malam: 23 − 12 = <strong>11°C</strong>.',
-        langkah: ['18 + 5 = 23 (suhu sore)', '23 − 12 = 11 (suhu malam)'],
-      },
-      {
-        id: 'm2',
-        badge: 'Saldo Rekening',
-        icon: '🏦',
-        story:
-          'Saldo rekening Pak Budi adalah <strong>−Rp 50.000</strong> (berhutang). Ia kemudian menerima gaji <strong>Rp 200.000</strong>.',
-        question: 'Berapa saldo Pak Budi <strong>setelah menerima gaji</strong>?',
-        type: 'choice',
-        options: [
-          { id: 'opt_a', label: 'Rp 250.000' },
-          { id: 'opt_b', label: 'Rp 150.000' },
-          { id: 'opt_c', label: '−Rp 150.000' },
-        ],
-        correct: 'opt_b',
-        hint: 'Nilai awal: −50.000. Perubahan: +200.000. Hitung −50.000 + 200.000.',
-        explanation:
-          '−50.000 + 200.000 = <strong>Rp 150.000</strong>. Saldo Pak Budi sekarang positif karena melebihi jumlah hutangnya.',
-      },
-      {
-        id: 'm3',
-        badge: 'Ketinggian Pesawat',
-        icon: '✈️',
-        story:
-          'Pesawat terbang di ketinggian <strong>8.000 m</strong>. Pesawat turun <strong>3.000 m</strong> untuk persiapan mendarat, lalu naik <strong>500 m</strong> untuk menghindari awan.',
-        question: 'Berapa ketinggian pesawat <strong>saat ini</strong>?',
-        type: 'input',
-        answer: 5500,
-        unit: 'meter',
-        hint: 'Langkah 1: 8.000 − 3.000 = ? Langkah 2: hasil + 500.',
-        explanation: '8.000 − 3.000 = 5.000. Kemudian 5.000 + 500 = <strong>5.500 meter</strong>.',
-        langkah: ['8000 − 3000 = 5000 (setelah turun)', '5000 + 500 = 5500 (setelah naik)'],
-      },
-      {
-        id: 'm4',
-        badge: 'Skor Ujian',
-        icon: '📝',
-        story:
-          'Dalam ulangan, setiap benar <strong>+4 poin</strong>, salah <strong>−2 poin</strong>, tidak dijawab <strong>0 poin</strong>. Dea menjawab: 20 benar, 5 salah, 5 tidak dijawab.',
-        question: 'Berapa <strong>total skor</strong> Dea?',
-        type: 'input',
-        answer: 70,
-        unit: 'poin',
-        hint: 'Hitung masing-masing dulu: (20×4) = ? dan (5×(−2)) = ? Lalu jumlahkan semua.',
-        explanation:
-          '(20×4) + (5×(−2)) + (5×0) = 80 + (−10) + 0 = 80 − 10 = <strong>70 poin</strong>.',
-        langkah: [
-          '20 × 4 = 80 (poin jawaban benar)',
-          '5 × (−2) = −10 (poin jawaban salah)',
-          '80 + (−10) + 0 = 70 (total)',
-        ],
-      },
-      {
-        id: 'm5',
-        badge: 'Pendaki Gunung',
-        icon: '🏔️',
-        story:
-          'Seorang pendaki berada di ketinggian <strong>1.200 m</strong>. Ia mendaki <strong>400 m</strong>, lalu turun <strong>600 m</strong> karena cuaca buruk.',
-        question: 'Di ketinggian berapa pendaki itu <strong>sekarang</strong>?',
-        type: 'choice',
-        options: [
-          { id: 'opt_a', label: '2.200 m' },
-          { id: 'opt_b', label: '1.000 m' },
-          { id: 'opt_c', label: '600 m' },
-        ],
-        correct: 'opt_b',
-        hint: 'Langkah 1: 1.200 + 400 = 1.600. Langkah 2: 1.600 − 600 = ?',
-        explanation: '1.200 + 400 = 1.600 m. Kemudian 1.600 − 600 = <strong>1.000 m</strong>.',
-      },
-      {
-        id: 'm6',
-        badge: 'Token Listrik',
-        icon: '💡',
-        story:
-          'Saldo token listrik Ibu Sari <strong>−5 kWh</strong> (sudah melewati batas). Ia membeli token <strong>20 kWh</strong>, lalu menggunakan listrik <strong>8 kWh</strong>.',
-        question: 'Berapa <strong>sisa saldo</strong> token listrik Ibu Sari?',
-        type: 'input',
-        answer: 7,
-        unit: 'kWh',
-        hint: 'Langkah 1: −5 + 20 = ? (setelah beli). Langkah 2: hasil − 8 (setelah pakai).',
-        explanation: '−5 + 20 = 15 kWh. Kemudian 15 − 8 = <strong>7 kWh</strong>.',
-        langkah: ['−5 + 20 = 15 (setelah beli token)', '15 − 8 = 7 (setelah pakai listrik)'],
-      },
-    ],
-  },
-
-  /* ----------------------------------------------------------
-     TAHAP 6 — TANTANGAN
-     Perubahan nilai berantai (multi-langkah)
-     ---------------------------------------------------------- */
-  tantangan: {
-    title: 'Tantangan: Perubahan Nilai Berantai',
-    instruction:
-      'Setiap masalah memiliki beberapa perubahan berurutan. Hitung langkah demi langkah.',
-    soal: [
-      {
-        id: 't1',
-        badge: 'Kapal Selam Riset',
-        icon: '🚢',
-        story:
-          'Kapal selam riset memulai dari permukaan laut (<strong>0 m</strong>). Menyelam <strong>30 m</strong>, lalu naik <strong>12 m</strong> untuk mengambil sampel, kemudian menyelam lagi <strong>18 m</strong>.',
-        question:
-          'Di kedalaman berapa kapal selam itu <strong>sekarang</strong>? (kedalaman = bilangan negatif)',
-        type: 'input',
-        answer: -36,
-        unit: 'meter',
-        hint: 'Mulai dari 0. Menyelam 30 m: 0 − 30 = −30. Naik 12 m: −30 + 12 = −18. Menyelam 18 m: −18 − 18 = ?',
-        explanation: '0 − 30 = −30 → −30 + 12 = −18 → −18 − 18 = <strong>−36 meter</strong>.',
-        langkah: [
-          '0 − 30 = −30 (menyelam)',
-          '−30 + 12 = −18 (naik)',
-          '−18 − 18 = −36 (menyelam lagi)',
-        ],
-      },
-      {
-        id: 't2',
-        badge: 'Game RPG',
-        icon: '🎮',
-        story:
-          'Skor awal Farel: <strong>250 poin</strong>. Ia mengalahkan monster (<strong>+150</strong>), membeli senjata (<strong>−80</strong>), mendapat bonus harian (<strong>+50</strong>), lalu terkena jebakan (<strong>−120</strong>).',
-        question: 'Berapa <strong>skor akhir</strong> Farel?',
-        type: 'input',
-        answer: 250,
-        unit: 'poin',
-        hint: 'Hitung berurutan: 250 + 150 = 400 → 400 − 80 = 320 → 320 + 50 = 370 → 370 − 120 = ?',
-        explanation: '250+150=400 → 400−80=320 → 320+50=370 → 370−120=<strong>250 poin</strong>.',
-        langkah: [
-          '250 + 150 = 400 (kalahkan monster)',
-          '400 − 80 = 320 (beli senjata)',
-          '320 + 50 = 370 (bonus harian)',
-          '370 − 120 = 250 (kena jebakan)',
-        ],
-      },
-      {
-        id: 't3',
-        badge: 'Harga Saham',
-        icon: '📈',
-        story:
-          'Harga saham PT. Maju Jaya hari Senin: <strong>Rp 2.500</strong>. Selasa <strong>+Rp150</strong>, Rabu <strong>−Rp300</strong>, Kamis <strong>+Rp75</strong>, Jumat <strong>−Rp200</strong>.',
-        question: 'Berapa harga saham pada hari <strong>Jumat</strong>?',
-        type: 'choice',
-        options: [
-          { id: 'opt_a', label: 'Rp 2.125' },
-          { id: 'opt_b', label: 'Rp 2.225' },
-          { id: 'opt_c', label: 'Rp 2.275' },
-        ],
-        correct: 'opt_b',
-        hint: 'Hitung berurutan: 2500 + 150 = 2650 → 2650 − 300 = 2350 → 2350 + 75 = 2425 → 2425 − 200 = ?',
-        explanation:
-          '2500+150=2650 → 2650−300=2350 → 2350+75=2425 → 2425−200=<strong>Rp 2.225</strong>.',
-        langkah: [
-          '2500 + 150 = 2650 (Selasa)',
-          '2650 − 300 = 2350 (Rabu)',
-          '2350 + 75 = 2425 (Kamis)',
-          '2425 − 200 = 2225 (Jumat)',
-        ],
-      },
-      {
-        id: 't4',
-        badge: 'Petualang Alam',
-        icon: '🧗',
-        story:
-          'Penjelajah memulai di ketinggian <strong>500 m</strong>. Turun ke sebuah gua <strong>200 m di bawahnya</strong>, naik kembali <strong>350 m</strong>, lalu turun ke dasar jurang <strong>400 m di bawahnya</strong>.',
-        question:
-          'Di ketinggian berapa (dari permukaan laut) penjelajah itu <strong>sekarang</strong>?',
-        type: 'input',
-        answer: 250,
-        unit: 'meter (dari permukaan laut)',
-        hint: 'Langkah 1: 500 − 200 = 300. Langkah 2: 300 + 350 = 650. Langkah 3: 650 − 400 = ?',
-        explanation:
-          '500−200=300 → 300+350=650 → 650−400=<strong>250 m</strong> di atas permukaan laut.',
-        langkah: [
-          '500 − 200 = 300 (turun ke gua)',
-          '300 + 350 = 650 (naik)',
-          '650 − 400 = 250 (turun ke jurang)',
-        ],
-      },
-    ],
+  penghargaan: {
+    kicker: 'Tahap 6 · Penghargaan Tim',
+    syntax: CL + ' · Fase 6',
+    goal: 'Merayakan hasil kerja sama tim dan menghargai kontribusi setiap anggota.',
+    guru: 'Umumkan predikat setiap tim di depan kelas (Tim Baik, Tim Hebat, Tim Super) — semua tim mendapat apresiasi. Bila anggota mengerjakan kuis di perangkat berbeda, rata-ratakan skor kuis anggota secara manual. Minta Juru Bicara tiap tim membacakan pujian untuk teman satu tim.',
+    bobot: 'Poin tim = 50% skor misi (benar pada percobaan pertama) + 50% skor kuis individu.',
+    pujianLabel: 'Tulis satu pujian untuk teman satu tim (sebut namanya dan apa yang ia lakukan).',
+    pujianPlaceholder: 'Terima kasih, … karena …',
+    nextLabel: 'Lanjut: Refleksi →',
   },
 
   /* ----------------------------------------------------------
      TAHAP 7 — REFLEKSI
      ---------------------------------------------------------- */
   refleksi: {
-    title: 'Refleksi Pembelajaran',
-    note: 'Refleksi ini membantu merangkum pemahamanmu. Jawaban <strong>tidak dikirim ke mana pun</strong> — hanya untuk dirimu sendiri.',
-    soal: [
+    kicker: 'Tahap 7 · Refleksi',
+    syntax: 'Refleksi proses kelompok',
+    goal: 'Merefleksikan pemahaman pribadi dan cara tim bekerja sama.',
+    guru: 'Beri waktu hening 3 menit untuk refleksi pribadi, lalu 3 menit untuk refleksi kerja sama tim. Undang dua tim membagikan satu hal yang akan mereka perbaiki di kerja kelompok berikutnya.',
+    pertanyaan: [
       {
         id: 'r1',
-        question:
-          'Dengan kata-katamu sendiri, jelaskan bagaimana cara menghitung <strong>penjumlahan dengan bilangan negatif</strong>. Berikan satu contoh.',
-        placeholder: 'Penjelasanmu...',
+        teks: 'Bagaimana caramu menentukan bilangan yang lebih besar di antara dua bilangan negatif?',
+        placeholder: 'Aku melihat letaknya pada garis bilangan …',
       },
       {
         id: 'r2',
-        question:
-          'Mengapa <strong>a − (−b) = a + b</strong>? Jelaskan dengan kalimatmu sendiri atau gunakan contoh dari kehidupan nyata.',
-        placeholder: 'Penjelasanmu...',
+        teks: 'Bagian mana yang tadinya membingungkan, dan siapa/apa yang membantumu memahaminya?',
+        placeholder: 'Tadinya aku bingung … lalu …',
       },
-      {
-        id: 'r3',
-        question:
-          'Dari semua konteks yang kamu pelajari (suhu, saldo, ketinggian, skor), <strong>mana yang paling mudah dipahami</strong> untuk menjelaskan operasi bilangan bulat? Mengapa?',
-        placeholder: 'Jawabanmu...',
-      },
-      {
-        id: 'r4',
-        question:
-          'Tuliskan <strong>satu pertanyaan</strong> yang masih ingin kamu tanyakan kepada guru tentang operasi penjumlahan dan pengurangan bilangan bulat.',
-        placeholder: 'Pertanyaanmu...',
-      },
+    ],
+    kerjaJudul: 'Bagaimana kerja sama tim kita?',
+    kerja: [
+      { id: 'k1', teks: 'Setiap anggota mendapat kesempatan berbicara.' },
+      { id: 'k2', teks: 'Kami menjalankan peran masing-masing dengan baik.' },
+      { id: 'k3', teks: 'Kami menjawab setelah semua anggota setuju.' },
+    ],
+    kerjaOpsi: [
+      { id: 'selalu', label: '😄 Selalu' },
+      { id: 'sering', label: '🙂 Sering' },
+      { id: 'kadang', label: '😐 Kadang-kadang' },
+      { id: 'belum', label: '🌱 Belum' },
+    ],
+    diriLabel: 'Seberapa yakin kamu sekarang membandingkan dan mengurutkan bilangan bulat?',
+    diriOpsi: [
+      { id: 'sangat', label: '🚀 Sangat yakin — aku bisa menjelaskannya ke teman' },
+      { id: 'yakin', label: '👍 Yakin — kadang masih melihat garis bilangan' },
+      { id: 'cukup', label: '🤔 Cukup — bilangan negatif masih sering tertukar' },
+      { id: 'belum', label: '🙋 Belum — aku perlu latihan lagi bersama guru' },
+    ],
+    nextLabel: 'Selesai →',
+  },
+
+  /* ----------------------------------------------------------
+     TAHAP 8 — SELESAI
+     ---------------------------------------------------------- */
+  selesai: {
+    judul: 'Misi Tim Tuntas!',
+    teks: 'Kalian sudah membandingkan dan mengurutkan bilangan bulat dengan garis bilangan — sambil bekerja sama sebagai tim.',
+    capaian: [
+      'Menentukan bilangan yang lebih besar/kecil dari letaknya pada garis bilangan.',
+      'Menuliskan perbandingan dengan lambang <, >, dan =.',
+      'Mengurutkan bilangan bulat naik (kiri → kanan) dan turun (kanan → kiri).',
+      'Menemukan dan menjelaskan kesalahan umum, mis. "−8 > −3".',
+      'Menjalankan peran dalam tim dan menghargai kontribusi teman.',
     ],
   },
 };
