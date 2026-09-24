@@ -36,6 +36,8 @@
    18. Bilangan bulat: perkalian, pembagian & urutan pengerjaan
        (penjumlahan berulang, tabel aturan tanda, langkah operasi
        campuran)
+   19. Bilangan desimal: nilai tempat, cara baca & model visual
+       (tabel nilai tempat, model blok, perakit desimal)
    ============================================================ */
 
 /* ============================================================
@@ -560,6 +562,13 @@ function createStageMachine(opts) {
  *   inputSuffix(s)         (opsional) HTML tepat di samping kotak isian,
  *                          mis. satuan jawaban
  *   stripPunctuation       (opsional) diteruskan ke parseInputInt
+ *   parseInput(val)        (opsional) pengganti parseInputInt, mengembalikan
+ *                          { value, error, message? }; `message` (bila ada)
+ *                          dipakai sebagai notice isian tidak valid
+ *   isCorrect(value, s)    (opsional) pengganti `value === checkValue(s)`,
+ *                          mis. hampirSama() untuk jawaban desimal
+ *   inputMode              (opsional) nilai atribut inputmode kotak isian,
+ *                          mis. 'decimal'
  *   allowNegative          (opsional) true → kotak isian tanpa inputmode numerik
  *                          agar tombol minus tersedia di keyboard ponsel
  *   revealAfterAttempts    (opsional, default 2)
@@ -724,7 +733,11 @@ function createExerciseStage(cfg) {
         inputRowClass +
         '">' +
         '<input type="text"' +
-        (cfg.allowNegative ? '' : ' inputmode="numeric"') +
+        (cfg.inputMode
+          ? ' inputmode="' + esc(cfg.inputMode) + '"'
+          : cfg.allowNegative
+          ? ''
+          : ' inputmode="numeric"') +
         ' id="' +
         prefix +
         'Input" class="input-text" placeholder="' +
@@ -898,19 +911,23 @@ function createExerciseStage(cfg) {
       checkBtn.addEventListener('click', function () {
         if (!inp) return;
         var val = inp.value;
-        var parsed = parseInputInt(val, cfg.stripPunctuation);
+        var parsed = cfg.parseInput
+          ? cfg.parseInput(val)
+          : parseInputInt(val, cfg.stripPunctuation);
         if (parsed.error) {
           if (countAttemptOnInvalid) {
             ex.userInput = val;
             ex.attempts += 1;
             cfg.save();
           }
-          showNotice(parsed.error === 'empty' ? emptyMessage : invalidMessage);
+          showNotice(parsed.error === 'empty' ? emptyMessage : parsed.message || invalidMessage);
           return;
         }
         ex.userInput = val;
         ex.attempts += 1;
-        ex.correct = parsed.value === cfg.checkValue(s);
+        ex.correct = cfg.isCorrect
+          ? cfg.isCorrect(parsed.value, s)
+          : parsed.value === cfg.checkValue(s);
         if (ex.correct) ex.checked = true;
         cfg.save();
         render(container);
@@ -1391,12 +1408,14 @@ function makeDlStep() {
  *   opts.allowNegative  true → tanpa inputmode numerik agar tombol minus
  *                       tersedia di keyboard ponsel
  *   opts.rational       true → inputmode desimal (koma/garis miring)
+ *   opts.desimal        true → inputmode="decimal" (desimal berkoma)
  *   opts.error, opts.disabled, opts.aria, opts.placeholder
  */
 function buildDlNumInput(id, value, opts) {
   opts = opts || {};
   var mode = '';
-  if (opts.rational) mode = ' inputmode="text"';
+  if (opts.desimal) mode = ' inputmode="decimal"';
+  else if (opts.rational) mode = ' inputmode="text"';
   else if (!opts.allowNegative) mode = ' inputmode="numeric"';
   return (
     '<input type="text" class="input-text dl-num-input' +
@@ -1442,7 +1461,9 @@ function readDlNumber(val, rational) {
  * umpan balik salah, dan teks temuan setelah benar.
  *   id    awalan id DOM (mis. 'sn0' → sn0Input, sn0Check, sn0Hint)
  *   st    state langkah (makeDlStep)
- *   step  { label, jawab, hints, temuan|bukti, allowNegative, rational }
+ *   step  { label, jawab, hints, temuan|bukti, allowNegative, rational,
+ *           desimal }  — desimal true: isian wajib berkoma
+ *           (parseInputDesimalKoma), dibandingkan dengan hampirSama()
  *   num   nomor langkah opsional (bulatan kecil di depan label)
  */
 function buildDlStep(id, st, step, num) {
@@ -1471,6 +1492,7 @@ function buildDlStep(id, st, step, num) {
       error: st.salah,
       allowNegative: step.allowNegative,
       rational: step.rational,
+      desimal: step.desimal,
     }) +
     '<button type="button" class="btn btn--primary" id="' +
     id +
@@ -1501,11 +1523,21 @@ function bindDlStep(id, st, step, save, rerender) {
       if (e.key === 'Enter') btn.click();
     });
     btn.addEventListener('click', function () {
-      var v = readDlNumber(inp.value, step.rational);
+      var v;
+      if (step.desimal) {
+        var pd = parseInputDesimalKoma(inp.value);
+        if (pd.error) {
+          showNotice(pd.message);
+          return;
+        }
+        v = pd.value;
+      } else {
+        v = readDlNumber(inp.value, step.rational);
+      }
       if (v === null) return;
       st.input = inp.value.trim();
       st.attempts += 1;
-      st.done = step.rational ? hampirSama(v, step.jawab) : v === step.jawab;
+      st.done = step.rational || step.desimal ? hampirSama(v, step.jawab) : v === step.jawab;
       st.salah = !st.done;
       save();
       rerender();
@@ -4748,4 +4780,414 @@ function exprStepsDone(states) {
   return states.every(function (s) {
     return s.done;
   });
+}
+
+/* ============================================================
+   19. BILANGAN DESIMAL: NILAI TEMPAT, CARA BACA & MODEL VISUAL
+   Dipakai fase-d/mpi-3.1. Bilangan desimal selalu diolah sebagai
+   STRING berkoma ("3,07"), bukan Number, agar angka 0 pengisi tempat
+   dan angka 0 di akhir (0,50) tidak hilang saat dibaca/ditampilkan.
+   Gaya .dec-* ada di shared/base.css.
+   ============================================================ */
+
+/*
+ * Nilai tempat yang dimodelkan: satuan dan tiga tempat di belakang koma.
+ *   key     kunci state perakit (buildDecimalBuilder)
+ *   nama    nama nilai tempat
+ *   baca    nama penyebut saat membaca ("tujuh perseratus")
+ *   nilai   nilai satu unit tempat itu dalam desimal & pecahan
+ */
+var DESIMAL_TEMPAT = [
+  { key: 's', nama: 'satuan', baca: '', nilai: '1', pecahan: '1' },
+  { key: 'd1', nama: 'persepuluhan', baca: 'persepuluh', nilai: '0,1', pecahan: '1/10' },
+  { key: 'd2', nama: 'perseratusan', baca: 'perseratus', nilai: '0,01', pecahan: '1/100' },
+  { key: 'd3', nama: 'perseribuan', baca: 'perseribu', nilai: '0,001', pecahan: '1/1000' },
+];
+
+/* Nama tempat bagian bulat dari kanan: satuan, puluhan, ratusan. */
+var DESIMAL_TEMPAT_BULAT = ['satuan', 'puluhan', 'ratusan'];
+
+/*
+ * Memecah string desimal menjadi { bulat, pecahan } (keduanya string
+ * angka). Koma maupun titik diterima: "3,07" → { bulat: '3', pecahan:
+ * '07' }, "12" → { bulat: '12', pecahan: '' }. null bila tidak valid.
+ */
+function desimalDigits(str) {
+  var m = String(str)
+    .trim()
+    .replace('.', ',')
+    .match(/^(\d+)(?:,(\d+))?$/);
+  if (!m) return null;
+  return { bulat: m[1], pecahan: m[2] || '' };
+}
+
+/*
+ * Nama nilai tempat angka ke-`pos` di belakang koma (1 → persepuluhan,
+ * 2 → perseratusan, 3 → perseribuan). pos 0 → satuan, −1 → puluhan,
+ * −2 → ratusan.
+ */
+function namaNilaiTempatDesimal(pos) {
+  if (pos >= 1 && pos <= 3) return DESIMAL_TEMPAT[pos].nama;
+  return DESIMAL_TEMPAT_BULAT[-pos] || '';
+}
+
+/*
+ * Nama tempat untuk judul kolom sempit: "persepuluhan" → "per&shy;sepuluhan"
+ * (sudah di-escape) agar di layar ponsel boleh terpotong menjadi
+ * "per-" / "sepuluhan" alih-alih melebarkan tabel.
+ */
+function namaTempatHtml(nama) {
+  return esc(nama).replace(/^per/, 'per&shy;');
+}
+
+/*
+ * Cara baca "koma": bagian bulat dibaca sebagai bilangan, angka di
+ * belakang koma dibaca SATU PER SATU.
+ *   "3,07"  → "tiga koma nol tujuh"
+ *   "12,48" → "dua belas koma empat delapan"
+ */
+function bacaDesimalKoma(str) {
+  var p = desimalDigits(str);
+  if (!p) return '';
+  var baca = terbilang(parseInt(p.bulat, 10));
+  if (!p.pecahan) return baca;
+  return (
+    baca +
+    ' koma ' +
+    p.pecahan
+      .split('')
+      .map(function (d) {
+        return terbilang(+d);
+      })
+      .join(' ')
+  );
+}
+
+/*
+ * Cara baca "nilai tempat": angka di belakang koma dibaca sebagai satu
+ * bilangan, diikuti nama tempat angka PALING KANAN.
+ *   "3,07"  → "tiga dan tujuh perseratus"
+ *   "0,375" → "tiga ratus tujuh puluh lima perseribu"
+ *   "0,50"  → "lima puluh perseratus"
+ */
+function bacaDesimalNilaiTempat(str) {
+  var p = desimalDigits(str);
+  if (!p) return '';
+  var bulat = parseInt(p.bulat, 10);
+  var pembilang = p.pecahan ? parseInt(p.pecahan, 10) : 0;
+  if (!p.pecahan || pembilang === 0) return terbilang(bulat);
+  var tempat = DESIMAL_TEMPAT[p.pecahan.length];
+  var penyebut = tempat ? tempat.baca : 'per' + terbilang(Math.pow(10, p.pecahan.length));
+  var frac = terbilang(pembilang) + ' ' + penyebut;
+  return bulat === 0 ? frac : terbilang(bulat) + ' dan ' + frac;
+}
+
+/*
+ * Nilai angka ke-`pos` (1–3) di belakang koma, dalam desimal:
+ * nilaiAngkaDesimal('4,72', 1) → "0,7", nilaiAngkaDesimal('0,381', 2)
+ * → "0,08". '' bila posisi itu tidak ada.
+ */
+function nilaiAngkaDesimal(str, pos) {
+  var p = desimalDigits(str);
+  if (!p || pos < 1 || pos > p.pecahan.length) return '';
+  var d = p.pecahan.charAt(pos - 1);
+  return '0,' + new Array(pos).join('0') + d;
+}
+
+/*
+ * Bentuk panjang berdasarkan nilai tempat (angka 0 dilewati):
+ *   "3,07"  → "3 + 0,07"
+ *   "1,25"  → "1 + 0,2 + 0,05"
+ */
+function bentukPanjangDesimal(str) {
+  var p = desimalDigits(str);
+  if (!p) return '';
+  var suku = [];
+  if (parseInt(p.bulat, 10) > 0 || !p.pecahan) suku.push(String(parseInt(p.bulat, 10)));
+  for (var i = 1; i <= p.pecahan.length; i++) {
+    if (p.pecahan.charAt(i - 1) !== '0') suku.push(nilaiAngkaDesimal(str, i));
+  }
+  return suku.length ? suku.join(' + ') : '0';
+}
+
+/* State default perakit desimal: satu angka (0–9) per tempat. */
+function makeDecimalParts(s, d1, d2, d3) {
+  return { s: s || 0, d1: d1 || 0, d2: d2 || 0, d3: d3 || 0 };
+}
+
+/* {s,d1,d2,d3} → string desimal tanpa angka 0 di akhir: {2,0,5,0} → "2,05". */
+function desimalDariBagian(parts) {
+  var pecahan = String(parts.d1) + String(parts.d2) + String(parts.d3);
+  pecahan = pecahan.replace(/0+$/, '');
+  return String(parts.s) + (pecahan ? ',' + pecahan : '');
+}
+
+/* String desimal (satuan ≤ 9, maks. 3 angka di belakang koma) → {s,d1,d2,d3}. */
+function bagianDariDesimal(str) {
+  var p = desimalDigits(str);
+  if (!p) return makeDecimalParts();
+  var f = (p.pecahan + '000').slice(0, 3);
+  return makeDecimalParts(parseInt(p.bulat, 10) % 10, +f.charAt(0), +f.charAt(1), +f.charAt(2));
+}
+
+/*
+ * Membaca isian desimal yang DITULIS dengan koma (notasi baku Indonesia).
+ * Titik ditolak dengan pesan khusus karena di Indonesia titik adalah
+ * pemisah ribuan. Bentuk kembalian { value, error, message }.
+ *   "3,07" → 3.07     "12" → 12     ",5" / "3.07" → error
+ */
+function parseInputDesimalKoma(str) {
+  if (!str || String(str).trim() === '') {
+    return { value: null, error: 'empty', message: 'Isi jawabanmu terlebih dahulu.' };
+  }
+  var s = String(str).trim().replace(/\s/g, '');
+  if (s.indexOf('.') !== -1) {
+    return {
+      value: null,
+      error: 'titik',
+      message: 'Gunakan tanda koma (,) sebagai pemisah desimal, mis. 3,07 — bukan titik.',
+    };
+  }
+  if (!/^\d+(,\d+)?$/.test(s)) {
+    return {
+      value: null,
+      error: 'invalid',
+      message: 'Tulis bilangan desimal dengan koma, mis. 0,5 atau 3,07.',
+    };
+  }
+  return { value: parseFloat(s.replace(',', '.')), error: null, message: '' };
+}
+
+/*
+ * Tabel nilai tempat (.dec-pv) untuk satu bilangan desimal.
+ *   str             bilangan berkoma, mis. "3,07"
+ *   opts.highlight  posisi yang disorot (−1 puluhan, 0 satuan, 1–3 di
+ *                   belakang koma) atau null
+ *   opts.showNilai  true → baris tambahan nilai satu unit tiap tempat
+ *   opts.caption    judul kecil di atas tabel
+ * Tiga kolom di belakang koma selalu tampil; kolom tanpa angka
+ * ditandai kosong agar murid melihat "tempat" yang belum terisi.
+ */
+function buildPlaceValueTable(str, opts) {
+  opts = opts || {};
+  var p = desimalDigits(str) || { bulat: '0', pecahan: '' };
+  var bulat = p.bulat.replace(/^0+(?=\d)/, '');
+  var cols = [];
+  for (var i = bulat.length - 1; i >= 0; i--) {
+    cols.push({ pos: -i, digit: bulat.charAt(bulat.length - 1 - i) });
+  }
+  cols.push({ koma: true });
+  var n = Math.max(3, p.pecahan.length);
+  for (var j = 1; j <= n; j++) {
+    cols.push({ pos: j, digit: p.pecahan.charAt(j - 1) });
+  }
+  var nilaiBulat = ['1', '10', '100'];
+
+  function cls(c) {
+    var out = 'dec-pv__cell';
+    if (c.koma) return out + ' dec-pv__cell--koma';
+    out += ' dec-pv__cell--p' + Math.max(0, Math.min(c.pos, 3));
+    if (c.pos === opts.highlight) out += ' dec-pv__cell--hl';
+    if (c.digit === '') out += ' dec-pv__cell--empty';
+    return out;
+  }
+
+  var head = cols
+    .map(function (c) {
+      return (
+        '<th scope="col" class="' +
+        cls(c) +
+        '">' +
+        (c.koma
+          ? '<span class="sr-only">koma</span>'
+          : namaTempatHtml(namaNilaiTempatDesimal(c.pos))) +
+        '</th>'
+      );
+    })
+    .join('');
+  var row = cols
+    .map(function (c) {
+      return '<td class="' + cls(c) + '">' + (c.koma ? ',' : esc(c.digit || '')) + '</td>';
+    })
+    .join('');
+  var nilaiRow = opts.showNilai
+    ? '<tr class="dec-pv__nilai">' +
+      cols
+        .map(function (c) {
+          if (c.koma) return '<td class="' + cls(c) + '"></td>';
+          var t =
+            c.pos <= 0
+              ? nilaiBulat[-c.pos]
+              : DESIMAL_TEMPAT[c.pos]
+              ? DESIMAL_TEMPAT[c.pos].pecahan
+              : '';
+          return '<td class="' + cls(c) + '">' + esc(t) + '</td>';
+        })
+        .join('') +
+      '</tr>'
+    : '';
+
+  return (
+    '<div class="dec-pv">' +
+    (opts.caption ? '<p class="dec-pv__caption">' + esc(opts.caption) + '</p>' : '') +
+    '<div class="table-scroll"><table class="dec-pv__table" aria-label="Tabel nilai tempat ' +
+    esc(String(str)) +
+    '">' +
+    '<thead><tr>' +
+    head +
+    '</tr></thead><tbody><tr>' +
+    row +
+    '</tr>' +
+    nilaiRow +
+    '</tbody></table></div></div>'
+  );
+}
+
+/*
+ * Model blok desimal: 1 satuan = persegi 10 × 10, 1 persepuluhan = satu
+ * batang (1/10 persegi), 1 perseratusan = satu kotak kecil (1/100),
+ * 1 perseribuan = satu irisan tipis (1/10 kotak kecil).
+ *   parts        {s, d1, d2, d3} banyak blok tiap tempat (0–9)
+ *   opts.compact true → blok lebih kecil (untuk kartu/soal)
+ */
+function buildDecimalBlockModel(parts, opts) {
+  opts = opts || {};
+  var aria = DESIMAL_TEMPAT.map(function (t) {
+    return parts[t.key] + ' ' + t.nama;
+  }).join(', ');
+  var groups = DESIMAL_TEMPAT.map(function (t, i) {
+    var count = parts[t.key] || 0;
+    var pieces = '';
+    for (var k = 0; k < count; k++) {
+      pieces += '<span class="dec-block__piece dec-block__piece--p' + i + '"></span>';
+    }
+    return (
+      '<div class="dec-block__group dec-block__group--p' +
+      i +
+      (count ? '' : ' dec-block__group--empty') +
+      '">' +
+      '<div class="dec-block__pieces">' +
+      (pieces || '<span class="dec-block__none">–</span>') +
+      '</div>' +
+      '<span class="dec-block__label"><strong>' +
+      count +
+      '</strong> ' +
+      esc(t.nama) +
+      '</span>' +
+      '</div>'
+    );
+  }).join('');
+  return (
+    '<div class="dec-block' +
+    (opts.compact ? ' dec-block--compact' : '') +
+    '" role="img" aria-label="Model blok: ' +
+    esc(aria) +
+    '">' +
+    groups +
+    '</div>'
+  );
+}
+
+/* Legenda ukuran blok: 1 satuan = 10 persepuluhan = 100 perseratusan … */
+function buildDecimalBlockLegend() {
+  return (
+    '<div class="dec-legend" aria-hidden="true">' +
+    DESIMAL_TEMPAT.map(function (t, i) {
+      return (
+        '<span class="dec-legend__item">' +
+        '<span class="dec-block__piece dec-block__piece--p' +
+        i +
+        '"></span>' +
+        '<span>1 ' +
+        esc(t.nama) +
+        ' = ' +
+        esc(t.nilai) +
+        '</span></span>'
+      );
+    }).join('') +
+    '</div>'
+  );
+}
+
+/*
+ * Perakit bilangan desimal: empat stepper (satuan, persepuluhan,
+ * perseratusan, perseribuan; masing-masing 0–9) yang langsung
+ * memperbarui tulisan desimal, tabel nilai tempat, model blok, dan
+ * dua cara bacanya.
+ *   id               id elemen pembungkus
+ *   parts            {s, d1, d2, d3} — state perakit (disimpan modul)
+ *   opts.showReading false → sembunyikan cara baca (murid menebak dulu)
+ *   opts.locked      true → stepper dimatikan
+ * Pasang event dengan bindDecimalBuilder(); perakit merender ulang
+ * dirinya sendiri sehingga tahap tidak perlu dirender ulang.
+ */
+function buildDecimalBuilder(id, parts, opts) {
+  opts = opts || {};
+  var str = desimalDariBagian(parts);
+  var steppers = DESIMAL_TEMPAT.map(function (t, i) {
+    var html = buildIntegerStepper(id + t.key, t.nama, parts[t.key], { min: 0, max: 9 });
+    if (opts.locked) html = html.replace(/<button /g, '<button disabled ');
+    return (
+      (i === 1 ? '<span class="dec-builder__koma" aria-hidden="true">,</span>' : '') +
+      '<div class="dec-builder__step dec-builder__step--p' +
+      i +
+      '">' +
+      html +
+      '</div>'
+    );
+  }).join('');
+  return (
+    '<div class="dec-builder" id="' +
+    id +
+    '">' +
+    '<div class="dec-builder__controls" role="group" aria-label="Atur banyak blok tiap nilai tempat">' +
+    steppers +
+    '</div>' +
+    '<div class="dec-builder__out">' +
+    '<p class="dec-builder__num" aria-live="polite"><span class="sr-only">Bilangan: </span>' +
+    esc(str) +
+    '</p>' +
+    buildDecimalBlockModel(parts) +
+    buildPlaceValueTable(str) +
+    (opts.showReading === false
+      ? ''
+      : '<dl class="dec-read">' +
+        '<div><dt>Dibaca</dt><dd>' +
+        esc(bacaDesimalKoma(str)) +
+        '</dd></div>' +
+        '<div><dt>Atau (nilai tempat)</dt><dd>' +
+        esc(bacaDesimalNilaiTempat(str)) +
+        '</dd></div>' +
+        '</dl>') +
+    '</div>' +
+    '</div>'
+  );
+}
+
+/*
+ * onChange(parts) dipanggil setiap nilai stepper berubah (mis. untuk
+ * menyimpan State). Fokus keyboard dipulihkan ke tombol yang ditekan.
+ */
+function bindDecimalBuilder(root, id, parts, opts, onChange) {
+  opts = opts || {};
+  function refresh(focusId) {
+    var el = root.querySelector('#' + id);
+    if (!el) return;
+    el.outerHTML = buildDecimalBuilder(id, parts, opts);
+    bind();
+    var f = focusId && root.querySelector('#' + focusId);
+    if (f && !f.disabled) f.focus();
+  }
+  function bind() {
+    DESIMAL_TEMPAT.forEach(function (t) {
+      bindIntegerStepper(root, id + t.key, function (delta) {
+        var v = Math.max(0, Math.min(9, (parts[t.key] || 0) + delta));
+        if (v === parts[t.key]) return;
+        parts[t.key] = v;
+        if (onChange) onChange(parts);
+        refresh(id + t.key + (delta > 0 ? 'Inc' : 'Dec'));
+      });
+    });
+  }
+  bind();
 }

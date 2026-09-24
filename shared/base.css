@@ -4254,3 +4254,393 @@ details.hint-reveal[open] summary::before {
     font-size: 1.1rem;
   }
 }
+
+/* =========================================================================
+   Bilangan desimal: tabel nilai tempat (.dec-pv*), model blok
+   (.dec-block*, .dec-legend*), perakit desimal (.dec-builder*) dan
+   cara baca (.dec-read). Lihat engine.js bagian 19.
+   Warna tempat: satuan biru, persepuluhan oranye, perseratusan ungu,
+   perseribuan hijau — konsisten di tabel, blok, dan stepper.
+   ========================================================================= */
+
+.dec-pv {
+  margin: var(--space-3) 0;
+}
+
+.dec-pv__caption {
+  margin: 0 0 var(--space-2);
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--color-ink-muted);
+}
+
+.dec-pv__table {
+  border-collapse: separate;
+  border-spacing: 4px;
+  margin: 0 auto;
+}
+
+.dec-pv__cell {
+  min-width: 56px;
+  padding: var(--space-2);
+  border-radius: var(--radius-sm);
+  text-align: center;
+  background: var(--color-bg);
+  border: 2px solid var(--color-border);
+}
+
+.dec-pv__table th.dec-pv__cell {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  color: var(--color-ink-muted);
+}
+
+.dec-pv__table td.dec-pv__cell {
+  font-family: var(--font-mono);
+  font-size: 1.6rem;
+  font-weight: 700;
+}
+
+.dec-pv__nilai td.dec-pv__cell {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--color-ink-muted);
+}
+
+.dec-pv__cell--koma {
+  min-width: 0;
+  padding: var(--space-2) 2px;
+  background: transparent;
+  border-color: transparent;
+}
+
+.dec-pv__table td.dec-pv__cell--koma {
+  color: var(--color-error-strong);
+}
+
+.dec-pv__cell--p0 {
+  background: var(--color-blue-soft);
+  border-color: var(--color-blue);
+}
+
+.dec-pv__cell--p1 {
+  background: var(--color-orange-soft);
+  border-color: var(--color-orange);
+}
+
+.dec-pv__cell--p2 {
+  background: var(--color-purple-soft);
+  border-color: var(--color-purple);
+}
+
+.dec-pv__cell--p3 {
+  background: var(--color-success-soft);
+  border-color: var(--color-success);
+}
+
+.dec-pv__cell--empty {
+  border-style: dashed;
+  background: var(--color-surface);
+}
+
+.dec-pv__cell--hl {
+  box-shadow: 0 0 0 3px var(--color-warning);
+  border-color: var(--color-warning-strong);
+}
+
+/* Model blok */
+.dec-block {
+  --dec-u: 70px;
+  --dec-t: 7px;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: flex-end;
+  gap: var(--space-4);
+  margin: var(--space-3) 0;
+}
+
+.dec-block--compact {
+  --dec-u: 44px;
+  --dec-t: 4.4px;
+  gap: var(--space-3);
+}
+
+.dec-block__group {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.dec-block__pieces {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 3px;
+  min-height: var(--dec-u);
+  max-width: calc(var(--dec-u) * 3 + 6px);
+}
+
+.dec-block__group--empty .dec-block__pieces {
+  align-items: center;
+}
+
+.dec-block__none {
+  color: var(--color-ink-muted);
+  font-size: 1.2rem;
+}
+
+.dec-block__label {
+  font-size: 0.8rem;
+  color: var(--color-ink-muted);
+  text-align: center;
+}
+
+.dec-block__label strong {
+  font-family: var(--font-mono);
+  font-size: 1rem;
+  color: var(--color-ink);
+}
+
+.dec-block__piece {
+  display: inline-block;
+  flex: none;
+}
+
+.dec-block__piece--p0 {
+  width: var(--dec-u);
+  height: var(--dec-u);
+  border: 1px solid var(--color-blue-strong);
+  background-color: var(--color-blue-soft);
+  background-image: linear-gradient(to right, rgba(24, 86, 164, 0.35) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(24, 86, 164, 0.35) 1px, transparent 1px);
+  background-size: var(--dec-t) var(--dec-t);
+}
+
+.dec-block__piece--p1 {
+  width: var(--dec-t);
+  height: var(--dec-u);
+  background: var(--color-orange);
+  box-shadow: inset 0 0 0 1px var(--color-orange-strong);
+}
+
+.dec-block__piece--p2 {
+  width: var(--dec-t);
+  height: var(--dec-t);
+  background: var(--color-purple);
+}
+
+.dec-block__piece--p3 {
+  width: 2px;
+  height: var(--dec-t);
+  background: var(--color-success);
+}
+
+.dec-legend {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--space-2) var(--space-4);
+  margin: var(--space-2) 0 var(--space-3);
+  font-size: 0.82rem;
+  color: var(--color-ink-muted);
+}
+
+.dec-legend__item {
+  display: inline-flex;
+  align-items: flex-end;
+  gap: var(--space-2);
+}
+
+.dec-legend .dec-block__piece--p0 {
+  --dec-u: 28px;
+  --dec-t: 2.8px;
+}
+
+.dec-legend .dec-block__piece--p1 {
+  width: 3px;
+  height: 28px;
+}
+
+.dec-legend .dec-block__piece--p2 {
+  width: 6px;
+  height: 6px;
+}
+
+.dec-legend .dec-block__piece--p3 {
+  width: 2px;
+  height: 6px;
+}
+
+/* Perakit desimal */
+.dec-builder {
+  border: 2px dashed var(--color-border-strong);
+  border-radius: var(--radius-md);
+  padding: var(--space-4);
+  background: var(--color-bg);
+}
+
+.dec-builder__controls {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: flex-end;
+  gap: var(--space-3);
+}
+
+.dec-builder__step {
+  padding: var(--space-2);
+  border-radius: var(--radius-md);
+  border-top: 4px solid var(--color-border-strong);
+  background: var(--color-surface);
+}
+
+.dec-builder__step--p0 {
+  border-top-color: var(--color-blue);
+}
+
+.dec-builder__step--p1 {
+  border-top-color: var(--color-orange);
+}
+
+.dec-builder__step--p2 {
+  border-top-color: var(--color-purple);
+}
+
+.dec-builder__step--p3 {
+  border-top-color: var(--color-success);
+}
+
+.dec-builder .int-stepper__val {
+  color: var(--color-ink);
+}
+
+.dec-builder__koma {
+  align-self: center;
+  font-family: var(--font-mono);
+  font-size: 2.4rem;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--color-error-strong);
+}
+
+.dec-builder__out {
+  margin-top: var(--space-4);
+}
+
+.dec-builder__num {
+  margin: 0;
+  text-align: center;
+  font-family: var(--font-mono);
+  font-size: 2.6rem;
+  font-weight: 700;
+  color: var(--color-primary-strong);
+}
+
+.dec-read {
+  display: grid;
+  gap: var(--space-2);
+  margin: var(--space-3) 0 0;
+}
+
+.dec-read > div {
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+}
+
+.dec-read dt {
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--color-ink-muted);
+}
+
+.dec-read dd {
+  margin: 2px 0 0;
+  font-weight: 600;
+}
+
+.dec-mark {
+  padding: 0 3px;
+  border-radius: var(--radius-sm);
+  background: var(--color-warning-soft);
+  color: var(--color-warning-strong);
+  box-shadow: inset 0 -3px 0 var(--color-warning);
+}
+
+@media (max-width: 640px) {
+  .dec-pv__cell {
+    min-width: 40px;
+    padding: 6px 4px;
+  }
+
+  .dec-pv__table th.dec-pv__cell {
+    font-size: 0.62rem;
+  }
+
+  .dec-pv__table td.dec-pv__cell {
+    font-size: 1.3rem;
+  }
+
+  .dec-block {
+    --dec-u: 56px;
+    --dec-t: 5.6px;
+    gap: var(--space-3);
+  }
+
+  .dec-pv__cell,
+  .dec-pv__table th.dec-pv__cell {
+    min-width: 0;
+    hyphens: manual;
+  }
+
+  .dec-block {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: end;
+  }
+
+  .dec-builder {
+    padding: var(--space-3) var(--space-2);
+  }
+
+  /* Empat stepper menjadi kisi 2 × 2; koma diwakili tepi merah stepper
+     persepuluhan agar tidak memakan satu baris sendiri. */
+  .dec-builder__controls {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--space-2);
+  }
+
+  .dec-builder__koma {
+    display: none;
+  }
+
+  .dec-builder__step {
+    padding: var(--space-2) 4px;
+  }
+
+  .dec-builder .int-stepper__row {
+    gap: 4px;
+  }
+
+  .dec-builder .int-stepper__btn {
+    min-width: 40px;
+    min-height: 40px;
+  }
+
+  .dec-builder .int-stepper__val {
+    min-width: 1.6ch;
+    font-size: 1.3rem;
+  }
+
+  .dec-builder__num {
+    font-size: 2.1rem;
+  }
+}
