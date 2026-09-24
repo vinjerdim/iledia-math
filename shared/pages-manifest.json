@@ -24,19 +24,22 @@
     "extraBody": "partials/reset-modal.html"
   },
   "fase-d/mpi-1.4": {
-    "title": "Eksplorasi Bilangan Rasional — Matematika Fase D",
-    "description": "Media pembelajaran interaktif untuk membandingkan dan mengubah representasi bilangan rasional: pecahan biasa, pecahan campuran, dan desimal.",
+    "title": "Menyederhanakan & Menyamakan Penyebut Pecahan — Matematika Fase D",
+    "description": "Media pembelajaran interaktif berbasis Problem-Based Learning untuk menyederhanakan pecahan dan menyamakan penyebut dua pecahan atau lebih sebagai dasar perbandingan.",
     "kicker": "Matematika — Fase D (SMP)",
-    "h1": "Eksplorasi Bilangan Rasional",
-    "stageCount": 8,
+    "h1": "Menyederhanakan & Menyamakan Penyebut Pecahan",
+    "stageCount": 10,
+    "extraBody": "partials/reset-modal.html",
     "extraScripts": [
       "app-core.js",
       "app-stage-orientasi.js",
-      "app-stage-eksplorasi.js",
-      "app-stage-konversi.js",
-      "app-stage-bandingkan.js",
-      "app-stage-urutkan.js",
-      "app-stage-tantangan.js",
+      "app-stage-organisasi.js",
+      "app-stage-selidik-sederhana.js",
+      "app-stage-latih-sederhana.js",
+      "app-stage-selidik-samakan.js",
+      "app-stage-latih-samakan.js",
+      "app-stage-karya.js",
+      "app-stage-evaluasi.js",
       "app-stage-refleksi.js",
       "app-stage-selesai.js"
     ]

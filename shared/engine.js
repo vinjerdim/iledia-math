@@ -21,6 +21,12 @@
     8. Komponen Discovery Learning lanjutan (langkah isian
        bertahap, pemilahan kategori, grafik perbandingan)
     9. Bilangan bulat: cara baca baku & garis bilangan interaktif
+   10. Pecahan: notasi baku, cara baca & model visual
+   11. Bilangan bulat: penempatan, perbandingan & pengurutan
+   12. Komponen Cooperative Learning
+   13. Pertanyaan penuntun bertingkat
+   14. Pecahan senilai (menyederhanakan & menyamakan penyebut) dan
+       komponen urut-ketuk
    ============================================================ */
 
 /* ============================================================
@@ -86,6 +92,24 @@ function gcd(a, b) {
     a = t;
   }
   return a;
+}
+
+/*
+ * KPK (kelipatan persekutuan terkecil) dua bilangan asli, dan KPK
+ * sekumpulan bilangan. Dipakai modul pecahan (fase-d/mpi-1.4) untuk
+ * mencari penyebut bersama terkecil.
+ */
+function kpk(a, b) {
+  a = Math.abs(Math.round(a));
+  b = Math.abs(Math.round(b));
+  if (!a || !b) return 0;
+  return (a / gcd(a, b)) * b;
+}
+
+function kpkBanyak(arr) {
+  return arr.reduce(function (acc, n) {
+    return kpk(acc, n);
+  }, 1);
 }
 
 /*
@@ -2186,6 +2210,14 @@ function buildFracInline(num, den, whole) {
  *   opts.caption  teks kecil di bawah model (opsional)
  *   opts.aria     label aksesibel (default dibuat otomatis)
  *   opts.small    true → ukuran ringkas
+ *   opts.wide     true → pita lebih lebar (untuk membandingkan beberapa
+ *                 pita yang ditumpuk; semua pita sama panjang)
+ *   opts.group    (pita saja) garis tebal setiap `group` bagian — mis.
+ *                 buildFractionModel(6, 8, 0, { group: 2 }) menampilkan 6/8
+ *                 yang potongannya digabung berdua-dua menjadi 3/4, atau
+ *                 buildFractionModel(9, 12, 0, { group: 3 }) menampilkan 3/4
+ *                 yang tiap bagiannya dipotong lagi menjadi 3 (9/12).
+ *                 Diabaikan bila `den` tidak habis dibagi `group`.
  */
 function buildFractionModel(num, den, whole, opts) {
   opts = opts || {};
@@ -2193,6 +2225,7 @@ function buildFractionModel(num, den, whole, opts) {
   den = Math.max(1, Math.round(den));
   var sisa = whole * den + Math.max(0, Math.round(num));
   var banyakBangun = Math.max(1, Math.ceil(sisa / den));
+  var group = opts.group && den % opts.group === 0 ? opts.group : 0;
   var shapes = '';
 
   for (var b = 0; b < banyakBangun; b++) {
@@ -2252,7 +2285,11 @@ function buildFractionModel(num, den, whole, opts) {
     } else {
       var cells = '';
       for (var j = 0; j < den; j++) {
-        cells += '<span class="frac-model__cell' + (j < arsir ? ' is-on' : '') + '"></span>';
+        cells +=
+          '<span class="frac-model__cell' +
+          (j < arsir ? ' is-on' : '') +
+          (group > 1 && (j + 1) % group === 0 && j < den - 1 ? ' is-group-end' : '') +
+          '"></span>';
       }
       shapes +=
         '<span class="frac-model__bar" style="grid-template-columns:repeat(' +
@@ -2276,6 +2313,7 @@ function buildFractionModel(num, den, whole, opts) {
     '<figure class="frac-model frac-model--' +
     (opts.shape === 'circle' ? 'circle' : 'bar') +
     (opts.small ? ' frac-model--small' : '') +
+    (opts.wide ? ' frac-model--wide' : '') +
     '" role="img" aria-label="' +
     esc(aria) +
     '">' +
@@ -3047,4 +3085,205 @@ function guidedQuizAllCorrect(list, pilih) {
   return list.every(function (q) {
     return pilih[q.id] === q.correct;
   });
+}
+
+/* ============================================================
+   14. PECAHAN SENILAI & KOMPONEN URUT-KETUK
+   Dipakai modul menyederhanakan & menyamakan penyebut pecahan
+   (fase-d/mpi-1.4). Gaya .order-picker ada di shared/base.css.
+   ============================================================ */
+
+/* Apakah a/b senilai dengan c/d? Pecahan berupa { num, den }. */
+function pecahanSetara(a, b) {
+  return a.num * b.den === b.num * a.den;
+}
+
+/*
+ * Bentuk paling sederhana num/den: pembilang dan penyebut dibagi FPB-nya.
+ *   sederhanakanPecahan(6, 8) → { num: 3, den: 4, fpb: 2 }
+ */
+function sederhanakanPecahan(num, den) {
+  var f = gcd(num, den) || 1;
+  return { num: num / f, den: den / f, fpb: f };
+}
+
+/*
+ * Mendiagnosis jawaban "sederhanakan asal":
+ *   'tepat'           senilai dengan asal DAN FPB pembilang-penyebutnya 1
+ *   'belum-sederhana' senilai, tetapi masih bisa dibagi lagi
+ *   'tidak-setara'    nilainya berubah
+ * `v` dan `asal` berupa { num, den }.
+ */
+function diagnosaSederhana(v, asal) {
+  if (!v.den || !pecahanSetara(v, asal)) return 'tidak-setara';
+  return gcd(v.num, v.den) === 1 ? 'tepat' : 'belum-sederhana';
+}
+
+/*
+ * Komponen urut-ketuk: murid mengetuk butir satu per satu untuk mengisi
+ * urutan (mis. dari paling besar ke paling kecil, atau langkah-langkah
+ * rencana penyelidikan). Butir di "kolam" tampil dalam urutan ACAK yang
+ * disimpan di State, sehingga stabil lintas render/reload namun teracak
+ * ulang setiap Reset.
+ *
+ *   items         [{ id, label }]   label boleh HTML
+ *   correctOrder  [id, ...]         urutan benar
+ *
+ * ensureOrderPicker(state, key, items) menyiapkan state[key]:
+ *   { order, picked, done, correct, attempts, salah }
+ */
+function ensureOrderPicker(state, key, items) {
+  var st = state[key];
+  if (!st || typeof st !== 'object' || !Array.isArray(st.picked)) {
+    st = { order: null, picked: [], done: false, correct: false, attempts: 0, salah: false };
+  }
+  var ids = optionIds(items);
+  st.picked = st.picked.filter(function (id) {
+    return ids.indexOf(id) !== -1;
+  });
+  ensureShuffledOrder(st, 'order', items);
+  state[key] = st;
+  return st;
+}
+
+/*
+ * Merender komponen urut-ketuk.
+ *   id                awalan id/atribut DOM
+ *   opts.slotLabels   label tiap posisi (mis. ['Paling laris', '', 'Paling sedikit'])
+ *   opts.correctOrder urutan benar (untuk menandai posisi setelah diperiksa)
+ *   opts.checkLabel   teks tombol periksa (default 'Periksa Urutan')
+ */
+function buildOrderPicker(id, items, st, opts) {
+  opts = opts || {};
+  var byId = {};
+  items.forEach(function (it) {
+    byId[it.id] = it;
+  });
+  var lengkap = st.picked.length === items.length;
+  var slots = '';
+  for (var i = 0; i < items.length; i++) {
+    var pid = st.picked[i];
+    var cls = 'order-picker__slot';
+    if (pid && (st.done || st.salah) && opts.correctOrder) {
+      cls += opts.correctOrder[i] === pid ? ' is-ok' : ' is-bad';
+    }
+    var label = opts.slotLabels && opts.slotLabels[i] ? opts.slotLabels[i] : '';
+    slots +=
+      '<li class="' +
+      cls +
+      '">' +
+      '<span class="order-picker__rank">' +
+      (i + 1) +
+      '</span>' +
+      (pid
+        ? '<button type="button" class="order-picker__chip" data-' +
+          id +
+          '-unpick="' +
+          esc(pid) +
+          '"' +
+          (st.done ? ' disabled' : '') +
+          ' aria-label="Keluarkan dari urutan ke-' +
+          (i + 1) +
+          '">' +
+          byId[pid].label +
+          '</button>'
+        : '<span class="order-picker__empty">' +
+          (label ? esc(label) : 'ketuk pilihan di bawah') +
+          '</span>') +
+      '</li>';
+  }
+  var pool = orderByIds(items, st.order)
+    .filter(function (it) {
+      return st.picked.indexOf(it.id) === -1;
+    })
+    .map(function (it) {
+      return (
+        '<button type="button" class="order-picker__chip order-picker__chip--pool" data-' +
+        id +
+        '-pick="' +
+        esc(it.id) +
+        '">' +
+        it.label +
+        '</button>'
+      );
+    })
+    .join('');
+  return (
+    '<div class="order-picker" id="' +
+    id +
+    '">' +
+    '<ol class="order-picker__slots">' +
+    slots +
+    '</ol>' +
+    (st.done
+      ? ''
+      : '<div class="order-picker__pool" role="group" aria-label="Pilihan yang belum diurutkan">' +
+        (pool || '<span class="dl-caption">Semua sudah diurutkan.</span>') +
+        '</div>' +
+        '<div class="btn-group">' +
+        '<button type="button" class="btn btn--primary" id="' +
+        id +
+        'Check"' +
+        (lengkap ? '' : ' disabled') +
+        '>' +
+        esc(opts.checkLabel || 'Periksa Urutan') +
+        '</button>' +
+        (st.picked.length
+          ? '<button type="button" class="btn btn--ghost" id="' + id + 'Clear">Ulangi</button>'
+          : '') +
+        '</div>') +
+    '</div>'
+  );
+}
+
+/*
+ * Memasang event buildOrderPicker di dalam `root`. Urutan dianggap benar
+ * bila sama persis dengan `correctOrder`; `save` lalu `rerender`
+ * dipanggil setelah setiap perubahan.
+ */
+function bindOrderPicker(root, id, items, st, correctOrder, save, rerender) {
+  root.querySelectorAll('[data-' + id + '-pick]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      if (st.done) return;
+      st.picked.push(btn.getAttribute('data-' + id + '-pick'));
+      st.salah = false;
+      save();
+      rerender();
+    });
+  });
+  root.querySelectorAll('[data-' + id + '-unpick]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      if (st.done) return;
+      var pid = btn.getAttribute('data-' + id + '-unpick');
+      st.picked = st.picked.filter(function (x) {
+        return x !== pid;
+      });
+      st.salah = false;
+      save();
+      rerender();
+    });
+  });
+  var clear = root.querySelector('#' + id + 'Clear');
+  if (clear) {
+    clear.addEventListener('click', function () {
+      st.picked = [];
+      st.salah = false;
+      save();
+      rerender();
+    });
+  }
+  var check = root.querySelector('#' + id + 'Check');
+  if (check) {
+    check.addEventListener('click', function () {
+      if (st.picked.length !== items.length) return;
+      st.attempts += 1;
+      st.correct = st.picked.every(function (x, i) {
+        return x === correctOrder[i];
+      });
+      st.done = st.correct;
+      st.salah = !st.correct;
+      save();
+      rerender();
+    });
+  }
 }
