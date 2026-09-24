@@ -77,10 +77,11 @@
   },
   "fase-f/mpi-1.1": {
     "title": "Barisan dan Deret Aritmetika — Matematika Fase F",
-    "description": "Media pembelajaran interaktif untuk mengidentifikasi pola, menentukan rumus suku ke-n, dan menghitung jumlah n suku pertama pada barisan dan deret aritmetika.",
-    "kicker": "Matematika — Fase F (SMK)",
+    "description": "Media pembelajaran interaktif berbasis Discovery Learning untuk menjelaskan pola barisan aritmetika, menurunkan rumus suku ke-n dan jumlah n suku deret aritmetika, serta menerapkannya dalam menyelesaikan masalah kontekstual.",
+    "kicker": "Matematika — Fase F (SMK RPL)",
     "h1": "Barisan dan Deret Aritmetika",
-    "stageCount": 9
+    "stageCount": 10,
+    "extraBody": "partials/reset-modal.html"
   },
   "fase-f/mpi-1.2": {
     "title": "Barisan dan Deret Geometri — Matematika Fase F",

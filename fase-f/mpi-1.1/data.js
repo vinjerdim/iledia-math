@@ -1,469 +1,566 @@
 'use strict';
 
 /* ============================================================
-   data.js — Konten pembelajaran
+   data.js — Konten media pembelajaran
    Matematika: Barisan dan Deret Aritmetika
    Fase F — SMK Rekayasa Perangkat Lunak
+
+   Tujuan Pembelajaran:
+   Menjelaskan pola barisan aritmetika, menurunkan rumus suku ke-n
+   dan jumlah n suku deret aritmetika, serta menerapkannya dalam
+   menyelesaikan masalah kontekstual.
+
+   Model pembelajaran: DISCOVERY LEARNING (Penemuan Terbimbing).
+   Pemetaan sintaks ke tahap media:
+
+     Sintaks 1 — Stimulation ................ tahap 'stimulasi'
+     Sintaks 2 — Problem statement .......... tahap 'masalah'
+     Sintaks 3 — Data collection ............ tahap 'koleksi'
+     Sintaks 4 — Data processing ............ tahap 'olahUn' & 'olahSn'
+     Sintaks 5 — Verification ............... tahap 'verifikasi'
+     Sintaks 6 — Generalization ............. tahap 'generalisasi'
+     Penerapan & penutup .................... 'terapkan', 'refleksi', 'selesai'
+
+   Rangkaian aktivitas (± 2 × 45 menit, murid berpasangan/kelompok kecil):
+     1. Stimulasi (10')  — kasus XP naik level di game; murid menduga
+                           XP level 20 & total XP tanpa menghitung.
+     2. Masalah   (5')   — memilih pertanyaan inti & menulis hipotesis.
+     3. Data      (15')  — mengungkap suku tiga konteks RPL, mencari
+                           a dan b, memilah barisan aritmetika/bukan.
+     4. Olah data (20')  — tabel pola koefisien b → rumus Uₙ;
+                           trik Gauss (maju + mundur) → rumus Sₙ.
+     5. Bukti     (10')  — menguji rumus pada data nyata & dugaan awal.
+     6. Simpulan  (10')  — menyusun kesimpulan dari bank kalimat acak.
+     7. Uji terap (15')  — enam masalah kontekstual RPL.
+     8. Refleksi  (5')   — refleksi tertulis & penilaian diri.
+
+   Catatan: seluruh daftar pilihan jawaban di berkas ini ditulis dalam
+   urutan "wajar". Pengacakan dilakukan app.js memakai
+   ensureShuffledOrder()/shuffleArray() dari shared/engine.js, satu kali
+   saat state disiapkan, sehingga tiap murid (dan tiap Reset) mendapat
+   urutan berbeda.
    ============================================================ */
 
+var DL = 'Discovery Learning';
+
 var DATA = {
-  meta: {
-    title: 'Barisan dan Deret Aritmetika',
-    subject: 'Matematika — Fase F (SMK RPL)',
-    goal: 'Saya dapat mengidentifikasi pola, menentukan rumus suku ke-n (Uₙ), dan menghitung jumlah n suku pertama (Sₙ) pada barisan dan deret aritmetika.',
+  /* ----------------------------------------------------------
+     TAHAP 1 — STIMULASI
+     Konflik kognitif: suku ke-20 dan jumlah 20 suku terasa
+     "harus ditulis satu per satu". Dugaan TIDAK dinilai.
+     ---------------------------------------------------------- */
+  stimulasi: {
+    kicker: 'Tahap 1 · Stimulasi',
+    syntax: DL + ' · Sintaks 1',
+    goal: 'Mengamati pola kenaikan XP dan menduga XP pada level yang jauh.',
+    guru: 'Bacakan kasusnya dengan antusias. Minta murid menduga <em>tanpa kalkulator dan tanpa menulis 20 suku</em>. Jangan membenarkan atau menyalahkan dugaan apa pun — dugaan ini akan diuji sendiri oleh murid pada tahap Pembuktian.',
+    judul: 'XP Naik Level di Game Buatan Dimas',
+    cerita:
+      'Dimas, siswa RPL, sedang membuat game edukasi. Agar tantangannya meningkat, XP yang dibutuhkan untuk naik level ia atur bertambah secara teratur.',
+    terms: [120, 150, 180, 210],
+    labels: ['Level 1', 'Level 2', 'Level 3', 'Level 4'],
+    tail: { label: 'Level 20', value: '?' },
+    satuan: 'XP',
+    pertanyaanUn: 'Dugaanmu: berapa XP yang dibutuhkan untuk naik di Level 20?',
+    opsiUn: [
+      { id: 'u690', label: '690 XP' },
+      { id: 'u720', label: '720 XP' },
+      { id: 'u600', label: '600 XP' },
+      { id: 'u2400', label: '2.400 XP' },
+    ],
+    pertanyaanSn: 'Dugaanmu: berapa total XP dari Level 1 sampai Level 20?',
+    opsiSn: [
+      { id: 's8100', label: '8.100 XP' },
+      { id: 's13800', label: '13.800 XP' },
+      { id: 's6900', label: '6.900 XP' },
+      { id: 's4050', label: '4.050 XP' },
+    ],
+    alasanLabel: 'Bagaimana kamu mendapatkan dugaan itu?',
+    alasanPlaceholder: 'Contoh: aku melihat XP selalu bertambah …',
+    catatan:
+      'Belum ada jawaban benar atau salah di sini. Simpan dugaanmu — nanti kamu sendiri yang akan membuktikannya.',
+    nextLabel: 'Simpan Dugaan & Lanjut →',
   },
 
   /* ----------------------------------------------------------
-     TAHAP 2 — EKSPLORASI POLA
+     TAHAP 2 — IDENTIFIKASI MASALAH
      ---------------------------------------------------------- */
-  eksplorasi: {
-    title: 'Mengenal Pola Barisan Aritmetika',
-    instruction:
-      'Tekan tombol untuk mengungkap suku berikutnya. Amati pola yang terbentuk, lalu tentukan suku pertama (a) dan beda (b).',
+  masalah: {
+    kicker: 'Tahap 2 · Identifikasi Masalah',
+    syntax: DL + ' · Sintaks 2',
+    goal: 'Merumuskan pertanyaan inti yang perlu dijawab agar dugaan dapat diuji.',
+    guru: 'Arahkan diskusi pada dua pertanyaan besar: (1) aturan umum suku ke-n, (2) aturan umum jumlah n suku. Tampung hipotesis murid di papan tulis tanpa dikoreksi.',
+    pengantar:
+      'Menulis XP level 1 sampai 20 satu per satu memang bisa, tetapi lama dan rawan salah. Bagaimana jika Dimas nanti membuat 100 level?',
+    pertanyaan: 'Pertanyaan mana yang paling tepat untuk kita selidiki?',
+    opsi: [
+      {
+        id: 'rumus',
+        label:
+          'Adakah aturan umum untuk menghitung XP level ke-n dan total XP n level tanpa menulis semua levelnya?',
+      },
+      { id: 'tambah', label: 'Berapa XP level 21 jika kita terus menambahkan satu per satu?' },
+      { id: 'kali', label: 'Berapa hasil 120 dikali 20?' },
+      { id: 'game', label: 'Game apa yang paling cocok dibuat Dimas?' },
+    ],
+    correct: 'rumus',
+    umpan: {
+      rumus:
+        '<strong>Tepat.</strong> Inilah dua pertanyaan penyelidikan kita: aturan <em>suku ke-n</em> dan aturan <em>jumlah n suku pertama</em>.',
+      tambah:
+        'Cara ini tetap mengharuskan kita menulis semua suku. Cari pertanyaan yang membawa ke <em>aturan umum</em>.',
+      kali: 'Mengalikan 120 × 20 menganggap XP tiap level sama, padahal XP bertambah. Coba pilih lagi.',
+      game: 'Pertanyaan ini menarik, tetapi tidak membantu menjawab soal XP. Coba pilih lagi.',
+    },
+    hipotesisLabel:
+      'Tulis hipotesismu: menurutmu, apa yang membuat XP bertambah secara teratur, dan bagaimana memanfaatkannya?',
+    hipotesisPlaceholder: 'Contoh: setiap naik level XP bertambah angka yang sama, jadi …',
+    nextLabel: 'Mulai Mengumpulkan Data →',
+  },
+
+  /* ----------------------------------------------------------
+     TAHAP 3 — PENGUMPULAN DATA
+     Bagian A: ungkap suku, cari a dan b (3 konteks RPL).
+     Bagian B: pilah barisan aritmetika / bukan.
+     ---------------------------------------------------------- */
+  koleksi: {
+    kicker: 'Tahap 3 · Pengumpulan Data',
+    syntax: DL + ' · Sintaks 3',
+    goal: 'Mengumpulkan data suku-suku barisan dan menemukan apa yang tetap di antara suku berurutan.',
+    guru: 'Berkeliling antarkelompok. Ajukan pertanyaan pelacak: "Apa yang berubah? Apa yang tetap? Bagaimana jika bedanya negatif?" Biarkan media memberi petunjuk berjenjang lebih dulu sebelum guru membantu.',
+    instruksiA:
+      'Ungkap suku-suku barisan (minimal 4 suku), amati selisih dua suku yang berurutan, lalu isi suku pertama (a) dan beda (b).',
+    minReveal: 4,
     konteks: [
       {
-        id: 'ctx1',
-        badge: 'Kursi Bioskop',
-        story:
-          'Sebuah bioskop memiliki kursi yang bertambah secara teratur di setiap barisnya. Baris ke-1 memiliki 8 kursi, baris ke-2 memiliki 13 kursi, dan seterusnya.',
-        icon: '🎬',
-        terms: [8, 13, 18, 23, 28, 33],
+        id: 'lab',
+        badge: 'Kursi Lab Bertingkat',
+        icon: '🪑',
+        cerita:
+          'Lab multimedia sekolah berbentuk tribun. Baris paling depan berisi 12 kursi, baris di belakangnya selalu lebih banyak dengan pola teratur.',
+        terms: [12, 15, 18, 21, 24, 27],
         labels: ['Baris 1', 'Baris 2', 'Baris 3', 'Baris 4', 'Baris 5', 'Baris 6'],
-        unit: 'kursi',
-        a: 8,
-        b: 5,
-        hint_a: 'Suku pertama adalah jumlah kursi di baris ke-1.',
-        hint_b: 'Berapa selisih jumlah kursi antara dua baris yang berurutan?',
+        satuan: 'kursi',
+        a: 12,
+        b: 3,
+        hints: [
+          'Suku pertama (a) adalah banyak kursi di <strong>Baris 1</strong>.',
+          'Beda (b) = suku berikutnya − suku sebelumnya, mis. 15 − 12.',
+        ],
       },
       {
-        id: 'ctx2',
+        id: 'hosting',
         badge: 'Biaya Hosting',
-        story:
-          'Tim pengembang RPL menyewa server cloud. Bulan pertama biayanya Rp 200.000. Setiap bulan biaya bertambah Rp 50.000 karena kapasitas ditingkatkan.',
         icon: '☁️',
-        terms: [200, 250, 300, 350, 400, 450],
-        labels: ['Bln 1', 'Bln 2', 'Bln 3', 'Bln 4', 'Bln 5', 'Bln 6'],
-        unit: 'ribu rupiah',
-        a: 200,
-        b: 50,
-        hint_a: 'Suku pertama adalah biaya di bulan ke-1 (dalam ribu rupiah).',
-        hint_b: 'Berapa kenaikan biaya dari satu bulan ke bulan berikutnya?',
-      },
-      {
-        id: 'ctx3',
-        badge: 'Commit GitHub',
-        story:
-          'Rahel sedang belajar Git. Minggu pertama ia membuat 3 commit, minggu kedua 7 commit, dan seterusnya — bertambah secara teratur.',
-        icon: '💻',
-        terms: [3, 7, 11, 15, 19, 23],
-        labels: ['Mgg 1', 'Mgg 2', 'Mgg 3', 'Mgg 4', 'Mgg 5', 'Mgg 6'],
-        unit: 'commit',
-        a: 3,
-        b: 4,
-        hint_a: 'Suku pertama adalah jumlah commit di minggu ke-1.',
-        hint_b: 'Berapa tambahan commit dari satu minggu ke minggu berikutnya?',
-      },
-    ],
-  },
-
-  /* ----------------------------------------------------------
-     TAHAP 3 — TEMUKAN RUMUS Uₙ
-     ---------------------------------------------------------- */
-  rumusUn: {
-    title: 'Menemukan Rumus Suku ke-n (Uₙ)',
-    instruction:
-      'Lengkapi tabel berikut untuk menemukan pola, lalu turunkan rumus Uₙ secara mandiri.',
-    barisan: [3, 7, 11, 15, 19],
-    a: 3,
-    b: 4,
-    konteks: 'Commit GitHub Rahel: 3, 7, 11, 15, 19, ...',
-    tableRows: [
-      { n: 1, bentuk: 'a', expanded: '3', Un: 3 },
-      { n: 2, bentuk: 'a + b', expanded: '3 + 4', Un: 7 },
-      { n: 3, bentuk: 'a + 2b', expanded: '3 + 2×4', Un: 11 },
-      { n: 4, bentuk: 'a + 3b', expanded: '3 + 3×4', Un: 15 },
-      { n: 5, bentuk: 'a + 4b', expanded: '3 + 4×4', Un: 19 },
-      { n: 'n', bentuk: 'a + (n−1)b', expanded: '3 + (n−1)×4', Un: null },
-    ],
-    steps: [
-      {
-        id: 's1',
-        question:
-          'Perhatikan kolom "Bentuk Umum". Berapa kali <strong>b</strong> ditambahkan untuk mendapatkan suku ke-4?',
-        answer: '3',
-        hint: 'U₄ = a + ?×b. Lihat polanya: U₁ tidak ada b, U₂ ada 1b, U₃ ada 2b, U₄ ada...?',
-        explanation:
-          'Untuk suku ke-4, b ditambahkan sebanyak 3 kali: U₄ = a + 3b. Polanya: Uₙ = a + (n−1)b.',
-      },
-      {
-        id: 's2',
-        question: 'Berapa nilai <strong>U₁₀</strong> pada barisan commit Rahel (a=3, b=4)?',
-        answer: '39',
-        hint: 'Gunakan rumus Uₙ = a + (n−1)b dengan n=10, a=3, b=4.',
-        explanation:
-          'U₁₀ = 3 + (10−1)×4 = 3 + 9×4 = 3 + 36 = 39. Rahel membuat 39 commit di minggu ke-10.',
-      },
-    ],
-  },
-
-  /* ----------------------------------------------------------
-     TAHAP 4 — LATIHAN Uₙ
-     ---------------------------------------------------------- */
-  latihanUn: {
-    title: 'Latihan Menghitung Suku ke-n',
-    instruction: 'Hitung nilai Uₙ yang diminta. Gunakan rumus Uₙ = a + (n−1)b.',
-    soal: [
-      {
-        id: 'u1',
-        konteks: null,
-        barisan_display: '3, 7, 11, 15, ...',
-        question: 'Tentukan <strong>U₁₀</strong> dari barisan 3, 7, 11, 15, ...',
-        a: 3,
-        b: 4,
-        n: 10,
-        answer: 39,
+        cerita:
+          'Tim RPL menyewa server cloud untuk aplikasi kantin. Biaya bulan pertama Rp150 ribu, lalu naik tetap setiap bulan karena kapasitas ditambah.',
+        terms: [150, 175, 200, 225, 250, 275],
+        labels: ['Bulan 1', 'Bulan 2', 'Bulan 3', 'Bulan 4', 'Bulan 5', 'Bulan 6'],
+        satuan: 'ribu rupiah',
+        a: 150,
+        b: 25,
         hints: [
-          'Identifikasi: a = 3 (suku pertama), b = 7 − 3 = 4 (beda). Gunakan Uₙ = a + (n−1)b dengan n = 10.',
-          'U₁₀ = 3 + (10−1) × 4 = 3 + 9 × 4 = 3 + ... Hitung 9 × 4 terlebih dahulu.',
+          'Suku pertama (a) adalah biaya <strong>Bulan 1</strong> (dalam ribu rupiah).',
+          'Hitung 175 − 150, lalu 200 − 175. Apakah hasilnya sama?',
         ],
-        explanation: 'U₁₀ = a + (n−1)b = 3 + (10−1)×4 = 3 + 36 = <strong>39</strong>.',
       },
       {
-        id: 'u2',
-        konteks: null,
-        barisan_display: '50, 46, 42, 38, ...',
-        question: 'Tentukan <strong>U₈</strong> dari barisan 50, 46, 42, 38, ...',
-        a: 50,
-        b: -4,
-        n: 8,
-        answer: 22,
-        hints: [
-          'Barisan ini menurun. Hitung beda: b = 46 − 50 = −4. Gunakan Uₙ = a + (n−1)b dengan n = 8.',
-          'U₈ = 50 + (8−1) × (−4) = 50 + 7 × (−4) = 50 + ... Hitung 7 × (−4) terlebih dahulu.',
-        ],
-        explanation:
-          'U₈ = 50 + (8−1)×(−4) = 50 + (−28) = <strong>22</strong>. Beda negatif → barisan menurun.',
-      },
-      {
-        id: 'u3',
-        konteks: 'Biaya hosting server naik Rp 50.000 per bulan, mulai dari Rp 200.000.',
-        barisan_display: '200, 250, 300, 350, ... (ribu rupiah)',
-        question: 'Berapa biaya hosting di <strong>bulan ke-12</strong>?',
-        a: 200,
-        b: 50,
-        n: 12,
-        answer: 750,
-        hints: [
-          'a = 200 (biaya bulan pertama, dalam ribu), b = 50 (kenaikan tiap bulan). Cari U₁₂.',
-          'U₁₂ = 200 + (12−1) × 50 = 200 + 11 × 50 = 200 + ... Berapa 11 × 50?',
-        ],
-        explanation:
-          'U₁₂ = 200 + (12−1)×50 = 200 + 550 = <strong>750</strong> (ribu rupiah). Biaya bulan ke-12 adalah Rp 750.000.',
-      },
-      {
-        id: 'u4',
-        konteks: null,
-        barisan_display: '5, 12, 19, 26, ...',
-        question: 'Diketahui a = 5 dan b = 7. Tentukan <strong>U₂₀</strong>.',
-        a: 5,
-        b: 7,
-        n: 20,
-        answer: 138,
-        hints: [
-          'Gunakan langsung rumus Uₙ = a + (n−1)b dengan a=5, b=7, n=20.',
-          'U₂₀ = 5 + (20−1) × 7 = 5 + 19 × 7 = 5 + ... Hitung 19 × 7 = ?',
-        ],
-        explanation: 'U₂₀ = 5 + (20−1)×7 = 5 + 19×7 = 5 + 133 = <strong>138</strong>.',
-      },
-      {
-        id: 'u5',
-        konteks:
-          'Dika menulis laporan magang. Hari pertama ia menulis 15 baris kode, setiap hari bertambah 8 baris.',
-        barisan_display: '15, 23, 31, 39, ...',
-        question: 'Berapa baris kode yang ditulis Dika di <strong>hari ke-15</strong>?',
-        a: 15,
-        b: 8,
-        n: 15,
-        answer: 127,
-        hints: [
-          'a = 15 (hari pertama), b = 8 (tambahan per hari). Cari U₁₅.',
-          'U₁₅ = 15 + (15−1) × 8 = 15 + 14 × 8 = 15 + ... Berapa 14 × 8?',
-        ],
-        explanation:
-          'U₁₅ = 15 + (15−1)×8 = 15 + 14×8 = 15 + 112 = <strong>127</strong> baris kode.',
-      },
-      {
-        id: 'u6',
-        konteks: null,
-        barisan_display: '100, 95, 90, 85, ...',
-        question: 'Pada suku keberapa barisan 100, 95, 90, 85, ... bernilai <strong>55</strong>?',
-        a: 100,
-        b: -5,
-        n: null,
-        answer: 10,
-        hints: [
-          'Gunakan Uₙ = a + (n−1)b, set Uₙ = 55. Jadi: 55 = 100 + (n−1)×(−5). Selesaikan untuk n.',
-          '55 − 100 = (n−1)×(−5) → −45 = (n−1)×(−5) → n−1 = −45 ÷ (−5) = 9 → n = ?',
-        ],
-        explanation:
-          '55 = 100 + (n−1)×(−5) → −45 = (n−1)×(−5) → n−1 = 9 → n = <strong>10</strong>. Jadi U₁₀ = 55.',
-      },
-    ],
-  },
-
-  /* ----------------------------------------------------------
-     TAHAP 5 — EKSPLORASI Sₙ
-     ---------------------------------------------------------- */
-  ekspSn: {
-    title: 'Menemukan Rumus Jumlah n Suku Pertama (Sₙ)',
-    instruction:
-      'Kita akan menemukan rumus Sₙ dengan trik yang digunakan matematikawan Carl Friedrich Gauss.',
-    barisan: [3, 7, 11, 15, 19, 23, 27, 31],
-    a: 3,
-    b: 4,
-    n_demo: 8,
-    un_demo: 31,
-    Sn_demo: 136,
-    steps: [
-      {
-        id: 'g1',
-        title: 'Tulis Deret Maju',
-        desc: 'S₈ = 3 + 7 + 11 + 15 + 19 + 23 + 27 + 31',
-      },
-      {
-        id: 'g2',
-        title: 'Tulis Deret Mundur',
-        desc: 'S₈ = 31 + 27 + 23 + 19 + 15 + 11 + 7 + 3',
-      },
-      {
-        id: 'g3',
-        title: 'Jumlahkan Keduanya',
-        desc: '2S₈ = 34 + 34 + 34 + 34 + 34 + 34 + 34 + 34 = 8 × 34 = 272',
-      },
-      {
-        id: 'g4',
-        title: 'Bagi Dua',
-        desc: 'S₈ = 272 ÷ 2 = 136',
-      },
-    ],
-    gaussQuestion: {
-      question:
-        'Perhatikan: 34 = 3 + 31 = a + U₈ = a + Uₙ. Jadi 2Sₙ = n × (a + Uₙ). Karena Uₙ = a + (n−1)b, maka:',
-      formula: 'Sₙ = n/2 × (2a + (n−1)b)',
-      alt: 'atau: Sₙ = n/2 × (a + Uₙ)',
-    },
-    verifikasi: {
-      question:
-        'Verifikasi: Gunakan rumus untuk menghitung S₈ pada barisan di atas (a=3, b=4, n=8).',
-      answer: 136,
-      hint: 'S₈ = 8/2 × (2×3 + (8−1)×4) = 4 × (6 + 28) = 4 × 34 = ?',
-      explanation:
-        'S₈ = 8/2 × (2×3 + 7×4) = 4 × (6 + 28) = 4 × 34 = <strong>136</strong>. ✓ Sesuai dengan cara langsung!',
-    },
-  },
-
-  /* ----------------------------------------------------------
-     TAHAP 6 — LATIHAN Sₙ
-     ---------------------------------------------------------- */
-  latihanSn: {
-    title: 'Latihan Menghitung Jumlah n Suku Pertama',
-    instruction: 'Hitung nilai Sₙ yang diminta. Gunakan rumus Sₙ = n/2 × (2a + (n−1)b).',
-    soal: [
-      {
-        id: 's1',
-        barisan_display: '2, 5, 8, 11, ...',
-        question: 'Tentukan <strong>S₁₀</strong> dari barisan 2, 5, 8, 11, ...',
-        a: 2,
-        b: 3,
-        n: 10,
-        answer: 155,
-        hints: [
-          'a = 2, b = 3. Gunakan Sₙ = n/2 × (2a + (n−1)b) dengan n=10.',
-          'S₁₀ = 10/2 × (2×2 + (10−1)×3) = 5 × (4 + 27) = 5 × ... Berapa 4 + 27?',
-        ],
-        explanation: 'S₁₀ = 10/2 × (2×2 + 9×3) = 5 × (4 + 27) = 5 × 31 = <strong>155</strong>.',
-      },
-      {
-        id: 's2',
-        barisan_display: '4, 8, 12, 16, ...',
-        question: 'Tentukan <strong>S₁₅</strong> dari barisan 4, 8, 12, 16, ...',
-        a: 4,
-        b: 4,
-        n: 15,
-        answer: 480,
-        hints: [
-          'a = 4, b = 4. Gunakan Sₙ = n/2 × (2a + (n−1)b) dengan n=15.',
-          'S₁₅ = 15/2 × (2×4 + (15−1)×4) = 7,5 × (8 + 56) = 7,5 × ... Berapa 8 + 56?',
-        ],
-        explanation:
-          'S₁₅ = 15/2 × (2×4 + 14×4) = 7,5 × (8 + 56) = 7,5 × 64 = <strong>480</strong>.',
-      },
-      {
-        id: 's3',
-        barisan_display: '100, 95, 90, 85, ...',
-        question: 'Tentukan <strong>S₁₀</strong> dari barisan 100, 95, 90, 85, ...',
-        a: 100,
-        b: -5,
-        n: 10,
-        answer: 775,
-        hints: [
-          'Barisan menurun: a = 100, b = −5. Gunakan Sₙ = n/2 × (2a + (n−1)b) dengan n=10.',
-          'S₁₀ = 10/2 × (2×100 + (10−1)×(−5)) = 5 × (200 + (−45)) = 5 × ... Berapa 200 − 45?',
-        ],
-        explanation:
-          'S₁₀ = 10/2 × (200 + 9×(−5)) = 5 × (200 − 45) = 5 × 155 = <strong>775</strong>.',
-      },
-      {
-        id: 's4',
-        barisan_display: '10, 13, 16, 19, ...',
-        question: 'Tentukan <strong>S₁₂</strong> dari barisan 10, 13, 16, 19, ...',
-        a: 10,
-        b: 3,
-        n: 12,
-        answer: 318,
-        hints: [
-          'a = 10, b = 3. Gunakan Sₙ = n/2 × (2a + (n−1)b) dengan n=12.',
-          'S₁₂ = 12/2 × (2×10 + (12−1)×3) = 6 × (20 + 33) = 6 × ... Berapa 20 + 33?',
-        ],
-        explanation: 'S₁₂ = 12/2 × (2×10 + 11×3) = 6 × (20 + 33) = 6 × 53 = <strong>318</strong>.',
-      },
-      {
-        id: 's5',
-        barisan_display: '1, 3, 5, 7, ...',
-        question:
-          'Tentukan jumlah 20 bilangan ganjil pertama: <strong>S₂₀</strong> dari 1, 3, 5, 7, ...',
-        a: 1,
-        b: 2,
-        n: 20,
-        answer: 400,
-        hints: [
-          'Barisan bilangan ganjil: a = 1, b = 2. Cari S₂₀.',
-          'S₂₀ = 20/2 × (2×1 + (20−1)×2) = 10 × (2 + 38) = 10 × ... Berapa 2 + 38?',
-        ],
-        explanation:
-          'S₂₀ = 20/2 × (2 + 19×2) = 10 × (2 + 38) = 10 × 40 = <strong>400</strong>. Menarik: jumlah n bilangan ganjil pertama selalu = n²!',
-      },
-      {
-        id: 's6',
-        barisan_display: '50, 45, 40, 35, ...',
-        question: 'Diketahui a = 50 dan b = −5. Tentukan <strong>S₈</strong>.',
-        a: 50,
-        b: -5,
-        n: 8,
-        answer: 260,
-        hints: [
-          'a = 50, b = −5. Gunakan Sₙ = n/2 × (2a + (n−1)b) dengan n=8.',
-          'S₈ = 8/2 × (2×50 + (8−1)×(−5)) = 4 × (100 − 35) = 4 × ... Berapa 100 − 35?',
-        ],
-        explanation: 'S₈ = 8/2 × (100 + 7×(−5)) = 4 × (100 − 35) = 4 × 65 = <strong>260</strong>.',
-      },
-    ],
-  },
-
-  /* ----------------------------------------------------------
-     TAHAP 7 — TANTANGAN KONTEKSTUAL
-     ---------------------------------------------------------- */
-  tantangan: {
-    title: 'Tantangan Kontekstual',
-    soal: [
-      {
-        id: 't1',
-        badge: 'Biaya Berlangganan',
-        icon: '📱',
-        story:
-          'Platform streaming populer menaikkan harga langganannya setiap bulan. Bulan pertama harganya <strong>Rp 50.000</strong>. Setiap bulan harga naik <strong>Rp 5.000</strong>.',
-        question: 'Berapa biaya langganan di <strong>bulan ke-8</strong>?',
-        type: 'input',
-        answer: 85000,
-        unit: 'rupiah',
-        hint: 'Ini adalah masalah barisan aritmetika. a = 50.000, b = 5.000, n = 8. Gunakan Uₙ = a + (n−1)b.',
-        explanation: 'U₈ = 50.000 + (8−1) × 5.000 = 50.000 + 35.000 = <strong>Rp 85.000</strong>.',
-      },
-      {
-        id: 't2',
-        badge: 'Storage Server',
+        id: 'storage',
+        badge: 'Sisa Penyimpanan Server',
         icon: '💾',
-        story:
-          'Kapasitas server tim RPL bertambah <strong>20 GB</strong> setiap bulan. Kapasitas awal di bulan pertama adalah <strong>100 GB</strong>.',
-        question:
-          'Berapa <strong>total kapasitas</strong> yang digunakan selama <strong>10 bulan</strong> pertama?',
-        type: 'input',
-        answer: 1900,
-        unit: 'GB',
-        hint: 'Ini adalah masalah deret aritmetika (jumlah kapasitas 10 bulan). a = 100, b = 20, n = 10. Gunakan Sₙ = n/2 × (2a + (n−1)b).',
-        explanation:
-          'S₁₀ = 10/2 × (2×100 + 9×20) = 5 × (200 + 180) = 5 × 380 = <strong>1.900 GB</strong>.',
-      },
-      {
-        id: 't3',
-        badge: 'Gaji Magang',
-        icon: '💼',
-        story:
-          'Dika magang di perusahaan teknologi selama 6 bulan. Gaji bulan pertamanya <strong>Rp 1.200.000</strong> dan setiap bulan naik <strong>Rp 150.000</strong>.',
-        question: 'Berapa <strong>total gaji</strong> yang diterima Dika selama 6 bulan magang?',
-        type: 'choice',
-        options: [
-          { id: 'opt_a', label: 'Rp 7.200.000' },
-          { id: 'opt_b', label: 'Rp 9.450.000' },
-          { id: 'opt_c', label: 'Rp 10.200.000' },
+        cerita:
+          'Server backup mula-mula memiliki ruang kosong 500 GB. Setiap minggu, file backup memakai ruang dengan jumlah yang sama.',
+        terms: [500, 460, 420, 380, 340, 300],
+        labels: ['Mgg 1', 'Mgg 2', 'Mgg 3', 'Mgg 4', 'Mgg 5', 'Mgg 6'],
+        satuan: 'GB',
+        a: 500,
+        b: -40,
+        hints: [
+          'Suku pertama (a) adalah ruang kosong di <strong>Minggu 1</strong>.',
+          'Hitung 460 − 500. Hasilnya negatif karena barisannya <em>turun</em>. Tulis dengan tanda minus, mis. −10.',
         ],
-        correct: 'opt_b',
-        hint: 'Gunakan Sₙ = n/2 × (2a + (n−1)b) dengan a = 1.200.000, b = 150.000, n = 6.',
-        explanation:
-          'S₆ = 6/2 × (2×1.200.000 + 5×150.000) = 3 × (2.400.000 + 750.000) = 3 × 3.150.000 = <strong>Rp 9.450.000</strong>.',
-      },
-      {
-        id: 't4',
-        badge: 'Bug Report',
-        icon: '🐛',
-        story:
-          'Tim QA mencatat jumlah bug yang ditemukan per sprint. Sprint ke-1 ada <strong>25 bug</strong>, dan setiap sprint berkurang <strong>3 bug</strong> (tim makin mahir!).',
-        question: 'Pada sprint keberapa jumlah bug menjadi <strong>7</strong>?',
-        type: 'choice',
-        options: [
-          { id: 'opt_a', label: 'Sprint ke-6' },
-          { id: 'opt_b', label: 'Sprint ke-7' },
-          { id: 'opt_c', label: 'Sprint ke-8' },
-        ],
-        correct: 'opt_b',
-        hint: 'Gunakan Uₙ = a + (n−1)b, set Uₙ = 7. a = 25, b = −3. Selesaikan: 7 = 25 + (n−1)×(−3).',
-        explanation:
-          '7 = 25 + (n−1)×(−3) → −18 = (n−1)×(−3) → n−1 = 6 → n = <strong>7</strong>. Jadi pada sprint ke-7, jumlah bug menjadi 7.',
       },
     ],
+    temuanA:
+      'Pada ketiga data, selisih dua suku yang berurutan <strong>selalu sama</strong>. Selisih tetap ini disebut <strong>beda (b)</strong>; boleh positif (naik) atau negatif (turun).',
+    instruksiB:
+      'Gunakan temuanmu. Tentukan apakah setiap barisan berikut termasuk barisan aritmetika.',
+    opsiPilah: [
+      { id: 'ya', label: 'Barisan aritmetika' },
+      { id: 'bukan', label: 'Bukan barisan aritmetika' },
+    ],
+    pilah: [
+      {
+        id: 'p1',
+        barisan: '5, 9, 13, 17, …',
+        correct: 'ya',
+        explanation: 'Selisihnya selalu +4, jadi beda tetap b = 4.',
+      },
+      {
+        id: 'p2',
+        barisan: '2, 4, 8, 16, …',
+        correct: 'bukan',
+        explanation:
+          'Selisihnya +2, +4, +8 — berubah-ubah. Barisan ini dikali 2 (barisan geometri).',
+      },
+      {
+        id: 'p3',
+        barisan: '30, 24, 18, 12, …',
+        correct: 'ya',
+        explanation: 'Selisihnya selalu −6, jadi beda tetap b = −6 (barisan turun).',
+      },
+      {
+        id: 'p4',
+        barisan: '1, 4, 9, 16, …',
+        correct: 'bukan',
+        explanation: 'Selisihnya +3, +5, +7 — tidak tetap. Ini barisan bilangan kuadrat.',
+      },
+    ],
+    nextLabel: 'Olah Data: Cari Aturan Uₙ →',
+  },
+
+  /* ----------------------------------------------------------
+     TAHAP 4a — PENGOLAHAN DATA: RUMUS Uₙ
+     ---------------------------------------------------------- */
+  olahUn: {
+    kicker: 'Tahap 4 · Pengolahan Data (Uₙ)',
+    syntax: DL + ' · Sintaks 4',
+    goal: 'Mengolah pola koefisien beda untuk menurunkan rumus suku ke-n.',
+    guru: 'Minta kelompok membaca kolom koefisien secara vertikal: 0, 1, 2, 3, … Tanyakan: "Koefisien b selalu kurang berapa dari n?" Biarkan murid sendiri yang mengucapkan "n − 1".',
+    konteks: 'Kursi lab bertingkat: a = 12, b = 3',
+    a: 12,
+    b: 3,
+    instruksi:
+      'Setiap suku dapat ditulis sebagai suku pertama ditambah beberapa kali beda. Isi berapa kali beda (b) ditambahkan pada setiap baris.',
+    baris: [1, 2, 3, 4, 5, 10, 25],
+    hints: [
+      'U₂ = 15 = 12 + <strong>1</strong> × 3. U₃ = 18 = 12 + <strong>2</strong> × 3. Lanjutkan polanya.',
+      'Dari Baris 1 ke Baris n, beda ditambahkan sebanyak "banyak lompatan" di antara kotak-kotak itu.',
+      'Banyak lompatan selalu satu kurang dari nomor suku: koefisien = n − 1.',
+    ],
+    temuanTabel:
+      'Koefisien b selalu <strong>satu kurang</strong> dari nomor suku. Suku ke-10 memuat 9 kali beda, suku ke-25 memuat 24 kali beda.',
+    pertanyaanRumus: 'Berdasarkan pola pada tabel, rumus umum suku ke-n adalah …',
+    opsiRumus: [
+      { id: 'benar', label: 'Uₙ = a + (n − 1)b' },
+      { id: 'nb', label: 'Uₙ = a + nb' },
+      { id: 'geo', label: 'Uₙ = a × bⁿ⁻¹' },
+      { id: 'kali', label: 'Uₙ = (a + b) × n' },
+    ],
+    correctRumus: 'benar',
+    umpanRumus: {
+      benar: '<strong>Hebat!</strong> Kamu menemukan rumus suku ke-n barisan aritmetika.',
+      nb: 'Uji dengan n = 1: 12 + 1 × 3 = 15, padahal U₁ = 12. Koefisien b harus 0 saat n = 1.',
+      geo: 'Rumus ini memakai perkalian berulang (pangkat), padahal suku kita bertambah dengan penjumlahan.',
+      kali: 'Uji dengan n = 1: (12 + 3) × 1 = 15, padahal U₁ = 12. Coba lagi.',
+    },
+    ujiLabel: 'Pakai rumus temuanmu: berapa kursi di Baris 20?',
+    ujiJawab: 69,
+    ujiHints: ['U₂₀ = a + (20 − 1)b = 12 + 19 × 3.'],
+    nextLabel: 'Lanjut: Cari Aturan Sₙ →',
+  },
+
+  /* ----------------------------------------------------------
+     TAHAP 4b — PENGOLAHAN DATA: RUMUS Sₙ (trik Gauss)
+     ---------------------------------------------------------- */
+  olahSn: {
+    kicker: 'Tahap 4 · Pengolahan Data (Sₙ)',
+    syntax: DL + ' · Sintaks 4',
+    goal: 'Menemukan rumus jumlah n suku pertama dengan menjumlahkan deret maju dan mundur.',
+    guru: 'Ceritakan singkat kisah Carl Friedrich Gauss kecil yang menjumlahkan 1 + 2 + … + 100 dalam hitungan detik. Tekankan bahwa setiap pasangan (depan + belakang) bernilai sama, lalu biarkan murid menemukan mengapa hasilnya harus dibagi 2.',
+    konteks: 'Total kursi 6 baris pertama lab: 12 + 15 + 18 + 21 + 24 + 27',
+    terms: [12, 15, 18, 21, 24, 27],
+    langkah: [
+      {
+        id: 'pasangan',
+        label: 'Jumlahkan setiap pasangan atas–bawah. Berapa nilai setiap pasangan?',
+        jawab: 39,
+        hints: ['Pasangan pertama: 12 + 27. Pasangan kedua: 15 + 24. Apa yang kamu perhatikan?'],
+        temuan:
+          'Setiap pasangan bernilai sama: <strong>39 = a + U₆</strong> (suku pertama + suku terakhir).',
+      },
+      {
+        id: 'banyak',
+        label: 'Ada berapa pasangan seperti itu?',
+        jawab: 6,
+        hints: ['Setiap suku punya satu pasangan. Ada berapa suku yang dijumlahkan?'],
+        temuan: 'Banyak pasangan = banyak suku = <strong>n = 6</strong>.',
+      },
+      {
+        id: 'duaS',
+        label: 'Baris atas dan bawah sama-sama bernilai S₆. Berapa 2 × S₆?',
+        jawab: 234,
+        hints: ['2 × S₆ = banyak pasangan × nilai tiap pasangan = 6 × 39.'],
+        temuan: '2 × S₆ = 6 × 39 = <strong>234</strong>.',
+      },
+      {
+        id: 's',
+        label: 'Jadi, berapa S₆ (total kursi 6 baris pertama)?',
+        jawab: 117,
+        hints: ['Kita menjumlahkan deret dua kali, jadi bagi hasilnya dengan 2.'],
+        temuan:
+          'S₆ = 234 ÷ 2 = <strong>117</strong>. Cek manual: 12 + 15 + 18 + 21 + 24 + 27 = 117 ✓',
+      },
+    ],
+    pertanyaan1: 'Dari langkah tadi, bentuk umum jumlah n suku pertama adalah …',
+    opsi1: [
+      { id: 'benar', label: 'Sₙ = n/2 × (a + Uₙ)' },
+      { id: 'lupa2', label: 'Sₙ = n × (a + Uₙ)' },
+      { id: 'tengah', label: 'Sₙ = (a + Uₙ) / 2' },
+      { id: 'nun', label: 'Sₙ = n × Uₙ' },
+    ],
+    correct1: 'benar',
+    umpan1: {
+      benar:
+        '<strong>Tepat.</strong> n pasangan bernilai (a + Uₙ), dibagi 2 karena deret ditulis dua kali.',
+      lupa2: 'Itu adalah nilai 2 × Sₙ. Ingat, kita menjumlahkan deret dua kali (maju + mundur).',
+      tengah: 'Itu hanya rata-rata suku pertama dan terakhir. Masih perlu dikalikan banyak suku.',
+      nun: 'Uji: 6 × 27 = 162 ≠ 117. Tidak semua suku sebesar suku terakhir.',
+    },
+    pertanyaan2:
+      'Sering kali Uₙ belum diketahui. Substitusikan Uₙ = a + (n − 1)b ke rumus tadi. Hasilnya …',
+    opsi2: [
+      { id: 'benar', label: 'Sₙ = n/2 × (2a + (n − 1)b)' },
+      { id: 'satuA', label: 'Sₙ = n/2 × (a + (n − 1)b)' },
+      { id: 'nb', label: 'Sₙ = n/2 × (2a + nb)' },
+      { id: 'tanpa2', label: 'Sₙ = n × (2a + (n − 1)b)' },
+    ],
+    correct2: 'benar',
+    umpan2: {
+      benar:
+        '<strong>Luar biasa!</strong> a + a + (n − 1)b = 2a + (n − 1)b. Kamu menurunkan rumus Sₙ sendiri.',
+      satuA: 'a + Uₙ = a + a + (n − 1)b. Ada berapa a di situ?',
+      nb: 'Suku ke-n memuat (n − 1) kali beda, bukan n kali. Coba lagi.',
+      tanpa2: 'Pembagian 2 dari langkah sebelumnya hilang. Coba lagi.',
+    },
+    nextLabel: 'Buktikan Rumusmu →',
+  },
+
+  /* ----------------------------------------------------------
+     TAHAP 5 — PEMBUKTIAN
+     ---------------------------------------------------------- */
+  verifikasi: {
+    kicker: 'Tahap 5 · Pembuktian',
+    syntax: DL + ' · Sintaks 5',
+    goal: 'Menguji rumus Uₙ dan Sₙ pada data nyata serta membuktikan dugaan awal.',
+    guru: 'Minta murid membandingkan hasil rumus dengan data/penjumlahan manual. Pada bagian dugaan, beri apresiasi pada proses berpikir, bukan pada tepat-tidaknya dugaan awal.',
+    uji: [
+      {
+        id: 'hU6',
+        grup: 'A',
+        label: 'Biaya hosting (a = 150, b = 25). Hitung U₆ dengan rumus (ribu rupiah).',
+        jawab: 275,
+        hints: ['U₆ = 150 + (6 − 1) × 25.'],
+        bukti: 'Data Bulan 6 pada tahap Pengumpulan Data juga 275 ✓',
+      },
+      {
+        id: 'hS6',
+        grup: 'A',
+        label: 'Hitung S₆: total biaya hosting 6 bulan pertama (ribu rupiah).',
+        jawab: 1275,
+        hints: ['S₆ = 6/2 × (2 × 150 + 5 × 25) = 3 × (300 + 125).'],
+        bukti: 'Cek manual: 150 + 175 + 200 + 225 + 250 + 275 = 1.275 ✓',
+      },
+      {
+        id: 'xU20',
+        grup: 'B',
+        label: 'XP game Dimas (a = 120, b = 30). Hitung XP Level 20.',
+        jawab: 690,
+        hints: ['U₂₀ = 120 + 19 × 30.'],
+        bukti: 'U₂₀ = 120 + 570 = 690 XP.',
+      },
+      {
+        id: 'xS20',
+        grup: 'B',
+        label: 'Hitung total XP Level 1 sampai Level 20.',
+        jawab: 8100,
+        hints: [
+          'Pakai Sₙ = n/2 × (a + Uₙ) dengan U₂₀ yang baru kamu hitung.',
+          'S₂₀ = 20/2 × (120 + 690) = 10 × 810.',
+        ],
+        bukti: 'S₂₀ = 10 × 810 = 8.100 XP.',
+      },
+    ],
+    judulA: 'A. Uji rumus pada data biaya hosting',
+    judulB: 'B. Kembali ke dugaan awalmu',
+    dugaanUnBenar: 'u690',
+    dugaanSnBenar: 's8100',
+    nextLabel: 'Tarik Kesimpulan →',
+  },
+
+  /* ----------------------------------------------------------
+     TAHAP 6 — MENARIK KESIMPULAN
+     ---------------------------------------------------------- */
+  generalisasi: {
+    kicker: 'Tahap 6 · Menarik Kesimpulan',
+    syntax: DL + ' · Sintaks 6',
+    goal: 'Merumuskan kesimpulan tentang pola, rumus Uₙ, dan rumus Sₙ barisan dan deret aritmetika.',
+    guru: 'Minta perwakilan kelompok membacakan kesimpulannya. Konfirmasi dan kaitkan dengan istilah formal: suku pertama (a), beda (b), suku ke-n (Uₙ), deret, jumlah n suku pertama (Sₙ).',
+    instruksi:
+      'Lengkapi setiap kalimat dengan potongan yang tepat dari daftar pilihan. Setiap potongan hanya dipakai satu kali.',
+    selectPlaceholder: '— pilih potongan kalimat —',
+    kalimat: [
+      { id: 'k1', awal: 'Barisan aritmetika adalah barisan bilangan yang', correct: 'b1' },
+      { id: 'k2', awal: 'Beda (b) barisan aritmetika dapat dihitung dengan', correct: 'b2' },
+      { id: 'k3', awal: 'Suku ke-n barisan aritmetika dirumuskan', correct: 'b3' },
+      { id: 'k4', awal: 'Jumlah n suku pertama deret aritmetika dirumuskan', correct: 'b4' },
+    ],
+    bank: [
+      { id: 'b1', teks: 'selisih dua suku berurutannya selalu tetap' },
+      { id: 'b2', teks: 'b = Uₙ − Uₙ₋₁' },
+      { id: 'b3', teks: 'Uₙ = a + (n − 1)b' },
+      { id: 'b4', teks: 'Sₙ = n/2 × (2a + (n − 1)b) atau Sₙ = n/2 × (a + Uₙ)' },
+      { id: 'x1', teks: 'hasil bagi dua suku berurutannya selalu tetap' },
+      { id: 'x2', teks: 'b = Uₙ × Uₙ₋₁' },
+      { id: 'x3', teks: 'Uₙ = a + nb' },
+      { id: 'x4', teks: 'Sₙ = n × (a + Uₙ)' },
+    ],
+    rangkuman: [
+      'Barisan aritmetika: U₁, U₂, U₃, … dengan selisih tetap <strong>b = Uₙ − Uₙ₋₁</strong>.',
+      'Suku ke-n: <strong>Uₙ = a + (n − 1)b</strong> — suku pertama ditambah (n − 1) kali beda.',
+      'Deret aritmetika: U₁ + U₂ + … + Uₙ, dengan jumlah <strong>Sₙ = n/2 × (a + Uₙ) = n/2 × (2a + (n − 1)b)</strong>.',
+    ],
+    nextLabel: 'Terapkan pada Masalah Nyata →',
+  },
+
+  /* ----------------------------------------------------------
+     TAHAP 7 — UJI TERAP (dirender createExerciseStage)
+     ---------------------------------------------------------- */
+  terapkan: {
+    kicker: 'Tahap 7 · Uji Terap',
+    goal: 'Menerapkan rumus Uₙ dan Sₙ untuk menyelesaikan masalah kontekstual.',
+    guru: 'Amati strategi murid: apakah mereka menentukan a, b, dan n lebih dulu sebelum memilih rumus? Soal pilihan ganda dapat dijadikan bahan diskusi pengecoh.',
+    instruksi:
+      'Tentukan dulu a, b, dan n dari cerita, lalu pilih rumus yang sesuai. Tulis jawaban berupa bilangan bulat (tanpa satuan).',
+    soal: [
+      {
+        type: 'input',
+        cerita:
+          'Nadia magang di software house. Uang saku bulan pertama Rp1.500.000 dan naik Rp100.000 setiap bulan.',
+        pertanyaan: 'Berapa rupiah uang saku Nadia pada <strong>bulan ke-8</strong>?',
+        jawab: 2200000,
+        hints: [
+          'a = 1.500.000, b = 100.000, n = 8. Yang ditanya suku ke-8 (Uₙ).',
+          'U₈ = 1.500.000 + 7 × 100.000.',
+        ],
+        explanation: 'U₈ = 1.500.000 + (8 − 1) × 100.000 = Rp2.200.000.',
+        reveal: 'U₈ = 1.500.000 + 7 × 100.000 = <strong>2.200.000</strong>.',
+      },
+      {
+        type: 'choice',
+        cerita:
+          'Auditorium sekolah untuk expo RPL memiliki 15 baris kursi. Baris pertama 20 kursi dan setiap baris berikutnya bertambah 4 kursi.',
+        pertanyaan: 'Berapa <strong>total kursi</strong> di auditorium?',
+        options: [
+          { id: 'a', label: '720 kursi' },
+          { id: 'b', label: '1.440 kursi' },
+          { id: 'c', label: '76 kursi' },
+          { id: 'd', label: '750 kursi' },
+        ],
+        correct: 'a',
+        explanation:
+          'S₁₅ = 15/2 × (2 × 20 + 14 × 4) = 7,5 × 96 = 720. (1.440 lupa dibagi 2; 76 adalah U₁₅; 750 memakai nb, bukan (n − 1)b.)',
+      },
+      {
+        type: 'input',
+        cerita:
+          'Aplikasi to-do list buatan kelas XI RPL diunduh 250 kali pada minggu pertama. Setiap minggu, unduhan bertambah 50 kali dari minggu sebelumnya.',
+        pertanyaan:
+          'Pada <strong>minggu ke berapa</strong> unduhan mingguannya mencapai 1.000 kali?',
+        jawab: 16,
+        hints: [
+          'Yang dicari n, bukan Uₙ. Tulis 1.000 = 250 + (n − 1) × 50.',
+          '(n − 1) × 50 = 750, jadi n − 1 = 15.',
+        ],
+        explanation: '1.000 = 250 + (n − 1) × 50 → n − 1 = 15 → n = 16.',
+        reveal: '(n − 1) × 50 = 750 → n − 1 = 15 → n = <strong>16</strong>.',
+      },
+      {
+        type: 'choice',
+        cerita:
+          'Raka menambah jumlah baris kode programnya secara teratur setiap hari. Pada hari ke-3 ia menulis 14 baris, dan pada hari ke-7 ia menulis 30 baris.',
+        pertanyaan: 'Berapa baris kode yang ditulis Raka pada <strong>hari ke-10</strong>?',
+        options: [
+          { id: 'a', label: '42 baris' },
+          { id: 'b', label: '46 baris' },
+          { id: 'c', label: '38 baris' },
+          { id: 'd', label: '54 baris' },
+        ],
+        correct: 'a',
+        explanation: 'U₇ − U₃ = 4b = 16 → b = 4; a = 14 − 2 × 4 = 6; U₁₀ = 6 + 9 × 4 = 42.',
+      },
+      {
+        type: 'input',
+        cerita:
+          'Dewi menabung untuk membeli laptop. Bulan pertama ia menabung Rp200.000, dan setiap bulan tabungannya ditambah Rp50.000 lebih banyak dari bulan sebelumnya.',
+        pertanyaan: 'Berapa rupiah <strong>total tabungan</strong> Dewi setelah 12 bulan?',
+        jawab: 5700000,
+        hints: [
+          'Yang ditanya jumlah (Sₙ). a = 200.000, b = 50.000, n = 12.',
+          'S₁₂ = 12/2 × (2 × 200.000 + 11 × 50.000) = 6 × 950.000.',
+        ],
+        explanation: 'S₁₂ = 6 × (400.000 + 550.000) = Rp5.700.000.',
+        reveal: 'S₁₂ = 6 × 950.000 = <strong>5.700.000</strong>.',
+      },
+      {
+        type: 'input',
+        cerita:
+          'Pada sprint pertama, tim QA menemukan 60 bug. Setelah perbaikan rutin, banyak bug berkurang 7 setiap sprint.',
+        pertanyaan: 'Berapa bug yang tersisa pada <strong>sprint ke-8</strong>?',
+        jawab: 11,
+        hints: ['Bug berkurang, jadi beda negatif: b = −7.', 'U₈ = 60 + (8 − 1) × (−7) = 60 − 49.'],
+        explanation: 'U₈ = 60 + 7 × (−7) = 60 − 49 = 11 bug.',
+        reveal: 'U₈ = 60 − 49 = <strong>11</strong>.',
+      },
+    ],
+    nextLabel: 'Lanjut ke Refleksi →',
   },
 
   /* ----------------------------------------------------------
      TAHAP 8 — REFLEKSI
      ---------------------------------------------------------- */
   refleksi: {
-    title: 'Refleksi Pembelajaran',
-    note: 'Refleksi ini membantu kamu merangkum pemahaman hari ini. Jawaban <strong>tidak dikirim ke mana pun</strong> — hanya ditampilkan di layarmu.',
-    soal: [
+    kicker: 'Tahap 8 · Refleksi',
+    goal: 'Merefleksikan proses menemukan rumus dan kesiapan menerapkannya.',
+    guru: 'Pilih 2–3 murid untuk membagikan refleksinya. Gunakan penilaian diri untuk menentukan murid yang memerlukan pendampingan lanjutan.',
+    pertanyaan: [
       {
         id: 'r1',
-        question:
-          'Dengan kata-katamu sendiri, jelaskan apa yang dimaksud dengan <strong>barisan aritmetika</strong> dan apa itu <strong>beda (b)</strong>.',
-        placeholder: 'Tuliskan penjelasanmu...',
+        teks: 'Dengan kata-katamu sendiri, mengapa suku ke-n memuat (n − 1) kali beda, bukan n kali?',
+        placeholder: 'Tuliskan penjelasanmu …',
       },
       {
         id: 'r2',
-        question:
-          'Bagaimana kamu mengingat rumus <strong>Uₙ = a + (n−1)b</strong>? Strategi apa yang kamu pakai?',
-        placeholder: 'Ceritakan strategimu...',
+        teks: 'Bagian mana dari penurunan rumus Sₙ yang paling membuatmu "aha!"? Mengapa?',
+        placeholder: 'Tuliskan pengalamanmu …',
       },
       {
         id: 'r3',
-        question:
-          'Berikan satu contoh <strong>barisan aritmetika</strong> dari kehidupan sehari-hari sebagai pelajar SMK RPL yang belum disebutkan dalam media ini.',
-        placeholder: 'Contohmu...',
+        teks: 'Sebutkan satu masalah di bidang RPL yang bisa diselesaikan dengan barisan atau deret aritmetika.',
+        placeholder: 'Contoh: menghitung total biaya server …',
       },
-      {
-        id: 'r4',
-        question:
-          'Hal apa yang masih membingungkan atau ingin kamu pelajari lebih lanjut tentang barisan dan deret?',
-        placeholder: 'Tuliskan pertanyaan atau kesulitanmu...',
-      },
+    ],
+    diriLabel: 'Seberapa yakin kamu menerapkan rumus Uₙ dan Sₙ sekarang?',
+    diriOpsi: [
+      { id: 'sangat', label: '🚀 Sangat yakin — aku bisa menjelaskannya ke teman' },
+      { id: 'yakin', label: '🙂 Yakin — tetapi masih perlu melihat catatan' },
+      { id: 'ragu', label: '🤔 Masih ragu — perlu latihan lagi' },
+      { id: 'bingung', label: '🆘 Belum paham — perlu bimbingan guru' },
+    ],
+    nextLabel: 'Simpan Refleksi & Selesai →',
+  },
+
+  /* ----------------------------------------------------------
+     TAHAP 9 — SELESAI
+     ---------------------------------------------------------- */
+  selesai: {
+    judul: 'Penemuanmu Tuntas!',
+    teks: 'Kamu tidak sekadar menghafal rumus — kamu menemukannya sendiri dari data, mengujinya, lalu menerapkannya.',
+    capaian: [
+      'Menjelaskan pola barisan aritmetika melalui beda yang tetap.',
+      'Menurunkan rumus suku ke-n: Uₙ = a + (n − 1)b.',
+      'Menurunkan rumus jumlah n suku pertama: Sₙ = n/2 × (2a + (n − 1)b).',
+      'Menerapkan kedua rumus pada masalah kontekstual RPL.',
     ],
   },
 };

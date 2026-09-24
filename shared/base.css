@@ -1738,3 +1738,253 @@ details.hint-reveal[open] summary::before {
     grid-template-columns: repeat(2, 1fr);
   }
 }
+
+/* =========================================================================
+   Komponen Discovery Learning (dipakai lewat shared/engine.js bagian 7)
+   ========================================================================= */
+
+.dl-syntax-chip {
+  display: inline-block;
+  margin: 0 0 var(--space-2) var(--space-2);
+  padding: 2px var(--space-2);
+  border-radius: 999px;
+  background: var(--color-purple-soft);
+  color: var(--color-purple-strong);
+  font-size: 0.72rem;
+  font-weight: 700;
+  vertical-align: top;
+}
+
+.teacher-note {
+  margin: 0 0 var(--space-4);
+  border: 1px dashed var(--color-border-strong);
+  border-radius: var(--radius-md);
+  background: var(--color-bg-grid);
+  font-size: 0.86rem;
+}
+
+.teacher-note summary {
+  cursor: pointer;
+  padding: var(--space-2) var(--space-3);
+  font-weight: 600;
+  color: var(--color-ink-muted);
+  min-height: 40px;
+  display: flex;
+  align-items: center;
+}
+
+.teacher-note p {
+  margin: 0;
+  padding: 0 var(--space-3) var(--space-3);
+  line-height: 1.6;
+}
+
+/* Deret suku + busur selisih */
+.seq-tiles {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--space-2) 0;
+  margin: var(--space-4) 0;
+}
+
+.seq-tile {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 64px;
+  padding: var(--space-2) var(--space-3);
+  border: 2px solid var(--color-blue);
+  border-radius: var(--radius-md);
+  background: var(--color-blue-soft);
+  color: var(--color-blue-strong);
+}
+
+.seq-tile--hidden {
+  border-style: dashed;
+  border-color: var(--color-border-strong);
+  background: var(--color-surface);
+  color: var(--color-ink-muted);
+}
+
+.seq-tile--new {
+  animation: seq-pop 0.35s ease-out;
+}
+
+.seq-tile--tail {
+  border-color: var(--color-orange);
+  background: var(--color-orange-soft);
+  color: var(--color-orange-strong);
+}
+
+.seq-tile__label {
+  font-size: 0.7rem;
+  font-weight: 600;
+  opacity: 0.85;
+}
+
+.seq-tile__val {
+  font-family: var(--font-mono);
+  font-size: 1.15rem;
+  font-weight: 700;
+}
+
+.seq-gap {
+  position: relative;
+  display: inline-flex;
+  justify-content: center;
+  min-width: 40px;
+  padding-bottom: var(--space-5);
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--color-ink-muted);
+}
+
+.seq-gap::after {
+  content: '';
+  position: absolute;
+  left: 4px;
+  right: 4px;
+  bottom: 14px;
+  border-bottom: 2px dashed var(--color-border-strong);
+}
+
+.seq-gap--known {
+  color: var(--color-success-strong);
+}
+
+.seq-gap--known::after {
+  border-bottom-style: solid;
+  border-color: var(--color-success);
+}
+
+.seq-gap--dots {
+  padding-bottom: var(--space-3);
+  font-size: 1.2rem;
+}
+
+.seq-gap--dots::after {
+  display: none;
+}
+
+@keyframes seq-pop {
+  from {
+    transform: scale(0.8);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+/* Latihan isian/pilihan & kesimpulan terbimbing */
+.dl-exercise {
+  margin-top: var(--space-2);
+}
+
+.dl-input-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+}
+
+.dl-input-row .input-text,
+.dl-num-input {
+  max-width: 150px;
+  font-family: var(--font-mono);
+  font-size: 1.1rem;
+  text-align: center;
+}
+
+.dl-prompt {
+  margin-bottom: var(--space-4);
+}
+
+.dl-prompt__cerita {
+  margin: 0 0 var(--space-2);
+  font-size: 0.93rem;
+  line-height: 1.6;
+  color: var(--color-ink-muted);
+}
+
+.dl-prompt__tanya {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+  line-height: 1.55;
+}
+
+.dl-simpulan-item {
+  display: flex;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  border: 2px solid var(--color-border);
+  border-radius: var(--radius-md);
+  margin-bottom: var(--space-3);
+}
+
+.dl-simpulan-item--correct {
+  border-color: var(--color-success);
+  background: var(--color-success-soft);
+}
+
+.dl-simpulan-item--incorrect {
+  border-color: var(--color-error);
+  background: var(--color-error-soft);
+}
+
+.dl-simpulan-item__num {
+  flex: 0 0 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: var(--color-purple);
+  color: #fff;
+  font-size: 0.8rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.dl-simpulan-item__body {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.dl-simpulan-item__awal {
+  display: block;
+  margin-bottom: var(--space-2);
+  font-size: 0.95rem;
+  font-weight: 600;
+  line-height: 1.5;
+}
+
+.dl-simpulan-item__note {
+  margin: var(--space-2) 0 0;
+  font-size: 0.82rem;
+  color: var(--color-error-strong);
+}
+
+@media (max-width: 480px) {
+  .seq-tile {
+    min-width: 52px;
+    padding: var(--space-1) var(--space-2);
+  }
+
+  .seq-tile__val {
+    font-size: 1rem;
+  }
+
+  .seq-gap {
+    min-width: 30px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .seq-tile--new {
+    animation: none;
+  }
+}
