@@ -1,0 +1,162 @@
+/* =========================================================================
+   fase-f/mpi-15.1/styles.css
+   Peluang Kejadian Majemuk — Fase F (SMK RPL), Inquiry Learning
+
+   Hanya memuat gaya yang KHAS modul ini (kartu aturan game PapanKode,
+   klaim Nadia, perbandingan hipotesis vs data, tata letak berdampingan,
+   jarak antarlangkah isian, kisi kartu rumus). Dasar design system —
+   panel, tombol, umpan balik, pilihan ganda, langkah isian, pemilahan,
+   grid ruang sampel, simulator percobaan, diagram Venn, kartu rumus,
+   kartu ringkasan, navigasi tahap, modal — berasal dari shared/base.css.
+   ========================================================================= */
+
+/* Tahap 1 — tiga aturan game */
+.pk-aturan-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: var(--space-3);
+}
+
+.pk-aturan {
+  display: flex;
+  gap: var(--space-3);
+  align-items: flex-start;
+  min-width: 0;
+  padding: var(--space-3);
+  border: 1px solid var(--color-border);
+  border-top: 5px solid var(--color-purple);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+}
+
+.pk-aturan p {
+  margin: var(--space-1) 0 0;
+}
+
+.pk-aturan__icon {
+  font-size: 1.8rem;
+  line-height: 1;
+}
+
+.pk-klaim {
+  display: flex;
+  gap: var(--space-2);
+  margin: var(--space-4) 0 0;
+  padding: var(--space-3);
+  border-left: 4px solid var(--color-orange);
+  border-radius: var(--radius-sm);
+  background: var(--color-orange-soft);
+  color: var(--color-orange-strong);
+  font-weight: 600;
+}
+
+/* Dua kolom berdampingan (bertumpuk di ponsel) */
+.pk-duo {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: var(--space-4);
+  align-items: start;
+}
+
+.pk-duo > * {
+  min-width: 0;
+}
+
+/* Langkah isian & pertanyaan pengamatan */
+.pk-step,
+.pk-amati {
+  margin-top: var(--space-4);
+}
+
+.pk-step + .pk-step {
+  padding-top: var(--space-4);
+  border-top: 1px dashed var(--color-border);
+}
+
+.pk-diagnosa {
+  margin-top: var(--space-2);
+}
+
+.pk-cek {
+  margin: 0;
+  padding-left: var(--space-5);
+  font-weight: 600;
+}
+
+.pk-venn-row {
+  display: flex;
+  justify-content: center;
+  margin: var(--space-3) 0;
+}
+
+/* Tahap 6 — hipotesis vs data */
+.pk-hipotesis-awal {
+  padding: var(--space-3);
+  border-radius: var(--radius-md);
+  background: var(--color-bg);
+  font-style: italic;
+}
+
+.pk-hipotesis-awal span {
+  font-style: normal;
+  font-weight: 700;
+}
+
+.pk-banding {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.pk-banding__item {
+  padding: var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+}
+
+.pk-banding__kasus,
+.pk-banding__bukti {
+  margin: 0;
+}
+
+.pk-banding__row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-4);
+  align-items: center;
+  margin: var(--space-2) 0;
+}
+
+.pk-banding__bukti {
+  font-size: 0.9rem;
+  color: var(--color-ink-muted);
+}
+
+.pk-tag {
+  display: inline-block;
+  padding: 2px var(--space-2);
+  border-radius: var(--radius-sm);
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.pk-tag--ok {
+  background: var(--color-success-soft);
+  color: var(--color-success-strong);
+}
+
+.pk-tag--no {
+  background: var(--color-error-soft);
+  color: var(--color-error-strong);
+}
+
+.pk-tag--info {
+  background: var(--color-blue-soft);
+  color: var(--color-blue-strong);
+}
+
+/* Kartu rumus: tiga kartu sejajar */
+.pk-formula-grid {
+  max-width: 900px;
+  margin-bottom: var(--space-4);
+}

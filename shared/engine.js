@@ -59,6 +59,10 @@
    27. Eksponen bulat (pecahan eksak, pangkat nol & negatif, tangga
        pangkat, ubin faktor, sifat-sifat eksponen & dugaan keliru,
        diagnosa miskonsepsi, lab uji sifat)
+   28. Peluang kejadian majemuk (ruang sampel dadu/koin/kartu,
+       predikat kejadian gabungan & irisan, saling lepas & saling
+       bebas, diagnosa rumus, simulator percobaan, grid ruang sampel
+       bertanda, diagram Venn banyak anggota)
    ============================================================ */
 
 /* ============================================================
@@ -9307,6 +9311,865 @@ function bindExponentLab(root, id, st, opts, onChange) {
         tidakTerdefinisi: 'Uji dengan hasil tak terdefinisi tidak dicatat. Pilih a ≠ 0.',
       };
       onChange(pesan[hasil]);
+    });
+  }
+}
+
+/* ============================================================
+   28. PELUANG KEJADIAN MAJEMUK
+   Dipakai modul peluang kejadian majemuk (fase-f/mpi-15.1).
+   Peluang dihitung EKSAK sebagai pecahan { num, den } (seksi 27)
+   dengan mencacah ruang sampel, sehingga sifat saling lepas dan
+   saling bebas dapat diperiksa langsung dari data:
+     saling lepas  ⇔ n(A ∩ B) = 0
+     saling bebas  ⇔ P(A ∩ B) = P(A) × P(B)
+   Isi:
+     - tambah/kurang pecahan
+     - ruang sampel: satu/dua dadu, koin, koin + dadu, kartu remi,
+       dua kartu dengan/tanpa pengembalian
+     - predikat kejadian bernama ('jumlah:7', 'kembar', 'koin:A',
+       'dadu:genap', 'nilai:A', 'jenis:hati', 'k1:nilai:A', …),
+       digabung dengan '|' (gabungan) dan '&' (irisan)
+     - sifat dua kejadian, rumus gabungan & irisan saling bebas
+     - diagnosa miskonsepsi rumus peluang
+     - simulator percobaan acak (RNG dapat diinjeksi untuk tes)
+     - grid ruang sampel bertanda A/B, diagram Venn banyak anggota
+   Gaya .prob-* ada di shared/base.css.
+   ============================================================ */
+
+function tambahPecahan(p, q) {
+  if (!p || !q) return null;
+  return pecahan(p.num * q.den + q.num * p.den, p.den * q.den);
+}
+
+function kurangPecahan(p, q) {
+  if (!p || !q) return null;
+  return pecahan(p.num * q.den - q.num * p.den, p.den * q.den);
+}
+
+var JENIS_KARTU = [
+  { id: 'hati', nama: 'Hati', simbol: '♥', warna: 'merah' },
+  { id: 'wajik', nama: 'Wajik', simbol: '♦', warna: 'merah' },
+  { id: 'keriting', nama: 'Keriting', simbol: '♣', warna: 'hitam' },
+  { id: 'sekop', nama: 'Sekop', simbol: '♠', warna: 'hitam' },
+];
+var NILAI_KARTU = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
+var SISI_KOIN = [
+  { id: 'A', nama: 'Angka' },
+  { id: 'G', nama: 'Gambar' },
+];
+
+/* 52 kartu remi { id, nilai, jenis, warna, simbol }, urut per jenis. */
+function dekKartu() {
+  var out = [];
+  JENIS_KARTU.forEach(function (j) {
+    NILAI_KARTU.forEach(function (v) {
+      out.push({ id: v + '-' + j.id, nilai: v, jenis: j.id, warna: j.warna, simbol: j.simbol });
+    });
+  });
+  return out;
+}
+
+/* n koin sekaligus: { koin1, koin2, … } berisi 'A' (angka) atau 'G' (gambar). */
+function ruangSampelKoin(n) {
+  var out = [{}];
+  for (var i = 1; i <= n; i++) {
+    var next = [];
+    out.forEach(function (o) {
+      SISI_KOIN.forEach(function (s) {
+        var baru = Object.assign({}, o);
+        baru['koin' + i] = s.id;
+        next.push(baru);
+      });
+    });
+    out = next;
+  }
+  return out;
+}
+
+function ruangSampelDuaKartu(kembali) {
+  var dek = dekKartu();
+  var out = [];
+  dek.forEach(function (k1) {
+    dek.forEach(function (k2) {
+      if (kembali || k1.id !== k2.id) out.push({ k1: k1, k2: k2 });
+    });
+  });
+  return out;
+}
+
+var RUANG_SAMPEL_BUAT = {
+  satuDadu: function () {
+    return [1, 2, 3, 4, 5, 6].map(function (d) {
+      return { dadu: d };
+    });
+  },
+  duaDadu: function () {
+    var out = [];
+    for (var a = 1; a <= 6; a++) for (var b = 1; b <= 6; b++) out.push({ d1: a, d2: b });
+    return out;
+  },
+  satuKoin: function () {
+    return SISI_KOIN.map(function (s) {
+      return { koin: s.id };
+    });
+  },
+  duaKoin: function () {
+    return ruangSampelKoin(2);
+  },
+  koinDadu: function () {
+    var out = [];
+    SISI_KOIN.forEach(function (s) {
+      for (var d = 1; d <= 6; d++) out.push({ koin: s.id, dadu: d });
+    });
+    return out;
+  },
+  kartu: dekKartu,
+  duaKartuKembali: function () {
+    return ruangSampelDuaKartu(true);
+  },
+  duaKartuTanpa: function () {
+    return ruangSampelDuaKartu(false);
+  },
+};
+var RUANG_SAMPEL_CACHE = {};
+
+/* Ruang sampel bernama (disimpan sekali; jangan dimutasi). */
+function ruangSampel(id) {
+  if (!RUANG_SAMPEL_BUAT[id]) throw new Error('Ruang sampel tidak dikenal: ' + id);
+  if (!RUANG_SAMPEL_CACHE[id]) RUANG_SAMPEL_CACHE[id] = RUANG_SAMPEL_BUAT[id]();
+  return RUANG_SAMPEL_CACHE[id];
+}
+
+/* Uji bilangan: 'genap', 'ganjil', 'prima', 'min:N', 'maks:N', atau 'N'. */
+function ujiAngkaPeluang(spec) {
+  if (spec === 'genap')
+    return function (v) {
+      return v % 2 === 0;
+    };
+  if (spec === 'ganjil')
+    return function (v) {
+      return v % 2 === 1;
+    };
+  if (spec === 'prima')
+    return function (v) {
+      return v === 2 || v === 3 || v === 5;
+    };
+  var m = /^(min|maks):(\d+)$/.exec(spec);
+  if (m) {
+    var batas = parseInt(m[2], 10);
+    return m[1] === 'min'
+      ? function (v) {
+          return v >= batas;
+        }
+      : function (v) {
+          return v <= batas;
+        };
+  }
+  if (/^\d+$/.test(spec)) {
+    var n = parseInt(spec, 10);
+    return function (v) {
+      return v === n;
+    };
+  }
+  return null;
+}
+
+/* Predikat satu kejadian dasar (tanpa '|' / '&'). */
+function predikatAtom(atom) {
+  if (atom === 'kembar')
+    return function (o) {
+      return o.d1 === o.d2;
+    };
+  if (atom === 'wajah')
+    return function (o) {
+      return o.nilai === 'J' || o.nilai === 'Q' || o.nilai === 'K';
+    };
+  var i = atom.indexOf(':');
+  var kunci = i === -1 ? atom : atom.slice(0, i);
+  var isi = i === -1 ? '' : atom.slice(i + 1);
+  var uji;
+  if (kunci === 'k1' || kunci === 'k2') {
+    var dalam = predikatAtom(isi);
+    return function (o) {
+      return dalam(o[kunci]);
+    };
+  }
+  if (kunci === 'jumlah') {
+    uji = ujiAngkaPeluang(isi);
+    if (uji)
+      return function (o) {
+        return uji(o.d1 + o.d2);
+      };
+  }
+  if (kunci === 'dadu' || kunci === 'dadu1' || kunci === 'dadu2') {
+    var field = kunci === 'dadu' ? 'dadu' : kunci === 'dadu1' ? 'd1' : 'd2';
+    uji = ujiAngkaPeluang(isi);
+    if (uji)
+      return function (o) {
+        return uji(o[field]);
+      };
+  }
+  if (/^koin\d?$/.test(kunci) && (isi === 'A' || isi === 'G')) {
+    return function (o) {
+      return o[kunci] === isi;
+    };
+  }
+  if ((kunci === 'nilai' || kunci === 'jenis' || kunci === 'warna') && isi) {
+    return function (o) {
+      return o[kunci] === isi;
+    };
+  }
+  throw new Error('Kejadian tidak dikenal: ' + atom);
+}
+
+/*
+ * Predikat kejadian: 'X|Y' = gabungan (X atau Y), 'X&Y' = irisan
+ * (X dan Y); '&' lebih kuat daripada '|'.
+ */
+function predikatKejadian(id) {
+  var atau = String(id)
+    .split('|')
+    .map(function (bagian) {
+      var dan = bagian.split('&').map(predikatAtom);
+      return function (o) {
+        return dan.every(function (p) {
+          return p(o);
+        });
+      };
+    });
+  return function (o) {
+    return atau.some(function (p) {
+      return p(o);
+    });
+  };
+}
+
+function filterKejadian(S, id) {
+  return S.filter(predikatKejadian(id));
+}
+
+function ruangDari(ruang) {
+  return typeof ruang === 'string' ? ruangSampel(ruang) : ruang;
+}
+
+/* P(A) = n(A) / n(S), eksak. `ruang` berupa id atau array hasil. */
+function peluangKejadian(ruang, id) {
+  var S = ruangDari(ruang);
+  return pecahan(filterKejadian(S, id).length, S.length);
+}
+
+/*
+ * Semua besaran dua kejadian A dan B pada satu ruang sampel:
+ * { nS, nA, nB, nIrisan, nGabungan, pA, pB, pIrisan, pGabungan,
+ *   salingLepas, salingBebas }.
+ */
+function sifatKejadian(ruang, idA, idB) {
+  var S = ruangDari(ruang);
+  var pa = predikatKejadian(idA);
+  var pb = predikatKejadian(idB);
+  var nA = 0;
+  var nB = 0;
+  var nI = 0;
+  S.forEach(function (o) {
+    var a = pa(o);
+    var b = pb(o);
+    if (a) nA++;
+    if (b) nB++;
+    if (a && b) nI++;
+  });
+  var nS = S.length;
+  var pA = pecahan(nA, nS);
+  var pB = pecahan(nB, nS);
+  var pI = pecahan(nI, nS);
+  return {
+    nS: nS,
+    nA: nA,
+    nB: nB,
+    nIrisan: nI,
+    nGabungan: nA + nB - nI,
+    pA: pA,
+    pB: pB,
+    pIrisan: pI,
+    pGabungan: pecahan(nA + nB - nI, nS),
+    salingLepas: nI === 0,
+    salingBebas: samaPecahan(pI, kaliPecahan(pA, pB)),
+  };
+}
+
+/* P(A ∪ B) = P(A) + P(B) − P(A ∩ B); pIrisan boleh kosong (saling lepas). */
+function peluangGabungan(pA, pB, pIrisan) {
+  return kurangPecahan(tambahPecahan(pA, pB), pIrisan || pecahan(0, 1));
+}
+
+/* P(A ∩ B) = P(A) × P(B), khusus kejadian saling bebas. */
+function peluangIrisanBebas(pA, pB) {
+  return kaliPecahan(pA, pB);
+}
+
+/* Besaran bernama dari sifatKejadian sebagai Number (untuk kunci isian). */
+function nilaiSifat(s, kunci) {
+  switch (kunci) {
+    case 'nS':
+    case 'nA':
+    case 'nB':
+    case 'nIrisan':
+    case 'nGabungan':
+      return s[kunci];
+    case 'pA':
+    case 'pB':
+    case 'pIrisan':
+    case 'pGabungan':
+      return nilaiPecahan(s[kunci]);
+    case 'pA+pB':
+      return nilaiPecahan(tambahPecahan(s.pA, s.pB));
+    case 'pA*pB':
+      return nilaiPecahan(kaliPecahan(s.pA, s.pB));
+    default:
+      throw new Error('Besaran tidak dikenal: ' + kunci);
+  }
+}
+
+/*
+ * Diagnosa jawaban peluang (pecahan eksak) terhadap besaran `tanya`
+ * ('pA', 'pB', 'pGabungan', 'pIrisan') dari sifatKejadian `s`.
+ * Kode: 'benar', 'bukanPeluang', 'lupaIrisan', 'dikali', 'hanyaIrisan',
+ * 'dijumlah', 'dikaliTakBebas', 'tertukarGabungan', 'lain'.
+ */
+function diagnosaPeluang(jawab, s, tanya) {
+  if (!jawab) return 'lain';
+  if (samaPecahan(jawab, s[tanya])) return 'benar';
+  if (jawab.num < 0 || jawab.num > jawab.den) return 'bukanPeluang';
+  var jumlah = tambahPecahan(s.pA, s.pB);
+  var kali = kaliPecahan(s.pA, s.pB);
+  if (tanya === 'pGabungan') {
+    if (s.nIrisan > 0 && samaPecahan(jawab, jumlah)) return 'lupaIrisan';
+    if (samaPecahan(jawab, kali)) return 'dikali';
+    if (s.nIrisan > 0 && samaPecahan(jawab, s.pIrisan)) return 'hanyaIrisan';
+  }
+  if (tanya === 'pIrisan') {
+    if (samaPecahan(jawab, jumlah)) return 'dijumlah';
+    if (!s.salingBebas && samaPecahan(jawab, kali)) return 'dikaliTakBebas';
+    if (samaPecahan(jawab, s.pGabungan)) return 'tertukarGabungan';
+  }
+  return 'lain';
+}
+
+function pesanDiagnosaPeluang(kode) {
+  var pesan = {
+    bukanPeluang:
+      'Peluang selalu bernilai dari 0 sampai 1. Periksa lagi: banyak anggota kejadian tidak mungkin melebihi banyak anggota ruang sampel.',
+    lupaIrisan:
+      'Kamu menjumlahkan P(A) dan P(B) begitu saja. Ada hasil yang termasuk A <em>dan</em> B sekaligus sehingga terhitung dua kali — kurangi P(A ∩ B).',
+    dikali:
+      'Kata "atau" menanyakan gabungan A ∪ B, bukan irisan. Mengalikan P(A) × P(B) justru menghitung peluang A <em>dan</em> B (itu pun hanya bila saling bebas).',
+    hanyaIrisan:
+      'Itu peluang A <em>dan</em> B (irisan). Yang ditanyakan A <em>atau</em> B: semua hasil yang termasuk A, B, atau keduanya.',
+    dijumlah:
+      'Kata "dan" menanyakan irisan A ∩ B. Menjumlahkan P(A) + P(B) menghitung gabungan, dan hasilnya pasti tidak lebih kecil dari P(A).',
+    dikaliTakBebas:
+      'P(A) × P(B) hanya berlaku bila A dan B saling bebas. Di sini kejadian pertama mengubah isi ruang sampel untuk kejadian kedua, jadi hitung dari hasil yang benar-benar mungkin.',
+    tertukarGabungan:
+      'Itu peluang A <em>atau</em> B (gabungan). Yang ditanyakan A <em>dan</em> B: hanya hasil yang memenuhi keduanya sekaligus.',
+    lain: 'Belum tepat. Hitung ulang banyak hasil yang memenuhi kejadian itu, lalu bagi dengan banyak anggota ruang sampel.',
+  };
+  return pesan[kode] || pesan.lain;
+}
+
+/* Teks satu hasil percobaan: '(3, 4)', '(A, 5)', 'A♥', 'A♥, 7♠', 'AG', '5', 'A'. */
+function formatHasil(o) {
+  if (o.k1) return formatHasil(o.k1) + ', ' + formatHasil(o.k2);
+  if (o.simbol) return o.nilai + o.simbol;
+  if (o.d1 !== undefined) return '(' + o.d1 + ', ' + o.d2 + ')';
+  if (o.koin !== undefined && o.dadu !== undefined) return '(' + o.koin + ', ' + o.dadu + ')';
+  if (o.dadu !== undefined) return String(o.dadu);
+  if (o.koin !== undefined) return o.koin;
+  var koin = '';
+  for (var i = 1; o['koin' + i] !== undefined; i++) koin += o['koin' + i];
+  return koin;
+}
+
+/* Kunci unik satu hasil (dipakai grid ruang sampel bertanda). */
+function kunciHasil(o) {
+  if (o.k1) return o.k1.id + '|' + o.k2.id;
+  if (o.id) return o.id;
+  if (o.d1 !== undefined) return o.d1 + '-' + o.d2;
+  if (o.koin !== undefined && o.dadu !== undefined) return o.koin + '-' + o.dadu;
+  return formatHasil(o);
+}
+
+/* ---------- Simulator percobaan acak ---------- */
+
+function makeProbSimState() {
+  return { n: 0, frek: {}, last: [] };
+}
+
+/*
+ * Menjalankan `kali` percobaan pada ruang sampel `ruang` (setiap hasil
+ * berpeluang sama) dan mencatat frekuensi setiap kejadian di `ids`.
+ * `rng` default Math.random; `batas` (default 10000) membatasi total.
+ */
+function jalankanPercobaan(st, ruang, ids, kali, rng, batas) {
+  var S = ruangSampel(ruang);
+  var acak = rng || Math.random;
+  var maks = batas || 10000;
+  var preds = ids.map(predikatKejadian);
+  ids.forEach(function (id) {
+    if (typeof st.frek[id] !== 'number') st.frek[id] = 0;
+  });
+  if (!Array.isArray(st.last)) st.last = [];
+  var jalan = Math.max(0, Math.min(kali, maks - st.n));
+  for (var t = 0; t < jalan; t++) {
+    var o = S[Math.floor(acak() * S.length)];
+    st.n += 1;
+    for (var k = 0; k < ids.length; k++) if (preds[k](o)) st.frek[ids[k]] += 1;
+    st.last.push(formatHasil(o));
+  }
+  if (st.last.length > 12) st.last = st.last.slice(st.last.length - 12);
+  return st;
+}
+
+function frekuensiRelatif(st, id) {
+  return st && st.n ? (st.frek[id] || 0) / st.n : 0;
+}
+
+/* ---------- Grid ruang sampel bertanda A / B ---------- */
+
+function makeGridMarkState() {
+  return { layer: 'A', A: {}, B: {}, cek: { A: null, B: null } };
+}
+
+function toggleGridMark(st, key) {
+  var set = st[st.layer];
+  if (set[key]) delete set[key];
+  else set[key] = true;
+  st.cek[st.layer] = null;
+}
+
+function gridMarkCount(st, layer) {
+  return Object.keys(st[layer] || {}).length;
+}
+
+/* { benar, lebih: [kunci salah ditandai], kurang: [kunci terlewat] }. */
+function periksaGridMark(st, ruang, kejadianId, layer) {
+  var target = {};
+  filterKejadian(ruangSampel(ruang), kejadianId).forEach(function (o) {
+    target[kunciHasil(o)] = true;
+  });
+  var tanda = st[layer] || {};
+  var lebih = Object.keys(tanda).filter(function (k) {
+    return !target[k];
+  });
+  var kurang = Object.keys(target).filter(function (k) {
+    return !tanda[k];
+  });
+  return { benar: !lebih.length && !kurang.length, lebih: lebih, kurang: kurang };
+}
+
+/*
+ * Tata letak grid ruang sampel: { rowHead, colHead, rows, cols, cell(r, c) }.
+ * Dua dadu 6 × 6, koin + dadu 2 × 6, kartu 4 jenis × 13 nilai.
+ */
+function gridRuangSampel(ruang) {
+  var dadu = [1, 2, 3, 4, 5, 6].map(function (d) {
+    return { key: d, label: String(d) };
+  });
+  if (ruang === 'duaDadu') {
+    return {
+      rowHead: 'Dadu 1',
+      colHead: 'Dadu 2',
+      rows: dadu,
+      cols: dadu,
+      cell: function (r, c) {
+        return { d1: r.key, d2: c.key };
+      },
+    };
+  }
+  if (ruang === 'koinDadu') {
+    return {
+      rowHead: 'Koin',
+      colHead: 'Dadu',
+      rows: SISI_KOIN.map(function (s) {
+        return { key: s.id, label: s.id + ' (' + s.nama + ')' };
+      }),
+      cols: dadu,
+      cell: function (r, c) {
+        return { koin: r.key, dadu: c.key };
+      },
+    };
+  }
+  if (ruang === 'kartu') {
+    var byId = {};
+    dekKartu().forEach(function (k) {
+      byId[k.id] = k;
+    });
+    return {
+      rowHead: 'Jenis',
+      colHead: 'Nilai',
+      rows: JENIS_KARTU.map(function (j) {
+        return { key: j.id, label: j.simbol + ' ' + j.nama };
+      }),
+      cols: NILAI_KARTU.map(function (v) {
+        return { key: v, label: v };
+      }),
+      cell: function (r, c) {
+        return byId[c.key + '-' + r.key];
+      },
+    };
+  }
+  throw new Error('Grid tidak tersedia untuk ruang sampel: ' + ruang);
+}
+
+/*
+ * Grid ruang sampel yang bisa diketuk untuk menandai anggota A atau B.
+ *   st            makeGridMarkState()
+ *   opts.layers   [{ id: 'A'|'B', label }] — tombol lapis yang boleh ditandai
+ *   opts.locked   { A: true } → lapis itu sudah benar, tidak bisa diubah
+ *   opts.caption  teks aksesibel grid
+ * Sel salah ditandai (.is-extra) atau terlewat (.is-missing) setelah
+ * lapis aktif diperiksa (st.cek[layer] berisi hasil periksaGridMark).
+ */
+function buildOutcomeGrid(id, ruang, st, opts) {
+  opts = opts || {};
+  var g = gridRuangSampel(ruang);
+  var locked = opts.locked || {};
+  var layers = opts.layers || [];
+  var aktifLocked = !!locked[st.layer];
+  var cek = st.cek[st.layer];
+  var salah = {};
+  if (cek && !cek.benar) {
+    cek.lebih.forEach(function (k) {
+      salah[k] = 'is-extra';
+    });
+    cek.kurang.forEach(function (k) {
+      salah[k] = 'is-missing';
+    });
+  }
+
+  var layerBar = layers.length
+    ? '<div class="prob-layer" role="group" aria-label="Pilih kejadian yang ditandai">' +
+      layers
+        .map(function (l) {
+          return (
+            '<button type="button" class="prob-layer__btn prob-layer__btn--' +
+            l.id.toLowerCase() +
+            '" data-grid-layer="' +
+            esc(l.id) +
+            '" aria-pressed="' +
+            (st.layer === l.id ? 'true' : 'false') +
+            '">' +
+            (locked[l.id] ? '✓ ' : '') +
+            esc(l.label) +
+            ' <span class="prob-layer__count">' +
+            gridMarkCount(st, l.id) +
+            '</span></button>'
+          );
+        })
+        .join('') +
+      '</div>'
+    : '';
+
+  var head =
+    '<div class="prob-grid__row prob-grid__row--head" aria-hidden="true">' +
+    '<span class="prob-grid__corner">' +
+    esc(g.rowHead) +
+    ' \\ ' +
+    esc(g.colHead) +
+    '</span>' +
+    g.cols
+      .map(function (c) {
+        return '<span class="prob-grid__colhead">' + esc(c.label) + '</span>';
+      })
+      .join('') +
+    '</div>';
+
+  var rows = g.rows
+    .map(function (r) {
+      return (
+        '<div class="prob-grid__row" role="group" aria-label="' +
+        esc(g.rowHead + ' ' + r.label) +
+        '">' +
+        '<span class="prob-grid__rowhead">' +
+        esc(r.label) +
+        '</span>' +
+        g.cols
+          .map(function (c) {
+            var o = g.cell(r, c);
+            var key = kunciHasil(o);
+            var inA = !!st.A[key];
+            var inB = !!st.B[key];
+            var cls = 'prob-cell';
+            if (inA) cls += ' is-a';
+            if (inB) cls += ' is-b';
+            if (salah[key]) cls += ' ' + salah[key];
+            if (o.warna === 'merah') cls += ' prob-cell--merah';
+            var aria = formatHasil(o) + (inA ? ', anggota A' : '') + (inB ? ', anggota B' : '');
+            return (
+              '<button type="button" class="' +
+              cls +
+              '" data-cell="' +
+              esc(key) +
+              '" aria-pressed="' +
+              (st[st.layer][key] ? 'true' : 'false') +
+              '" aria-label="' +
+              esc(aria) +
+              '"' +
+              (aktifLocked ? ' disabled' : '') +
+              '>' +
+              esc(o.simbol ? o.nilai + o.simbol : formatHasil(o).replace(/[()\s]/g, '')) +
+              '</button>'
+            );
+          })
+          .join('') +
+        '</div>'
+      );
+    })
+    .join('');
+
+  return (
+    '<div class="prob-grid-wrap" id="' +
+    id +
+    '">' +
+    layerBar +
+    '<div class="prob-grid prob-grid--' +
+    esc(ruang) +
+    '" role="group" aria-label="' +
+    esc(opts.caption || 'Ruang sampel') +
+    '">' +
+    head +
+    rows +
+    '</div>' +
+    '<div class="prob-legend" aria-hidden="true">' +
+    '<span><i class="prob-swatch prob-swatch--a"></i>A</span>' +
+    '<span><i class="prob-swatch prob-swatch--b"></i>B</span>' +
+    '<span><i class="prob-swatch prob-swatch--ab"></i>A ∩ B</span>' +
+    '</div>' +
+    '</div>'
+  );
+}
+
+function bindOutcomeGrid(root, id, st, opts, onChange) {
+  opts = opts || {};
+  var wrap = root.querySelector('#' + id);
+  if (!wrap) return;
+  var locked = opts.locked || {};
+  wrap.querySelectorAll('[data-grid-layer]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      st.layer = btn.dataset.gridLayer;
+      onChange(null);
+    });
+  });
+  wrap.querySelectorAll('[data-cell]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      if (locked[st.layer]) return;
+      toggleGridMark(st, btn.dataset.cell);
+      onChange(btn.dataset.cell);
+    });
+  });
+}
+
+/* Mengembalikan fokus ke sel grid yang baru diketuk setelah render ulang. */
+function fokusSelGrid(root, id, key) {
+  if (!key) return;
+  var wrap = root.querySelector('#' + id);
+  if (!wrap) return;
+  var cells = wrap.querySelectorAll('[data-cell]');
+  for (var i = 0; i < cells.length; i++) {
+    if (cells[i].dataset.cell === key) {
+      cells[i].focus();
+      return;
+    }
+  }
+}
+
+/*
+ * Diagram Venn banyak anggota: n(A saja), n(A ∩ B), n(B saja) dan
+ * n di luar A ∪ B, dari hasil sifatKejadian `s`.
+ */
+function buildVennCount(s, opts) {
+  opts = opts || {};
+  var aSaja = s.nA - s.nIrisan;
+  var bSaja = s.nB - s.nIrisan;
+  var luar = s.nS - s.nGabungan;
+  var lepas = s.nIrisan === 0;
+  var cxA = lepas ? 95 : 120;
+  var cxB = lepas ? 225 : 200;
+  return (
+    '<figure class="prob-venn">' +
+    '<svg viewBox="0 0 320 180" role="img" aria-label="' +
+    esc(
+      'Diagram Venn: n(S) = ' +
+        s.nS +
+        ', A saja ' +
+        aSaja +
+        ', A ∩ B ' +
+        s.nIrisan +
+        ', B saja ' +
+        bSaja +
+        ', di luar keduanya ' +
+        luar
+    ) +
+    '">' +
+    '<rect class="prob-venn__s" x="4" y="4" width="312" height="172" rx="8"/>' +
+    '<text class="prob-venn__label" x="16" y="26">S (' +
+    s.nS +
+    ')</text>' +
+    '<circle class="prob-venn__a" cx="' +
+    cxA +
+    '" cy="96" r="62"/>' +
+    '<circle class="prob-venn__b" cx="' +
+    cxB +
+    '" cy="96" r="62"/>' +
+    '<text class="prob-venn__label" x="' +
+    (cxA - 40) +
+    '" y="44">A</text>' +
+    '<text class="prob-venn__label" x="' +
+    (cxB + 32) +
+    '" y="44">B</text>' +
+    '<text class="prob-venn__num" x="' +
+    (lepas ? cxA : cxA - 30) +
+    '" y="102" text-anchor="middle">' +
+    aSaja +
+    '</text>' +
+    (lepas
+      ? ''
+      : '<text class="prob-venn__num prob-venn__num--ab" x="160" y="102" text-anchor="middle">' +
+        s.nIrisan +
+        '</text>') +
+    '<text class="prob-venn__num" x="' +
+    (lepas ? cxB : cxB + 30) +
+    '" y="102" text-anchor="middle">' +
+    bSaja +
+    '</text>' +
+    '<text class="prob-venn__num prob-venn__num--luar" x="296" y="166" text-anchor="end">' +
+    luar +
+    '</text>' +
+    '</svg>' +
+    (opts.caption ? '<figcaption>' + opts.caption + '</figcaption>' : '') +
+    '</figure>'
+  );
+}
+
+/*
+ * Simulator percobaan: tombol "Lakukan k×", hasil terakhir, dan tabel
+ * frekuensi & frekuensi relatif tiap kejadian (dengan batang).
+ *   opts.ruang     id ruang sampel
+ *   opts.kejadian  [{ id, label, teori? }] — teori: pecahan peluang teoretis
+ *   opts.tombol    daftar k (default [1, 10, 100])
+ *   opts.batas     maksimum total percobaan (default 10000)
+ *   opts.teori     true → tampilkan kolom peluang teoretis
+ *   opts.judul     judul kecil di atas simulator
+ */
+function buildProbSimulator(id, st, opts) {
+  var tombol = opts.tombol || [1, 10, 100];
+  var batas = opts.batas || 10000;
+  var penuh = st.n >= batas;
+  var baris = opts.kejadian
+    .map(function (k) {
+      var f = st.frek[k.id] || 0;
+      var fr = frekuensiRelatif(st, k.id);
+      return (
+        '<tr>' +
+        '<th scope="row">' +
+        k.label +
+        '</th>' +
+        '<td>' +
+        formatNumber(f) +
+        '</td>' +
+        '<td>' +
+        (st.n ? formatNumber(f) + '/' + formatNumber(st.n) + ' ≈ ' + formatDesimal(fr, 3) : '–') +
+        '<span class="prob-sim__bar" aria-hidden="true"><span style="width:' +
+        Math.round(fr * 100) +
+        '%"></span></span>' +
+        '</td>' +
+        (opts.teori
+          ? '<td>' +
+            (k.teori
+              ? formatPecahan(k.teori) + ' ≈ ' + formatDesimal(nilaiPecahan(k.teori), 3)
+              : '–') +
+            '</td>'
+          : '') +
+        '</tr>'
+      );
+    })
+    .join('');
+  return (
+    '<div class="prob-sim" id="' +
+    id +
+    '">' +
+    (opts.judul ? '<p class="prob-sim__title">' + esc(opts.judul) + '</p>' : '') +
+    '<div class="prob-sim__controls">' +
+    tombol
+      .map(function (k) {
+        return (
+          '<button type="button" class="btn btn--primary btn--small" data-sim-kali="' +
+          k +
+          '"' +
+          (penuh ? ' disabled' : '') +
+          '>Lakukan ' +
+          formatNumber(k) +
+          '×</button>'
+        );
+      })
+      .join('') +
+    '<button type="button" class="btn btn--ghost btn--small" data-sim-reset' +
+    (st.n ? '' : ' disabled') +
+    '>Ulang dari 0</button>' +
+    '</div>' +
+    '<p class="prob-sim__n" aria-live="polite">Banyak percobaan: <strong>' +
+    formatNumber(st.n) +
+    '</strong>' +
+    (penuh ? ' (batas tercapai)' : '') +
+    '</p>' +
+    (st.last && st.last.length
+      ? '<div class="prob-sim__last" aria-label="Hasil terakhir">' +
+        st.last
+          .map(function (h) {
+            return '<span class="prob-chip">' + esc(h) + '</span>';
+          })
+          .join('') +
+        '</div>'
+      : '') +
+    '<div class="prob-sim__table-wrap">' +
+    '<table class="prob-sim__table">' +
+    '<thead><tr><th scope="col">Kejadian</th><th scope="col">Frekuensi</th><th scope="col">Frekuensi relatif</th>' +
+    (opts.teori ? '<th scope="col">Peluang teoretis</th>' : '') +
+    '</tr></thead>' +
+    '<tbody>' +
+    baris +
+    '</tbody></table></div>' +
+    '</div>'
+  );
+}
+
+function bindProbSimulator(root, id, st, opts, save, rerender) {
+  var wrap = root.querySelector('#' + id);
+  if (!wrap) return;
+  var ids = opts.kejadian.map(function (k) {
+    return k.id;
+  });
+  wrap.querySelectorAll('[data-sim-kali]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      jalankanPercobaan(
+        st,
+        opts.ruang,
+        ids,
+        parseInt(btn.dataset.simKali, 10),
+        Math.random,
+        opts.batas
+      );
+      save();
+      rerender();
+    });
+  });
+  var reset = wrap.querySelector('[data-sim-reset]');
+  if (reset) {
+    reset.addEventListener('click', function () {
+      st.n = 0;
+      st.frek = {};
+      st.last = [];
+      save();
+      rerender();
     });
   }
 }

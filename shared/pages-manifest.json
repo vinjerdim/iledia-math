@@ -184,5 +184,13 @@
     "h1": "Sifat-sifat Eksponen Bulat",
     "stageCount": 10,
     "extraBody": "partials/reset-modal.html"
+  },
+  "fase-f/mpi-15.1": {
+    "title": "Peluang Kejadian Majemuk — Matematika Fase F",
+    "description": "Media pembelajaran interaktif berbasis Inquiry Learning untuk menyelidiki peluang kejadian majemuk (saling lepas, tidak saling lepas, dan saling bebas) melalui percobaan dadu, koin, dan kartu, lalu menentukan peluangnya dengan rumus yang sesuai pada masalah kontekstual.",
+    "kicker": "Matematika — Fase F (SMK RPL)",
+    "h1": "Peluang Kejadian Majemuk",
+    "stageCount": 10,
+    "extraBody": "partials/reset-modal.html"
   }
 }
