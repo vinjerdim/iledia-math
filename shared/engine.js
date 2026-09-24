@@ -56,6 +56,9 @@
    26. Kekongruenan bangun datar (ukur sisi & sudut, kertas jiplak
        putar/balik, korespondensi titik bersesuaian, kongruen vs
        sebangun, papan ukur, tabel perbandingan)
+   27. Eksponen bulat (pecahan eksak, pangkat nol & negatif, tangga
+       pangkat, ubin faktor, sifat-sifat eksponen & dugaan keliru,
+       diagnosa miskonsepsi, lab uji sifat)
    ============================================================ */
 
 /* ============================================================
@@ -8498,4 +8501,812 @@ function buildCompareTable(p, q, map, opts) {
       .join('') +
     '</tbody></table></div>'
   );
+}
+
+/* ============================================================
+   27. EKSPONEN BULAT
+   Dipakai modul sifat-sifat eksponen bulat (fase-e/mpi-1.1).
+   Nilai pangkat dihitung EKSAK sebagai pecahan { num, den }
+   agar 2⁻³ = 1/8 dan 3⁻² = 1/9 tidak terjebak galat desimal.
+   Isi:
+     - superskrip, format bilangan berpangkat & pecahan
+     - pecahan eksak (normalisasi, kali, bagi, sama, format)
+     - pangkatBulat (positif, nol, negatif; 0⁰ & 0⁻ⁿ → null)
+     - pembaca isian pecahan/bulat/desimal eksak
+     - tangga pangkat (tiap turun satu anak tangga dibagi a)
+     - ubin faktor (perkalian, pembagian dengan coretan, pangkat
+       dari pangkat, pangkat dari perkalian)
+     - sifat-sifat eksponen + dugaan keliru untuk disangkal
+     - diagnosa miskonsepsi nilai pangkat
+     - lab uji sifat eksponen (stepper a, m, n, b + catatan uji)
+   Gaya .pw-ladder*, .fx-*, .xlab* ada di shared/base.css.
+   ============================================================ */
+
+var SUPERSKRIP_MAP = {
+  0: '⁰',
+  1: '¹',
+  2: '²',
+  3: '³',
+  4: '⁴',
+  5: '⁵',
+  6: '⁶',
+  7: '⁷',
+  8: '⁸',
+  9: '⁹',
+  '-': '⁻',
+  '−': '⁻',
+  '+': '⁺',
+  '(': '⁽',
+  ')': '⁾',
+  m: 'ᵐ',
+  n: 'ⁿ',
+  k: 'ᵏ',
+  p: 'ᵖ',
+};
+
+/* Angka/eksponen → karakter superskrip (−2 → '⁻²', 'm+n' → 'ᵐ⁺ⁿ'). */
+function superskrip(n) {
+  return String(n)
+    .split('')
+    .map(function (ch) {
+      return SUPERSKRIP_MAP[ch] || ch;
+    })
+    .join('');
+}
+
+/* Pecahan eksak { num, den }: penyebut positif, paling sederhana; null bila den = 0. */
+function pecahan(num, den) {
+  if (den === 0) return null;
+  if (den < 0) {
+    num = -num;
+    den = -den;
+  }
+  var f = gcd(num, den) || 1;
+  return { num: num / f, den: den / f };
+}
+
+function keFraksi(a) {
+  return typeof a === 'object' && a !== null ? pecahan(a.num, a.den) : pecahan(a, 1);
+}
+
+function kaliPecahan(p, q) {
+  if (!p || !q) return null;
+  return pecahan(p.num * q.num, p.den * q.den);
+}
+
+function bagiPecahan(p, q) {
+  if (!p || !q || q.num === 0) return null;
+  return pecahan(p.num * q.den, p.den * q.num);
+}
+
+function samaPecahan(p, q) {
+  if (!p || !q) return false;
+  return p.num * q.den === q.num * p.den;
+}
+
+function nilaiPecahan(p) {
+  return p.num / p.den;
+}
+
+/* '16', '1/8', '−1/8', '1.000.000'; null → 'tak terdefinisi'. */
+function formatPecahan(p) {
+  if (!p) return 'tak terdefinisi';
+  var tanda = p.num < 0 ? '−' : '';
+  var num = formatNumber(Math.abs(p.num));
+  return tanda + (p.den === 1 ? num : num + '/' + formatNumber(p.den));
+}
+
+/* Basis ditulis dengan kurung bila negatif atau pecahan: (−3), (2/3). */
+function formatBasis(a) {
+  if (typeof a === 'string') return a;
+  if (typeof a === 'object' && a !== null) return '(' + formatPecahan(a) + ')';
+  return a < 0 ? '(−' + Math.abs(a) + ')' : String(a);
+}
+
+function formatPangkat(a, n) {
+  return formatBasis(a) + superskrip(n);
+}
+
+/*
+ * Nilai aⁿ untuk eksponen bulat n, sebagai pecahan eksak.
+ *   n > 0 → a × a × … (n faktor);  n = 0 → 1;  n < 0 → 1 / a⁻ⁿ.
+ * a boleh bulat atau pecahan { num, den }. 0⁰ dan 0⁻ⁿ → null.
+ */
+function pangkatBulat(a, n) {
+  var basis = keFraksi(a);
+  if (basis.num === 0 && n <= 0) return null;
+  var hasil = pecahan(1, 1);
+  for (var i = 0; i < Math.abs(n); i++) hasil = kaliPecahan(hasil, basis);
+  return n < 0 ? bagiPecahan(pecahan(1, 1), hasil) : hasil;
+}
+
+/*
+ * Membaca isian bilangan secara eksak: bulat ('−27', '1.000'),
+ * pecahan ('1/8', '−1/9') atau desimal berkoma/bertitik ('0,25').
+ * Titik diperlakukan sebagai pemisah ribuan bila diikuti tepat tiga
+ * angka dan angka depannya bukan 0 (gaya Indonesia: '1.000'), selain
+ * itu sebagai koma desimal ('0.125').
+ * Kembalian: { value: {num, den} | null, error: null | 'empty' | 'invalid' }.
+ */
+function parseInputPecahan(str) {
+  if (!str || String(str).trim() === '') return { value: null, error: 'empty' };
+  var s = String(str).trim().replace(/\s/g, '').replace(/−/g, '-');
+  var m = s.match(/^([-+]?)(\d+)\/(\d+)$/);
+  if (m) {
+    var den = parseInt(m[3], 10);
+    if (den === 0) return { value: null, error: 'invalid' };
+    var num = parseInt(m[2], 10) * (m[1] === '-' ? -1 : 1);
+    return { value: pecahan(num, den), error: null };
+  }
+  if (/^[-+]?[1-9]\d{0,2}(\.\d{3})+$/.test(s)) s = s.replace(/\./g, '');
+  var d = s.replace(',', '.').match(/^([-+]?)(\d*)(?:\.(\d+))?$/);
+  if (!d || (d[2] === '' && !d[3])) return { value: null, error: 'invalid' };
+  var digitDesimal = d[3] || '';
+  var skala = Math.pow(10, digitDesimal.length);
+  var pembilang = parseInt((d[2] || '0') + digitDesimal, 10) * (d[1] === '-' ? -1 : 1);
+  return { value: pecahan(pembilang, skala), error: null };
+}
+
+/* Baris tangga pangkat dari eksponen `dari` turun sampai `sampai`. */
+function tanggaPangkat(a, dari, sampai) {
+  var out = [];
+  for (var n = dari; n >= sampai; n--) out.push({ n: n, nilai: pangkatBulat(a, n) });
+  return out;
+}
+
+function faktorPangkat(a, n) {
+  var out = [];
+  for (var i = 0; i < n; i++) out.push(a);
+  return out;
+}
+
+/* Menulis eksponen di dalam penjumlahan: 3 + (−1). */
+function tulisSuku(n) {
+  return n < 0 ? '(−' + Math.abs(n) + ')' : String(n);
+}
+
+/*
+ * Sifat-sifat eksponen. `keliru` true menandai dugaan keliru yang
+ * sengaja disediakan agar murid mencari contoh penyangkalnya.
+ */
+var SIFAT_EKSPONEN = {
+  kali: { nama: 'Perkalian', rumus: 'aᵐ × aⁿ = aᵐ⁺ⁿ', keliru: false, pakaiB: false },
+  bagi: { nama: 'Pembagian', rumus: 'aᵐ : aⁿ = aᵐ⁻ⁿ', keliru: false, pakaiB: false },
+  pangkat: { nama: 'Pangkat dari pangkat', rumus: '(aᵐ)ⁿ = aᵐˣⁿ', keliru: false, pakaiB: false },
+  kaliBasis: {
+    nama: 'Pangkat dari perkalian',
+    rumus: '(a × b)ⁿ = aⁿ × bⁿ',
+    keliru: false,
+    pakaiB: true,
+  },
+  bagiBasis: {
+    nama: 'Pangkat dari pembagian',
+    rumus: '(a : b)ⁿ = aⁿ : bⁿ',
+    keliru: false,
+    pakaiB: true,
+  },
+  salahKali: { nama: 'Dugaan A', rumus: 'aᵐ × aⁿ = aᵐˣⁿ ?', keliru: true, pakaiB: false },
+  salahNegatif: { nama: 'Dugaan B', rumus: 'a⁻ⁿ = −aⁿ ?', keliru: true, pakaiB: false },
+};
+
+/* Apakah sifat memakai eksponen m (sifat basis & dugaan B hanya memakai n). */
+function sifatPakaiM(id) {
+  return ['kali', 'bagi', 'pangkat', 'salahKali'].indexOf(id) !== -1;
+}
+
+/*
+ * Menghitung kedua ruas sebuah sifat untuk nilai a, m, n (dan b).
+ * Kembalian { kiri, kanan, teksKiri, teksKanan, catatan, terdefinisi, sama }.
+ * Ruas yang memuat 0⁰, 0⁻ⁿ atau pembagian dengan 0 → terdefinisi false.
+ */
+function cekSifatEksponen(id, a, m, n, b) {
+  var P = pangkatBulat;
+  var F = formatPangkat;
+  var kiri, kanan, teksKiri, teksKanan, catatan;
+  if (id === 'kali') {
+    kiri = kaliPecahan(P(a, m), P(a, n));
+    kanan = P(a, m + n);
+    teksKiri = F(a, m) + ' × ' + F(a, n);
+    teksKanan = F(a, m + n);
+    catatan = tulisSuku(m) + ' + ' + tulisSuku(n) + ' = ' + fmtBulat(m + n);
+  } else if (id === 'bagi') {
+    kiri = bagiPecahan(P(a, m), P(a, n));
+    kanan = P(a, m - n);
+    teksKiri = F(a, m) + ' : ' + F(a, n);
+    teksKanan = F(a, m - n);
+    catatan = tulisSuku(m) + ' − ' + tulisSuku(n) + ' = ' + fmtBulat(m - n);
+  } else if (id === 'pangkat') {
+    kiri = P(a, m) === null ? null : P(P(a, m), n);
+    kanan = P(a, m * n);
+    teksKiri = '(' + F(a, m) + ')' + superskrip(n);
+    teksKanan = F(a, m * n);
+    catatan = tulisSuku(m) + ' × ' + tulisSuku(n) + ' = ' + fmtBulat(m * n);
+  } else if (id === 'kaliBasis') {
+    kiri = P(a * b, n);
+    kanan = kaliPecahan(P(a, n), P(b, n));
+    teksKiri = '(' + a + ' × ' + b + ')' + superskrip(n);
+    teksKanan = F(a, n) + ' × ' + F(b, n);
+    catatan = 'setiap faktor dipangkatkan ' + fmtBulat(n);
+  } else if (id === 'bagiBasis') {
+    kiri = b === 0 ? null : P(pecahan(a, b), n);
+    kanan = bagiPecahan(P(a, n), P(b, n));
+    teksKiri = '(' + a + ' : ' + b + ')' + superskrip(n);
+    teksKanan = F(a, n) + ' : ' + F(b, n);
+    catatan = 'pembilang dan penyebut dipangkatkan ' + fmtBulat(n);
+  } else if (id === 'salahKali') {
+    kiri = kaliPecahan(P(a, m), P(a, n));
+    kanan = P(a, m * n);
+    teksKiri = F(a, m) + ' × ' + F(a, n);
+    teksKanan = F(a, m * n);
+    catatan = tulisSuku(m) + ' × ' + tulisSuku(n) + ' = ' + fmtBulat(m * n);
+  } else if (id === 'salahNegatif') {
+    kiri = P(a, -n);
+    var pos = P(a, n);
+    kanan = pos === null ? null : pecahan(-pos.num, pos.den);
+    teksKiri = F(a, -n);
+    teksKanan = '−' + F(a, n);
+    catatan = 'bandingkan tanda dan besar kedua ruas';
+  } else {
+    throw new Error('sifat eksponen tidak dikenal: ' + id);
+  }
+  var terdefinisi = kiri !== null && kanan !== null;
+  return {
+    kiri: kiri,
+    kanan: kanan,
+    teksKiri: teksKiri,
+    teksKanan: teksKanan,
+    catatan: catatan,
+    terdefinisi: terdefinisi,
+    sama: terdefinisi && samaPecahan(kiri, kanan),
+  };
+}
+
+/*
+ * Diagnosa jawaban murid untuk nilai aⁿ (jawab berupa pecahan):
+ *   'benar' | 'nolJadiNol' (a⁰ = 0) | 'nolJadiBasis' (a⁰ = a) |
+ *   'negatifJadiMinus' (a⁻ⁿ = −aⁿ) | 'tandaPecahan' (a⁻ⁿ = −1/aⁿ) |
+ *   'kaliEksponen' (aⁿ = a × n) | 'lain'
+ */
+function diagnosaPangkat(a, n, jawab) {
+  var benar = pangkatBulat(a, n);
+  if (!jawab) return 'lain';
+  if (samaPecahan(jawab, benar)) return 'benar';
+  if (n === 0 && jawab.num === 0) return 'nolJadiNol';
+  if (n === 0 && samaPecahan(jawab, pecahan(a, 1))) return 'nolJadiBasis';
+  if (n < 0) {
+    var pos = pangkatBulat(a, -n);
+    if (samaPecahan(jawab, pecahan(-pos.num, pos.den))) return 'negatifJadiMinus';
+    if (samaPecahan(jawab, pecahan(-benar.num, benar.den))) return 'tandaPecahan';
+  }
+  if (samaPecahan(jawab, pecahan(a * n, 1))) return 'kaliEksponen';
+  return 'lain';
+}
+
+/* Pesan umpan balik diagnosa; ditampilkan setelah label bilangan berpangkatnya. */
+function pesanDiagnosaPangkat(kode, a, n) {
+  var pesan = {
+    nolJadiNol:
+      'Nilainya bukan 0. Lihat tangga pangkat: setiap turun satu anak tangga nilainya <em>dibagi</em> ' +
+      a +
+      ', bukan dikurangi sampai habis.',
+    nolJadiBasis:
+      'Nilainya bukan ' +
+      a +
+      '. Nilai ' +
+      formatPangkat(a, 1) +
+      ' = ' +
+      a +
+      ' masih harus dibagi ' +
+      a +
+      ' sekali lagi untuk turun ke pangkat 0.',
+    negatifJadiMinus:
+      'Pangkat negatif <strong>tidak</strong> membuat hasilnya negatif. Teruskan pola membagi dengan ' +
+      a +
+      ' di bawah pangkat 0.',
+    tandaPecahan:
+      'Bentuk pecahannya sudah tepat, tetapi tandanya belum. Membagi bilangan positif dengan ' +
+      a +
+      ' tidak mengubah tandanya.',
+    kaliEksponen:
+      'Nilainya bukan ' +
+      a +
+      ' × ' +
+      tulisSuku(n) +
+      '. Pangkat berarti perkalian <em>berulang</em> (atau pembagian berulang untuk pangkat negatif).',
+    lain: 'Belum tepat. Mulailah dari anak tangga di atasnya, lalu bagi dengan ' + a + '.',
+  };
+  return pesan[kode] || pesan.lain;
+}
+
+/* ------------------------------------------------------------
+   Tangga pangkat: kolom aⁿ dari eksponen `dari` turun ke `sampai`
+   dengan panah "÷ a" di antara anak tangga.
+     cfg     { a, dari, sampai, diketahui: [n, …] } — nilai yang
+             ditampilkan; eksponen lain diisi murid
+     inputs  { '<n>': 'isian' }
+     opts.tanya    true → sel yang belum diketahui ditampilkan '?'
+                   (tanpa isian; untuk tahap stimulasi)
+     opts.checked  true → tandai sel terisi ✓/✗
+     opts.locked   true → isian dinonaktifkan
+     opts.faktor   true → tampilkan uraian faktor untuk n > 0
+     opts.caption  label aksesibel
+   ------------------------------------------------------------ */
+
+function powerLadderCellCorrect(a, n, str) {
+  var parsed = parseInputPecahan(String(str || ''));
+  return !parsed.error && samaPecahan(parsed.value, pangkatBulat(a, n));
+}
+
+function powerLadderEditable(cfg) {
+  var out = [];
+  for (var n = cfg.dari; n >= cfg.sampai; n--) {
+    if ((cfg.diketahui || []).indexOf(n) === -1) out.push(n);
+  }
+  return out;
+}
+
+function powerLadderFilled(cfg, inputs) {
+  return powerLadderEditable(cfg).every(function (n) {
+    return String((inputs || {})[n] || '').trim() !== '';
+  });
+}
+
+function powerLadderAllCorrect(cfg, inputs) {
+  return powerLadderEditable(cfg).every(function (n) {
+    return powerLadderCellCorrect(cfg.a, n, (inputs || {})[n]);
+  });
+}
+
+function buildPowerLadder(id, cfg, inputs, opts) {
+  opts = opts || {};
+  inputs = inputs || {};
+  var a = cfg.a;
+  var html = '';
+  for (var n = cfg.dari; n >= cfg.sampai; n--) {
+    var diketahui = (cfg.diketahui || []).indexOf(n) !== -1;
+    var nilai = pangkatBulat(a, n);
+    var sel;
+    var tanda = '';
+    if (diketahui) {
+      sel = '<span class="pw-ladder__val">' + esc(formatPecahan(nilai)) + '</span>';
+    } else if (opts.tanya) {
+      sel = '<span class="pw-ladder__val pw-ladder__val--tanya">?</span>';
+    } else {
+      var isi = inputs[n] || '';
+      var terisi = String(isi).trim() !== '';
+      var benar = terisi && powerLadderCellCorrect(a, n, isi);
+      if (opts.checked && terisi) {
+        tanda =
+          '<span class="pw-ladder__mark pw-ladder__mark--' +
+          (benar ? 'ok' : 'no') +
+          '" aria-label="' +
+          (benar ? 'benar' : 'belum tepat') +
+          '">' +
+          (benar ? '✓' : '✗') +
+          '</span>';
+      }
+      sel =
+        '<input type="text" class="input-text pw-ladder__input' +
+        (opts.checked && terisi && !benar ? ' has-error' : '') +
+        '" id="' +
+        id +
+        '-in-' +
+        n +
+        '" data-ladder="' +
+        esc(id) +
+        '" data-n="' +
+        n +
+        '" inputmode="text" autocomplete="off" value="' +
+        esc(isi) +
+        '" aria-label="Nilai ' +
+        esc(formatBasis(a)) +
+        ' pangkat ' +
+        fmtBulat(n) +
+        '" placeholder="…"' +
+        (opts.locked ? ' disabled' : '') +
+        '>';
+    }
+    if (n < cfg.dari) {
+      html +=
+        '<li class="pw-ladder__step" aria-hidden="true"><span class="pw-ladder__arrow">↓</span> ÷ ' +
+        esc(formatBasis(a)) +
+        '</li>';
+    }
+    var uraian = '';
+    if (opts.faktor) {
+      uraian =
+        '<span class="pw-ladder__faktor">' +
+        (n > 0 ? esc(faktorPangkat(formatBasis(a), n).join(' × ')) : '') +
+        '</span>';
+    }
+    html +=
+      '<li class="pw-ladder__row' +
+      (n === 0 ? ' pw-ladder__row--nol' : n < 0 ? ' pw-ladder__row--neg' : '') +
+      '">' +
+      '<span class="pw-ladder__pow">' +
+      esc(formatPangkat(a, n)) +
+      '</span>' +
+      '<span class="pw-ladder__eq" aria-hidden="true">=</span>' +
+      sel +
+      tanda +
+      uraian +
+      '</li>';
+  }
+  return (
+    '<ol class="pw-ladder" aria-label="' +
+    esc(opts.caption || 'Tangga pangkat ' + formatBasis(a)) +
+    '">' +
+    html +
+    '</ol>'
+  );
+}
+
+/* onEnter dipanggil saat murid menekan Enter di salah satu isian. */
+function bindPowerLadder(root, id, inputs, save, onEnter) {
+  root.querySelectorAll('[data-ladder="' + id + '"]').forEach(function (inp) {
+    inp.addEventListener('input', function () {
+      inputs[inp.dataset.n] = inp.value;
+      save();
+    });
+    inp.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter' && onEnter) onEnter();
+    });
+  });
+}
+
+/* ------------------------------------------------------------
+   Ubin faktor: menguraikan bilangan berpangkat menjadi faktor.
+     spec { jenis: 'kali', a, m, n }        aᵐ × aⁿ (dua kelompok)
+          { jenis: 'bagi', a, m, n, coret } aᵐ : aⁿ sebagai pecahan;
+                                             coret true → pasangan faktor
+                                             pembilang–penyebut dicoret
+          { jenis: 'pangkat', a, m, n }     (aᵐ)ⁿ = n kelompok isi m
+          { jenis: 'kaliBasis', a, b, n }   (a × b)ⁿ = n kelompok (a, b)
+   ------------------------------------------------------------ */
+
+function fxTile(teks, cls) {
+  return '<span class="fx-tile' + (cls ? ' ' + cls : '') + '">' + esc(teks) + '</span>';
+}
+
+function fxGroup(tiles, ton) {
+  return '<span class="fx-group fx-group--' + ton + '">' + tiles.join('') + '</span>';
+}
+
+function buildFactorTiles(spec, opts) {
+  opts = opts || {};
+  var a = formatBasis(spec.a);
+  var i;
+  var isi = '';
+  var aria = '';
+  if (spec.jenis === 'kali') {
+    var g1 = faktorPangkat(a, spec.m).map(function (x) {
+      return fxTile(x);
+    });
+    var g2 = faktorPangkat(a, spec.n).map(function (x) {
+      return fxTile(x);
+    });
+    isi = fxGroup(g1, 'a') + '<span class="fx-op">×</span>' + fxGroup(g2, 'b');
+    aria =
+      formatPangkat(spec.a, spec.m) +
+      ' kali ' +
+      formatPangkat(spec.a, spec.n) +
+      ': ' +
+      (spec.m + spec.n) +
+      ' faktor ' +
+      a;
+  } else if (spec.jenis === 'bagi') {
+    var k = spec.coret ? Math.min(spec.m, spec.n) : 0;
+    var atas = [];
+    var bawah = [];
+    for (i = 0; i < spec.m; i++) atas.push(fxTile(a, i < k ? 'fx-tile--coret' : ''));
+    for (i = 0; i < spec.n; i++) bawah.push(fxTile(a, i < k ? 'fx-tile--coret' : ''));
+    if (spec.coret && spec.m <= spec.n) atas.push('<span class="fx-one">1</span>');
+    isi =
+      '<span class="fx-frac">' +
+      '<span class="fx-frac__row">' +
+      fxGroup(atas, 'a') +
+      '</span>' +
+      '<span class="fx-frac__bar" aria-hidden="true"></span>' +
+      '<span class="fx-frac__row">' +
+      fxGroup(bawah, 'b') +
+      '</span>' +
+      '</span>';
+    aria =
+      formatPangkat(spec.a, spec.m) +
+      ' dibagi ' +
+      formatPangkat(spec.a, spec.n) +
+      (spec.coret ? ': ' + k + ' pasang faktor dicoret' : '');
+  } else if (spec.jenis === 'pangkat') {
+    var grup = [];
+    for (i = 0; i < spec.n; i++) {
+      grup.push(
+        fxGroup(
+          faktorPangkat(a, spec.m).map(function (x) {
+            return fxTile(x);
+          }),
+          i % 2 ? 'b' : 'a'
+        )
+      );
+    }
+    isi = grup.join('<span class="fx-op">×</span>');
+    aria =
+      '(' +
+      formatPangkat(spec.a, spec.m) +
+      ') pangkat ' +
+      spec.n +
+      ': ' +
+      spec.n +
+      ' kelompok berisi ' +
+      spec.m +
+      ' faktor ' +
+      a;
+  } else if (spec.jenis === 'kaliBasis') {
+    var b = formatBasis(spec.b);
+    var pas = [];
+    for (i = 0; i < spec.n; i++) pas.push(fxGroup([fxTile(a), fxTile(b, 'fx-tile--b')], 'a'));
+    isi = pas.join('<span class="fx-op">×</span>');
+    aria = '(' + a + ' × ' + b + ') pangkat ' + spec.n + ': ' + spec.n + ' pasang faktor';
+  }
+  return (
+    '<figure class="fx-tiles" role="img" aria-label="' +
+    esc(aria) +
+    '">' +
+    '<div class="fx-tiles__body">' +
+    isi +
+    '</div>' +
+    (opts.caption ? '<figcaption class="dl-caption">' + opts.caption + '</figcaption>' : '') +
+    '</figure>'
+  );
+}
+
+/* ------------------------------------------------------------
+   Lab uji sifat eksponen: murid memilih sifat, mengatur a, m, n
+   (dan b) dengan stepper, melihat kedua ruas dihitung, lalu
+   mencatat uji. Syarat selesai per sifat:
+     { sifat, min, nonPositif, sangkal }
+       min         banyak uji tercatat minimal
+       nonPositif  harus ada uji dengan eksponen 0 atau negatif
+       sangkal     (dugaan keliru) harus ada uji yang TIDAK sama
+   ------------------------------------------------------------ */
+
+function makeExponentLabState(sifat) {
+  return { sifat: sifat || 'kali', a: 2, m: 3, n: 2, b: 3, log: [] };
+}
+
+function labKunci(st) {
+  var d = SIFAT_EKSPONEN[st.sifat];
+  return [st.sifat, st.a, sifatPakaiM(st.sifat) ? st.m : '', st.n, d && d.pakaiB ? st.b : ''].join(
+    '|'
+  );
+}
+
+function labHasil(st) {
+  return cekSifatEksponen(st.sifat, st.a, st.m, st.n, st.b);
+}
+
+/* Mencatat uji saat ini: 'ok' | 'duplikat' | 'tidakTerdefinisi'. */
+function labCatat(st) {
+  var r = labHasil(st);
+  if (!r.terdefinisi) return 'tidakTerdefinisi';
+  var kunci = labKunci(st);
+  var ada = st.log.some(function (u) {
+    return u.kunci === kunci;
+  });
+  if (ada) return 'duplikat';
+  var pakaiM = sifatPakaiM(st.sifat);
+  st.log.push({
+    kunci: kunci,
+    sifat: st.sifat,
+    teksKiri: r.teksKiri,
+    teksKanan: r.teksKanan,
+    kiri: formatPecahan(r.kiri),
+    kanan: formatPecahan(r.kanan),
+    sama: r.sama,
+    nonPositif: st.n <= 0 || (pakaiM && st.m <= 0),
+  });
+  return 'ok';
+}
+
+function labRingkasan(st, syarat) {
+  return syarat.map(function (s) {
+    var uji = st.log.filter(function (u) {
+      return u.sifat === s.sifat;
+    });
+    var nonPositif = uji.some(function (u) {
+      return u.nonPositif;
+    });
+    var sangkal = uji.some(function (u) {
+      return !u.sama;
+    });
+    return {
+      sifat: s.sifat,
+      jumlah: uji.length,
+      min: s.min,
+      nonPositif: nonPositif,
+      sangkal: sangkal,
+      selesai: uji.length >= s.min && (!s.nonPositif || nonPositif) && (!s.sangkal || sangkal),
+    };
+  });
+}
+
+function labSyaratSelesai(st, syarat) {
+  return labRingkasan(st, syarat).every(function (r) {
+    return r.selesai;
+  });
+}
+
+/* opts.batasA = [min, max] untuk a & b; opts.batasE untuk m & n. */
+function ubahExponentLab(st, key, step, opts) {
+  opts = opts || {};
+  var batas = key === 'a' || key === 'b' ? opts.batasA || [-5, 5] : opts.batasE || [-4, 4];
+  st[key] = Math.max(batas[0], Math.min(batas[1], st[key] + step));
+}
+
+/*
+ * opts.sifat   daftar id sifat yang bisa dipilih
+ * opts.syarat  syarat selesai (untuk daftar periksa)
+ * opts.batasA, opts.batasE  batas stepper
+ */
+function buildExponentLab(id, st, opts) {
+  opts = opts || {};
+  var batasA = opts.batasA || [-5, 5];
+  var batasE = opts.batasE || [-4, 4];
+  var d = SIFAT_EKSPONEN[st.sifat];
+  var r = labHasil(st);
+  var pilihan = (opts.sifat || Object.keys(SIFAT_EKSPONEN))
+    .map(function (sid) {
+      var s = SIFAT_EKSPONEN[sid];
+      return (
+        '<button type="button" class="xlab__sifat' +
+        (s.keliru ? ' xlab__sifat--dugaan' : '') +
+        '" data-xlab-sifat="' +
+        esc(sid) +
+        '" aria-pressed="' +
+        (sid === st.sifat ? 'true' : 'false') +
+        '"><span class="xlab__sifat-nama">' +
+        esc(s.nama) +
+        '</span><span class="xlab__sifat-rumus">' +
+        esc(s.rumus) +
+        '</span></button>'
+      );
+    })
+    .join('');
+
+  var stepper = function (key, label, batas) {
+    return buildIntegerStepper(id + '-' + key, label, st[key], { min: batas[0], max: batas[1] });
+  };
+
+  var vonis;
+  if (!r.terdefinisi) {
+    vonis =
+      '<p class="xlab__vonis xlab__vonis--undef">⚠ Tak terdefinisi — ada pembagian dengan 0 (0⁰ atau 0 berpangkat negatif). Pilih a ≠ 0.</p>';
+  } else if (r.sama) {
+    vonis = '<p class="xlab__vonis xlab__vonis--ok">✓ Kedua ruas SAMA</p>';
+  } else {
+    vonis =
+      '<p class="xlab__vonis xlab__vonis--no">✗ Kedua ruas TIDAK sama — contoh penyangkal!</p>';
+  }
+
+  var ringkasan = opts.syarat
+    ? '<ul class="xlab__cek">' +
+      labRingkasan(st, opts.syarat)
+        .map(function (s) {
+          var info = SIFAT_EKSPONEN[s.sifat];
+          var ket = s.jumlah + '/' + s.min + ' uji';
+          var syaratIni = opts.syarat.filter(function (x) {
+            return x.sifat === s.sifat;
+          })[0];
+          if (syaratIni.nonPositif)
+            ket += s.nonPositif ? ' · ada eksponen ≤ 0 ✓' : ' · perlu eksponen 0/negatif';
+          if (syaratIni.sangkal)
+            ket += s.sangkal ? ' · penyangkal ditemukan ✓' : ' · cari penyangkal';
+          return (
+            '<li class="xlab__cek-item' +
+            (s.selesai ? ' xlab__cek-item--done' : '') +
+            '"><span aria-hidden="true">' +
+            (s.selesai ? '✅' : '⬜') +
+            '</span> <strong>' +
+            esc(info.nama) +
+            '</strong> <span class="xlab__cek-ket">' +
+            esc(ket) +
+            '</span></li>'
+          );
+        })
+        .join('') +
+      '</ul>'
+    : '';
+
+  var log = st.log.length
+    ? '<div class="xlab__log-wrap"><table class="xlab__log">' +
+      '<caption class="sr-only">Catatan uji sifat eksponen</caption>' +
+      '<thead><tr><th scope="col">Ruas kiri</th><th scope="col">Ruas kanan</th><th scope="col">Hasil</th></tr></thead><tbody>' +
+      st.log
+        .map(function (u) {
+          return (
+            '<tr><td>' +
+            esc(u.teksKiri) +
+            ' = ' +
+            esc(u.kiri) +
+            '</td><td>' +
+            esc(u.teksKanan) +
+            ' = ' +
+            esc(u.kanan) +
+            '</td><td>' +
+            (u.sama
+              ? '<span class="xlab__tag xlab__tag--ok">sama</span>'
+              : '<span class="xlab__tag xlab__tag--no">beda</span>') +
+            '</td></tr>'
+          );
+        })
+        .join('') +
+      '</tbody></table></div>'
+    : '<p class="dl-caption">Belum ada uji yang dicatat.</p>';
+
+  return (
+    '<div class="xlab" id="' +
+    id +
+    '">' +
+    '<div class="xlab__pilih" role="group" aria-label="Pilih sifat yang diuji">' +
+    pilihan +
+    '</div>' +
+    '<div class="xlab__stepper">' +
+    stepper('a', 'Basis a', batasA) +
+    (sifatPakaiM(st.sifat) ? stepper('m', 'Eksponen m', batasE) : '') +
+    stepper('n', 'Eksponen n', batasE) +
+    (d.pakaiB ? stepper('b', 'Basis b', batasA) : '') +
+    '</div>' +
+    '<div class="xlab__hasil" aria-live="polite">' +
+    '<div class="xlab__ruas"><span class="xlab__ruas-label">Ruas kiri</span><span class="xlab__ruas-teks">' +
+    esc(r.teksKiri) +
+    '</span><span class="xlab__ruas-nilai">= ' +
+    esc(formatPecahan(r.kiri)) +
+    '</span></div>' +
+    '<div class="xlab__ruas"><span class="xlab__ruas-label">Ruas kanan</span><span class="xlab__ruas-teks">' +
+    esc(r.teksKanan) +
+    '</span><span class="xlab__ruas-nilai">= ' +
+    esc(formatPecahan(r.kanan)) +
+    '</span></div>' +
+    '<p class="xlab__catatan">Eksponen: ' +
+    esc(r.catatan) +
+    '</p>' +
+    vonis +
+    '</div>' +
+    '<div class="btn-group">' +
+    '<button type="button" class="btn btn--primary" id="' +
+    id +
+    '-catat">📝 Catat uji ini</button>' +
+    '</div>' +
+    ringkasan +
+    log +
+    '</div>'
+  );
+}
+
+/* onChange(pesan) dipanggil setelah state berubah; pesan opsional untuk notice. */
+function bindExponentLab(root, id, st, opts, onChange) {
+  opts = opts || {};
+  root.querySelectorAll('[data-xlab-sifat]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      st.sifat = btn.dataset.xlabSifat;
+      onChange();
+    });
+  });
+  ['a', 'm', 'n', 'b'].forEach(function (key) {
+    bindIntegerStepper(root, id + '-' + key, function (delta) {
+      ubahExponentLab(st, key, delta, opts);
+      onChange();
+    });
+  });
+  var catat = root.querySelector('#' + id + '-catat');
+  if (catat) {
+    catat.addEventListener('click', function () {
+      var hasil = labCatat(st);
+      var pesan = {
+        ok: 'Uji dicatat.',
+        duplikat: 'Uji ini sudah dicatat. Coba nilai a, m, atau n yang lain.',
+        tidakTerdefinisi: 'Uji dengan hasil tak terdefinisi tidak dicatat. Pilih a ≠ 0.',
+      };
+      onChange(pesan[hasil]);
+    });
+  }
 }

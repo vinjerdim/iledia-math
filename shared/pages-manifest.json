@@ -176,5 +176,13 @@
     "h1": "Bangun Kongruen & Sifat-sifatnya",
     "stageCount": 10,
     "extraBody": "partials/reset-modal.html"
+  },
+  "fase-e/mpi-1.1": {
+    "title": "Sifat-sifat Eksponen Bulat — Matematika Fase E",
+    "description": "Media pembelajaran interaktif berbasis Discovery Learning untuk menemukan dan menjelaskan sifat-sifat eksponen bulat (positif, negatif, dan nol), termasuk makna a⁰ = 1 dan a⁻ⁿ = 1/aⁿ, melalui pengamatan pola tangga pangkat, ubin faktor, dan penalaran.",
+    "kicker": "Matematika — Fase E (SMK RPL)",
+    "h1": "Sifat-sifat Eksponen Bulat",
+    "stageCount": 10,
+    "extraBody": "partials/reset-modal.html"
   }
 }
