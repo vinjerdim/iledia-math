@@ -2659,6 +2659,26 @@ details.hint-reveal[open] summary::before {
   height: 30px;
 }
 
+.frac-model--wide .frac-model__bar {
+  width: min(100%, 420px);
+}
+
+/* Garis tebal pengelompokan bagian (buildFractionModel opts.group). */
+.frac-model__cell.is-group-end {
+  position: relative;
+}
+
+.frac-model__cell.is-group-end::after {
+  content: '';
+  position: absolute;
+  top: -5px;
+  bottom: -5px;
+  right: -3px;
+  width: 3px;
+  border-radius: 2px;
+  background: var(--color-ink);
+}
+
 .frac-model--small .frac-model__circle {
   width: 72px;
   height: 72px;
@@ -2754,4 +2774,109 @@ details.hint-reveal[open] summary::before {
   .frac-model__part {
     transition: none;
   }
+}
+
+/* =========================================================================
+   Komponen urut-ketuk (buildOrderPicker di engine.js bagian 11)
+   ========================================================================= */
+
+.order-picker {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.order-picker__slots {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.order-picker__slot {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-height: 56px;
+  padding: var(--space-2) var(--space-3);
+  border: 2px dashed var(--color-border-strong);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+}
+
+.order-picker__slot.is-ok {
+  border-style: solid;
+  border-color: var(--color-success);
+  background: var(--color-success-soft);
+}
+
+.order-picker__slot.is-bad {
+  border-style: solid;
+  border-color: var(--color-error);
+  background: var(--color-error-soft);
+}
+
+.order-picker__rank {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--color-primary);
+  color: #fff;
+  font-weight: 700;
+}
+
+.order-picker__empty {
+  font-size: 0.85rem;
+  color: var(--color-ink-muted);
+}
+
+.order-picker__pool {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  border-radius: var(--radius-md);
+  background: var(--color-bg-grid);
+}
+
+.order-picker__chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: 44px;
+  padding: var(--space-2) var(--space-4);
+  border: 2px solid var(--color-primary);
+  border-radius: 999px;
+  background: var(--color-surface);
+  font-family: var(--font-body);
+  font-size: 0.92rem;
+  font-weight: 600;
+  color: var(--color-ink);
+  text-align: left;
+  cursor: pointer;
+}
+
+.order-picker__chip:hover:not(:disabled) {
+  background: var(--color-primary-soft);
+}
+
+.order-picker__chip:focus-visible {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+.order-picker__chip:disabled {
+  border-color: transparent;
+  background: transparent;
+  cursor: default;
+}
+
+.order-picker__slot .order-picker__chip:not(:disabled)::after {
+  content: '✕';
+  font-size: 0.75rem;
+  color: var(--color-ink-muted);
 }
