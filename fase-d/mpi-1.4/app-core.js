@@ -208,55 +208,7 @@ var updateProgress = StageMachine.updateProgress;
    5. UTILITAS RENDER
    ============================================================ */
 
-/** Render frac-block HTML */
-function buildFracBlock(num, den, whole, size) {
-  size = size || '';
-  var cls = size ? ' frac-block--' + size : '';
-  var ariaLabel =
-    whole != null
-      ? esc(whole) + ' dan ' + esc(num) + ' per ' + esc(den)
-      : esc(num) + ' per ' + esc(den);
-  var wholeHTML =
-    whole != null ? '<span class="frac-block__whole">' + esc(String(whole)) + '</span>' : '';
-  return (
-    '<span class="frac-block' +
-    cls +
-    '" role="img" aria-label="' +
-    ariaLabel +
-    '">' +
-    wholeHTML +
-    '<span class="frac-block__frac">' +
-    '<span class="frac-block__num">' +
-    esc(String(num)) +
-    '</span>' +
-    '<span class="frac-block__den">' +
-    esc(String(den)) +
-    '</span>' +
-    '</span></span>'
-  );
-}
-
-/** Render inline fraction */
-function buildFracInline(num, den, whole) {
-  var ariaLabel =
-    whole != null
-      ? esc(whole) + ' dan ' + esc(num) + ' per ' + esc(den)
-      : esc(num) + ' per ' + esc(den);
-  var wholeStr = whole != null ? esc(String(whole)) : '';
-  return (
-    '<span class="frac-inline" role="img" aria-label="' +
-    ariaLabel +
-    '">' +
-    wholeStr +
-    '<span class="frac-num">' +
-    esc(String(num)) +
-    '</span>' +
-    '<span class="frac-den">' +
-    esc(String(den)) +
-    '</span>' +
-    '</span>'
-  );
-}
+/* buildFracBlock/buildFracInline berada di shared/engine.js. */
 
 /** Render number object sebagai display HTML */
 function buildNumberDisplay(obj, size) {

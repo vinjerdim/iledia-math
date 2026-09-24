@@ -588,7 +588,7 @@ function renderKoleksi(container) {
       ? buildDlPanel(
           '<h3 style="margin-top:0;">📋 Tabel Data Kelompokmu</h3>' +
             buildTabelData() +
-            '<div class="quiz-item" style="margin-top:var(--space-5);">' +
+            '<div class="quiz-item quiz-item--guided" style="margin-top:var(--space-5);">' +
             '<p class="exercise-label">' +
             esc(A.pertanyaan) +
             '</p>' +

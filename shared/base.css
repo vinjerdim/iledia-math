@@ -2590,6 +2590,174 @@ details.hint-reveal[open] summary::before {
 }
 
 /* =========================================================================
+   Pecahan — pecahan campuran dalam kalimat, model visual, isian bersusun
+   (buildFracInline, buildFractionModel, buildFractionInput di engine.js)
+   ========================================================================= */
+
+.frac-mixed {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  vertical-align: middle;
+  font-weight: 700;
+}
+
+.frac-mixed__whole {
+  font-size: 1.05em;
+  line-height: 1;
+}
+
+.frac-model {
+  margin: var(--space-3) 0;
+}
+
+.frac-model__shapes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  align-items: center;
+}
+
+.frac-model__bar {
+  display: grid;
+  gap: 3px;
+  width: min(100%, 240px);
+  height: 44px;
+  padding: 3px;
+  border: 2px solid var(--color-orange-strong);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+}
+
+.frac-model__cell {
+  border-radius: 2px;
+  background: var(--color-bg-grid);
+  transition: background-color 0.2s;
+}
+
+.frac-model__cell.is-on {
+  background: var(--color-orange);
+}
+
+.frac-model__circle {
+  width: 104px;
+  height: 104px;
+}
+
+.frac-model__part {
+  fill: var(--color-warning-soft);
+  stroke: var(--color-orange-strong);
+  stroke-width: 1.5;
+  transition: fill 0.2s;
+}
+
+.frac-model__part.is-on {
+  fill: var(--color-orange);
+}
+
+.frac-model--small .frac-model__bar {
+  width: min(100%, 160px);
+  height: 30px;
+}
+
+.frac-model--small .frac-model__circle {
+  width: 72px;
+  height: 72px;
+}
+
+.frac-model__caption {
+  margin-top: var(--space-2);
+  font-size: 0.82rem;
+  color: var(--color-ink-muted);
+}
+
+.frac-input {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  border: 2px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+}
+
+.frac-input--ok {
+  border-color: var(--color-success);
+  background: var(--color-success-soft);
+}
+
+.frac-input--bad {
+  border-color: var(--color-error);
+}
+
+.frac-input__whole {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+.frac-input__cap {
+  font-size: 0.68rem;
+  color: var(--color-ink-muted);
+}
+
+.frac-input__stack {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.frac-input__line {
+  display: block;
+  width: 100%;
+  min-width: 56px;
+  height: 3px;
+  border-radius: 2px;
+  background: var(--color-ink);
+}
+
+.frac-input__box {
+  width: 3.2rem;
+  min-height: 44px;
+  padding: 4px;
+  border: 2px solid var(--color-border-strong);
+  border-radius: var(--radius-sm);
+  font-family: var(--font-mono);
+  font-size: 1.35rem;
+  font-weight: 700;
+  text-align: center;
+  color: var(--color-ink);
+  background: var(--color-surface);
+}
+
+.frac-input__box--whole {
+  width: 3.4rem;
+  min-height: 60px;
+  font-size: 1.8rem;
+}
+
+.frac-input__box:focus-visible {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 1px;
+}
+
+.frac-input__box:disabled {
+  background: transparent;
+  border-color: transparent;
+  color: var(--color-ink);
+  opacity: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .frac-model__cell,
+  .frac-model__part {
+    transition: none;
+  }
+}
+
+/* =========================================================================
    Bilangan bulat — chip notasi, penempatan, perbandingan & pengurutan
    (buildNumChip, buildNumberLinePlacement, buildCompareSentence,
    buildCompareSymbolChoice, buildTapOrder di shared/engine.js)
@@ -2959,17 +3127,17 @@ details.hint-reveal[open] summary::before {
 }
 
 /* Pertanyaan penuntun bertingkat (buildGuidedQuizList) */
-.quiz-item + .quiz-item {
+.quiz-item--guided + .quiz-item--guided {
   margin-top: var(--space-5);
   padding-top: var(--space-4);
   border-top: 1px dashed var(--color-border);
 }
 
-.quiz-item .exercise-label {
+.quiz-item--guided .exercise-label {
   line-height: 1.7;
 }
 
-.quiz-item .exercise-label .dl-step__num {
+.quiz-item--guided .exercise-label .dl-step__num {
   margin-right: var(--space-2);
   vertical-align: middle;
 }

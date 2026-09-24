@@ -4,7 +4,7 @@
 
    Hanya memuat gaya yang KHAS modul ini. Seluruh dasar design system
    (panel, tombol, kotak umpan balik, pilihan ganda, pemilahan, garis
-   bilangan interaktif .nlp-*, chip bilangan .num-chip, penempatan titik, pertanyaan penuntun .quiz-item, kartu ringkasan, navigasi tahap, modal)
+   bilangan interaktif .nlp-*, chip bilangan .num-chip, penempatan titik, pertanyaan penuntun .quiz-item--guided, kartu ringkasan, navigasi tahap, modal)
    berasal dari shared/base.css.
    ========================================================================= */
 
