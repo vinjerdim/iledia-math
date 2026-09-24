@@ -1983,6 +1983,436 @@ details.hint-reveal[open] summary::before {
   }
 }
 
+/* Busur rasio (barisan geometri): pengali ×r */
+.seq-gap--ratio.seq-gap--known {
+  color: var(--color-orange-strong);
+}
+
+.seq-gap--ratio.seq-gap--known::after {
+  border-color: var(--color-orange);
+}
+
+/* =========================================================================
+   Komponen Discovery Learning lanjutan (shared/engine.js bagian 8):
+   langkah isian, form data, tabel pola, kartu rumus, perbandingan
+   dugaan, tab konteks, pemilahan, grafik perbandingan.
+   ========================================================================= */
+
+.dl-caption {
+  margin: var(--space-2) 0;
+  font-size: 0.82rem;
+  color: var(--color-ink-muted);
+}
+
+/* -------------------------------------------------------------------------
+   Langkah isian bertahap
+   ------------------------------------------------------------------------- */
+
+.dl-step {
+  padding: var(--space-4) 0;
+  border-top: 1px dashed var(--color-border);
+}
+
+.dl-step:first-of-type {
+  border-top: none;
+}
+
+.dl-step__label {
+  margin: 0 0 var(--space-3);
+  font-weight: 600;
+  line-height: 1.5;
+}
+
+.dl-step__num {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  margin-right: var(--space-2);
+  border-radius: 50%;
+  background: var(--color-primary);
+  color: #fff;
+  font-size: 0.78rem;
+}
+
+.dl-step--done .dl-step__num {
+  background: var(--color-success);
+}
+
+.dl-step__answer {
+  margin: 0 0 var(--space-3);
+  font-family: var(--font-mono);
+  font-weight: 700;
+  color: var(--color-success-strong);
+}
+
+.ctx-card {
+  padding: var(--space-4);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-bg);
+  margin-bottom: var(--space-4);
+}
+
+.ctx-card__story {
+  margin: 0;
+  line-height: 1.6;
+}
+
+.ab-form {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--space-3) var(--space-4);
+}
+
+.ab-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.pilah-item {
+  padding: var(--space-4) 0;
+  border-top: 1px dashed var(--color-border);
+}
+
+.pilah-item__seq {
+  margin: 0 0 var(--space-3);
+  font-family: var(--font-mono);
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--color-blue-strong);
+}
+
+.pilah-item .challenge-options {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+}
+
+/* -------------------------------------------------------------------------
+   Tahap 4a — tabel pola koefisien beda
+   ------------------------------------------------------------------------- */
+
+.un-table-wrap {
+  overflow-x: auto;
+  margin-top: var(--space-3);
+}
+
+.un-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.95rem;
+}
+
+.un-table th,
+.un-table td {
+  padding: var(--space-2) var(--space-3);
+  border-bottom: 1px solid var(--color-border);
+  text-align: left;
+  white-space: nowrap;
+}
+
+.un-table thead th {
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--color-ink-muted);
+}
+
+.un-row--ok {
+  background: var(--color-success-soft);
+}
+
+.un-row--no {
+  background: var(--color-error-soft);
+}
+
+.un-row__val,
+.un-row__expr {
+  font-family: var(--font-mono);
+  font-weight: 700;
+}
+
+.un-row__input.input-text {
+  display: inline-block;
+  width: 64px;
+  min-height: 40px;
+  padding: 4px 6px;
+  font-family: var(--font-mono);
+  font-size: 1rem;
+  text-align: center;
+}
+
+.un-row__mark {
+  margin-left: var(--space-2);
+  font-weight: 700;
+}
+
+.un-row__mark--ok {
+  color: var(--color-success);
+}
+
+.un-row__mark--no {
+  color: var(--color-error);
+}
+
+/* -------------------------------------------------------------------------
+   Kartu rumus
+   ------------------------------------------------------------------------- */
+
+.formula-card {
+  margin: 0 0 var(--space-4);
+  padding: var(--space-4);
+  border: 2px solid var(--color-purple);
+  border-radius: var(--radius-md);
+  background: var(--color-purple-soft);
+  color: var(--color-purple-strong);
+  font-family: var(--font-mono);
+  font-size: 1.15rem;
+  font-weight: 700;
+  text-align: center;
+}
+
+.formula-card__label {
+  display: block;
+  margin-bottom: var(--space-1);
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.formula-duo {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: var(--space-3);
+  max-width: 640px;
+  margin: 0 auto var(--space-4);
+}
+
+.formula-duo .formula-card {
+  margin: 0;
+}
+
+/* -------------------------------------------------------------------------
+   Tahap 5 — perbandingan dugaan
+   ------------------------------------------------------------------------- */
+
+.dugaan-compare {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: var(--space-3);
+  margin: var(--space-4) 0;
+}
+
+.dugaan-row {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  padding: var(--space-3) var(--space-4);
+  border: 2px solid var(--color-warning);
+  border-radius: var(--radius-md);
+  background: var(--color-warning-soft);
+  font-size: 0.9rem;
+}
+
+.dugaan-row--ok {
+  border-color: var(--color-success);
+  background: var(--color-success-soft);
+}
+
+.dugaan-row__title {
+  font-family: var(--font-display);
+  font-weight: 700;
+}
+
+.dugaan-row__verdict {
+  margin-top: var(--space-1);
+  font-weight: 700;
+}
+
+/* -------------------------------------------------------------------------
+   Refleksi & selesai
+   ------------------------------------------------------------------------- */
+
+.dl-refleksi-q {
+  display: block;
+  margin-bottom: var(--space-3);
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+.done-card__lead {
+  max-width: 520px;
+  margin: 0 auto var(--space-5);
+  font-size: 1.05rem;
+  color: var(--color-ink-muted);
+}
+
+.done-card__list {
+  max-width: 640px;
+  margin: 0 auto var(--space-5);
+  text-align: left;
+}
+
+.done-card__note {
+  max-width: 560px;
+  margin: 0 auto var(--space-5);
+  text-align: left;
+}
+
+@media (max-width: 560px) {
+  .formula-card {
+    font-size: 1rem;
+  }
+
+  .ab-form .dl-input-row {
+    width: 100%;
+  }
+}
+
+/* Tab pemilih data/konteks */
+.dl-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-bottom: var(--space-4);
+}
+
+.dl-tab {
+  min-height: 44px;
+  padding: var(--space-2) var(--space-4);
+  border: 2px solid var(--color-border);
+  border-radius: 999px;
+  background: var(--color-surface);
+  font-family: var(--font-body);
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--color-ink);
+  cursor: pointer;
+}
+
+.dl-tab:hover {
+  border-color: var(--color-primary);
+}
+
+.dl-tab.is-active {
+  border-color: var(--color-primary);
+  background: var(--color-primary-soft);
+  color: var(--color-primary-strong);
+}
+
+.dl-tab.is-done:not(.is-active) {
+  border-color: var(--color-success);
+  color: var(--color-success-strong);
+}
+
+/* Pemilahan kategori */
+.sort-item {
+  padding: var(--space-4) 0;
+  border-top: 1px dashed var(--color-border);
+}
+
+.sort-item:first-child {
+  border-top: none;
+  padding-top: 0;
+}
+
+.sort-item__text {
+  margin: 0 0 var(--space-3);
+  font-weight: 600;
+  line-height: 1.5;
+}
+
+.sort-item__text--mono {
+  font-family: var(--font-mono);
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--color-blue-strong);
+}
+
+.sort-item .challenge-options {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+}
+
+/* Grafik batang perbandingan */
+.cmp-chart {
+  margin: var(--space-4) 0;
+}
+
+.cmp-chart svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: var(--radius-md);
+  background: var(--color-bg-grid);
+}
+
+.cmp-chart__legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-4);
+  margin-bottom: var(--space-2);
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.cmp-chart__key {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.cmp-chart__swatch {
+  width: 14px;
+  height: 14px;
+  border-radius: 3px;
+}
+
+.cmp-chart__swatch--0,
+.cmp-chart__bar--0 {
+  background: var(--color-blue);
+  fill: var(--color-blue);
+}
+
+.cmp-chart__swatch--1,
+.cmp-chart__bar--1 {
+  background: var(--color-orange);
+  fill: var(--color-orange);
+}
+
+.cmp-chart__grid {
+  stroke: var(--color-border);
+  stroke-width: 1;
+}
+
+.cmp-chart__axis {
+  stroke: var(--color-ink-muted);
+  stroke-width: 2;
+}
+
+.cmp-chart__ytick,
+.cmp-chart__xtick {
+  fill: var(--color-ink-muted);
+  font-family: var(--font-mono);
+  font-size: 12px;
+}
+
+.cmp-chart__xtick.is-hl {
+  fill: var(--color-ink);
+  font-weight: 700;
+}
+
+.cmp-chart__hl {
+  fill: var(--color-warning-soft);
+}
+
 @media (prefers-reduced-motion: reduce) {
   .seq-tile--new {
     animation: none;

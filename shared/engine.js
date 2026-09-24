@@ -16,7 +16,10 @@
     5. Tahap Latihan Soal (isian numerik & pilihan ganda)
     6. State Persistence
     7. Komponen Discovery Learning (pilihan acak, petunjuk
-       berjenjang, kepala tahap, catatan guru, deret suku)
+       berjenjang, kepala tahap, catatan guru, deret suku
+       aritmetika/geometri)
+    8. Komponen Discovery Learning lanjutan (langkah isian
+       bertahap, pemilahan kategori, grafik perbandingan)
    ============================================================ */
 
 /* ============================================================
@@ -136,6 +139,50 @@ function formatDesimal(n, maksDesimal) {
   var digits = typeof maksDesimal === 'number' ? maksDesimal : 2;
   var faktor = Math.pow(10, digits);
   return String(Math.round(n * faktor) / faktor).replace('.', ',');
+}
+
+/*
+ * Menulis rasio (pengali) barisan geometri: bilangan bulat apa adanya,
+ * pecahan umum dengan karakter pecahan Unicode (0,5 -> "½"), selebihnya
+ * desimal berkoma. Tanda negatif memakai minus tipografis '−'.
+ */
+function formatRatio(r) {
+  var sign = r < 0 ? '−' : '';
+  var abs = Math.abs(r);
+  if (hampirSama(abs, Math.round(abs))) return sign + formatNumber(abs);
+  var pecahan = [
+    [1 / 2, '½'],
+    [1 / 3, '⅓'],
+    [2 / 3, '⅔'],
+    [1 / 4, '¼'],
+    [3 / 4, '¾'],
+    [1 / 5, '⅕'],
+    [1 / 8, '⅛'],
+  ];
+  for (var i = 0; i < pecahan.length; i++) {
+    if (hampirSama(abs, pecahan[i][0])) return sign + pecahan[i][1];
+  }
+  return sign + formatDesimal(abs, 3);
+}
+
+/*
+ * Membaca isian bilangan rasional: bulat ("3", "−2"), desimal ("0,5",
+ * ".25") atau pecahan biasa ("1/2", "−3/4"). Dipakai untuk rasio
+ * barisan geometri. Bentuk kembaliannya sama seperti parseInputInt.
+ */
+function parseInputRational(str) {
+  if (!str || String(str).trim() === '') return { value: null, error: 'empty' };
+  var normalized = String(str)
+    .trim()
+    .replace(/\s/g, '')
+    .replace(/\u2212/g, '-');
+  var frac = normalized.match(/^(-?\d+)\/(\d+)$/);
+  if (frac) {
+    var den = parseInt(frac[2], 10);
+    if (den === 0) return { value: null, error: 'invalid' };
+    return { value: parseInt(frac[1], 10) / den, error: null };
+  }
+  return parseInputDecimal(normalized);
 }
 
 function esc(str) {
@@ -1164,7 +1211,10 @@ function buildHintToggle(id, hints, level) {
  *   terms          array nilai suku
  *   opts.labels    label di atas tiap kotak (mis. 'Baris 1'); default 'U₁', 'U₂', ...
  *   opts.reveal    banyak suku yang terlihat (sisanya '?'); default semua
- *   opts.showDiff  true → tampilkan selisih (+b) pada busur; false → '?'
+ *   opts.showDiff  true → tampilkan nilai busur (selisih/rasio); false → '?'
+ *   opts.gap       'diff' (default) → busur berisi selisih (+b, barisan
+ *                  aritmetika); 'ratio' → busur berisi pengali (×r, barisan
+ *                  geometri), ditulis dengan formatRatio()
  *   opts.format    function(n) → teks nilai suku (default formatNumber dengan '−')
  *   opts.more      true → tambahkan kotak '…' di akhir
  *   opts.tail      {label, value} opsional: kotak suku jauh (mis. U₂₀ = ?)
@@ -1190,10 +1240,18 @@ function buildSequenceTiles(terms, opts) {
   for (var i = 0; i < terms.length; i++) {
     var shown = i < reveal;
     if (i > 0) {
-      var diff = terms[i] - terms[i - 1];
-      var diffText = opts.showDiff && shown ? (diff >= 0 ? '+' : '−') + fmt(Math.abs(diff)) : '?';
+      var diffText = '?';
+      if (opts.showDiff && shown) {
+        if (opts.gap === 'ratio') {
+          diffText = '×' + formatRatio(terms[i] / terms[i - 1]);
+        } else {
+          var diff = terms[i] - terms[i - 1];
+          diffText = (diff >= 0 ? '+' : '−') + fmt(Math.abs(diff));
+        }
+      }
       html +=
         '<span class="seq-gap' +
+        (opts.gap === 'ratio' ? ' seq-gap--ratio' : '') +
         (opts.showDiff && shown ? ' seq-gap--known' : '') +
         '" aria-hidden="true"><span class="seq-gap__val">' +
         diffText +
@@ -1240,5 +1298,451 @@ function buildSequenceTiles(terms, opts) {
     '">' +
     html +
     '</div>'
+  );
+}
+
+/* ============================================================
+   8. KOMPONEN DISCOVERY LEARNING — LANGKAH ISIAN, PEMILAHAN,
+      & GRAFIK PERBANDINGAN
+   Dipakai tahap pengolahan data/pembuktian (isian bertahap
+   berpetunjuk), tahap pemilahan (setiap pernyataan dipilahkan
+   ke salah satu kategori dengan opsi teracak), dan tahap
+   membandingkan dua barisan secara visual.
+   ============================================================ */
+
+/* Panel shared (.panel) dengan class tambahan opsional. */
+function buildDlPanel(inner, cls) {
+  return '<div class="panel' + (cls ? ' ' + cls : '') + '">' + inner + '</div>';
+}
+
+/* Tombol lanjut rata kanan. */
+function buildDlNextButton(id, label, large) {
+  return (
+    '<div class="btn-group btn-group--end">' +
+    '<button type="button" class="btn btn--primary' +
+    (large ? ' btn--large' : '') +
+    '" id="' +
+    id +
+    '">' +
+    esc(label) +
+    '</button>' +
+    '</div>'
+  );
+}
+
+/* Label opsi {id, label} berdasarkan id; '' bila tidak ada. */
+function findOptionLabel(options, id) {
+  for (var i = 0; i < options.length; i++) {
+    if (options[i].id === id) return options[i].label;
+  }
+  return '';
+}
+
+/* State default satu langkah isian bertahap. */
+function makeDlStep() {
+  return { input: '', done: false, salah: false, attempts: 0, hintLevel: 0 };
+}
+
+/*
+ * Kotak isian bilangan.
+ *   opts.allowNegative  true → tanpa inputmode numerik agar tombol minus
+ *                       tersedia di keyboard ponsel
+ *   opts.rational       true → inputmode desimal (koma/garis miring)
+ *   opts.error, opts.disabled, opts.aria, opts.placeholder
+ */
+function buildDlNumInput(id, value, opts) {
+  opts = opts || {};
+  var mode = '';
+  if (opts.rational) mode = ' inputmode="text"';
+  else if (!opts.allowNegative) mode = ' inputmode="numeric"';
+  return (
+    '<input type="text" class="input-text dl-num-input' +
+    (opts.error ? ' has-error' : '') +
+    '" id="' +
+    id +
+    '"' +
+    mode +
+    ' autocomplete="off" value="' +
+    esc(value || '') +
+    '" aria-label="' +
+    esc(opts.aria || 'Jawaban') +
+    '"' +
+    (opts.disabled ? ' disabled' : '') +
+    ' placeholder="' +
+    esc(opts.placeholder || '…') +
+    '">'
+  );
+}
+
+/*
+ * Membaca isian bilangan; menampilkan notice dan mengembalikan null bila
+ * kosong/tidak valid. `rational` true menerima desimal & pecahan (1/2),
+ * selain itu bilangan bulat dengan pemisah ribuan.
+ */
+function readDlNumber(val, rational) {
+  var parsed = rational ? parseInputRational(val) : parseInputInt(val, true);
+  if (parsed.error) {
+    showNotice(
+      parsed.error === 'empty'
+        ? 'Isi jawabanmu terlebih dahulu.'
+        : rational
+          ? 'Tulis jawaban berupa bilangan, pecahan, atau desimal, mis. 3, 1/2, atau 0,5.'
+          : 'Tulis jawaban berupa bilangan bulat, mis. 12 atau −40.'
+    );
+    return null;
+  }
+  return parsed.value;
+}
+
+/*
+ * Satu langkah isian bertahap: label, isian, tombol Periksa & Petunjuk,
+ * umpan balik salah, dan teks temuan setelah benar.
+ *   id    awalan id DOM (mis. 'sn0' → sn0Input, sn0Check, sn0Hint)
+ *   st    state langkah (makeDlStep)
+ *   step  { label, jawab, hints, temuan|bukti, allowNegative, rational }
+ *   num   nomor langkah opsional (bulatan kecil di depan label)
+ */
+function buildDlStep(id, st, step, num) {
+  var temuan = step.temuan || step.bukti || '';
+  var head =
+    '<p class="dl-step__label">' +
+    (num ? '<span class="dl-step__num">' + num + '</span>' : '') +
+    step.label +
+    '</p>';
+  if (st.done) {
+    return (
+      '<div class="dl-step dl-step--done">' +
+      head +
+      '<p class="dl-step__answer">✓ ' +
+      esc(st.input) +
+      '</p>' +
+      (temuan ? buildFeedbackBox('success', '💡', temuan) : '') +
+      '</div>'
+    );
+  }
+  return (
+    '<div class="dl-step">' +
+    head +
+    '<div class="dl-input-row">' +
+    buildDlNumInput(id + 'Input', st.input, {
+      error: st.salah,
+      allowNegative: step.allowNegative,
+      rational: step.rational,
+    }) +
+    '<button type="button" class="btn btn--primary" id="' +
+    id +
+    'Check">Periksa</button>' +
+    buildHintToggle(id + 'Hint', step.hints, st.hintLevel) +
+    '</div>' +
+    (st.salah
+      ? '<div style="margin-top:var(--space-3);">' +
+        buildFeedbackBox(
+          'error',
+          '✗',
+          'Jawaban <strong>' + esc(st.input) + '</strong> belum tepat. Periksa lagi perhitunganmu.'
+        ) +
+        '</div>'
+      : '') +
+    buildHintStack(step.hints, st.hintLevel) +
+    '</div>'
+  );
+}
+
+/* Memasang event buildDlStep; `save` lalu `rerender` dipanggil setelah perubahan. */
+function bindDlStep(id, st, step, save, rerender) {
+  var inp = document.getElementById(id + 'Input');
+  var btn = document.getElementById(id + 'Check');
+  var hint = document.getElementById(id + 'Hint');
+  if (inp && btn) {
+    inp.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter') btn.click();
+    });
+    btn.addEventListener('click', function () {
+      var v = readDlNumber(inp.value, step.rational);
+      if (v === null) return;
+      st.input = inp.value.trim();
+      st.attempts += 1;
+      st.done = step.rational ? hampirSama(v, step.jawab) : v === step.jawab;
+      st.salah = !st.done;
+      save();
+      rerender();
+    });
+  }
+  if (hint) {
+    hint.addEventListener('click', function () {
+      st.hintLevel = Math.min(st.hintLevel + 1, step.hints.length);
+      save();
+      rerender();
+    });
+  }
+}
+
+/*
+ * Aktivitas memilah: setiap butir (mis. barisan atau pernyataan) dipilahkan
+ * ke salah satu kategori `options`. Urutan butir dan urutan opsi pada tiap
+ * butir DIACAK sekali lalu disimpan di State.
+ *
+ *   items   [{ id, teks, correct, explanation }]
+ *   options [{ id, label }] — kategori
+ *
+ * ensureSortStates(state, key, orderKey, items, options) menyiapkan
+ *   state[key]      { <itemId>: { chosen, correct, optionOrder } }
+ *   state[orderKey] urutan acak id butir
+ */
+function ensureSortStates(state, key, orderKey, items, options) {
+  var map = state[key] && typeof state[key] === 'object' ? state[key] : {};
+  var next = {};
+  items.forEach(function (it) {
+    var st = map[it.id];
+    if (!st || typeof st !== 'object') {
+      st = { chosen: null, correct: false, optionOrder: null };
+    }
+    ensureShuffledOrder(st, 'optionOrder', options);
+    next[it.id] = st;
+  });
+  state[key] = next;
+  ensureShuffledOrder(state, orderKey, items);
+}
+
+function sortItemsAllAnswered(items, states) {
+  return items.every(function (it) {
+    return !!(states[it.id] && states[it.id].chosen);
+  });
+}
+
+function sortItemsCorrectCount(items, states) {
+  return items.filter(function (it) {
+    return states[it.id] && states[it.id].correct;
+  }).length;
+}
+
+/*
+ * Merender butir pemilahan. Setiap butir dijawab sekali (terkunci) lalu
+ * langsung diberi umpan balik beserta alasannya.
+ *   opts.mono  true → teks butir bergaya kode/angka (untuk barisan)
+ */
+function buildSortItems(items, itemOrder, options, states, opts) {
+  opts = opts || {};
+  return (
+    '<div class="sort-list">' +
+    orderByIds(items, itemOrder)
+      .map(function (it) {
+        var st = states[it.id];
+        return (
+          '<div class="sort-item">' +
+          '<p class="sort-item__text' +
+          (opts.mono ? ' sort-item__text--mono' : '') +
+          '">' +
+          it.teks +
+          '</p>' +
+          buildChoiceGroup(options, st.optionOrder, {
+            chosen: st.chosen,
+            correctId: it.correct,
+            grade: true,
+            locked: true,
+            group: it.id,
+            attr: 'data-sort-opt',
+          }) +
+          (st.chosen
+            ? '<div style="margin-top:var(--space-2);">' +
+              buildFeedbackBox(
+                st.correct ? 'success' : 'error',
+                st.correct ? '✓' : '✗',
+                (st.correct ? '<strong>Benar.</strong> ' : '<strong>Belum tepat.</strong> ') +
+                  it.explanation
+              ) +
+              '</div>'
+            : '') +
+          '</div>'
+        );
+      })
+      .join('') +
+    '</div>'
+  );
+}
+
+/* Memasang event buildSortItems di dalam `root`. */
+function bindSortItems(root, items, states, save, rerender) {
+  var byId = {};
+  items.forEach(function (it) {
+    byId[it.id] = it;
+  });
+  root.querySelectorAll('[data-sort-opt]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var it = byId[btn.dataset.group];
+      var st = it && states[it.id];
+      if (!st || st.chosen) return;
+      st.chosen = btn.dataset.sortOpt;
+      st.correct = st.chosen === it.correct;
+      save();
+      rerender();
+    });
+  });
+}
+
+/*
+ * Grafik batang berdampingan untuk membandingkan dua (atau lebih)
+ * barisan, mis. aritmetika vs geometri, bunga tunggal vs majemuk.
+ *   series      [{ label, values: [..] }] — warna mengikuti urutan (0 biru, 1 oranye)
+ *   opts.xLabel     function(i) → label sumbu-x kelompok ke-i (default i + 1)
+ *   opts.format     function(v) → teks nilai (default formatNumber)
+ *   opts.highlight  indeks kelompok yang disorot (nilai tepatnya sebaiknya
+ *                   ditulis di luar grafik agar tidak menumpuk)
+ *   opts.caption    teks aksesibel grafik
+ */
+function buildCompareBarChart(series, opts) {
+  opts = opts || {};
+  var fmtV =
+    opts.format ||
+    function (v) {
+      return formatNumber(v);
+    };
+  var xLabel =
+    opts.xLabel ||
+    function (i) {
+      return String(i + 1);
+    };
+  var W = 640;
+  var H = 280;
+  var padL = 64;
+  var padR = 12;
+  var padT = 28;
+  var padB = 36;
+  var plotW = W - padL - padR;
+  var plotH = H - padT - padB;
+  var count = series[0].values.length;
+  var max = 0;
+  series.forEach(function (s) {
+    s.values.forEach(function (v) {
+      if (v > max) max = v;
+    });
+  });
+  /* Batas atas dibulatkan ke kelipatan 4 × langkah "rapi" (1–10 × 10ᵏ)
+     agar label sumbu-y mudah dibaca. */
+  if (max <= 0) max = 1;
+  var kasar = max / 4;
+  var pangkat = Math.pow(10, Math.floor(Math.log10(kasar)));
+  var langkah = [1, 1.5, 2, 2.5, 3, 4, 5, 6, 8, 10]
+    .map(function (m) {
+      return m * pangkat;
+    })
+    .filter(function (v) {
+      return v >= kasar;
+    })[0];
+  max = langkah * 4;
+
+  function yOf(v) {
+    return padT + plotH - (v / max) * plotH;
+  }
+
+  var grid = '';
+  [0, 0.25, 0.5, 0.75, 1].forEach(function (f) {
+    var y = yOf(max * f);
+    grid +=
+      '<line class="cmp-chart__grid" x1="' +
+      padL +
+      '" x2="' +
+      (W - padR) +
+      '" y1="' +
+      y +
+      '" y2="' +
+      y +
+      '"/>' +
+      '<text class="cmp-chart__ytick" x="' +
+      (padL - 8) +
+      '" y="' +
+      (y + 4) +
+      '" text-anchor="end">' +
+      esc(fmtV(max * f)) +
+      '</text>';
+  });
+
+  var groupW = plotW / count;
+  var barW = Math.min(28, (groupW * 0.8) / series.length);
+  var bars = '';
+  for (var i = 0; i < count; i++) {
+    var gx = padL + i * groupW + (groupW - barW * series.length) / 2;
+    var hl = opts.highlight === i;
+    if (hl) {
+      bars +=
+        '<rect class="cmp-chart__hl" x="' +
+        (padL + i * groupW) +
+        '" y="' +
+        padT +
+        '" width="' +
+        groupW +
+        '" height="' +
+        plotH +
+        '"/>';
+    }
+    for (var k = 0; k < series.length; k++) {
+      var v = series[k].values[i];
+      var x = gx + k * barW;
+      var y = yOf(v);
+      bars +=
+        '<rect class="cmp-chart__bar cmp-chart__bar--' +
+        k +
+        '" x="' +
+        x +
+        '" y="' +
+        y +
+        '" width="' +
+        (barW - 2) +
+        '" height="' +
+        Math.max(0, padT + plotH - y) +
+        '"><title>' +
+        esc(series[k].label + ', ' + xLabel(i) + ': ' + fmtV(v)) +
+        '</title></rect>';
+    }
+    bars +=
+      '<text class="cmp-chart__xtick' +
+      (hl ? ' is-hl' : '') +
+      '" x="' +
+      (padL + i * groupW + groupW / 2) +
+      '" y="' +
+      (H - padB + 18) +
+      '" text-anchor="middle">' +
+      esc(xLabel(i)) +
+      '</text>';
+  }
+
+  var legend =
+    '<div class="cmp-chart__legend">' +
+    series
+      .map(function (s, k) {
+        return (
+          '<span class="cmp-chart__key"><span class="cmp-chart__swatch cmp-chart__swatch--' +
+          k +
+          '" aria-hidden="true"></span>' +
+          esc(s.label) +
+          '</span>'
+        );
+      })
+      .join('') +
+    '</div>';
+
+  return (
+    '<figure class="cmp-chart">' +
+    legend +
+    '<svg viewBox="0 0 ' +
+    W +
+    ' ' +
+    H +
+    '" role="img" aria-label="' +
+    esc(opts.caption || 'Grafik perbandingan') +
+    '">' +
+    grid +
+    '<line class="cmp-chart__axis" x1="' +
+    padL +
+    '" x2="' +
+    (W - padR) +
+    '" y1="' +
+    (padT + plotH) +
+    '" y2="' +
+    (padT + plotH) +
+    '"/>' +
+    bars +
+    '</svg>' +
+    '</figure>'
   );
 }
