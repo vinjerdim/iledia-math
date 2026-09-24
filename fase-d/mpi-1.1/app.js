@@ -8,7 +8,9 @@
    Utilitas bersama (esc, formatNumber, shuffleArray, showNotice,
    buildFeedbackBox, createStageMachine, createExerciseStage,
    createStore, komponen Discovery Learning, bacaBilanganBulat,
-   buildNumberLinePicker/bindNumberLinePicker) berada di
+   buildNumberLinePicker/bindNumberLinePicker, penempatan titik
+   buildNumberLinePlacement/bindNumberLinePlacement, pertanyaan
+   penuntun buildGuidedQuizList/bindGuidedQuizList) berada di
    shared/engine.js.
 
    Alur tahap mengikuti sintaks Discovery Learning; lihat komentar
@@ -27,8 +29,8 @@
     1. Konstanta
     2. State & Storage
     3. Navigasi
-    4. Utilitas Render (pertanyaan bertingkat, skala tegak,
-       penempatan pada garis bilangan)
+    4. Utilitas Render (skala tegak, bilangan untuk penempatan
+       pada garis bilangan)
     5. Stage: Stimulasi            (DL sintaks 1)
     6. Stage: Identifikasi Masalah (DL sintaks 2)
     7. Stage: Pengumpulan Data     (DL sintaks 3)
@@ -139,15 +141,6 @@ function clearState() {
   initExerciseArrays();
 }
 
-/* State penempatan bilangan pada garis bilangan. */
-function ensurePlaceState(key) {
-  var st = State[key];
-  if (!st || typeof st !== 'object' || typeof st.idx !== 'number') {
-    State[key] = { idx: 0, salah: null, wrong: {} };
-  }
-  if (!State[key].wrong || typeof State[key].wrong !== 'object') State[key].wrong = {};
-}
-
 /* Mengambil `n` bilangan acak dari kumpulan, minimal satu negatif & satu positif. */
 function pilihUjiAcak(kumpulan, n) {
   var hasil = [];
@@ -205,7 +198,7 @@ function initExerciseArrays() {
 
   /* Tahap 4b — urutan bilangan dari tabel data diacak */
   ensureShuffledOrder(State, 'garisOrder', DATA.koleksi.situasi);
-  ensurePlaceState('garisPlace');
+  ensureNumberLinePlacementState(State, 'garisPlace');
   if (!State.tanyaOrders || typeof State.tanyaOrders !== 'object') State.tanyaOrders = {};
   if (!State.tanyaPilih || typeof State.tanyaPilih !== 'object') State.tanyaPilih = {};
   DATA.olahGaris.tanya.forEach(function (q) {
@@ -224,7 +217,7 @@ function initExerciseArrays() {
     State.ujiValues = pilihUjiAcak(DATA.verifikasi.kumpulan, DATA.verifikasi.banyakUji);
     State.ujiPlace = null;
   }
-  ensurePlaceState('ujiPlace');
+  ensureNumberLinePlacementState(State, 'ujiPlace');
 
   /* Tahap 6 */
   ensureShuffledOrder(State, 'bankOrder', DATA.generalisasi.bank);
@@ -286,20 +279,6 @@ function fmt(n) {
   return formatNumber(n, '−');
 }
 
-function numChip(n, big) {
-  return '<span class="num-chip' + (big ? ' num-chip--lg' : '') + '">' + fmt(n) + '</span>';
-}
-
-/* Kotak umpan balik pilihan bertingkat (benar → success, salah → warning). */
-function buildChoiceFeedback(chosen, benar, umpan) {
-  if (!chosen) return '';
-  return (
-    '<div style="margin-top:var(--space-3);">' +
-    buildFeedbackBox(benar ? 'success' : 'warning', benar ? '✓' : '💭', umpan[chosen]) +
-    '</div>'
-  );
-}
-
 /* Memasang tombol lanjut yang menyelesaikan tahap ini lalu pindah tahap. */
 function bindNext(id, stageId, nextStageId) {
   var btn = document.getElementById(id);
@@ -307,61 +286,6 @@ function bindNext(id, stageId, nextStageId) {
   btn.addEventListener('click', function () {
     completeStage(stageId);
     navigateTo(nextStageId);
-  });
-}
-
-/*
- * Kumpulan pertanyaan pilihan bertingkat: boleh dicoba lagi sampai
- * benar, lalu terkunci. Urutan opsi tiap pertanyaan diambil dari
- * `orders[q.id]` (diacak di initExerciseArrays).
- *   q = { id, teks|tanya, opsi, correct, umpan }
- */
-function buildQuizList(list, orders, pilih) {
-  return list
-    .map(function (q, i) {
-      var chosen = pilih[q.id] || null;
-      var benar = chosen === q.correct;
-      return (
-        '<div class="quiz-item">' +
-        '<p class="exercise-label"><span class="dl-step__num">' +
-        (i + 1) +
-        '</span>' +
-        (q.tanya || q.teks) +
-        '</p>' +
-        buildChoiceGroup(q.opsi, orders[q.id], {
-          chosen: chosen,
-          correctId: benar ? q.correct : null,
-          grade: true,
-          locked: benar,
-          group: q.id,
-          attr: 'data-q-opt',
-        }) +
-        buildChoiceFeedback(chosen, benar, q.umpan) +
-        '</div>'
-      );
-    })
-    .join('');
-}
-
-function bindQuizList(root, list, pilih, rerender) {
-  var byId = {};
-  list.forEach(function (q) {
-    byId[q.id] = q;
-  });
-  root.querySelectorAll('[data-q-opt]').forEach(function (btn) {
-    btn.addEventListener('click', function () {
-      var q = byId[btn.dataset.group];
-      if (!q || pilih[q.id] === q.correct) return;
-      pilih[q.id] = btn.dataset.qOpt;
-      saveState();
-      rerender();
-    });
-  });
-}
-
-function quizSemuaBenar(list, pilih) {
-  return list.every(function (q) {
-    return pilih[q.id] === q.correct;
   });
 }
 
@@ -412,119 +336,6 @@ function buildSkalaTegak(sit, done) {
     rows +
     '</div>'
   );
-}
-
-/*
- * Aktivitas menempatkan bilangan satu per satu pada garis bilangan.
- *   items  [{ value, teks }] dalam urutan tampil (sudah diacak)
- *   st     { idx, salah, wrong: { <idx>: banyak salah } }
- *   cfg    { min, max, labelEvery }
- */
-function placementDone(items, st) {
-  return st.idx >= items.length;
-}
-
-function arahDari0(v) {
-  if (v === 0) return '0 adalah titik acuan di tengah garis bilangan.';
-  return (
-    fmt(v) +
-    ' berada ' +
-    Math.abs(v) +
-    ' langkah di sebelah ' +
-    (v < 0 ? 'kiri' : 'kanan') +
-    ' 0. Hitung langkahnya mulai dari 0.'
-  );
-}
-
-function buildPlacement(pid, items, st, cfg) {
-  var done = placementDone(items, st);
-  var marks = items.slice(0, Math.min(st.idx, items.length)).map(function (it) {
-    return { value: it.value, label: fmt(it.value) };
-  });
-  if (!done && st.salah !== null && st.salah !== undefined) {
-    marks.push({ value: st.salah, label: fmt(st.salah) + '?', tone: 'bad' });
-  }
-
-  var head = '';
-  var feedback = '';
-  if (done) {
-    feedback = buildFeedbackBox(
-      'success',
-      '✓',
-      '<strong>Semua bilangan sudah menempati titik yang tepat.</strong>'
-    );
-  } else {
-    var target = items[st.idx];
-    head =
-      '<div class="place-target">' +
-      '<span class="place-target__count">Bilangan ' +
-      (st.idx + 1) +
-      ' dari ' +
-      items.length +
-      '</span>' +
-      '<span>Ketuk letak ' +
-      numChip(target.value, true) +
-      (target.teks ? ' <span class="dl-caption">(' + esc(target.teks) + ')</span>' : '') +
-      '</span>' +
-      '</div>';
-    if (st.salah !== null && st.salah !== undefined) {
-      var nSalah = st.wrong[st.idx] || 0;
-      feedback = buildFeedbackBox(
-        'warning',
-        '💭',
-        'Titik yang kamu ketuk adalah <strong>' +
-          fmt(st.salah) +
-          '</strong>, bukan ' +
-          fmt(target.value) +
-          '. ' +
-          (nSalah >= 2
-            ? arahDari0(target.value)
-            : 'Periksa lagi: ' +
-              fmt(target.value) +
-              (target.value === 0
-                ? ' adalah titik acuan.'
-                : ' berada di sebelah kiri atau kanan 0? Berapa langkah dari 0?'))
-      );
-    }
-  }
-
-  return (
-    head +
-    buildNumberLinePicker(pid, {
-      min: cfg.min,
-      max: cfg.max,
-      labelEvery: cfg.labelEvery,
-      marks: marks,
-      interactive: !done,
-      sides: true,
-    }) +
-    feedback
-  );
-}
-
-function bindPlacement(root, pid, items, st, rerender) {
-  bindNumberLinePicker(root, pid, function (v) {
-    if (placementDone(items, st)) return;
-    var target = items[st.idx].value;
-    if (v === target) {
-      st.idx += 1;
-      st.salah = null;
-    } else {
-      st.salah = v;
-      st.wrong[st.idx] = (st.wrong[st.idx] || 0) + 1;
-    }
-    saveState();
-    rerender();
-  });
-}
-
-/* Banyak bilangan yang tepat ditempatkan pada ketukan pertama. */
-function placementSekaliCoba(items, st) {
-  var n = 0;
-  for (var i = 0; i < Math.min(st.idx, items.length); i++) {
-    if (!st.wrong[i]) n += 1;
-  }
-  return n;
 }
 
 /* Bilangan dari tabel data (tahap 3) dalam urutan acak tersimpan. */
@@ -652,7 +463,7 @@ function renderMasalah(container) {
           grade: true,
           locked: benar,
         }) +
-        buildChoiceFeedback(State.masalahPilihan, benar, D.umpan)
+        buildGuidedChoiceFeedback(State.masalahPilihan, benar, D.umpan)
     ) +
     (benar
       ? buildDlPanel(
@@ -777,7 +588,7 @@ function renderKoleksi(container) {
       ? buildDlPanel(
           '<h3 style="margin-top:0;">📋 Tabel Data Kelompokmu</h3>' +
             buildTabelData() +
-            '<div class="quiz-item" style="margin-top:var(--space-5);">' +
+            '<div class="quiz-item quiz-item--guided" style="margin-top:var(--space-5);">' +
             '<p class="exercise-label">' +
             esc(A.pertanyaan) +
             '</p>' +
@@ -787,7 +598,7 @@ function renderKoleksi(container) {
               grade: true,
               locked: amatiBenar,
             }) +
-            buildChoiceFeedback(State.amatiPilihan, amatiBenar, A.umpan) +
+            buildGuidedChoiceFeedback(State.amatiPilihan, amatiBenar, A.umpan) +
             '</div>'
         )
       : '') +
@@ -821,7 +632,7 @@ function renderKoleksi(container) {
 function renderOlahBaca(container) {
   var D = DATA.olahBaca;
   var pilahSelesai = sortItemsAllAnswered(D.pilah, State.pilahStates);
-  var bacaSelesai = quizSemuaBenar(D.baca, State.bacaPilih);
+  var bacaSelesai = guidedQuizAllCorrect(D.baca, State.bacaPilih);
   var rerender = function () {
     renderOlahBaca(container);
   };
@@ -846,7 +657,7 @@ function renderOlahBaca(container) {
             '<p class="dl-caption">' +
             esc(D.instruksiB) +
             '</p>' +
-            buildQuizList(D.baca, State.bacaOrders, State.bacaPilih)
+            buildGuidedQuizList(D.baca, State.bacaOrders, State.bacaPilih)
         )
       : '') +
     (pilahSelesai && bacaSelesai
@@ -865,7 +676,7 @@ function renderOlahBaca(container) {
     '</section>';
 
   bindSortItems(container, D.pilah, State.pilahStates, saveState, rerender);
-  bindQuizList(container, D.baca, State.bacaPilih, rerender);
+  bindGuidedQuizList(container, D.baca, State.bacaPilih, saveState, rerender);
   bindNext('bacaNextBtn', 'olahBaca', 'olahGaris');
 }
 
@@ -877,8 +688,8 @@ function renderOlahGaris(container) {
   var D = DATA.olahGaris;
   var items = garisItems();
   var st = State.garisPlace;
-  var tempatSelesai = placementDone(items, st);
-  var tanyaSelesai = quizSemuaBenar(D.tanya, State.tanyaPilih);
+  var tempatSelesai = numberLinePlacementDone(items, st);
+  var tanyaSelesai = guidedQuizAllCorrect(D.tanya, State.tanyaPilih);
   var rerender = function () {
     renderOlahGaris(container);
   };
@@ -888,7 +699,7 @@ function renderOlahGaris(container) {
     buildHead(D) +
     buildDlPanel('<p style="margin:0;">' + esc(D.instruksi) + '</p>', 'panel--info') +
     buildDlPanel(
-      buildPlacement('garisPicker', items, st, {
+      buildNumberLinePlacement('garisPicker', items, st, {
         min: D.min,
         max: D.max,
         labelEvery: D.labelEvery,
@@ -897,7 +708,7 @@ function renderOlahGaris(container) {
     (tempatSelesai
       ? buildDlPanel(
           '<h3 style="margin-top:0;">🔍 Amati garis bilanganmu</h3>' +
-            buildQuizList(D.tanya, State.tanyaOrders, State.tanyaPilih)
+            buildGuidedQuizList(D.tanya, State.tanyaOrders, State.tanyaPilih)
         )
       : '') +
     (tempatSelesai && tanyaSelesai
@@ -906,8 +717,8 @@ function renderOlahGaris(container) {
       : '') +
     '</section>';
 
-  bindPlacement(container, 'garisPicker', items, st, rerender);
-  bindQuizList(container, D.tanya, State.tanyaPilih, rerender);
+  bindNumberLinePlacement(container, 'garisPicker', items, st, saveState, rerender);
+  bindGuidedQuizList(container, D.tanya, State.tanyaPilih, saveState, rerender);
   bindNext('garisNextBtn', 'olahGaris', 'verifikasi');
 }
 
@@ -953,7 +764,7 @@ function renderVerifikasi(container) {
   var items = ujiItems();
   var st = State.ujiPlace;
   var pernyataanSelesai = sortItemsAllAnswered(D.pernyataan, State.verifStates);
-  var ujiSelesai = placementDone(items, st);
+  var ujiSelesai = numberLinePlacementDone(items, st);
   var rerender = function () {
     renderVerifikasi(container);
   };
@@ -975,7 +786,7 @@ function renderVerifikasi(container) {
             '<p class="dl-caption">' +
             esc(D.instruksiB) +
             '</p>' +
-            buildPlacement('ujiPicker', items, st, {
+            buildNumberLinePlacement('ujiPicker', items, st, {
               min: D.min,
               max: D.max,
               labelEvery: D.labelEvery,
@@ -990,7 +801,7 @@ function renderVerifikasi(container) {
     '</section>';
 
   bindSortItems(container, D.pernyataan, State.verifStates, saveState, rerender);
-  bindPlacement(container, 'ujiPicker', items, st, rerender);
+  bindNumberLinePlacement(container, 'ujiPicker', items, st, saveState, rerender);
   bindNext('verifNextBtn', 'verifikasi', 'generalisasi');
 }
 
@@ -1233,7 +1044,8 @@ function renderRefleksi(container) {
   var uItems = ujiItems();
   var tempatSemua = gItems.length + uItems.length;
   var tempatSekali =
-    placementSekaliCoba(gItems, State.garisPlace) + placementSekaliCoba(uItems, State.ujiPlace);
+    numberLinePlacementFirstTry(gItems, State.garisPlace) +
+    numberLinePlacementFirstTry(uItems, State.ujiPlace);
   var benarTerap = State.terapkanExercises.filter(function (e) {
     return e.correct;
   }).length;
