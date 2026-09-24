@@ -4709,3 +4709,176 @@ details.hint-reveal[open] summary::before {
     padding: var(--space-1);
   }
 }
+
+/* =========================================================================
+   Deret aritmetika & geometri (engine.js seksi 21): tabel isian deret,
+   grid "kalikan r, geser, kurangkan", tabel uji rumus. Tabel dan grid
+   menggulir di dalam kotaknya sendiri sehingga halaman tidak ikut
+   bergeser pada layar sempit.
+   ========================================================================= */
+
+.series-fill,
+.series-check {
+  overflow-x: auto;
+  margin-top: var(--space-3);
+  -webkit-overflow-scrolling: touch;
+}
+
+.series-fill__table,
+.series-check__table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.95rem;
+}
+
+.series-fill__table th,
+.series-fill__table td,
+.series-check__table th,
+.series-check__table td {
+  padding: var(--space-2) var(--space-3);
+  border-bottom: 1px solid var(--color-border);
+  text-align: center;
+  white-space: nowrap;
+}
+
+.series-fill__table thead th,
+.series-check__table thead th {
+  font-size: 0.78rem;
+  letter-spacing: 0.02em;
+  color: var(--color-ink-muted);
+}
+
+.series-fill__given,
+.series-check__table td {
+  font-family: var(--font-mono);
+  font-weight: 700;
+}
+
+.series-fill__cell.sel--ok {
+  background: var(--color-success-soft);
+}
+
+.series-fill__cell.sel--no {
+  background: var(--color-error-soft);
+}
+
+.series-fill__input.input-text {
+  display: inline-block;
+  width: 120px;
+  min-height: 40px;
+  padding: 4px 6px;
+  font-family: var(--font-mono);
+  font-size: 1rem;
+  text-align: center;
+}
+
+.series-fill__mark {
+  margin-left: var(--space-1);
+  font-weight: 700;
+}
+
+.series-fill__mark--ok,
+.series-check__ok {
+  color: var(--color-success);
+  font-weight: 700;
+}
+
+.series-fill__mark--no,
+.series-check__no {
+  color: var(--color-error);
+  font-weight: 700;
+}
+
+.shift-grid {
+  overflow-x: auto;
+  margin: var(--space-4) 0;
+  padding: var(--space-3);
+  border-radius: var(--radius-md);
+  background: var(--color-bg-grid);
+}
+
+.shift-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  min-width: max-content;
+  margin-bottom: var(--space-2);
+}
+
+.shift-row__label {
+  flex: 0 0 64px;
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--color-ink-muted);
+}
+
+.shift-cell {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 52px;
+  height: 44px;
+  padding: 0 var(--space-2);
+  border: 2px solid var(--color-blue);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+  font-family: var(--font-mono);
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--color-blue-strong);
+}
+
+.shift-row--times .shift-cell {
+  border-color: var(--color-orange);
+  color: var(--color-orange-strong);
+}
+
+.shift-cell--empty,
+.shift-row--times .shift-cell--empty {
+  border-color: transparent;
+  background: transparent;
+}
+
+.shift-cell--pair {
+  cursor: pointer;
+  border-style: dashed;
+}
+
+.shift-cell--pair:hover,
+.shift-cell--pair:focus-visible {
+  background: var(--color-warning-soft);
+}
+
+.shift-cell--pair.is-struck {
+  cursor: default;
+  border-style: solid;
+  border-color: var(--color-border-strong);
+  background: var(--color-surface);
+  color: var(--color-ink-muted);
+  text-decoration: line-through;
+  text-decoration-thickness: 2px;
+  opacity: 0.6;
+}
+
+.shift-cell--rest,
+.shift-row--times .shift-cell--rest {
+  border-color: var(--color-success);
+  background: var(--color-success-soft);
+  color: var(--color-success-strong);
+}
+
+.shift-op {
+  width: 14px;
+  text-align: center;
+  font-weight: 700;
+  color: var(--color-ink-muted);
+}
+
+.shift-result {
+  margin-top: var(--space-2);
+  padding-top: var(--space-2);
+  border-top: 2px solid var(--color-ink-muted);
+  font-family: var(--font-mono);
+  font-weight: 700;
+}
