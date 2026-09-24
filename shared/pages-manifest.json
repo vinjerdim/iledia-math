@@ -8,11 +8,12 @@
     "extraBody": "partials/reset-modal.html"
   },
   "fase-d/mpi-1.2": {
-    "title": "Penjumlahan dan Pengurangan Bilangan Bulat — Matematika Fase D",
-    "description": "Media pembelajaran interaktif untuk menerapkan operasi penjumlahan dan pengurangan pada bilangan bulat dalam menyelesaikan masalah kontekstual perubahan nilai.",
+    "title": "Membandingkan & Mengurutkan Bilangan Bulat — Matematika Fase D",
+    "description": "Media pembelajaran interaktif berbasis Cooperative Learning untuk membandingkan dan mengurutkan bilangan bulat menggunakan garis bilangan sebagai alat bantu.",
     "kicker": "Matematika — Fase D (SMP)",
-    "h1": "Penjumlahan dan Pengurangan Bilangan Bulat",
-    "stageCount": 8
+    "h1": "Membandingkan & Mengurutkan Bilangan Bulat",
+    "stageCount": 8,
+    "extraBody": "partials/reset-modal.html"
   },
   "fase-d/mpi-1.3": {
     "title": "Membaca & Menulis Pecahan Biasa dan Pecahan Campuran — Matematika Fase D",
@@ -23,19 +24,22 @@
     "extraBody": "partials/reset-modal.html"
   },
   "fase-d/mpi-1.4": {
-    "title": "Eksplorasi Bilangan Rasional — Matematika Fase D",
-    "description": "Media pembelajaran interaktif untuk membandingkan dan mengubah representasi bilangan rasional: pecahan biasa, pecahan campuran, dan desimal.",
+    "title": "Menyederhanakan & Menyamakan Penyebut Pecahan — Matematika Fase D",
+    "description": "Media pembelajaran interaktif berbasis Problem-Based Learning untuk menyederhanakan pecahan dan menyamakan penyebut dua pecahan atau lebih sebagai dasar perbandingan.",
     "kicker": "Matematika — Fase D (SMP)",
-    "h1": "Eksplorasi Bilangan Rasional",
-    "stageCount": 8,
+    "h1": "Menyederhanakan & Menyamakan Penyebut Pecahan",
+    "stageCount": 10,
+    "extraBody": "partials/reset-modal.html",
     "extraScripts": [
       "app-core.js",
       "app-stage-orientasi.js",
-      "app-stage-eksplorasi.js",
-      "app-stage-konversi.js",
-      "app-stage-bandingkan.js",
-      "app-stage-urutkan.js",
-      "app-stage-tantangan.js",
+      "app-stage-organisasi.js",
+      "app-stage-selidik-sederhana.js",
+      "app-stage-latih-sederhana.js",
+      "app-stage-selidik-samakan.js",
+      "app-stage-latih-samakan.js",
+      "app-stage-karya.js",
+      "app-stage-evaluasi.js",
       "app-stage-refleksi.js",
       "app-stage-selesai.js"
     ]

@@ -2659,6 +2659,26 @@ details.hint-reveal[open] summary::before {
   height: 30px;
 }
 
+.frac-model--wide .frac-model__bar {
+  width: min(100%, 420px);
+}
+
+/* Garis tebal pengelompokan bagian (buildFractionModel opts.group). */
+.frac-model__cell.is-group-end {
+  position: relative;
+}
+
+.frac-model__cell.is-group-end::after {
+  content: '';
+  position: absolute;
+  top: -5px;
+  bottom: -5px;
+  right: -3px;
+  width: 3px;
+  border-radius: 2px;
+  background: var(--color-ink);
+}
+
 .frac-model--small .frac-model__circle {
   width: 72px;
   height: 72px;
@@ -2754,6 +2774,496 @@ details.hint-reveal[open] summary::before {
   .frac-model__part {
     transition: none;
   }
+}
+
+/* =========================================================================
+   Komponen urut-ketuk (buildOrderPicker di engine.js bagian 11)
+   ========================================================================= */
+
+.order-picker {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.order-picker__slots {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.order-picker__slot {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-height: 56px;
+  padding: var(--space-2) var(--space-3);
+  border: 2px dashed var(--color-border-strong);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+}
+
+.order-picker__slot.is-ok {
+  border-style: solid;
+  border-color: var(--color-success);
+  background: var(--color-success-soft);
+}
+
+.order-picker__slot.is-bad {
+  border-style: solid;
+  border-color: var(--color-error);
+  background: var(--color-error-soft);
+}
+
+.order-picker__rank {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--color-primary);
+  color: #fff;
+  font-weight: 700;
+}
+
+.order-picker__empty {
+  font-size: 0.85rem;
+  color: var(--color-ink-muted);
+}
+
+.order-picker__pool {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  border-radius: var(--radius-md);
+  background: var(--color-bg-grid);
+}
+
+.order-picker__chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: 44px;
+  padding: var(--space-2) var(--space-4);
+  border: 2px solid var(--color-primary);
+  border-radius: 999px;
+  background: var(--color-surface);
+  font-family: var(--font-body);
+  font-size: 0.92rem;
+  font-weight: 600;
+  color: var(--color-ink);
+  text-align: left;
+  cursor: pointer;
+}
+
+.order-picker__chip:hover:not(:disabled) {
+  background: var(--color-primary-soft);
+}
+
+.order-picker__chip:focus-visible {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+.order-picker__chip:disabled {
+  border-color: transparent;
+  background: transparent;
+  cursor: default;
+}
+
+.order-picker__slot .order-picker__chip:not(:disabled)::after {
+  content: '✕';
+  font-size: 0.75rem;
+  color: var(--color-ink-muted);
+}
+
+/* =========================================================================
+   Bilangan bulat — chip notasi, penempatan, perbandingan & pengurutan
+   (buildNumChip, buildNumberLinePlacement, buildCompareSentence,
+   buildCompareSymbolChoice, buildTapOrder di shared/engine.js)
+   ========================================================================= */
+
+.num-chip {
+  display: inline-block;
+  min-width: 2.2em;
+  padding: 1px var(--space-2);
+  border-radius: var(--radius-md);
+  background: var(--color-purple-soft);
+  color: var(--color-purple-strong);
+  font-family: var(--font-mono);
+  font-weight: 700;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.num-chip--lg {
+  font-size: 1.3rem;
+  padding: 2px var(--space-3);
+}
+
+.place-target {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2) var(--space-4);
+  font-weight: 600;
+}
+
+.place-target__count {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--color-ink-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+/* Kalimat perbandingan [a] ☐ [b] */
+.cmp-sentence {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-3);
+  margin: var(--space-3) 0;
+}
+
+.cmp-sentence .num-chip--lg {
+  font-size: 1.7rem;
+  padding: var(--space-1) var(--space-4);
+}
+
+.cmp-sentence__sym {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 56px;
+  height: 56px;
+  border: 3px dashed var(--color-border-strong);
+  border-radius: var(--radius-md);
+  font-family: var(--font-mono);
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: var(--color-ink-muted);
+}
+
+.cmp-sentence__sym.is-filled {
+  border-style: solid;
+  border-color: var(--color-success);
+  background: var(--color-success-soft);
+  color: var(--color-success-strong);
+}
+
+/* Tombol lambang <, >, = */
+.cmp-symbols .challenge-options {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.cmp-symbols .choice-btn {
+  flex-direction: column;
+  justify-content: center;
+  gap: var(--space-1);
+  font-family: var(--font-mono);
+  font-size: 1.8rem;
+  font-weight: 700;
+  text-align: center;
+  min-height: 76px;
+}
+
+.cmp-symbols .choice-btn__icon {
+  display: none;
+}
+
+.cmp-sym-name {
+  display: block;
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--color-ink-muted);
+}
+
+/* Menyusun kartu dengan ketukan */
+.tap-order {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.tap-order__ends {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--color-ink-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.tap-order__slots,
+.tap-order__pool {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.tap-order__slots {
+  padding: var(--space-3);
+  border-radius: var(--radius-md);
+  background: var(--color-bg-grid);
+}
+
+.tap-order__slot,
+.tap-order__card {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-1);
+  min-width: 72px;
+  min-height: 52px;
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-md);
+  font-family: var(--font-body);
+  font-size: 0.95rem;
+  line-height: 1.25;
+  text-align: center;
+}
+
+.tap-order__slot {
+  border: 2px dashed var(--color-border-strong);
+  background: var(--color-surface);
+}
+
+.tap-order__card {
+  border: 2px solid var(--color-primary);
+  background: var(--color-surface);
+  color: var(--color-ink);
+  cursor: pointer;
+  box-shadow: 0 2px 0 var(--color-border);
+}
+
+.tap-order__card:hover:not(:disabled) {
+  background: var(--color-primary-soft);
+}
+
+.tap-order__card:disabled {
+  cursor: default;
+}
+
+.tap-order__card--placed {
+  border-color: var(--color-purple);
+}
+
+.tap-order__card.is-correct {
+  border-color: var(--color-success);
+  background: var(--color-success-soft);
+}
+
+.tap-order__card.is-wrong {
+  border-color: var(--color-error);
+  background: var(--color-error-soft);
+}
+
+.tap-order__card strong {
+  font-family: var(--font-mono);
+  font-size: 1.1rem;
+}
+
+.tap-order__rank {
+  position: absolute;
+  top: -8px;
+  left: -6px;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 4px;
+  border-radius: 999px;
+  background: var(--color-ink-muted);
+  color: #fff;
+  font-size: 0.7rem;
+  font-weight: 700;
+  line-height: 20px;
+}
+
+.tap-order__sep {
+  font-family: var(--font-mono);
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: var(--color-ink-muted);
+}
+
+.tap-order__cap {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--color-ink-muted);
+}
+
+/* =========================================================================
+   Cooperative Learning — peran kelompok, kartu tim, penghargaan
+   ========================================================================= */
+
+.coop-role-bar {
+  margin-bottom: var(--space-4);
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--color-border);
+  border-left: 5px solid var(--color-purple);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+}
+
+.coop-role-bar__title {
+  display: block;
+  margin-bottom: var(--space-2);
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--color-purple-strong);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.coop-role-bar__list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(128px, 1fr));
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.coop-role {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  column-gap: var(--space-2);
+  align-items: center;
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-md);
+  background: var(--color-purple-soft);
+  font-size: 1.1rem;
+}
+
+.coop-role > span:first-child {
+  grid-row: span 2;
+}
+
+.coop-role__nama {
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: var(--color-ink);
+  overflow-wrap: anywhere;
+}
+
+.coop-role__peran {
+  font-size: 0.75rem;
+  color: var(--color-ink-muted);
+}
+
+.coop-team-card {
+  padding: var(--space-4);
+  border: 2px solid var(--color-purple);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+}
+
+.coop-team-card__nama {
+  margin: 0 0 var(--space-3);
+  font-family: var(--font-display);
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--color-purple-strong);
+  overflow-wrap: anywhere;
+}
+
+.coop-team-card__list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: var(--space-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.coop-team-card__list li {
+  display: flex;
+  gap: var(--space-3);
+  align-items: flex-start;
+  overflow-wrap: anywhere;
+}
+
+.coop-team-card__list .dl-caption {
+  display: block;
+  margin-top: 2px;
+}
+
+.coop-team-card__ikon {
+  font-size: 1.6rem;
+  line-height: 1;
+}
+
+.coop-award {
+  margin-bottom: var(--space-4);
+  padding: var(--space-5);
+  border: 3px solid var(--color-warning);
+  border-radius: var(--radius-md);
+  background: var(--color-warning-soft);
+  text-align: center;
+}
+
+.coop-award__ikon {
+  display: block;
+  font-size: 3.4rem;
+  line-height: 1.1;
+}
+
+.coop-award__label {
+  margin: var(--space-2) 0 var(--space-1);
+  font-family: var(--font-display);
+  font-size: 1.6rem;
+  font-weight: 800;
+  color: var(--color-warning-strong);
+}
+
+.coop-award__tim {
+  margin: 0 0 var(--space-3);
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 480px) {
+  .cmp-sentence .num-chip--lg {
+    font-size: 1.35rem;
+    padding: var(--space-1) var(--space-2);
+  }
+
+  .cmp-symbols .choice-btn {
+    font-size: 1.5rem;
+    padding: var(--space-2);
+  }
+
+  .tap-order__slot,
+  .tap-order__card {
+    min-width: 60px;
+    padding: var(--space-2);
+    font-size: 0.85rem;
+  }
+}
+
+/* Pertanyaan penuntun bertingkat (buildGuidedQuizList) */
+.quiz-item--guided + .quiz-item--guided {
+  margin-top: var(--space-5);
+  padding-top: var(--space-4);
+  border-top: 1px dashed var(--color-border);
+}
+
+.quiz-item--guided .exercise-label {
+  line-height: 1.7;
+}
+
+.quiz-item--guided .exercise-label .dl-step__num {
+  margin-right: var(--space-2);
+  vertical-align: middle;
 }
 
 /* =========================================================================

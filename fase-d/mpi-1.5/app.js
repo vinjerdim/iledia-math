@@ -9,7 +9,7 @@
    buildProgressDots, createStageMachine, createStore,
    createExerciseStage, komponen pilihan/pemilahan/langkah isian,
    komponen pecahan, serta komponen membandingkan & mengurutkan
-   pecahan: lcm, kpkList, compareFractions, sortFractions,
+   pecahan: kpk, kpkBanyak, compareFractions, sortFractions,
    renderFracText, buildFracStripCompare, buildFracNumberLine,
    buildOrderBoard/bindOrderBoard, buildRoleCards, buildRoleTag)
    berada di shared/engine.js.
@@ -480,7 +480,7 @@ function strategiSelesai(s) {
 function buildStrategiVisual(s) {
   if (s.id === 'kpk') {
     return buildFracStripCompare(s.contoh, {
-      common: kpkList(
+      common: kpkBanyak(
         s.contoh.map(function (f) {
           return f.den;
         })
@@ -754,7 +754,7 @@ function tandaBenar(q) {
 }
 
 function langkahBanding(q) {
-  var K = lcm(q.a.den, q.b.den);
+  var K = kpk(q.a.den, q.b.den);
   var besar = Math.max(q.a.den, q.b.den);
   var kecil = Math.min(q.a.den, q.b.den);
   function senilai(f, peran) {
@@ -1079,7 +1079,7 @@ function renderUrutkan(container) {
 
   var pembahasan = '';
   if (selesai) {
-    var K = kpkList(
+    var K = kpkBanyak(
       q.items.map(function (it) {
         return it.den;
       })

@@ -22,8 +22,13 @@
        bertahap, pemilahan kategori, grafik perbandingan)
     9. Bilangan bulat: cara baca baku & garis bilangan interaktif
    10. Pecahan: notasi baku, cara baca & model visual
-   11. Pecahan: membandingkan & mengurutkan (KPK, pita pecahan,
-       garis bilangan 0–1, papan urutan, kartu peran kelompok)
+   11. Bilangan bulat: penempatan, perbandingan & pengurutan
+   12. Komponen Cooperative Learning
+   13. Pertanyaan penuntun bertingkat
+   14. Pecahan senilai (menyederhanakan & menyamakan penyebut) dan
+       komponen urut-ketuk
+   15. Pecahan: membandingkan & mengurutkan (pita pecahan, garis
+       bilangan 0–1, papan urutan, kartu & label peran kelompok)
    ============================================================ */
 
 /* ============================================================
@@ -89,6 +94,24 @@ function gcd(a, b) {
     a = t;
   }
   return a;
+}
+
+/*
+ * KPK (kelipatan persekutuan terkecil) dua bilangan asli, dan KPK
+ * sekumpulan bilangan. Dipakai modul pecahan (fase-d/mpi-1.4) untuk
+ * mencari penyebut bersama terkecil.
+ */
+function kpk(a, b) {
+  a = Math.abs(Math.round(a));
+  b = Math.abs(Math.round(b));
+  if (!a || !b) return 0;
+  return (a / gcd(a, b)) * b;
+}
+
+function kpkBanyak(arr) {
+  return arr.reduce(function (acc, n) {
+    return kpk(acc, n);
+  }, 1);
 }
 
 /*
@@ -2189,6 +2212,14 @@ function buildFracInline(num, den, whole) {
  *   opts.caption  teks kecil di bawah model (opsional)
  *   opts.aria     label aksesibel (default dibuat otomatis)
  *   opts.small    true → ukuran ringkas
+ *   opts.wide     true → pita lebih lebar (untuk membandingkan beberapa
+ *                 pita yang ditumpuk; semua pita sama panjang)
+ *   opts.group    (pita saja) garis tebal setiap `group` bagian — mis.
+ *                 buildFractionModel(6, 8, 0, { group: 2 }) menampilkan 6/8
+ *                 yang potongannya digabung berdua-dua menjadi 3/4, atau
+ *                 buildFractionModel(9, 12, 0, { group: 3 }) menampilkan 3/4
+ *                 yang tiap bagiannya dipotong lagi menjadi 3 (9/12).
+ *                 Diabaikan bila `den` tidak habis dibagi `group`.
  */
 function buildFractionModel(num, den, whole, opts) {
   opts = opts || {};
@@ -2196,6 +2227,7 @@ function buildFractionModel(num, den, whole, opts) {
   den = Math.max(1, Math.round(den));
   var sisa = whole * den + Math.max(0, Math.round(num));
   var banyakBangun = Math.max(1, Math.ceil(sisa / den));
+  var group = opts.group && den % opts.group === 0 ? opts.group : 0;
   var shapes = '';
 
   for (var b = 0; b < banyakBangun; b++) {
@@ -2255,7 +2287,11 @@ function buildFractionModel(num, den, whole, opts) {
     } else {
       var cells = '';
       for (var j = 0; j < den; j++) {
-        cells += '<span class="frac-model__cell' + (j < arsir ? ' is-on' : '') + '"></span>';
+        cells +=
+          '<span class="frac-model__cell' +
+          (j < arsir ? ' is-on' : '') +
+          (group > 1 && (j + 1) % group === 0 && j < den - 1 ? ' is-group-end' : '') +
+          '"></span>';
       }
       shapes +=
         '<span class="frac-model__bar" style="grid-template-columns:repeat(' +
@@ -2279,6 +2315,7 @@ function buildFractionModel(num, den, whole, opts) {
     '<figure class="frac-model frac-model--' +
     (opts.shape === 'circle' ? 'circle' : 'bar') +
     (opts.small ? ' frac-model--small' : '') +
+    (opts.wide ? ' frac-model--wide' : '') +
     '" role="img" aria-label="' +
     esc(aria) +
     '">' +
@@ -2380,27 +2417,886 @@ function readFractionInput(root, id) {
 }
 
 /* ============================================================
-   11. PECAHAN — MEMBANDINGKAN & MENGURUTKAN
+   11. BILANGAN BULAT — PENEMPATAN, PERBANDINGAN & PENGURUTAN
+   Aktivitas menempatkan bilangan satu per satu pada garis
+   bilangan, memilih lambang <, >, = , dan menyusun kartu
+   bilangan dengan ketukan (tanpa seret, ramah layar sentuh &
+   keyboard). Gaya .place-target, .num-chip, .cmp-*, .tap-order*
+   ada di shared/base.css.
+   ============================================================ */
+
+/* Chip notasi baku bilangan bulat (lambang minus tipografis). */
+function buildNumChip(n, big) {
+  return (
+    '<span class="num-chip' + (big ? ' num-chip--lg' : '') + '">' + formatNumber(n, '−') + '</span>'
+  );
+}
+
+/*
+ * Menyiapkan state penempatan pada state[key]:
+ *   { idx: indeks bilangan yang sedang ditempatkan,
+ *     salah: titik salah terakhir (atau null),
+ *     wrong: { <idx>: banyak ketukan salah } }
+ */
+function ensureNumberLinePlacementState(state, key) {
+  var st = state[key];
+  if (!st || typeof st !== 'object' || typeof st.idx !== 'number') {
+    state[key] = { idx: 0, salah: null, wrong: {} };
+  }
+  if (!state[key].wrong || typeof state[key].wrong !== 'object') state[key].wrong = {};
+  return state[key];
+}
+
+function numberLinePlacementDone(items, st) {
+  return st.idx >= items.length;
+}
+
+/* Banyak bilangan yang tepat ditempatkan pada ketukan pertama. */
+function numberLinePlacementFirstTry(items, st) {
+  var n = 0;
+  for (var i = 0; i < Math.min(st.idx, items.length); i++) {
+    if (!st.wrong[i]) n += 1;
+  }
+  return n;
+}
+
+/* Petunjuk arah dari 0 untuk bilangan v. */
+function numberLineDirectionHint(v) {
+  var f = formatNumber(v, '−');
+  if (v === 0) return '0 adalah titik acuan di tengah garis bilangan.';
+  return (
+    f +
+    ' berada ' +
+    Math.abs(v) +
+    ' langkah di sebelah ' +
+    (v < 0 ? 'kiri' : 'kanan') +
+    ' 0. Hitung langkahnya mulai dari 0.'
+  );
+}
+
+/*
+ * Aktivitas menempatkan bilangan satu per satu pada garis bilangan.
+ *   pid    id SVG garis bilangan
+ *   items  [{ value, teks, mark }] dalam urutan tampil (sudah diacak);
+ *          `mark` opsional mengganti label titik (default notasi baku)
+ *   st     state dari ensureNumberLinePlacementState
+ *   cfg    { min, max, labelEvery, doneText }
+ * Pasang event dengan bindNumberLinePlacement().
+ */
+function buildNumberLinePlacement(pid, items, st, cfg) {
+  cfg = cfg || {};
+  var fmtV = function (n) {
+    return formatNumber(n, '−');
+  };
+  var done = numberLinePlacementDone(items, st);
+  var marks = items.slice(0, Math.min(st.idx, items.length)).map(function (it) {
+    return { value: it.value, label: it.mark !== undefined ? it.mark : fmtV(it.value) };
+  });
+  if (!done && st.salah !== null && st.salah !== undefined) {
+    marks.push({ value: st.salah, label: fmtV(st.salah) + '?', tone: 'bad' });
+  }
+
+  var head = '';
+  var feedback = '';
+  if (done) {
+    feedback = buildFeedbackBox(
+      'success',
+      '✓',
+      cfg.doneText || '<strong>Semua bilangan sudah menempati titik yang tepat.</strong>'
+    );
+  } else {
+    var target = items[st.idx];
+    head =
+      '<div class="place-target">' +
+      '<span class="place-target__count">Bilangan ' +
+      (st.idx + 1) +
+      ' dari ' +
+      items.length +
+      '</span>' +
+      '<span>Ketuk letak ' +
+      buildNumChip(target.value, true) +
+      (target.teks ? ' <span class="dl-caption">(' + esc(target.teks) + ')</span>' : '') +
+      '</span>' +
+      '</div>';
+    if (st.salah !== null && st.salah !== undefined) {
+      var nSalah = st.wrong[st.idx] || 0;
+      feedback = buildFeedbackBox(
+        'warning',
+        '💭',
+        'Titik yang kamu ketuk adalah <strong>' +
+          fmtV(st.salah) +
+          '</strong>, bukan ' +
+          fmtV(target.value) +
+          '. ' +
+          (nSalah >= 2
+            ? numberLineDirectionHint(target.value)
+            : 'Periksa lagi: ' +
+              fmtV(target.value) +
+              (target.value === 0
+                ? ' adalah titik acuan.'
+                : ' berada di sebelah kiri atau kanan 0? Berapa langkah dari 0?'))
+      );
+    }
+  }
+
+  return (
+    head +
+    buildNumberLinePicker(pid, {
+      min: cfg.min,
+      max: cfg.max,
+      labelEvery: cfg.labelEvery,
+      marks: marks,
+      interactive: !done,
+      sides: true,
+    }) +
+    feedback
+  );
+}
+
+function bindNumberLinePlacement(root, pid, items, st, save, rerender) {
+  bindNumberLinePicker(root, pid, function (v) {
+    if (numberLinePlacementDone(items, st)) return;
+    var target = items[st.idx].value;
+    if (v === target) {
+      st.idx += 1;
+      st.salah = null;
+    } else {
+      st.salah = v;
+      st.wrong[st.idx] = (st.wrong[st.idx] || 0) + 1;
+    }
+    save();
+    rerender();
+  });
+}
+
+/*
+ * Pilihan lambang perbandingan. Label berupa HTML; urutan tampil
+ * diacak lewat ensureShuffledOrder(state, key, COMPARE_SYMBOLS).
+ */
+var COMPARE_SYMBOLS = [
+  { id: 'lt', label: '&lt; <span class="cmp-sym-name">kurang dari</span>' },
+  { id: 'gt', label: '&gt; <span class="cmp-sym-name">lebih dari</span>' },
+  { id: 'eq', label: '= <span class="cmp-sym-name">sama dengan</span>' },
+];
+
+function compareSymbolId(a, b) {
+  if (a < b) return 'lt';
+  if (a > b) return 'gt';
+  return 'eq';
+}
+
+function compareSymbolText(id) {
+  return { lt: '<', gt: '>', eq: '=' }[id] || '?';
+}
+
+/*
+ * Kalimat perbandingan besar: [a] ☐ [b]. `symbolId` null → kotak '?'.
+ */
+function buildCompareSentence(a, b, symbolId) {
+  return (
+    '<div class="cmp-sentence" aria-label="' +
+    esc(
+      formatNumber(a, '−') +
+        ' ' +
+        (symbolId ? compareSymbolText(symbolId) : 'kotak kosong') +
+        ' ' +
+        formatNumber(b, '−')
+    ) +
+    '">' +
+    buildNumChip(a, true) +
+    '<span class="cmp-sentence__sym' +
+    (symbolId ? ' is-filled' : '') +
+    '">' +
+    esc(symbolId ? compareSymbolText(symbolId) : '?') +
+    '</span>' +
+    buildNumChip(b, true) +
+    '</div>'
+  );
+}
+
+/*
+ * Tombol lambang <, >, = (buildChoiceGroup) yang boleh dicoba lagi
+ * sampai benar, lalu terkunci.
+ *   st  { chosen, wrong }  — `wrong` = banyak pilihan salah
+ *   opts.group  nilai data-group pembeda antarsoal
+ */
+function buildCompareSymbolChoice(a, b, order, st, opts) {
+  opts = opts || {};
+  var benarId = compareSymbolId(a, b);
+  var benar = st.chosen === benarId;
+  return (
+    '<div class="cmp-symbols">' +
+    buildChoiceGroup(COMPARE_SYMBOLS, order, {
+      chosen: st.chosen,
+      correctId: benar ? benarId : null,
+      grade: true,
+      locked: benar,
+      group: opts.group || 'cmp',
+      attr: 'data-cmp-sym',
+    }) +
+    '</div>'
+  );
+}
+
+/* Memasang event buildCompareSymbolChoice; `st` dicari lewat getState(group). */
+function bindCompareSymbolChoice(root, getPair, getState, save, rerender) {
+  root.querySelectorAll('[data-cmp-sym]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var group = btn.dataset.group;
+      var pair = getPair(group);
+      var st = getState(group);
+      if (!pair || !st) return;
+      var benarId = compareSymbolId(pair[0], pair[1]);
+      if (st.chosen === benarId) return;
+      st.chosen = btn.dataset.cmpSym;
+      if (st.chosen !== benarId) st.wrong = (st.wrong || 0) + 1;
+      save();
+      rerender();
+    });
+  });
+}
+
+/*
+ * Menyusun kartu dengan ketukan.
+ *   items   [{ id, label }] — label berupa HTML
+ *   answer  array id dalam urutan benar
+ * ensureTapOrderState(state, key, items, answer) menyiapkan state[key]:
+ *   { pool: id kartu yang belum dipakai (teracak, dijamin tidak sama
+ *     dengan urutan benar), placed: id kartu di slot, checked, correct,
+ *     attempts }
+ */
+function ensureTapOrderState(state, key, items, answer) {
+  var st = state[key];
+  var ids = optionIds(items);
+  var valid =
+    st &&
+    typeof st === 'object' &&
+    Array.isArray(st.pool) &&
+    Array.isArray(st.placed) &&
+    st.pool.length + st.placed.length === ids.length &&
+    ids.every(function (id) {
+      return st.pool.indexOf(id) !== -1 || st.placed.indexOf(id) !== -1;
+    });
+  if (!valid) {
+    var pool = shuffleArray(ids);
+    for (var coba = 0; coba < 20 && answer && pool.join('|') === answer.join('|'); coba++) {
+      pool = shuffleArray(ids);
+    }
+    state[key] = { pool: pool, placed: [], checked: false, correct: false, attempts: 0 };
+  }
+  return state[key];
+}
+
+/*
+ *   opts.answer      array id urutan benar (wajib)
+ *   opts.startLabel  keterangan ujung kiri slot (mis. 'Terkecil')
+ *   opts.endLabel    keterangan ujung kanan slot (mis. 'Terbesar')
+ *   opts.separator   lambang di antara slot (mis. '<' atau '>')
+ *   opts.successText HTML umpan balik setelah benar
+ */
+function buildTapOrder(id, items, st, opts) {
+  opts = opts || {};
+  var byId = {};
+  items.forEach(function (it) {
+    byId[it.id] = it;
+  });
+  var locked = st.correct;
+  var n = items.length;
+
+  var slots = '';
+  for (var i = 0; i < n; i++) {
+    if (i > 0 && opts.separator) {
+      slots += '<span class="tap-order__sep" aria-hidden="true">' + esc(opts.separator) + '</span>';
+    }
+    var pid = st.placed[i];
+    if (pid) {
+      var cls = 'tap-order__card tap-order__card--placed';
+      if (st.checked) cls += pid === opts.answer[i] ? ' is-correct' : ' is-wrong';
+      slots +=
+        '<button type="button" class="' +
+        cls +
+        '" data-tap-back="' +
+        i +
+        '" data-tap-id="' +
+        esc(id) +
+        '"' +
+        (locked ? ' disabled' : '') +
+        ' aria-label="Urutan ' +
+        (i + 1) +
+        ': ' +
+        esc(byId[pid].aria || byId[pid].label.replace(/<[^>]*>/g, '')) +
+        (locked ? '' : '. Ketuk untuk mengembalikan') +
+        '">' +
+        '<span class="tap-order__rank">' +
+        (i + 1) +
+        '</span>' +
+        byId[pid].label +
+        '</button>';
+    } else {
+      slots +=
+        '<span class="tap-order__slot" aria-label="Urutan ' +
+        (i + 1) +
+        ' masih kosong"><span class="tap-order__rank">' +
+        (i + 1) +
+        '</span></span>';
+    }
+  }
+
+  var pool = st.pool
+    .map(function (pid) {
+      return (
+        '<button type="button" class="tap-order__card" data-tap-add="' +
+        esc(pid) +
+        '" data-tap-id="' +
+        esc(id) +
+        '">' +
+        byId[pid].label +
+        '</button>'
+      );
+    })
+    .join('');
+
+  var feedback = '';
+  if (st.correct) {
+    feedback = buildFeedbackBox(
+      'success',
+      '✓',
+      opts.successText || '<strong>Urutannya tepat!</strong>'
+    );
+  } else if (st.checked) {
+    var tepat = st.placed.filter(function (pid, i) {
+      return pid === opts.answer[i];
+    }).length;
+    feedback = buildFeedbackBox(
+      'warning',
+      '💭',
+      '<strong>' +
+        tepat +
+        ' dari ' +
+        n +
+        ' kartu sudah di tempat yang tepat.</strong> Kartu bertanda merah belum tepat — lihat lagi letaknya pada garis bilangan, lalu ketuk kartu itu untuk memindahkannya.'
+    );
+  }
+
+  return (
+    '<div class="tap-order" id="' +
+    esc(id) +
+    '">' +
+    (opts.startLabel || opts.endLabel
+      ? '<div class="tap-order__ends"><span>⬅ ' +
+        esc(opts.startLabel || '') +
+        '</span><span>' +
+        esc(opts.endLabel || '') +
+        ' ➡</span></div>'
+      : '') +
+    '<div class="tap-order__slots" role="list" aria-label="Urutan yang kamu susun">' +
+    slots +
+    '</div>' +
+    (locked
+      ? ''
+      : '<p class="tap-order__cap">' +
+        (st.pool.length
+          ? 'Ketuk kartu di bawah untuk mengisi urutan berikutnya. Ketuk kartu di atas untuk mengembalikannya.'
+          : 'Semua kartu sudah terpasang. Periksa urutanmu!') +
+        '</p>' +
+        '<div class="tap-order__pool" role="group" aria-label="Kartu yang belum diurutkan">' +
+        pool +
+        '</div>' +
+        '<div class="btn-group">' +
+        '<button type="button" class="btn btn--primary" id="' +
+        esc(id) +
+        'Check"' +
+        (st.pool.length ? ' disabled' : '') +
+        '>Periksa Urutan</button>' +
+        '<button type="button" class="btn btn--ghost btn--small" id="' +
+        esc(id) +
+        'Clear"' +
+        (st.placed.length ? '' : ' disabled') +
+        '>Kosongkan</button>' +
+        '</div>') +
+    feedback +
+    '</div>'
+  );
+}
+
+function tapOrderIsCorrect(st, answer) {
+  return st.placed.length === answer.length && st.placed.join('|') === answer.join('|');
+}
+
+function bindTapOrder(root, id, st, answer, save, rerender) {
+  if (st.correct) return;
+  var sel = '[data-tap-id="' + id + '"]';
+  root.querySelectorAll(sel + '[data-tap-add]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var pid = btn.dataset.tapAdd;
+      var k = st.pool.indexOf(pid);
+      if (k === -1) return;
+      st.pool.splice(k, 1);
+      st.placed.push(pid);
+      st.checked = false;
+      save();
+      rerender();
+    });
+  });
+  root.querySelectorAll(sel + '[data-tap-back]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var i = parseInt(btn.dataset.tapBack, 10);
+      var pid = st.placed[i];
+      if (!pid) return;
+      st.placed.splice(i, 1);
+      st.pool.push(pid);
+      st.checked = false;
+      save();
+      rerender();
+    });
+  });
+  var check = document.getElementById(id + 'Check');
+  if (check) {
+    check.addEventListener('click', function () {
+      if (st.pool.length) return;
+      st.attempts += 1;
+      st.checked = true;
+      st.correct = tapOrderIsCorrect(st, answer);
+      save();
+      rerender();
+    });
+  }
+  var clear = document.getElementById(id + 'Clear');
+  if (clear) {
+    clear.addEventListener('click', function () {
+      st.pool = st.pool.concat(st.placed);
+      st.placed = [];
+      st.checked = false;
+      save();
+      rerender();
+    });
+  }
+}
+
+/* ============================================================
+   12. KOMPONEN COOPERATIVE LEARNING
+   Pembagian peran kelompok yang diacak lalu dirotasi setiap
+   misi (saling ketergantungan positif & tanggung jawab
+   individu), kartu tim, dan predikat penghargaan tim ala STAD.
+   Gaya .coop-* ada di shared/base.css.
+   ============================================================ */
+
+var COOP_ROLES = [
+  {
+    id: 'pembaca',
+    ikon: '📖',
+    nama: 'Pembaca Soal',
+    tugas: 'Membacakan soal dengan lantang dan memastikan semua anggota paham yang ditanyakan.',
+  },
+  {
+    id: 'penempat',
+    ikon: '👆',
+    nama: 'Penempat Garis',
+    tugas: 'Mengetuk garis bilangan/kartu setelah tim sepakat — bukan memutuskan sendiri.',
+  },
+  {
+    id: 'pemeriksa',
+    ikon: '🔍',
+    nama: 'Pemeriksa',
+    tugas: 'Bertanya "Semua setuju?" dan mengecek jawaban sebelum tombol Periksa ditekan.',
+  },
+  {
+    id: 'jubir',
+    ikon: '🎤',
+    nama: 'Juru Bicara',
+    tugas: 'Menjelaskan alasan tim dengan kalimat sendiri, di kelompok maupun di depan kelas.',
+  },
+];
+
+/* Nama anggota yang terisi, dalam urutan acak (penentu peran awal). */
+function assignCoopRoles(members) {
+  return shuffleArray(
+    (members || [])
+      .map(function (m) {
+        return String(m || '').trim();
+      })
+      .filter(function (m) {
+        return m;
+      })
+  );
+}
+
+/*
+ * Pasangan peran → anggota untuk putaran ke-`round`. Setiap putaran
+ * peran bergeser satu anggota; bila anggota < banyak peran, seorang
+ * anggota memegang lebih dari satu peran.
+ */
+function coopRoleAssignment(anggota, round, roles) {
+  roles = roles || COOP_ROLES;
+  var n = anggota.length;
+  return roles.map(function (r, i) {
+    return { role: r, nama: n ? anggota[(i + (round || 0)) % n] : '—' };
+  });
+}
+
+/* Bilah ringkas peran pada satu misi. */
+function buildCoopRoleBar(anggota, round, opts) {
+  opts = opts || {};
+  return (
+    '<div class="coop-role-bar">' +
+    '<span class="coop-role-bar__title">' +
+    esc(opts.title || 'Peran pada misi ini') +
+    '</span>' +
+    '<ul class="coop-role-bar__list">' +
+    coopRoleAssignment(anggota, round, opts.roles)
+      .map(function (p) {
+        return (
+          '<li class="coop-role coop-role--' +
+          esc(p.role.id) +
+          '"><span aria-hidden="true">' +
+          p.role.ikon +
+          '</span><span class="coop-role__nama">' +
+          esc(p.nama) +
+          '</span><span class="coop-role__peran">' +
+          esc(p.role.nama) +
+          '</span></li>'
+        );
+      })
+      .join('') +
+    '</ul>' +
+    '</div>'
+  );
+}
+
+/* Kartu tim: nama tim dan peran lengkap beserta tugasnya. */
+function buildCoopTeamCard(namaTim, anggota, round, roles) {
+  return (
+    '<div class="coop-team-card">' +
+    '<p class="coop-team-card__nama">👥 ' +
+    esc(namaTim || 'Tim tanpa nama') +
+    '</p>' +
+    '<ul class="coop-team-card__list">' +
+    coopRoleAssignment(anggota, round, roles)
+      .map(function (p) {
+        return (
+          '<li><span class="coop-team-card__ikon" aria-hidden="true">' +
+          p.role.ikon +
+          '</span><div><strong>' +
+          esc(p.nama) +
+          '</strong> — ' +
+          esc(p.role.nama) +
+          '<span class="dl-caption">' +
+          esc(p.role.tugas) +
+          '</span></div></li>'
+        );
+      })
+      .join('') +
+    '</ul>' +
+    '</div>'
+  );
+}
+
+/*
+ * Predikat penghargaan tim ala STAD dari persentase skor (0–100).
+ * Mengembalikan { id, label, ikon, teks }.
+ */
+function coopAwardLevel(persen) {
+  if (persen >= 85) {
+    return {
+      id: 'super',
+      label: 'Tim Super',
+      ikon: '🏆',
+      teks: 'Luar biasa! Kalian bekerja sama dengan sangat kompak dan teliti.',
+    };
+  }
+  if (persen >= 70) {
+    return {
+      id: 'hebat',
+      label: 'Tim Hebat',
+      ikon: '🥈',
+      teks: 'Hebat! Kerja sama kalian sudah kuat — sedikit lagi menuju Tim Super.',
+    };
+  }
+  return {
+    id: 'baik',
+    label: 'Tim Baik',
+    ikon: '🥉',
+    teks: 'Kerja bagus! Terus saling membantu agar semua anggota makin yakin.',
+  };
+}
+
+/* ============================================================
+   13. PERTANYAAN PENUNTUN BERTINGKAT
+   Daftar pertanyaan pilihan yang boleh dicoba lagi sampai benar,
+   lalu terkunci; setiap pilihan punya umpan balik sendiri.
+   Urutan opsi tiap pertanyaan diambil dari `orders[q.id]`
+   (diacak sekali dengan ensureShuffledOrder saat state disiapkan).
+     q = { id, tanya|teks, opsi, correct, umpan: { <idOpsi>: html } }
+   Gaya .quiz-item--guided ada di shared/base.css.
+   ============================================================ */
+
+/* Kotak umpan balik pilihan bertingkat (benar → success, salah → warning). */
+function buildGuidedChoiceFeedback(chosen, benar, umpan) {
+  if (!chosen) return '';
+  return (
+    '<div style="margin-top:var(--space-3);">' +
+    buildFeedbackBox(benar ? 'success' : 'warning', benar ? '✓' : '💭', umpan[chosen]) +
+    '</div>'
+  );
+}
+
+function buildGuidedQuizList(list, orders, pilih) {
+  return list
+    .map(function (q, i) {
+      var chosen = pilih[q.id] || null;
+      var benar = chosen === q.correct;
+      return (
+        '<div class="quiz-item quiz-item--guided">' +
+        '<p class="exercise-label"><span class="dl-step__num">' +
+        (i + 1) +
+        '</span>' +
+        (q.tanya || q.teks) +
+        '</p>' +
+        buildChoiceGroup(q.opsi, orders[q.id], {
+          chosen: chosen,
+          correctId: benar ? q.correct : null,
+          grade: true,
+          locked: benar,
+          group: q.id,
+          attr: 'data-q-opt',
+        }) +
+        buildGuidedChoiceFeedback(chosen, benar, q.umpan) +
+        '</div>'
+      );
+    })
+    .join('');
+}
+
+function bindGuidedQuizList(root, list, pilih, save, rerender) {
+  var byId = {};
+  list.forEach(function (q) {
+    byId[q.id] = q;
+  });
+  root.querySelectorAll('[data-q-opt]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var q = byId[btn.dataset.group];
+      if (!q || pilih[q.id] === q.correct) return;
+      pilih[q.id] = btn.dataset.qOpt;
+      save();
+      rerender();
+    });
+  });
+}
+
+function guidedQuizAllCorrect(list, pilih) {
+  return list.every(function (q) {
+    return pilih[q.id] === q.correct;
+  });
+}
+
+/* ============================================================
+   14. PECAHAN SENILAI & KOMPONEN URUT-KETUK
+   Dipakai modul menyederhanakan & menyamakan penyebut pecahan
+   (fase-d/mpi-1.4). Gaya .order-picker ada di shared/base.css.
+   ============================================================ */
+
+/* Apakah a/b senilai dengan c/d? Pecahan berupa { num, den }. */
+function pecahanSetara(a, b) {
+  return a.num * b.den === b.num * a.den;
+}
+
+/*
+ * Bentuk paling sederhana num/den: pembilang dan penyebut dibagi FPB-nya.
+ *   sederhanakanPecahan(6, 8) → { num: 3, den: 4, fpb: 2 }
+ */
+function sederhanakanPecahan(num, den) {
+  var f = gcd(num, den) || 1;
+  return { num: num / f, den: den / f, fpb: f };
+}
+
+/*
+ * Mendiagnosis jawaban "sederhanakan asal":
+ *   'tepat'           senilai dengan asal DAN FPB pembilang-penyebutnya 1
+ *   'belum-sederhana' senilai, tetapi masih bisa dibagi lagi
+ *   'tidak-setara'    nilainya berubah
+ * `v` dan `asal` berupa { num, den }.
+ */
+function diagnosaSederhana(v, asal) {
+  if (!v.den || !pecahanSetara(v, asal)) return 'tidak-setara';
+  return gcd(v.num, v.den) === 1 ? 'tepat' : 'belum-sederhana';
+}
+
+/*
+ * Komponen urut-ketuk: murid mengetuk butir satu per satu untuk mengisi
+ * urutan (mis. dari paling besar ke paling kecil, atau langkah-langkah
+ * rencana penyelidikan). Butir di "kolam" tampil dalam urutan ACAK yang
+ * disimpan di State, sehingga stabil lintas render/reload namun teracak
+ * ulang setiap Reset.
+ *
+ *   items         [{ id, label }]   label boleh HTML
+ *   correctOrder  [id, ...]         urutan benar
+ *
+ * ensureOrderPicker(state, key, items) menyiapkan state[key]:
+ *   { order, picked, done, correct, attempts, salah }
+ */
+function ensureOrderPicker(state, key, items) {
+  var st = state[key];
+  if (!st || typeof st !== 'object' || !Array.isArray(st.picked)) {
+    st = { order: null, picked: [], done: false, correct: false, attempts: 0, salah: false };
+  }
+  var ids = optionIds(items);
+  st.picked = st.picked.filter(function (id) {
+    return ids.indexOf(id) !== -1;
+  });
+  ensureShuffledOrder(st, 'order', items);
+  state[key] = st;
+  return st;
+}
+
+/*
+ * Merender komponen urut-ketuk.
+ *   id                awalan id/atribut DOM
+ *   opts.slotLabels   label tiap posisi (mis. ['Paling laris', '', 'Paling sedikit'])
+ *   opts.correctOrder urutan benar (untuk menandai posisi setelah diperiksa)
+ *   opts.checkLabel   teks tombol periksa (default 'Periksa Urutan')
+ */
+function buildOrderPicker(id, items, st, opts) {
+  opts = opts || {};
+  var byId = {};
+  items.forEach(function (it) {
+    byId[it.id] = it;
+  });
+  var lengkap = st.picked.length === items.length;
+  var slots = '';
+  for (var i = 0; i < items.length; i++) {
+    var pid = st.picked[i];
+    var cls = 'order-picker__slot';
+    if (pid && (st.done || st.salah) && opts.correctOrder) {
+      cls += opts.correctOrder[i] === pid ? ' is-ok' : ' is-bad';
+    }
+    var label = opts.slotLabels && opts.slotLabels[i] ? opts.slotLabels[i] : '';
+    slots +=
+      '<li class="' +
+      cls +
+      '">' +
+      '<span class="order-picker__rank">' +
+      (i + 1) +
+      '</span>' +
+      (pid
+        ? '<button type="button" class="order-picker__chip" data-' +
+          id +
+          '-unpick="' +
+          esc(pid) +
+          '"' +
+          (st.done ? ' disabled' : '') +
+          ' aria-label="Keluarkan dari urutan ke-' +
+          (i + 1) +
+          '">' +
+          byId[pid].label +
+          '</button>'
+        : '<span class="order-picker__empty">' +
+          (label ? esc(label) : 'ketuk pilihan di bawah') +
+          '</span>') +
+      '</li>';
+  }
+  var pool = orderByIds(items, st.order)
+    .filter(function (it) {
+      return st.picked.indexOf(it.id) === -1;
+    })
+    .map(function (it) {
+      return (
+        '<button type="button" class="order-picker__chip order-picker__chip--pool" data-' +
+        id +
+        '-pick="' +
+        esc(it.id) +
+        '">' +
+        it.label +
+        '</button>'
+      );
+    })
+    .join('');
+  return (
+    '<div class="order-picker" id="' +
+    id +
+    '">' +
+    '<ol class="order-picker__slots">' +
+    slots +
+    '</ol>' +
+    (st.done
+      ? ''
+      : '<div class="order-picker__pool" role="group" aria-label="Pilihan yang belum diurutkan">' +
+        (pool || '<span class="dl-caption">Semua sudah diurutkan.</span>') +
+        '</div>' +
+        '<div class="btn-group">' +
+        '<button type="button" class="btn btn--primary" id="' +
+        id +
+        'Check"' +
+        (lengkap ? '' : ' disabled') +
+        '>' +
+        esc(opts.checkLabel || 'Periksa Urutan') +
+        '</button>' +
+        (st.picked.length
+          ? '<button type="button" class="btn btn--ghost" id="' + id + 'Clear">Ulangi</button>'
+          : '') +
+        '</div>') +
+    '</div>'
+  );
+}
+
+/*
+ * Memasang event buildOrderPicker di dalam `root`. Urutan dianggap benar
+ * bila sama persis dengan `correctOrder`; `save` lalu `rerender`
+ * dipanggil setelah setiap perubahan.
+ */
+function bindOrderPicker(root, id, items, st, correctOrder, save, rerender) {
+  root.querySelectorAll('[data-' + id + '-pick]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      if (st.done) return;
+      st.picked.push(btn.getAttribute('data-' + id + '-pick'));
+      st.salah = false;
+      save();
+      rerender();
+    });
+  });
+  root.querySelectorAll('[data-' + id + '-unpick]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      if (st.done) return;
+      var pid = btn.getAttribute('data-' + id + '-unpick');
+      st.picked = st.picked.filter(function (x) {
+        return x !== pid;
+      });
+      st.salah = false;
+      save();
+      rerender();
+    });
+  });
+  var clear = root.querySelector('#' + id + 'Clear');
+  if (clear) {
+    clear.addEventListener('click', function () {
+      st.picked = [];
+      st.salah = false;
+      save();
+      rerender();
+    });
+  }
+  var check = root.querySelector('#' + id + 'Check');
+  if (check) {
+    check.addEventListener('click', function () {
+      if (st.picked.length !== items.length) return;
+      st.attempts += 1;
+      st.correct = st.picked.every(function (x, i) {
+        return x === correctOrder[i];
+      });
+      st.done = st.correct;
+      st.salah = !st.correct;
+      save();
+      rerender();
+    });
+  }
+}
+
+/* ============================================================
+   15. PECAHAN — MEMBANDINGKAN & MENGURUTKAN
    Dipakai modul membandingkan & mengurutkan pecahan (fase-d/mpi-1.5).
    Pecahan ditulis sebagai objek { num, den } (boleh berisi field lain
    seperti id/nama). Gaya .frac-strip*, .frac-nl*, .order-board*,
    .role-card* ada di shared/base.css.
    ============================================================ */
-
-/* KPK (kelipatan persekutuan terkecil) dua bilangan cacah positif. */
-function lcm(a, b) {
-  a = Math.abs(Math.round(a));
-  b = Math.abs(Math.round(b));
-  if (!a || !b) return 0;
-  return (a / gcd(a, b)) * b;
-}
-
-/* KPK sederet bilangan, mis. kpkList([3, 4, 8]) → 24. */
-function kpkList(arr) {
-  return arr.reduce(function (acc, n) {
-    return lcm(acc, n);
-  }, 1);
-}
 
 /*
  * Membandingkan dua pecahan dengan perkalian silang (bilangan bulat,
