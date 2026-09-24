@@ -6334,3 +6334,369 @@ details.hint-reveal[open] summary::before {
     height: 28px;
   }
 }
+
+/* =========================================================================
+   Peluang kejadian majemuk (engine.js seksi 28): grid ruang sampel
+   bertanda (.prob-grid*, .prob-cell), tombol lapis A/B (.prob-layer*),
+   simulator percobaan (.prob-sim*), diagram Venn (.prob-venn*).
+   Warna: kejadian A biru, kejadian B oranye, irisan A ∩ B ungu.
+   ========================================================================= */
+
+.prob-grid-wrap {
+  display: grid;
+  gap: var(--space-3);
+  min-width: 0;
+}
+
+.prob-layer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.prob-layer__btn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: 40px;
+  padding: var(--space-1) var(--space-3);
+  border: 2px solid var(--color-border-strong);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  color: var(--color-ink);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.prob-layer__btn--a[aria-pressed='true'] {
+  border-color: var(--color-blue);
+  background: var(--color-blue-soft);
+  color: var(--color-blue-strong);
+}
+
+.prob-layer__btn--b[aria-pressed='true'] {
+  border-color: var(--color-orange);
+  background: var(--color-orange-soft);
+  color: var(--color-orange-strong);
+}
+
+.prob-layer__count {
+  min-width: 1.6em;
+  padding: 0 var(--space-1);
+  border-radius: 999px;
+  background: var(--color-ink);
+  color: var(--color-surface);
+  font-size: 0.8rem;
+  text-align: center;
+}
+
+.prob-grid {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+
+.prob-grid__row {
+  display: grid;
+  grid-template-columns: minmax(52px, auto) repeat(6, minmax(0, 1fr));
+  gap: 3px;
+  align-items: stretch;
+}
+
+.prob-grid--kartu .prob-grid__row {
+  grid-template-columns: minmax(84px, auto) repeat(13, minmax(0, 1fr));
+}
+
+.prob-grid__corner,
+.prob-grid__colhead,
+.prob-grid__rowhead {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--color-ink-muted);
+}
+
+.prob-grid__corner {
+  font-size: 0.68rem;
+  font-weight: 600;
+  line-height: 1.2;
+  text-align: center;
+}
+
+.prob-grid__rowhead {
+  justify-content: flex-start;
+  padding-right: var(--space-1);
+  white-space: nowrap;
+}
+
+.prob-cell {
+  min-width: 0;
+  min-height: 40px;
+  padding: 2px;
+  border: 2px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+  color: var(--color-ink);
+  font-family: var(--font-mono);
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  overflow: hidden;
+  text-overflow: clip;
+  white-space: nowrap;
+}
+
+.prob-cell:hover:not(:disabled) {
+  border-color: var(--color-border-strong);
+}
+
+.prob-cell:disabled {
+  cursor: default;
+}
+
+.prob-cell--merah {
+  color: var(--color-error-strong);
+}
+
+.prob-cell.is-a {
+  border-color: var(--color-blue);
+  background: var(--color-blue-soft);
+}
+
+.prob-cell.is-b {
+  border-color: var(--color-orange);
+  background: var(--color-orange-soft);
+}
+
+.prob-cell.is-a.is-b {
+  border-color: var(--color-purple);
+  background: repeating-linear-gradient(
+    135deg,
+    var(--color-blue-soft) 0 6px,
+    var(--color-orange-soft) 6px 12px
+  );
+  box-shadow: inset 0 0 0 2px var(--color-purple);
+}
+
+.prob-cell.is-extra {
+  outline: 3px solid var(--color-error);
+  outline-offset: -3px;
+}
+
+.prob-cell.is-missing {
+  border-style: dashed;
+  border-color: var(--color-error);
+}
+
+.prob-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-4);
+  font-size: 0.82rem;
+  color: var(--color-ink-muted);
+}
+
+.prob-legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.prob-swatch {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border-radius: 3px;
+  border: 2px solid;
+}
+
+.prob-swatch--a {
+  border-color: var(--color-blue);
+  background: var(--color-blue-soft);
+}
+
+.prob-swatch--b {
+  border-color: var(--color-orange);
+  background: var(--color-orange-soft);
+}
+
+.prob-swatch--ab {
+  border-color: var(--color-purple);
+  background: repeating-linear-gradient(
+    135deg,
+    var(--color-blue-soft) 0 3px,
+    var(--color-orange-soft) 3px 6px
+  );
+}
+
+/* Simulator percobaan */
+.prob-sim {
+  display: grid;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-bg);
+  min-width: 0;
+}
+
+.prob-sim__title {
+  margin: 0;
+  font-weight: 700;
+}
+
+.prob-sim__controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.prob-sim__n {
+  margin: 0;
+}
+
+.prob-sim__last {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+}
+
+.prob-chip {
+  padding: 2px var(--space-2);
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  background: var(--color-surface);
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+}
+
+.prob-sim__table-wrap {
+  min-width: 0;
+}
+
+.prob-sim__table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.88rem;
+  table-layout: fixed;
+}
+
+.prob-sim__table th,
+.prob-sim__table td {
+  padding: var(--space-1) var(--space-2);
+  border-bottom: 1px solid var(--color-border);
+  text-align: left;
+  vertical-align: top;
+  overflow-wrap: anywhere;
+}
+
+.prob-sim__table thead th {
+  font-size: 0.78rem;
+  color: var(--color-ink-muted);
+}
+
+.prob-sim__bar {
+  display: block;
+  height: 6px;
+  margin-top: 4px;
+  border-radius: 3px;
+  background: var(--color-border);
+  overflow: hidden;
+}
+
+.prob-sim__bar > span {
+  display: block;
+  height: 100%;
+  background: var(--color-primary);
+}
+
+/* Diagram Venn */
+.prob-venn {
+  margin: 0;
+  max-width: 360px;
+}
+
+.prob-venn svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.prob-venn figcaption {
+  font-size: 0.85rem;
+  color: var(--color-ink-muted);
+}
+
+.prob-venn__s {
+  fill: var(--color-surface);
+  stroke: var(--color-border-strong);
+  stroke-width: 2;
+}
+
+.prob-venn__a {
+  fill: var(--color-blue);
+  fill-opacity: 0.16;
+  stroke: var(--color-blue);
+  stroke-width: 2;
+}
+
+.prob-venn__b {
+  fill: var(--color-orange);
+  fill-opacity: 0.16;
+  stroke: var(--color-orange);
+  stroke-width: 2;
+}
+
+.prob-venn__label {
+  font-family: var(--font-display);
+  font-size: 15px;
+  font-weight: 700;
+  fill: var(--color-ink);
+}
+
+.prob-venn__num {
+  font-family: var(--font-mono);
+  font-size: 20px;
+  font-weight: 700;
+  fill: var(--color-ink);
+}
+
+.prob-venn__num--ab {
+  fill: var(--color-purple-strong);
+}
+
+.prob-venn__num--luar {
+  font-size: 15px;
+  fill: var(--color-ink-muted);
+}
+
+@media (max-width: 560px) {
+  .prob-grid--kartu .prob-grid__row--head {
+    display: none;
+  }
+
+  .prob-grid--kartu .prob-grid__row {
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+  }
+
+  .prob-grid--kartu .prob-grid__rowhead {
+    grid-column: 1 / -1;
+    padding-top: var(--space-1);
+  }
+
+  .prob-grid__row {
+    grid-template-columns: minmax(34px, auto) repeat(6, minmax(0, 1fr));
+  }
+
+  .prob-cell {
+    min-height: 36px;
+    font-size: 0.74rem;
+  }
+
+  .prob-sim__table {
+    font-size: 0.8rem;
+  }
+}
