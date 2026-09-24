@@ -91,20 +91,6 @@
     "stageCount": 11,
     "extraBody": "partials/reset-modal.html"
   },
-  "fase-f/mpi-1.3": {
-    "title": "Bunga Tunggal dan Bunga Majemuk — Matematika Fase F",
-    "description": "Media pembelajaran interaktif untuk menjelaskan konsep bunga tunggal dan bunga majemuk serta membedakan karakteristik keduanya berdasarkan keterkaitannya dengan pola barisan aritmetika dan geometri.",
-    "kicker": "Matematika — Fase F (SMK RPL)",
-    "h1": "Bunga Tunggal dan Bunga Majemuk",
-    "stageCount": 9
-  },
-  "fase-f/mpi-1.4": {
-    "title": "Bunga Tunggal pada Transaksi Simpan Pinjam — Matematika Fase F",
-    "description": "Media pembelajaran interaktif berbasis Problem-Based Learning untuk menerapkan rumus barisan dan deret aritmetika dalam memecahkan masalah kontekstual bunga tunggal pada transaksi simpan pinjam.",
-    "kicker": "Matematika — Fase F (SMK RPL)",
-    "h1": "Bunga Tunggal pada Transaksi Simpan Pinjam",
-    "stageCount": 9
-  },
   "fase-f/mpi-2.1": {
     "title": "Jumlah n Suku Pertama Deret Aritmetika — Matematika Fase F",
     "description": "Media pembelajaran interaktif berbasis Discovery Learning untuk menemukan dan membuktikan rumus jumlah n suku pertama deret aritmetika (Sₙ) secara visual dan aljabar, serta menggunakannya untuk menyelesaikan masalah sederhana.",
