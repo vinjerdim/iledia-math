@@ -38,6 +38,9 @@
        campuran)
    19. Bilangan desimal: nilai tempat, cara baca & model visual
        (tabel nilai tempat, model blok, perakit desimal)
+   20. Bilangan desimal: membandingkan & mengurutkan (perbandingan
+       berbasis nilai tempat, diagnosa miskonsepsi, tabel nilai tempat
+       berdampingan, garis bilangan desimal & penempatan)
    ============================================================ */
 
 /* ============================================================
@@ -2104,14 +2107,17 @@ function buildNumberLinePicker(id, opts) {
  * Memasang event garis bilangan buildNumberLinePicker di dalam `root`.
  * onPick(value) dipanggil saat titik diklik/diketuk atau ditekan
  * Enter/Spasi; panah kiri/kanan memindah fokus antartitik.
+ * `parse` opsional mengubah data-nl-value menjadi nilai (default
+ * parseInt); garis bilangan desimal memakai string apa adanya.
  */
-function bindNumberLinePicker(root, id, onPick) {
+function bindNumberLinePicker(root, id, onPick, parse) {
   var svg = root.querySelector('#' + id);
   if (!svg) return;
   var wrap = svg.parentNode;
   var hits = Array.prototype.slice.call(svg.querySelectorAll('.nlp-hit'));
   function pick(g) {
-    var v = parseInt(g.getAttribute('data-nl-value'), 10);
+    var raw = g.getAttribute('data-nl-value');
+    var v = parse ? parse(raw) : parseInt(raw, 10);
     NLP_LAST_PICK[id] = v;
     NLP_LAST_SCROLL[id] = wrap.scrollLeft;
     onPick(v);
@@ -2140,7 +2146,7 @@ function bindNumberLinePicker(root, id, onPick) {
     });
   });
   /* Pulihkan fokus keyboard pada titik yang terakhir dipilih. */
-  if (typeof NLP_LAST_PICK[id] === 'number' && document.activeElement === document.body) {
+  if (NLP_LAST_PICK[id] !== undefined && document.activeElement === document.body) {
     var prev = svg.querySelector('[data-nl-value="' + NLP_LAST_PICK[id] + '"]');
     if (prev && prev.focus) prev.focus({ preventScroll: true });
     delete NLP_LAST_PICK[id];
@@ -5190,4 +5196,701 @@ function bindDecimalBuilder(root, id, parts, opts, onChange) {
     });
   }
   bind();
+}
+
+/* ============================================================
+   20. BILANGAN DESIMAL: MEMBANDINGKAN & MENGURUTKAN
+   Dipakai fase-d/mpi-3.2. Seperti bagian 19, bilangan desimal diolah
+   sebagai STRING berkoma agar perbandingan tidak terganggu galat
+   pembulatan dan agar penulisan asli (0,50) tetap tampil apa adanya.
+   Gaya .dec-cmp* dan .nlp--dec ada di shared/base.css.
+   ============================================================ */
+
+/* Bagian bulat tanpa angka 0 di depan: "07" → "7", "0" tetap "0". */
+function bulatDesimalNormal(p) {
+  return p.bulat.replace(/^0+(?=\d)/, '');
+}
+
+/* Menambah angka 0 di kanan sampai panjangnya n (tidak pernah memotong). */
+function padKananNol(str, n) {
+  while (str.length < n) str += '0';
+  return str;
+}
+
+/* Banyak angka di belakang koma: "3,07" → 2, "12" → 0. */
+function banyakAngkaDesimal(str) {
+  var p = desimalDigits(str);
+  return p ? p.pecahan.length : 0;
+}
+
+/*
+ * Menyamakan banyak angka di belakang koma dengan menambah angka 0 di
+ * akhir (nilainya tetap): samakanDigitDesimal('0,8', 2) → "0,80".
+ */
+function samakanDigitDesimal(str, n) {
+  var p = desimalDigits(str);
+  if (!p) return String(str);
+  var pecahan = padKananNol(p.pecahan, n);
+  return bulatDesimalNormal(p) + (pecahan ? ',' + pecahan : '');
+}
+
+/*
+ * Membandingkan dua desimal berdasarkan nilai tempat: −1 (a < b),
+ * 0 (a = b), 1 (a > b); null bila salah satunya tidak valid.
+ * Bagian bulat dibandingkan lebih dulu, lalu bagian desimal setelah
+ * banyak angkanya disamakan.
+ */
+function bandingkanDesimal(a, b) {
+  var p = desimalDigits(a);
+  var q = desimalDigits(b);
+  if (!p || !q) return null;
+  var ba = bulatDesimalNormal(p);
+  var bb = bulatDesimalNormal(q);
+  if (ba.length !== bb.length) return ba.length > bb.length ? 1 : -1;
+  if (ba !== bb) return ba > bb ? 1 : -1;
+  var n = Math.max(p.pecahan.length, q.pecahan.length);
+  var fa = padKananNol(p.pecahan, n);
+  var fb = padKananNol(q.pecahan, n);
+  if (fa === fb) return 0;
+  return fa > fb ? 1 : -1;
+}
+
+/* Id lambang perbandingan ('lt' | 'gt' | 'eq') sesuai COMPARE_SYMBOLS. */
+function simbolBandingDesimal(a, b) {
+  var c = bandingkanDesimal(a, b);
+  if (c === null) return null;
+  return c < 0 ? 'lt' : c > 0 ? 'gt' : 'eq';
+}
+
+/*
+ * Angka pada nilai tempat `pos` (−1 puluhan, 0 satuan, 1 persepuluhan, …)
+ * setelah bagian bulat dirata kanan ke panjang `L` dan bagian desimal
+ * dirata kiri. Tempat yang tidak ada bernilai '0'.
+ */
+function angkaPadaTempat(p, pos, L) {
+  if (pos <= 0) {
+    var bulat = bulatDesimalNormal(p);
+    while (bulat.length < L) bulat = '0' + bulat;
+    return bulat.charAt(bulat.length - 1 + pos) || '0';
+  }
+  return p.pecahan.charAt(pos - 1) || '0';
+}
+
+/*
+ * Posisi nilai tempat PERTAMA dari kiri yang angkanya tidak sama pada
+ * semua bilangan di `list` (−1 puluhan, 0 satuan, 1 persepuluhan,
+ * 2 perseratusan, …); null bila semua bilangan sama nilainya.
+ */
+function tempatBedaPertamaDaftar(list) {
+  var ps = list.map(desimalDigits);
+  if (
+    !ps.length ||
+    ps.some(function (p) {
+      return !p;
+    })
+  ) {
+    return null;
+  }
+  var L = 0;
+  var n = 0;
+  ps.forEach(function (p) {
+    L = Math.max(L, bulatDesimalNormal(p).length);
+    n = Math.max(n, p.pecahan.length);
+  });
+  for (var pos = 1 - L; pos <= n; pos++) {
+    var d0 = angkaPadaTempat(ps[0], pos, L);
+    for (var i = 1; i < ps.length; i++) {
+      if (angkaPadaTempat(ps[i], pos, L) !== d0) return pos;
+    }
+  }
+  return null;
+}
+
+/* tempatBedaPertamaDaftar untuk sepasang bilangan. */
+function tempatBedaPertama(a, b) {
+  return tempatBedaPertamaDaftar([a, b]);
+}
+
+/*
+ * Kalimat alasan perbandingan berdasarkan nilai tempat:
+ *   ('0,8', '0,75') → "… persepuluhan: 8 > 7, jadi 0,8 > 0,75."
+ *   ('0,5', '0,50') → "… 0,50 dan 0,50 … jadi 0,5 = 0,50."
+ */
+function alasanBandingDesimal(a, b) {
+  var sym = compareSymbolText(simbolBandingDesimal(a, b));
+  var pos = tempatBedaPertama(a, b);
+  if (pos === null) {
+    var n = Math.max(banyakAngkaDesimal(a), banyakAngkaDesimal(b));
+    return (
+      'Samakan banyak angka di belakang koma: ' +
+      samakanDigitDesimal(a, n) +
+      ' dan ' +
+      samakanDigitDesimal(b, n) +
+      '. Angka pada setiap nilai tempat sama, jadi ' +
+      a +
+      ' = ' +
+      b +
+      '.'
+    );
+  }
+  var p = desimalDigits(a);
+  var q = desimalDigits(b);
+  var L = Math.max(bulatDesimalNormal(p).length, bulatDesimalNormal(q).length);
+  return (
+    'Bandingkan mulai dari nilai tempat terbesar (paling kiri). Nilai tempat pertama yang berbeda adalah ' +
+    namaNilaiTempatDesimal(pos) +
+    ': ' +
+    angkaPadaTempat(p, pos, L) +
+    ' ' +
+    sym +
+    ' ' +
+    angkaPadaTempat(q, pos, L) +
+    ', jadi ' +
+    a +
+    ' ' +
+    sym +
+    ' ' +
+    b +
+    '.'
+  );
+}
+
+/* Salinan daftar desimal yang terurut naik (desc true → turun). */
+function urutkanDesimal(list, desc) {
+  return list.slice().sort(function (x, y) {
+    return bandingkanDesimal(x, y) * (desc ? -1 : 1);
+  });
+}
+
+/*
+ * Mendiagnosis pilihan lambang yang salah untuk pasangan a ☐ b.
+ *   null                    pilihan benar
+ *   'nol-akhir'             mengira 0 di akhir mengubah nilai (0,5 vs 0,50)
+ *   'abaikan-bulat'         bagian bulat berbeda tetapi terlewat
+ *   'bagian-desimal-bulat'  angka di belakang koma dibaca sebagai bilangan
+ *                           bulat — "lebih banyak angka lebih besar"
+ *                           (0,75 > 0,8 karena 75 > 8)
+ *   'lebih-pendek'          "lebih sedikit angka lebih besar" (0,4 > 0,45)
+ *   'lain'                  salah dengan pola lain
+ */
+function diagnosaBandingDesimal(a, b, chosen) {
+  var benar = simbolBandingDesimal(a, b);
+  if (!benar || chosen === benar) return null;
+  if (benar === 'eq') return 'nol-akhir';
+  var p = desimalDigits(a);
+  var q = desimalDigits(b);
+  var ba = parseInt(p.bulat, 10);
+  var bb = parseInt(q.bulat, 10);
+  if (ba !== bb) return 'abaikan-bulat';
+  var na = parseInt(p.pecahan || '0', 10);
+  var nb = parseInt(q.pecahan || '0', 10);
+  var naif = na < nb ? 'lt' : na > nb ? 'gt' : 'eq';
+  if (naif !== benar && chosen === naif) return 'bagian-desimal-bulat';
+  var la = p.pecahan.length;
+  var lb = q.pecahan.length;
+  if ((la < lb && chosen === 'gt') || (lb < la && chosen === 'lt')) return 'lebih-pendek';
+  return 'lain';
+}
+
+/* Pesan umpan balik (teks biasa, belum di-escape) untuk kode diagnosa. */
+function pesanDiagnosaDesimal(kode, a, b) {
+  var n = Math.max(banyakAngkaDesimal(a), banyakAngkaDesimal(b));
+  var sa = samakanDigitDesimal(a, n);
+  var sb = samakanDigitDesimal(b, n);
+  var pesan = {
+    'nol-akhir':
+      'Angka 0 di ujung kanan bagian desimal tidak mengubah nilai. Tulis keduanya dengan banyak angka yang sama: ' +
+      sa +
+      ' dan ' +
+      sb +
+      ' — apakah ada angka yang berbeda?',
+    'abaikan-bulat':
+      'Lihat dulu bagian bulatnya (angka di depan koma). Bagian bulat yang lebih besar menandakan bilangan yang lebih besar, berapa pun angka di belakang koma.',
+    'bagian-desimal-bulat':
+      'Hati-hati: angka di belakang koma tidak dibaca seperti bilangan bulat, jadi lebih banyak angka belum tentu lebih besar. Samakan dulu banyak angkanya (' +
+      sa +
+      ' dan ' +
+      sb +
+      '), lalu bandingkan dari nilai tempat paling kiri.',
+    'lebih-pendek':
+      'Lebih sedikit angka di belakang koma belum tentu lebih besar. Tulis keduanya dengan banyak angka yang sama (' +
+      sa +
+      ' dan ' +
+      sb +
+      '), lalu bandingkan angka pada setiap nilai tempat dari kiri.',
+    lain: 'Belum tepat. Bandingkan angka pada setiap nilai tempat mulai dari yang paling kiri sampai kamu menemukan angka yang berbeda.',
+  };
+  return pesan[kode] || pesan.lain;
+}
+
+/*
+ * Desimal → bilangan bulat berskala 10^d (titik ke-k pada garis bilangan
+ * berjarak 10^−d): skalaDesimal('0,75', 2) → 75, ('3,40', 1) → 34.
+ * null bila tidak valid atau punya angka bukan-nol di luar ketelitian d.
+ */
+function skalaDesimal(str, d) {
+  var p = desimalDigits(str);
+  if (!p) return null;
+  var pecahan = p.pecahan;
+  if (pecahan.length > d) {
+    if (/[1-9]/.test(pecahan.slice(d))) return null;
+    pecahan = pecahan.slice(0, d);
+  }
+  pecahan = padKananNol(pecahan, d);
+  return parseInt(p.bulat, 10) * Math.pow(10, d) + (d ? parseInt(pecahan, 10) : 0);
+}
+
+/*
+ * Kebalikan skalaDesimal: (34, 1) → "3,4", (70, 2) → "0,7". fixed true
+ * mempertahankan d angka di belakang koma: (70, 2, true) → "0,70".
+ */
+function desimalDariSkala(k, d, fixed) {
+  if (!d) return String(k);
+  var s = String(Math.abs(k));
+  while (s.length < d + 1) s = '0' + s;
+  var bulat = s.slice(0, s.length - d);
+  var pecahan = s.slice(s.length - d);
+  if (!fixed) pecahan = pecahan.replace(/0+$/, '');
+  return bulat + (pecahan ? ',' + pecahan : '');
+}
+
+/*
+ * Petunjuk letak desimal pada garis bilangan berketelitian d:
+ *   ('0,75', 2) → "0,75 = 0,7 + 5 perseratusan. Mulai dari titik 0,7, …"
+ */
+function petunjukLetakDesimal(str, d) {
+  var k = skalaDesimal(str, d);
+  if (k === null) return '';
+  var dasar = Math.floor(k / 10) * 10;
+  var langkah = k - dasar;
+  var dasarStr = desimalDariSkala(dasar, d);
+  if (langkah === 0)
+    return str + ' sama dengan ' + dasarStr + '. Cari titik berlabel ' + dasarStr + '.';
+  return (
+    str +
+    ' = ' +
+    dasarStr +
+    ' + ' +
+    langkah +
+    ' ' +
+    DESIMAL_TEMPAT[d].nama +
+    '. Mulai dari titik ' +
+    dasarStr +
+    ', lalu maju ' +
+    langkah +
+    ' garis kecil ke kanan.'
+  );
+}
+
+/*
+ * Beberapa bilangan desimal dalam SATU tabel nilai tempat (satu baris per
+ * bilangan, kolom sejajar per nilai tempat) untuk dibandingkan kolom demi
+ * kolom.
+ *   opts.highlight  true → sorot kolom nilai tempat pertama yang berbeda
+ *   opts.padZeros   true → tempat desimal yang kosong diisi 0 (tampak
+ *                   berbeda) untuk menunjukkan 0,8 = 0,80
+ *   opts.minDigits  banyak kolom desimal minimum (default 0)
+ *   opts.caption    judul kecil di atas tabel
+ */
+function buildPlaceValueStack(list, opts) {
+  opts = opts || {};
+  var rows = list.map(function (s) {
+    return { str: s, p: desimalDigits(s) || { bulat: '0', pecahan: '' } };
+  });
+  var L = 1;
+  var n = opts.minDigits || 0;
+  rows.forEach(function (r) {
+    L = Math.max(L, bulatDesimalNormal(r.p).length);
+    n = Math.max(n, r.p.pecahan.length);
+  });
+  var hl = opts.highlight ? tempatBedaPertamaDaftar(list) : null;
+  var posList = [];
+  for (var i = 1 - L; i <= n; i++) posList.push(i);
+
+  function cls(pos, extra) {
+    var out = 'dec-pv__cell dec-pv__cell--p' + Math.max(0, Math.min(pos, 3));
+    if (hl !== null && pos === hl) out += ' dec-pv__cell--hl';
+    return out + (extra || '');
+  }
+  function komaTh() {
+    return '<th scope="col" class="dec-pv__cell dec-pv__cell--koma"><span class="sr-only">koma</span></th>';
+  }
+
+  var head =
+    '<tr><td class="dec-cmp__corner"></td>' +
+    posList
+      .map(function (pos) {
+        return (
+          (pos === 1 ? komaTh() : '') +
+          '<th scope="col" class="' +
+          cls(pos) +
+          '">' +
+          namaTempatHtml(namaNilaiTempatDesimal(pos)) +
+          '</th>'
+        );
+      })
+      .join('') +
+    (n === 0 ? komaTh() : '') +
+    '</tr>';
+
+  var body = rows
+    .map(function (r) {
+      var bulat = bulatDesimalNormal(r.p);
+      return (
+        '<tr class="dec-cmp__row">' +
+        '<th scope="row" class="dec-cmp__label">' +
+        esc(r.str) +
+        '</th>' +
+        posList
+          .map(function (pos) {
+            var koma = pos === 1 ? '<td class="dec-pv__cell dec-pv__cell--koma">,</td>' : '';
+            var digit;
+            if (pos <= 0) {
+              var k = bulat.length - 1 + pos;
+              digit = k >= 0 ? bulat.charAt(k) : '';
+            } else {
+              digit = r.p.pecahan.charAt(pos - 1);
+            }
+            if (digit !== '') return koma + '<td class="' + cls(pos) + '">' + esc(digit) + '</td>';
+            if (pos > 0 && opts.padZeros) {
+              return koma + '<td class="' + cls(pos, ' dec-cmp__pad') + '">0</td>';
+            }
+            return koma + '<td class="' + cls(pos, ' dec-pv__cell--empty') + '"></td>';
+          })
+          .join('') +
+        (n === 0 ? '<td class="dec-pv__cell dec-pv__cell--koma"></td>' : '') +
+        '</tr>'
+      );
+    })
+    .join('');
+
+  return (
+    '<div class="dec-pv dec-cmp">' +
+    (opts.caption ? '<p class="dec-pv__caption">' + esc(opts.caption) + '</p>' : '') +
+    '<div class="table-scroll"><table class="dec-pv__table" aria-label="Tabel nilai tempat ' +
+    esc(list.slice(0, -1).join(', ') + (list.length > 1 ? ' dan ' : '') + list[list.length - 1]) +
+    '"><thead>' +
+    head +
+    '</thead><tbody>' +
+    body +
+    '</tbody></table></div></div>'
+  );
+}
+
+/* buildPlaceValueStack untuk sepasang bilangan a dan b. */
+function buildPlaceValueCompare(a, b, opts) {
+  return buildPlaceValueStack([a, b], opts);
+}
+
+/* Chip bilangan desimal (penulisan asli dipertahankan, mis. "0,50"). */
+function buildDecChip(str, big) {
+  return '<span class="num-chip' + (big ? ' num-chip--lg' : '') + '">' + esc(str) + '</span>';
+}
+
+/* Kalimat perbandingan besar [a] ☐ [b] untuk desimal; symbolId null → '?'. */
+function buildCompareSentenceDesimal(a, b, symbolId) {
+  return (
+    '<div class="cmp-sentence" aria-label="' +
+    esc(a + ' ' + (symbolId ? compareSymbolText(symbolId) : 'kotak kosong') + ' ' + b) +
+    '">' +
+    buildDecChip(a, true) +
+    '<span class="cmp-sentence__sym' +
+    (symbolId ? ' is-filled' : '') +
+    '">' +
+    esc(symbolId ? compareSymbolText(symbolId) : '?') +
+    '</span>' +
+    buildDecChip(b, true) +
+    '</div>'
+  );
+}
+
+/*
+ * Garis bilangan desimal (SVG) berjarak 10^−digits antartitik.
+ *   id                 id elemen <svg>
+ *   opts.min, max      ujung garis (string berkoma atau Number)
+ *   opts.digits        1 → langkah 0,1; 2 → langkah 0,01 (default 1)
+ *   opts.labelEvery    label setiap kelipatan ini (dalam langkah;
+ *                      default 1). Ujung garis selalu berlabel.
+ *   opts.fixedLabels   true → label ditulis dengan `digits` angka (0,70)
+ *   opts.marks         [{ value, label, tone }] — tone 'ok' | 'bad' |
+ *                      'target' | 'pos' (default 'pos')
+ *   opts.selected      nilai yang sedang dipilih atau null
+ *   opts.zoom          { from, to } — pita sorot ruas yang "diperbesar"
+ *   opts.interactive   false → hanya gambar
+ *   opts.aria          label aksesibel
+ * Titik yang bisa diketuk membawa data-nl-value berupa string desimal
+ * tanpa 0 di akhir ("0,7", "0,75"). Pasang event dengan
+ * bindDecimalNumberLine().
+ */
+function buildDecimalNumberLine(id, opts) {
+  opts = opts || {};
+  var d = opts.digits || 1;
+  var kMin = skalaDesimal(String(opts.min !== undefined ? opts.min : 0), d);
+  var kMax = skalaDesimal(String(opts.max !== undefined ? opts.max : 1), d);
+  var every = opts.labelEvery || 1;
+  var interactive = opts.interactive !== false;
+  var marks = opts.marks || [];
+  var unit = opts.unit || 54;
+  var padX = 40;
+  var H = 116;
+  var axisY = 70;
+  var W = padX * 2 + (kMax - kMin) * unit;
+  function xOf(k) {
+    return padX + (k - kMin) * unit;
+  }
+
+  var html = '';
+  if (opts.zoom) {
+    var z0 = skalaDesimal(String(opts.zoom.from), d);
+    var z1 = skalaDesimal(String(opts.zoom.to), d);
+    if (z0 !== null && z1 !== null) {
+      html +=
+        '<rect class="nlp-zoom" x="' +
+        (xOf(z0) - 6) +
+        '" y="' +
+        (axisY - 18) +
+        '" width="' +
+        (xOf(z1) - xOf(z0) + 12) +
+        '" height="36" rx="8"/>';
+    }
+  }
+
+  var x0 = xOf(kMin) - 24;
+  var x1 = xOf(kMax) + 24;
+  html +=
+    '<line class="nlp-axis" x1="' +
+    x0 +
+    '" y1="' +
+    axisY +
+    '" x2="' +
+    x1 +
+    '" y2="' +
+    axisY +
+    '"/>' +
+    '<polygon class="nlp-arrow" points="' +
+    (x1 + 4) +
+    ',' +
+    axisY +
+    ' ' +
+    (x1 - 8) +
+    ',' +
+    (axisY - 6) +
+    ' ' +
+    (x1 - 8) +
+    ',' +
+    (axisY + 6) +
+    '"/>';
+
+  for (var k = kMin; k <= kMax; k++) {
+    var x = xOf(k);
+    var major = k % 10 === 0;
+    var berlabel = k === kMin || k === kMax || (k - kMin) % every === 0;
+    var nilai = desimalDariSkala(k, d);
+    var label = desimalDariSkala(k, d, opts.fixedLabels);
+    var h = major ? 14 : 8;
+    var tick =
+      '<line class="nlp-tick' +
+      (major ? ' nlp-tick--major' : '') +
+      '" x1="' +
+      x +
+      '" y1="' +
+      (axisY - h) +
+      '" x2="' +
+      x +
+      '" y2="' +
+      (axisY + h) +
+      '"/>' +
+      (berlabel
+        ? '<text class="nlp-num nlp-num--dec' +
+          (major ? ' nlp-num--major' : '') +
+          '" x="' +
+          x +
+          '" y="' +
+          (axisY + 34) +
+          '">' +
+          esc(label) +
+          '</text>'
+        : '');
+    if (interactive) {
+      html +=
+        '<g class="nlp-hit' +
+        (opts.selected !== undefined && opts.selected !== null && opts.selected === nilai
+          ? ' is-selected'
+          : '') +
+        '" role="button" tabindex="0" data-nl-value="' +
+        esc(nilai) +
+        '" aria-label="Titik ' +
+        esc(label) +
+        '">' +
+        '<rect class="nlp-hit__area" x="' +
+        (x - unit / 2) +
+        '" y="22" width="' +
+        unit +
+        '" height="' +
+        (H - 22) +
+        '"/>' +
+        '<circle class="nlp-hit__ring" cx="' +
+        x +
+        '" cy="' +
+        axisY +
+        '" r="13"/>' +
+        tick +
+        '</g>';
+    } else {
+      html += tick;
+    }
+  }
+
+  marks.forEach(function (m) {
+    var mk = skalaDesimal(String(m.value), d);
+    if (mk === null || mk < kMin || mk > kMax) return;
+    var mx = xOf(mk);
+    html +=
+      '<g class="nlp-mark nlp-mark--' +
+      (m.tone || 'pos') +
+      '">' +
+      '<circle cx="' +
+      mx +
+      '" cy="' +
+      axisY +
+      '" r="9"/>' +
+      (m.label !== undefined && m.label !== ''
+        ? '<text class="nlp-mark__label" x="' +
+          mx +
+          '" y="' +
+          (axisY - 20) +
+          '">' +
+          esc(m.label) +
+          '</text>'
+        : '') +
+      '</g>';
+  });
+
+  return (
+    '<div class="nlp-wrap">' +
+    '<svg class="nlp nlp--dec' +
+    (interactive ? ' nlp--interactive' : '') +
+    '" id="' +
+    id +
+    '" data-zero="" viewBox="0 0 ' +
+    W +
+    ' ' +
+    H +
+    '" style="min-width:' +
+    Math.round(W * 0.62) +
+    'px" ' +
+    (interactive ? 'role="group"' : 'role="img"') +
+    ' aria-label="' +
+    esc(
+      opts.aria ||
+        'Garis bilangan desimal dari ' +
+          desimalDariSkala(kMin, d) +
+          ' sampai ' +
+          desimalDariSkala(kMax, d) +
+          ', setiap langkah ' +
+          desimalDariSkala(1, d)
+    ) +
+    '">' +
+    html +
+    '</svg>' +
+    '</div>'
+  );
+}
+
+/* onPick(nilai) menerima string desimal titik yang diketuk. */
+function bindDecimalNumberLine(root, id, onPick) {
+  bindNumberLinePicker(root, id, onPick, function (raw) {
+    return raw;
+  });
+}
+
+/*
+ * Aktivitas menempatkan desimal satu per satu pada garis bilangan
+ * desimal. State memakai ensureNumberLinePlacementState() (bagian 11).
+ *   items  [{ value: '0,75', teks?, mark? }] dalam urutan tampil (acak)
+ *   cfg    { min, max, digits, labelEvery, fixedLabels, zoom, doneText }
+ * Ketukan salah kedua dst. memunculkan petunjukLetakDesimal().
+ */
+function buildDecimalPlacement(pid, items, st, cfg) {
+  cfg = cfg || {};
+  var d = cfg.digits || 1;
+  var done = numberLinePlacementDone(items, st);
+  var marks = items.slice(0, Math.min(st.idx, items.length)).map(function (it) {
+    return { value: it.value, label: it.mark !== undefined ? it.mark : it.value, tone: 'ok' };
+  });
+  var adaSalah = !done && st.salah !== null && st.salah !== undefined;
+  if (adaSalah) marks.push({ value: st.salah, label: st.salah + '?', tone: 'bad' });
+
+  var head = '';
+  var feedback = '';
+  if (done) {
+    feedback = buildFeedbackBox(
+      'success',
+      '✓',
+      cfg.doneText || '<strong>Semua bilangan sudah menempati titik yang tepat.</strong>'
+    );
+  } else {
+    var target = items[st.idx];
+    head =
+      '<div class="place-target">' +
+      '<span class="place-target__count">Bilangan ' +
+      (st.idx + 1) +
+      ' dari ' +
+      items.length +
+      '</span>' +
+      '<span>Ketuk letak ' +
+      buildDecChip(target.value, true) +
+      (target.teks ? ' <span class="dl-caption">(' + esc(target.teks) + ')</span>' : '') +
+      '</span>' +
+      '</div>';
+    if (adaSalah) {
+      var nSalah = st.wrong[st.idx] || 0;
+      feedback = buildFeedbackBox(
+        'warning',
+        '💭',
+        'Titik yang kamu ketuk adalah <strong>' +
+          esc(st.salah) +
+          '</strong>, bukan ' +
+          esc(target.value) +
+          '. ' +
+          esc(
+            nSalah >= 2
+              ? petunjukLetakDesimal(target.value, d)
+              : 'Periksa lagi: ' +
+                  target.value +
+                  ' terletak di antara dua label yang mana? Hitung garis kecilnya dari label yang lebih kecil.'
+          )
+      );
+    }
+  }
+
+  return (
+    head +
+    buildDecimalNumberLine(pid, {
+      min: cfg.min,
+      max: cfg.max,
+      digits: d,
+      labelEvery: cfg.labelEvery,
+      fixedLabels: cfg.fixedLabels,
+      zoom: cfg.zoom,
+      marks: marks,
+      interactive: !done,
+    }) +
+    feedback
+  );
+}
+
+function bindDecimalPlacement(root, pid, items, st, save, rerender) {
+  bindDecimalNumberLine(root, pid, function (v) {
+    if (numberLinePlacementDone(items, st)) return;
+    if (bandingkanDesimal(v, items[st.idx].value) === 0) {
+      st.idx += 1;
+      st.salah = null;
+    } else {
+      st.salah = v;
+      st.wrong[st.idx] = (st.wrong[st.idx] || 0) + 1;
+    }
+    save();
+    rerender();
+  });
 }

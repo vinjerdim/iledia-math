@@ -4,7 +4,8 @@
   "private": true,
   "scripts": {
     "prepare": "husky install",
-    "build:pages": "node scripts/build-pages.js"
+    "build:pages": "node scripts/build-pages.js",
+    "test": "node --test tests/*.test.js"
   },
   "lint-staged": {
     "*.{js,jsx,ts,tsx,css,html}": [

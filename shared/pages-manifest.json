@@ -120,5 +120,13 @@
     "h1": "Jumlah n Suku Pertama Deret Aritmetika",
     "stageCount": 10,
     "extraBody": "partials/reset-modal.html"
+  },
+  "fase-d/mpi-3.2": {
+    "title": "Membandingkan & Mengurutkan Bilangan Desimal — Matematika Fase D",
+    "description": "Media pembelajaran interaktif berbasis Inquiry Learning untuk membandingkan dan mengurutkan beberapa bilangan desimal dengan tepat menggunakan nilai tempat dan garis bilangan, serta menjelaskan alasannya.",
+    "kicker": "Matematika — Fase D (SMP)",
+    "h1": "Membandingkan & Mengurutkan Bilangan Desimal",
+    "stageCount": 11,
+    "extraBody": "partials/reset-modal.html"
   }
 }
