@@ -41,11 +41,11 @@
   --color-warning-strong: #6a4c00;
   --color-focus: #2563eb;
 
-  --font-display:
-    'Avenir Next', 'Segoe UI Semibold', 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+  --font-display: 'Avenir Next', 'Segoe UI Semibold', 'Segoe UI', 'Helvetica Neue', Arial,
+    sans-serif;
   --font-body: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
-  --font-mono:
-    ui-monospace, 'Cascadia Mono', 'Segoe UI Mono', Consolas, 'Liberation Mono', monospace;
+  --font-mono: ui-monospace, 'Cascadia Mono', 'Segoe UI Mono', Consolas, 'Liberation Mono',
+    monospace;
 
   --space-1: 4px;
   --space-2: 8px;
@@ -79,8 +79,7 @@ body {
   font-family: var(--font-body);
   color: var(--color-ink);
   background-color: var(--color-bg);
-  background-image:
-    linear-gradient(var(--color-bg-grid) 1px, transparent 1px),
+  background-image: linear-gradient(var(--color-bg-grid) 1px, transparent 1px),
     linear-gradient(90deg, var(--color-bg-grid) 1px, transparent 1px);
   background-size: 28px 28px;
   line-height: 1.6;
@@ -4025,5 +4024,233 @@ details.hint-reveal[open] summary::before {
 
   .int-sim__expr {
     font-size: 1.15rem;
+  }
+}
+
+/* =========================================================================
+   18. Bilangan bulat — perkalian, pembagian & urutan pengerjaan
+   Komponen umum modul operasi bilangan bulat (dipakai fase-d/mpi-2.1
+   dan fase-d/mpi-2.2): kartu masalah serupa (.teaser-*), ekspresi
+   operasi (.op-expr), chip konteks, tabel data, tabel aturan tanda
+   (.sign-grid*), dan langkah operasi campuran (.expr-steps*).
+   Lihat engine.js bagian 18.
+   ========================================================================= */
+
+.teaser-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: var(--space-3);
+}
+
+.teaser-card {
+  display: flex;
+  gap: var(--space-3);
+  align-items: flex-start;
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-bg);
+}
+
+.teaser-card p {
+  margin: 0;
+  font-size: 0.95rem;
+}
+
+.teaser-card__icon {
+  font-size: 1.6rem;
+  line-height: 1;
+}
+
+.op-expr {
+  margin: 0 0 var(--space-2);
+  font-family: var(--font-mono);
+  font-size: 1.4rem;
+  font-weight: 700;
+  text-align: center;
+}
+
+.konteks-chip {
+  display: inline-block;
+  margin-bottom: var(--space-2);
+  padding: 2px var(--space-3);
+  border-radius: 999px;
+  background: var(--color-primary-soft);
+  color: var(--color-primary-strong);
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.table-scroll {
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.95rem;
+}
+
+.data-table th,
+.data-table td {
+  padding: var(--space-2) var(--space-3);
+  border-bottom: 1px solid var(--color-border);
+  text-align: left;
+  vertical-align: middle;
+}
+
+.data-table th {
+  background: var(--color-bg);
+  font-size: 0.85rem;
+  color: var(--color-ink-muted);
+}
+
+/* Tabel aturan tanda */
+
+.sign-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: var(--space-3);
+}
+
+.sign-grid__cell {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4);
+  border: 2px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+}
+
+.sign-grid__cell--match {
+  border-color: var(--color-success);
+  background: var(--color-success-soft);
+}
+
+.sign-grid__cell--miss {
+  border-color: var(--color-orange);
+  background: var(--color-orange-soft);
+}
+
+.sign-grid__rule {
+  font-family: var(--font-mono);
+  font-size: 1.3rem;
+  font-weight: 700;
+  text-align: center;
+}
+
+.sign-grid__contoh {
+  font-size: 0.85rem;
+  text-align: center;
+  color: var(--color-ink-muted);
+}
+
+.sign-grid__cell .challenge-options {
+  gap: var(--space-2);
+}
+
+.sign-grid__cell .choice-btn {
+  padding: var(--space-2) var(--space-3);
+}
+
+.sign-grid__compare {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: var(--space-1) var(--space-3);
+  margin: 0;
+  font-size: 0.92rem;
+}
+
+.sign-grid__compare dt {
+  color: var(--color-ink-muted);
+}
+
+.sign-grid__compare dd {
+  margin: 0;
+  font-weight: 700;
+}
+
+.sign-grid__val--positif {
+  color: var(--color-orange-strong);
+}
+
+.sign-grid__val--negatif {
+  color: var(--color-blue-strong);
+}
+
+.sign-grid__mark {
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+.sign-grid__cell--match .sign-grid__mark {
+  color: var(--color-success-strong);
+}
+
+.sign-grid__cell--miss .sign-grid__mark {
+  color: var(--color-orange-strong);
+}
+
+/* Langkah operasi campuran */
+
+.expr-steps {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.expr-steps__line {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: 1.25rem;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+.expr-steps__line--final {
+  color: var(--color-success-strong);
+}
+
+.expr-steps__eq {
+  color: var(--color-ink-muted);
+}
+
+.expr-steps__mark {
+  padding: 0 4px;
+  border-radius: var(--radius-sm);
+  background: var(--color-orange-soft);
+  color: var(--color-orange-strong);
+  box-shadow: inset 0 -2px 0 var(--color-orange);
+}
+
+.expr-steps__stepno {
+  display: inline-block;
+  margin-right: var(--space-1);
+  padding: 0 var(--space-2);
+  border-radius: 999px;
+  background: var(--color-primary-soft);
+  color: var(--color-primary-strong);
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.expr-steps__work .dl-step {
+  margin: 0;
+}
+
+@media (max-width: 640px) {
+  .op-expr {
+    font-size: 1.2rem;
+  }
+
+  .data-table th,
+  .data-table td {
+    padding: var(--space-2);
+  }
+
+  .expr-steps__line {
+    font-size: 1.1rem;
   }
 }

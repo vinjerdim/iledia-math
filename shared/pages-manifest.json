@@ -95,6 +95,14 @@
     "stageCount": 10,
     "extraBody": "partials/reset-modal.html"
   },
+  "fase-d/mpi-2.2": {
+    "title": "Perkalian & Pembagian Bilangan Bulat — Matematika Fase D",
+    "description": "Media pembelajaran interaktif berbasis Inquiry Learning untuk mengalikan dan membagi bilangan bulat serta menerapkan sifat-sifat operasi hitung dan urutan pengerjaan dalam menyelesaikan masalah kontekstual.",
+    "kicker": "Matematika — Fase D (SMP)",
+    "h1": "Perkalian & Pembagian Bilangan Bulat",
+    "stageCount": 11,
+    "extraBody": "partials/reset-modal.html"
+  },
   "fase-f/mpi-1.1": {
     "title": "Barisan dan Deret Aritmetika — Matematika Fase F",
     "description": "Media pembelajaran interaktif berbasis Discovery Learning untuk menjelaskan pola barisan aritmetika, menurunkan rumus suku ke-n dan jumlah n suku deret aritmetika, serta menerapkannya dalam menyelesaikan masalah kontekstual.",
