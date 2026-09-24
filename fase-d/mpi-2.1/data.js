@@ -2,13 +2,14 @@
 
 /* ============================================================
    data.js — Konten media pembelajaran
-   Matematika: Konsep Rasio & Menyederhanakan Perbandingan
+   Matematika: Penjumlahan & Pengurangan Bilangan Bulat
    Fase D — SMP Kelas 7
 
    Tujuan Pembelajaran:
-   Menjelaskan konsep rasio serta menyederhanakan perbandingan dua
-   besaran sejenis dan berbeda satuan dalam masalah kontekstual
-   sehari-hari dengan tepat.
+   Merepresentasikan bilangan bulat pada garis bilangan serta
+   menjumlah dan mengurangkan bilangan bulat dengan tepat untuk
+   menyelesaikan masalah kontekstual sederhana (suhu, saldo,
+   ketinggian).
 
    Model pembelajaran: DISCOVERY LEARNING (Penemuan Terbimbing).
    Pemetaan sintaks ke tahap media:
@@ -16,643 +17,548 @@
      Sintaks 1 — Stimulation ................ tahap 'stimulasi'
      Sintaks 2 — Problem statement .......... tahap 'masalah'
      Sintaks 3 — Data collection ............ tahap 'koleksi'
-     Sintaks 4 — Data processing ............ tahap 'olahData' & 'satuan'
+     Sintaks 4 — Data processing ............ tahap 'olahJumlah' & 'olahKurang'
      Sintaks 5 — Verification ............... tahap 'verifikasi'
      Sintaks 6 — Generalization ............. tahap 'generalisasi'
      Penerapan & penutup .................... 'terapkan', 'refleksi', 'selesai'
 
-   Peran guru saat media dipakai:
-     tahap 1–2  memancing rasa ingin tahu, TIDAK membenarkan atau
-                menyalahkan prediksi murid;
-     tahap 3–5  berkeliling antar kelompok, mengajukan pertanyaan
-                pelacak ("apa yang tetap? apa yang berubah?"),
-                membiarkan media memberi petunjuk berjenjang;
-     tahap 6–7  mengonfirmasi kesimpulan murid dan menautkannya ke
-                istilah formal (rasio, FPB, besaran sejenis);
-     tahap 8–10 menilai penerapan dan memandu refleksi.
+   Rangkaian aktivitas:
+     1. Stimulasi   — suhu pagi di Puncak Jaya −3 °C lalu naik 5 °C;
+                      murid MENDUGA suhu siang (tidak dinilai).
+     2. Masalah     — memilih rumusan masalah & menulis hipotesis.
+     3. Data        — (A) menempatkan bilangan dari konteks suhu,
+                      ketinggian, dan saldo pada garis bilangan;
+                      (B) bereksperimen dengan simulator lompatan dan
+                      mencatat hasil empat percobaan.
+     4. Olah (+)    — memilah arah lompatan, menghitung hasil, lalu
+                      menemukan pola: +positif → kanan, +negatif → kiri.
+     5. Olah (−)    — melengkapi pola 5 − 3, 5 − 2, … 5 − (−2) untuk
+                      menemukan a − b = a + (−b), lalu memakainya.
+     6. Bukti       — menguji dugaan tahap 1 & menanggapi miskonsepsi.
+     7. Simpulan    — menyusun kalimat kesimpulan dari bank kalimat.
+     8. Uji terap   — soal kontekstual suhu, saldo, ketinggian.
+     9. Refleksi    — rekap, refleksi tertulis, penilaian diri.
 
    Catatan: seluruh daftar pilihan jawaban di berkas ini ditulis dalam
-   urutan "wajar". Pengacakan dilakukan app.js memakai shuffleArray()
-   dari shared/engine.js, satu kali saat state disiapkan.
+   urutan "wajar". Pengacakan dilakukan app.js memakai
+   ensureShuffledOrder()/shuffleArray() dari shared/engine.js, satu
+   kali saat state disiapkan.
    ============================================================ */
 
 var DATA = {
+  /* Rentang garis bilangan yang dipakai hampir di seluruh tahap. */
+  garis: { min: -10, max: 10 },
+
   /* ----------------------------------------------------------
-     TAHAP 1 — STIMULASI (Discovery Learning: stimulation)
-     Konflik kognitif: bilangannya berbeda, tetapi rasanya sama.
+     TAHAP 1 — STIMULASI
      ---------------------------------------------------------- */
   stimulasi: {
     kicker: 'Tahap 1 · Stimulasi',
-    goal: 'Mengamati dua campuran dan memperkirakan mana yang lebih manis.',
-    judul: 'Dua Gelas Es Jeruk',
+    syntax: 'Discovery Learning · Sintaks 1',
+    goal: 'Mengamati perubahan suhu dan menduga hasilnya.',
+    guru: 'Bacakan cerita dengan antusias. Jangan membenarkan atau menyalahkan dugaan murid — mintalah beberapa murid membacakan alasannya, lalu biarkan perbedaan pendapat itu menjadi rasa ingin tahu.',
+    judul: 'Pagi yang Membeku di Puncak Jaya',
     cerita:
-      'Di kantin sekolah, Bu Ida membuat dua gelas es jeruk dengan takaran sendok yang sama besar.',
-    gelas: [
-      { id: 'A', nama: 'Gelas A', gula: 2, air: 6 },
-      { id: 'B', nama: 'Gelas B', gula: 3, air: 9 },
-    ],
-    satuanGula: 'sendok gula',
-    satuanAir: 'sendok air',
-    pertanyaan: 'Menurut dugaanmu, es jeruk di gelas mana yang terasa lebih manis?',
+      'Tim pendaki bermalam di dekat Puncak Jaya, Papua. Pukul 05.00 termometer di tenda menunjukkan suhu 3 °C di bawah nol. Menjelang pukul 11.00, matahari bersinar dan suhu naik 5 °C.',
+    suhuAwal: -3,
+    naik: 5,
+    captionAwal: 'Pukul 05.00',
+    pertanyaan: 'Menurut dugaanmu, berapa suhu pada pukul 11.00?',
     opsi: [
-      { id: 'a', label: 'Gelas A lebih manis' },
-      { id: 'b', label: 'Gelas B lebih manis' },
-      { id: 'sama', label: 'Sama manis' },
-      { id: 'takTentu', label: 'Tidak dapat ditentukan' },
+      { id: 'p2', label: '2 °C' },
+      { id: 'p8', label: '8 °C' },
+      { id: 'm8', label: '−8 °C' },
+      { id: 'm2', label: '−2 °C' },
     ],
-    alasanLabel: 'Mengapa kamu menduga begitu?',
-    alasanPlaceholder: 'Tulis alasanmu dengan kalimatmu sendiri…',
+    benar: 'p2',
+    alasanLabel: 'Bagaimana kamu memperoleh dugaan itu?',
+    alasanPlaceholder: 'Tulis caramu berpikir dengan kalimatmu sendiri…',
+    teaserJudul: 'Masalah serupa juga muncul di tempat lain',
+    teaser: [
+      {
+        ikon: '💰',
+        teks: 'Kas kelas tersisa Rp10.000, lalu dipakai membeli bola Rp15.000. Kekurangannya dicatat sebagai utang. Berapa saldo kas sekarang?',
+      },
+      {
+        ikon: '🤿',
+        teks: 'Seorang penyelam berada 6 m di bawah permukaan laut, lalu naik 4 m. Di mana posisinya sekarang?',
+      },
+    ],
     catatan:
-      'Di tahap ini belum ada jawaban benar atau salah. Dugaanmu akan disimpan, lalu kamu sendiri yang mengujinya pada tahap Pembuktian.',
+      'Belum ada jawaban benar atau salah di tahap ini. Dugaanmu disimpan, lalu kamu sendiri yang mengujinya pada tahap Pembuktian.',
     nextLabel: 'Lanjut: Rumuskan Masalah →',
   },
 
   /* ----------------------------------------------------------
-     TAHAP 2 — IDENTIFIKASI MASALAH (problem statement)
+     TAHAP 2 — IDENTIFIKASI MASALAH
      ---------------------------------------------------------- */
   masalah: {
     kicker: 'Tahap 2 · Identifikasi Masalah',
-    goal: 'Merumuskan pertanyaan yang tepat agar kedua gelas dapat dibandingkan secara adil.',
+    syntax: 'Discovery Learning · Sintaks 2',
+    goal: 'Merumuskan pertanyaan yang akan diselidiki.',
+    guru: 'Bila murid memilih rumusan yang kurang tepat, ajukan pertanyaan balik: "Kalau pertanyaan itu terjawab, apakah kita bisa menghitung suhu siang, saldo kas, dan posisi penyelam?"',
     pengantar:
-      'Agar dugaanmu dapat diuji, masalahnya perlu dirumuskan dengan jelas lebih dulu. Perhatikan: banyak gula Gelas B memang lebih banyak, tetapi airnya juga lebih banyak.',
+      'Ketiga masalah tadi memuat bilangan di bawah nol: suhu di bawah 0 °C, saldo yang berutang, dan posisi di bawah permukaan laut. Bilangan seperti ini disebut bilangan bulat negatif.',
     pertanyaan: 'Rumusan masalah mana yang paling tepat untuk diselidiki?',
     opsi: [
-      { id: 'r1', label: 'Berapa banyak sendok gula pada Gelas A dan Gelas B?' },
+      { id: 'r1', label: 'Berapa suhu terendah yang pernah tercatat di Puncak Jaya?' },
       {
         id: 'r2',
         label:
-          'Bagaimana cara membandingkan banyak gula terhadap banyak air pada setiap gelas, agar tingkat manis keduanya dapat dibandingkan secara adil?',
+          'Bagaimana cara menjumlah dan mengurangkan bilangan bulat, termasuk bilangan negatif, dengan bantuan garis bilangan?',
       },
-      { id: 'r3', label: 'Gelas manakah yang isinya paling banyak?' },
-      { id: 'r4', label: 'Berapa selisih banyak sendok air pada kedua gelas?' },
+      { id: 'r3', label: 'Mengapa suhu di puncak gunung bisa berada di bawah nol?' },
+      { id: 'r4', label: 'Berapa hasil 3 + 5 bila tanda minusnya diabaikan saja?' },
     ],
     correct: 'r2',
     umpan: {
-      r1: 'Pertanyaan ini hanya membaca data, belum membandingkan apa pun. Banyak gula saja tidak menentukan tingkat manis.',
-      r2: 'Tepat. Tingkat manis ditentukan oleh <em>hubungan</em> antara banyak gula dan banyak air, bukan oleh banyak gula saja.',
-      r3: 'Isi gelas yang lebih banyak belum tentu lebih manis — segelas besar bisa saja encer.',
-      r4: 'Selisih hanya menjawab "berapa lebihnya", bukan "berapa kali lipatnya". Rasa manis tidak ditentukan selisih.',
+      r1: 'Pertanyaan ini menarik, tetapi jawabannya hanya sebuah fakta. Pertanyaan ini tidak membantu kita menghitung perubahan suhu, saldo, atau posisi.',
+      r2: 'Tepat. Ketiga masalah memerlukan cara menjumlah dan mengurangkan bilangan bulat, dan garis bilangan dapat menjadi alat bantunya.',
+      r3: 'Ini pertanyaan untuk pelajaran IPA. Kita perlu pertanyaan matematika yang membantu menghitung.',
+      r4: 'Tanda minus justru penting: −3 °C dan 3 °C adalah suhu yang sangat berbeda.',
     },
     hipotesisLabel: 'Tulis dugaan sementaramu (hipotesis)',
     hipotesisPlaceholder:
-      'Contoh: saya menduga kedua gelas dapat dibandingkan jika banyak gula dibagi banyak air…',
+      'Contoh: saya menduga suhu naik berarti bergerak ke … pada garis bilangan, sehingga …',
     nextLabel: 'Lanjut: Kumpulkan Data →',
   },
 
   /* ----------------------------------------------------------
-     TAHAP 3 — PENGUMPULAN DATA (data collection)
-     Bagian A: mencatat pasangan bilangan dari situasi nyata.
-     Bagian B: mengenali tiga bentuk penulisan rasio.
-     Bagian C: mencocokkan pernyataan dengan bentuk rasionya.
+     TAHAP 3 — PENGUMPULAN DATA
+     A. Menempatkan bilangan dari konteks pada garis bilangan.
+     B. Simulator lompatan + tabel percobaan.
      ---------------------------------------------------------- */
   koleksi: {
     kicker: 'Tahap 3 · Pengumpulan Data',
-    goal: 'Mencatat pasangan bilangan dari situasi sehari-hari dan mengenali cara menuliskannya.',
+    syntax: 'Discovery Learning · Sintaks 3',
+    goal: 'Merepresentasikan bilangan bulat dari konteks pada garis bilangan dan mengumpulkan data hasil operasi.',
+    guru: 'Pada bagian A, minta murid menyebutkan dulu: "di atas/bawah nol? berarti kiri atau kanan 0?". Pada bagian B, beri keleluasaan bereksperimen dengan simulator sebelum mengisi tabel.',
     instruksiA:
-      'Baca setiap situasi, lalu catat pasangan bilangannya pada kolom yang tersedia. Perhatikan urutan yang diminta — urutan pada rasio tidak boleh ditukar.',
-    situasi: [
+      'Bagian A. Ubah setiap keadaan menjadi bilangan bulat, lalu ketuk letaknya pada garis bilangan. Keadaan di bawah nol, di bawah permukaan laut, atau utang ditulis sebagai bilangan negatif.',
+    tempatkan: [
+      { id: 'e1', value: -3, teks: 'suhu 3 °C di bawah nol' },
+      { id: 'e2', value: -6, teks: 'penyelam 6 m di bawah permukaan laut' },
+      { id: 'e3', value: 4, teks: 'lift naik ke lantai 4 di atas lobi' },
+      { id: 'e4', value: -5, teks: 'utang kas kelas Rp5.000 (dalam ribuan)' },
+      { id: 'e5', value: 0, teks: 'tepat di permukaan laut' },
+    ],
+    selesaiA:
+      '<strong>Semua bilangan sudah menempati titik yang tepat.</strong> Bilangan negatif berada di kiri 0, bilangan positif di kanan 0.',
+    instruksiB:
+      'Bagian B. Gunakan simulator untuk bereksperimen: atur titik awal, pilih operasinya, lalu atur bilangan kedua. Amati arah dan panjang lompatannya.',
+    simAwal: { a: -3, op: '+', b: 5 },
+    instruksiTabel:
+      'Atur simulator sesuai setiap percobaan di bawah ini, amati titik akhirnya, lalu catat hasilnya.',
+    percobaan: [
+      { id: 'p1', a: -3, op: '+', b: 5, konteks: 'Suhu −3 °C naik 5 °C' },
+      { id: 'p2', a: 4, op: '+', b: -6, konteks: 'Lantai 4, lift turun 6 lantai' },
+      { id: 'p3', a: -2, op: '+', b: -4, konteks: 'Utang 2 ribu, berutang lagi 4 ribu' },
+      { id: 'p4', a: 2, op: '-', b: 5, konteks: 'Suhu 2 °C turun 5 °C' },
+    ],
+    nextLabel: 'Lanjut: Olah Data Penjumlahan →',
+  },
+
+  /* ----------------------------------------------------------
+     TAHAP 4 — PENGOLAHAN DATA (PENJUMLAHAN)
+     ---------------------------------------------------------- */
+  olahJumlah: {
+    kicker: 'Tahap 4 · Pengolahan Data: Penjumlahan',
+    syntax: 'Discovery Learning · Sintaks 4',
+    goal: 'Menemukan hubungan antara tanda bilangan kedua dan arah lompatan pada penjumlahan.',
+    guru: 'Ajukan pertanyaan pelacak: "Apa yang menentukan arah lompatan: bilangan pertama atau bilangan kedua?" Biarkan murid menemukan polanya sebelum tahap ini ditutup.',
+    instruksi:
+      'Setiap garis bilangan menunjukkan titik awal dan lompatan untuk sebuah penjumlahan. Tentukan dulu arah lompatannya, lalu hitung hasilnya.',
+    arahLabel: 'Ke mana arah lompatannya?',
+    opsiArah: [
+      { id: 'kanan', label: 'Ke kanan' },
+      { id: 'kiri', label: 'Ke kiri' },
+      { id: 'diam', label: 'Tidak bergerak' },
+    ],
+    kasus: [
       {
-        id: 's1',
-        judul: 'Es jeruk Gelas A',
-        teks: '2 sendok gula dicampur 6 sendok air.',
-        minta: 'gula : air',
-        a: 2,
-        b: 6,
-        labelA: 'gula',
-        labelB: 'air',
-      },
-      {
-        id: 's2',
-        judul: 'Es jeruk Gelas B',
-        teks: '3 sendok gula dicampur 9 sendok air.',
-        minta: 'gula : air',
+        id: 'j1',
         a: 3,
-        b: 9,
-        labelA: 'gula',
-        labelB: 'air',
+        b: 4,
+        correct: 'kanan',
+        explanation: 'Bilangan kedua (4) positif, maka lompatan 4 langkah ke kanan.',
+        hints: ['Mulai dari 3, lompat 4 langkah ke kanan.', 'Hitung: 4, 5, 6, 7.'],
       },
       {
-        id: 's3',
-        judul: 'Murid kelas 7A',
-        teks: 'Terdapat 12 murid putra dan 18 murid putri.',
-        minta: 'putra : putri',
-        a: 12,
-        b: 18,
-        labelA: 'putra',
-        labelB: 'putri',
+        id: 'j2',
+        a: -5,
+        b: 3,
+        correct: 'kanan',
+        explanation:
+          'Walaupun titik awalnya negatif, bilangan kedua (3) positif sehingga lompatan tetap ke kanan.',
+        hints: ['Mulai dari −5, lompat 3 langkah ke kanan (mendekati 0).', 'Hitung: −4, −3, −2.'],
       },
       {
-        id: 's4',
-        judul: 'Kotak pensil Rani',
-        teks: 'Berisi 8 pensil dan 10 pulpen.',
-        minta: 'pensil : pulpen',
-        a: 8,
-        b: 10,
-        labelA: 'pensil',
-        labelB: 'pulpen',
+        id: 'j3',
+        a: 2,
+        b: -6,
+        correct: 'kiri',
+        explanation: 'Bilangan kedua (−6) negatif, maka lompatan 6 langkah ke kiri.',
+        hints: [
+          'Mulai dari 2, lompat 6 langkah ke kiri. Kamu akan melewati 0.',
+          'Hitung: 1, 0, −1, −2, −3, −4.',
+        ],
+      },
+      {
+        id: 'j4',
+        a: -1,
+        b: -4,
+        correct: 'kiri',
+        explanation:
+          'Bilangan kedua (−4) negatif, maka lompatan 4 langkah ke kiri, makin jauh dari 0.',
+        hints: ['Mulai dari −1, lompat 4 langkah ke kiri.', 'Hitung: −2, −3, −4, −5.'],
       },
     ],
-    bentuk: {
-      judul: 'Tiga cara menuliskan rasio yang sama',
-      teks: 'Perbandingan gula terhadap air pada Gelas A dapat ditulis dalam tiga bentuk berikut, dan ketiganya bermakna sama.',
-      contoh: [
-        { bentuk: '2 : 6', nama: 'bentuk titik dua', baca: 'dibaca "dua berbanding enam"' },
-        { bentuk: '2/6', nama: 'bentuk pecahan', baca: 'menegaskan bahwa rasio adalah hasil bagi' },
-        {
-          bentuk: '2 berbanding 6',
-          nama: 'bentuk kalimat',
-          baca: 'dipakai saat menjelaskan lisan',
-        },
-      ],
+    polaLabel: 'Dari keempat kasus, pola apa yang kamu temukan?',
+    polaOpsi: [
+      {
+        id: 'q1',
+        label:
+          'Menambah bilangan <strong>positif</strong> berarti bergerak ke <strong>kanan</strong>; menambah bilangan <strong>negatif</strong> berarti bergerak ke <strong>kiri</strong>.',
+      },
+      { id: 'q2', label: 'Penjumlahan selalu menghasilkan bilangan yang lebih besar.' },
+      { id: 'q3', label: 'Tanda hasil penjumlahan selalu sama dengan tanda bilangan pertama.' },
+      { id: 'q4', label: 'Arah lompatan ditentukan oleh tanda bilangan pertama.' },
+    ],
+    polaCorrect: 'q1',
+    polaUmpan: {
+      q1: 'Tepat! Arah lompatan ditentukan oleh tanda bilangan yang ditambahkan.',
+      q2: 'Periksa kasus 2 + (−6) = −4. Hasilnya justru lebih kecil dari 2.',
+      q3: 'Periksa kasus −5 + 3 = −2 dan 2 + (−6) = −4. Tanda hasilnya tidak selalu mengikuti bilangan pertama.',
+      q4: 'Periksa kasus −5 + 3: bilangan pertamanya negatif, tetapi lompatannya ke kanan.',
     },
-    instruksiC:
-      'Sekarang uji pemahamanmu. Pilih bentuk rasio yang tepat untuk setiap pernyataan — perhatikan urutan besaran yang disebut lebih dulu.',
+    nextLabel: 'Lanjut: Olah Data Pengurangan →',
+  },
+
+  /* ----------------------------------------------------------
+     TAHAP 5 — PENGOLAHAN DATA (PENGURANGAN)
+     ---------------------------------------------------------- */
+  olahKurang: {
+    kicker: 'Tahap 5 · Pengolahan Data: Pengurangan',
+    syntax: 'Discovery Learning · Sintaks 4',
+    goal: 'Menemukan hubungan pengurangan dengan penjumlahan: a − b = a + (−b).',
+    guru: 'Tekankan cara membaca pola di tabel: bilangan pengurang turun 1, hasil naik 1. Minta murid menjelaskan dengan kalimatnya sendiri mengapa 5 − (−1) lebih dari 5.',
+    instruksiPola:
+      'Perhatikan pola pengurangan di bawah ini. Setiap baris, bilangan pengurangnya berkurang 1. Lanjutkan polanya!',
+    pola: [
+      { b: 3, hasil: 2, tampil: true },
+      { b: 2, hasil: 3, tampil: true },
+      { b: 1, hasil: 4, tampil: true },
+      {
+        b: 0,
+        hasil: 5,
+        hints: ['Hasilnya naik 1 dari baris sebelumnya.'],
+      },
+      {
+        b: -1,
+        hasil: 6,
+        hints: ['Pengurangnya turun 1 lagi (dari 0 ke −1). Hasilnya naik 1 lagi.'],
+      },
+      {
+        b: -2,
+        hasil: 7,
+        hints: ['Teruskan pola: setiap pengurang turun 1, hasilnya naik 1.'],
+      },
+    ],
+    polaA: 5,
+    setaraLabel: 'Dari polanya, 5 − (−2) = 7. Penjumlahan mana yang memberi hasil yang sama?',
+    setaraOpsi: [
+      { id: 's1', label: '5 + 2' },
+      { id: 's2', label: '5 − 2' },
+      { id: 's3', label: '−5 + 2' },
+      { id: 's4', label: '−5 − 2' },
+    ],
+    setaraCorrect: 's1',
+    setaraUmpan: {
+      s1: 'Tepat! Mengurangi −2 sama dengan menambah 2 (lawan dari −2).',
+      s2: '5 − 2 = 3, bukan 7. Coba lagi.',
+      s3: '−5 + 2 = −3, bukan 7. Coba lagi.',
+      s4: '−5 − 2 = −7, bukan 7. Coba lagi.',
+    },
+    bandingJudul: 'Bandingkan dua lompatan ini',
+    banding: { a: 5, b: 3 },
+    bandingTeks:
+      'Lompatan 5 − 3 dan 5 + (−3) sama persis: keduanya 3 langkah ke kiri dan berhenti di 2. Mengurangi suatu bilangan sama dengan menambah <strong>lawannya</strong>.',
+    instruksiCocok:
+      'Sekarang pakai temuanmu. Pilih penjumlahan yang setara dengan setiap pengurangan.',
     cocok: [
       {
         id: 'c1',
-        pernyataan: 'Banyak gula dibanding banyak air pada <strong>Gelas A</strong>',
+        a: -4,
+        b: 3,
         options: [
-          { id: 'o1', label: '2 : 6' },
-          { id: 'o2', label: '6 : 2' },
-          { id: 'o3', label: '2 : 8' },
-          { id: 'o4', label: '6 : 8' },
+          { id: 'o1', label: '−4 + (−3)' },
+          { id: 'o2', label: '−4 + 3' },
+          { id: 'o3', label: '4 + (−3)' },
+          { id: 'o4', label: '4 + 3' },
         ],
         correct: 'o1',
-        explanation:
-          'Yang disebut lebih dulu adalah <strong>gula</strong> (2 sendok), lalu <strong>air</strong> (6 sendok), sehingga ditulis 2 : 6.',
+        explanation: 'Mengurangi 3 sama dengan menambah −3, jadi −4 − 3 = −4 + (−3).',
       },
       {
         id: 'c2',
-        pernyataan: 'Banyak air dibanding banyak gula pada <strong>Gelas A</strong>',
+        a: 2,
+        b: -6,
         options: [
-          { id: 'o1', label: '6 : 2' },
-          { id: 'o2', label: '2 : 6' },
-          { id: 'o3', label: '6 : 8' },
-          { id: 'o4', label: '8 : 6' },
+          { id: 'o1', label: '2 + 6' },
+          { id: 'o2', label: '2 + (−6)' },
+          { id: 'o3', label: '−2 + 6' },
+          { id: 'o4', label: '−2 + (−6)' },
         ],
         correct: 'o1',
-        explanation:
-          'Urutannya dibalik menjadi air lebih dulu, sehingga 6 : 2. Ini menunjukkan urutan pada rasio tidak boleh ditukar sembarangan.',
+        explanation: 'Mengurangi −6 sama dengan menambah 6, jadi 2 − (−6) = 2 + 6.',
       },
       {
         id: 'c3',
-        pernyataan: 'Banyak murid putra dibanding <strong>seluruh</strong> murid kelas 7A',
+        a: -1,
+        b: -5,
         options: [
-          { id: 'o1', label: '12 : 30' },
-          { id: 'o2', label: '12 : 18' },
-          { id: 'o3', label: '18 : 30' },
-          { id: 'o4', label: '30 : 12' },
+          { id: 'o1', label: '−1 + 5' },
+          { id: 'o2', label: '−1 + (−5)' },
+          { id: 'o3', label: '1 + 5' },
+          { id: 'o4', label: '1 + (−5)' },
         ],
         correct: 'o1',
-        explanation:
-          'Seluruh murid = 12 + 18 = 30 orang. Perbandingan bagian terhadap keseluruhan ditulis 12 : 30.',
-      },
-      {
-        id: 'c4',
-        pernyataan: 'Banyak pulpen dibanding banyak pensil di kotak pensil Rani',
-        options: [
-          { id: 'o1', label: '10 : 8' },
-          { id: 'o2', label: '8 : 10' },
-          { id: 'o3', label: '10 : 18' },
-          { id: 'o4', label: '8 : 18' },
-        ],
-        correct: 'o1',
-        explanation: 'Pulpen (10) disebut lebih dulu, lalu pensil (8), sehingga ditulis 10 : 8.',
+        explanation: 'Mengurangi −5 sama dengan menambah 5, jadi −1 − (−5) = −1 + 5.',
       },
     ],
-    nextLabel: 'Lanjut: Olah Datanya →',
-  },
-
-  /* ----------------------------------------------------------
-     TAHAP 4 — PENGOLAHAN DATA (data processing)
-     Besaran SEJENIS dengan SATUAN SAMA → bagi dengan FPB.
-     ---------------------------------------------------------- */
-  olahData: {
-    kicker: 'Tahap 4 · Pengolahan Data',
-    goal: 'Menemukan cara menyederhanakan perbandingan dua besaran sejenis bersatuan sama.',
-    instruksi:
-      'Perbandingan dapat ditulis lebih ringkas tanpa mengubah maknanya. Pada setiap kasus: cari bilangan terbesar yang membagi habis kedua bilangan (FPB), lalu bagi keduanya dengan bilangan itu.',
-    kasus: [
+    instruksiHitung: 'Terakhir, hitung hasil pengurangannya dengan bantuan bentuk setaranya.',
+    hitung: [
       {
-        id: 'k1',
-        judul: 'Es jeruk Gelas A',
-        konteks: '2 sendok gula : 6 sendok air',
+        a: -4,
+        b: 3,
+        hints: ['−4 − 3 = −4 + (−3): mulai dari −4, lompat 3 langkah ke kiri.'],
+      },
+      {
         a: 2,
-        b: 6,
-        hints: [
-          'Cari bilangan terbesar yang dapat membagi habis 2 dan 6 sekaligus.',
-          'Faktor 2 → 1, 2. Faktor 6 → 1, 2, 3, 6. Faktor persekutuan terbesarnya adalah 2.',
-        ],
-        makna: 'Artinya setiap 1 sendok gula dicampur 3 sendok air.',
-      },
-      {
-        id: 'k2',
-        judul: 'Es jeruk Gelas B',
-        konteks: '3 sendok gula : 9 sendok air',
-        a: 3,
-        b: 9,
-        hints: [
-          'Bilangan berapa yang membagi habis 3 dan juga 9?',
-          'Faktor 3 → 1, 3. Faktor 9 → 1, 3, 9. FPB-nya adalah 3.',
-        ],
-        makna: 'Artinya setiap 1 sendok gula dicampur 3 sendok air — perhatikan hasilnya!',
-      },
-      {
-        id: 'k3',
-        judul: 'Murid kelas 7A',
-        konteks: '12 murid putra : 18 murid putri',
-        a: 12,
-        b: 18,
-        hints: [
-          'Kedua bilangan sama-sama habis dibagi 2, tetapi carilah pembagi yang paling besar.',
-          'Faktor persekutuan 12 dan 18 → 1, 2, 3, 6. Yang terbesar adalah 6.',
-        ],
-        makna: 'Artinya setiap 2 murid putra sebanding dengan 3 murid putri.',
-      },
-      {
-        id: 'k4',
-        judul: 'Kotak pensil Rani',
-        konteks: '8 pensil : 10 pulpen',
-        a: 8,
-        b: 10,
-        hints: [
-          'Keduanya bilangan genap. Bilangan genap terbesar berapa yang membagi habis 8 dan 10?',
-          'Faktor persekutuan 8 dan 10 → 1, 2. FPB-nya adalah 2.',
-        ],
-        makna: 'Artinya setiap 4 pensil sebanding dengan 5 pulpen.',
-      },
-    ],
-    temuan:
-      'Perhatikan Gelas A dan Gelas B: bilangannya berbeda (2 : 6 dan 3 : 9), tetapi bentuk paling sederhananya <strong>sama</strong>. Simpan temuan ini — kamu akan memakainya untuk menguji dugaan awalmu.',
-    nextLabel: 'Lanjut: Satuan Berbeda →',
-  },
-
-  /* ----------------------------------------------------------
-     TAHAP 5 — PENGOLAHAN DATA LANJUT
-     Besaran SEJENIS dengan SATUAN BERBEDA → samakan satuan dulu.
-     ---------------------------------------------------------- */
-  satuan: {
-    kicker: 'Tahap 5 · Pengolahan Data (Lanjut)',
-    goal: 'Menyederhanakan perbandingan dua besaran sejenis yang satuannya berbeda.',
-    instruksi:
-      'Perbandingan hanya bermakna bila kedua besaran diukur dengan satuan yang sama. Pada setiap kasus: (1) pilih satuan acuan, (2) ubah besaran yang belum sesuai, (3) sederhanakan hasilnya.',
-    langkahLabel: ['Pilih satuan acuan', 'Samakan satuannya', 'Sederhanakan'],
-    kasus: [
-      {
-        id: 'u1',
-        judul: 'Lama belajar',
-        teks: 'Dina belajar selama <strong>2 jam</strong>, sedangkan Rio belajar selama <strong>45 menit</strong>.',
-        minta: 'lama belajar Dina : lama belajar Rio',
-        besaranA: { nilai: 2, satuan: 'jam', tampil: '2 jam' },
-        besaranB: { nilai: 45, satuan: 'menit', tampil: '45 menit' },
-        opsiSatuan: [
-          { id: 'menit', label: 'Ubah semuanya ke menit' },
-          { id: 'jam', label: 'Ubah semuanya ke jam' },
-          { id: 'detik', label: 'Ubah semuanya ke detik' },
-        ],
-        correctSatuan: 'menit',
-        umpanSatuan: {
-          menit:
-            'Tepat. Dengan satuan menit, kedua besaran menjadi bilangan bulat sehingga mudah disederhanakan.',
-          jam: 'Boleh saja, tetapi 45 menit menjadi 0,75 jam — muncul bilangan pecahan yang menyulitkan penyederhanaan.',
-          detik:
-            'Hasilnya tetap benar, tetapi bilangannya menjadi sangat besar (7.200 dan 2.700) dan tidak praktis.',
-        },
-        konversi: { faktorTeks: '1 jam = 60 menit', nilaiA: 120, nilaiB: 45, satuan: 'menit' },
-        sederhana: { a: 8, b: 3 },
-        hints: [
-          'Ubah 2 jam menjadi menit lebih dulu: 2 × 60.',
-          'Setelah menjadi 120 : 45, cari FPB dari 120 dan 45, yaitu 15.',
-        ],
-        makna: 'Artinya setiap 8 menit Dina belajar, Rio belajar 3 menit.',
-      },
-      {
-        id: 'u2',
-        judul: 'Berat bahan kue',
-        teks: 'Ibu memakai <strong>1,5 kg</strong> tepung dan <strong>300 g</strong> gula.',
-        minta: 'berat tepung : berat gula',
-        besaranA: { nilai: 1.5, satuan: 'kg', tampil: '1,5 kg' },
-        besaranB: { nilai: 300, satuan: 'g', tampil: '300 g' },
-        opsiSatuan: [
-          { id: 'g', label: 'Ubah semuanya ke gram' },
-          { id: 'kg', label: 'Ubah semuanya ke kilogram' },
-          { id: 'tidak', label: 'Tidak perlu disamakan' },
-        ],
-        correctSatuan: 'g',
-        umpanSatuan: {
-          g: 'Tepat. Dengan satuan gram, 1,5 kg menjadi 1.500 g sehingga keduanya bilangan bulat.',
-          kg: 'Boleh, tetapi 300 g menjadi 0,3 kg sehingga muncul bilangan desimal.',
-          tidak:
-            'Tidak bisa. Membandingkan 1,5 dengan 300 tanpa menyamakan satuan akan memberi kesimpulan yang keliru.',
-        },
-        konversi: { faktorTeks: '1 kg = 1.000 g', nilaiA: 1500, nilaiB: 300, satuan: 'g' },
-        sederhana: { a: 5, b: 1 },
-        hints: [
-          'Ubah 1,5 kg menjadi gram: 1,5 × 1.000.',
-          'Setelah menjadi 1.500 : 300, FPB-nya adalah 300.',
-        ],
-        makna: 'Artinya berat tepung 5 kali berat gula.',
-      },
-      {
-        id: 'u3',
-        judul: 'Panjang pita',
-        teks: 'Pita Sinta panjangnya <strong>2,5 m</strong>, pita Dewi <strong>75 cm</strong>.',
-        minta: 'panjang pita Sinta : panjang pita Dewi',
-        besaranA: { nilai: 2.5, satuan: 'm', tampil: '2,5 m' },
-        besaranB: { nilai: 75, satuan: 'cm', tampil: '75 cm' },
-        opsiSatuan: [
-          { id: 'cm', label: 'Ubah semuanya ke sentimeter' },
-          { id: 'm', label: 'Ubah semuanya ke meter' },
-          { id: 'mm', label: 'Ubah semuanya ke milimeter' },
-        ],
-        correctSatuan: 'cm',
-        umpanSatuan: {
-          cm: 'Tepat. 2,5 m menjadi 250 cm sehingga kedua bilangan bulat dan mudah dibandingkan.',
-          m: 'Boleh, tetapi 75 cm menjadi 0,75 m sehingga muncul bilangan desimal.',
-          mm: 'Hasilnya tetap benar, tetapi bilangannya jadi besar (2.500 dan 750) tanpa manfaat tambahan.',
-        },
-        konversi: { faktorTeks: '1 m = 100 cm', nilaiA: 250, nilaiB: 75, satuan: 'cm' },
-        sederhana: { a: 10, b: 3 },
-        hints: [
-          'Ubah 2,5 m menjadi sentimeter: 2,5 × 100.',
-          'Setelah menjadi 250 : 75, FPB dari 250 dan 75 adalah 25.',
-        ],
-        makna: 'Artinya setiap 10 cm pita Sinta sebanding dengan 3 cm pita Dewi.',
-      },
-      {
-        id: 'u4',
-        judul: 'Isi botol minuman',
-        teks: 'Botol Andi berisi <strong>1,2 L</strong> air, botol Bima berisi <strong>800 mL</strong>.',
-        minta: 'isi botol Andi : isi botol Bima',
-        besaranA: { nilai: 1.2, satuan: 'L', tampil: '1,2 L' },
-        besaranB: { nilai: 800, satuan: 'mL', tampil: '800 mL' },
-        opsiSatuan: [
-          { id: 'ml', label: 'Ubah semuanya ke mililiter' },
-          { id: 'l', label: 'Ubah semuanya ke liter' },
-          { id: 'tidak', label: 'Tidak perlu disamakan' },
-        ],
-        correctSatuan: 'ml',
-        umpanSatuan: {
-          ml: 'Tepat. 1,2 L menjadi 1.200 mL sehingga keduanya bilangan bulat.',
-          l: 'Boleh, tetapi 800 mL menjadi 0,8 L sehingga muncul bilangan desimal.',
-          tidak:
-            'Tidak bisa. Angka 1,2 dan 800 berasal dari satuan berbeda, jadi belum dapat dibandingkan langsung.',
-        },
-        konversi: { faktorTeks: '1 L = 1.000 mL', nilaiA: 1200, nilaiB: 800, satuan: 'mL' },
-        sederhana: { a: 3, b: 2 },
-        hints: [
-          'Ubah 1,2 L menjadi mililiter: 1,2 × 1.000.',
-          'Setelah menjadi 1.200 : 800, FPB dari 1.200 dan 800 adalah 400.',
-        ],
-        makna: 'Artinya setiap 3 gelas isi botol Andi sebanding dengan 2 gelas isi botol Bima.',
+        b: -6,
+        hints: ['2 − (−6) = 2 + 6: mulai dari 2, lompat 6 langkah ke kanan.'],
       },
     ],
     nextLabel: 'Lanjut: Buktikan Dugaanmu →',
   },
 
   /* ----------------------------------------------------------
-     TAHAP 6 — PEMBUKTIAN (verification)
-     Murid menguji prediksinya sendiri + menelaah non-contoh.
+     TAHAP 6 — PEMBUKTIAN
      ---------------------------------------------------------- */
   verifikasi: {
     kicker: 'Tahap 6 · Pembuktian',
-    goal: 'Menguji dugaan awal dengan perbandingan yang sudah disederhanakan.',
+    syntax: 'Discovery Learning · Sintaks 5',
+    goal: 'Menguji dugaan awal dan memeriksa kekeliruan umum dengan garis bilangan.',
+    guru: 'Undang murid yang dugaan awalnya berbeda untuk menjelaskan apa yang berubah dari cara berpikirnya. Diskusikan kasus-kasus miskonsepsi secara klasikal.',
     prediksiLabel: 'Dugaanmu pada Tahap 1',
-    prediksiTeks: {
-      a: 'Gelas A lebih manis',
-      b: 'Gelas B lebih manis',
-      sama: 'Sama manis',
-      takTentu: 'Tidak dapat ditentukan',
+    uji: {
+      label: 'Suhu pukul 11.00 = −3 + 5 = ? (°C)',
+      hints: ['Mulai dari −3 pada garis bilangan, lalu lompat 5 langkah ke kanan (suhu naik).'],
+      temuan:
+        'Dari −3, lima langkah ke kanan berhenti di <strong>2</strong>. Jadi suhu pukul 11.00 adalah 2 °C.',
     },
-    instruksi:
-      'Kembali ke dua gelas es jeruk. Sederhanakan perbandingan gula : air pada masing-masing gelas, lalu bandingkan hasilnya.',
-    uji: [
-      { id: 'A', nama: 'Gelas A', a: 2, b: 6, sederhanaA: 1, sederhanaB: 3 },
-      { id: 'B', nama: 'Gelas B', a: 3, b: 9, sederhanaA: 1, sederhanaB: 3 },
-    ],
-    kesimpulan:
-      'Kedua gelas memiliki perbandingan gula : air yang sama, yaitu <strong>1 : 3</strong>. Jadi <strong>kedua es jeruk sama manisnya</strong>, meskipun banyak gulanya berbeda.',
-    kesimpulanBenar: 'Dugaanmu di Tahap 1 ternyata sudah tepat. Sekarang kamu punya buktinya!',
+    kesimpulanBenar: 'Dugaanmu di Tahap 1 ternyata tepat. Sekarang kamu punya buktinya!',
     kesimpulanKeliru:
-      'Dugaan awalmu ternyata berbeda dengan hasil pembuktian. Itu hal yang wajar dan justru berharga — di situlah penemuan terjadi.',
+      'Dugaan awalmu berbeda dengan hasil pembuktian. Itu wajar dan justru berharga — di situlah penemuan terjadi.',
     instruksiSoal:
-      'Uji pemahamanmu dengan tiga kasus berikut. Perhatikan baik-baik, ada kasus yang sengaja dibuat untuk menguji ketelitianmu.',
+      'Tiga teman menuliskan jawaban berikut. Periksa dengan garis bilangan, lalu pilih tanggapan yang paling tepat.',
     soal: [
       {
         id: 'v1',
         pernyataan:
-          'Rina berkata, <em>"Gelas B pasti lebih manis, sebab gulanya 3 sendok sedangkan Gelas A hanya 2 sendok."</em> Tanggapan mana yang paling tepat?',
+          'Budi menulis <em>−3 + 5 = −8</em>, "karena angkanya dijumlah lalu diberi tanda minus." Tanggapan mana yang tepat?',
         options: [
           {
             id: 'o1',
-            label:
-              'Rina keliru. Tingkat manis ditentukan perbandingan gula terhadap air, dan keduanya sama-sama 1 : 3.',
+            label: 'Budi keliru. Dari −3 lompat 5 langkah ke kanan berhenti di 2, jadi −3 + 5 = 2.',
           },
-          { id: 'o2', label: 'Rina benar, karena gula yang lebih banyak pasti lebih manis.' },
-          { id: 'o3', label: 'Rina benar, karena isi Gelas B lebih banyak daripada Gelas A.' },
-          {
-            id: 'o4',
-            label:
-              'Rina keliru, karena seharusnya Gelas A yang lebih manis (gulanya lebih sedikit).',
-          },
+          { id: 'o2', label: 'Budi benar, karena ada tanda minus di depan 3.' },
+          { id: 'o3', label: 'Budi keliru, jawaban yang benar adalah 8.' },
+          { id: 'o4', label: 'Budi keliru, jawaban yang benar adalah −2.' },
         ],
         correct: 'o1',
         explanation:
-          'Banyak gula saja belum cukup. Karena airnya juga bertambah dengan perbandingan yang sama, tingkat manis kedua gelas tetap sama, yaitu 1 : 3.',
+          'Menambah 5 berarti bergerak ke kanan, bukan ke kiri. Hasilnya harus lebih besar daripada −3, yaitu 2.',
       },
       {
         id: 'v2',
         pernyataan:
-          'Pada Gelas A selisih air dan gula adalah 6 − 2 = 4, sedangkan pada Gelas B adalah 9 − 3 = 6. Selisihnya berbeda, tetapi rasanya sama. Pernyataan mana yang benar?',
+          'Sari menulis <em>4 − (−2) = 2</em>, "karena dikurangi berarti hasilnya lebih kecil." Tanggapan mana yang tepat?',
         options: [
           {
             id: 'o1',
-            label:
-              'Rasio membandingkan dua besaran dengan cara <strong>membagi</strong>, bukan mengurangi, sehingga selisih yang berbeda tidak berarti rasionya berbeda.',
+            label: 'Sari keliru. 4 − (−2) = 4 + 2 = 6, jadi hasilnya justru lebih besar.',
           },
-          {
-            id: 'o2',
-            label: 'Berarti perhitungan sebelumnya salah, kedua gelas seharusnya berbeda rasa.',
-          },
-          { id: 'o3', label: 'Rasio dan selisih selalu memberikan kesimpulan yang sama.' },
-          { id: 'o4', label: 'Rasio sebaiknya dihitung dengan mengurangkan kedua besaran.' },
+          { id: 'o2', label: 'Sari benar, pengurangan selalu membuat hasil lebih kecil.' },
+          { id: 'o3', label: 'Sari keliru, jawaban yang benar adalah −6.' },
+          { id: 'o4', label: 'Sari keliru, jawaban yang benar adalah −2.' },
         ],
         correct: 'o1',
         explanation:
-          'Inilah pembeda penting: selisih menjawab "berapa lebihnya", sedangkan rasio menjawab "berapa kali lipatnya". 2 : 6 dan 3 : 9 sama-sama bernilai 1/3.',
+          'Mengurangi bilangan negatif sama dengan menambah lawannya. Karena −2 dilawan menjadi 2, hasilnya 4 + 2 = 6.',
       },
       {
         id: 'v3',
         pernyataan:
-          'Sebuah mobil menempuh 3 km dalam waktu 20 menit. Manakah pernyataan yang <strong>benar</strong> mengenai 3 km : 20 menit?',
+          'Suhu Kota A 3 °C, sedangkan Kota B −4 °C. Rudi berkata selisih suhunya 1 °C "karena 4 − 3 = 1." Tanggapan mana yang tepat?',
         options: [
           {
             id: 'o1',
             label:
-              'Km dan menit adalah besaran <strong>tak sejenis</strong>, sehingga satuannya tidak dapat dihilangkan; perbandingan ini dibaca sebagai laju, yaitu 3 km setiap 20 menit.',
+              'Rudi keliru. Selisihnya 3 − (−4) = 7 °C; pada garis bilangan jarak dari −4 ke 3 adalah 7 langkah.',
           },
-          { id: 'o2', label: 'Dapat langsung disederhanakan menjadi 3 : 20 tanpa satuan.' },
-          {
-            id: 'o3',
-            label: 'Satuan menit harus diubah ke km lebih dulu agar dapat disederhanakan.',
-          },
-          { id: 'o4', label: 'Perbandingan ini tidak bermakna dan tidak dapat digunakan.' },
+          { id: 'o2', label: 'Rudi benar, selisih suhunya 1 °C.' },
+          { id: 'o3', label: 'Rudi keliru, selisihnya −1 °C.' },
+          { id: 'o4', label: 'Rudi keliru, selisihnya −7 °C.' },
         ],
         correct: 'o1',
         explanation:
-          'Menyederhanakan sampai satuannya hilang hanya berlaku untuk besaran <strong>sejenis</strong> (panjang dengan panjang, waktu dengan waktu). Panjang dibanding waktu menghasilkan besaran baru, yaitu laju — dan satuannya tetap ditulis.',
+          'Hitung langkah dari −4 ke 3: 4 langkah menuju 0, lalu 3 langkah lagi, jadi 7 langkah. Secara hitungan 3 − (−4) = 3 + 4 = 7.',
       },
     ],
     nextLabel: 'Lanjut: Susun Kesimpulan →',
   },
 
   /* ----------------------------------------------------------
-     TAHAP 7 — GENERALISASI (generalization)
-     Murid menyusun sendiri kalimat kesimpulan dari bank kartu.
+     TAHAP 7 — GENERALISASI
      ---------------------------------------------------------- */
   generalisasi: {
     kicker: 'Tahap 7 · Menarik Kesimpulan',
-    goal: 'Merumuskan kesimpulan umum tentang rasio dan cara menyederhanakannya.',
+    syntax: 'Discovery Learning · Sintaks 6',
+    goal: 'Merumuskan aturan umum penjumlahan dan pengurangan bilangan bulat.',
+    guru: 'Setelah kalimat lengkap, minta dua atau tiga murid membacakan kesimpulan dengan bahasanya sendiri lalu tautkan ke istilah formal: lawan bilangan dan garis bilangan.',
     instruksi:
-      'Lengkapi ketiga kalimat kesimpulan berikut dengan memilih potongan kalimat yang tepat. Hati-hati, ada beberapa potongan pengecoh.',
+      'Lengkapi kalimat-kalimat kesimpulan berikut dengan memilih potongan kalimat yang tepat. Hati-hati, ada potongan pengecoh.',
     selectPlaceholder: '— pilih potongan kalimat —',
     kalimat: [
-      {
-        id: 'g1',
-        awal: 'Rasio (perbandingan) dua besaran adalah',
-        correct: 'b3',
-      },
-      {
-        id: 'g2',
-        awal: 'Untuk menyederhanakan perbandingan dua besaran sejenis, kedua bilangan dibagi dengan',
-        correct: 'b1',
-      },
-      {
-        id: 'g3',
-        awal: 'Jika satuan kedua besaran berbeda, langkah pertama yang harus dilakukan adalah',
-        correct: 'b5',
-      },
+      { id: 'g1', awal: 'Pada garis bilangan, bilangan bulat negatif terletak', correct: 'b1' },
+      { id: 'g2', awal: 'Menambah bilangan positif berarti', correct: 'b2' },
+      { id: 'g3', awal: 'Menambah bilangan negatif berarti', correct: 'b3' },
+      { id: 'g4', awal: 'Mengurangi suatu bilangan sama dengan', correct: 'b4' },
     ],
     bank: [
-      { id: 'b1', teks: 'FPB (faktor persekutuan terbesar) dari kedua bilangan itu.' },
-      { id: 'b2', teks: 'selisih dari kedua bilangan itu.' },
-      {
-        id: 'b3',
-        teks: 'hasil membandingkan dua besaran dengan cara membagi, yang dapat ditulis a : b, a/b, atau "a berbanding b".',
-      },
-      { id: 'b4', teks: 'hasil menjumlahkan kedua besaran lalu membaginya dengan dua.' },
-      { id: 'b5', teks: 'menyamakan satuan kedua besaran lebih dulu, baru disederhanakan.' },
-      { id: 'b6', teks: 'langsung membagi bilangan yang besar dengan bilangan yang kecil.' },
+      { id: 'b1', teks: 'di sebelah kiri 0; makin ke kiri, nilainya makin kecil.' },
+      { id: 'b2', teks: 'bergerak ke kanan pada garis bilangan.' },
+      { id: 'b3', teks: 'bergerak ke kiri pada garis bilangan.' },
+      { id: 'b4', teks: 'menambah lawan bilangan itu: a − b = a + (−b).' },
+      { id: 'b5', teks: 'di sebelah kanan 0, karena bertanda minus.' },
+      { id: 'b6', teks: 'selalu menghasilkan bilangan yang lebih besar.' },
+      { id: 'b7', teks: 'mengurangi lawan bilangan itu: a − b = a − (−b).' },
     ],
     rangkuman: [
-      'Rasio membandingkan dua besaran dengan cara <strong>membagi</strong>, bukan mengurangi.',
-      'Urutan penyebutan menentukan penulisan: gula : air (2 : 6) berbeda makna dengan air : gula (6 : 2).',
-      'Bentuk paling sederhana diperoleh dengan membagi kedua bilangan dengan <strong>FPB</strong>-nya. Nilai rasio tidak berubah.',
-      'Besaran <strong>sejenis</strong> yang satuannya berbeda harus <strong>disamakan satuannya lebih dulu</strong>.',
-      'Besaran <strong>tak sejenis</strong> (mis. km dan menit) tidak dapat dihilangkan satuannya — hasilnya berupa laju.',
+      'Bilangan bulat negatif (−1, −2, −3, …) terletak di kiri 0, bilangan positif di kanan 0.',
+      'Pada penjumlahan a + b, mulailah dari a lalu lompat sejauh b: ke <strong>kanan</strong> bila b positif, ke <strong>kiri</strong> bila b negatif.',
+      'Pengurangan diubah menjadi penjumlahan dengan lawannya: <strong>a − b = a + (−b)</strong>. Contoh: 4 − (−2) = 4 + 2 = 6.',
+      'Suhu naik, menyetor uang, dan naik ke atas dinyatakan dengan bilangan positif; suhu turun, utang, dan posisi di bawah permukaan laut dinyatakan dengan bilangan negatif.',
     ],
     nextLabel: 'Lanjut: Uji Terap →',
   },
 
   /* ----------------------------------------------------------
-     TAHAP 8 — UJI TERAP (penerapan pada masalah kontekstual)
-     Dirender createExerciseStage: campuran 'input' dan 'choice'.
+     TAHAP 8 — UJI TERAP (createExerciseStage)
      ---------------------------------------------------------- */
   terapkan: {
     kicker: 'Tahap 8 · Uji Terap',
-    goal: 'Menerapkan konsep rasio pada masalah kontekstual sehari-hari.',
+    syntax: 'Penerapan konsep',
+    goal: 'Menyelesaikan masalah kontekstual suhu, saldo, dan ketinggian dengan operasi bilangan bulat.',
+    guru: 'Amati murid yang sering membuka petunjuk. Ajak mereka menggambar garis bilangan di buku sebelum menghitung.',
     instruksi:
-      'Enam soal berikut memuat kasus satuan sama maupun satuan berbeda. Gunakan petunjuk bila diperlukan.',
+      'Enam soal berikut memuat konteks suhu, saldo, dan ketinggian. Ubah dulu ceritanya menjadi operasi bilangan bulat, lalu hitung.',
     soal: [
       {
         id: 't1',
         type: 'choice',
-        cerita:
-          'Di kelas 7B terdapat 16 murid putra dan 20 murid putri untuk kegiatan kerja kelompok.',
-        pertanyaan: 'Bentuk paling sederhana dari perbandingan putra : putri adalah…',
+        konteks: '🌡️ Suhu',
+        cerita: 'Suhu di dalam freezer −18 °C. Saat listrik padam, suhunya naik 7 °C.',
+        pertanyaan: 'Berapa suhu freezer sekarang?',
         options: [
-          { id: 'o1', label: '4 : 5' },
-          { id: 'o2', label: '5 : 4' },
-          { id: 'o3', label: '8 : 10' },
-          { id: 'o4', label: '16 : 36' },
+          { id: 'o1', label: '−11 °C' },
+          { id: 'o2', label: '−25 °C' },
+          { id: 'o3', label: '11 °C' },
+          { id: 'o4', label: '25 °C' },
         ],
         correct: 'o1',
-        explanation: 'FPB dari 16 dan 20 adalah 4, sehingga 16 : 20 = (16 ÷ 4) : (20 ÷ 4) = 4 : 5.',
+        explanation: 'Suhu naik berarti ditambah: −18 + 7 = −11. Suhu freezer menjadi −11 °C.',
       },
       {
         id: 't2',
         type: 'input',
-        cerita: 'Sebuah denah lapangan memuat perbandingan panjang : lebar sebesar 24 : 36.',
-        pertanyaan:
-          'Setelah disederhanakan, perbandingan itu menjadi a : b. Berapa nilai <strong>a</strong>?',
-        jawab: 2,
-        suffix: '',
+        konteks: '💰 Saldo',
+        cerita:
+          'Kas kelas berisi Rp25.000. Kelas membeli perlengkapan kebersihan seharga Rp40.000 dan kekurangannya dicatat sebagai utang.',
+        pertanyaan: 'Berapa saldo kas kelas sekarang, dalam <strong>ribu rupiah</strong>?',
+        jawab: -15,
+        suffix: 'ribu',
         hints: [
-          'Cari FPB dari 24 dan 36 lebih dulu.',
-          'Faktor persekutuan 24 dan 36 → 1, 2, 3, 4, 6, 12. FPB-nya 12.',
+          'Membeli berarti saldo berkurang: 25 − 40.',
+          '25 − 40 = 25 + (−40). Dari 25 lompat 40 ke kiri: 25 langkah sampai 0, lalu 15 langkah lagi.',
         ],
         reveal:
-          '24 : 36 dibagi FPB-nya (12) menjadi <strong>2 : 3</strong>, sehingga nilai a adalah <strong>2</strong>.',
+          '25 − 40 = 25 + (−40) = <strong>−15</strong>. Saldo kas −15 ribu rupiah, artinya kelas berutang Rp15.000.',
+        explanation: '25 − 40 = −15. Saldo negatif berarti kelas masih berutang Rp15.000.',
       },
       {
         id: 't3',
         type: 'choice',
-        cerita: 'Panjang pita Sinta 1,2 m, sedangkan panjang pita Dewi 90 cm.',
-        pertanyaan: 'Perbandingan panjang pita Sinta : Dewi dalam bentuk paling sederhana adalah…',
+        konteks: '🌊 Ketinggian',
+        cerita:
+          'Seekor burung camar terbang 8 m di atas permukaan laut, lalu menukik 11 m ke bawah untuk menangkap ikan.',
+        pertanyaan: 'Di manakah posisi burung camar itu sekarang?',
         options: [
-          { id: 'o1', label: '4 : 3' },
-          { id: 'o2', label: '3 : 4' },
-          { id: 'o3', label: '1,2 : 90' },
-          { id: 'o4', label: '12 : 9' },
+          { id: 'o1', label: '3 m di bawah permukaan laut (−3 m)' },
+          { id: 'o2', label: '3 m di atas permukaan laut (3 m)' },
+          { id: 'o3', label: '19 m di atas permukaan laut (19 m)' },
+          { id: 'o4', label: '19 m di bawah permukaan laut (−19 m)' },
         ],
         correct: 'o1',
         explanation:
-          'Samakan satuan lebih dulu: 1,2 m = 120 cm. Lalu 120 : 90 dibagi FPB-nya (30) menjadi 4 : 3.',
+          'Menukik ke bawah berarti dikurangi: 8 − 11 = 8 + (−11) = −3, yaitu 3 m di bawah permukaan laut.',
       },
       {
         id: 't4',
         type: 'input',
-        cerita: 'Dalam sebuah keranjang terdapat 15 jeruk dan 25 apel.',
-        pertanyaan:
-          'Perbandingan banyak jeruk terhadap <strong>seluruh</strong> buah adalah 3 : n. Berapa nilai <strong>n</strong>?',
-        jawab: 8,
-        suffix: '',
-        hints: [
-          'Hitung dulu banyak seluruh buah: jeruk ditambah apel.',
-          'Seluruh buah = 15 + 25 = 40. Sederhanakan 15 : 40 dengan FPB 5.',
-        ],
+        konteks: '🌡️ Suhu',
+        cerita:
+          'Pada siang hari suhu di Dataran Tinggi Dieng 14 °C. Menjelang subuh suhunya turun menjadi −2 °C.',
+        pertanyaan: 'Berapa derajat penurunan suhunya?',
+        jawab: 16,
+        suffix: '°C',
+        hints: ['Penurunan suhu = suhu siang − suhu subuh = 14 − (−2).', '14 − (−2) = 14 + 2.'],
         reveal:
-          'Seluruh buah 15 + 25 = 40. Maka 15 : 40 dibagi 5 menjadi <strong>3 : 8</strong>, sehingga n = <strong>8</strong>.',
+          '14 − (−2) = 14 + 2 = <strong>16</strong>. Suhunya turun 16 °C (14 langkah sampai 0, lalu 2 langkah lagi).',
+        explanation: '14 − (−2) = 14 + 2 = 16. Suhunya turun 16 °C.',
       },
       {
         id: 't5',
         type: 'choice',
-        cerita: 'Waktu tempuh Andi ke sekolah 1 jam, sedangkan Budi 40 menit.',
-        pertanyaan: 'Perbandingan waktu tempuh Andi : Budi adalah…',
+        konteks: '🌊 Ketinggian',
+        cerita:
+          'Sebuah kapal selam berada 50 m di bawah permukaan laut. Kapal itu naik 20 m, lalu turun lagi 35 m.',
+        pertanyaan: 'Di manakah posisi akhir kapal selam?',
         options: [
-          { id: 'o1', label: '3 : 2' },
-          { id: 'o2', label: '1 : 40' },
-          { id: 'o3', label: '2 : 3' },
-          { id: 'o4', label: '40 : 60' },
+          { id: 'o1', label: '−65 m' },
+          { id: 'o2', label: '−5 m' },
+          { id: 'o3', label: '−35 m' },
+          { id: 'o4', label: '−105 m' },
         ],
         correct: 'o1',
         explanation:
-          'Samakan satuan: 1 jam = 60 menit. Lalu 60 : 40 dibagi FPB-nya (20) menjadi 3 : 2.',
+          '−50 + 20 − 35 = −30 − 35 = −30 + (−35) = −65. Kapal selam berada 65 m di bawah permukaan laut.',
       },
       {
         id: 't6',
         type: 'input',
-        cerita: 'Resep bolu memerlukan 250 g tepung dan 200 g gula.',
-        pertanyaan:
-          'Perbandingan tepung : gula dalam bentuk paling sederhana adalah a : b. Berapa nilai <strong>a + b</strong>?',
-        jawab: 9,
-        suffix: '',
+        konteks: '💰 Saldo',
+        cerita: 'Catatan kantin menunjukkan Ani berutang Rp8.000. Hari ini Ani membayar Rp5.000.',
+        pertanyaan: 'Berapa saldo catatan Ani sekarang, dalam <strong>ribu rupiah</strong>?',
+        jawab: -3,
+        suffix: 'ribu',
         hints: [
-          'Sederhanakan 250 : 200 lebih dulu, baru jumlahkan kedua bilangannya.',
-          'FPB dari 250 dan 200 adalah 50, sehingga bentuk sederhananya 5 : 4.',
+          'Utang Rp8.000 ditulis −8. Membayar berarti saldonya bertambah: −8 + 5.',
+          'Dari −8 lompat 5 langkah ke kanan.',
         ],
-        reveal:
-          '250 : 200 dibagi 50 menjadi <strong>5 : 4</strong>, sehingga a + b = 5 + 4 = <strong>9</strong>.',
+        reveal: '−8 + 5 = <strong>−3</strong>. Ani masih berutang Rp3.000.',
+        explanation: '−8 + 5 = −3. Ani masih berutang Rp3.000.',
       },
     ],
     nextLabel: 'Lanjut: Refleksi →',
@@ -663,7 +569,9 @@ var DATA = {
      ---------------------------------------------------------- */
   refleksi: {
     kicker: 'Tahap 9 · Refleksi',
-    goal: 'Menyadari proses berpikir sendiri selama menemukan konsep rasio.',
+    syntax: 'Refleksi',
+    goal: 'Menyadari proses berpikir sendiri selama menemukan aturan operasi bilangan bulat.',
+    guru: 'Bacalah jawaban refleksi murid untuk menentukan siapa yang perlu pendampingan lanjutan, terutama pada pengurangan bilangan negatif.',
     pertanyaan: [
       {
         id: 'f1',
@@ -672,19 +580,19 @@ var DATA = {
       },
       {
         id: 'f2',
-        teks: 'Bagian mana yang paling menantang: mencari FPB, atau menyamakan satuan? Mengapa?',
-        placeholder: 'Bagian yang paling menantang bagi saya adalah…',
+        teks: 'Jelaskan dengan kalimatmu sendiri mengapa 4 − (−2) hasilnya lebih besar daripada 4.',
+        placeholder: 'Menurut saya, karena…',
       },
       {
         id: 'f3',
-        teks: 'Tuliskan satu contoh perbandingan yang kamu temui sendiri di rumah atau di sekolah, lalu sederhanakan.',
-        placeholder: 'Contoh: di rumah ada … dibanding …, bentuk sederhananya …',
+        teks: 'Tuliskan satu contoh masalah sehari-hari yang memakai bilangan negatif, lalu selesaikan.',
+        placeholder: 'Contoh: suhu … turun …, jadi …',
       },
     ],
-    diriLabel: 'Seberapa yakin kamu dapat menyederhanakan perbandingan sekarang?',
+    diriLabel: 'Seberapa yakin kamu dapat menjumlah dan mengurangkan bilangan bulat sekarang?',
     diriOpsi: [
       { id: 'd1', label: 'Sangat yakin, saya bisa menjelaskannya ke teman' },
-      { id: 'd2', label: 'Cukup yakin, sesekali masih perlu petunjuk' },
+      { id: 'd2', label: 'Cukup yakin, sesekali masih perlu garis bilangan' },
       { id: 'd3', label: 'Belum yakin, saya ingin berlatih lagi' },
     ],
     nextLabel: 'Selesaikan Pembelajaran →',
@@ -694,15 +602,13 @@ var DATA = {
      TAHAP 10 — SELESAI
      ---------------------------------------------------------- */
   selesai: {
-    kicker: 'Tahap 10 · Selesai',
     judul: 'Kerja bagus, kamu sudah menemukannya sendiri!',
     teks: 'Kamu telah menempuh seluruh tahap penemuan: dari menduga, merumuskan masalah, mengumpulkan dan mengolah data, membuktikan, sampai menarik kesimpulan sendiri.',
     capaian: [
-      'Menjelaskan konsep rasio sebagai hasil membandingkan dua besaran dengan cara membagi.',
-      'Menuliskan rasio dalam bentuk a : b, a/b, dan kalimat "a berbanding b".',
-      'Menyederhanakan perbandingan dua besaran sejenis bersatuan sama menggunakan FPB.',
-      'Menyamakan satuan lebih dulu sebelum menyederhanakan perbandingan bersatuan berbeda.',
-      'Membedakan besaran sejenis dan tak sejenis serta rasio dan selisih.',
+      'Merepresentasikan bilangan bulat dari konteks suhu, ketinggian, dan saldo pada garis bilangan.',
+      'Menjumlahkan bilangan bulat dengan lompatan ke kanan (tambah positif) atau ke kiri (tambah negatif).',
+      'Mengurangkan bilangan bulat dengan mengubahnya menjadi penjumlahan lawan: a − b = a + (−b).',
+      'Menyelesaikan masalah kontekstual suhu, saldo, dan ketinggian dengan operasi bilangan bulat.',
     ],
   },
 };

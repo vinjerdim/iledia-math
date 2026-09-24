@@ -88,10 +88,10 @@
     "stageCount": 8
   },
   "fase-d/mpi-2.1": {
-    "title": "Konsep Rasio dan Menyederhanakan Perbandingan — Matematika Fase D",
-    "description": "Media pembelajaran interaktif berbasis Discovery Learning untuk menjelaskan konsep rasio serta menyederhanakan perbandingan dua besaran sejenis dan berbeda satuan dalam masalah kontekstual sehari-hari.",
+    "title": "Penjumlahan & Pengurangan Bilangan Bulat — Matematika Fase D",
+    "description": "Media pembelajaran interaktif berbasis Discovery Learning untuk merepresentasikan bilangan bulat pada garis bilangan serta menjumlah dan mengurangkan bilangan bulat dalam masalah kontekstual suhu, saldo, dan ketinggian.",
     "kicker": "Matematika — Fase D (SMP)",
-    "h1": "Konsep Rasio & Menyederhanakan Perbandingan",
+    "h1": "Penjumlahan & Pengurangan Bilangan Bulat",
     "stageCount": 10,
     "extraBody": "partials/reset-modal.html"
   },

@@ -2,22 +2,32 @@
 
 /* ============================================================
    app.js — Logika aplikasi media pembelajaran
-   Matematika: Konsep Rasio & Menyederhanakan Perbandingan
+   Matematika: Penjumlahan & Pengurangan Bilangan Bulat
    Fase D — SMP Kelas 7
 
-   Utilitas bersama (esc, parseInputInt, parseInputDecimal,
-   formatNumber, gcd, shuffleArray, showNotice, buildFeedbackBox,
-   buildProgressDots, createStageMachine, createExerciseStage,
-   createStore, ensureExerciseArray) berada di shared/engine.js.
+   Utilitas & komponen bersama berada di shared/engine.js:
+   esc, parseInputInt, shuffleArray, showNotice, buildFeedbackBox,
+   createStageMachine, createExerciseStage, createStore,
+   ensureExerciseArray, optionIds, komponen Discovery Learning
+   (ensureShuffledOrder, orderByIds, buildDiscoveryHead,
+   buildTeacherNote, buildChoiceGroup, buildDlPanel,
+   buildDlNextButton, makeDlStep, buildDlStep, bindDlStep,
+   ensureSortStates, bindSortItems, sortItemsAllAnswered,
+   sortItemsCorrectCount), garis bilangan (buildNumberLinePlacement,
+   bindNumberLinePlacement, numberLinePlacementDone,
+   numberLinePlacementFirstTry, centerNumberLines), termometer
+   (buildThermometer), serta komponen operasi bilangan bulat
+   (fmtBulat, fmtOperasiBulat, integerJumps, arahLompatan,
+   buildNumberLineJumps, buildIntegerOpSimulator,
+   bindIntegerOpSimulator).
 
    Alur tahap mengikuti sintaks Discovery Learning; lihat komentar
-   kepala pada data.js untuk pemetaannya.
+   kepala pada data.js untuk pemetaan dan rangkaian aktivitasnya.
 
-   Seluruh pilihan jawaban DIACAK dengan shuffleArray(). Pengacakan
-   dilakukan SEKALI saat state disiapkan (initExerciseArrays), lalu
-   urutannya disimpan di State — bukan saat render. Dengan begitu
-   pilihan tidak melompat-lompat setiap kali tahap dirender ulang,
-   tetapi teracak ulang untuk setiap murid dan setiap kali Reset.
+   Seluruh pilihan jawaban DIACAK. Pengacakan dilakukan SEKALI saat
+   state disiapkan (initExerciseArrays), lalu urutannya disimpan di
+   State — bukan saat render — sehingga pilihan tidak melompat-lompat
+   ketika tahap dirender ulang, tetapi teracak ulang setiap Reset.
 
    Bagian:
     1. Konstanta
@@ -27,8 +37,8 @@
     5. Stage: Stimulasi            (DL sintaks 1)
     6. Stage: Identifikasi Masalah (DL sintaks 2)
     7. Stage: Pengumpulan Data     (DL sintaks 3)
-    8. Stage: Pengolahan Data      (DL sintaks 4a — satuan sama)
-    9. Stage: Samakan Satuan       (DL sintaks 4b — satuan berbeda)
+    8. Stage: Olah Penjumlahan     (DL sintaks 4)
+    9. Stage: Olah Pengurangan     (DL sintaks 4)
    10. Stage: Pembuktian           (DL sintaks 5)
    11. Stage: Menarik Kesimpulan   (DL sintaks 6)
    12. Stage: Uji Terap
@@ -47,8 +57,8 @@ var STAGES = [
   'stimulasi',
   'masalah',
   'koleksi',
-  'olahData',
-  'satuan',
+  'olahJumlah',
+  'olahKurang',
   'verifikasi',
   'generalisasi',
   'terapkan',
@@ -59,15 +69,15 @@ var STAGE_LABELS = [
   'Stimulasi',
   'Masalah',
   'Data',
-  'Sederhana',
-  'Satuan',
+  'Olah (+)',
+  'Olah (−)',
   'Bukti',
   'Simpulan',
   'Uji Terap',
   'Refleksi',
   'Selesai',
 ];
-var STORAGE_KEY = 'mpi-2-1-rasio-v1';
+var STORAGE_KEY = 'mpi-2-1-bulat-operasi-v1';
 
 /* ============================================================
    2. STATE & STORAGE
@@ -77,33 +87,40 @@ var State = {
   currentStage: 'stimulasi',
   completedStages: {},
 
-  /* Tahap 1 — stimulasi */
+  /* Tahap 1 — stimulasi (dugaan, tidak dinilai) */
   stimulasiOrder: null,
   stimulasiPilihan: null,
   stimulasiAlasan: '',
-  stimulasiSaved: false,
 
   /* Tahap 2 — identifikasi masalah */
   masalahOrder: null,
   masalahPilihan: null,
   masalahHipotesis: '',
-  masalahSaved: false,
 
   /* Tahap 3 — pengumpulan data */
-  koleksiInputs: [],
-  koleksiDone: [],
-  koleksiChecked: false,
-  cocokExercises: [],
+  tempatOrder: null,
+  tempatState: null,
+  sim: { a: -3, op: '+', b: 5 },
+  percobaanInputs: [],
+  percobaanChecked: false,
 
-  /* Tahap 4 — pengolahan data (satuan sama) */
-  olahExercises: [],
+  /* Tahap 4 — olah penjumlahan */
+  arahStates: {},
+  arahOrder: null,
+  jumlahSteps: [],
+  polaOrder: null,
+  polaPilihan: null,
 
-  /* Tahap 5 — samakan satuan */
-  satuanExercises: [],
+  /* Tahap 5 — olah pengurangan */
+  kurangSteps: [],
+  setaraOrder: null,
+  setaraPilihan: null,
+  cocokOrders: {},
+  cocokPilih: {},
+  hitungSteps: [],
 
   /* Tahap 6 — pembuktian */
-  verifInputs: [],
-  verifDone: [],
+  verifSteps: [],
   verifExercises: [],
 
   /* Tahap 7 — menarik kesimpulan */
@@ -119,7 +136,6 @@ var State = {
   refleksiAnswers: {},
   refleksiDiri: null,
   refleksiDiriOrder: null,
-  refleksiSaved: false,
 };
 
 var Store = createStore({ key: STORAGE_KEY, state: State });
@@ -131,92 +147,74 @@ function clearState() {
   initExerciseArrays();
 }
 
-/* Mengambil daftar id opsi dalam urutan acak yang sudah tersimpan. */
-function idsOf(options) {
-  return options.map(function (o) {
-    return o.id;
+/* Baris pola pengurangan yang harus diisi murid (bukan contoh). */
+function polaIsian() {
+  return DATA.olahKurang.pola.filter(function (p) {
+    return !p.tampil;
   });
 }
 
 /*
- * Menyiapkan seluruh array state per-soal DAN seluruh urutan acak
- * pilihan jawaban. Dipanggil sekali saat init (setelah loadState) dan
- * setiap kali progress direset — sehingga murid berikutnya mendapat
- * urutan pilihan yang berbeda.
+ * Menyiapkan seluruh state per-soal DAN seluruh urutan acak pilihan
+ * jawaban. Dipanggil sekali saat init (setelah loadState) dan setiap
+ * kali progress direset.
  */
 function initExerciseArrays() {
-  /* Tahap 1 & 2 — urutan pilihan tunggal */
-  if (
-    !Array.isArray(State.stimulasiOrder) ||
-    State.stimulasiOrder.length !== DATA.stimulasi.opsi.length
-  ) {
-    State.stimulasiOrder = shuffleArray(idsOf(DATA.stimulasi.opsi));
-  }
-  if (
-    !Array.isArray(State.masalahOrder) ||
-    State.masalahOrder.length !== DATA.masalah.opsi.length
-  ) {
-    State.masalahOrder = shuffleArray(idsOf(DATA.masalah.opsi));
-  }
+  /* Tahap 1–2 */
+  ensureShuffledOrder(State, 'stimulasiOrder', DATA.stimulasi.opsi);
+  ensureShuffledOrder(State, 'masalahOrder', DATA.masalah.opsi);
 
-  /* Tahap 3 — tabel data + pencocokan */
-  ensureExerciseArray(State, 'koleksiInputs', DATA.koleksi.situasi, function () {
-    return { a: '', b: '' };
-  });
+  /* Tahap 3 */
+  ensureShuffledOrder(State, 'tempatOrder', DATA.koleksi.tempatkan);
+  ensureNumberLinePlacementState(State, 'tempatState');
+  var s = State.sim;
+  if (!s || typeof s.a !== 'number' || typeof s.b !== 'number' || (s.op !== '+' && s.op !== '-')) {
+    State.sim = JSON.parse(JSON.stringify(DATA.koleksi.simAwal));
+  }
   if (
-    !Array.isArray(State.koleksiDone) ||
-    State.koleksiDone.length !== DATA.koleksi.situasi.length
+    !Array.isArray(State.percobaanInputs) ||
+    State.percobaanInputs.length !== DATA.koleksi.percobaan.length
   ) {
-    State.koleksiDone = DATA.koleksi.situasi.map(function () {
-      return null;
+    State.percobaanInputs = DATA.koleksi.percobaan.map(function () {
+      return '';
     });
   }
-  ensureExerciseArray(State, 'cocokExercises', DATA.koleksi.cocok, function (s) {
-    return { chosen: null, correct: false, optionOrder: shuffleArray(idsOf(s.options)) };
+
+  /* Tahap 4 */
+  ensureSortStates(
+    State,
+    'arahStates',
+    'arahOrder',
+    DATA.olahJumlah.kasus,
+    DATA.olahJumlah.opsiArah
+  );
+  ensureExerciseArray(State, 'jumlahSteps', DATA.olahJumlah.kasus, makeDlStep);
+  ensureShuffledOrder(State, 'polaOrder', DATA.olahJumlah.polaOpsi);
+
+  /* Tahap 5 */
+  ensureExerciseArray(State, 'kurangSteps', polaIsian(), makeDlStep);
+  ensureShuffledOrder(State, 'setaraOrder', DATA.olahKurang.setaraOpsi);
+  if (!State.cocokOrders || typeof State.cocokOrders !== 'object') State.cocokOrders = {};
+  if (!State.cocokPilih || typeof State.cocokPilih !== 'object') State.cocokPilih = {};
+  DATA.olahKurang.cocok.forEach(function (c) {
+    ensureShuffledOrder(State.cocokOrders, c.id, c.options);
+  });
+  ensureExerciseArray(State, 'hitungSteps', DATA.olahKurang.hitung, makeDlStep);
+
+  /* Tahap 6 */
+  ensureExerciseArray(State, 'verifSteps', [DATA.verifikasi.uji], makeDlStep);
+  ensureExerciseArray(State, 'verifExercises', DATA.verifikasi.soal, function (q) {
+    return { chosen: null, correct: false, optionOrder: shuffleArray(optionIds(q.options)) };
   });
 
-  /* Tahap 4 — penyederhanaan bersatuan sama */
-  ensureExerciseArray(State, 'olahExercises', DATA.olahData.kasus, function () {
-    return { fpb: '', a: '', b: '', attempts: 0, hintLevel: 0, done: false, salah: false };
-  });
-
-  /* Tahap 5 — penyamaan satuan (3 langkah per kasus) */
-  ensureExerciseArray(State, 'satuanExercises', DATA.satuan.kasus, function (s) {
-    return {
-      optionOrder: shuffleArray(idsOf(s.opsiSatuan)),
-      satuan: null,
-      satuanBenar: false,
-      konversi: '',
-      konversiBenar: false,
-      sederhanaA: '',
-      sederhanaB: '',
-      done: false,
-      attempts: 0,
-      hintLevel: 0,
-      salah: false,
-    };
-  });
-
-  /* Tahap 6 — pembuktian */
-  ensureExerciseArray(State, 'verifInputs', DATA.verifikasi.uji, function () {
-    return { a: '', b: '' };
-  });
-  if (!Array.isArray(State.verifDone) || State.verifDone.length !== DATA.verifikasi.uji.length) {
-    State.verifDone = DATA.verifikasi.uji.map(function () {
-      return false;
-    });
-  }
-  ensureExerciseArray(State, 'verifExercises', DATA.verifikasi.soal, function (s) {
-    return { chosen: null, correct: false, optionOrder: shuffleArray(idsOf(s.options)) };
-  });
-
-  /* Tahap 7 — bank potongan kalimat */
-  if (!Array.isArray(State.bankOrder) || State.bankOrder.length !== DATA.generalisasi.bank.length) {
-    State.bankOrder = shuffleArray(idsOf(DATA.generalisasi.bank));
+  /* Tahap 7 */
+  ensureShuffledOrder(State, 'bankOrder', DATA.generalisasi.bank);
+  if (!State.simpulanPilihan || typeof State.simpulanPilihan !== 'object') {
+    State.simpulanPilihan = {};
   }
 
   /* Tahap 8 — uji terap (dirender createExerciseStage) */
-  ensureExerciseArray(State, 'terapkanExercises', DATA.terapkan.soal, function (s) {
+  ensureExerciseArray(State, 'terapkanExercises', DATA.terapkan.soal, function (q) {
     return {
       attempts: 0,
       hintLevel: 0,
@@ -226,19 +224,17 @@ function initExerciseArrays() {
       revealed: false,
       chosen: null,
       checked: false,
-      optionOrder: s.options ? shuffleArray(idsOf(s.options)) : null,
+      optionOrder: q.options ? shuffleArray(optionIds(q.options)) : null,
     };
   });
   if (State.terapkanIdx >= DATA.terapkan.soal.length || State.terapkanIdx < 0) {
     State.terapkanIdx = 0;
   }
 
-  /* Tahap 9 — pilihan penilaian diri */
-  if (
-    !Array.isArray(State.refleksiDiriOrder) ||
-    State.refleksiDiriOrder.length !== DATA.refleksi.diriOpsi.length
-  ) {
-    State.refleksiDiriOrder = shuffleArray(idsOf(DATA.refleksi.diriOpsi));
+  /* Tahap 9 */
+  ensureShuffledOrder(State, 'refleksiDiriOrder', DATA.refleksi.diriOpsi);
+  if (!State.refleksiAnswers || typeof State.refleksiAnswers !== 'object') {
+    State.refleksiAnswers = {};
   }
 }
 
@@ -264,240 +260,122 @@ var updateProgress = StageMachine.updateProgress;
    4. UTILITAS RENDER
    ============================================================ */
 
-/* Mencari opsi berdasarkan id di dalam sebuah array opsi DATA. */
-function findById(list, id) {
-  for (var i = 0; i < list.length; i++) {
-    if (list[i].id === id) return list[i];
-  }
-  return null;
+/* Kepala tahap + catatan peran guru. */
+function buildHead(D) {
+  return buildDiscoveryHead(D.kicker, D.goal, D.syntax) + buildTeacherNote(D.guru);
 }
 
-/*
- * Menyusun daftar opsi menurut urutan acak yang tersimpan di State.
- * Bila urutan belum ada atau tidak lagi cocok dengan DATA, urutan asli
- * dipakai agar tampilan tetap aman.
- */
-function orderOptions(options, order) {
-  if (!Array.isArray(order) || order.length !== options.length) return options;
-  var out = [];
-  for (var i = 0; i < order.length; i++) {
-    var opt = findById(options, order[i]);
-    if (!opt) return options;
-    out.push(opt);
-  }
-  return out;
-}
-
-/* Kepala tahap standar. */
-function buildHead(kicker, goal) {
+/* Kotak umpan balik pilihan (benar → success, salah → warning). */
+function buildChoiceFeedback(chosen, benar, umpan) {
+  if (!chosen) return '';
   return (
-    '<div class="stage-head">' +
-    '<span class="stage-head__kicker">' +
-    esc(kicker) +
-    '</span>' +
-    '<p class="stage-head__goal">Tujuan: ' +
-    esc(goal) +
-    '</p>' +
+    '<div style="margin-top:var(--space-3);">' +
+    buildFeedbackBox(benar ? 'success' : 'warning', benar ? '✓' : '💭', umpan[chosen]) +
     '</div>'
   );
 }
 
-/*
- * Tombol pilihan ganda bergaya shared (.choice-btn + .is-*).
- *   revealState  true  → tandai benar/salah setelah dijawab
- *                false → hanya tandai pilihan (.is-selected), tanpa menilai
- *   correctId    id opsi benar, atau null bila jawaban benar belum boleh
- *                dibocorkan (tahap yang masih mengizinkan coba lagi) —
- *                pilihan keliru tetap ditandai merah
- *   locked       true  → matikan tombol setelah dijawab (sekali pilih)
- */
-function buildChoiceButtons(options, order, chosen, correctId, revealState, locked) {
-  var letters = ['A', 'B', 'C', 'D', 'E'];
-  var answered = chosen !== null && chosen !== undefined;
-  return (
-    '<div class="challenge-options">' +
-    orderOptions(options, order)
-      .map(function (opt, i) {
-        var cls = 'choice-btn';
-        if (answered) {
-          if (revealState) {
-            if (opt.id === correctId) cls += ' is-correct';
-            else if (opt.id === chosen) cls += ' is-incorrect';
-          } else if (opt.id === chosen) {
-            cls += ' is-selected';
-          }
-        }
-        return (
-          '<button type="button" class="' +
-          cls +
-          '" data-opt-id="' +
-          esc(opt.id) +
-          '"' +
-          (answered && locked ? ' disabled' : '') +
-          '>' +
-          '<span class="choice-btn__icon">' +
-          letters[i] +
-          '</span>' +
-          '<span>' +
-          opt.label +
-          '</span>' +
-          '</button>'
-        );
-      })
-      .join('') +
-    '</div>'
-  );
+/* Memasang tombol lanjut yang menyelesaikan tahap ini lalu pindah tahap. */
+function bindNext(id, stageId, nextStageId) {
+  var btn = document.getElementById(id);
+  if (!btn) return;
+  btn.addEventListener('click', function () {
+    completeStage(stageId);
+    navigateTo(nextStageId);
+  });
 }
 
-/*
- * Deretan bulatan takaran. Bila perGroup diberikan, bulatan dibungkus
- * per kelompok sebesar itu (memvisualkan pembagian dengan FPB); tanpa
- * perGroup bulatan tampil polos tanpa bingkai kelompok.
- */
-function buildDots(count, modifier, perGroup) {
-  var dot = '<span class="takaran-dot takaran-dot--' + modifier + '"></span>';
-  var html = '';
-  var i;
-  if (!perGroup) {
-    for (i = 0; i < count; i++) html += dot;
-    return '<span class="takaran-dots">' + html + '</span>';
-  }
-  var group = '';
-  for (i = 0; i < count; i++) {
-    group += dot;
-    if ((i + 1) % perGroup === 0) {
-      html += '<span class="takaran-group">' + group + '</span>';
-      group = '';
-    }
-  }
-  if (group) html += '<span class="takaran-group">' + group + '</span>';
-  return '<span class="takaran-dots">' + html + '</span>';
+/* Garis lompatan untuk operasi a op b. */
+function buildOpLine(id, a, op, b, showEnd) {
+  var r = integerJumps(a, op, b);
+  return buildNumberLineJumps(id, {
+    min: DATA.garis.min,
+    max: DATA.garis.max,
+    start: a,
+    jumps: [{ by: r.by }],
+    showEnd: showEnd,
+  });
 }
 
-/* Kartu takaran satu gelas: bulatan gula & air + label. */
-function buildGelasCard(g, perGroupGula, perGroupAir) {
-  return (
-    '<div class="gelas-card">' +
-    '<h4 class="gelas-card__title">' +
-    esc(g.nama) +
-    '</h4>' +
-    '<div class="takaran-row">' +
-    '<span class="takaran-row__label">Gula</span>' +
-    buildDots(g.gula, 'gula', perGroupGula) +
-    '<span class="takaran-row__count">' +
-    g.gula +
-    '</span>' +
-    '</div>' +
-    '<div class="takaran-row">' +
-    '<span class="takaran-row__label">Air</span>' +
-    buildDots(g.air, 'air', perGroupAir) +
-    '<span class="takaran-row__count">' +
-    g.air +
-    '</span>' +
-    '</div>' +
-    '<p class="gelas-card__ratio">' +
-    g.gula +
-    ' : ' +
-    g.air +
-    '</p>' +
-    '</div>'
-  );
+/* Ekspresi operasi besar (monospace). */
+function buildExpr(teks) {
+  return '<p class="op-expr">' + esc(teks) + '</p>';
 }
 
-/* Lencana rasio besar, mis. "1 : 3". */
-function buildRasioBadge(a, b, modifier) {
-  return (
-    '<span class="rasio-badge' +
-    (modifier ? ' rasio-badge--' + modifier : '') +
-    '">' +
-    formatNumber(a) +
-    ' <span class="rasio-badge__sep">:</span> ' +
-    formatNumber(b) +
-    '</span>'
-  );
-}
-
-/* Kotak petunjuk berjenjang. */
-function buildHintBox(hints, level) {
-  if (!level || level < 1) return '';
-  return hints
-    .slice(0, level)
-    .map(function (h, i) {
-      return (
-        '<div class="hint-box">' +
-        '<span class="hint-box__label">' +
-        (hints.length > 1 ? 'Petunjuk ' + (i + 1) : 'Petunjuk') +
-        '</span>' +
-        h +
-        '</div>'
-      );
-    })
-    .join('');
-}
-
-/* Tombol petunjuk berjenjang; null bila seluruh petunjuk sudah terbuka. */
-function buildHintButton(id, hints, level) {
-  if (level >= hints.length) return '';
-  var label =
-    hints.length > 1 ? '💡 Petunjuk (' + (level + 1) + '/' + hints.length + ')' : '💡 Petunjuk';
-  return (
-    '<button type="button" class="btn btn--ghost btn--small" id="' + id + '">' + label + '</button>'
-  );
+/* Merender ulang tahap aktif (dipakai callback komponen). */
+function rerender() {
+  renderCurrentStage();
 }
 
 /* ============================================================
    5. STAGE: STIMULASI  (Discovery Learning — sintaks 1)
-   Murid mengamati dan MENDUGA. Media sengaja tidak memberi
-   penilaian benar/salah di sini; dugaan disimpan untuk diuji
-   sendiri oleh murid pada tahap Pembuktian.
+   Murid mengamati dan MENDUGA. Tidak ada penilaian benar/salah.
    ============================================================ */
 
 function renderStimulasi(container) {
   var D = DATA.stimulasi;
-  var terisi = State.stimulasiPilihan !== null && State.stimulasiPilihan !== undefined;
+  var terisi = !!State.stimulasiPilihan;
 
   container.innerHTML =
     '<section aria-label="Stimulasi">' +
-    buildHead(D.kicker, D.goal) +
-    '<div class="panel panel--hero">' +
-    '<h2 style="margin-top:0;">' +
-    esc(D.judul) +
-    '</h2>' +
-    '<p>' +
-    esc(D.cerita) +
-    '</p>' +
-    '<div class="gelas-grid">' +
-    D.gelas
-      .map(function (g) {
-        return buildGelasCard(g);
-      })
-      .join('') +
-    '</div>' +
-    '<p class="takaran-legend">' +
-    '<span class="takaran-dot takaran-dot--gula"></span> ' +
-    esc(D.satuanGula) +
-    ' &nbsp;·&nbsp; ' +
-    '<span class="takaran-dot takaran-dot--air"></span> ' +
-    esc(D.satuanAir) +
-    '</p>' +
-    '</div>' +
-    '<div class="panel">' +
-    '<p class="exercise-label">' +
-    esc(D.pertanyaan) +
-    '</p>' +
-    buildChoiceButtons(D.opsi, State.stimulasiOrder, State.stimulasiPilihan, null, false) +
-    '<div class="field-group" style="margin-top:var(--space-4);">' +
-    '<label for="stimulasiAlasan">' +
-    esc(D.alasanLabel) +
-    '</label>' +
-    '<textarea id="stimulasiAlasan" class="input-textarea" placeholder="' +
-    esc(D.alasanPlaceholder) +
-    '">' +
-    esc(State.stimulasiAlasan) +
-    '</textarea>' +
-    '</div>' +
-    buildFeedbackBox('info', '🔎', esc(D.catatan)) +
-    '</div>' +
+    buildHead(D) +
+    buildDlPanel(
+      '<h2 style="margin-top:0;">🏔️ ' +
+        esc(D.judul) +
+        '</h2>' +
+        '<div class="stimulasi-grid">' +
+        '<p class="stimulasi-cerita">' +
+        esc(D.cerita) +
+        '</p>' +
+        '<div class="stimulasi-thermo">' +
+        buildThermometer(D.suhuAwal, { min: -10, max: 10, step: 2, caption: D.captionAwal }) +
+        '<div class="suhu-tanya" aria-label="Suhu pukul 11.00 belum diketahui">' +
+        '<span class="suhu-tanya__naik">naik 5 °C ↑</span>' +
+        '<span class="suhu-tanya__val">? °C</span>' +
+        '<span class="suhu-tanya__cap">Pukul 11.00</span>' +
+        '</div>' +
+        '</div>' +
+        '</div>',
+      'panel--hero'
+    ) +
+    buildDlPanel(
+      '<p class="exercise-label">' +
+        esc(D.pertanyaan) +
+        '</p>' +
+        buildChoiceGroup(D.opsi, State.stimulasiOrder, { chosen: State.stimulasiPilihan }) +
+        '<div class="field-group" style="margin-top:var(--space-5);">' +
+        '<label for="stimulasiAlasan">' +
+        esc(D.alasanLabel) +
+        '</label>' +
+        '<textarea id="stimulasiAlasan" class="input-textarea" placeholder="' +
+        esc(D.alasanPlaceholder) +
+        '">' +
+        esc(State.stimulasiAlasan) +
+        '</textarea>' +
+        '</div>' +
+        buildFeedbackBox('info', '🔎', esc(D.catatan))
+    ) +
+    buildDlPanel(
+      '<h3 style="margin-top:0;">' +
+        esc(D.teaserJudul) +
+        '</h3>' +
+        '<div class="teaser-grid">' +
+        D.teaser
+          .map(function (t) {
+            return (
+              '<div class="teaser-card">' +
+              '<span class="teaser-card__icon" aria-hidden="true">' +
+              t.ikon +
+              '</span>' +
+              '<p>' +
+              esc(t.teks) +
+              '</p>' +
+              '</div>'
+            );
+          })
+          .join('') +
+        '</div>'
+    ) +
     '<div class="btn-group btn-group--end">' +
     '<button type="button" class="btn btn--primary" id="stimulasiNextBtn"' +
     (terisi ? '' : ' disabled') +
@@ -516,20 +394,16 @@ function renderStimulasi(container) {
   });
 
   var ta = document.getElementById('stimulasiAlasan');
-  if (ta) {
-    ta.addEventListener('input', function () {
-      State.stimulasiAlasan = ta.value;
-      saveState();
-    });
-  }
+  ta.addEventListener('input', function () {
+    State.stimulasiAlasan = ta.value;
+    saveState();
+  });
 
   document.getElementById('stimulasiNextBtn').addEventListener('click', function () {
-    if (State.stimulasiPilihan === null) {
-      showNotice('Pilih dulu dugaanmu sebelum melanjutkan.');
+    if (!State.stimulasiPilihan) {
+      showNotice('Pilih dugaanmu sebelum melanjutkan.');
       return;
     }
-    State.stimulasiSaved = true;
-    saveState();
     completeStage('stimulasi');
     navigateTo('masalah');
   });
@@ -541,60 +415,37 @@ function renderStimulasi(container) {
 
 function renderMasalah(container) {
   var D = DATA.masalah;
-  var answered = State.masalahPilihan !== null && State.masalahPilihan !== undefined;
   var benar = State.masalahPilihan === D.correct;
-
-  var feedbackHTML = '';
-  if (answered) {
-    feedbackHTML = buildFeedbackBox(
-      benar ? 'success' : 'warning',
-      benar ? '✓' : '💭',
-      D.umpan[State.masalahPilihan]
-    );
-  }
 
   container.innerHTML =
     '<section aria-label="Identifikasi Masalah">' +
-    buildHead(D.kicker, D.goal) +
-    '<div class="panel panel--info">' +
-    '<p style="margin:0;">' +
-    esc(D.pengantar) +
-    '</p>' +
-    '</div>' +
-    '<div class="panel">' +
-    '<p class="exercise-label">' +
-    esc(D.pertanyaan) +
-    '</p>' +
-    buildChoiceButtons(
-      D.opsi,
-      State.masalahOrder,
-      State.masalahPilihan,
-      benar ? D.correct : null,
-      true,
-      benar
+    buildHead(D) +
+    buildDlPanel('<p style="margin:0;">' + esc(D.pengantar) + '</p>', 'panel--info') +
+    buildDlPanel(
+      '<p class="exercise-label">' +
+        esc(D.pertanyaan) +
+        '</p>' +
+        buildChoiceGroup(D.opsi, State.masalahOrder, {
+          chosen: State.masalahPilihan,
+          correctId: benar ? D.correct : null,
+          grade: true,
+          locked: benar,
+        }) +
+        buildChoiceFeedback(State.masalahPilihan, benar, D.umpan)
     ) +
-    (feedbackHTML ? '<div style="margin-top:var(--space-3);">' + feedbackHTML + '</div>' : '') +
-    '</div>' +
     (benar
-      ? '<div class="panel">' +
-        '<div class="field-group">' +
-        '<label for="masalahHipotesis">' +
-        esc(D.hipotesisLabel) +
-        '</label>' +
-        '<textarea id="masalahHipotesis" class="input-textarea" placeholder="' +
-        esc(D.hipotesisPlaceholder) +
-        '">' +
-        esc(State.masalahHipotesis) +
-        '</textarea>' +
-        '</div>' +
-        '</div>'
-      : '') +
-    (benar
-      ? '<div class="btn-group btn-group--end">' +
-        '<button type="button" class="btn btn--primary" id="masalahNextBtn">' +
-        esc(D.nextLabel) +
-        '</button>' +
-        '</div>'
+      ? buildDlPanel(
+          '<div class="field-group">' +
+            '<label for="masalahHipotesis">' +
+            esc(D.hipotesisLabel) +
+            '</label>' +
+            '<textarea id="masalahHipotesis" class="input-textarea" placeholder="' +
+            esc(D.hipotesisPlaceholder) +
+            '">' +
+            esc(State.masalahHipotesis) +
+            '</textarea>' +
+            '</div>'
+        ) + buildDlNextButton('masalahNextBtn', D.nextLabel)
       : '') +
     '</section>';
 
@@ -619,11 +470,9 @@ function renderMasalah(container) {
   if (nextBtn) {
     nextBtn.addEventListener('click', function () {
       if (!State.masalahHipotesis.trim()) {
-        showNotice('Tulis dugaan sementaramu lebih dulu, walau hanya satu kalimat.');
+        showNotice('Tulis hipotesismu lebih dulu, walau hanya satu kalimat.');
         return;
       }
-      State.masalahSaved = true;
-      saveState();
       completeStage('masalah');
       navigateTo('koleksi');
     });
@@ -632,821 +481,570 @@ function renderMasalah(container) {
 
 /* ============================================================
    7. STAGE: PENGUMPULAN DATA  (Discovery Learning — sintaks 3)
-   Bagian A: mencatat pasangan bilangan.
-   Bagian B: tiga bentuk penulisan rasio (dibuka setelah A benar).
-   Bagian C: mencocokkan pernyataan dengan bentuk rasionya.
+   Bagian A: menempatkan bilangan dari konteks pada garis bilangan.
+   Bagian B: simulator lompatan + tabel percobaan (dibuka setelah A).
    ============================================================ */
 
-function koleksiSemuaBenar() {
-  return State.koleksiDone.every(function (d) {
-    return d === true;
-  });
+function tempatItems() {
+  return orderByIds(DATA.koleksi.tempatkan, State.tempatOrder);
 }
 
-function cocokSemuaDijawab() {
-  return State.cocokExercises.every(function (e) {
-    return e.chosen !== null && e.chosen !== undefined;
+/* true/false/null (belum diisi) untuk percobaan ke-i. */
+function percobaanStatus(i) {
+  var p = DATA.koleksi.percobaan[i];
+  var parsed = parseInputInt(State.percobaanInputs[i] || '', true);
+  if (parsed.error) return null;
+  return parsed.value === integerJumps(p.a, p.op, p.b).hasil;
+}
+
+function percobaanSemuaBenar() {
+  return DATA.koleksi.percobaan.every(function (p, i) {
+    return percobaanStatus(i) === true;
   });
 }
 
 function renderKoleksi(container) {
   var D = DATA.koleksi;
-  var bukaB = koleksiSemuaBenar();
+  var items = tempatItems();
+  var bukaB = numberLinePlacementDone(items, State.tempatState);
+  var tabelBenar = State.percobaanChecked && percobaanSemuaBenar();
 
-  var tabelHTML = D.situasi
-    .map(function (s, i) {
-      var inp = State.koleksiInputs[i];
-      var status = State.koleksiDone[i];
-      var cls =
-        'data-row' +
-        (status === true ? ' data-row--correct' : status === false ? ' data-row--incorrect' : '');
-      return (
-        '<div class="' +
-        cls +
-        '">' +
-        '<div class="data-row__info">' +
-        '<h4 class="data-row__title">' +
-        esc(s.judul) +
-        '</h4>' +
-        '<p class="data-row__text">' +
-        esc(s.teks) +
-        '</p>' +
-        '</div>' +
-        '<div class="data-row__fields">' +
-        '<span class="data-row__minta">' +
-        esc(s.minta) +
-        '</span>' +
-        '<label class="sr-only" for="kol-a-' +
-        i +
-        '">Banyak ' +
-        esc(s.labelA) +
-        '</label>' +
-        '<input type="text" inputmode="numeric" class="input-text data-row__input" id="kol-a-' +
-        i +
-        '" data-kol="a" data-idx="' +
-        i +
-        '" value="' +
-        esc(inp.a) +
-        '" placeholder="?" />' +
-        '<span class="data-row__sep">:</span>' +
-        '<label class="sr-only" for="kol-b-' +
-        i +
-        '">Banyak ' +
-        esc(s.labelB) +
-        '</label>' +
-        '<input type="text" inputmode="numeric" class="input-text data-row__input" id="kol-b-' +
-        i +
-        '" data-kol="b" data-idx="' +
-        i +
-        '" value="' +
-        esc(inp.b) +
-        '" placeholder="?" />' +
-        (status === true ? '<span class="data-row__mark data-row__mark--ok">✓</span>' : '') +
-        (status === false ? '<span class="data-row__mark data-row__mark--no">✗</span>' : '') +
-        '</div>' +
-        '</div>'
-      );
-    })
-    .join('');
-
-  var bentukHTML = '';
+  var tabelHTML = '';
   if (bukaB) {
-    bentukHTML =
-      '<div class="panel panel--info">' +
-      '<h3 style="margin-top:0;">' +
-      esc(D.bentuk.judul) +
-      '</h3>' +
-      '<p>' +
-      esc(D.bentuk.teks) +
+    tabelHTML =
+      '<p class="exercise-label" style="margin-top:var(--space-5);">' +
+      esc(D.instruksiTabel) +
       '</p>' +
-      '<div class="bentuk-grid">' +
-      D.bentuk.contoh
-        .map(function (c) {
+      '<div class="table-scroll">' +
+      '<table class="data-table percobaan-table">' +
+      '<thead><tr><th scope="col">Percobaan</th><th scope="col">Operasi</th><th scope="col">Hasil</th></tr></thead>' +
+      '<tbody>' +
+      D.percobaan
+        .map(function (p, i) {
+          var st = State.percobaanChecked ? percobaanStatus(i) : null;
           return (
-            '<div class="bentuk-card">' +
-            '<span class="bentuk-card__form">' +
-            esc(c.bentuk) +
-            '</span>' +
-            '<span class="bentuk-card__name">' +
-            esc(c.nama) +
-            '</span>' +
-            '<span class="bentuk-card__note">' +
-            esc(c.baca) +
-            '</span>' +
-            '</div>'
-          );
-        })
-        .join('') +
-      '</div>' +
-      '</div>';
-  }
-
-  var cocokHTML = '';
-  if (bukaB) {
-    cocokHTML =
-      '<div class="panel">' +
-      '<p class="exercise-label">' +
-      esc(D.instruksiC) +
-      '</p>' +
-      D.cocok
-        .map(function (s, i) {
-          var ex = State.cocokExercises[i];
-          var answered = ex.chosen !== null && ex.chosen !== undefined;
-          return (
-            '<div class="cocok-item" data-cocok="' +
-            i +
+            '<tr>' +
+            '<td>' +
+            esc(p.konteks) +
+            '</td>' +
+            '<td class="percobaan-table__op">' +
+            esc(fmtOperasiBulat(p.a, p.op, p.b)) +
+            '</td>' +
+            '<td class="percobaan-table__cell' +
+            (st === true ? ' sel--ok' : st === false ? ' sel--no' : '') +
             '">' +
-            '<p class="cocok-item__q">' +
-            s.pernyataan +
-            '</p>' +
-            buildChoiceButtons(s.options, ex.optionOrder, ex.chosen, s.correct, true, true) +
-            (answered
-              ? buildFeedbackBox(
-                  ex.correct ? 'success' : 'error',
-                  ex.correct ? '✓' : '✗',
-                  (ex.correct ? '<strong>Tepat.</strong> ' : '<strong>Belum tepat.</strong> ') +
-                    s.explanation
-                )
+            '<input type="text" class="input-text percobaan-table__input" data-perc="' +
+            i +
+            '" autocomplete="off" value="' +
+            esc(State.percobaanInputs[i]) +
+            '" aria-label="Hasil ' +
+            esc(fmtOperasiBulat(p.a, p.op, p.b)) +
+            '" placeholder="?"' +
+            (tabelBenar ? ' disabled' : '') +
+            '>' +
+            (st === true
+              ? '<span class="percobaan-table__mark percobaan-table__mark--ok" aria-label="benar">✓</span>'
               : '') +
-            '</div>'
+            (st === false
+              ? '<span class="percobaan-table__mark percobaan-table__mark--no" aria-label="salah">✗</span>'
+              : '') +
+            '</td>' +
+            '</tr>'
           );
         })
         .join('') +
-      '</div>';
+      '</tbody></table></div>' +
+      (tabelBenar
+        ? buildFeedbackBox(
+            'success',
+            '✓',
+            '<strong>Datamu lengkap dan tepat.</strong> Simpan hasil percobaan ini — kamu akan mengolahnya untuk menemukan aturannya.'
+          )
+        : '<div class="btn-group btn-group--end" style="margin-top:var(--space-3);">' +
+          '<button type="button" class="btn btn--primary" id="percobaanCheckBtn">Periksa Data</button>' +
+          '</div>');
   }
 
   container.innerHTML =
     '<section aria-label="Pengumpulan Data">' +
-    buildHead(D.kicker, D.goal) +
-    '<div class="panel">' +
-    '<p class="exercise-label">' +
-    esc(D.instruksiA) +
-    '</p>' +
-    tabelHTML +
-    '<div class="btn-group btn-group--end" style="margin-top:var(--space-4);">' +
-    '<button type="button" class="btn btn--primary" id="koleksiCheckBtn">Periksa Data</button>' +
-    '</div>' +
-    '</div>' +
-    bentukHTML +
-    cocokHTML +
-    (bukaB && cocokSemuaDijawab()
-      ? '<div class="btn-group btn-group--end">' +
-        '<button type="button" class="btn btn--primary btn--large" id="koleksiNextBtn">' +
-        esc(D.nextLabel) +
-        '</button>' +
-        '</div>'
+    buildHead(D) +
+    buildDlPanel(
+      '<p class="exercise-label">' +
+        esc(D.instruksiA) +
+        '</p>' +
+        buildNumberLinePlacement('tempatLine', items, State.tempatState, {
+          min: DATA.garis.min,
+          max: DATA.garis.max,
+          doneText: D.selesaiA,
+        })
+    ) +
+    (bukaB
+      ? buildDlPanel(
+          '<p class="exercise-label">' +
+            esc(D.instruksiB) +
+            '</p>' +
+            buildIntegerOpSimulator('sim', State.sim, {
+              min: DATA.garis.min,
+              max: DATA.garis.max,
+            }) +
+            tabelHTML
+        )
       : '') +
+    (tabelBenar ? buildDlNextButton('koleksiNextBtn', D.nextLabel, true) : '') +
     '</section>';
 
-  container.querySelectorAll('.data-row__input').forEach(function (inp) {
+  bindNumberLinePlacement(
+    container,
+    'tempatLine',
+    items,
+    State.tempatState,
+    saveState,
+    function () {
+      renderKoleksi(container);
+    }
+  );
+
+  if (bukaB) {
+    bindIntegerOpSimulator(
+      container,
+      'sim',
+      State.sim,
+      { min: DATA.garis.min, max: DATA.garis.max },
+      function () {
+        saveState();
+      }
+    );
+  }
+
+  container.querySelectorAll('[data-perc]').forEach(function (inp) {
     inp.addEventListener('input', function () {
-      State.koleksiInputs[inp.dataset.idx][inp.dataset.kol] = inp.value;
+      State.percobaanInputs[+inp.dataset.perc] = inp.value;
       saveState();
     });
-  });
-
-  document.getElementById('koleksiCheckBtn').addEventListener('click', function () {
-    var adaKosong = false;
-    D.situasi.forEach(function (s, i) {
-      var inp = State.koleksiInputs[i];
-      var pa = parseInputInt(inp.a);
-      var pb = parseInputInt(inp.b);
-      if (pa.error || pb.error) {
-        adaKosong = true;
-        State.koleksiDone[i] = null;
-        return;
+    inp.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter') {
+        var b = document.getElementById('percobaanCheckBtn');
+        if (b) b.click();
       }
-      State.koleksiDone[i] = pa.value === s.a && pb.value === s.b;
     });
-    State.koleksiChecked = true;
-    saveState();
-    if (adaKosong) showNotice('Masih ada kolom yang kosong atau bukan bilangan.');
-    else if (!koleksiSemuaBenar())
-      showNotice('Ada yang belum tepat. Perhatikan urutan besaran yang diminta.');
-    renderKoleksi(container);
   });
 
-  container.querySelectorAll('.cocok-item').forEach(function (wrap) {
-    var i = parseInt(wrap.dataset.cocok, 10);
-    wrap.querySelectorAll('[data-opt-id]').forEach(function (btn) {
-      btn.addEventListener('click', function () {
-        var ex = State.cocokExercises[i];
-        if (ex.chosen !== null && ex.chosen !== undefined) return;
-        ex.chosen = btn.dataset.optId;
-        ex.correct = ex.chosen === D.cocok[i].correct;
-        saveState();
-        renderKoleksi(container);
+  var checkBtn = document.getElementById('percobaanCheckBtn');
+  if (checkBtn) {
+    checkBtn.addEventListener('click', function () {
+      var kosong = D.percobaan.some(function (p, i) {
+        return percobaanStatus(i) === null;
       });
-    });
-  });
-
-  var nextBtn = document.getElementById('koleksiNextBtn');
-  if (nextBtn) {
-    nextBtn.addEventListener('click', function () {
-      completeStage('koleksi');
-      navigateTo('olahData');
+      State.percobaanChecked = true;
+      saveState();
+      if (kosong) showNotice('Masih ada hasil yang kosong atau bukan bilangan bulat.');
+      else if (!percobaanSemuaBenar())
+        showNotice(
+          'Ada yang belum tepat. Atur simulator sesuai operasinya, lalu amati titik akhirnya.'
+        );
+      renderKoleksi(container);
     });
   }
+
+  bindNext('koleksiNextBtn', 'koleksi', 'olahJumlah');
+  centerNumberLines(container);
 }
 
 /* ============================================================
-   8. STAGE: PENGOLAHAN DATA  (Discovery Learning — sintaks 4a)
-   Besaran sejenis, satuan sama → bagi kedua bilangan dengan FPB.
+   8. STAGE: OLAH PENJUMLAHAN  (Discovery Learning — sintaks 4)
+   Setiap kasus: pilih arah lompatan (opsi acak) → hitung hasil.
+   Setelah semua kasus selesai → pilih pola yang ditemukan.
    ============================================================ */
 
-function olahSemuaSelesai() {
-  return State.olahExercises.every(function (e) {
-    return e.done;
+function jumlahSemuaSelesai() {
+  return State.jumlahSteps.every(function (s) {
+    return s.done;
   });
 }
 
-function renderOlahData(container) {
-  var D = DATA.olahData;
+function renderOlahJumlah(container) {
+  var D = DATA.olahJumlah;
+  var kasus = orderByIds(D.kasus, State.arahOrder);
+  var semua = jumlahSemuaSelesai();
+  var polaBenar = State.polaPilihan === D.polaCorrect;
 
-  var kasusHTML = D.kasus
-    .map(function (k, i) {
-      var ex = State.olahExercises[i];
-      var fpb = gcd(k.a, k.b);
-      var sa = k.a / fpb;
-      var sb = k.b / fpb;
-
-      var hasilHTML = ex.done
-        ? '<div class="olah-hasil">' +
-          '<div class="olah-hasil__row">' +
-          buildRasioBadge(k.a, k.b, 'muted') +
-          '<span class="olah-hasil__arrow">÷ ' +
-          fpb +
-          ' →</span>' +
-          buildRasioBadge(sa, sb, 'hero') +
-          '</div>' +
-          '<div class="olah-hasil__dots">' +
-          buildDots(k.a, 'gula', fpb) +
-          '<span class="olah-hasil__dotlabel">dikelompokkan ' +
-          fpb +
-          '-an → ' +
-          sa +
-          ' kelompok</span>' +
-          '</div>' +
-          '<div class="olah-hasil__dots">' +
-          buildDots(k.b, 'air', fpb) +
-          '<span class="olah-hasil__dotlabel">dikelompokkan ' +
-          fpb +
-          '-an → ' +
-          sb +
-          ' kelompok</span>' +
-          '</div>' +
-          '<p class="olah-hasil__makna">' +
-          esc(k.makna) +
-          '</p>' +
-          '</div>'
-        : '';
-
-      var formHTML = ex.done
-        ? ''
-        : '<div class="olah-form">' +
-          '<div class="olah-field">' +
-          '<label for="olah-fpb-' +
-          i +
-          '">FPB dari ' +
-          k.a +
-          ' dan ' +
-          k.b +
-          '</label>' +
-          '<input type="text" inputmode="numeric" class="input-text" id="olah-fpb-' +
-          i +
-          '" data-olah="fpb" data-idx="' +
-          i +
-          '" value="' +
-          esc(ex.fpb) +
-          '" placeholder="?" />' +
-          '</div>' +
-          '<div class="olah-field olah-field--pair">' +
-          '<label for="olah-a-' +
-          i +
-          '">Bentuk paling sederhana</label>' +
-          '<div class="olah-pair">' +
-          '<input type="text" inputmode="numeric" class="input-text" id="olah-a-' +
-          i +
-          '" data-olah="a" data-idx="' +
-          i +
-          '" value="' +
-          esc(ex.a) +
-          '" placeholder="?" />' +
-          '<span class="olah-pair__sep">:</span>' +
-          '<label class="sr-only" for="olah-b-' +
-          i +
-          '">Bilangan kedua</label>' +
-          '<input type="text" inputmode="numeric" class="input-text" id="olah-b-' +
-          i +
-          '" data-olah="b" data-idx="' +
-          i +
-          '" value="' +
-          esc(ex.b) +
-          '" placeholder="?" />' +
-          '</div>' +
-          '</div>' +
-          '</div>' +
-          (ex.salah
-            ? buildFeedbackBox(
-                'error',
-                '✗',
-                '<strong>Belum tepat.</strong> Periksa kembali pembagimu — pastikan kedua bilangan dibagi dengan bilangan yang sama.'
-              )
-            : '') +
-          buildHintBox(k.hints, ex.hintLevel) +
-          '<div class="btn-group btn-group--spread" style="margin-top:var(--space-3);">' +
-          buildHintButton('olah-hint-' + i, k.hints, ex.hintLevel) +
-          '<button type="button" class="btn btn--primary" data-olah-check="' +
-          i +
-          '">Periksa</button>' +
-          '</div>';
-
+  var kasusHTML = kasus
+    .map(function (k) {
+      var i = D.kasus.indexOf(k);
+      var st = State.arahStates[k.id];
+      var step = State.jumlahSteps[i];
+      var teks = fmtOperasiBulat(k.a, '+', k.b);
+      var r = integerJumps(k.a, '+', k.b);
       return (
         '<div class="panel olah-kasus' +
-        (ex.done ? ' olah-kasus--done' : '') +
+        (step.done ? ' olah-kasus--done' : '') +
         '">' +
-        '<div class="olah-kasus__head">' +
-        '<h4 class="olah-kasus__title">' +
-        esc(k.judul) +
-        '</h4>' +
-        '<span class="olah-kasus__konteks">' +
-        esc(k.konteks) +
-        '</span>' +
-        '</div>' +
-        formHTML +
-        hasilHTML +
+        buildExpr(teks + ' = ' + (step.done ? fmtBulat(r.hasil) : '?')) +
+        buildOpLine('jl-' + k.id, k.a, '+', k.b, step.done) +
+        '<p class="dl-step__label">' +
+        esc(D.arahLabel) +
+        '</p>' +
+        buildChoiceGroup(D.opsiArah, st.optionOrder, {
+          chosen: st.chosen,
+          correctId: k.correct,
+          grade: true,
+          locked: true,
+          group: k.id,
+          attr: 'data-sort-opt',
+        }) +
+        (st.chosen
+          ? '<div style="margin-top:var(--space-2);">' +
+            buildFeedbackBox(
+              st.correct ? 'success' : 'error',
+              st.correct ? '✓' : '✗',
+              (st.correct ? '<strong>Benar.</strong> ' : '<strong>Belum tepat.</strong> ') +
+                k.explanation
+            ) +
+            '</div>' +
+            buildDlStep(
+              'js' + i,
+              step,
+              {
+                label: 'Hasil ' + esc(teks) + ' = …',
+                jawab: r.hasil,
+                hints: k.hints,
+                allowNegative: true,
+              },
+              null
+            )
+          : '') +
         '</div>'
       );
     })
     .join('');
 
-  var selesai = olahSemuaSelesai();
-
   container.innerHTML =
-    '<section aria-label="Pengolahan Data">' +
-    buildHead(D.kicker, D.goal) +
-    '<div class="panel panel--info">' +
-    '<p style="margin:0;">' +
-    esc(D.instruksi) +
-    '</p>' +
-    '</div>' +
-    buildProgressDots(
-      D.kasus.length,
-      Math.min(
-        State.olahExercises.filter(function (e) {
-          return e.done;
-        }).length,
-        D.kasus.length - 1
-      ),
-      State.olahExercises.map(function (e) {
-        return e.done ? 'correct' : e.salah ? 'incorrect' : null;
-      })
-    ) +
+    '<section aria-label="Pengolahan Data Penjumlahan">' +
+    buildHead(D) +
+    buildDlPanel('<p style="margin:0;">' + esc(D.instruksi) + '</p>', 'panel--info') +
     kasusHTML +
-    (selesai
-      ? '<div class="panel panel--warning">' +
-        '<p style="margin:0;">' +
-        D.temuan +
-        '</p>' +
-        '</div>' +
-        '<div class="btn-group btn-group--end">' +
-        '<button type="button" class="btn btn--primary btn--large" id="olahNextBtn">' +
-        esc(D.nextLabel) +
-        '</button>' +
-        '</div>'
+    (semua
+      ? buildDlPanel(
+          '<p class="exercise-label">' +
+            esc(D.polaLabel) +
+            '</p>' +
+            buildChoiceGroup(D.polaOpsi, State.polaOrder, {
+              chosen: State.polaPilihan,
+              correctId: polaBenar ? D.polaCorrect : null,
+              grade: true,
+              locked: polaBenar,
+              group: 'pola',
+            }) +
+            buildChoiceFeedback(State.polaPilihan, polaBenar, D.polaUmpan),
+          'panel--warning'
+        )
       : '') +
+    (semua && polaBenar ? buildDlNextButton('jumlahNextBtn', D.nextLabel, true) : '') +
     '</section>';
 
-  container.querySelectorAll('[data-olah]').forEach(function (inp) {
-    inp.addEventListener('input', function () {
-      State.olahExercises[inp.dataset.idx][inp.dataset.olah] = inp.value;
-      saveState();
-    });
+  bindSortItems(container, D.kasus, State.arahStates, saveState, function () {
+    renderOlahJumlah(container);
   });
 
   D.kasus.forEach(function (k, i) {
-    var hintBtn = document.getElementById('olah-hint-' + i);
-    if (hintBtn) {
-      hintBtn.addEventListener('click', function () {
-        var ex = State.olahExercises[i];
-        ex.hintLevel = Math.min(ex.hintLevel + 1, k.hints.length);
-        saveState();
-        renderOlahData(container);
-      });
-    }
-  });
-
-  container.querySelectorAll('[data-olah-check]').forEach(function (btn) {
-    btn.addEventListener('click', function () {
-      var i = parseInt(btn.dataset.olahCheck, 10);
-      var k = D.kasus[i];
-      var ex = State.olahExercises[i];
-      var pf = parseInputInt(ex.fpb);
-      var pa = parseInputInt(ex.a);
-      var pb = parseInputInt(ex.b);
-      if (pf.error || pa.error || pb.error) {
-        showNotice('Isi ketiga kolom dengan bilangan bulat lebih dulu.');
-        return;
+    var r = integerJumps(k.a, '+', k.b);
+    bindDlStep(
+      'js' + i,
+      State.jumlahSteps[i],
+      { jawab: r.hasil, hints: k.hints },
+      saveState,
+      function () {
+        renderOlahJumlah(container);
       }
-      var fpb = gcd(k.a, k.b);
-      ex.attempts += 1;
-      ex.done = pf.value === fpb && pa.value === k.a / fpb && pb.value === k.b / fpb;
-      ex.salah = !ex.done;
+    );
+  });
+
+  container.querySelectorAll('[data-group="pola"][data-opt-id]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      if (State.polaPilihan === D.polaCorrect) return;
+      State.polaPilihan = btn.dataset.optId;
       saveState();
-      renderOlahData(container);
+      renderOlahJumlah(container);
     });
   });
 
-  var nextBtn = document.getElementById('olahNextBtn');
-  if (nextBtn) {
-    nextBtn.addEventListener('click', function () {
-      completeStage('olahData');
-      navigateTo('satuan');
-    });
-  }
+  bindNext('jumlahNextBtn', 'olahJumlah', 'olahKurang');
+  centerNumberLines(container);
 }
 
 /* ============================================================
-   9. STAGE: SAMAKAN SATUAN  (Discovery Learning — sintaks 4b)
-   Besaran sejenis, satuan BERBEDA → samakan satuan, baru
-   disederhanakan. Dikerjakan tiga langkah per kasus.
+   9. STAGE: OLAH PENGURANGAN  (Discovery Learning — sintaks 4)
+   A. Lanjutkan pola 5 − 3, 5 − 2, … → 5 − (−2).
+   B. Pilih penjumlahan setara 5 − (−2) (opsi acak) + banding lompatan.
+   C. Cocokkan pengurangan dengan penjumlahan setara (opsi acak).
+   D. Hitung dua pengurangan.
    ============================================================ */
 
-function satuanSemuaSelesai() {
-  return State.satuanExercises.every(function (e) {
-    return e.done;
+function kurangPolaSelesai() {
+  return State.kurangSteps.every(function (s) {
+    return s.done;
   });
 }
 
-function renderSatuan(container) {
-  var D = DATA.satuan;
+function cocokSemuaDijawab() {
+  return DATA.olahKurang.cocok.every(function (c) {
+    return !!State.cocokPilih[c.id];
+  });
+}
 
-  var kasusHTML = D.kasus
-    .map(function (k, i) {
-      var ex = State.satuanExercises[i];
-      var langkah1 = ex.satuanBenar;
-      var langkah2 = ex.konversiBenar;
+function hitungSemuaSelesai() {
+  return State.hitungSteps.every(function (s) {
+    return s.done;
+  });
+}
 
-      /* Langkah 1 — memilih satuan acuan */
-      var umpan1 = '';
-      if (ex.satuan) {
-        umpan1 = buildFeedbackBox(
-          ex.satuanBenar ? 'success' : 'warning',
-          ex.satuanBenar ? '✓' : '💭',
-          k.umpanSatuan[ex.satuan]
+function renderOlahKurang(container) {
+  var D = DATA.olahKurang;
+  var polaSelesai = kurangPolaSelesai();
+  var setaraBenar = State.setaraPilihan === D.setaraCorrect;
+  var bukaC = polaSelesai && setaraBenar;
+  var bukaD = bukaC && cocokSemuaDijawab();
+  var selesai = bukaD && hitungSemuaSelesai();
+
+  /* A — tabel pola */
+  var isianIdx = 0;
+  var polaRows = D.pola
+    .map(function (p) {
+      var teks = fmtOperasiBulat(D.polaA, '-', p.b);
+      if (p.tampil) {
+        return (
+          '<tr><td class="pola-table__op">' +
+          esc(teks) +
+          '</td><td class="pola-table__hasil">' +
+          fmtBulat(p.hasil) +
+          '</td></tr>'
         );
       }
-      var blok1 =
-        '<div class="langkah' +
-        (langkah1 ? ' langkah--done' : '') +
-        '">' +
-        '<span class="langkah__num">1</span>' +
-        '<div class="langkah__body">' +
-        '<p class="langkah__label">' +
-        esc(D.langkahLabel[0]) +
-        '</p>' +
-        buildChoiceButtons(
-          k.opsiSatuan,
-          ex.optionOrder,
-          ex.satuan,
-          langkah1 ? k.correctSatuan : null,
-          true,
-          langkah1
-        ) +
-        (umpan1 ? '<div style="margin-top:var(--space-3);">' + umpan1 + '</div>' : '') +
-        '</div>' +
-        '</div>';
-
-      /* Langkah 2 — konversi besaran yang belum sesuai */
-      var blok2 = '';
-      if (langkah1) {
-        blok2 =
-          '<div class="langkah' +
-          (langkah2 ? ' langkah--done' : '') +
-          '">' +
-          '<span class="langkah__num">2</span>' +
-          '<div class="langkah__body">' +
-          '<p class="langkah__label">' +
-          esc(D.langkahLabel[1]) +
-          '</p>' +
-          '<p class="langkah__hint">' +
-          esc(k.konversi.faktorTeks) +
-          '</p>' +
-          (langkah2
-            ? '<p class="langkah__done-text">' +
-              esc(k.besaranA.tampil) +
-              ' = <strong>' +
-              formatNumber(k.konversi.nilaiA) +
-              ' ' +
-              esc(k.konversi.satuan) +
-              '</strong>, sehingga perbandingannya menjadi ' +
-              formatNumber(k.konversi.nilaiA) +
-              ' : ' +
-              formatNumber(k.konversi.nilaiB) +
-              '</p>'
-            : '<div class="konversi-row">' +
-              '<span>' +
-              esc(k.besaranA.tampil) +
-              ' = </span>' +
-              '<label class="sr-only" for="sat-kv-' +
-              i +
-              '">Hasil konversi dalam ' +
-              esc(k.konversi.satuan) +
-              '</label>' +
-              '<input type="text" inputmode="numeric" class="input-text" id="sat-kv-' +
-              i +
-              '" data-sat="konversi" data-idx="' +
-              i +
-              '" value="' +
-              esc(ex.konversi) +
-              '" placeholder="?" />' +
-              '<span>' +
-              esc(k.konversi.satuan) +
-              '</span>' +
-              '<button type="button" class="btn btn--primary btn--small" data-sat-kv="' +
-              i +
-              '">Periksa</button>' +
-              '</div>') +
-          '</div>' +
-          '</div>';
-      }
-
-      /* Langkah 3 — penyederhanaan */
-      var blok3 = '';
-      if (langkah2) {
-        blok3 =
-          '<div class="langkah' +
-          (ex.done ? ' langkah--done' : '') +
-          '">' +
-          '<span class="langkah__num">3</span>' +
-          '<div class="langkah__body">' +
-          '<p class="langkah__label">' +
-          esc(D.langkahLabel[2]) +
-          '</p>' +
-          (ex.done
-            ? '<div class="olah-hasil__row">' +
-              buildRasioBadge(k.konversi.nilaiA, k.konversi.nilaiB, 'muted') +
-              '<span class="olah-hasil__arrow">÷ ' +
-              formatNumber(gcd(k.konversi.nilaiA, k.konversi.nilaiB)) +
-              ' →</span>' +
-              buildRasioBadge(k.sederhana.a, k.sederhana.b, 'hero') +
-              '</div>' +
-              '<p class="olah-hasil__makna">' +
-              esc(k.makna) +
-              '</p>'
-            : '<div class="olah-pair">' +
-              '<label class="sr-only" for="sat-a-' +
-              i +
-              '">Bilangan pertama</label>' +
-              '<input type="text" inputmode="numeric" class="input-text" id="sat-a-' +
-              i +
-              '" data-sat="sederhanaA" data-idx="' +
-              i +
-              '" value="' +
-              esc(ex.sederhanaA) +
-              '" placeholder="?" />' +
-              '<span class="olah-pair__sep">:</span>' +
-              '<label class="sr-only" for="sat-b-' +
-              i +
-              '">Bilangan kedua</label>' +
-              '<input type="text" inputmode="numeric" class="input-text" id="sat-b-' +
-              i +
-              '" data-sat="sederhanaB" data-idx="' +
-              i +
-              '" value="' +
-              esc(ex.sederhanaB) +
-              '" placeholder="?" />' +
-              '</div>' +
-              (ex.salah
-                ? buildFeedbackBox(
-                    'error',
-                    '✗',
-                    '<strong>Belum tepat.</strong> Bagi kedua bilangan dengan FPB-nya.'
-                  )
-                : '') +
-              buildHintBox(k.hints, ex.hintLevel) +
-              '<div class="btn-group btn-group--spread" style="margin-top:var(--space-3);">' +
-              buildHintButton('sat-hint-' + i, k.hints, ex.hintLevel) +
-              '<button type="button" class="btn btn--primary" data-sat-check="' +
-              i +
-              '">Periksa</button>' +
-              '</div>') +
-          '</div>' +
-          '</div>';
-      }
-
+      var idx = isianIdx++;
+      var st = State.kurangSteps[idx];
+      var bisa = idx === 0 || State.kurangSteps[idx - 1].done;
       return (
-        '<div class="panel olah-kasus' +
-        (ex.done ? ' olah-kasus--done' : '') +
-        '">' +
-        '<div class="olah-kasus__head">' +
-        '<h4 class="olah-kasus__title">' +
-        esc(k.judul) +
-        '</h4>' +
-        '<span class="olah-kasus__konteks">' +
-        esc(k.minta) +
-        '</span>' +
-        '</div>' +
-        '<p class="olah-kasus__teks">' +
-        k.teks +
-        '</p>' +
-        blok1 +
-        blok2 +
-        blok3 +
-        '</div>'
+        '<tr class="' +
+        (st.done ? 'pola-table__row--done' : '') +
+        '"><td class="pola-table__op">' +
+        esc(teks) +
+        '</td><td class="pola-table__hasil">' +
+        (st.done
+          ? fmtBulat(p.hasil) + ' <span class="pola-table__ok" aria-label="benar">✓</span>'
+          : bisa
+            ? buildDlStep('kp' + idx, st, {
+                label: '',
+                jawab: p.hasil,
+                hints: p.hints,
+                allowNegative: true,
+              })
+            : '<span class="dl-caption">…</span>') +
+        '</td></tr>'
       );
     })
     .join('');
 
+  var partA = buildDlPanel(
+    '<p class="exercise-label">' +
+      esc(D.instruksiPola) +
+      '</p>' +
+      '<div class="table-scroll"><table class="data-table pola-table">' +
+      '<thead><tr><th scope="col">Pengurangan</th><th scope="col">Hasil</th></tr></thead>' +
+      '<tbody>' +
+      polaRows +
+      '</tbody></table></div>'
+  );
+
+  /* B — bentuk setara + banding lompatan */
+  var partB = '';
+  if (polaSelesai) {
+    partB = buildDlPanel(
+      '<p class="exercise-label">' +
+        esc(D.setaraLabel) +
+        '</p>' +
+        buildChoiceGroup(D.setaraOpsi, State.setaraOrder, {
+          chosen: State.setaraPilihan,
+          correctId: setaraBenar ? D.setaraCorrect : null,
+          grade: true,
+          locked: setaraBenar,
+          group: 'setara',
+        }) +
+        buildChoiceFeedback(State.setaraPilihan, setaraBenar, D.setaraUmpan) +
+        (setaraBenar
+          ? '<h3 style="margin:var(--space-5) 0 var(--space-2);">' +
+            esc(D.bandingJudul) +
+            '</h3>' +
+            '<div class="banding-grid">' +
+            '<div>' +
+            buildExpr(fmtOperasiBulat(D.banding.a, '-', D.banding.b) + ' = 2') +
+            buildOpLine('bd1', D.banding.a, '-', D.banding.b, true) +
+            '</div>' +
+            '<div>' +
+            buildExpr(fmtOperasiBulat(D.banding.a, '+', -D.banding.b) + ' = 2') +
+            buildOpLine('bd2', D.banding.a, '+', -D.banding.b, true) +
+            '</div>' +
+            '</div>' +
+            buildFeedbackBox('info', '💡', D.bandingTeks)
+          : ''),
+      'panel--warning'
+    );
+  }
+
+  /* C — cocokkan bentuk setara */
+  var partC = '';
+  if (bukaC) {
+    partC = buildDlPanel(
+      '<p class="exercise-label">' +
+        esc(D.instruksiCocok) +
+        '</p>' +
+        D.cocok
+          .map(function (c) {
+            var chosen = State.cocokPilih[c.id] || null;
+            var benar = chosen === c.correct;
+            return (
+              '<div class="sort-item">' +
+              '<p class="sort-item__text sort-item__text--mono">' +
+              esc(fmtOperasiBulat(c.a, '-', c.b)) +
+              ' = …</p>' +
+              buildChoiceGroup(c.options, State.cocokOrders[c.id], {
+                chosen: chosen,
+                correctId: c.correct,
+                grade: true,
+                locked: true,
+                group: c.id,
+                attr: 'data-cocok-opt',
+              }) +
+              (chosen
+                ? '<div style="margin-top:var(--space-2);">' +
+                  buildFeedbackBox(
+                    benar ? 'success' : 'error',
+                    benar ? '✓' : '✗',
+                    (benar ? '<strong>Benar.</strong> ' : '<strong>Belum tepat.</strong> ') +
+                      c.explanation
+                  ) +
+                  '</div>'
+                : '') +
+              '</div>'
+            );
+          })
+          .join('')
+    );
+  }
+
+  /* D — hitung */
+  var partD = '';
+  if (bukaD) {
+    partD = buildDlPanel(
+      '<p class="exercise-label">' +
+        esc(D.instruksiHitung) +
+        '</p>' +
+        D.hitung
+          .map(function (h, i) {
+            var st = State.hitungSteps[i];
+            var r = integerJumps(h.a, '-', h.b);
+            return (
+              '<div class="hitung-item">' +
+              buildDlStep(
+                'kh' + i,
+                st,
+                {
+                  label: esc(fmtOperasiBulat(h.a, '-', h.b)) + ' = ' + esc(r.setara) + ' = …',
+                  jawab: r.hasil,
+                  hints: h.hints,
+                  allowNegative: true,
+                },
+                i + 1
+              ) +
+              (st.done ? buildOpLine('kl' + i, h.a, '-', h.b, true) : '') +
+              '</div>'
+            );
+          })
+          .join('')
+    );
+  }
+
   container.innerHTML =
-    '<section aria-label="Samakan Satuan">' +
-    buildHead(D.kicker, D.goal) +
-    '<div class="panel panel--info">' +
-    '<p style="margin:0;">' +
-    esc(D.instruksi) +
-    '</p>' +
-    '</div>' +
-    buildProgressDots(
-      D.kasus.length,
-      Math.min(
-        State.satuanExercises.filter(function (e) {
-          return e.done;
-        }).length,
-        D.kasus.length - 1
-      ),
-      State.satuanExercises.map(function (e) {
-        return e.done ? 'correct' : e.salah ? 'incorrect' : null;
-      })
-    ) +
-    kasusHTML +
-    (satuanSemuaSelesai()
-      ? '<div class="btn-group btn-group--end">' +
-        '<button type="button" class="btn btn--primary btn--large" id="satuanNextBtn">' +
-        esc(D.nextLabel) +
-        '</button>' +
-        '</div>'
-      : '') +
+    '<section aria-label="Pengolahan Data Pengurangan">' +
+    buildHead(D) +
+    partA +
+    partB +
+    partC +
+    partD +
+    (selesai ? buildDlNextButton('kurangNextBtn', D.nextLabel, true) : '') +
     '</section>';
 
-  container.querySelectorAll('[data-sat]').forEach(function (inp) {
-    inp.addEventListener('input', function () {
-      State.satuanExercises[inp.dataset.idx][inp.dataset.sat] = inp.value;
-      saveState();
-    });
-  });
-
-  D.kasus.forEach(function (k, i) {
-    var ex = State.satuanExercises[i];
-
-    /* Langkah 1 — pilihan satuan acuan */
-    var wrap = container.querySelectorAll('.olah-kasus')[i];
-    if (wrap && !ex.satuanBenar) {
-      wrap.querySelectorAll('[data-opt-id]').forEach(function (btn) {
-        btn.addEventListener('click', function () {
-          ex.satuan = btn.dataset.optId;
-          ex.satuanBenar = ex.satuan === k.correctSatuan;
-          saveState();
-          renderSatuan(container);
-        });
-      });
-    }
-
-    /* Langkah 3 — petunjuk berjenjang */
-    var hintBtn = document.getElementById('sat-hint-' + i);
-    if (hintBtn) {
-      hintBtn.addEventListener('click', function () {
-        ex.hintLevel = Math.min(ex.hintLevel + 1, k.hints.length);
-        saveState();
-        renderSatuan(container);
-      });
-    }
-  });
-
-  /* Langkah 2 — periksa hasil konversi */
-  container.querySelectorAll('[data-sat-kv]').forEach(function (btn) {
-    btn.addEventListener('click', function () {
-      var i = parseInt(btn.dataset.satKv, 10);
-      var k = D.kasus[i];
-      var ex = State.satuanExercises[i];
-      var parsed = parseInputInt(ex.konversi, true);
-      if (parsed.error) {
-        showNotice('Tulis hasil konversinya sebagai bilangan bulat lebih dulu.');
-        return;
-      }
-      if (parsed.value !== k.konversi.nilaiA) {
-        showNotice('Belum tepat. Ingat, ' + k.konversi.faktorTeks + '.');
-        return;
-      }
-      ex.konversiBenar = true;
-      saveState();
-      renderSatuan(container);
-    });
-  });
-
-  /* Langkah 3 — periksa bentuk sederhana */
-  container.querySelectorAll('[data-sat-check]').forEach(function (btn) {
-    btn.addEventListener('click', function () {
-      var i = parseInt(btn.dataset.satCheck, 10);
-      var k = D.kasus[i];
-      var ex = State.satuanExercises[i];
-      var pa = parseInputInt(ex.sederhanaA);
-      var pb = parseInputInt(ex.sederhanaB);
-      if (pa.error || pb.error) {
-        showNotice('Isi kedua kolom dengan bilangan bulat lebih dulu.');
-        return;
-      }
-      ex.attempts += 1;
-      ex.done = pa.value === k.sederhana.a && pb.value === k.sederhana.b;
-      ex.salah = !ex.done;
-      saveState();
-      renderSatuan(container);
-    });
-  });
-
-  var nextBtn = document.getElementById('satuanNextBtn');
-  if (nextBtn) {
-    nextBtn.addEventListener('click', function () {
-      completeStage('satuan');
-      navigateTo('verifikasi');
-    });
+  function ulang() {
+    renderOlahKurang(container);
   }
+
+  polaIsian().forEach(function (p, i) {
+    bindDlStep(
+      'kp' + i,
+      State.kurangSteps[i],
+      { jawab: p.hasil, hints: p.hints },
+      saveState,
+      ulang
+    );
+  });
+
+  container.querySelectorAll('[data-group="setara"][data-opt-id]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      if (State.setaraPilihan === D.setaraCorrect) return;
+      State.setaraPilihan = btn.dataset.optId;
+      saveState();
+      ulang();
+    });
+  });
+
+  container.querySelectorAll('[data-cocok-opt]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var id = btn.dataset.group;
+      if (State.cocokPilih[id]) return;
+      State.cocokPilih[id] = btn.dataset.cocokOpt;
+      saveState();
+      ulang();
+    });
+  });
+
+  D.hitung.forEach(function (h, i) {
+    bindDlStep(
+      'kh' + i,
+      State.hitungSteps[i],
+      { jawab: integerJumps(h.a, '-', h.b).hasil, hints: h.hints },
+      saveState,
+      ulang
+    );
+  });
+
+  bindNext('kurangNextBtn', 'olahKurang', 'verifikasi');
+  centerNumberLines(container);
 }
 
 /* ============================================================
    10. STAGE: PEMBUKTIAN  (Discovery Learning — sintaks 5)
-   Murid menguji prediksinya sendiri, lalu menelaah non-contoh.
+   A. Menguji dugaan tahap 1 pada garis bilangan.
+   B. Menanggapi tiga miskonsepsi (opsi acak, sekali jawab).
    ============================================================ */
-
-function verifSemuaTerbukti() {
-  return State.verifDone.every(function (d) {
-    return d === true;
-  });
-}
 
 function verifSoalSemuaDijawab() {
   return State.verifExercises.every(function (e) {
-    return e.chosen !== null && e.chosen !== undefined;
+    return !!e.chosen;
   });
 }
 
 function renderVerifikasi(container) {
   var D = DATA.verifikasi;
-  var terbukti = verifSemuaTerbukti();
-  var prediksi = State.stimulasiPilihan;
-
-  var ujiHTML = D.uji
-    .map(function (u, i) {
-      var inp = State.verifInputs[i];
-      var done = State.verifDone[i];
-      return (
-        '<div class="uji-card' +
-        (done ? ' uji-card--done' : '') +
-        '">' +
-        '<h4 class="uji-card__title">' +
-        esc(u.nama) +
-        '</h4>' +
-        '<p class="uji-card__awal">' +
-        u.a +
-        ' : ' +
-        u.b +
-        '</p>' +
-        (done
-          ? '<p class="uji-card__hasil">' +
-            buildRasioBadge(u.sederhanaA, u.sederhanaB, 'hero') +
-            '</p>'
-          : '<div class="olah-pair">' +
-            '<label class="sr-only" for="ver-a-' +
-            i +
-            '">Bilangan pertama</label>' +
-            '<input type="text" inputmode="numeric" class="input-text" id="ver-a-' +
-            i +
-            '" data-ver="a" data-idx="' +
-            i +
-            '" value="' +
-            esc(inp.a) +
-            '" placeholder="?" />' +
-            '<span class="olah-pair__sep">:</span>' +
-            '<label class="sr-only" for="ver-b-' +
-            i +
-            '">Bilangan kedua</label>' +
-            '<input type="text" inputmode="numeric" class="input-text" id="ver-b-' +
-            i +
-            '" data-ver="b" data-idx="' +
-            i +
-            '" value="' +
-            esc(inp.b) +
-            '" placeholder="?" />' +
-            '</div>') +
-        '</div>'
-      );
-    })
-    .join('');
+  var S = DATA.stimulasi;
+  var step = State.verifSteps[0];
+  var terbukti = step.done;
+  var prediksiLabel = State.stimulasiPilihan
+    ? findOptionLabel(S.opsi, State.stimulasiPilihan)
+    : 'belum diisi';
 
   var kesimpulanHTML = '';
   if (terbukti) {
-    var cocok = prediksi === 'sama';
+    var cocok = State.stimulasiPilihan === S.benar;
     kesimpulanHTML =
-      buildFeedbackBox('success', '🎯', D.kesimpulan) +
       '<div style="margin-top:var(--space-3);">' +
       buildFeedbackBox(
         cocok ? 'success' : 'info',
@@ -1458,132 +1056,119 @@ function renderVerifikasi(container) {
 
   var soalHTML = '';
   if (terbukti) {
-    soalHTML =
-      '<div class="panel">' +
+    soalHTML = buildDlPanel(
       '<p class="exercise-label">' +
-      esc(D.instruksiSoal) +
-      '</p>' +
-      D.soal
-        .map(function (s, i) {
-          var ex = State.verifExercises[i];
-          var answered = ex.chosen !== null && ex.chosen !== undefined;
-          return (
-            '<div class="cocok-item" data-verif="' +
-            i +
-            '">' +
-            '<p class="cocok-item__q">' +
-            s.pernyataan +
-            '</p>' +
-            buildChoiceButtons(s.options, ex.optionOrder, ex.chosen, s.correct, true, true) +
-            (answered
-              ? buildFeedbackBox(
-                  ex.correct ? 'success' : 'error',
-                  ex.correct ? '✓' : '✗',
-                  (ex.correct ? '<strong>Tepat.</strong> ' : '<strong>Belum tepat.</strong> ') +
-                    s.explanation
-                )
-              : '') +
-            '</div>'
-          );
-        })
-        .join('') +
-      '</div>';
+        esc(D.instruksiSoal) +
+        '</p>' +
+        D.soal
+          .map(function (q, i) {
+            var ex = State.verifExercises[i];
+            return (
+              '<div class="sort-item">' +
+              '<p class="sort-item__text">' +
+              q.pernyataan +
+              '</p>' +
+              buildChoiceGroup(q.options, ex.optionOrder, {
+                chosen: ex.chosen,
+                correctId: q.correct,
+                grade: true,
+                locked: true,
+                group: q.id,
+                attr: 'data-verif-opt',
+              }) +
+              (ex.chosen
+                ? '<div style="margin-top:var(--space-2);">' +
+                  buildFeedbackBox(
+                    ex.correct ? 'success' : 'error',
+                    ex.correct ? '✓' : '✗',
+                    (ex.correct ? '<strong>Tepat.</strong> ' : '<strong>Belum tepat.</strong> ') +
+                      q.explanation
+                  ) +
+                  '</div>'
+                : '') +
+              '</div>'
+            );
+          })
+          .join('')
+    );
   }
 
   container.innerHTML =
     '<section aria-label="Pembuktian">' +
-    buildHead(D.kicker, D.goal) +
-    '<div class="panel panel--warning">' +
-    '<p style="margin:0;font-size:0.88rem;">' +
-    esc(D.prediksiLabel) +
-    ': <strong>' +
-    esc(prediksi ? D.prediksiTeks[prediksi] : 'belum diisi') +
-    '</strong>' +
-    (State.stimulasiAlasan ? '<br><em>"' + esc(State.stimulasiAlasan) + '"</em>' : '') +
-    '</p>' +
-    '</div>' +
-    '<div class="panel">' +
-    '<p class="exercise-label">' +
-    esc(D.instruksi) +
-    '</p>' +
-    '<div class="uji-grid">' +
-    ujiHTML +
-    '</div>' +
-    (terbukti
-      ? ''
-      : '<div class="btn-group btn-group--end" style="margin-top:var(--space-4);">' +
-        '<button type="button" class="btn btn--primary" id="verifCheckBtn">Buktikan</button>' +
-        '</div>') +
-    (kesimpulanHTML ? '<div style="margin-top:var(--space-4);">' + kesimpulanHTML + '</div>' : '') +
-    '</div>' +
+    buildHead(D) +
+    buildDlPanel(
+      '<p style="margin:0;">' +
+        esc(D.prediksiLabel) +
+        ': <strong>' +
+        prediksiLabel +
+        '</strong>' +
+        (State.stimulasiAlasan ? '<br><em>"' + esc(State.stimulasiAlasan) + '"</em>' : '') +
+        '</p>',
+      'panel--warning'
+    ) +
+    buildDlPanel(
+      '<div class="verif-grid">' +
+        buildThermometer(terbukti ? S.suhuAwal + S.naik : S.suhuAwal, {
+          min: -10,
+          max: 10,
+          step: 2,
+          caption: terbukti ? 'Pukul 11.00' : S.captionAwal,
+        }) +
+        '<div class="verif-grid__main">' +
+        buildOpLine('vfLine', S.suhuAwal, '+', S.naik, terbukti) +
+        buildDlStep(
+          'vf0',
+          step,
+          {
+            label: esc(D.uji.label),
+            jawab: S.suhuAwal + S.naik,
+            hints: D.uji.hints,
+            temuan: D.uji.temuan,
+            allowNegative: true,
+          },
+          null
+        ) +
+        kesimpulanHTML +
+        '</div>' +
+        '</div>'
+    ) +
     soalHTML +
     (terbukti && verifSoalSemuaDijawab()
-      ? '<div class="btn-group btn-group--end">' +
-        '<button type="button" class="btn btn--primary btn--large" id="verifNextBtn">' +
-        esc(D.nextLabel) +
-        '</button>' +
-        '</div>'
+      ? buildDlNextButton('verifNextBtn', D.nextLabel, true)
       : '') +
     '</section>';
 
-  container.querySelectorAll('[data-ver]').forEach(function (inp) {
-    inp.addEventListener('input', function () {
-      State.verifInputs[inp.dataset.idx][inp.dataset.ver] = inp.value;
-      saveState();
-    });
-  });
+  bindDlStep(
+    'vf0',
+    step,
+    { jawab: S.suhuAwal + S.naik, hints: D.uji.hints },
+    saveState,
+    function () {
+      renderVerifikasi(container);
+    }
+  );
 
-  var checkBtn = document.getElementById('verifCheckBtn');
-  if (checkBtn) {
-    checkBtn.addEventListener('click', function () {
-      var adaKosong = false;
-      D.uji.forEach(function (u, i) {
-        var inp = State.verifInputs[i];
-        var pa = parseInputInt(inp.a);
-        var pb = parseInputInt(inp.b);
-        if (pa.error || pb.error) {
-          adaKosong = true;
-          return;
-        }
-        State.verifDone[i] = pa.value === u.sederhanaA && pb.value === u.sederhanaB;
+  container.querySelectorAll('[data-verif-opt]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var i = -1;
+      D.soal.forEach(function (q, k) {
+        if (q.id === btn.dataset.group) i = k;
       });
+      var ex = State.verifExercises[i];
+      if (!ex || ex.chosen) return;
+      ex.chosen = btn.dataset.verifOpt;
+      ex.correct = ex.chosen === D.soal[i].correct;
       saveState();
-      if (adaKosong) showNotice('Isi kedua kolom pada setiap gelas lebih dulu.');
-      else if (!verifSemuaTerbukti())
-        showNotice(
-          'Belum tepat. Bagi kedua bilangan dengan FPB-nya, seperti pada tahap sebelumnya.'
-        );
       renderVerifikasi(container);
     });
-  }
-
-  container.querySelectorAll('[data-verif]').forEach(function (wrap) {
-    var i = parseInt(wrap.dataset.verif, 10);
-    wrap.querySelectorAll('[data-opt-id]').forEach(function (btn) {
-      btn.addEventListener('click', function () {
-        var ex = State.verifExercises[i];
-        if (ex.chosen !== null && ex.chosen !== undefined) return;
-        ex.chosen = btn.dataset.optId;
-        ex.correct = ex.chosen === D.soal[i].correct;
-        saveState();
-        renderVerifikasi(container);
-      });
-    });
   });
 
-  var nextBtn = document.getElementById('verifNextBtn');
-  if (nextBtn) {
-    nextBtn.addEventListener('click', function () {
-      completeStage('verifikasi');
-      navigateTo('generalisasi');
-    });
-  }
+  bindNext('verifNextBtn', 'verifikasi', 'generalisasi');
+  centerNumberLines(container);
 }
 
 /* ============================================================
    11. STAGE: MENARIK KESIMPULAN  (Discovery Learning — sintaks 6)
-   Murid menyusun kalimat kesimpulan dari bank potongan kalimat
-   yang urutannya diacak dan memuat pengecoh.
    ============================================================ */
 
 function simpulanSemuaBenar() {
@@ -1594,33 +1179,29 @@ function simpulanSemuaBenar() {
 
 function renderGeneralisasi(container) {
   var D = DATA.generalisasi;
-  var bank = orderOptions(
-    D.bank.map(function (b) {
-      return { id: b.id, label: b.teks };
-    }),
-    State.bankOrder
-  );
+  var bank = orderByIds(D.bank, State.bankOrder);
   var benarSemua = simpulanSemuaBenar();
-  var sudahDiperiksa = State.simpulanChecked;
+  var diperiksa = State.simpulanChecked;
 
   var kalimatHTML = D.kalimat
     .map(function (g, i) {
       var dipilih = State.simpulanPilihan[g.id] || '';
       var status = '';
-      if (sudahDiperiksa && dipilih) {
-        status = dipilih === g.correct ? ' simpulan-item--correct' : ' simpulan-item--incorrect';
+      if (diperiksa && dipilih) {
+        status =
+          dipilih === g.correct ? ' dl-simpulan-item--correct' : ' dl-simpulan-item--incorrect';
       }
       return (
-        '<div class="simpulan-item' +
+        '<div class="dl-simpulan-item' +
         status +
         '">' +
-        '<span class="simpulan-item__num">' +
+        '<span class="dl-simpulan-item__num">' +
         (i + 1) +
         '</span>' +
-        '<div class="simpulan-item__body">' +
+        '<div class="dl-simpulan-item__body">' +
         '<label for="simp-' +
         g.id +
-        '" class="simpulan-item__awal">' +
+        '" class="dl-simpulan-item__awal">' +
         esc(g.awal) +
         ' …</label>' +
         '<select class="input-select" id="simp-' +
@@ -1641,14 +1222,14 @@ function renderGeneralisasi(container) {
               '"' +
               (dipilih === b.id ? ' selected' : '') +
               '>' +
-              esc(b.label) +
+              esc(b.teks) +
               '</option>'
             );
           })
           .join('') +
         '</select>' +
-        (sudahDiperiksa && dipilih && dipilih !== g.correct
-          ? '<p class="simpulan-item__note">Belum tepat — baca ulang kalimatnya, lalu pilih potongan lain.</p>'
+        (diperiksa && dipilih && dipilih !== g.correct
+          ? '<p class="dl-simpulan-item__note">Belum tepat — ingat kembali temuanmu, lalu pilih potongan lain.</p>'
           : '') +
         '</div>' +
         '</div>'
@@ -1656,48 +1237,36 @@ function renderGeneralisasi(container) {
     })
     .join('');
 
-  var rangkumanHTML = '';
-  if (benarSemua) {
-    rangkumanHTML =
-      '<div class="panel panel--hero">' +
-      '<h3 style="margin-top:0;">Rangkuman Konsep Rasio</h3>' +
-      '<ol class="objectives-list">' +
-      D.rangkuman
-        .map(function (r, i) {
-          return '<li><span class="objectives-list__num">' + (i + 1) + '</span>' + r + '</li>';
-        })
-        .join('') +
-      '</ol>' +
-      '</div>';
-  }
-
   container.innerHTML =
     '<section aria-label="Menarik Kesimpulan">' +
-    buildHead(D.kicker, D.goal) +
-    '<div class="panel panel--info">' +
-    '<p style="margin:0;">' +
-    esc(D.instruksi) +
-    '</p>' +
-    '</div>' +
-    '<div class="panel">' +
-    kalimatHTML +
+    buildHead(D) +
+    buildDlPanel('<p style="margin:0;">' + esc(D.instruksi) + '</p>', 'panel--info') +
+    buildDlPanel(
+      kalimatHTML +
+        (benarSemua
+          ? buildFeedbackBox(
+              'success',
+              '✓',
+              '<strong>Kesimpulanmu lengkap dan tepat.</strong> Inilah aturan yang kamu temukan dan buktikan sendiri.'
+            )
+          : '<div class="btn-group btn-group--end" style="margin-top:var(--space-4);">' +
+            '<button type="button" class="btn btn--primary" id="simpulanCheckBtn">Periksa Kesimpulan</button>' +
+            '</div>')
+    ) +
     (benarSemua
-      ? buildFeedbackBox(
-          'success',
-          '✓',
-          '<strong>Kesimpulanmu lengkap dan tepat.</strong> Inilah konsep yang baru saja kamu temukan sendiri.'
-        )
-      : '<div class="btn-group btn-group--end" style="margin-top:var(--space-4);">' +
-        '<button type="button" class="btn btn--primary" id="simpulanCheckBtn">Periksa Kesimpulan</button>' +
-        '</div>') +
-    '</div>' +
-    rangkumanHTML +
-    (benarSemua
-      ? '<div class="btn-group btn-group--end">' +
-        '<button type="button" class="btn btn--primary btn--large" id="simpulanNextBtn">' +
-        esc(D.nextLabel) +
-        '</button>' +
-        '</div>'
+      ? buildDlPanel(
+          '<h3 style="margin-top:0;">Rangkuman Operasi Bilangan Bulat</h3>' +
+            '<ol class="objectives-list">' +
+            D.rangkuman
+              .map(function (r, i) {
+                return (
+                  '<li><span class="objectives-list__num">' + (i + 1) + '</span>' + r + '</li>'
+                );
+              })
+              .join('') +
+            '</ol>',
+          'panel--hero'
+        ) + buildDlNextButton('simpulanNextBtn', D.nextLabel, true)
       : '') +
     '</section>';
 
@@ -1715,39 +1284,33 @@ function renderGeneralisasi(container) {
         return !State.simpulanPilihan[g.id];
       });
       if (adaKosong) {
-        showNotice('Lengkapi ketiga kalimat lebih dulu.');
+        showNotice('Lengkapi semua kalimat lebih dulu.');
         return;
       }
       var terpakai = {};
-      var adaGanda = false;
+      var ganda = false;
       D.kalimat.forEach(function (g) {
         var v = State.simpulanPilihan[g.id];
-        if (terpakai[v]) adaGanda = true;
+        if (terpakai[v]) ganda = true;
         terpakai[v] = true;
       });
       State.simpulanChecked = true;
       saveState();
-      if (adaGanda) showNotice('Setiap potongan kalimat hanya dipakai satu kali.');
+      if (ganda) showNotice('Setiap potongan kalimat hanya dipakai satu kali.');
       else if (!simpulanSemuaBenar())
         showNotice('Masih ada yang belum tepat. Periksa tanda merahnya.');
       renderGeneralisasi(container);
     });
   }
 
-  var nextBtn = document.getElementById('simpulanNextBtn');
-  if (nextBtn) {
-    nextBtn.addEventListener('click', function () {
-      completeStage('generalisasi');
-      navigateTo('terapkan');
-    });
-  }
+  bindNext('simpulanNextBtn', 'generalisasi', 'terapkan');
 }
 
 /* ============================================================
    12. STAGE: UJI TERAP
-   Memakai createExerciseStage dari shared/engine.js: campuran soal
-   'input' dan 'choice'. Urutan opsi diambil dari ex.optionOrder
-   yang sudah diacak di initExerciseArrays().
+   createExerciseStage (shared/engine.js): campuran soal 'input'
+   dan 'choice'; urutan opsi dari ex.optionOrder yang diacak di
+   initExerciseArrays().
    ============================================================ */
 
 var TerapkanStage = createExerciseStage({
@@ -1767,17 +1330,29 @@ var TerapkanStage = createExerciseStage({
   kicker: DATA.terapkan.kicker,
   goal: DATA.terapkan.goal,
   instruction: DATA.terapkan.instruksi,
+  buildHead: function () {
+    return (
+      buildHead(DATA.terapkan) +
+      buildDlPanel('<p style="margin:0;">' + esc(DATA.terapkan.instruksi) + '</p>', 'panel--info')
+    );
+  },
   nextStageId: 'refleksi',
   completeStageId: 'terapkan',
   nextButtonLabel: DATA.terapkan.nextLabel,
   defaultType: 'input',
   listClass: 'challenge-options',
   choiceClassStyle: 'state',
-  wrapClass: 'ex-exercise',
-  inputRowClass: 'ex-input-row',
+  wrapClass: 'dl-exercise',
+  inputRowClass: 'dl-input-row',
   inputAriaLabel: 'Jawabanmu',
-  inputPlaceholder: 'Tulis jawabanmu',
+  inputPlaceholder: 'Jawabanmu',
+  allowNegative: true,
+  stripPunctuation: true,
   revealButtonStyle: 'separate',
+  invalidMessage: 'Tulis jawaban berupa bilangan bulat, mis. 16 atau −15.',
+  inputSuffix: function (s) {
+    return s.suffix ? '<span class="dl-caption">' + esc(s.suffix) + '</span>' : '';
+  },
   checkValue: function (s) {
     return s.jawab;
   },
@@ -1786,11 +1361,14 @@ var TerapkanStage = createExerciseStage({
   },
   renderPrompt: function (s) {
     return (
-      '<div class="terap-prompt">' +
-      '<p class="terap-prompt__cerita">' +
+      '<div class="dl-prompt">' +
+      '<span class="konteks-chip">' +
+      esc(s.konteks) +
+      '</span>' +
+      '<p class="dl-prompt__cerita">' +
       esc(s.cerita) +
       '</p>' +
-      '<p class="terap-prompt__tanya">' +
+      '<p class="dl-prompt__tanya">' +
       s.pertanyaan +
       '</p>' +
       '</div>'
@@ -1808,88 +1386,74 @@ function renderTerapkan(container) {
 
 function renderRefleksi(container) {
   var D = DATA.refleksi;
+  var items = tempatItems();
+  var tempatSekali = numberLinePlacementFirstTry(items, State.tempatState);
+  var arahBenar = sortItemsCorrectCount(DATA.olahJumlah.kasus, State.arahStates);
+  var verifBenar = State.verifExercises.filter(function (e) {
+    return e.correct;
+  }).length;
+  var terapBenar = State.terapkanExercises.filter(function (e) {
+    return e.correct;
+  }).length;
 
-  var benarTerap = State.terapkanExercises.filter(function (e) {
-    return e.correct;
-  }).length;
-  var benarVerif = State.verifExercises.filter(function (e) {
-    return e.correct;
-  }).length;
-  var benarCocok = State.cocokExercises.filter(function (e) {
-    return e.correct;
-  }).length;
-
-  var pertanyaanHTML = D.pertanyaan
-    .map(function (q, i) {
-      var saved = State.refleksiAnswers[q.id] || '';
-      return (
-        '<div class="panel panel--compact refleksi-item">' +
-        '<span class="refleksi-item__num">Pertanyaan ' +
-        (i + 1) +
-        ' dari ' +
-        D.pertanyaan.length +
-        '</span>' +
-        '<label for="ref-' +
-        q.id +
-        '" style="font-size:0.95rem;font-weight:600;display:block;margin-bottom:var(--space-3);">' +
-        esc(q.teks) +
-        '</label>' +
-        '<textarea id="ref-' +
-        q.id +
-        '" class="input-textarea" placeholder="' +
-        esc(q.placeholder) +
-        '" data-rid="' +
-        q.id +
-        '">' +
-        esc(saved) +
-        '</textarea>' +
-        '</div>'
-      );
-    })
-    .join('');
+  function kartu(val, label) {
+    return (
+      '<div class="summary-card"><div class="summary-card__val">' +
+      val +
+      '</div><div class="summary-card__label">' +
+      label +
+      '</div></div>'
+    );
+  }
 
   container.innerHTML =
     '<section aria-label="Refleksi Pembelajaran">' +
-    buildHead(D.kicker, D.goal) +
-    '<div class="panel">' +
-    '<div class="summary-grid">' +
-    '<div class="summary-card"><div class="summary-card__val">' +
-    benarCocok +
-    '/' +
-    DATA.koleksi.cocok.length +
-    '</div><div class="summary-card__label">Penulisan rasio benar</div></div>' +
-    '<div class="summary-card"><div class="summary-card__val">' +
-    benarVerif +
-    '/' +
-    DATA.verifikasi.soal.length +
-    '</div><div class="summary-card__label">Uji konsep benar</div></div>' +
-    '<div class="summary-card"><div class="summary-card__val">' +
-    benarTerap +
-    '/' +
-    DATA.terapkan.soal.length +
-    '</div><div class="summary-card__label">Uji terap benar</div></div>' +
-    '</div>' +
-    '</div>' +
-    '<div class="refleksi-list">' +
-    pertanyaanHTML +
-    '</div>' +
-    '<div class="panel">' +
-    '<p class="exercise-label">' +
-    esc(D.diriLabel) +
-    '</p>' +
-    buildChoiceButtons(
-      D.diriOpsi,
-      State.refleksiDiriOrder,
-      State.refleksiDiri,
-      null,
-      false,
-      false
+    buildHead(D) +
+    buildDlPanel(
+      '<div class="summary-grid">' +
+        kartu(tempatSekali + '/' + items.length, 'Bilangan tepat ditempatkan sekali ketuk') +
+        kartu(arahBenar + '/' + DATA.olahJumlah.kasus.length, 'Arah lompatan benar') +
+        kartu(verifBenar + '/' + DATA.verifikasi.soal.length, 'Miskonsepsi ditanggapi benar') +
+        kartu(terapBenar + '/' + DATA.terapkan.soal.length, 'Uji terap benar') +
+        '</div>'
     ) +
+    '<div class="refleksi-list">' +
+    D.pertanyaan
+      .map(function (q, i) {
+        return (
+          '<div class="panel panel--compact">' +
+          '<span class="refleksi-item__num">Pertanyaan ' +
+          (i + 1) +
+          ' dari ' +
+          D.pertanyaan.length +
+          '</span>' +
+          '<label for="ref-' +
+          q.id +
+          '" class="dl-refleksi-q">' +
+          esc(q.teks) +
+          '</label>' +
+          '<textarea id="ref-' +
+          q.id +
+          '" class="input-textarea" data-rid="' +
+          q.id +
+          '" placeholder="' +
+          esc(q.placeholder) +
+          '">' +
+          esc(State.refleksiAnswers[q.id] || '') +
+          '</textarea>' +
+          '</div>'
+        );
+      })
+      .join('') +
     '</div>' +
+    buildDlPanel(
+      '<p class="exercise-label">' +
+        esc(D.diriLabel) +
+        '</p>' +
+        buildChoiceGroup(D.diriOpsi, State.refleksiDiriOrder, { chosen: State.refleksiDiri })
+    ) +
     '<div class="btn-group btn-group--spread">' +
-    '<span style="font-size:0.82rem;color:var(--color-ink-muted);align-self:center;">' +
-    'Jawaban tersimpan di perangkatmu saja, tidak dikirim ke mana pun.' +
-    '</span>' +
+    '<span class="dl-caption" style="align-self:center;">Jawaban tersimpan di perangkatmu saja, tidak dikirim ke mana pun.</span>' +
     '<button type="button" class="btn btn--primary" id="refleksiSaveBtn">' +
     esc(D.nextLabel) +
     '</button>' +
@@ -1916,8 +1480,6 @@ function renderRefleksi(container) {
       showNotice('Pilih dulu seberapa yakin kamu sekarang.');
       return;
     }
-    State.refleksiSaved = true;
-    saveState();
     completeStage('refleksi');
     navigateTo('selesai');
   });
@@ -1933,14 +1495,19 @@ function renderSelesai(container) {
   container.innerHTML =
     '<section aria-label="Selesai">' +
     '<div class="done-card">' +
-    '<span class="done-card__icon">🔍</span>' +
+    '<span class="done-card__icon">🏆</span>' +
     '<h2>' +
     esc(D.judul) +
     '</h2>' +
-    '<p style="font-size:1.05rem;color:var(--color-ink-muted);max-width:520px;margin:0 auto var(--space-5);">' +
+    '<p class="done-card__lead">' +
     esc(D.teks) +
     '</p>' +
-    '<div class="panel panel--hero" style="text-align:left;max-width:640px;margin:0 auto var(--space-5);">' +
+    '<div class="aturan-duo">' +
+    '<div class="aturan-card aturan-card--pos"><span class="aturan-card__label">Tambah positif</span>lompat ke kanan →</div>' +
+    '<div class="aturan-card aturan-card--neg"><span class="aturan-card__label">Tambah negatif</span>← lompat ke kiri</div>' +
+    '<div class="aturan-card"><span class="aturan-card__label">Pengurangan</span>a − b = a + (−b)</div>' +
+    '</div>' +
+    '<div class="panel panel--hero done-card__list">' +
     '<h3 style="margin-top:0;">Yang sudah kamu capai</h3>' +
     '<ol class="objectives-list">' +
     D.capaian
@@ -1950,12 +1517,12 @@ function renderSelesai(container) {
       .join('') +
     '</ol>' +
     '</div>' +
-    '<div class="feedback-box feedback-box--info" style="text-align:left;max-width:560px;margin:0 auto var(--space-5);">' +
+    '<div class="feedback-box feedback-box--info done-card__note">' +
     '<span class="feedback-box__icon">📌</span>' +
     '<div class="feedback-box__body">' +
     '<strong>Catatan untuk Guru:</strong><br>' +
     'Rekap pada tahap Refleksi adalah indikator latihan digital, bukan nilai akhir. ' +
-    'Kualitas penjelasan lisan murid saat menyampaikan kesimpulan temuannya tetap menjadi bahan penilaian utama.' +
+    'Kemampuan murid menjelaskan lompatan pada garis bilangan dan aturan a − b = a + (−b) dengan kata-kata sendiri tetap menjadi bahan penilaian utama.' +
     '</div></div>' +
     '<div class="btn-group btn-group--center">' +
     '<a href="../../index.html" class="btn btn--ghost">← Beranda</a>' +
@@ -1979,8 +1546,8 @@ var RENDERERS = {
   stimulasi: renderStimulasi,
   masalah: renderMasalah,
   koleksi: renderKoleksi,
-  olahData: renderOlahData,
-  satuan: renderSatuan,
+  olahJumlah: renderOlahJumlah,
+  olahKurang: renderOlahKurang,
   verifikasi: renderVerifikasi,
   generalisasi: renderGeneralisasi,
   terapkan: renderTerapkan,
@@ -2016,7 +1583,9 @@ function hideResetModal() {
 function init() {
   buildStageNav();
   loadState();
+  if (STAGES.indexOf(State.currentStage) === -1) State.currentStage = 'stimulasi';
   initExerciseArrays();
+  saveState();
   updateStageNav();
   updateProgress();
   renderCurrentStage();
@@ -2043,6 +1612,9 @@ function init() {
   if (modal) {
     modal.addEventListener('click', function (e) {
       if (e.target === modal) hideResetModal();
+    });
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape') hideResetModal();
     });
   }
 }
