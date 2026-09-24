@@ -41,11 +41,11 @@
   --color-warning-strong: #6a4c00;
   --color-focus: #2563eb;
 
-  --font-display: 'Avenir Next', 'Segoe UI Semibold', 'Segoe UI', 'Helvetica Neue', Arial,
-    sans-serif;
+  --font-display:
+    'Avenir Next', 'Segoe UI Semibold', 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
   --font-body: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
-  --font-mono: ui-monospace, 'Cascadia Mono', 'Segoe UI Mono', Consolas, 'Liberation Mono',
-    monospace;
+  --font-mono:
+    ui-monospace, 'Cascadia Mono', 'Segoe UI Mono', Consolas, 'Liberation Mono', monospace;
 
   --space-1: 4px;
   --space-2: 8px;
@@ -79,7 +79,8 @@ body {
   font-family: var(--font-body);
   color: var(--color-ink);
   background-color: var(--color-bg);
-  background-image: linear-gradient(var(--color-bg-grid) 1px, transparent 1px),
+  background-image:
+    linear-gradient(var(--color-bg-grid) 1px, transparent 1px),
     linear-gradient(90deg, var(--color-bg-grid) 1px, transparent 1px);
   background-size: 28px 28px;
   line-height: 1.6;
@@ -3648,5 +3649,183 @@ details.hint-reveal[open] summary::before {
   .frac-strip__cell,
   .order-board__card {
     transition: none;
+  }
+}
+
+/* =========================================================================
+   Penerapan kontekstual — termometer bilangan bulat & papan info
+   (engine.js bagian 16; dipakai fase-d/mpi-1.6)
+   ========================================================================= */
+
+.thermo {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  margin: 0;
+  width: 120px;
+}
+
+.thermo--small {
+  width: 92px;
+}
+
+.thermo__svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.thermo__tube {
+  fill: var(--color-surface);
+  stroke: var(--color-border-strong);
+  stroke-width: 2;
+}
+
+.thermo__bulb--cold,
+.thermo__fluid--cold {
+  fill: var(--color-blue);
+}
+
+.thermo__bulb--warm,
+.thermo__fluid--warm {
+  fill: var(--color-orange);
+}
+
+.thermo__tick {
+  stroke: var(--color-ink-muted);
+  stroke-width: 1;
+}
+
+.thermo__tick--zero {
+  stroke: var(--color-ink);
+  stroke-width: 2.5;
+}
+
+.thermo__label {
+  font-family: var(--font-body);
+  font-size: 10px;
+  fill: var(--color-ink-muted);
+}
+
+.thermo__label--zero {
+  font-weight: 700;
+  fill: var(--color-ink);
+}
+
+.thermo__marker {
+  stroke: var(--color-ink);
+  stroke-width: 2.5;
+  stroke-linecap: round;
+}
+
+.thermo__cap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  font-size: 0.82rem;
+  color: var(--color-ink-muted);
+  text-align: center;
+}
+
+.thermo__value {
+  font-family: var(--font-display);
+  font-size: 1.05rem;
+  white-space: nowrap;
+}
+
+.thermo__value--cold {
+  color: var(--color-blue-strong);
+}
+
+.thermo__value--warm {
+  color: var(--color-orange-strong);
+}
+
+.thermo-row {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--space-3);
+  margin: var(--space-3) 0;
+}
+
+.info-poster {
+  max-width: 640px;
+  margin: 0 auto;
+  padding: var(--space-5);
+  border: 3px solid var(--color-success);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  box-shadow: 0 6px 0 var(--color-success-soft);
+}
+
+.info-poster__head {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
+  padding-bottom: var(--space-3);
+  border-bottom: 2px dashed var(--color-border);
+}
+
+.info-poster__icon {
+  font-size: 2rem;
+  line-height: 1;
+}
+
+.info-poster__title {
+  margin: 0;
+  font-size: 1.25rem;
+}
+
+.info-poster__rows {
+  display: grid;
+  gap: var(--space-3);
+  margin: 0;
+}
+
+.info-poster__row {
+  display: grid;
+  grid-template-columns: minmax(0, 13rem) minmax(0, 1fr);
+  gap: var(--space-3);
+  align-items: center;
+}
+
+.info-poster__row dt {
+  font-weight: 700;
+}
+
+.info-poster__row dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.info-poster__msg {
+  margin: var(--space-4) 0 0;
+  padding: var(--space-3);
+  border-radius: var(--radius-md);
+  background: var(--color-warning-soft);
+  font-style: italic;
+}
+
+.info-poster__foot {
+  margin-top: var(--space-3);
+  font-size: 0.8rem;
+  color: var(--color-ink-muted);
+}
+
+@media (max-width: 480px) {
+  .thermo--small {
+    width: 76px;
+  }
+
+  .info-poster {
+    padding: var(--space-4);
+  }
+
+  .info-poster__row {
+    grid-template-columns: 1fr;
+    gap: 2px;
   }
 }
