@@ -4,31 +4,9 @@
 
    Hanya memuat gaya yang KHAS modul ini. Seluruh dasar design system
    (panel, tombol, kotak umpan balik, pilihan ganda, pemilahan, garis
-   bilangan interaktif .nlp-*, kartu ringkasan, navigasi tahap, modal)
+   bilangan interaktif .nlp-*, chip bilangan .num-chip, penempatan titik, pertanyaan penuntun .quiz-item, kartu ringkasan, navigasi tahap, modal)
    berasal dari shared/base.css.
    ========================================================================= */
-
-/* -------------------------------------------------------------------------
-   Chip bilangan (notasi baku ditampilkan besar & jelas)
-   ------------------------------------------------------------------------- */
-
-.num-chip {
-  display: inline-block;
-  min-width: 2.2em;
-  padding: 1px var(--space-2);
-  border-radius: var(--radius-md);
-  background: var(--color-purple-soft);
-  color: var(--color-purple-strong);
-  font-family: var(--font-mono);
-  font-weight: 700;
-  text-align: center;
-  white-space: nowrap;
-}
-
-.num-chip--lg {
-  font-size: 1.3rem;
-  padding: 2px var(--space-3);
-}
 
 /* -------------------------------------------------------------------------
    Tahap 1 — Stimulasi: catatan teman
@@ -226,44 +204,13 @@
 }
 
 /* -------------------------------------------------------------------------
-   Tahap 4–5 — pertanyaan bertingkat, temuan, penempatan titik
+   Tahap 4–5 — temuan & hipotesis
    ------------------------------------------------------------------------- */
-
-.quiz-item + .quiz-item {
-  margin-top: var(--space-5);
-  padding-top: var(--space-4);
-  border-top: 1px dashed var(--color-border);
-}
-
-.quiz-item .exercise-label {
-  line-height: 1.7;
-}
-
-.quiz-item .exercise-label .dl-step__num {
-  margin-right: var(--space-2);
-  vertical-align: middle;
-}
 
 .temuan-list {
   margin: 0;
   padding-left: var(--space-5);
   line-height: 1.7;
-}
-
-.place-target {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--space-2) var(--space-4);
-  font-weight: 600;
-}
-
-.place-target__count {
-  font-size: 0.78rem;
-  font-weight: 700;
-  color: var(--color-ink-muted);
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
 }
 
 .hipotesis-box {
