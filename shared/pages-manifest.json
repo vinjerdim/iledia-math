@@ -121,6 +121,14 @@
     "stageCount": 10,
     "extraBody": "partials/reset-modal.html"
   },
+  "fase-f/mpi-2.2": {
+    "title": "Jumlah n Suku Pertama Deret Geometri — Matematika Fase F",
+    "description": "Media pembelajaran interaktif berbasis Problem Based Learning untuk menemukan dan membuktikan rumus jumlah n suku pertama deret geometri (Sₙ), serta menerapkannya untuk menyelesaikan masalah kontekstual yang melibatkan deret aritmetika dan geometri.",
+    "kicker": "Matematika — Fase F (SMK RPL)",
+    "h1": "Jumlah n Suku Pertama Deret Geometri",
+    "stageCount": 10,
+    "extraBody": "partials/reset-modal.html"
+  },
   "fase-d/mpi-3.2": {
     "title": "Membandingkan & Mengurutkan Bilangan Desimal — Matematika Fase D",
     "description": "Media pembelajaran interaktif berbasis Inquiry Learning untuk membandingkan dan mengurutkan beberapa bilangan desimal dengan tepat menggunakan nilai tempat dan garis bilangan, serta menjelaskan alasannya.",

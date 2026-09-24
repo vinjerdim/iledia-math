@@ -41,6 +41,9 @@
    20. Bilangan desimal: membandingkan & mengurutkan (perbandingan
        berbasis nilai tempat, diagnosa miskonsepsi, tabel nilai tempat
        berdampingan, garis bilangan desimal & penempatan)
+   21. Deret aritmetika & geometri: suku & jumlah n suku (tabel
+       isian deret, grid "kalikan r, geser, kurangkan", tabel uji
+       rumus)
    ============================================================ */
 
 /* ============================================================
@@ -5893,4 +5896,387 @@ function bindDecimalPlacement(root, pid, items, st, save, rerender) {
     save();
     rerender();
   });
+}
+
+/* ============================================================
+   21. DERET ARITMETIKA & GEOMETRI: SUKU & JUMLAH n SUKU
+   Rumus suku ke-n dan jumlah n suku pertama kedua jenis deret,
+   pengenal jenis deret, serta komponen visual untuk menemukan
+   dan menguji rumus Sₙ:
+     • tabel isian deret (Uₙ/Sₙ; sebagian kolom diisi murid),
+     • grid "kalikan r, geser, kurangkan" (bukti Sₙ geometri),
+     • tabel uji rumus (jumlah manual vs hasil rumus).
+   Gaya .series-fill*, .shift-*, .series-check* ada di
+   shared/base.css.
+   ============================================================ */
+
+/* Uₙ = a + (n − 1)b */
+function sukuAritmetika(a, b, n) {
+  return a + (n - 1) * b;
+}
+
+/* Sₙ = n/2 × (2a + (n − 1)b) */
+function jumlahAritmetika(a, b, n) {
+  return (n * (2 * a + (n - 1) * b)) / 2;
+}
+
+/* Uₙ = a·rⁿ⁻¹ */
+function sukuGeometri(a, r, n) {
+  return a * Math.pow(r, n - 1);
+}
+
+/*
+ * Sₙ = a(rⁿ − 1)/(r − 1) untuk r ≠ 1, dan Sₙ = n·a untuk r = 1.
+ * Hasil yang hampir bulat (galat biner r pecahan, mis. r = ⅓)
+ * dibulatkan agar cocok dengan kunci jawaban bilangan bulat.
+ */
+function jumlahGeometri(a, r, n) {
+  if (hampirSama(r, 1)) return n * a;
+  var s = (a * (Math.pow(r, n) - 1)) / (r - 1);
+  var bulat = Math.round(s);
+  return hampirSama(s, bulat) ? bulat : s;
+}
+
+/*
+ * Daftar n suku pertama. jenis 'aritmetika' → `beda` adalah b,
+ * jenis 'geometri' → `beda` adalah rasio r.
+ */
+function daftarSuku(jenis, a, beda, n) {
+  var out = [];
+  for (var k = 1; k <= n; k++) {
+    out.push(jenis === 'geometri' ? sukuGeometri(a, beda, k) : sukuAritmetika(a, beda, k));
+  }
+  return out;
+}
+
+/* Jumlah berjalan: [U₁, U₂, …] → [S₁, S₂, …]. */
+function jumlahBerjalan(terms) {
+  var out = [];
+  var s = 0;
+  for (var i = 0; i < terms.length; i++) {
+    s += terms[i];
+    out.push(s);
+  }
+  return out;
+}
+
+/*
+ * Jenis barisan dari suku-sukunya: 'konstan' (semua suku sama),
+ * 'aritmetika' (selisih tetap), 'geometri' (rasio tetap, tanpa suku 0),
+ * atau 'bukan'. Minimal dua suku.
+ */
+function jenisDeret(terms) {
+  if (!terms || terms.length < 2) return 'bukan';
+  var d = terms[1] - terms[0];
+  var aritmetika = true;
+  for (var i = 2; i < terms.length; i++) {
+    if (!hampirSama(terms[i] - terms[i - 1], d)) aritmetika = false;
+  }
+  if (aritmetika) return hampirSama(d, 0) ? 'konstan' : 'aritmetika';
+  if (
+    terms.some(function (t) {
+      return hampirSama(t, 0);
+    })
+  ) {
+    return 'bukan';
+  }
+  var r = terms[1] / terms[0];
+  for (var j = 2; j < terms.length; j++) {
+    if (!hampirSama(terms[j] / terms[j - 1], r)) return 'bukan';
+  }
+  return 'geometri';
+}
+
+/* Angka → karakter subskrip (12 → '₁₂'), untuk label Uₙ/Sₙ. */
+function subskrip(n) {
+  var subs = ['₀', '₁', '₂', '₃', '₄', '₅', '₆', '₇', '₈', '₉'];
+  return String(n)
+    .split('')
+    .map(function (d) {
+      return subs[+d] || d;
+    })
+    .join('');
+}
+
+/*
+ * Tabel isian deret: kolom pertama n = 1, 2, …; kolom lain dari `columns`.
+ *   columns  [{ id, label, values: [..], editable }] — kolom editable
+ *            diisi murid (jawaban benar = values[i]); lainnya ditampilkan
+ *   inputs   { <colId>: ['isian', …] } — isian murid per kolom editable
+ *   opts.checked  true → tandai sel terisi dengan ✓/✗
+ *   opts.locked   true → isian dinonaktifkan (mis. setelah semua benar)
+ *   opts.format   function(v) → teks nilai tetap (default formatNumber)
+ *   opts.caption  teks aksesibel tabel
+ * Isian dibaca dengan parseInputInt(…, true) sehingga pemisah ribuan
+ * (6.200.000) diterima.
+ */
+function seriesFillCellCorrect(col, inputs, i) {
+  var val = inputs && inputs[col.id] ? inputs[col.id][i] : '';
+  var parsed = parseInputInt(String(val || ''), true);
+  return !parsed.error && hampirSama(parsed.value, col.values[i]);
+}
+
+function seriesFillTableAllCorrect(columns, inputs) {
+  return columns.every(function (col) {
+    if (!col.editable) return true;
+    return col.values.every(function (v, i) {
+      return seriesFillCellCorrect(col, inputs, i);
+    });
+  });
+}
+
+function buildSeriesFillTable(id, columns, inputs, opts) {
+  opts = opts || {};
+  inputs = inputs || {};
+  var fmtV =
+    opts.format ||
+    function (v) {
+      return formatNumber(v, '−');
+    };
+  var rows = columns[0].values.length;
+  var head =
+    '<tr><th scope="col">n</th>' +
+    columns
+      .map(function (c) {
+        return '<th scope="col">' + c.label + '</th>';
+      })
+      .join('') +
+    '</tr>';
+  var body = '';
+  for (var i = 0; i < rows; i++) {
+    body += '<tr><th scope="row">' + (i + 1) + '</th>';
+    columns.forEach(function (c) {
+      if (!c.editable) {
+        body += '<td class="series-fill__given">' + esc(fmtV(c.values[i])) + '</td>';
+        return;
+      }
+      var val = inputs[c.id] ? inputs[c.id][i] || '' : '';
+      var dinilai = opts.checked && String(val).trim() !== '';
+      var ok = dinilai && seriesFillCellCorrect(c, inputs, i);
+      body +=
+        '<td class="series-fill__cell' +
+        (dinilai ? (ok ? ' sel--ok' : ' sel--no') : '') +
+        '">' +
+        '<input type="text" inputmode="numeric" autocomplete="off" class="input-text series-fill__input"' +
+        ' data-fill-id="' +
+        esc(id) +
+        '" data-fill-col="' +
+        esc(c.id) +
+        '" data-idx="' +
+        i +
+        '" value="' +
+        esc(val) +
+        '" aria-label="' +
+        esc(c.label.replace(/<[^>]*>/g, '') + ' untuk n = ' + (i + 1)) +
+        '"' +
+        (opts.locked ? ' disabled' : '') +
+        '>' +
+        (dinilai
+          ? ok
+            ? '<span class="series-fill__mark series-fill__mark--ok" aria-label="benar">✓</span>'
+            : '<span class="series-fill__mark series-fill__mark--no" aria-label="salah">✗</span>'
+          : '') +
+        '</td>';
+    });
+    body += '</tr>';
+  }
+  return (
+    '<div class="series-fill" id="' +
+    esc(id) +
+    '">' +
+    '<table class="series-fill__table"' +
+    (opts.caption ? ' aria-label="' + esc(opts.caption) + '"' : '') +
+    '>' +
+    '<thead>' +
+    head +
+    '</thead><tbody>' +
+    body +
+    '</tbody></table></div>'
+  );
+}
+
+/*
+ * Memasang isian buildSeriesFillTable: setiap ketikan disimpan ke
+ * inputs[col][i]; Enter memanggil onEnter() (mis. klik tombol Periksa).
+ */
+function bindSeriesFillTable(root, id, inputs, save, onEnter) {
+  root.querySelectorAll('[data-fill-id="' + id + '"]').forEach(function (inp) {
+    inp.addEventListener('input', function () {
+      var col = inp.dataset.fillCol;
+      if (!Array.isArray(inputs[col])) inputs[col] = [];
+      inputs[col][+inp.dataset.idx] = inp.value;
+      save();
+    });
+    inp.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter' && onEnter) onEnter();
+    });
+  });
+}
+
+/*
+ * Grid "kalikan r, geser, kurangkan" untuk membuktikan Sₙ geometri.
+ * Baris atas Sₙ = U₁ + … + Uₙ (kolom 0..n−1), baris bawah r·Sₙ yang
+ * bergeser satu kolom (kolom 1..n). Kolom 1..n−1 berisi pasangan kembar
+ * yang diketuk untuk dicoret; setelah semua tercoret tampil hasil
+ * r·Sₙ − Sₙ = r·Uₙ − U₁.
+ *   terms   suku-suku deret (bilangan)
+ *   r       rasio
+ *   struck  array boolean sepanjang n − 1 (indeks = kolom − 1)
+ *   opts.label   label jumlah, mis. 'S₅' (default 'Sₙ')
+ *   opts.format  function(v) → teks nilai (default formatNumber)
+ */
+function shiftGridAllStruck(struck) {
+  return (
+    Array.isArray(struck) &&
+    struck.every(function (c) {
+      return c;
+    })
+  );
+}
+
+function buildShiftSubtractGrid(id, terms, r, struck, opts) {
+  opts = opts || {};
+  var label = opts.label || 'Sₙ';
+  var rLabel = formatRatio(r) + label;
+  var fmtV =
+    opts.format ||
+    function (v) {
+      return formatNumber(v, '−');
+    };
+  var n = terms.length;
+  var semua = shiftGridAllStruck(struck);
+
+  function cell(val, col) {
+    if (val === null) {
+      return '<span class="shift-cell shift-cell--empty" aria-hidden="true"></span>';
+    }
+    var kembar = col >= 1 && col <= n - 1;
+    if (!kembar) {
+      return (
+        '<span class="shift-cell' +
+        (semua ? ' shift-cell--rest' : '') +
+        '">' +
+        fmtV(val) +
+        '</span>'
+      );
+    }
+    var coret = !!struck[col - 1];
+    return (
+      '<button type="button" class="shift-cell shift-cell--pair' +
+      (coret ? ' is-struck' : '') +
+      '" data-shift-id="' +
+      esc(id) +
+      '" data-shift-coret="' +
+      (col - 1) +
+      '" aria-pressed="' +
+      coret +
+      '" aria-label="' +
+      (coret ? 'Sudah dicoret: ' : 'Coret pasangan ') +
+      esc(fmtV(val)) +
+      '"' +
+      (coret ? ' disabled' : '') +
+      '>' +
+      fmtV(val) +
+      '</button>'
+    );
+  }
+
+  function row(rowLabel, slots, cls) {
+    var html = '<div class="shift-row' + (cls ? ' ' + cls : '') + '">';
+    html += '<span class="shift-row__label">' + esc(rowLabel) + '</span>';
+    for (var c = 0; c <= n; c++) {
+      if (c > 0) {
+        var op = slots[c - 1] !== null && slots[c] !== null ? '+' : '';
+        html += '<span class="shift-op" aria-hidden="true">' + op + '</span>';
+      }
+      html += cell(slots[c], c);
+    }
+    return html + '</div>';
+  }
+
+  var atas = terms.concat([null]);
+  var bawah = [null].concat(
+    terms.map(function (t) {
+      return t * r;
+    })
+  );
+  var terakhir = terms[n - 1] * r;
+
+  return (
+    '<div class="shift-grid" id="' +
+    esc(id) +
+    '" role="group" aria-label="' +
+    esc('Deret ' + label + ' dan ' + rLabel + ' yang bergeser satu kolom') +
+    '">' +
+    row(label + ' =', atas) +
+    row(rLabel + ' =', bawah, 'shift-row--times') +
+    (semua
+      ? '<div class="shift-result">' +
+        esc(rLabel) +
+        ' − ' +
+        esc(label) +
+        ' = <strong>' +
+        fmtV(terakhir) +
+        '</strong> − <strong>' +
+        fmtV(terms[0]) +
+        '</strong></div>'
+      : '') +
+    '</div>'
+  );
+}
+
+function bindShiftSubtractGrid(root, id, struck, save, rerender) {
+  root.querySelectorAll('[data-shift-id="' + id + '"][data-shift-coret]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      struck[+btn.dataset.shiftCoret] = true;
+      save();
+      rerender();
+    });
+  });
+}
+
+/*
+ * Tabel uji rumus: jumlah suku satu per satu vs hasil rumus.
+ *   rows          [{ n, manual, rumus }]
+ *   opts.format   function(v) → teks nilai (default formatNumber)
+ *   opts.manualLabel, opts.rumusLabel  judul kolom
+ *   opts.caption  teks aksesibel tabel
+ */
+function buildSeriesCheckTable(rows, opts) {
+  opts = opts || {};
+  var fmtV =
+    opts.format ||
+    function (v) {
+      return formatNumber(v, '−');
+    };
+  return (
+    '<div class="series-check">' +
+    '<table class="series-check__table"' +
+    (opts.caption ? ' aria-label="' + esc(opts.caption) + '"' : '') +
+    '>' +
+    '<thead><tr><th scope="col">n</th><th scope="col">' +
+    esc(opts.manualLabel || 'Dijumlah satu per satu') +
+    '</th><th scope="col">' +
+    esc(opts.rumusLabel || 'Hasil rumus') +
+    '</th><th scope="col">Cocok?</th></tr></thead><tbody>' +
+    rows
+      .map(function (r) {
+        var ok = hampirSama(r.manual, r.rumus);
+        return (
+          '<tr><th scope="row">' +
+          r.n +
+          '</th><td>' +
+          esc(fmtV(r.manual)) +
+          '</td><td>' +
+          esc(fmtV(r.rumus)) +
+          '</td><td>' +
+          (ok
+            ? '<span class="series-check__ok" aria-label="cocok">✓</span>'
+            : '<span class="series-check__no" aria-label="tidak cocok">✗</span>') +
+          '</td></tr>'
+        );
+      })
+      .join('') +
+    '</tbody></table></div>'
+  );
 }
