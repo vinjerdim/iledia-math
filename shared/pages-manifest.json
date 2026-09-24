@@ -168,5 +168,13 @@
     "h1": "Relasi Antara Dua Himpunan",
     "stageCount": 10,
     "extraBody": "partials/reset-modal.html"
+  },
+  "fase-d/mpi-29.1": {
+    "title": "Bangun Kongruen & Sifat-sifatnya — Matematika Fase D",
+    "description": "Media pembelajaran interaktif berbasis Discovery Learning untuk menjelaskan pengertian bangun kongruen dan sifat-sifatnya (sisi dan sudut bersesuaian sama besar) serta membedakannya dari bangun sebangun melalui kegiatan menjiplak dan mengukur berbagai bangun datar.",
+    "kicker": "Matematika — Fase D (SMP)",
+    "h1": "Bangun Kongruen & Sifat-sifatnya",
+    "stageCount": 10,
+    "extraBody": "partials/reset-modal.html"
   }
 }
