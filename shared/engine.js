@@ -21,6 +21,9 @@
     8. Komponen Discovery Learning lanjutan (langkah isian
        bertahap, pemilahan kategori, grafik perbandingan)
     9. Bilangan bulat: cara baca baku & garis bilangan interaktif
+   10. Pecahan: notasi baku, cara baca & model visual
+   11. Pecahan: membandingkan & mengurutkan (KPK, pita pecahan,
+       garis bilangan 0–1, papan urutan, kartu peran kelompok)
    ============================================================ */
 
 /* ============================================================
@@ -2374,4 +2377,536 @@ function readFractionInput(root, id) {
   };
   if (value.den === 0) return { raw: raw, value: value, error: 'zero-den' };
   return { raw: raw, value: value, error: null };
+}
+
+/* ============================================================
+   11. PECAHAN — MEMBANDINGKAN & MENGURUTKAN
+   Dipakai modul membandingkan & mengurutkan pecahan (fase-d/mpi-1.5).
+   Pecahan ditulis sebagai objek { num, den } (boleh berisi field lain
+   seperti id/nama). Gaya .frac-strip*, .frac-nl*, .order-board*,
+   .role-card* ada di shared/base.css.
+   ============================================================ */
+
+/* KPK (kelipatan persekutuan terkecil) dua bilangan cacah positif. */
+function lcm(a, b) {
+  a = Math.abs(Math.round(a));
+  b = Math.abs(Math.round(b));
+  if (!a || !b) return 0;
+  return (a / gcd(a, b)) * b;
+}
+
+/* KPK sederet bilangan, mis. kpkList([3, 4, 8]) → 24. */
+function kpkList(arr) {
+  return arr.reduce(function (acc, n) {
+    return lcm(acc, n);
+  }, 1);
+}
+
+/*
+ * Membandingkan dua pecahan dengan perkalian silang (bilangan bulat,
+ * bebas galat pembulatan): −1 bila a < b, 0 bila a = b, 1 bila a > b.
+ */
+function compareFractions(a, b) {
+  var kiri = a.num * b.den;
+  var kanan = b.num * a.den;
+  if (kiri < kanan) return -1;
+  if (kiri > kanan) return 1;
+  return 0;
+}
+
+/* Tanda perbandingan dari hasil compareFractions: '<', '=', atau '>'. */
+function fracRelationSymbol(cmp) {
+  if (cmp < 0) return '<';
+  if (cmp > 0) return '>';
+  return '=';
+}
+
+/* Salinan pecahan yang terurut naik (desc true → turun). */
+function sortFractions(fracs, desc) {
+  return fracs.slice().sort(function (a, b) {
+    return desc ? compareFractions(b, a) : compareFractions(a, b);
+  });
+}
+
+/*
+ * Mengganti token pecahan di dalam teks HTML dengan buildFracInline:
+ *   "{3/4}"   → pecahan 3/4 bersusun
+ *   "{2 3/4}" → pecahan campuran 2¾
+ *   "{a/b}"   → pecahan berhuruf (untuk bentuk umum)
+ * Dipakai agar isi DATA tetap ringkas ditulis sebagai teks biasa.
+ */
+function renderFracText(str) {
+  function angka(v) {
+    return /^\d+$/.test(v) ? parseInt(v, 10) : v;
+  }
+  return String(str).replace(/\{(?:(\d+)\s+)?(\w+)\/(\w+)\}/g, function (m, w, n, d) {
+    return buildFracInline(angka(n), angka(d), w ? angka(w) : null);
+  });
+}
+
+/*
+ * Pita pecahan bertumpuk pada skala yang sama (seluruh pita panjangnya
+ * sama = 1 utuh), untuk membandingkan beberapa pecahan secara visual.
+ *   fracs          [{ num, den, nama? }]
+ *   opts.common    penyebut bersama (mis. KPK). Bila diisi, tiap pita
+ *                  dibagi `common` bagian; batas bagian asal tetap
+ *                  ditebalkan sehingga kesetaraan (2/3 = 8/12) terlihat.
+ *   opts.half      true → garis putus-putus patokan ½
+ *   opts.highlight indeks pita yang disorot (mis. pecahan terbesar)
+ *   opts.caption   teks kecil di bawah pita (HTML)
+ */
+function buildFracStripCompare(fracs, opts) {
+  opts = opts || {};
+  var rows = fracs
+    .map(function (f, k) {
+      var den = Math.max(1, Math.round(f.den));
+      var n = opts.common && opts.common % den === 0 ? opts.common : den;
+      var per = n / den;
+      var on = f.num * per;
+      var cells = '';
+      for (var j = 0; j < n; j++) {
+        var edge = per > 1 && (j + 1) % per === 0 && j < n - 1;
+        cells +=
+          '<span class="frac-strip__cell' +
+          (j < on ? ' is-on' : '') +
+          (edge ? ' is-edge' : '') +
+          '"></span>';
+      }
+      var label =
+        buildFracInline(f.num, f.den) +
+        (per > 1 ? ' <span class="frac-strip__eq">= ' + buildFracInline(on, n) + '</span>' : '');
+      return (
+        '<div class="frac-strip__row frac-strip__row--' +
+        (k % 4) +
+        (opts.highlight === k ? ' is-hl' : '') +
+        '">' +
+        '<span class="frac-strip__label">' +
+        (f.nama ? '<span class="frac-strip__name">' + esc(f.nama) + '</span>' : '') +
+        label +
+        '</span>' +
+        '<span class="frac-strip__bar" style="grid-template-columns:repeat(' +
+        n +
+        ',1fr)" aria-hidden="true">' +
+        cells +
+        '</span>' +
+        '</div>'
+      );
+    })
+    .join('');
+  var aria = fracs
+    .map(function (f) {
+      return (f.nama ? f.nama + ' ' : '') + bacaPecahan(f.num, f.den);
+    })
+    .join(', ');
+  return (
+    '<figure class="frac-strip' +
+    (opts.half ? ' frac-strip--half' : '') +
+    '" role="img" aria-label="' +
+    esc('Pita pecahan sama panjang: ' + aria) +
+    '">' +
+    rows +
+    (opts.caption
+      ? '<figcaption class="frac-strip__caption">' + opts.caption + '</figcaption>'
+      : '') +
+    '</figure>'
+  );
+}
+
+/*
+ * Garis bilangan 0 … 1 (SVG, tidak interaktif) dengan titik-titik pecahan
+ * berlabel. Label yang berdekatan diletakkan selang-seling atas/bawah
+ * agar tidak bertumpuk.
+ *   fracs        [{ num, den, nama? }]
+ *   opts.ticks   penyebut garis bantu (mis. KPK); 0/undefined → tanpa
+ *   opts.aria    label aksesibel
+ */
+function buildFracNumberLine(fracs, opts) {
+  opts = opts || {};
+  var W = 420;
+  var H = 136;
+  var padX = 24;
+  var axisY = 70;
+  function xOf(v) {
+    return padX + v * (W - 2 * padX);
+  }
+  var html =
+    '<line class="frac-nl__axis" x1="' +
+    xOf(0) +
+    '" y1="' +
+    axisY +
+    '" x2="' +
+    xOf(1) +
+    '" y2="' +
+    axisY +
+    '"/>';
+  if (opts.ticks && opts.ticks <= 60) {
+    for (var t = 1; t < opts.ticks; t++) {
+      var tx = xOf(t / opts.ticks);
+      html +=
+        '<line class="frac-nl__tick" x1="' +
+        tx +
+        '" y1="' +
+        (axisY - 6) +
+        '" x2="' +
+        tx +
+        '" y2="' +
+        (axisY + 6) +
+        '"/>';
+    }
+  }
+  [0, 1].forEach(function (v) {
+    html +=
+      '<line class="frac-nl__tick frac-nl__tick--major" x1="' +
+      xOf(v) +
+      '" y1="' +
+      (axisY - 12) +
+      '" x2="' +
+      xOf(v) +
+      '" y2="' +
+      (axisY + 12) +
+      '"/>' +
+      '<text class="frac-nl__end" x="' +
+      xOf(v) +
+      '" y="' +
+      (axisY + 30) +
+      '">' +
+      v +
+      '</text>';
+  });
+  var urut = sortFractions(fracs);
+  var lastX = -Infinity;
+  var atas = true;
+  urut.forEach(function (f) {
+    var x = xOf(f.num / f.den);
+    atas = x - lastX < 36 ? !atas : true;
+    lastX = x;
+    var ly = atas ? axisY - 50 : axisY + 32;
+    html +=
+      '<g class="frac-nl__mark frac-nl__mark--' +
+      (fracs.indexOf(f) % 4) +
+      '">' +
+      '<line class="frac-nl__stem" x1="' +
+      x +
+      '" y1="' +
+      axisY +
+      '" x2="' +
+      x +
+      '" y2="' +
+      (atas ? axisY - 26 : axisY + 12) +
+      '"/>' +
+      '<circle cx="' +
+      x +
+      '" cy="' +
+      axisY +
+      '" r="7"/>' +
+      '<text class="frac-nl__num" x="' +
+      x +
+      '" y="' +
+      ly +
+      '">' +
+      f.num +
+      '</text>' +
+      '<line class="frac-nl__bar" x1="' +
+      (x - 11) +
+      '" y1="' +
+      (ly + 5) +
+      '" x2="' +
+      (x + 11) +
+      '" y2="' +
+      (ly + 5) +
+      '"/>' +
+      '<text class="frac-nl__num" x="' +
+      x +
+      '" y="' +
+      (ly + 22) +
+      '">' +
+      f.den +
+      '</text>' +
+      '</g>';
+  });
+  return (
+    '<div class="frac-nl-wrap"><svg class="frac-nl" viewBox="0 0 ' +
+    W +
+    ' ' +
+    H +
+    '" role="img" aria-label="' +
+    esc(
+      opts.aria ||
+        'Garis bilangan 0 sampai 1 dengan titik ' +
+          urut
+            .map(function (f) {
+              return bacaPecahan(f.num, f.den);
+            })
+            .join(', ')
+    ) +
+    '">' +
+    html +
+    '</svg></div>'
+  );
+}
+
+/*
+ * Aktivitas MENGURUTKAN dengan mengetuk kartu. Kartu diacak SEKALI
+ * lalu urutannya disimpan di State, sehingga stabil lintas render/reload
+ * namun teracak ulang saat Reset.
+ *
+ * State satu papan (makeOrderState):
+ *   { pool: [id acak], picked: [id terpilih], checked, correct, attempts }
+ *
+ * ensureOrderState(state, key, items) menyiapkan state[key] untuk
+ * items [{ id, ... }]; dibuat ulang bila id-nya tidak lagi cocok.
+ */
+function makeOrderState(items) {
+  return {
+    pool: shuffleArray(optionIds(items)),
+    picked: [],
+    checked: false,
+    correct: false,
+    attempts: 0,
+  };
+}
+
+function ensureOrderState(state, key, items) {
+  var st = state[key];
+  var ids = optionIds(items);
+  var cocok =
+    st &&
+    Array.isArray(st.pool) &&
+    Array.isArray(st.picked) &&
+    st.pool.length === ids.length &&
+    ids.every(function (id) {
+      return st.pool.indexOf(id) !== -1;
+    });
+  if (!cocok) state[key] = makeOrderState(items);
+  return state[key];
+}
+
+/*
+ * Merender papan urutan.
+ *   id             awalan id DOM (unik dalam tahap)
+ *   items          [{ id, html, aria }] — isi kartu (HTML) & label aksesibel
+ *   st             state papan (makeOrderState)
+ *   opts.correct   array id urutan benar (untuk menandai tiap posisi)
+ *   opts.fromLabel label ujung kiri (mis. 'Terkecil')
+ *   opts.toLabel   label ujung kanan (mis. 'Terbesar')
+ */
+function buildOrderBoard(id, items, st, opts) {
+  opts = opts || {};
+  var byId = {};
+  items.forEach(function (it) {
+    byId[it.id] = it;
+  });
+  var locked = st.checked && st.correct;
+  var slots = '';
+  for (var i = 0; i < items.length; i++) {
+    var pid = st.picked[i];
+    var cls = 'order-board__slot';
+    if (pid) cls += ' is-filled';
+    if (st.checked && pid && opts.correct) {
+      cls += opts.correct[i] === pid ? ' is-ok' : ' is-bad';
+    }
+    slots +=
+      '<li class="' +
+      cls +
+      '">' +
+      '<span class="order-board__pos">' +
+      (i + 1) +
+      '</span>' +
+      (pid
+        ? '<span class="order-board__val">' + byId[pid].html + '</span>'
+        : '<span class="order-board__empty">?</span>') +
+      '</li>';
+  }
+  var pool = st.pool
+    .filter(function (pid) {
+      return st.picked.indexOf(pid) === -1;
+    })
+    .map(function (pid) {
+      return (
+        '<button type="button" class="order-board__card" data-order-pick="' +
+        esc(pid) +
+        '" data-order-board="' +
+        esc(id) +
+        '" aria-label="' +
+        esc('Pilih ' + (byId[pid].aria || pid)) +
+        '"' +
+        (st.checked ? ' disabled' : '') +
+        '>' +
+        byId[pid].html +
+        '</button>'
+      );
+    })
+    .join('');
+  var full = st.picked.length === items.length;
+  var controls = '';
+  if (!locked) {
+    if (st.checked) {
+      controls =
+        '<button type="button" class="btn btn--primary" id="' +
+        id +
+        'Fix">🔁 Perbaiki Urutan</button>';
+    } else {
+      controls =
+        '<button type="button" class="btn btn--primary" id="' +
+        id +
+        'Check"' +
+        (full ? '' : ' disabled') +
+        '>Periksa Urutan</button>' +
+        '<button type="button" class="btn btn--ghost btn--small" id="' +
+        id +
+        'Undo"' +
+        (st.picked.length ? '' : ' disabled') +
+        '>↩ Batal satu</button>' +
+        '<button type="button" class="btn btn--ghost btn--small" id="' +
+        id +
+        'Clear"' +
+        (st.picked.length ? '' : ' disabled') +
+        '>Ulang</button>';
+    }
+  }
+  return (
+    '<div class="order-board' +
+    (locked ? ' is-locked' : '') +
+    '" id="' +
+    id +
+    '">' +
+    '<div class="order-board__ends" aria-hidden="true"><span>' +
+    esc(opts.fromLabel || 'Terkecil') +
+    '</span><span>' +
+    esc(opts.toLabel || 'Terbesar') +
+    ' →</span></div>' +
+    '<ol class="order-board__slots" aria-label="' +
+    esc('Urutan dari ' + (opts.fromLabel || 'terkecil') + ' ke ' + (opts.toLabel || 'terbesar')) +
+    '">' +
+    slots +
+    '</ol>' +
+    (pool
+      ? '<p class="order-board__hint">Ketuk kartu sesuai urutan:</p><div class="order-board__pool">' +
+        pool +
+        '</div>'
+      : '') +
+    (controls ? '<div class="order-board__controls">' + controls + '</div>' : '') +
+    '</div>'
+  );
+}
+
+/*
+ * Memasang event buildOrderBoard di dalam `root`.
+ *   opts.correct   array id urutan benar
+ *   opts.save, opts.rerender   dipanggil setelah setiap perubahan
+ *   opts.onCheck(st)           (opsional) setelah diperiksa
+ */
+function bindOrderBoard(root, id, st, opts) {
+  function done() {
+    opts.save();
+    opts.rerender();
+  }
+  root.querySelectorAll('[data-order-board="' + id + '"]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      if (st.checked) return;
+      var pid = btn.getAttribute('data-order-pick');
+      if (st.picked.indexOf(pid) === -1) st.picked.push(pid);
+      done();
+    });
+  });
+  var check = root.querySelector('#' + id + 'Check');
+  var undo = root.querySelector('#' + id + 'Undo');
+  var clear = root.querySelector('#' + id + 'Clear');
+  var fix = root.querySelector('#' + id + 'Fix');
+  if (check) {
+    check.addEventListener('click', function () {
+      if (st.picked.length !== opts.correct.length) return;
+      st.attempts += 1;
+      st.checked = true;
+      st.correct = st.picked.every(function (pid, i) {
+        return pid === opts.correct[i];
+      });
+      if (opts.onCheck) opts.onCheck(st);
+      done();
+    });
+  }
+  if (undo) {
+    undo.addEventListener('click', function () {
+      st.picked.pop();
+      done();
+    });
+  }
+  if (clear) {
+    clear.addEventListener('click', function () {
+      st.picked = [];
+      done();
+    });
+  }
+  if (fix) {
+    fix.addEventListener('click', function () {
+      /* Kartu di posisi yang sudah benar tetap di tempat; sisanya kembali. */
+      var keep = [];
+      for (var i = 0; i < st.picked.length; i++) {
+        if (st.picked[i] !== opts.correct[i]) break;
+        keep.push(st.picked[i]);
+      }
+      st.picked = keep;
+      st.checked = false;
+      done();
+    });
+  }
+}
+
+/*
+ * Kartu peran kerja kelompok (Cooperative Learning): setiap peran punya
+ * ikon, nama, tugas, dan kotak isian nama anggota.
+ *   roles   [{ id, ikon, nama, tugas }]
+ *   values  { <roleId>: 'nama anggota' }
+ *   opts.locked  true → tampilkan nama saja (tanpa isian)
+ * Kotak isian memakai atribut data-role-id untuk dipasang event-nya.
+ */
+function buildRoleCards(roles, values, opts) {
+  opts = opts || {};
+  values = values || {};
+  return (
+    '<div class="role-cards">' +
+    roles
+      .map(function (r) {
+        var val = values[r.id] || '';
+        return (
+          '<div class="role-card">' +
+          '<span class="role-card__icon" aria-hidden="true">' +
+          r.ikon +
+          '</span>' +
+          '<div class="role-card__body">' +
+          '<p class="role-card__name">' +
+          esc(r.nama) +
+          '</p>' +
+          '<p class="role-card__task">' +
+          r.tugas +
+          '</p>' +
+          (opts.locked
+            ? '<p class="role-card__who">👤 ' + esc(val || '-') + '</p>'
+            : '<input type="text" class="input-text role-card__input" maxlength="24" data-role-id="' +
+              esc(r.id) +
+              '" value="' +
+              esc(val) +
+              '" placeholder="Nama anggota" aria-label="' +
+              esc('Nama anggota untuk peran ' + r.nama) +
+              '">') +
+          '</div>' +
+          '</div>'
+        );
+      })
+      .join('') +
+    '</div>'
+  );
+}
+
+/* Label kecil peran yang bertugas, mis. "🧮 Penghitung: Rina". */
+function buildRoleTag(role, name) {
+  if (!role) return '';
+  return (
+    '<span class="role-tag"><span aria-hidden="true">' +
+    role.ikon +
+    '</span> ' +
+    esc(role.nama) +
+    (name ? ': <strong>' + esc(name) + '</strong>' : '') +
+    '</span>'
+  );
 }

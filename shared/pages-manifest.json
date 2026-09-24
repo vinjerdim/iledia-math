@@ -41,11 +41,11 @@
     ]
   },
   "fase-d/mpi-1.5": {
-    "title": "Operasi Aritmatika Campuran — Matematika Fase D",
-    "description": "Media pembelajaran interaktif untuk menyelesaikan masalah operasi aritmatika campuran bilangan rasional dan desimal bagi peserta didik SMP.",
+    "title": "Membandingkan & Mengurutkan Pecahan — Matematika Fase D",
+    "description": "Media pembelajaran interaktif berbasis Cooperative Learning untuk membandingkan dan mengurutkan pecahan dengan penyebut berbeda melalui kerja kelompok berperan.",
     "kicker": "Matematika — Fase D (SMP)",
-    "h1": "Operasi Aritmatika Campuran",
-    "stageCount": 5,
+    "h1": "Membandingkan & Mengurutkan Pecahan",
+    "stageCount": 9,
     "extraBody": "partials/reset-modal.html"
   },
   "fase-d/mpi-1.6": {

@@ -2,200 +2,243 @@
 
 /* ============================================================
    app.js — Logika aplikasi media pembelajaran
-   Matematika: Menyelesaikan Masalah Operasi Aritmatika Campuran
-   Bilangan Rasional dan Desimal
+   Matematika: Membandingkan & Mengurutkan Pecahan Berpenyebut Berbeda
+   Fase D — SMP Kelas 7
 
-   Utilitas bersama (esc, parseInputInt, showNotice, builder render,
-   mesin navigasi tahap) berada di shared/engine.js.
+   Utilitas bersama (esc, shuffleArray, showNotice, buildFeedbackBox,
+   buildProgressDots, createStageMachine, createStore,
+   createExerciseStage, komponen pilihan/pemilahan/langkah isian,
+   komponen pecahan, serta komponen membandingkan & mengurutkan
+   pecahan: lcm, kpkList, compareFractions, sortFractions,
+   renderFracText, buildFracStripCompare, buildFracNumberLine,
+   buildOrderBoard/bindOrderBoard, buildRoleCards, buildRoleTag)
+   berada di shared/engine.js.
+
+   Alur tahap mengikuti fase Cooperative Learning; lihat komentar
+   kepala pada data.js untuk pemetaannya.
+
+   Seluruh pilihan jawaban DIACAK dengan shuffleArray() melalui
+   ensureShuffledOrder()/ensureSortStates()/ensureOrderState().
+   Pengacakan dilakukan SEKALI saat state disiapkan
+   (initExerciseArrays), lalu urutannya disimpan di State — bukan saat
+   render. Dengan begitu pilihan tidak melompat-lompat setiap kali
+   tahap dirender ulang, tetapi teracak ulang setiap kali Reset.
 
    Bagian:
-    1. Utilitas Matematika
-    2. Konstanta & Konfigurasi
-    3. State & Storage
-    4. Navigasi Tahap
-    5. Utilitas Render HTML
-    6. Stage: Orientasi
-    7. Stage: Contoh Terbimbing
-    8. Stage: Latihan (router + per-fase)
-    9. Stage: Hasil
-   10. Stage: Refleksi
-   11. Helper UI (notice, modal)
-   12. Init
+    1. Konstanta
+    2. State & Storage
+    3. Navigasi
+    4. Utilitas Render
+    5. Stage: Orientasi        (CL fase 1)
+    6. Stage: Sajian Materi    (CL fase 2)
+    7. Stage: Bentuk Kelompok  (CL fase 3)
+    8. Stage: Bandingkan       (CL fase 4)
+    9. Stage: Urutkan          (CL fase 4)
+   10. Stage: Kuis Individu    (CL fase 5)
+   11. Stage: Penghargaan      (CL fase 6)
+   12. Stage: Refleksi
+   13. Stage: Selesai
+   14. Router Render
+   15. Helper UI (modal reset)
+   16. Init
    ============================================================ */
 
 /* ============================================================
-   1. UTILITAS MATEMATIKA
+   1. KONSTANTA
    ============================================================ */
 
-/**
- * Parse input angka dari user.
- * Menerima koma atau titik sebagai pemisah desimal.
- * Mengembalikan { value: number|null, error: 'empty'|'invalid'|null }
- */
-function parseUserInput(str) {
-  if (!str || str.trim() === '') return { value: null, error: 'empty' };
-  var s = str.trim().replace(/\s/g, '');
-  /* Tolak jika ada lebih dari satu pemisah desimal */
-  var commas = (s.match(/,/g) || []).length;
-  var dots = (s.match(/\./g) || []).length;
-  if (commas + dots > 1) return { value: null, error: 'invalid' };
-  s = s.replace(',', '.');
-  /* Hanya izinkan angka negatif/positif dengan satu titik desimal */
-  if (!/^-?\d*\.?\d+$/.test(s)) return { value: null, error: 'invalid' };
-  var v = parseFloat(s);
-  if (isNaN(v)) return { value: null, error: 'invalid' };
-  return { value: v, error: null };
-}
+var STAGES = [
+  'orientasi',
+  'sajian',
+  'kelompok',
+  'bandingkan',
+  'urutkan',
+  'kuis',
+  'penghargaan',
+  'refleksi',
+  'selesai',
+];
+var STAGE_LABELS = [
+  'Orientasi',
+  'Sajian Materi',
+  'Bentuk Kelompok',
+  'Bandingkan',
+  'Urutkan',
+  'Kuis Individu',
+  'Penghargaan',
+  'Refleksi',
+  'Selesai',
+];
+var STORAGE_KEY = 'mpi-d-1-5-banding-pecahan-cl-v1';
 
-/** Periksa kesetaraan numerik dengan toleransi */
-function approxEqual(a, b, tol) {
-  if (tol === undefined) tol = 1e-9;
-  return Math.abs(a - b) <= tol;
-}
+/* Peran berdasarkan id, untuk label peran yang bertugas. */
+var PERAN = {};
+DATA.peran.forEach(function (r) {
+  PERAN[r.id] = r;
+});
 
-/** Format angka ke tampilan Indonesia (koma desimal, maks 4 digit) */
-function formatNum(val, maxDig) {
-  if (maxDig === undefined) maxDig = 4;
-  var s = parseFloat(val.toFixed(maxDig)).toString().replace('.', ',');
-  return s;
-}
+/* Soal kuis dengan token pecahan {a/b} sudah diubah menjadi HTML. */
+var KUIS_SOAL = DATA.kuis.soal.map(function (s) {
+  return Object.assign({}, s, {
+    tanya: renderFracText(s.tanya),
+    explanation: renderFracText(s.explanation),
+    options: s.options.map(function (o) {
+      return { id: o.id, label: renderFracText(o.label) };
+    }),
+  });
+});
 
-/* ============================================================
-   2. KONSTANTA & KONFIGURASI
-   ============================================================ */
-
-var STAGES = ['orientasi', 'contoh', 'latihan', 'hasil', 'refleksi'];
-var STAGE_LABELS = ['Orientasi', 'Contoh', 'Latihan', 'Hasil', 'Refleksi'];
-var STORAGE_KEY = 'mpi-1-5-v1';
-
-var PHASES = ['identify', 'model', 'order', 'calc', 'answer', 'verify'];
-var PHASE_LABELS = {
-  identify: 'Identifikasi',
-  model: 'Model Operasi',
-  order: 'Urutan Operasi',
-  calc: 'Hitung Bertahap',
-  answer: 'Jawaban Akhir',
-  verify: 'Periksa Kewajaran',
-};
-
-/* Max percobaan sebelum hint otomatis naik level */
-var MAX_ATTEMPTS_BEFORE_HINT = 2;
+/* Butir pemilahan refleksi (benar/keliru). */
+var REFLEKSI_ITEMS = DATA.refleksi.pernyataan.map(function (p) {
+  return {
+    id: p.id,
+    teks: renderFracText(p.teks),
+    correct: p.correct,
+    explanation: renderFracText(p.explanation),
+  };
+});
 
 /* ============================================================
-   3. STATE & STORAGE
+   2. STATE & STORAGE
    ============================================================ */
 
 var State = {
   currentStage: 'orientasi',
   completedStages: {},
 
-  /* Contoh terbimbing */
-  contohStepIdx: 0,
-  contohStepResults: {} /* { stepId: { correct: bool, attempts: int } } */,
-  contohDone: false,
+  /* Tahap 1 — orientasi */
+  orientasiOrder: null,
+  orientasiPilih: null,
 
-  /* Latihan */
-  currentProblemIdx: 0,
-  problemStates: [] /* diinisialisasi di initProblemStates() */,
+  /* Tahap 2 — sajian */
+  sajianIdx: 0,
+  sajianOrders: {},
+  sajianPilih: {},
+  sajianPertama: {},
 
-  /* Refleksi */
+  /* Tahap 3 — kelompok */
+  timNama: '',
+  timPeran: {},
+  timSepakat: {},
+
+  /* Tahap 4 — bandingkan */
+  bandingIdx: 0,
+  bandingStates: {},
+
+  /* Tahap 5 — urutkan */
+  urutIdx: 0,
+  urutStates: {},
+  urutHint: {},
+
+  /* Tahap 6 — kuis individu */
+  kuisIdx: 0,
+  kuisStates: [],
+
+  /* Tahap 7 — penghargaan */
+  apresiasiOrder: null,
+  apresiasi: null,
+
+  /* Tahap 8 — refleksi */
+  refleksiStates: {},
+  refleksiOrder: null,
   refleksiAnswers: {},
-  refleksiSaved: false,
+  refleksiDiri: null,
+  refleksiDiriOrder: null,
 };
-
-function initProblemStates() {
-  var ps = [];
-  DATA.problems.forEach(function (p) {
-    var calcSubsteps = p.calc.steps.map(function () {
-      return { attempts: 0, hintLevel: 0, input: '', correct: false, revealed: false };
-    });
-
-    /* tentukan fase aktif awal, lewati 'order' jika soal tidak memiliki order */
-    var startPhase = 'identify';
-
-    ps.push({
-      problemId: p.id,
-      status: 'not-started' /* not-started | in-progress | complete */,
-      currentPhase: startPhase,
-      reviewShown: false,
-      phases: {
-        identify: {
-          completed: false,
-          attempts: 0,
-          selected: [],
-          correct: false,
-        },
-        model: {
-          completed: false,
-          attempts: 0,
-          hintLevel: 0,
-          selected: null,
-          lastCheckedId: null,
-          correct: false,
-        },
-        order: {
-          completed: false,
-          attempts: 0,
-          hintLevel: 0,
-          selected: null,
-          lastCheckedId: null,
-          correct: false,
-          skipped: p.order === null,
-        },
-        calc: {
-          completed: false,
-          substeps: calcSubsteps,
-        },
-        answer: {
-          completed: false,
-          attempts: 0,
-          hintLevel: 0,
-          input: '',
-          correct: false,
-          revealed: false,
-        },
-        verify: {
-          completed: false,
-          attempts: 0,
-          selected: null,
-          lastCheckedId: null,
-          correct: false,
-        },
-      },
-      totalHints: 0,
-      totalAttempts: 0,
-      correctFirstTry: 0,
-    });
-  });
-  State.problemStates = ps;
-}
 
 var Store = createStore({ key: STORAGE_KEY, state: State });
 var saveState = Store.save;
-
-function loadState() {
-  try {
-    var raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return false;
-    var saved = JSON.parse(raw);
-    /* Validasi dasar sebelum menerapkan */
-    if (!saved || typeof saved !== 'object') return false;
-    if (!Array.isArray(saved.problemStates) || saved.problemStates.length !== DATA.problems.length)
-      return false;
-    Object.assign(State, saved);
-    return true;
-  } catch (e) {
-    return false;
-  }
-}
+var loadState = Store.load;
 
 function clearState() {
   Store.reset();
-  initProblemStates();
+  initExerciseArrays();
+}
+
+function ensureObject(key) {
+  if (!State[key] || typeof State[key] !== 'object' || Array.isArray(State[key])) State[key] = {};
+}
+
+function ensureIndex(key, total) {
+  if (typeof State[key] !== 'number' || State[key] < 0 || State[key] >= total) State[key] = 0;
+}
+
+function makeBandingState() {
+  return {
+    steps: [makeDlStep(), makeDlStep(), makeDlStep()],
+    tandaOrder: null,
+    tanda: null,
+    tandaPertama: null,
+  };
+}
+
+/*
+ * Menyiapkan seluruh state per-soal DAN seluruh urutan acak pilihan
+ * jawaban. Dipanggil sekali saat init (setelah loadState) dan setiap
+ * kali progress direset.
+ */
+function initExerciseArrays() {
+  /* Tahap 1 */
+  ensureShuffledOrder(State, 'orientasiOrder', DATA.orientasi.dugaan.opsi);
+
+  /* Tahap 2 */
+  ensureObject('sajianOrders');
+  ensureObject('sajianPilih');
+  ensureObject('sajianPertama');
+  DATA.sajian.strategi.forEach(function (s) {
+    ensureShuffledOrder(State.sajianOrders, s.id, s.cek.opsi);
+  });
+  ensureIndex('sajianIdx', DATA.sajian.strategi.length);
+
+  /* Tahap 3 */
+  if (typeof State.timNama !== 'string') State.timNama = '';
+  ensureObject('timPeran');
+  ensureObject('timSepakat');
+
+  /* Tahap 4 */
+  ensureObject('bandingStates');
+  DATA.bandingkan.soal.forEach(function (q) {
+    var st = State.bandingStates[q.id];
+    if (!st || !Array.isArray(st.steps) || st.steps.length !== 3) {
+      st = State.bandingStates[q.id] = makeBandingState();
+    }
+    ensureShuffledOrder(st, 'tandaOrder', DATA.bandingkan.tandaOpsi);
+  });
+  ensureIndex('bandingIdx', DATA.bandingkan.soal.length);
+
+  /* Tahap 5 */
+  ensureObject('urutStates');
+  ensureObject('urutHint');
+  DATA.urutkan.soal.forEach(function (q) {
+    ensureOrderState(State.urutStates, q.id, q.items);
+  });
+  ensureIndex('urutIdx', DATA.urutkan.soal.length);
+
+  /* Tahap 6 */
+  ensureExerciseArray(State, 'kuisStates', KUIS_SOAL, function (s) {
+    return {
+      attempts: 0,
+      hintLevel: 0,
+      correct: false,
+      userInput: '',
+      revealed: false,
+      chosen: null,
+      optionOrder: shuffleArray(optionIds(s.options)),
+    };
+  });
+  ensureIndex('kuisIdx', KUIS_SOAL.length);
+
+  /* Tahap 7 */
+  ensureShuffledOrder(State, 'apresiasiOrder', DATA.peran);
+
+  /* Tahap 8 */
+  ensureSortStates(State, 'refleksiStates', 'refleksiOrder', REFLEKSI_ITEMS, DATA.refleksi.opsi);
+  ensureObject('refleksiAnswers');
+  ensureShuffledOrder(State, 'refleksiDiriOrder', DATA.refleksi.diriOpsi);
 }
 
 /* ============================================================
-   4. NAVIGASI TAHAP
+   3. NAVIGASI
    ============================================================ */
 
 var StageMachine = createStageMachine({
@@ -213,1790 +256,1273 @@ var buildStageNav = StageMachine.buildStageNav;
 var updateProgress = StageMachine.updateProgress;
 
 /* ============================================================
-   5. UTILITAS RENDER HTML
+   4. UTILITAS RENDER
    ============================================================ */
 
-/* buildFracBlock berada di shared/engine.js. */
-
-/** Buat hint items HTML */
-function buildHints(hints, level) {
-  if (!hints || level <= 0) return '';
-  var items = '';
-  for (var i = 0; i < level && i < hints.length; i++) {
-    items +=
-      '<div class="hint-item"><span class="hint-item__num">Petunjuk ' +
-      (i + 1) +
-      '</span><span>' +
-      esc(hints[i]) +
-      '</span></div>';
-  }
-  return '<div class="hint-container" aria-live="polite">' + items + '</div>';
+/* Kepala tahap + catatan peran guru. */
+function buildHead(D) {
+  return buildDiscoveryHead(D.kicker, D.goal, D.syntax) + buildTeacherNote(D.guru);
 }
 
-/** Buat problem-dot navigation */
-function buildProblemDots(currentIdx, problemStates) {
-  var html = '';
-  problemStates.forEach(function (ps, i) {
-    var cls = 'problem-dot';
-    if (i === currentIdx) cls += ' problem-dot--current';
-    else if (ps.status === 'complete') cls += ' problem-dot--done';
-    html +=
-      '<span class="' +
-      cls +
-      '" aria-label="Soal ' +
-      (i + 1) +
-      (ps.status === 'complete' ? ' (selesai)' : '') +
-      '">' +
-      (i + 1) +
-      '</span>';
-  });
-  return html;
-}
-
-/** Buat phase indicator */
-function buildPhaseIndicator(problem, currentPhase) {
-  var phases = ['identify', 'model'];
-  if (problem.order !== null) phases.push('order');
-  phases.push('calc', 'answer', 'verify');
-
-  var html = '<div class="phase-indicator" aria-label="Langkah penyelesaian">';
-  phases.forEach(function (ph, i) {
-    var pstate = problem.order === null && ph === 'order' ? null : null;
-    var isDone = isPhaseComplete(State.problemStates[State.currentProblemIdx], ph);
-    var isCurrent = ph === currentPhase;
-    var cls = 'phase-step' + (isCurrent ? ' is-active' : isDone ? ' is-done' : '');
-    html += '<span class="' + cls + '">';
-    html += '<span class="phase-step__num">' + (isDone && !isCurrent ? '✓' : i + 1) + '</span>';
-    html += esc(PHASE_LABELS[ph]);
-    html += '</span>';
-    if (i < phases.length - 1) html += '<span class="phase-sep" aria-hidden="true">›</span>';
-  });
-  html += '</div>';
-  return html;
-}
-
-function isPhaseComplete(pstate, phase) {
-  if (!pstate) return false;
-  if (phase === 'order' && pstate.phases.order.skipped) return true;
-  return pstate.phases[phase] && pstate.phases[phase].completed;
-}
-
-/** Render halaman saat ini */
-function renderCurrentStage() {
-  var container = document.getElementById('stageContainer');
-  if (!container) return;
-  container.innerHTML = '';
-  updateProgress();
-
-  switch (State.currentStage) {
-    case 'orientasi':
-      renderOrientasi(container);
-      break;
-    case 'contoh':
-      renderContoh(container);
-      break;
-    case 'latihan':
-      renderLatihan(container);
-      break;
-    case 'hasil':
-      renderHasil(container);
-      break;
-    case 'refleksi':
-      renderRefleksi(container);
-      break;
-    default:
-      container.innerHTML =
-        '<p style="text-align:center;padding:var(--space-7);color:var(--color-ink-muted);">Tahap tidak ditemukan.</p>';
-  }
-}
-
-/* ============================================================
-   6. STAGE: ORIENTASI
-   ============================================================ */
-
-function renderOrientasi(container) {
-  container.innerHTML =
-    '<section aria-label="Orientasi">' +
-    '<div class="stage-head">' +
-    '<span class="stage-head__kicker">TAHAP 1 — ORIENTASI</span>' +
-    '<p class="stage-head__goal">Tujuan: Memahami konteks pembelajaran dan cara menggunakan media ini.</p>' +
-    '</div>' +
-    '<div class="panel panel--hero">' +
-    '<h2>' +
-    esc(DATA.meta.title) +
-    '</h2>' +
-    '<p style="font-size:1.05rem;"><strong>Tujuan Pembelajaran:</strong></p>' +
-    '<p style="font-size:1rem;margin-bottom:0;">' +
-    esc(DATA.meta.goal) +
-    '</p>' +
-    '</div>' +
-    '<div class="panel panel--compact">' +
-    '<h3>Apa yang akan kamu latih?</h3>' +
-    '<div class="hero-steps">' +
-    '<div class="hero-steps__item"><span class="hero-steps__num">1</span>Membaca masalah dan mengidentifikasi informasi penting.</div>' +
-    '<div class="hero-steps__item"><span class="hero-steps__num">2</span>Menentukan operasi matematika yang sesuai (+, −, ×, ÷).</div>' +
-    '<div class="hero-steps__item"><span class="hero-steps__num">3</span>Menentukan urutan operasi yang benar.</div>' +
-    '<div class="hero-steps__item"><span class="hero-steps__num">4</span>Melakukan perhitungan secara bertahap.</div>' +
-    '<div class="hero-steps__item"><span class="hero-steps__num">5</span>Memeriksa apakah hasil masuk akal dalam konteks.</div>' +
-    '</div></div>' +
-    '<div class="panel panel--compact">' +
-    '<h3>Cara menggunakan media ini</h3>' +
-    '<ul>' +
-    '<li>Kerjakan setiap tahap dari kiri ke kanan sesuai navigasi di atas.</li>' +
-    '<li>Setiap soal memiliki beberapa langkah — kerjakan satu per satu.</li>' +
-    '<li>Tersedia tombol <strong>Petunjuk</strong> jika kamu belum menemukan jawaban setelah beberapa percobaan.</li>' +
-    '<li>Feedback menjelaskan <em>mengapa</em> jawaban benar atau salah — baca dengan cermat.</li>' +
-    '<li>Progress tersimpan otomatis. Kamu bisa melanjutkan kapan saja.</li>' +
-    '</ul></div>' +
-    '<div class="panel panel--compact panel--warning">' +
-    '<p style="margin:0;font-size:0.88rem;color:var(--color-warning-strong);">' +
-    '<strong>Catatan:</strong> Hasil latihan dalam media ini adalah panduan belajar mandiri, ' +
-    'bukan nilai akhir sekolah. Diskusi dengan guru dan teman tetap menjadi bagian penting dari pembelajaran.' +
-    '</p></div>' +
-    '<div class="btn-group btn-group--end">' +
-    '<button type="button" class="btn btn--primary btn--large" id="startBtn">Mulai — Lihat Contoh →</button>' +
-    '</div>' +
-    '</section>';
-
-  document.getElementById('startBtn').addEventListener('click', function () {
-    completeStage('orientasi');
-    navigateTo('contoh');
+/* Memasang tombol lanjut yang menyelesaikan tahap ini lalu pindah tahap. */
+function bindNext(id, stageId, nextStageId) {
+  var btn = document.getElementById(id);
+  if (!btn) return;
+  btn.addEventListener('click', function () {
+    completeStage(stageId);
+    navigateTo(nextStageId);
   });
 }
 
-/* ============================================================
-   7. STAGE: CONTOH TERBIMBING
-   ============================================================ */
+/* Teks data dengan token pecahan {a/b}. */
+var T = renderFracText;
 
-function renderContoh(container) {
-  var ex = DATA.guidedExample;
-  var stepIdx = State.contohStepIdx;
-  var steps = ex.steps;
-  var totalSteps = steps.length;
-
-  /* Progress bar dalam contoh */
-  var pct = Math.round((stepIdx / (totalSteps - 1)) * 100);
-
-  var html =
-    '<section aria-label="Contoh Terbimbing">' +
-    '<div class="stage-head">' +
-    '<span class="stage-head__kicker">TAHAP 2 — CONTOH TERBIMBING</span>' +
-    '<p class="stage-head__goal">Saksikan bagaimana masalah diselesaikan langkah demi langkah, lalu coba sendiri beberapa bagiannya.</p>' +
-    '</div>' +
-    '<div class="problem-card">' +
-    '<div class="problem-card__kicker"><span>' +
-    esc(ex.title) +
-    '</span></div>' +
-    '<p class="problem-card__context">' +
-    ex.context +
-    '</p>' +
-    '<p class="problem-card__question">' +
-    esc(ex.question) +
-    '</p>' +
-    '</div>' +
-    '<div style="display:flex;align-items:center;gap:var(--space-3);margin-bottom:var(--space-4);">' +
-    '<span style="font-size:0.82rem;color:var(--color-ink-muted);white-space:nowrap;">Langkah ' +
-    (stepIdx + 1) +
-    ' dari ' +
-    totalSteps +
-    '</span>' +
-    '<div style="flex:1;height:6px;background:var(--color-bg-grid);border-radius:3px;overflow:hidden;">' +
-    '<div style="width:' +
-    pct +
-    '%;height:100%;background:var(--color-primary);border-radius:3px;transition:width 0.3s;"></div>' +
-    '</div></div>' +
-    '<div id="contohStepContent">';
-
-  html += buildContohStep(steps[stepIdx]);
-  html += '</div></section>';
-  container.innerHTML = html;
-
-  attachContohStepHandlers(steps[stepIdx]);
+/* Pecahan bersusun kecil dari objek { num, den }. */
+function F(f) {
+  return buildFracInline(f.num, f.den);
 }
 
-function buildContohStep(step) {
-  var html = '<div class="panel">';
-  html += '<div class="contoh-step-header">';
-  html += '<span class="contoh-step-badge">' + esc(step.title) + '</span>';
-  html += '</div>';
-
-  if (step.type === 'read') {
-    html += step.body;
-    html += '<div class="btn-group btn-group--end">';
-    html +=
-      '<button type="button" class="btn btn--primary" id="contohNextBtn">' +
-      esc(step.cta) +
-      ' →</button>';
-    html += '</div>';
-  }
-
-  if (step.type === 'mc') {
-    var stepResult = State.contohStepResults[step.id] || null;
-    var isLocked = stepResult && stepResult.correct;
-
-    html += '<p>' + step.prompt + '</p>';
-    html += '<div class="options-grid options-grid--2col">';
-    step.options.forEach(function (opt) {
-      var cls = 'option-card';
-      if (isLocked) {
-        cls += ' is-locked';
-        if (opt.correct) cls += ' is-correct';
-      } else if (stepResult && stepResult.selectedId === opt.id) {
-        cls += opt.correct ? ' is-correct' : ' is-wrong';
-      }
-      html +=
-        '<button type="button" class="' +
-        cls +
-        '" data-optid="' +
-        esc(opt.id) +
-        '"' +
-        (isLocked ? ' disabled' : '') +
-        '>' +
-        '<span class="option-card__marker">' +
-        esc(opt.id.toUpperCase()) +
-        '</span>' +
-        '<span class="option-card__body"><span class="option-card__expr">' +
-        esc(opt.label) +
-        '</span></span>' +
-        '</button>';
-    });
-    html += '</div>';
-
-    if (stepResult) {
-      var selOpt = step.options.find(function (o) {
-        return o.id === stepResult.selectedId;
-      });
-      if (selOpt) {
-        html += buildFeedbackBox(
-          selOpt.correct ? 'success' : 'error',
-          selOpt.correct ? '✓' : '✗',
-          esc(selOpt.feedback)
-        );
-      }
-    }
-
-    if (!stepResult) {
-      var hintText = step.hint || '';
-      html += '<div id="contohHintArea"></div>';
-      html += '<div class="btn-group" style="margin-top:var(--space-3);">';
-      if (hintText)
-        html +=
-          '<button type="button" class="btn btn--ghost btn--small" id="contohHintBtn">Petunjuk</button>';
-      html += '</div>';
-    } else if (stepResult.correct) {
-      html +=
-        '<div class="btn-group btn-group--end"><button type="button" class="btn btn--primary" id="contohNextBtn">Lanjut →</button></div>';
-    }
-  }
-
-  if (step.type === 'input') {
-    var stepResult2 = State.contohStepResults[step.id] || null;
-    var isDone = stepResult2 && stepResult2.correct;
-
-    html += '<p>' + esc(step.instruction) + '</p>';
-    html += '<div class="calc-step-wrap' + (isDone ? ' is-done' : '') + '">';
-    html += '<div class="calc-step__prompt">' + esc(step.prompt) + '</div>';
-
-    if (isDone) {
-      html += '<div class="calc-step__result-display">✓ ' + esc(step.correctDisplay) + '</div>';
-      html += buildFeedbackBox('success', '✓', esc(step.feedbackCorrect));
-    } else {
-      var errorMsg =
-        stepResult2 && !stepResult2.correct && stepResult2.errorMsg ? stepResult2.errorMsg : '';
-      html += '<div class="calc-input-row">';
-      html += '<label for="contohInput">' + esc(step.inputLabel) + '</label>';
-      html +=
-        '<input type="text" id="contohInput" class="input-text' +
-        (errorMsg ? ' has-error' : '') +
-        '"' +
-        ' placeholder="' +
-        esc(step.inputPlaceholder) +
-        '"' +
-        ' autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">';
-      html += '</div>';
-      if (errorMsg) html += '<div class="field-error">' + esc(errorMsg) + '</div>';
-
-      /* Petunjuk bertingkat */
-      var hintLevel = stepResult2 && stepResult2.hintLevel ? stepResult2.hintLevel : 0;
-      html += buildHints(step.hints, hintLevel);
-
-      if (stepResult2 && !stepResult2.correct) {
-        html += buildFeedbackBox('error', '✗', esc(step.feedbackWrong));
-      }
-
-      html += '<div class="btn-group">';
-      if (hintLevel < step.hints.length) {
-        html +=
-          '<button type="button" class="btn btn--ghost btn--small" id="contohHintBtn">Petunjuk</button>';
-      }
-      html += '<button type="button" class="btn btn--primary" id="contohCheckBtn">Periksa</button>';
-      html += '</div>';
-    }
-    html += '</div>';
-
-    if (isDone) {
-      html +=
-        '<div class="btn-group btn-group--end"><button type="button" class="btn btn--primary" id="contohNextBtn">Lanjut →</button></div>';
-    }
-  }
-
-  if (step.type === 'summary') {
-    html +=
-      '<p style="color:var(--color-ink-muted);font-size:0.9rem;margin-bottom:var(--space-4);">Berikut adalah rangkuman penyelesaian lengkap dari contoh di atas.</p>';
-    html += '<ol class="solution-steps">';
-    step.steps.forEach(function (s) {
-      html +=
-        '<li class="solution-step"><span class="solution-step__icon">→</span><span class="solution-step__text">' +
-        esc(s) +
-        '</span></li>';
-    });
-    html += '</ol>';
-    if (step.note) {
-      html +=
-        '<div class="contoh-explanation"><strong>Catatan:</strong> ' + esc(step.note) + '</div>';
-    }
-    html += '<div class="btn-group btn-group--end">';
-    html +=
-      '<button type="button" class="btn btn--primary btn--large" id="contohDoneBtn">Mulai Latihan →</button>';
-    html += '</div>';
-  }
-
-  html += '</div>';
-  return html;
+/* Label peran yang bertugas beserta nama anggotanya. */
+function roleTag(id) {
+  return buildRoleTag(PERAN[id], State.timPeran[id]);
 }
 
-function attachContohStepHandlers(step) {
-  /* Tombol lanjut */
-  var nextBtn = document.getElementById('contohNextBtn');
-  if (nextBtn) {
-    nextBtn.addEventListener('click', function () {
-      State.contohStepIdx++;
-      saveState();
-      renderContoh(document.getElementById('stageContainer'));
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    });
-  }
-
-  /* Tombol mulai latihan (dari summary) */
-  var doneBtn = document.getElementById('contohDoneBtn');
-  if (doneBtn) {
-    doneBtn.addEventListener('click', function () {
-      State.contohDone = true;
-      completeStage('contoh');
-      navigateTo('latihan');
-    });
-  }
-
-  /* MC options */
-  if (step.type === 'mc') {
-    document.querySelectorAll('.option-card[data-optid]').forEach(function (btn) {
-      btn.addEventListener('click', function () {
-        var optId = this.dataset.optid;
-        var opt = step.options.find(function (o) {
-          return o.id === optId;
-        });
-        if (!opt) return;
-        State.contohStepResults[step.id] = {
-          selectedId: optId,
-          correct: opt.correct,
-          attempts: ((State.contohStepResults[step.id] || {}).attempts || 0) + 1,
-        };
-        saveState();
-        renderContoh(document.getElementById('stageContainer'));
-        window.scrollTo({
-          top: document.getElementById('contohStepContent').offsetTop - 120,
-          behavior: 'smooth',
-        });
-      });
-    });
-
-    var hintBtn = document.getElementById('contohHintBtn');
-    if (hintBtn) {
-      hintBtn.addEventListener('click', function () {
-        var hintArea = document.getElementById('contohHintArea');
-        if (hintArea)
-          hintArea.innerHTML =
-            '<div class="hint-item"><span class="hint-item__num">Petunjuk</span><span>' +
-            esc(step.hint) +
-            '</span></div>';
-        hintBtn.disabled = true;
-      });
-    }
-  }
-
-  /* Input step */
-  if (step.type === 'input') {
-    var inp = document.getElementById('contohInput');
-    var checkBtn = document.getElementById('contohCheckBtn');
-    var hintBtn2 = document.getElementById('contohHintBtn');
-
-    if (inp) {
-      inp.addEventListener('keydown', function (e) {
-        if (e.key === 'Enter' && checkBtn) checkBtn.click();
-      });
-    }
-
-    if (checkBtn) {
-      checkBtn.addEventListener('click', function () {
-        var raw = inp ? inp.value : '';
-        var result = checkContohInput(step, raw);
-        var existing = State.contohStepResults[step.id] || { attempts: 0, hintLevel: 0 };
-        existing.attempts = (existing.attempts || 0) + 1;
-        existing.correct = result.correct;
-        existing.errorMsg = result.errorMsg;
-        if (
-          !result.correct &&
-          existing.attempts >= MAX_ATTEMPTS_BEFORE_HINT &&
-          existing.hintLevel < step.hints.length
-        ) {
-          existing.hintLevel = Math.min(step.hints.length, (existing.hintLevel || 0) + 1);
-        }
-        State.contohStepResults[step.id] = existing;
-        saveState();
-        renderContoh(document.getElementById('stageContainer'));
-        window.scrollTo({
-          top: document.getElementById('contohStepContent').offsetTop - 120,
-          behavior: 'smooth',
-        });
-      });
-    }
-
-    if (hintBtn2) {
-      hintBtn2.addEventListener('click', function () {
-        var existing2 = State.contohStepResults[step.id] || { hintLevel: 0 };
-        existing2.hintLevel = Math.min(step.hints.length, (existing2.hintLevel || 0) + 1);
-        State.contohStepResults[step.id] = existing2;
-        saveState();
-        renderContoh(document.getElementById('stageContainer'));
-      });
-    }
-  }
+/* Label opsi berdasarkan id, dengan token pecahan diubah. */
+function opsiLabel(options, id) {
+  return T(findOptionLabel(options, id));
 }
 
-function checkContohInput(step, raw) {
-  var parsed = parseUserInput(raw);
-  if (parsed.error === 'empty')
-    return { correct: false, errorMsg: 'Masukkan jawaban terlebih dahulu.' };
-  if (parsed.error === 'invalid')
-    return {
-      correct: false,
-      errorMsg: 'Format tidak valid. Gunakan angka (koma atau titik untuk desimal). Contoh: 0,75',
-    };
-
-  if (step.answerType === 'numerator') {
-    var intVal = Math.round(parsed.value);
-    if (Math.abs(parsed.value - intVal) > 0.001)
-      return { correct: false, errorMsg: 'Masukkan bilangan bulat untuk pembilang.' };
-    return { correct: intVal === step.answer };
-  }
-  /* decimal type */
-  return { correct: approxEqual(parsed.value, step.answer, step.tolerance || 0.01) };
+/* Deret kelipatan n sampai batas: 3, 6, 9, 12. */
+function kelipatan(n, sampai) {
+  var out = [];
+  for (var k = n; k <= sampai; k += n) out.push(k);
+  return out.join(', ');
 }
 
-/* ============================================================
-   8. STAGE: LATIHAN
-   ============================================================ */
-
-function renderLatihan(container) {
-  var pIdx = State.currentProblemIdx;
-  /* Lindungi dari index tidak valid */
-  if (pIdx < 0 || pIdx >= DATA.problems.length) {
-    pIdx = 0;
-    State.currentProblemIdx = 0;
-  }
-
-  var problem = DATA.problems[pIdx];
-  var pstate = State.problemStates[pIdx];
-
-  if (!pstate) {
-    container.innerHTML =
-      '<p style="color:var(--color-error-strong);padding:var(--space-5);">Terjadi kesalahan. <button type="button" class="btn btn--ghost btn--small" onclick="clearState();location.reload();">Reset</button></p>';
-    return;
-  }
-
-  /* Tandai sebagai in-progress */
-  if (pstate.status === 'not-started') pstate.status = 'in-progress';
-
-  /* Tentukan fase aktif */
-  var currentPhase = pstate.currentPhase;
-
-  /* Jika soal sudah selesai dan review diminta */
-  if (pstate.status === 'complete' && pstate.reviewShown) {
-    renderProblemReview(problem, pstate, container);
-    return;
-  }
-  if (pstate.status === 'complete' && !pstate.reviewShown) {
-    pstate.reviewShown = true;
-    saveState();
-    renderProblemReview(problem, pstate, container);
-    return;
-  }
-
-  /* Render header dan problem card */
-  var html =
-    '<section aria-label="Latihan Soal">' +
-    '<div class="stage-head">' +
-    '<span class="stage-head__kicker">TAHAP 3 — LATIHAN</span>' +
-    '<p class="stage-head__goal">Selesaikan setiap soal secara bertahap. Kerjakan satu langkah sebelum melanjutkan ke langkah berikutnya.</p>' +
-    '</div>';
-
-  /* Problem dots navigator */
-  html +=
-    '<div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:var(--space-3);margin-bottom:var(--space-4);">';
-  html += '<div style="display:flex;align-items:center;gap:var(--space-2);">';
-  html += buildProblemDots(pIdx, State.problemStates);
-  html +=
-    '<span style="font-size:0.82rem;color:var(--color-ink-muted);margin-left:var(--space-2);">Soal ' +
-    (pIdx + 1) +
-    ' dari ' +
-    DATA.problems.length +
-    '</span>';
-  html += '</div>';
-  /* Difficulty */
-  var diff = problem.difficulty || 1;
-  var diffLabel = diff === 1 ? 'Mudah' : diff === 2 ? 'Sedang' : 'Sulit';
-  html +=
-    '<span style="font-size:0.82rem;color:var(--color-ink-muted);">Tingkat: <strong>' +
-    esc(diffLabel) +
-    '</strong></span>';
-  html += '</div>';
-
-  /* Problem card */
-  html += '<div class="problem-card">';
-  html += '<div class="problem-card__kicker">';
-  html += '<span>Soal ' + (pIdx + 1) + ': ' + esc(problem.title) + '</span>';
-  html += '</div>';
-  html += '<p class="problem-card__context">' + problem.context + '</p>';
-  html += '<p class="problem-card__question">' + esc(problem.question) + '</p>';
-  html += '</div>';
-
-  /* Phase indicator — hanya ditampilkan di atas phaseContent */
-  html += buildPhaseIndicator(problem, currentPhase);
-
-  html += '<div id="phaseContent">';
-  html += buildPhaseContent(problem, pstate, currentPhase);
-  html += '</div>';
-
-  html += '</section>';
-  container.innerHTML = html;
-
-  attachPhaseHandlers(problem, pstate, currentPhase);
-}
-
-/** Dispatch ke render fungsi fase yang sesuai */
-function buildPhaseContent(problem, pstate, phase) {
-  switch (phase) {
-    case 'identify':
-      return buildPhaseIdentify(problem, pstate);
-    case 'model':
-      return buildPhaseModel(problem, pstate);
-    case 'order':
-      return buildPhaseOrder(problem, pstate);
-    case 'calc':
-      return buildPhaseCalc(problem, pstate);
-    case 'answer':
-      return buildPhaseAnswer(problem, pstate);
-    case 'verify':
-      return buildPhaseVerify(problem, pstate);
-    default:
-      return '<p style="color:var(--color-error-strong);">Fase tidak dikenali.</p>';
-  }
-}
-
-/* ---- Fase 1: Identifikasi ---- */
-function buildPhaseIdentify(problem, pstate) {
-  var ph = pstate.phases.identify;
-  var identify = problem.identify;
-  var isLocked = ph.completed;
-
-  var html = '<div class="panel">';
-  html += '<h3>Langkah: Identifikasi Informasi</h3>';
-  html += '<p>' + esc(identify.instruction) + '</p>';
-  html += '<ul class="identify-list" id="identifyList">';
-
-  identify.items.forEach(function (item) {
-    var isChecked = ph.selected.indexOf(item.id) !== -1;
-    var extraCls = '';
-    if (isLocked && isChecked && item.relevant) extraCls = ' is-correct-revealed';
-    else if (isLocked && isChecked && !item.relevant) extraCls = ' is-wrong-revealed';
-    else if (isLocked && !isChecked && item.relevant)
-      extraCls = ' is-wrong-revealed'; /* yang seharusnya dipilih tapi tidak */
-    else if (isChecked) extraCls = ' is-checked';
-
-    var cls = 'identify-item' + extraCls + (isLocked ? ' is-locked' : '');
-    html +=
-      '<li><button type="button" class="' +
-      cls +
-      '" data-itemid="' +
-      esc(item.id) +
-      '" role="checkbox" aria-checked="' +
-      isChecked +
-      '">';
-    html += '<span class="identify-checkbox"></span>';
-    html += '<span class="identify-item__text">' + esc(item.text) + '</span>';
-    html += '</button></li>';
-  });
-  html += '</ul>';
-
-  if (ph.completed) {
-    html += buildFeedbackBox('success', '✓', esc(identify.feedbackCorrect));
-    html +=
-      '<div class="btn-group btn-group--end"><button type="button" class="btn btn--primary" id="phaseNextBtn">Lanjut: Tentukan Operasi →</button></div>';
-  } else {
-    if (ph.attempts > 0 && !ph.correct) {
-      html += buildFeedbackBox('error', '✗', esc(identify.feedbackWrong));
-    }
-    var hintLevel =
-      ph.attempts >= MAX_ATTEMPTS_BEFORE_HINT
-        ? Math.min(identify.hints.length, ph.attempts - MAX_ATTEMPTS_BEFORE_HINT + 1)
-        : 0;
-    html += buildHints(identify.hints, hintLevel);
-    html += '<div class="btn-group">';
-    if (hintLevel < identify.hints.length && ph.attempts >= 1) {
-      html +=
-        '<button type="button" class="btn btn--ghost btn--small" id="hintBtn">Petunjuk</button>';
-    }
-    html +=
-      '<button type="button" class="btn btn--primary" id="phaseCheckBtn"' +
-      (ph.selected.length === 0 ? ' disabled' : '') +
-      '>Periksa Pilihan</button>';
-    html += '</div>';
-  }
-  html += '</div>';
-  return html;
-}
-
-/* ---- Fase 2: Model Operasi ---- */
-function buildPhaseModel(problem, pstate) {
-  var ph = pstate.phases.model;
-  var model = problem.model;
-  var isLocked = ph.completed;
-
-  var html = '<div class="panel">';
-  html += '<h3>Langkah: Tentukan Operasi</h3>';
-  html += '<p>' + esc(model.instruction) + '</p>';
-  html += '<div class="options-grid options-grid--2col">';
-
-  model.options.forEach(function (opt) {
-    var cls = 'option-card';
-    if (isLocked) {
-      cls += ' is-locked';
-      if (opt.correct) cls += ' is-correct';
-      else if (ph.lastCheckedId === opt.id) cls += ' is-wrong';
-    } else if (ph.lastCheckedId && !ph.correct && ph.lastCheckedId === opt.id) {
-      cls += ' is-wrong';
-    } else if (ph.selected === opt.id) {
-      cls += ' is-selected';
-    }
-    html += '<button type="button" class="' + cls + '" data-optid="' + esc(opt.id) + '">';
-    html += '<span class="option-card__marker">' + esc(opt.id.toUpperCase()) + '</span>';
-    html +=
-      '<span class="option-card__body"><span class="option-card__expr">' +
-      opt.expr +
-      '</span></span>';
-    html += '</button>';
-  });
-  html += '</div>';
-
-  /* Feedback setelah submit */
-  if (ph.attempts > 0 && ph.lastCheckedId) {
-    var selOpt = model.options.find(function (o) {
-      return o.id === ph.lastCheckedId;
-    });
-    if (selOpt) {
-      html += buildFeedbackBox(
-        selOpt.correct ? 'success' : 'error',
-        selOpt.correct ? '✓' : '✗',
-        esc(selOpt.feedback)
-      );
-    }
-  }
-
-  html += buildHints(model.hints, ph.hintLevel);
-
-  if (ph.completed) {
-    html +=
-      '<div class="btn-group btn-group--end"><button type="button" class="btn btn--primary" id="phaseNextBtn">Lanjut →</button></div>';
-  } else {
-    html += '<div class="btn-group">';
-    if (ph.hintLevel < model.hints.length && ph.attempts >= 1) {
-      html +=
-        '<button type="button" class="btn btn--ghost btn--small" id="hintBtn">Petunjuk</button>';
-    }
-    html +=
-      '<button type="button" class="btn btn--primary" id="phaseCheckBtn" ' +
-      (!ph.selected ? 'disabled' : '') +
-      '>Periksa</button>';
-    html += '</div>';
-  }
-  html += '</div>';
-  return html;
-}
-
-/* ---- Fase 3: Urutan Operasi ---- */
-function buildPhaseOrder(problem, pstate) {
-  var ph = pstate.phases.order;
-  var order = problem.order;
-  if (!order) return ''; /* tidak seharusnya terpanggil */
-
-  var isLocked = ph.completed;
-
-  var html = '<div class="panel">';
-  html += '<h3>Langkah: Urutan Operasi</h3>';
-  html += '<p>' + esc(order.instruction) + '</p>';
-  html += '<div class="options-grid options-grid--list">';
-
-  order.options.forEach(function (opt) {
-    var cls = 'option-card';
-    if (isLocked) {
-      cls += ' is-locked';
-      if (opt.correct) cls += ' is-correct';
-      else if (ph.lastCheckedId === opt.id) cls += ' is-wrong';
-    } else if (ph.lastCheckedId && !ph.correct && ph.lastCheckedId === opt.id) {
-      cls += ' is-wrong';
-    } else if (ph.selected === opt.id) {
-      cls += ' is-selected';
-    }
-    html += '<button type="button" class="' + cls + '" data-optid="' + esc(opt.id) + '">';
-    html += '<span class="option-card__marker">' + esc(opt.id.toUpperCase()) + '</span>';
-    html +=
-      '<span class="option-card__body"><span style="font-size:0.95rem;">' +
-      esc(opt.label) +
-      '</span></span>';
-    html += '</button>';
-  });
-  html += '</div>';
-
-  if (ph.attempts > 0 && ph.lastCheckedId) {
-    var selOpt = order.options.find(function (o) {
-      return o.id === ph.lastCheckedId;
-    });
-    if (selOpt) {
-      html += buildFeedbackBox(
-        selOpt.correct ? 'success' : 'error',
-        selOpt.correct ? '✓' : '✗',
-        esc(selOpt.feedback)
-      );
-    }
-  }
-
-  html += buildHints(order.hints, ph.hintLevel);
-
-  if (ph.completed) {
-    html +=
-      '<div class="btn-group btn-group--end"><button type="button" class="btn btn--primary" id="phaseNextBtn">Lanjut: Hitung Bertahap →</button></div>';
-  } else {
-    html += '<div class="btn-group">';
-    if (ph.hintLevel < order.hints.length && ph.attempts >= 1) {
-      html +=
-        '<button type="button" class="btn btn--ghost btn--small" id="hintBtn">Petunjuk</button>';
-    }
-    html +=
-      '<button type="button" class="btn btn--primary" id="phaseCheckBtn" ' +
-      (ph.selected ? '' : 'disabled') +
-      '>Periksa</button>';
-    html += '</div>';
-  }
-  html += '</div>';
-  return html;
-}
-
-/* ---- Fase 4: Hitung Bertahap ---- */
-function buildPhaseCalc(problem, pstate) {
-  var ph = pstate.phases.calc;
-  var calc = problem.calc;
-
-  var html = '<div class="panel">';
-  html += '<h3>Langkah: Hitung Bertahap</h3>';
-  html +=
-    '<p style="color:var(--color-ink-muted);font-size:0.9rem;">' + esc(calc.instruction) + '</p>';
-
-  calc.steps.forEach(function (step, i) {
-    var ss = ph.substeps[i];
-    var isDone = ss.correct;
-    var isActive = !isDone && !isAnySubstepActive(ph, i);
-
-    /* Kunci sub-langkah yang belum saatnya */
-    var prevDone = i === 0 || ph.substeps[i - 1].correct;
-
-    html += '<div class="calc-step-wrap' + (isDone ? ' is-done' : '') + '" id="calcStep' + i + '">';
-    html += '<div class="calc-step__instruction">' + esc(step.instruction) + '</div>';
-    html += '<div class="calc-step__prompt">' + esc(step.prompt) + '</div>';
-
-    if (isDone) {
-      html += '<div class="calc-step__result-display">✓ ' + esc(step.correctDisplay) + '</div>';
-    } else if (prevDone) {
-      /* Sub-langkah aktif */
-      var errorMsg = ss.errorMsg || '';
-      html += '<div class="calc-input-row">';
-      html += '<label for="calcInput' + i + '">' + esc(step.inputLabel) + '</label>';
-      html +=
-        '<input type="text" id="calcInput' +
-        i +
-        '"' +
-        ' class="input-text' +
-        (errorMsg ? ' has-error' : '') +
-        '"' +
-        ' placeholder="' +
-        esc(step.inputPlaceholder) +
-        '"' +
-        ' value="' +
-        esc(ss.input || '') +
-        '"' +
-        ' autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"' +
-        ' data-substep="' +
-        i +
-        '">';
-      html += '</div>';
-
-      if (errorMsg) html += '<div class="field-error">' + esc(errorMsg) + '</div>';
-      if (ss.attempts > 0 && !ss.correct) {
-        html += buildFeedbackBox('error', '✗', esc(step.feedbackWrong));
-      }
-      html += buildHints(step.hints, ss.hintLevel);
-      html += '<div class="btn-group">';
-      if (ss.hintLevel < step.hints.length && ss.attempts >= 1) {
-        html +=
-          '<button type="button" class="btn btn--ghost btn--small" id="calcHintBtn' +
-          i +
-          '" data-substep="' +
-          i +
-          '">Petunjuk</button>';
-      }
-      html +=
-        '<button type="button" class="btn btn--primary" id="calcCheckBtn' +
-        i +
-        '" data-substep="' +
-        i +
-        '">Periksa</button>';
-      html += '</div>';
-    } else {
-      /* Sub-langkah belum bisa diakses */
-      html +=
-        '<p style="color:var(--color-ink-muted);font-size:0.88rem;font-style:italic;">Selesaikan langkah sebelumnya terlebih dahulu.</p>';
-    }
-
-    html += '</div>';
-  });
-
-  if (ph.completed) {
-    html +=
-      '<div class="btn-group btn-group--end"><button type="button" class="btn btn--primary" id="phaseNextBtn">Lanjut: Jawaban Akhir →</button></div>';
-  }
-  html += '</div>';
-  return html;
-}
-
-function isAnySubstepActive(ph, idx) {
-  /* Apakah sub-langkah sebelum idx belum selesai? */
-  for (var i = 0; i < idx; i++) {
-    if (!ph.substeps[i].correct) return true;
-  }
-  return false;
-}
-
-/* ---- Fase 5: Jawaban Akhir ---- */
-function buildPhaseAnswer(problem, pstate) {
-  var ph = pstate.phases.answer;
-  var answer = problem.answer;
-  var isDone = ph.completed;
-
-  var html = '<div class="panel">';
-  html += '<h3>Langkah: Jawaban Akhir</h3>';
-  html += '<p style="font-size:1rem;font-weight:600;">' + esc(answer.prompt) + '</p>';
-
-  if (isDone) {
-    html +=
-      '<div class="calc-step__result-display" style="font-size:1.1rem;padding:var(--space-3) var(--space-4);">✓ ' +
-      esc(answer.correctDisplay) +
-      (answer.unit ? ' ' + answer.unit : '') +
-      '</div>';
-    html += buildFeedbackBox('success', '✓', esc(answer.feedbackCorrect));
-    html +=
-      '<div class="btn-group btn-group--end"><button type="button" class="btn btn--primary" id="phaseNextBtn">Lanjut: Periksa Kewajaran →</button></div>';
-  } else {
-    var errorMsg = ph.errorMsg || '';
-    html += '<div class="field-group">';
-    html +=
-      '<label for="answerInput">' +
-      esc(answer.inputLabel) +
-      (answer.unit ? ' (' + answer.unit + ')' : '') +
-      '</label>';
-    html += '<div class="calc-input-row" style="margin-top:var(--space-2);">';
-    html +=
-      '<input type="text" id="answerInput" class="input-text' +
-      (errorMsg ? ' has-error' : '') +
-      '"' +
-      ' placeholder="' +
-      esc(answer.inputPlaceholder) +
-      '"' +
-      ' value="' +
-      esc(ph.input || '') +
-      '"' +
-      ' autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"' +
-      ' style="max-width:220px;">';
-    if (answer.unit)
-      html +=
-        '<span style="font-size:0.95rem;color:var(--color-ink-muted);">' +
-        esc(answer.unit) +
-        '</span>';
-    html += '</div>';
-    html += '</div>';
-
-    if (errorMsg) html += '<div class="field-error">' + esc(errorMsg) + '</div>';
-    if (ph.attempts > 0 && !ph.correct) {
-      html += buildFeedbackBox('error', '✗', esc(answer.feedbackWrong));
-    }
-    html += buildHints(answer.hints, ph.hintLevel);
-    html += '<div class="btn-group">';
-    if (ph.hintLevel < answer.hints.length && ph.attempts >= 1) {
-      html +=
-        '<button type="button" class="btn btn--ghost btn--small" id="hintBtn">Petunjuk</button>';
-    }
-    html +=
-      '<button type="button" class="btn btn--primary" id="phaseCheckBtn">Periksa Jawaban</button>';
-    html += '</div>';
-  }
-  html += '</div>';
-  return html;
-}
-
-/* ---- Fase 6: Periksa Kewajaran ---- */
-function buildPhaseVerify(problem, pstate) {
-  var ph = pstate.phases.verify;
-  var verify = problem.verify;
-  var isLocked = ph.completed;
-
-  var html = '<div class="panel">';
-  html += '<h3>Langkah: Periksa Kewajaran</h3>';
-  html += '<p>' + esc(verify.question) + '</p>';
-  html += '<div class="options-grid options-grid--list">';
-
-  verify.options.forEach(function (opt) {
-    var cls = 'option-card';
-    if (isLocked) {
-      cls += ' is-locked';
-      if (opt.correct) cls += ' is-correct';
-      else if (ph.lastCheckedId === opt.id) cls += ' is-wrong';
-    } else if (ph.lastCheckedId && !ph.correct && ph.lastCheckedId === opt.id) {
-      cls += ' is-wrong';
-    } else if (ph.selected === opt.id) {
-      cls += ' is-selected';
-    }
-    html += '<button type="button" class="' + cls + '" data-optid="' + esc(opt.id) + '">';
-    html += '<span class="option-card__marker">' + esc(opt.id.slice(1).toUpperCase()) + '</span>';
-    html +=
-      '<span class="option-card__body"><span style="font-size:0.9rem;">' +
-      esc(opt.text) +
-      '</span></span>';
-    html += '</button>';
-  });
-  html += '</div>';
-
-  if (ph.attempts > 0 && ph.lastCheckedId) {
-    var selOpt = verify.options.find(function (o) {
-      return o.id === ph.lastCheckedId;
-    });
-    if (selOpt) {
-      html += buildFeedbackBox(
-        selOpt.correct ? 'success' : 'error',
-        selOpt.correct ? '✓' : '✗',
-        esc(selOpt.correct ? verify.feedbackCorrect : verify.feedbackWrong)
-      );
-    }
-  }
-
-  if (ph.completed) {
-    html +=
-      '<div class="btn-group btn-group--end"><button type="button" class="btn btn--primary btn--large" id="phaseNextBtn">Selesai — Lihat Rangkuman →</button></div>';
-  } else {
-    html += '<div class="btn-group btn-group--end">';
-    html +=
-      '<button type="button" class="btn btn--primary" id="phaseCheckBtn" ' +
-      (ph.selected ? '' : 'disabled') +
-      '>Periksa</button>';
-    html += '</div>';
-  }
-  html += '</div>';
-  return html;
-}
-
-/* ---- Review setelah soal selesai ---- */
-function renderProblemReview(problem, pstate, container) {
-  var pIdx = State.currentProblemIdx;
-  var isLastProblem = pIdx >= DATA.problems.length - 1;
-  var allDone = State.problemStates.every(function (ps) {
-    return ps.status === 'complete';
-  });
-
-  var html =
-    '<section aria-label="Rangkuman Soal">' +
-    '<div class="stage-head">' +
-    '<span class="stage-head__kicker">TAHAP 3 — LATIHAN</span>' +
-    '<p class="stage-head__goal">Rangkuman penyelesaian soal ' +
-    (pIdx + 1) +
-    '.</p>' +
-    '</div>';
-
-  /* Problem dots */
-  html +=
-    '<div style="display:flex;align-items:center;gap:var(--space-2);margin-bottom:var(--space-4);">';
-  html += buildProblemDots(pIdx, State.problemStates);
-  html += '</div>';
-
-  /* Problem card */
-  html += '<div class="problem-card">';
-  html +=
-    '<div class="problem-card__kicker"><span>Soal ' +
-    (pIdx + 1) +
-    ': ' +
-    esc(problem.title) +
-    ' — Selesai</span></div>';
-  html += '<p class="problem-card__context">' + problem.context + '</p>';
-  html += '<p class="problem-card__question">' + esc(problem.question) + '</p>';
-  html += '</div>';
-
-  /* Performance summary */
-  var totalHints = pstate.totalHints;
-  var totalAttempts = pstate.totalAttempts;
-  html += '<div class="panel panel--success panel--compact" style="margin-bottom:var(--space-4);">';
-  html += '<div style="display:flex;gap:var(--space-5);flex-wrap:wrap;">';
-  html +=
-    '<div><span style="font-size:1.5rem;font-weight:700;color:var(--color-success-strong);">✓</span> <span style="font-size:0.9rem;color:var(--color-success-strong);">Soal selesai</span></div>';
-  html +=
-    '<div><span style="font-size:0.9rem;color:var(--color-ink-muted);">Total percobaan: </span><strong>' +
-    totalAttempts +
-    '</strong></div>';
-  html +=
-    '<div><span style="font-size:0.9rem;color:var(--color-ink-muted);">Petunjuk digunakan: </span><strong>' +
-    totalHints +
-    '</strong></div>';
-  html += '</div></div>';
-
-  /* Penyelesaian lengkap */
-  html += '<div class="panel panel--compact">';
-  html += '<h3>Penyelesaian Lengkap</h3>';
-  html += '<ol class="solution-steps">';
-  problem.solution.steps.forEach(function (step) {
-    html +=
-      '<li class="solution-step"><span class="solution-step__icon">→</span><span class="solution-step__text">' +
-      esc(step) +
-      '</span></li>';
-  });
-  html += '</ol></div>';
-
-  /* Navigasi antar soal */
-  html += '<div class="problem-nav">';
-  html += '<div class="btn-group">';
-  if (pIdx > 0) {
-    html +=
-      '<button type="button" class="btn btn--ghost" id="prevProblemBtn">← Soal Sebelumnya</button>';
-  }
-  html +=
-    '<button type="button" class="btn btn--outline-primary" id="retryProblemBtn">Ulangi Soal Ini</button>';
-  html += '</div>';
-  html += '<div class="btn-group btn-group--end">';
-  if (!isLastProblem) {
-    html +=
-      '<button type="button" class="btn btn--primary btn--large" id="nextProblemBtn">Soal Berikutnya →</button>';
-  } else {
-    html +=
-      '<button type="button" class="btn btn--primary btn--large" id="allDoneBtn">Lihat Hasil Akhir →</button>';
-  }
-  html += '</div></div>';
-
-  html += '</section>';
-  container.innerHTML = html;
-
-  /* Event listeners */
-  var prevBtn = document.getElementById('prevProblemBtn');
-  if (prevBtn) {
-    prevBtn.addEventListener('click', function () {
-      State.currentProblemIdx--;
-      saveState();
-      renderLatihan(document.getElementById('stageContainer'));
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    });
-  }
-
-  var retryBtn = document.getElementById('retryProblemBtn');
-  if (retryBtn) {
-    retryBtn.addEventListener('click', function () {
-      resetProblemState(pIdx);
-      saveState();
-      renderLatihan(document.getElementById('stageContainer'));
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    });
-  }
-
-  var nextBtn2 = document.getElementById('nextProblemBtn');
-  if (nextBtn2) {
-    nextBtn2.addEventListener('click', function () {
-      State.currentProblemIdx++;
-      saveState();
-      renderLatihan(document.getElementById('stageContainer'));
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    });
-  }
-
-  var allDoneBtn = document.getElementById('allDoneBtn');
-  if (allDoneBtn) {
-    allDoneBtn.addEventListener('click', function () {
-      completeStage('latihan');
-      navigateTo('hasil');
-    });
-  }
-}
-
-function resetProblemState(pIdx) {
-  var problem = DATA.problems[pIdx];
-  var calcSubsteps = problem.calc.steps.map(function () {
-    return { attempts: 0, hintLevel: 0, input: '', correct: false, revealed: false };
-  });
-  State.problemStates[pIdx] = {
-    problemId: problem.id,
-    status: 'not-started',
-    currentPhase: 'identify',
-    reviewShown: false,
-    phases: {
-      identify: { completed: false, attempts: 0, selected: [], correct: false },
-      model: {
-        completed: false,
-        attempts: 0,
-        hintLevel: 0,
-        selected: null,
-        lastCheckedId: null,
-        correct: false,
-      },
-      order: {
-        completed: false,
-        attempts: 0,
-        hintLevel: 0,
-        selected: null,
-        lastCheckedId: null,
-        correct: false,
-        skipped: problem.order === null,
-      },
-      calc: { completed: false, substeps: calcSubsteps },
-      answer: {
-        completed: false,
-        attempts: 0,
-        hintLevel: 0,
-        input: '',
-        correct: false,
-        revealed: false,
-      },
-      verify: {
-        completed: false,
-        attempts: 0,
-        selected: null,
-        lastCheckedId: null,
-        correct: false,
-      },
-    },
-    totalHints: 0,
-    totalAttempts: 0,
-    correctFirstTry: 0,
-  };
-}
-
-/** Pindah ke fase berikutnya */
-function advanceToNextPhase(problem, pstate) {
-  var currentPhase = pstate.currentPhase;
-  var order = ['identify', 'model'];
-  if (problem.order !== null) order.push('order');
-  order.push('calc', 'answer', 'verify');
-
-  var idx = order.indexOf(currentPhase);
-  if (idx === -1 || idx >= order.length - 1) {
-    /* Selesai semua fase */
-    pstate.status = 'complete';
-    pstate.reviewShown = false;
-  } else {
-    pstate.currentPhase = order[idx + 1];
-  }
-  saveState();
-}
-
-/* ---- Attach event handlers untuk fase aktif ---- */
-function attachPhaseHandlers(problem, pstate, phase) {
-  /* Tombol lanjut (setelah fase selesai) */
-  var nextBtn = document.getElementById('phaseNextBtn');
-  if (nextBtn) {
-    nextBtn.addEventListener('click', function () {
-      advanceToNextPhase(problem, pstate);
-      renderLatihan(document.getElementById('stageContainer'));
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    });
-  }
-
-  if (phase === 'identify') attachIdentifyHandlers(problem, pstate);
-  else if (phase === 'model') attachMCHandlers(problem, pstate, phase);
-  else if (phase === 'order') attachMCHandlers(problem, pstate, phase);
-  else if (phase === 'calc') attachCalcHandlers(problem, pstate);
-  else if (phase === 'answer') attachAnswerHandlers(problem, pstate);
-  else if (phase === 'verify') attachMCHandlers(problem, pstate, phase);
-}
-
-/* ---- Identify handlers ---- */
-function attachIdentifyHandlers(problem, pstate) {
-  var ph = pstate.phases.identify;
-
-  /* Checkbox toggle */
-  document.querySelectorAll('.identify-item[data-itemid]').forEach(function (btn) {
-    btn.addEventListener('click', function () {
-      if (ph.completed) return;
-      var itemId = this.dataset.itemid;
-      var idx = ph.selected.indexOf(itemId);
-      if (idx === -1) ph.selected.push(itemId);
-      else ph.selected.splice(idx, 1);
-      /* Update aria-checked */
-      this.setAttribute('aria-checked', ph.selected.indexOf(itemId) !== -1 ? 'true' : 'false');
-      this.classList.toggle('is-checked', ph.selected.indexOf(itemId) !== -1);
-      var checkbox = this.querySelector('.identify-checkbox');
-      /* Enable check button jika ada pilihan */
-      var checkBtn = document.getElementById('phaseCheckBtn');
-      if (checkBtn) checkBtn.disabled = ph.selected.length === 0;
-      saveState();
-    });
-  });
-
-  var checkBtn = document.getElementById('phaseCheckBtn');
-  if (checkBtn) {
-    checkBtn.addEventListener('click', function () {
-      checkIdentify(problem, pstate);
-    });
-  }
-
-  var hintBtn = document.getElementById('hintBtn');
-  if (hintBtn) {
-    hintBtn.addEventListener('click', function () {
-      addHint(pstate, 'identify');
-      saveState();
-      renderLatihan(document.getElementById('stageContainer'));
-    });
-  }
-}
-
-function checkIdentify(problem, pstate) {
-  var ph = pstate.phases.identify;
-  var identify = problem.identify;
-  ph.attempts++;
-  pstate.totalAttempts++;
-
-  /* Cek: semua item relevan dipilih, dan tidak ada yang tidak relevan dipilih */
-  var relevant = identify.items
-    .filter(function (i) {
-      return i.relevant;
+/* Daftar kesetaraan pecahan terhadap penyebut K: "{3/4} = {9/12}". */
+function daftarSenilai(fracs, K) {
+  return fracs
+    .map(function (f) {
+      return F(f) + ' = ' + buildFracInline((f.num * K) / f.den, K);
     })
-    .map(function (i) {
-      return i.id;
-    });
-  var notRelevant = identify.items
-    .filter(function (i) {
-      return !i.relevant;
-    })
-    .map(function (i) {
-      return i.id;
-    });
-
-  var allRelevantSelected = relevant.every(function (id) {
-    return ph.selected.indexOf(id) !== -1;
-  });
-  var noIrrelevantSelected = notRelevant.every(function (id) {
-    return ph.selected.indexOf(id) === -1;
-  });
-
-  ph.correct = allRelevantSelected && noIrrelevantSelected;
-
-  if (ph.correct) {
-    ph.completed = true;
-    if (ph.attempts === 1) pstate.correctFirstTry++;
-  } else {
-    if (ph.attempts >= MAX_ATTEMPTS_BEFORE_HINT) {
-      addHint(pstate, 'identify');
-    }
-  }
-  saveState();
-  renderLatihan(document.getElementById('stageContainer'));
-  scrollToPhaseContent();
+    .join(' &nbsp;·&nbsp; ');
 }
 
-/* ---- Multiple choice handlers (model, order, verify) ---- */
-function attachMCHandlers(problem, pstate, phase) {
-  document.querySelectorAll('.option-card[data-optid]').forEach(function (btn) {
+/* Tombol pilihan kelompok (renderer tahap yang sama) → id opsi. */
+function bindChoices(container, group, handler) {
+  var sel = group ? '[data-opt-id][data-group="' + group + '"]' : '[data-opt-id]';
+  container.querySelectorAll(sel).forEach(function (btn) {
     btn.addEventListener('click', function () {
-      var ph = pstate.phases[phase];
-      if (ph.completed) return;
-      ph.selected = this.dataset.optid;
-      /* Enable check button */
-      var checkBtn = document.getElementById('phaseCheckBtn');
-      if (checkBtn) checkBtn.disabled = false;
-      /* Visual update: riset semua state lalu tandai yang baru dipilih */
-      document.querySelectorAll('.option-card[data-optid]').forEach(function (b) {
-        b.classList.remove('is-selected', 'is-wrong');
-        b.setAttribute('aria-pressed', 'false');
-      });
-      this.classList.add('is-selected');
-      this.setAttribute('aria-pressed', 'true');
-      saveState();
-    });
-  });
-
-  var checkBtn = document.getElementById('phaseCheckBtn');
-  if (checkBtn) {
-    checkBtn.addEventListener('click', function () {
-      checkMCPhase(problem, pstate, phase);
-    });
-  }
-
-  var hintBtn = document.getElementById('hintBtn');
-  if (hintBtn) {
-    hintBtn.addEventListener('click', function () {
-      addHint(pstate, phase);
-      saveState();
-      renderLatihan(document.getElementById('stageContainer'));
-    });
-  }
-}
-
-function checkMCPhase(problem, pstate, phase) {
-  var ph = pstate.phases[phase];
-  if (!ph.selected) return; /* tidak ada pilihan */
-  ph.attempts++;
-  pstate.totalAttempts++;
-  ph.lastCheckedId = ph.selected; /* simpan untuk feedback display */
-
-  var source =
-    phase === 'model'
-      ? problem.model.options
-      : phase === 'order'
-      ? problem.order.options
-      : problem.verify.options;
-
-  var selOpt = source.find(function (o) {
-    return o.id === ph.selected;
-  });
-  ph.correct = !!(selOpt && selOpt.correct);
-
-  if (ph.correct) {
-    ph.completed = true;
-    if (ph.attempts === 1) pstate.correctFirstTry++;
-  } else {
-    /* Beri kesempatan retry; reset pilihan agar user harus pilih lagi */
-    ph.selected = null;
-    if (ph.attempts >= MAX_ATTEMPTS_BEFORE_HINT) {
-      addHint(pstate, phase);
-    }
-  }
-  saveState();
-  renderLatihan(document.getElementById('stageContainer'));
-  scrollToPhaseContent();
-}
-
-/* ---- Calc handlers ---- */
-function attachCalcHandlers(problem, pstate) {
-  var ph = pstate.phases.calc;
-
-  document.querySelectorAll('[id^="calcCheckBtn"]').forEach(function (btn) {
-    btn.addEventListener('click', function () {
-      var substepIdx = parseInt(this.dataset.substep);
-      checkCalcSubstep(problem, pstate, substepIdx);
-    });
-  });
-
-  document.querySelectorAll('[id^="calcHintBtn"]').forEach(function (btn) {
-    btn.addEventListener('click', function () {
-      var substepIdx = parseInt(this.dataset.substep);
-      var ss = ph.substeps[substepIdx];
-      ss.hintLevel = Math.min(problem.calc.steps[substepIdx].hints.length, (ss.hintLevel || 0) + 1);
-      pstate.totalHints++;
-      saveState();
-      renderLatihan(document.getElementById('stageContainer'));
-    });
-  });
-
-  /* Enter key support */
-  document.querySelectorAll('[id^="calcInput"]').forEach(function (inp) {
-    inp.addEventListener('keydown', function (e) {
-      if (e.key === 'Enter') {
-        var substepIdx = parseInt(inp.dataset.substep);
-        var checkBtn = document.getElementById('calcCheckBtn' + substepIdx);
-        if (checkBtn) checkBtn.click();
-      }
+      handler(btn.dataset.optId);
     });
   });
 }
 
-function checkCalcSubstep(problem, pstate, substepIdx) {
-  var ph = pstate.phases.calc;
-  var ss = ph.substeps[substepIdx];
-  var step = problem.calc.steps[substepIdx];
-  var inp = document.getElementById('calcInput' + substepIdx);
-  var raw = inp ? inp.value : '';
-  ss.input = raw;
-
-  var parsed = parseUserInput(raw);
-  ss.attempts++;
-  pstate.totalAttempts++;
-
-  if (parsed.error === 'empty') {
-    ss.errorMsg = 'Masukkan jawaban terlebih dahulu.';
-    ss.correct = false;
-  } else if (parsed.error === 'invalid') {
-    ss.errorMsg = 'Format tidak valid. Gunakan angka (koma atau titik untuk desimal). Contoh: 0,75';
-    ss.correct = false;
-  } else {
-    ss.errorMsg = '';
-    if (step.answerType === 'numerator') {
-      var intVal = Math.round(parsed.value);
-      ss.correct = Math.abs(parsed.value - intVal) <= 0.001 && intVal === step.answer;
-    } else {
-      ss.correct = approxEqual(parsed.value, step.answer, step.tolerance || 0.01);
-    }
-  }
-
-  if (ss.correct) {
-    if (ss.attempts === 1) pstate.correctFirstTry++;
-    /* Periksa apakah semua sub-langkah selesai */
-    var allDone = ph.substeps.every(function (s) {
-      return s.correct;
-    });
-    if (allDone) {
-      ph.completed = true;
-    }
-  } else {
-    if (ss.attempts >= MAX_ATTEMPTS_BEFORE_HINT && ss.hintLevel < step.hints.length) {
-      ss.hintLevel = Math.min(step.hints.length, (ss.hintLevel || 0) + 1);
-      pstate.totalHints++;
-    }
-  }
-
-  saveState();
-  renderLatihan(document.getElementById('stageContainer'));
-  /* Scroll ke sub-langkah yang aktif */
-  var el = document.getElementById('calcStep' + substepIdx);
-  if (el) el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-}
-
-/* ---- Answer handlers ---- */
-function attachAnswerHandlers(problem, pstate) {
-  var ph = pstate.phases.answer;
-
-  var inp = document.getElementById('answerInput');
-  var checkBtn = document.getElementById('phaseCheckBtn');
-  var hintBtn = document.getElementById('hintBtn');
-
-  if (inp) {
-    inp.addEventListener('keydown', function (e) {
-      if (e.key === 'Enter' && checkBtn) checkBtn.click();
-    });
-  }
-
-  if (checkBtn) {
-    checkBtn.addEventListener('click', function () {
-      var raw = inp ? inp.value : '';
-      var parsed = parseUserInput(raw);
-      ph.input = raw;
-      ph.attempts++;
-      pstate.totalAttempts++;
-
-      if (parsed.error === 'empty') {
-        ph.errorMsg = 'Masukkan jawaban terlebih dahulu.';
-        ph.correct = false;
-      } else if (parsed.error === 'invalid') {
-        ph.errorMsg = 'Format tidak valid. Gunakan angka (koma atau titik). Contoh: 1,25';
-        ph.correct = false;
-      } else {
-        ph.errorMsg = '';
-        ph.correct = approxEqual(
-          parsed.value,
-          problem.answer.answer,
-          problem.answer.tolerance || 0.01
-        );
-      }
-
-      if (ph.correct) {
-        ph.completed = true;
-        if (ph.attempts === 1) pstate.correctFirstTry++;
-      } else {
-        if (ph.attempts >= MAX_ATTEMPTS_BEFORE_HINT && ph.hintLevel < problem.answer.hints.length) {
-          addHint(pstate, 'answer');
-        }
-      }
-      saveState();
-      renderLatihan(document.getElementById('stageContainer'));
-      scrollToPhaseContent();
-    });
-  }
-
-  if (hintBtn) {
-    hintBtn.addEventListener('click', function () {
-      addHint(pstate, 'answer');
-      saveState();
-      renderLatihan(document.getElementById('stageContainer'));
-    });
-  }
-}
-
-/* ---- Utility: tambah hint ke phase ---- */
-function addHint(pstate, phase) {
-  var ph = pstate.phases[phase];
-  if (!ph) return;
-  if (ph.hintLevel === undefined) ph.hintLevel = 0;
-  var sourceHints;
-  var pIdx = State.currentProblemIdx;
-  var problem = DATA.problems[pIdx];
-  switch (phase) {
-    case 'identify':
-      sourceHints = problem.identify.hints;
-      break;
-    case 'model':
-      sourceHints = problem.model.hints;
-      break;
-    case 'order':
-      sourceHints = problem.order ? problem.order.hints : [];
-      break;
-    case 'answer':
-      sourceHints = problem.answer.hints;
-      break;
-    default:
-      return;
-  }
-  if (ph.hintLevel < sourceHints.length) {
-    ph.hintLevel++;
-    pstate.totalHints++;
-  }
-}
-
-function scrollToPhaseContent() {
-  var el = document.getElementById('phaseContent');
-  if (el) el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-}
-
-/* ============================================================
-   9. STAGE: HASIL
-   ============================================================ */
-
-function renderHasil(container) {
-  var totalProblems = DATA.problems.length;
-  var completed = State.problemStates.filter(function (ps) {
-    return ps.status === 'complete';
-  }).length;
-  var totalHints = State.problemStates.reduce(function (acc, ps) {
-    return acc + ps.totalHints;
-  }, 0);
-  var totalAttempts = State.problemStates.reduce(function (acc, ps) {
-    return acc + ps.totalAttempts;
-  }, 0);
-  var correctFirstTry = State.problemStates.reduce(function (acc, ps) {
-    return acc + ps.correctFirstTry;
-  }, 0);
-
-  /* Total fase yang diselesaikan benar di percobaan pertama */
-  var totalPhases = State.problemStates.reduce(function (acc, ps) {
-    var count = 0;
-    if (ps.phases.identify.completed) count++;
-    if (ps.phases.model.completed) count++;
-    if (!ps.phases.order.skipped && ps.phases.order.completed) count++;
-    if (ps.phases.calc.completed) count++;
-    if (ps.phases.answer.completed) count++;
-    if (ps.phases.verify.completed) count++;
-    return acc + count;
-  }, 0);
-
-  var html =
-    '<section aria-label="Hasil Latihan">' +
-    '<div class="stage-head">' +
-    '<span class="stage-head__kicker">TAHAP 4 — HASIL</span>' +
-    '<p class="stage-head__goal">Ringkasan performa latihan kamu.</p>' +
-    '</div>' +
-    '<div class="panel panel--hero">' +
-    '<h2>Latihan Selesai!</h2>' +
-    '<p>' +
-    esc(completed + ' dari ' + totalProblems + ' soal berhasil diselesaikan.') +
-    '</p>' +
-    '</div>' +
-    '<div class="stats-grid">' +
-    buildStatCard(completed + '/' + totalProblems, 'Soal diselesaikan') +
-    buildStatCard(totalAttempts, 'Total percobaan') +
-    buildStatCard(totalHints, 'Petunjuk digunakan') +
-    buildStatCard(correctFirstTry, 'Langkah benar pertama kali') +
-    '</div>';
-
-  /* Ringkasan per soal */
-  html += '<div class="panel panel--compact"><h3>Ringkasan Per Soal</h3>';
-  html += '<ol style="padding-left:1.2em;">';
-  State.problemStates.forEach(function (ps, i) {
-    var p = DATA.problems[i];
-    var status = ps.status === 'complete' ? '✓ Selesai' : '– Belum selesai';
-    var diffLabel = p.difficulty === 1 ? 'Mudah' : p.difficulty === 2 ? 'Sedang' : 'Sulit';
-    html += '<li style="margin-bottom:var(--space-2);font-size:0.92rem;">';
-    html += '<strong>Soal ' + (i + 1) + ': ' + esc(p.title) + '</strong> ';
-    html += '<span style="color:var(--color-ink-muted);">(' + esc(diffLabel) + ')</span> — ';
-    html +=
-      '<span style="color:' +
-      (ps.status === 'complete' ? 'var(--color-success-strong)' : 'var(--color-ink-muted)') +
-      ';">' +
-      status +
-      '</span>';
-    html +=
-      ' <span style="color:var(--color-ink-muted);font-size:0.85rem;">| Percobaan: ' +
-      ps.totalAttempts +
-      ', Petunjuk: ' +
-      ps.totalHints +
-      '</span>';
-    html += '</li>';
-  });
-  html += '</ol></div>';
-
-  html += '<div class="panel panel--compact panel--warning">';
-  html += '<p style="margin:0;font-size:0.88rem;color:var(--color-warning-strong);">';
-  html +=
-    '<strong>Catatan:</strong> Hasil di atas adalah ringkasan latihan mandiri dalam media ini. ';
-  html +=
-    'Ini bukan nilai akhir sekolah. Guru kamu tetap akan menilai kemampuanmu melalui berbagai bentuk asesmen lainnya.';
-  html += '</p></div>';
-
-  html += '<div class="btn-group btn-group--spread">';
-  html +=
-    '<button type="button" class="btn btn--ghost" id="backToLatihanBtn">← Kembali ke Latihan</button>';
-  html +=
-    '<button type="button" class="btn btn--primary btn--large" id="goRefleksiBtn">Lanjut ke Refleksi →</button>';
-  html += '</div>';
-
-  html += '</section>';
-  container.innerHTML = html;
-
-  document.getElementById('backToLatihanBtn').addEventListener('click', function () {
-    navigateTo('latihan');
-  });
-
-  document.getElementById('goRefleksiBtn').addEventListener('click', function () {
-    completeStage('hasil');
-    navigateTo('refleksi');
-  });
-}
-
-function buildStatCard(value, label) {
+/* Kartu ringkasan angka. */
+function kartu(val, label) {
   return (
-    '<div class="stat-card"><div class="stat-card__num">' +
-    esc(String(value)) +
-    '</div><div class="stat-card__label">' +
-    esc(label) +
+    '<div class="summary-card"><div class="summary-card__val">' +
+    val +
+    '</div><div class="summary-card__label">' +
+    label +
     '</div></div>'
   );
 }
 
+/* Nilai tim (STAD): rata-rata skor LKPD tim dan skor kuis individu. */
+function hitungSkor() {
+  var bandingPertama = DATA.bandingkan.soal.filter(function (q) {
+    var st = State.bandingStates[q.id];
+    return st && st.tandaPertama === tandaBenar(q);
+  }).length;
+  var urutPertama = DATA.urutkan.soal.filter(function (q) {
+    var st = State.urutStates[q.id];
+    return st && st.correct && st.attempts === 1;
+  }).length;
+  var kuisBenar = State.kuisStates.filter(function (st) {
+    return st.correct;
+  }).length;
+  var lkpdTotal = DATA.bandingkan.soal.length + DATA.urutkan.soal.length;
+  var skorLkpd = Math.round(((bandingPertama + urutPertama) / lkpdTotal) * 100);
+  var skorKuis = Math.round((kuisBenar / KUIS_SOAL.length) * 100);
+  var nilai = Math.round((skorLkpd + skorKuis) / 2);
+  var predikat = DATA.penghargaan.predikat.filter(function (p) {
+    return nilai >= p.min;
+  })[0];
+  return {
+    bandingPertama: bandingPertama,
+    urutPertama: urutPertama,
+    kuisBenar: kuisBenar,
+    skorLkpd: skorLkpd,
+    skorKuis: skorKuis,
+    nilai: nilai,
+    predikat: predikat,
+  };
+}
+
+function namaTim() {
+  return State.timNama ? State.timNama : 'Tim kalian';
+}
+
 /* ============================================================
-   10. STAGE: REFLEKSI
+   5. STAGE: ORIENTASI (CL fase 1)
    ============================================================ */
 
-function renderRefleksi(container) {
-  var refleksi = DATA.refleksi;
-  var saved = State.refleksiAnswers || {};
-  var isSaved = State.refleksiSaved || false;
+function renderOrientasi(container) {
+  var D = DATA.orientasi;
+  var Q = D.dugaan;
+  var chosen = State.orientasiPilih;
 
-  var html =
-    '<section aria-label="Refleksi Pembelajaran">' +
-    '<div class="stage-head">' +
-    '<span class="stage-head__kicker">TAHAP 5 — REFLEKSI</span>' +
-    '<p class="stage-head__goal">Luangkan waktu sejenak untuk merefleksikan proses belajarmu hari ini.</p>' +
-    '</div>' +
-    '<div class="panel panel--compact panel--info" style="margin-bottom:var(--space-4);">' +
-    '<p style="margin:0;font-size:0.92rem;">Tidak ada jawaban yang benar atau salah di sini. Refleksi ini untukmu sendiri dan gurumu.</p>' +
-    '</div>';
+  container.innerHTML =
+    '<section aria-label="Orientasi">' +
+    buildHead(D) +
+    buildDlPanel(
+      '<div class="cl-hero">' +
+        '<span class="cl-hero__icon" aria-hidden="true">' +
+        D.ikon +
+        '</span>' +
+        '<div>' +
+        '<h2 class="cl-hero__title">' +
+        esc(D.judul) +
+        '</h2>' +
+        '<p class="cl-hero__story">' +
+        T(D.cerita) +
+        '</p>' +
+        '</div>' +
+        '</div>' +
+        '<div class="kue-grid">' +
+        D.kue
+          .map(function (k) {
+            return (
+              '<div class="kue-card">' +
+              buildFractionModel(k.num, k.den, 0, {
+                shape: 'circle',
+                small: true,
+                aria: k.nama + ' menghias ' + bacaPecahan(k.num, k.den) + ' kue',
+              }) +
+              '<p class="kue-card__name">' +
+              esc(k.nama) +
+              '</p>' +
+              '<p class="kue-card__frac">' +
+              buildFracBlock(k.num, k.den, null, 'small') +
+              '</p>' +
+              '</div>'
+            );
+          })
+          .join('') +
+        '</div>',
+      'panel--hero'
+    ) +
+    buildDlPanel(
+      '<p class="exercise-label">' +
+        esc(Q.tanya) +
+        '</p>' +
+        buildChoiceGroup(
+          Q.opsi.map(function (o) {
+            return { id: o.id, label: T(o.label) };
+          }),
+          State.orientasiOrder,
+          { chosen: chosen }
+        ) +
+        (chosen ? buildFeedbackBox('info', '📝', esc(Q.umpan)) : '')
+    ) +
+    (chosen
+      ? buildDlPanel(
+          '<h3 style="margin-top:0;">🎯 Setelah belajar hari ini, kamu dapat:</h3>' +
+            '<ol class="objectives-list">' +
+            D.tujuan
+              .map(function (t, i) {
+                return (
+                  '<li><span class="objectives-list__num">' + (i + 1) + '</span>' + esc(t) + '</li>'
+                );
+              })
+              .join('') +
+            '</ol>'
+        ) +
+        buildDlPanel(
+          '<h3 style="margin-top:0;">🤝 Aturan belajar kooperatif</h3>' +
+            '<div class="aturan-grid">' +
+            D.aturan
+              .map(function (a) {
+                return (
+                  '<div class="aturan-card"><span class="aturan-card__icon" aria-hidden="true">' +
+                  a.ikon +
+                  '</span><span>' +
+                  a.teks +
+                  '</span></div>'
+                );
+              })
+              .join('') +
+            '</div>',
+          'panel--info'
+        ) +
+        buildDlNextButton('orientasiNextBtn', D.nextLabel, true)
+      : '') +
+    '</section>';
 
-  refleksi.questions.forEach(function (q) {
-    html += '<div class="panel panel--compact">';
-    html += '<p style="font-weight:600;margin-bottom:var(--space-3);">' + esc(q.prompt) + '</p>';
-
-    if (q.type === 'mc') {
-      q.options.forEach(function (opt, i) {
-        var isChecked = saved[q.id] === opt;
-        html +=
-          '<label style="display:flex;align-items:center;gap:var(--space-2);margin-bottom:var(--space-2);cursor:pointer;font-size:0.92rem;">';
-        html +=
-          '<input type="radio" name="refleksi_' +
-          esc(q.id) +
-          '" value="' +
-          i +
-          '"' +
-          (isChecked ? ' checked' : '') +
-          (isSaved ? ' disabled' : '') +
-          '>';
-        html += esc(opt);
-        html += '</label>';
-      });
-    }
-
-    if (q.type === 'text') {
-      html +=
-        '<textarea class="input-textarea" name="refleksi_' +
-        esc(q.id) +
-        '" placeholder="' +
-        esc(q.placeholder) +
-        '"' +
-        (isSaved ? ' disabled' : '') +
-        '>' +
-        esc(saved[q.id] || '') +
-        '</textarea>';
-    }
-
-    html += '</div>';
+  bindChoices(container, null, function (id) {
+    State.orientasiPilih = id;
+    saveState();
+    renderOrientasi(container);
   });
 
-  if (!isSaved) {
-    html += '<div class="btn-group btn-group--end">';
-    html +=
-      '<button type="button" class="btn btn--primary btn--large" id="saveRefleksiBtn">Simpan Refleksi & Selesai</button>';
-    html += '</div>';
-  } else {
-    html += '<div class="panel panel--success panel--compact">';
-    html +=
-      '<p style="margin:0;">Refleksi tersimpan. Terima kasih telah menyelesaikan sesi latihan ini!</p>';
-    html += '</div>';
-    html += '<div class="btn-group btn-group--center">';
-    html +=
-      '<button type="button" class="btn btn--outline-primary" id="backHasilBtn">← Kembali ke Hasil</button>';
-    html += '</div>';
+  bindNext('orientasiNextBtn', 'orientasi', 'sajian');
+}
+
+/* ============================================================
+   6. STAGE: SAJIAN MATERI (CL fase 2)
+   ============================================================ */
+
+function strategiSelesai(s) {
+  return State.sajianPilih[s.id] === s.cek.correct;
+}
+
+function buildStrategiVisual(s) {
+  if (s.id === 'kpk') {
+    return buildFracStripCompare(s.contoh, {
+      common: kpkList(
+        s.contoh.map(function (f) {
+          return f.den;
+        })
+      ),
+      caption:
+        'Setiap pita dibagi lagi menjadi 12 bagian sama besar; garis tebal = batas bagian asal.',
+    });
+  }
+  if (s.id === 'patokan') {
+    return buildFracStripCompare(s.contoh, {
+      half: true,
+      caption: 'Garis putus-putus menandai ½.',
+    });
+  }
+  return buildFracStripCompare(s.contoh, { caption: 'Kedua pita sama panjang (1 utuh).' });
+}
+
+function renderSajian(container) {
+  var D = DATA.sajian;
+  var list = D.strategi;
+  var idx = State.sajianIdx;
+  var s = list[idx];
+  var chosen = State.sajianPilih[s.id];
+  var benar = chosen === s.cek.correct;
+  var semua = list.every(strategiSelesai);
+
+  var tabs =
+    '<div class="strategi-tabs" role="tablist" aria-label="Strategi">' +
+    list
+      .map(function (x, i) {
+        var terbuka = i === 0 || strategiSelesai(list[i - 1]);
+        return (
+          '<button type="button" role="tab" class="strategi-tab' +
+          (i === idx ? ' is-active' : '') +
+          (strategiSelesai(x) ? ' is-done' : '') +
+          '" data-strategi="' +
+          i +
+          '" aria-selected="' +
+          (i === idx ? 'true' : 'false') +
+          '"' +
+          (terbuka ? '' : ' disabled') +
+          '><span aria-hidden="true">' +
+          (strategiSelesai(x) ? '✓' : x.ikon) +
+          '</span> Strategi ' +
+          (i + 1) +
+          '</button>'
+        );
+      })
+      .join('') +
+    '</div>';
+
+  var langkah = s.langkah
+    ? '<ol class="strategi-langkah">' +
+      s.langkah
+        .map(function (l) {
+          return '<li>' + T(l) + '</li>';
+        })
+        .join('') +
+      '</ol>'
+    : '<p class="strategi-simpul">' + T(s.kesimpulan) + '</p>';
+
+  var cekOpsi = s.cek.opsi.map(function (o) {
+    return { id: o.id, label: T(o.label) };
+  });
+
+  var nav = '';
+  if (benar && idx < list.length - 1) {
+    nav = buildDlNextButton('sajianStrategiNext', 'Strategi ' + (idx + 2) + ' →');
   }
 
-  html += '</section>';
-  container.innerHTML = html;
+  var bukti = '';
+  if (semua) {
+    var dugaan = State.orientasiPilih;
+    var tepat = dugaan === DATA.orientasi.dugaan.correct;
+    bukti =
+      buildDlPanel(
+        '<h3 style="margin-top:0;">🎂 ' +
+          esc(D.bukti.judul) +
+          '</h3>' +
+          buildFracStripCompare(DATA.orientasi.kue, {
+            common: D.bukti.kpk,
+            highlight: 1,
+          }) +
+          '<p>' +
+          T(D.bukti.teks) +
+          '</p>' +
+          (dugaan
+            ? buildFeedbackBox(
+                tepat ? 'success' : 'warning',
+                tepat ? '🎉' : '💡',
+                'Dugaan awalmu: <strong>' +
+                  opsiLabel(DATA.orientasi.dugaan.opsi, dugaan) +
+                  '</strong>. ' +
+                  (tepat
+                    ? 'Dugaanmu terbukti benar!'
+                    : 'Sekarang kamu tahu cara membuktikannya — penyebut besar tidak berarti pecahan besar.')
+              )
+            : ''),
+        'panel--hero'
+      ) + buildDlNextButton('sajianNextBtn', D.nextLabel, true);
+  }
 
-  var saveBtn = document.getElementById('saveRefleksiBtn');
-  if (saveBtn) {
-    saveBtn.addEventListener('click', function () {
-      /* Kumpulkan jawaban */
-      refleksi.questions.forEach(function (q) {
-        if (q.type === 'mc') {
-          var checked = document.querySelector('input[name="refleksi_' + q.id + '"]:checked');
-          if (checked) State.refleksiAnswers[q.id] = q.options[parseInt(checked.value)];
-        }
-        if (q.type === 'text') {
-          var ta = document.querySelector('textarea[name="refleksi_' + q.id + '"]');
-          if (ta) State.refleksiAnswers[q.id] = ta.value;
-        }
-      });
-      State.refleksiSaved = true;
-      completeStage('refleksi');
+  container.innerHTML =
+    '<section aria-label="Sajian Materi">' +
+    buildHead(D) +
+    tabs +
+    buildDlPanel(
+      '<h2 class="strategi-judul"><span aria-hidden="true">' +
+        s.ikon +
+        '</span> ' +
+        esc(s.judul) +
+        '</h2>' +
+        '<p>' +
+        T(s.inti) +
+        '</p>' +
+        buildStrategiVisual(s) +
+        langkah +
+        (s.catatan ? '<div class="hint-box">' + T(s.catatan) + '</div>' : '')
+    ) +
+    buildDlPanel(
+      '<p class="exercise-label">⚡ Cek cepat</p>' +
+        '<p class="cek-tanya">' +
+        T(s.cek.tanya) +
+        '</p>' +
+        (s.cek.pita ? buildFracStripCompare(s.cek.pita, { half: true }) : '') +
+        buildChoiceGroup(cekOpsi, State.sajianOrders[s.id], {
+          chosen: chosen,
+          correctId: benar ? s.cek.correct : null,
+          grade: true,
+          locked: benar,
+        }) +
+        (chosen
+          ? buildFeedbackBox(
+              benar ? 'success' : 'warning',
+              benar ? '✓' : '💭',
+              T(s.cek.umpan[chosen])
+            )
+          : '')
+    ) +
+    nav +
+    bukti +
+    '</section>';
+
+  container.querySelectorAll('[data-strategi]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      State.sajianIdx = parseInt(btn.dataset.strategi, 10);
       saveState();
-      renderRefleksi(document.getElementById('stageContainer'));
+      renderSajian(container);
+    });
+  });
+
+  bindChoices(container, null, function (id) {
+    if (State.sajianPilih[s.id] === s.cek.correct) return;
+    if (!State.sajianPertama[s.id]) State.sajianPertama[s.id] = id;
+    State.sajianPilih[s.id] = id;
+    saveState();
+    renderSajian(container);
+  });
+
+  var stratNext = document.getElementById('sajianStrategiNext');
+  if (stratNext) {
+    stratNext.addEventListener('click', function () {
+      State.sajianIdx = idx + 1;
+      saveState();
+      renderSajian(container);
       window.scrollTo({ top: 0, behavior: 'smooth' });
     });
   }
 
-  var backBtn = document.getElementById('backHasilBtn');
-  if (backBtn) {
-    backBtn.addEventListener('click', function () {
-      navigateTo('hasil');
+  bindNext('sajianNextBtn', 'sajian', 'kelompok');
+}
+
+/* ============================================================
+   7. STAGE: BENTUK KELOMPOK (CL fase 3)
+   ============================================================ */
+
+function renderKelompok(container) {
+  var D = DATA.kelompok;
+
+  container.innerHTML =
+    '<section aria-label="Bentuk Kelompok">' +
+    buildHead(D) +
+    buildDlPanel(
+      '<label for="timNama" class="exercise-label">👥 ' +
+        esc(D.namaLabel) +
+        '</label>' +
+        '<input type="text" id="timNama" class="input-text tim-nama" maxlength="30" value="' +
+        esc(State.timNama) +
+        '" placeholder="' +
+        esc(D.namaPlaceholder) +
+        '">' +
+        '<h3 class="kelompok-sub">🎭 Bagi peran — tulis nama anggota</h3>' +
+        buildRoleCards(DATA.peran, State.timPeran)
+    ) +
+    buildDlPanel(
+      '<p class="exercise-label">' +
+        esc(D.kesepakatanJudul) +
+        '</p>' +
+        '<div class="sepakat-list">' +
+        D.kesepakatan
+          .map(function (k, i) {
+            return (
+              '<label class="sepakat-item"><input type="checkbox" data-sepakat="' +
+              i +
+              '"' +
+              (State.timSepakat[i] ? ' checked' : '') +
+              '><span>' +
+              esc(k) +
+              '</span></label>'
+            );
+          })
+          .join('') +
+        '</div>',
+      'panel--info'
+    ) +
+    buildDlNextButton('kelompokNextBtn', D.nextLabel, true) +
+    '</section>';
+
+  var nama = document.getElementById('timNama');
+  nama.addEventListener('input', function () {
+    State.timNama = nama.value.trim();
+    saveState();
+  });
+
+  container.querySelectorAll('[data-role-id]').forEach(function (inp) {
+    inp.addEventListener('input', function () {
+      State.timPeran[inp.dataset.roleId] = inp.value.trim();
+      saveState();
+    });
+  });
+
+  container.querySelectorAll('[data-sepakat]').forEach(function (cb) {
+    cb.addEventListener('change', function () {
+      State.timSepakat[cb.dataset.sepakat] = cb.checked;
+      saveState();
+    });
+  });
+
+  document.getElementById('kelompokNextBtn').addEventListener('click', function () {
+    if (!State.timNama) {
+      showNotice('Tuliskan dulu nama timmu.');
+      nama.focus();
+      return;
+    }
+    var kosong = DATA.peran.filter(function (r) {
+      return !State.timPeran[r.id];
+    });
+    if (kosong.length) {
+      showNotice('Isi nama anggota untuk peran ' + kosong[0].nama + '.');
+      return;
+    }
+    var belum = D.kesepakatan.some(function (k, i) {
+      return !State.timSepakat[i];
+    });
+    if (belum) {
+      showNotice('Centang semua kesepakatan tim terlebih dahulu.');
+      return;
+    }
+    completeStage('kelompok');
+    navigateTo('bandingkan');
+  });
+}
+
+/* ============================================================
+   8. STAGE: BANDINGKAN (CL fase 4)
+   Setiap soal: KPK → pembilang senilai kedua pecahan → tanda.
+   ============================================================ */
+
+function tandaBenar(q) {
+  return fracRelationSymbol(compareFractions(q.a, q.b));
+}
+
+function langkahBanding(q) {
+  var K = lcm(q.a.den, q.b.den);
+  var besar = Math.max(q.a.den, q.b.den);
+  var kecil = Math.min(q.a.den, q.b.den);
+  function senilai(f, peran) {
+    var kali = K / f.den;
+    return {
+      label:
+        roleTag(peran) +
+        '<br>Ubah ' +
+        F(f) +
+        ' menjadi per ' +
+        K +
+        ': ' +
+        F(f) +
+        ' = ' +
+        buildFracInline('?', K) +
+        '. Berapa pembilangnya?',
+      jawab: f.num * kali,
+      hints: [
+        'Penyebut ' +
+          f.den +
+          ' dikali berapa agar menjadi ' +
+          K +
+          '? (' +
+          K +
+          ' : ' +
+          f.den +
+          ' = ' +
+          kali +
+          ')',
+        'Pembilang juga dikali ' + kali + ': ' + f.num + ' × ' + kali + ' = …',
+      ],
+      temuan: T(F(f) + ' = ' + buildFracInline(f.num * kali, K)),
+    };
+  }
+  return [
+    {
+      label:
+        roleTag('penghitung') +
+        '<br>Berapa KPK (penyebut bersama terkecil) dari ' +
+        q.a.den +
+        ' dan ' +
+        q.b.den +
+        '?',
+      jawab: K,
+      hints: [
+        'Kelipatan ' +
+          besar +
+          ': ' +
+          kelipatan(besar, K * 1) +
+          ', … Mana yang juga habis dibagi ' +
+          kecil +
+          '?',
+        'Kelipatan ' +
+          kecil +
+          ': ' +
+          kelipatan(kecil, K) +
+          '. Bilangan pertama yang muncul di kedua daftar adalah KPK.',
+      ],
+      temuan: 'KPK dari ' + q.a.den + ' dan ' + q.b.den + ' adalah <strong>' + K + '</strong>.',
+    },
+    senilai(q.a, 'penghitung'),
+    senilai(q.b, 'pemeriksa'),
+  ];
+}
+
+function renderBandingkan(container) {
+  var D = DATA.bandingkan;
+  var soal = D.soal;
+  var idx = State.bandingIdx;
+  var q = soal[idx];
+  var st = State.bandingStates[q.id];
+  var steps = langkahBanding(q);
+  var K = steps[0].jawab;
+  var benarTanda = tandaBenar(q);
+  var tandaOk = st.tanda === benarTanda;
+  var langkahSelesai = st.steps.every(function (x) {
+    return x.done;
+  });
+
+  var statuses = soal.map(function (x) {
+    var s2 = State.bandingStates[x.id];
+    if (s2.tanda === tandaBenar(x))
+      return s2.tandaPertama === tandaBenar(x) ? 'correct' : 'incorrect';
+    return null;
+  });
+
+  var stepsHTML = '';
+  for (var i = 0; i < steps.length; i++) {
+    if (i > 0 && !st.steps[i - 1].done) break;
+    stepsHTML += buildDlStep('bd' + i, st.steps[i], steps[i], i + 1);
+  }
+
+  var tandaHTML = '';
+  if (langkahSelesai) {
+    var na = (q.a.num * K) / q.a.den;
+    var nb = (q.b.num * K) / q.b.den;
+    tandaHTML =
+      '<div class="dl-step' +
+      (tandaOk ? ' dl-step--done' : '') +
+      '">' +
+      '<p class="dl-step__label"><span class="dl-step__num">4</span>' +
+      roleTag('pemeriksa') +
+      '<br>Bandingkan ' +
+      buildFracInline(na, K) +
+      ' dan ' +
+      buildFracInline(nb, K) +
+      '. Tanda yang tepat untuk ' +
+      F(q.a) +
+      ' … ' +
+      F(q.b) +
+      ' adalah …</p>' +
+      buildChoiceGroup(D.tandaOpsi, st.tandaOrder, {
+        chosen: st.tanda,
+        correctId: tandaOk ? benarTanda : null,
+        grade: true,
+        locked: tandaOk,
+      }) +
+      (st.tanda && !tandaOk
+        ? buildFeedbackBox(
+            'warning',
+            '💭',
+            'Belum tepat. Penyebutnya sudah sama (' +
+              K +
+              '), jadi cukup bandingkan pembilangnya: ' +
+              na +
+              ' dan ' +
+              nb +
+              '.'
+          )
+        : '') +
+      '</div>';
+  }
+
+  var hasilHTML = '';
+  if (tandaOk) {
+    var simbol = benarTanda === '<' ? '&lt;' : benarTanda === '>' ? '&gt;' : '=';
+    hasilHTML = buildDlPanel(
+      buildFeedbackBox(
+        'success',
+        '✓',
+        '<strong>' +
+          F(q.a) +
+          ' ' +
+          simbol +
+          ' ' +
+          F(q.b) +
+          '</strong>' +
+          (benarTanda === '='
+            ? ' — ' + esc(q.a.nama) + ' dan ' + esc(q.b.nama) + ' sama banyak.'
+            : ' — ' + esc(benarTanda === '>' ? q.a.nama : q.b.nama) + ' lebih banyak.') +
+          ' 📣 Pelapor, jelaskan alasannya kepada tim!'
+      ) +
+        buildFracStripCompare([q.a, q.b], {
+          common: K <= 36 ? K : null,
+          half: true,
+          highlight: benarTanda === '>' ? 0 : benarTanda === '<' ? 1 : null,
+        }),
+      'panel--info'
+    );
+  }
+
+  var nav = '';
+  if (tandaOk) {
+    nav =
+      idx < soal.length - 1
+        ? buildDlNextButton('bandingNextSoal', 'Soal Berikutnya →')
+        : buildDlNextButton('bandingNextBtn', D.nextLabel, true);
+  }
+
+  container.innerHTML =
+    '<section aria-label="Bandingkan Pecahan">' +
+    buildHead(D) +
+    '<p class="tim-bar">👥 <strong>' +
+    esc(namaTim()) +
+    '</strong> · Kerjakan bersama, isi di buku juga!</p>' +
+    buildDlPanel(
+      buildProgressDots(soal.length, idx, statuses) +
+        '<p class="banding-konteks">' +
+        roleTag('pembaca') +
+        '<br>' +
+        T(q.konteks) +
+        '</p>' +
+        '<div class="banding-duel" aria-label="' +
+        esc(
+          'Bandingkan ' + bacaPecahan(q.a.num, q.a.den) + ' dan ' + bacaPecahan(q.b.num, q.b.den)
+        ) +
+        '">' +
+        '<div class="banding-duel__item">' +
+        buildFracBlock(q.a.num, q.a.den, null, 'large') +
+        '<span class="banding-duel__name">' +
+        esc(q.a.nama) +
+        '</span></div>' +
+        '<span class="banding-duel__sign' +
+        (tandaOk ? ' is-ok' : '') +
+        '">' +
+        (tandaOk ? esc(benarTanda) : '?') +
+        '</span>' +
+        '<div class="banding-duel__item">' +
+        buildFracBlock(q.b.num, q.b.den, null, 'large') +
+        '<span class="banding-duel__name">' +
+        esc(q.b.nama) +
+        '</span></div>' +
+        '</div>' +
+        stepsHTML +
+        tandaHTML
+    ) +
+    hasilHTML +
+    '<div class="btn-group btn-group--spread">' +
+    (idx > 0
+      ? '<button type="button" class="btn btn--ghost btn--small" id="bandingPrev">← Soal sebelumnya</button>'
+      : '<span></span>') +
+    '</div>' +
+    nav +
+    '</section>';
+
+  function rerender() {
+    renderBandingkan(container);
+  }
+
+  for (var j = 0; j < steps.length; j++) {
+    bindDlStep('bd' + j, st.steps[j], steps[j], saveState, rerender);
+  }
+
+  bindChoices(container, null, function (id) {
+    if (st.tanda === benarTanda) return;
+    if (!st.tandaPertama) st.tandaPertama = id;
+    st.tanda = id;
+    saveState();
+    rerender();
+  });
+
+  var prev = document.getElementById('bandingPrev');
+  if (prev) {
+    prev.addEventListener('click', function () {
+      State.bandingIdx = idx - 1;
+      saveState();
+      rerender();
+    });
+  }
+  var nextSoal = document.getElementById('bandingNextSoal');
+  if (nextSoal) {
+    nextSoal.addEventListener('click', function () {
+      State.bandingIdx = idx + 1;
+      saveState();
+      rerender();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+  }
+
+  var finish = document.getElementById('bandingNextBtn');
+  if (finish) {
+    finish.addEventListener('click', function () {
+      var belum = soal.filter(function (x) {
+        return State.bandingStates[x.id].tanda !== tandaBenar(x);
+      });
+      if (belum.length) {
+        showNotice('Masih ada soal yang belum selesai.');
+        return;
+      }
+      completeStage('bandingkan');
+      navigateTo('urutkan');
+    });
+  }
+
+  /* Fokus ke isian langkah yang sedang dikerjakan. */
+  var aktif = container.querySelector('.dl-step:not(.dl-step--done) .dl-num-input');
+  if (aktif && document.activeElement === document.body) aktif.focus({ preventScroll: true });
+}
+
+/* ============================================================
+   9. STAGE: URUTKAN (CL fase 4)
+   ============================================================ */
+
+function urutanBenar(q) {
+  return sortFractions(q.items, q.arah === 'turun').map(function (it) {
+    return it.id;
+  });
+}
+
+function urutSelesai(q) {
+  var st = State.urutStates[q.id];
+  return !!(st && st.checked && st.correct);
+}
+
+function renderUrutkan(container) {
+  var D = DATA.urutkan;
+  var soal = D.soal;
+  var idx = State.urutIdx;
+  var q = soal[idx];
+  var st = State.urutStates[q.id];
+  var benar = urutanBenar(q);
+  var selesai = urutSelesai(q);
+  var hintLevel = State.urutHint[q.id] || 0;
+  var turun = q.arah === 'turun';
+
+  var items = q.items.map(function (it) {
+    return {
+      id: it.id,
+      html:
+        '<span class="urut-card__name">' +
+        esc(it.nama) +
+        '</span>' +
+        buildFracInline(it.num, it.den),
+      aria: it.nama + ', ' + bacaPecahan(it.num, it.den) + ' ' + it.satuan,
+    };
+  });
+
+  var statuses = soal.map(function (x) {
+    var s2 = State.urutStates[x.id];
+    if (!urutSelesai(x)) return s2.checked ? 'incorrect' : null;
+    return s2.attempts === 1 ? 'correct' : 'incorrect';
+  });
+
+  var feedback = '';
+  if (st.checked && !st.correct) {
+    feedback = buildFeedbackBox(
+      'error',
+      '✗',
+      'Ada kartu yang belum di tempatnya (ditandai merah). Tekan <strong>Perbaiki Urutan</strong>; kartu yang sudah benar tetap di tempat. 🔍 Pemeriksa, cek dengan menyamakan penyebut!'
+    );
+  }
+
+  var pembahasan = '';
+  if (selesai) {
+    var K = kpkList(
+      q.items.map(function (it) {
+        return it.den;
+      })
+    );
+    var urut = benar.map(function (id) {
+      return q.items.filter(function (it) {
+        return it.id === id;
+      })[0];
+    });
+    pembahasan = buildDlPanel(
+      buildFeedbackBox(
+        'success',
+        '🎉',
+        '<strong>Urutan tepat' +
+          (st.attempts === 1 ? ' pada percobaan pertama!' : '!') +
+          '</strong> ' +
+          urut
+            .map(function (it) {
+              return F(it);
+            })
+            .join(turun ? ' &gt; ' : ' &lt; ')
+      ) +
+        '<p class="pembahasan-senilai"><strong>Dengan KPK ' +
+        K +
+        ':</strong> ' +
+        daftarSenilai(q.items, K) +
+        '</p>' +
+        buildFracNumberLine(q.items, { ticks: K }),
+      'panel--info'
+    );
+  }
+
+  var nav = '';
+  if (selesai) {
+    nav =
+      idx < soal.length - 1
+        ? buildDlNextButton('urutNextSoal', 'Soal Berikutnya →')
+        : buildDlNextButton('urutNextBtn', D.nextLabel, true);
+  }
+
+  container.innerHTML =
+    '<section aria-label="Urutkan Pecahan">' +
+    buildHead(D) +
+    '<p class="tim-bar">👥 <strong>' +
+    esc(namaTim()) +
+    '</strong> · Diskusikan dulu, baru ketuk kartu!</p>' +
+    buildDlPanel(
+      buildProgressDots(soal.length, idx, statuses) +
+        '<h2 class="urut-judul"><span aria-hidden="true">' +
+        q.ikon +
+        '</span> ' +
+        esc(q.judul) +
+        '</h2>' +
+        '<p>' +
+        roleTag('pembaca') +
+        '<br>' +
+        q.konteks +
+        '</p>' +
+        '<p class="urut-arah">' +
+        (turun ? '⬇️ Urutan TURUN: terbesar → terkecil' : '⬆️ Urutan NAIK: terkecil → terbesar') +
+        '</p>' +
+        buildOrderBoard('urutBoard', items, st, {
+          correct: benar,
+          fromLabel: turun ? 'Terbanyak' : 'Terkecil',
+          toLabel: turun ? 'Paling sedikit' : 'Terbesar',
+        }) +
+        feedback +
+        (selesai
+          ? ''
+          : buildHintStack(q.hints.map(T), hintLevel) +
+            '<div style="margin-top:var(--space-2);">' +
+            buildHintToggle('urutHintBtn', q.hints, hintLevel) +
+            '</div>')
+    ) +
+    pembahasan +
+    '<div class="btn-group btn-group--spread">' +
+    (idx > 0
+      ? '<button type="button" class="btn btn--ghost btn--small" id="urutPrev">← Soal sebelumnya</button>'
+      : '<span></span>') +
+    '</div>' +
+    nav +
+    '</section>';
+
+  function rerender() {
+    renderUrutkan(container);
+  }
+
+  bindOrderBoard(container, 'urutBoard', st, {
+    correct: benar,
+    save: saveState,
+    rerender: rerender,
+  });
+
+  var hintBtn = document.getElementById('urutHintBtn');
+  if (hintBtn) {
+    hintBtn.addEventListener('click', function () {
+      State.urutHint[q.id] = Math.min(hintLevel + 1, q.hints.length);
+      saveState();
+      rerender();
+    });
+  }
+
+  var prev = document.getElementById('urutPrev');
+  if (prev) {
+    prev.addEventListener('click', function () {
+      State.urutIdx = idx - 1;
+      saveState();
+      rerender();
+    });
+  }
+  var nextSoal = document.getElementById('urutNextSoal');
+  if (nextSoal) {
+    nextSoal.addEventListener('click', function () {
+      State.urutIdx = idx + 1;
+      saveState();
+      rerender();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+  }
+  var finish = document.getElementById('urutNextBtn');
+  if (finish) {
+    finish.addEventListener('click', function () {
+      if (!soal.every(urutSelesai)) {
+        showNotice('Masih ada soal yang belum selesai.');
+        return;
+      }
+      completeStage('urutkan');
+      navigateTo('kuis');
     });
   }
 }
 
 /* ============================================================
-   11. HELPER UI
+   10. STAGE: KUIS INDIVIDU (CL fase 5)
+   ============================================================ */
+
+var KuisStage = createExerciseStage({
+  soal: KUIS_SOAL,
+  defaultType: 'choice',
+  getExercises: function () {
+    return State.kuisStates;
+  },
+  getIndex: function () {
+    return State.kuisIdx;
+  },
+  setIndex: function (i) {
+    State.kuisIdx = i;
+  },
+  save: saveState,
+  idPrefix: 'kuis',
+  sectionLabel: 'Kuis Individu',
+  instruction: DATA.kuis.instruction,
+  buildHead: function () {
+    return buildHead(DATA.kuis);
+  },
+  listClass: 'challenge-options',
+  choiceClassStyle: 'state',
+  renderPrompt: function (s) {
+    return '<p class="kuis-tanya">' + s.tanya + '</p>';
+  },
+  nextStageId: 'penghargaan',
+  completeStageId: 'kuis',
+  nextButtonLabel: DATA.kuis.nextLabel,
+});
+
+function renderKuis(container) {
+  KuisStage.render(container);
+}
+
+/* ============================================================
+   11. STAGE: PENGHARGAAN (CL fase 6)
+   ============================================================ */
+
+function renderPenghargaan(container) {
+  var D = DATA.penghargaan;
+  var sk = hitungSkor();
+  var p = sk.predikat;
+  var anggota = DATA.peran.map(function (r) {
+    return {
+      id: r.id,
+      label:
+        r.ikon +
+        ' ' +
+        esc(State.timPeran[r.id] || r.nama) +
+        ' <small>(' +
+        esc(r.nama) +
+        ')</small>',
+    };
+  });
+
+  container.innerHTML =
+    '<section aria-label="Penghargaan Tim">' +
+    buildHead(D) +
+    '<div class="reward-card">' +
+    '<span class="reward-card__icon" aria-hidden="true">' +
+    p.ikon +
+    '</span>' +
+    '<p class="reward-card__team">' +
+    esc(namaTim()) +
+    '</p>' +
+    '<h2 class="reward-card__title">' +
+    esc(p.nama) +
+    '</h2>' +
+    '<p class="reward-card__text">' +
+    esc(p.teks) +
+    '</p>' +
+    '<div class="reward-meter" role="img" aria-label="Nilai tim ' +
+    sk.nilai +
+    ' dari 100">' +
+    '<span class="reward-meter__fill" style="width:' +
+    sk.nilai +
+    '%"></span>' +
+    '</div>' +
+    '<p class="reward-card__score">Nilai tim: <strong>' +
+    sk.nilai +
+    '</strong> / 100</p>' +
+    '</div>' +
+    buildDlPanel(
+      '<div class="summary-grid">' +
+        kartu(
+          sk.bandingPertama + '/' + DATA.bandingkan.soal.length,
+          'Bandingkan: tanda tepat pada pilihan pertama'
+        ) +
+        kartu(
+          sk.urutPertama + '/' + DATA.urutkan.soal.length,
+          'Urutkan: tepat pada percobaan pertama'
+        ) +
+        kartu(sk.kuisBenar + '/' + KUIS_SOAL.length, 'Kuis individu benar') +
+        '</div>' +
+        '<p class="dl-caption">Nilai tim = rata-rata skor LKPD tim (' +
+        sk.skorLkpd +
+        ') dan skor kuis individu (' +
+        sk.skorKuis +
+        '). Predikat: 🏆 Tim Super ≥ 85 · 🥇 Tim Hebat ≥ 70 · 🌟 Tim Baik.</p>'
+    ) +
+    buildDlPanel(
+      '<h3 style="margin-top:0;">🎭 Anggota tim</h3>' +
+        buildRoleCards(DATA.peran, State.timPeran, { locked: true }) +
+        '<p class="exercise-label">' +
+        esc(D.apresiasiLabel) +
+        '</p>' +
+        buildChoiceGroup(anggota, State.apresiasiOrder, { chosen: State.apresiasi }) +
+        (State.apresiasi ? buildFeedbackBox('success', '💐', esc(D.apresiasiUmpan)) : '')
+    ) +
+    buildDlNextButton('penghargaanNextBtn', D.nextLabel, true) +
+    '</section>';
+
+  bindChoices(container, null, function (id) {
+    State.apresiasi = id;
+    saveState();
+    renderPenghargaan(container);
+  });
+
+  document.getElementById('penghargaanNextBtn').addEventListener('click', function () {
+    if (!State.apresiasi) {
+      showNotice('Pilih dulu anggota yang ingin kamu apresiasi.');
+      return;
+    }
+    completeStage('penghargaan');
+    navigateTo('refleksi');
+  });
+}
+
+/* ============================================================
+   12. STAGE: REFLEKSI
+   ============================================================ */
+
+function renderRefleksi(container) {
+  var D = DATA.refleksi;
+
+  container.innerHTML =
+    '<section aria-label="Refleksi">' +
+    buildHead(D) +
+    buildDlPanel(
+      '<p class="exercise-label">✅ Benar atau keliru? Pilih untuk setiap pernyataan.</p>' +
+        buildSortItems(REFLEKSI_ITEMS, State.refleksiOrder, D.opsi, State.refleksiStates)
+    ) +
+    '<div class="refleksi-list">' +
+    D.pertanyaan
+      .map(function (q, i) {
+        return (
+          '<div class="panel panel--compact">' +
+          '<span class="refleksi-item__num">Pertanyaan ' +
+          (i + 1) +
+          ' dari ' +
+          D.pertanyaan.length +
+          '</span>' +
+          '<label for="ref-' +
+          q.id +
+          '" class="dl-refleksi-q">' +
+          esc(q.teks) +
+          '</label>' +
+          '<textarea id="ref-' +
+          q.id +
+          '" class="input-textarea" data-rid="' +
+          q.id +
+          '" placeholder="' +
+          esc(q.placeholder) +
+          '">' +
+          esc(State.refleksiAnswers[q.id] || '') +
+          '</textarea>' +
+          '</div>'
+        );
+      })
+      .join('') +
+    '</div>' +
+    buildDlPanel(
+      '<p class="exercise-label">' +
+        esc(D.diriLabel) +
+        '</p>' +
+        buildChoiceGroup(D.diriOpsi, State.refleksiDiriOrder, {
+          chosen: State.refleksiDiri,
+          group: 'diri',
+        })
+    ) +
+    '<div class="btn-group btn-group--spread">' +
+    '<span class="dl-caption" style="align-self:center;">Jawaban tersimpan di perangkatmu saja, tidak dikirim ke mana pun.</span>' +
+    '<button type="button" class="btn btn--primary" id="refleksiNextBtn">' +
+    esc(D.nextLabel) +
+    '</button>' +
+    '</div>' +
+    '</section>';
+
+  function rerender() {
+    renderRefleksi(container);
+  }
+
+  bindSortItems(container, REFLEKSI_ITEMS, State.refleksiStates, saveState, rerender);
+
+  container.querySelectorAll('textarea[data-rid]').forEach(function (ta) {
+    ta.addEventListener('input', function () {
+      State.refleksiAnswers[ta.dataset.rid] = ta.value;
+      saveState();
+    });
+  });
+
+  bindChoices(container, 'diri', function (id) {
+    State.refleksiDiri = id;
+    saveState();
+    rerender();
+  });
+
+  document.getElementById('refleksiNextBtn').addEventListener('click', function () {
+    if (!sortItemsAllAnswered(REFLEKSI_ITEMS, State.refleksiStates)) {
+      showNotice('Jawab dulu semua pernyataan benar/keliru.');
+      return;
+    }
+    if (!State.refleksiDiri) {
+      showNotice('Pilih dulu seberapa yakin kamu sekarang.');
+      return;
+    }
+    completeStage('refleksi');
+    navigateTo('selesai');
+  });
+}
+
+/* ============================================================
+   13. STAGE: SELESAI
+   ============================================================ */
+
+function renderSelesai(container) {
+  var D = DATA.selesai;
+  var sk = hitungSkor();
+
+  container.innerHTML =
+    '<section aria-label="Selesai">' +
+    '<div class="done-card">' +
+    '<span class="done-card__icon">' +
+    sk.predikat.ikon +
+    '</span>' +
+    '<h2>' +
+    esc(D.judul) +
+    '</h2>' +
+    '<p class="done-card__lead">' +
+    esc(namaTim()) +
+    ' meraih predikat <strong>' +
+    esc(sk.predikat.nama) +
+    '</strong>. ' +
+    esc(D.teks) +
+    '</p>' +
+    '<div class="formula-duo">' +
+    '<div class="formula-card"><span class="formula-card__label">Samakan penyebut</span>' +
+    T('{2/3} = {8/12} &lt; {9/12} = {3/4}') +
+    '</div>' +
+    '<div class="formula-card"><span class="formula-card__label">Kali silang</span>' +
+    T('{a/b} &lt; {c/d} bila a × d &lt; c × b') +
+    '</div>' +
+    '</div>' +
+    '<div class="panel panel--hero done-card__list">' +
+    '<h3 style="margin-top:0;">Yang sudah kalian capai</h3>' +
+    '<ol class="objectives-list">' +
+    D.capaian
+      .map(function (c, i) {
+        return '<li><span class="objectives-list__num">' + (i + 1) + '</span>' + esc(c) + '</li>';
+      })
+      .join('') +
+    '</ol>' +
+    '</div>' +
+    '<div class="feedback-box feedback-box--info done-card__note">' +
+    '<span class="feedback-box__icon">📌</span>' +
+    '<div class="feedback-box__body">' +
+    '<strong>Catatan untuk Guru:</strong><br>' +
+    'Nilai tim adalah indikator latihan digital, bukan nilai akhir. Kumpulkan catatan LKPD di buku tiap tim dan minta Pelapor mempresentasikan satu soal urutan untuk memastikan setiap anggota dapat menjelaskan strateginya.' +
+    '</div></div>' +
+    '<div class="btn-group btn-group--center">' +
+    '<a href="../../index.html" class="btn btn--ghost">← Beranda</a>' +
+    '<button type="button" class="btn btn--outline-primary" id="reviewBtn">Tinjau Ulang</button>' +
+    '</div>' +
+    '</div>' +
+    '</section>';
+
+  completeStage('selesai');
+
+  document.getElementById('reviewBtn').addEventListener('click', function () {
+    navigateTo('orientasi');
+  });
+}
+
+/* ============================================================
+   14. ROUTER RENDER
+   ============================================================ */
+
+var RENDERERS = {
+  orientasi: renderOrientasi,
+  sajian: renderSajian,
+  kelompok: renderKelompok,
+  bandingkan: renderBandingkan,
+  urutkan: renderUrutkan,
+  kuis: renderKuis,
+  penghargaan: renderPenghargaan,
+  refleksi: renderRefleksi,
+  selesai: renderSelesai,
+};
+
+function renderCurrentStage() {
+  var container = document.getElementById('stageContainer');
+  if (!container) return;
+  var fn = RENDERERS[State.currentStage] || RENDERERS.orientasi;
+  fn(container);
+}
+
+/* ============================================================
+   15. HELPER UI — MODAL RESET
    ============================================================ */
 
 function showResetModal() {
@@ -2010,41 +1536,22 @@ function hideResetModal() {
 }
 
 /* ============================================================
-   12. INIT
+   16. INIT
    ============================================================ */
 
 function init() {
-  /* Inisialisasi state */
-  initProblemStates();
-
-  /* Coba muat state tersimpan */
-  var loaded = loadState();
-  if (!loaded) {
-    /* State awal sudah diset di deklarasi State */
-  }
-
-  /* Pastikan problemStates selalu valid setelah load */
-  if (!Array.isArray(State.problemStates) || State.problemStates.length !== DATA.problems.length) {
-    initProblemStates();
-  }
-
-  /* Bangun stage nav */
   buildStageNav();
+  loadState();
+  if (STAGES.indexOf(State.currentStage) === -1) State.currentStage = 'orientasi';
+  initExerciseArrays();
+  saveState();
   updateStageNav();
   updateProgress();
-
-  /* Render tahap saat ini */
   renderCurrentStage();
 
-  /* Reset button */
   var resetBtn = document.getElementById('resetAppBtn');
-  if (resetBtn) {
-    resetBtn.addEventListener('click', function () {
-      showResetModal();
-    });
-  }
+  if (resetBtn) resetBtn.addEventListener('click', showResetModal);
 
-  /* Modal buttons */
   var cancelBtn = document.getElementById('resetCancelBtn');
   if (cancelBtn) cancelBtn.addEventListener('click', hideResetModal);
 
@@ -2056,29 +1563,19 @@ function init() {
       saveState();
       updateStageNav();
       updateProgress();
-      renderCurrentStage();
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-      showNotice('Progress berhasil di-reset.');
+      navigateTo('orientasi');
     });
   }
 
-  /* Tutup modal jika klik backdrop */
   var modal = document.getElementById('resetModal');
   if (modal) {
     modal.addEventListener('click', function (e) {
       if (e.target === modal) hideResetModal();
     });
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape') hideResetModal();
+    });
   }
-
-  /* Escape key tutup modal */
-  document.addEventListener('keydown', function (e) {
-    if (e.key === 'Escape') hideResetModal();
-  });
 }
 
-/* Jalankan saat DOM siap */
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', init);
-} else {
-  init();
-}
+document.addEventListener('DOMContentLoaded', init);
