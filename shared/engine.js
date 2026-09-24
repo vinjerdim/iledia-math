@@ -20,6 +20,7 @@
        aritmetika/geometri)
     8. Komponen Discovery Learning lanjutan (langkah isian
        bertahap, pemilahan kategori, grafik perbandingan)
+    9. Bilangan bulat: cara baca baku & garis bilangan interaktif
    ============================================================ */
 
 /* ============================================================
@@ -38,7 +39,8 @@ function parseInputInt(str, stripPunctuation) {
     .trim()
     .replace(pattern, '')
     .replace(/\u2212/g, '-');
-  if (!/^-?\d+$/.test(trimmed)) return { value: null, error: 'invalid' };
+  /* Tanda '+' di depan (mis. "+8") diterima: +8 dan 8 bernilai sama. */
+  if (!/^[-+]?\d+$/.test(trimmed)) return { value: null, error: 'invalid' };
   var v = parseInt(trimmed, 10);
   if (isNaN(v)) return { value: null, error: 'invalid' };
   return { value: v, error: null };
@@ -512,6 +514,8 @@ function createStageMachine(opts) {
  *   sectionLabel, kicker, goal, instruction   teks kepala tahap
  *   nextStageId, completeStageId, nextButtonLabel   tujuan setelah semua soal selesai
  *   defaultType            (opsional) tipe untuk soal tanpa `s.type`, default 'input'
+ *   afterRender(container) (opsional) dipanggil setiap selesai render, mis. untuk
+ *                          centerNumberLines() pada soal bergaris bilangan
  *   buildHead()            (opsional) mengganti markup kepala tahap seluruhnya —
  *                          dipakai modul yang memakai penanda sendiri (mis. pbl-badge)
  *
@@ -523,6 +527,8 @@ function createStageMachine(opts) {
  *   inputSuffix(s)         (opsional) HTML tepat di samping kotak isian,
  *                          mis. satuan jawaban
  *   stripPunctuation       (opsional) diteruskan ke parseInputInt
+ *   allowNegative          (opsional) true → kotak isian tanpa inputmode numerik
+ *                          agar tombol minus tersedia di keyboard ponsel
  *   revealAfterAttempts    (opsional, default 2)
  *   revealButtonStyle      (opsional) 'combined' (default) — satu tombol Petunjuk
  *                          yang berubah menjadi pengungkap jawaban setelah
@@ -684,7 +690,9 @@ function createExerciseStage(cfg) {
         '<div class="' +
         inputRowClass +
         '">' +
-        '<input type="text" inputmode="numeric" id="' +
+        '<input type="text"' +
+        (cfg.allowNegative ? '' : ' inputmode="numeric"') +
+        ' id="' +
         prefix +
         'Input" class="input-text" placeholder="' +
         esc(cfg.inputPlaceholder || '...') +
@@ -928,6 +936,8 @@ function createExerciseStage(cfg) {
         navigateTo(cfg.nextStageId);
       });
     }
+
+    if (cfg.afterRender) cfg.afterRender(container);
   }
 
   return { render: render };
@@ -1745,4 +1755,345 @@ function buildCompareBarChart(series, opts) {
     '</svg>' +
     '</figure>'
   );
+}
+
+/* ============================================================
+   9. BILANGAN BULAT — CARA BACA BAKU & GARIS BILANGAN INTERAKTIF
+   Dipakai tahap membaca/menulis bilangan bulat dan menempatkan
+   bilangan pada garis bilangan mendatar (klik/ketuk atau
+   keyboard). Gaya .nlp-* ada di shared/base.css.
+   ============================================================ */
+
+/*
+ * Terbilang bahasa Indonesia untuk bilangan cacah 0 … 999.999
+ * (12 → "dua belas", 105 → "seratus lima", 1000 → "seribu").
+ * Di luar rentang itu, angka ditulis dengan formatNumber().
+ */
+function terbilang(n) {
+  var dasar = [
+    'nol',
+    'satu',
+    'dua',
+    'tiga',
+    'empat',
+    'lima',
+    'enam',
+    'tujuh',
+    'delapan',
+    'sembilan',
+    'sepuluh',
+    'sebelas',
+  ];
+  function sisa(n, r) {
+    return r ? ' ' + t(r) : '';
+  }
+  function t(n) {
+    if (n < 12) return dasar[n];
+    if (n < 20) return dasar[n - 10] + ' belas';
+    if (n < 100) return dasar[Math.floor(n / 10)] + ' puluh' + sisa(n, n % 10);
+    if (n < 200) return 'seratus' + sisa(n, n - 100);
+    if (n < 1000) return dasar[Math.floor(n / 100)] + ' ratus' + sisa(n, n % 100);
+    if (n < 2000) return 'seribu' + sisa(n, n - 1000);
+    return t(Math.floor(n / 1000)) + ' ribu' + sisa(n, n % 1000);
+  }
+  n = Math.round(Math.abs(n));
+  if (n >= 1000000) return formatNumber(n);
+  return t(n);
+}
+
+/*
+ * Cara baca baku bilangan bulat: −12 → "negatif dua belas", 0 → "nol",
+ * 7 → "tujuh" (atau "positif tujuh" bila opts.positif true).
+ * Kata "minus" sengaja tidak dipakai: dalam notasi baku, "minus" adalah
+ * nama operasi pengurangan, sedangkan tanda di depan bilangan dibaca
+ * "negatif".
+ */
+function bacaBilanganBulat(n, opts) {
+  opts = opts || {};
+  if (n < 0) return 'negatif ' + terbilang(-n);
+  if (n === 0) return 'nol';
+  return (opts.positif ? 'positif ' : '') + terbilang(n);
+}
+
+/* Titik terakhir yang dipilih per garis bilangan, agar fokus keyboard
+   bisa dipulihkan setelah tahap dirender ulang. */
+var NLP_LAST_PICK = {};
+var NLP_LAST_SCROLL = {};
+
+/*
+ * Garis bilangan mendatar (SVG) yang bisa diketuk.
+ *   id               id elemen <svg> (unik dalam tahap)
+ *   opts.min, max    rentang bilangan bulat (default −10 … 10)
+ *   opts.labelEvery  label angka setiap kelipatan ini (default 1); ujung
+ *                    garis dan 0 selalu berlabel
+ *   opts.marks       [{ value, label, tone }] titik yang sudah ditempatkan;
+ *                    tone 'neg' | 'pos' | 'zero' | 'ok' | 'bad' | 'target'
+ *                    (default mengikuti tanda bilangan)
+ *   opts.selected    nilai yang sedang dipilih (cincin sorot) atau null
+ *   opts.interactive false → hanya gambar (mis. soal "titik A = ?")
+ *   opts.sides       true → pita warna sisi negatif (kiri) & positif (kanan)
+ *   opts.aria        label aksesibel garis
+ * Setiap bilangan bulat mendapat target sentuh selebar satu satuan
+ * (<g role="button" tabindex="0" data-nl-value>). Pasang event dengan
+ * bindNumberLinePicker(); panggil centerNumberLines() setelah render agar
+ * di layar sempit garis dimulai dengan 0 di tengah.
+ */
+function buildNumberLinePicker(id, opts) {
+  opts = opts || {};
+  var min = typeof opts.min === 'number' ? opts.min : -10;
+  var max = typeof opts.max === 'number' ? opts.max : 10;
+  var every = opts.labelEvery || 1;
+  var interactive = opts.interactive !== false;
+  var marks = opts.marks || [];
+  var unit = 40;
+  var padX = 34;
+  var H = 116;
+  var axisY = 70;
+  var W = padX * 2 + (max - min) * unit;
+  function xOf(v) {
+    return padX + (v - min) * unit;
+  }
+  function toneOf(v) {
+    if (v < 0) return 'neg';
+    if (v > 0) return 'pos';
+    return 'zero';
+  }
+
+  var html = '';
+
+  if (opts.sides && min < 0 && max > 0) {
+    html +=
+      '<rect class="nlp-side nlp-side--neg" x="' +
+      (xOf(min) - 14) +
+      '" y="' +
+      (axisY - 6) +
+      '" width="' +
+      (xOf(0) - xOf(min) + 14) +
+      '" height="12" rx="6"/>' +
+      '<rect class="nlp-side nlp-side--pos" x="' +
+      xOf(0) +
+      '" y="' +
+      (axisY - 6) +
+      '" width="' +
+      (xOf(max) - xOf(0) + 14) +
+      '" height="12" rx="6"/>' +
+      '<text class="nlp-side-cap nlp-side-cap--neg" x="' +
+      xOf(min) +
+      '" y="14">← negatif</text>' +
+      '<text class="nlp-side-cap nlp-side-cap--pos" x="' +
+      xOf(max) +
+      '" y="14">positif →</text>';
+  }
+
+  /* Sumbu + panah di kedua ujung (garis bilangan tak berujung). */
+  var x0 = xOf(min) - 22;
+  var x1 = xOf(max) + 22;
+  html +=
+    '<line class="nlp-axis" x1="' +
+    x0 +
+    '" y1="' +
+    axisY +
+    '" x2="' +
+    x1 +
+    '" y2="' +
+    axisY +
+    '"/>' +
+    '<polygon class="nlp-arrow" points="' +
+    (x0 - 4) +
+    ',' +
+    axisY +
+    ' ' +
+    (x0 + 8) +
+    ',' +
+    (axisY - 6) +
+    ' ' +
+    (x0 + 8) +
+    ',' +
+    (axisY + 6) +
+    '"/>' +
+    '<polygon class="nlp-arrow" points="' +
+    (x1 + 4) +
+    ',' +
+    axisY +
+    ' ' +
+    (x1 - 8) +
+    ',' +
+    (axisY - 6) +
+    ' ' +
+    (x1 - 8) +
+    ',' +
+    (axisY + 6) +
+    '"/>';
+
+  for (var v = min; v <= max; v++) {
+    var x = xOf(v);
+    var major = v === 0 || v % 5 === 0;
+    var berlabel = v === 0 || v === min || v === max || v % every === 0;
+    var h = major ? 12 : 8;
+    var tick =
+      '<line class="nlp-tick' +
+      (major ? ' nlp-tick--major' : '') +
+      '" x1="' +
+      x +
+      '" y1="' +
+      (axisY - h) +
+      '" x2="' +
+      x +
+      '" y2="' +
+      (axisY + h) +
+      '"/>' +
+      (berlabel
+        ? '<text class="nlp-num nlp-num--' +
+          toneOf(v) +
+          '" x="' +
+          x +
+          '" y="' +
+          (axisY + 34) +
+          '">' +
+          formatNumber(v, '−') +
+          '</text>'
+        : '');
+    if (interactive) {
+      html +=
+        '<g class="nlp-hit' +
+        (opts.selected === v ? ' is-selected' : '') +
+        '" role="button" tabindex="0" data-nl-value="' +
+        v +
+        '" aria-label="Titik ' +
+        (berlabel
+          ? formatNumber(v, '−')
+          : 'tanpa label, ' + Math.abs(v) + ' satuan di ' + (v < 0 ? 'kiri' : 'kanan') + ' nol') +
+        '">' +
+        '<rect class="nlp-hit__area" x="' +
+        (x - unit / 2) +
+        '" y="22" width="' +
+        unit +
+        '" height="' +
+        (H - 22) +
+        '"/>' +
+        '<circle class="nlp-hit__ring" cx="' +
+        x +
+        '" cy="' +
+        axisY +
+        '" r="13"/>' +
+        tick +
+        '</g>';
+    } else {
+      html += tick;
+    }
+  }
+
+  marks.forEach(function (m) {
+    if (m.value < min || m.value > max) return;
+    var mx = xOf(m.value);
+    html +=
+      '<g class="nlp-mark nlp-mark--' +
+      (m.tone || toneOf(m.value)) +
+      '">' +
+      '<circle cx="' +
+      mx +
+      '" cy="' +
+      axisY +
+      '" r="9"/>' +
+      (m.label !== undefined && m.label !== ''
+        ? '<text class="nlp-mark__label" x="' +
+          mx +
+          '" y="' +
+          (axisY - 20) +
+          '">' +
+          esc(m.label) +
+          '</text>'
+        : '') +
+      '</g>';
+  });
+
+  return (
+    '<div class="nlp-wrap">' +
+    '<svg class="nlp' +
+    (interactive ? ' nlp--interactive' : '') +
+    '" id="' +
+    id +
+    '" data-zero="' +
+    (min <= 0 && max >= 0 ? (xOf(0) / W).toFixed(4) : '') +
+    '" viewBox="0 0 ' +
+    W +
+    ' ' +
+    H +
+    '" style="min-width:' +
+    Math.round(W * 0.62) +
+    'px" ' +
+    (interactive ? 'role="group"' : 'role="img"') +
+    ' aria-label="' +
+    esc(
+      opts.aria ||
+        'Garis bilangan dari ' + formatNumber(min, '−') + ' sampai ' + formatNumber(max, '−')
+    ) +
+    '">' +
+    html +
+    '</svg>' +
+    '</div>'
+  );
+}
+
+/*
+ * Memasang event garis bilangan buildNumberLinePicker di dalam `root`.
+ * onPick(value) dipanggil saat titik diklik/diketuk atau ditekan
+ * Enter/Spasi; panah kiri/kanan memindah fokus antartitik.
+ */
+function bindNumberLinePicker(root, id, onPick) {
+  var svg = root.querySelector('#' + id);
+  if (!svg) return;
+  var wrap = svg.parentNode;
+  var hits = Array.prototype.slice.call(svg.querySelectorAll('.nlp-hit'));
+  function pick(g) {
+    var v = parseInt(g.getAttribute('data-nl-value'), 10);
+    NLP_LAST_PICK[id] = v;
+    NLP_LAST_SCROLL[id] = wrap.scrollLeft;
+    onPick(v);
+  }
+  /* Pulihkan posisi gulir setelah render ulang akibat ketukan. */
+  if (typeof NLP_LAST_SCROLL[id] === 'number') {
+    wrap.scrollLeft = NLP_LAST_SCROLL[id];
+    wrap.setAttribute('data-scroll-restored', '1');
+    delete NLP_LAST_SCROLL[id];
+  }
+  hits.forEach(function (g, i) {
+    g.addEventListener('click', function () {
+      pick(g);
+    });
+    g.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        pick(g);
+      } else if (e.key === 'ArrowLeft' && i > 0) {
+        e.preventDefault();
+        hits[i - 1].focus();
+      } else if (e.key === 'ArrowRight' && i < hits.length - 1) {
+        e.preventDefault();
+        hits[i + 1].focus();
+      }
+    });
+  });
+  /* Pulihkan fokus keyboard pada titik yang terakhir dipilih. */
+  if (typeof NLP_LAST_PICK[id] === 'number' && document.activeElement === document.body) {
+    var prev = svg.querySelector('[data-nl-value="' + NLP_LAST_PICK[id] + '"]');
+    if (prev && prev.focus) prev.focus({ preventScroll: true });
+    delete NLP_LAST_PICK[id];
+  }
+}
+
+/*
+ * Di layar sempit, garis bilangan bergulir mendatar di dalam wadahnya.
+ * Panggil setelah tahap dirender agar setiap garis di `root` dimulai
+ * dengan titik 0 di tengah layar (bukan terpotong di ujung kiri).
+ */
+function centerNumberLines(root) {
+  (root || document).querySelectorAll('.nlp-wrap').forEach(function (wrap) {
+    var svg = wrap.querySelector('svg[data-zero]');
+    if (!svg || wrap.scrollWidth <= wrap.clientWidth) return;
+    if (wrap.getAttribute('data-scroll-restored')) return;
+    var ratio = parseFloat(svg.getAttribute('data-zero'));
+    if (isNaN(ratio)) return;
+    wrap.scrollLeft = Math.max(0, ratio * svg.clientWidth - wrap.clientWidth / 2);
+  });
 }

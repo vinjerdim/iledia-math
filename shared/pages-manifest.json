@@ -1,10 +1,11 @@
 {
   "fase-d/mpi-1.1": {
-    "title": "Bilangan Bulat pada Garis Bilangan — Matematika Fase D",
-    "description": "Media pembelajaran interaktif untuk membaca, menulis, dan membandingkan urutan bilangan bulat pada garis bilangan serta menggunakannya untuk memodelkan situasi nyata.",
+    "title": "Membaca, Menulis & Menempatkan Bilangan Bulat — Matematika Fase D",
+    "description": "Media pembelajaran interaktif berbasis Discovery Learning untuk membaca dan menuliskan bilangan bulat positif dan negatif sesuai notasi baku, serta menempatkannya pada garis bilangan.",
     "kicker": "Matematika — Fase D (SMP)",
-    "h1": "Bilangan Bulat pada Garis Bilangan",
-    "stageCount": 8
+    "h1": "Membaca, Menulis & Menempatkan Bilangan Bulat",
+    "stageCount": 10,
+    "extraBody": "partials/reset-modal.html"
   },
   "fase-d/mpi-1.2": {
     "title": "Penjumlahan dan Pengurangan Bilangan Bulat — Matematika Fase D",

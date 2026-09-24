@@ -2418,3 +2418,173 @@ details.hint-reveal[open] summary::before {
     animation: none;
   }
 }
+
+/* =========================================================================
+   Garis bilangan interaktif (shared/engine.js bagian 9 —
+   buildNumberLinePicker). Hanya wadahnya yang boleh bergulir mendatar
+   di layar sempit; halaman tidak ikut bergulir.
+   ========================================================================= */
+
+.nlp-wrap {
+  max-width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  margin: var(--space-3) 0;
+  padding: var(--space-2) 0;
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+}
+
+.nlp {
+  display: block;
+  width: 100%;
+  height: auto;
+  font-family: var(--font-mono);
+  user-select: none;
+}
+
+.nlp-axis {
+  stroke: var(--color-ink);
+  stroke-width: 3;
+  stroke-linecap: round;
+}
+
+.nlp-arrow {
+  fill: var(--color-ink);
+}
+
+.nlp-tick {
+  stroke: var(--color-ink-muted);
+  stroke-width: 2;
+}
+
+.nlp-tick--major {
+  stroke: var(--color-ink);
+  stroke-width: 2.5;
+}
+
+.nlp-num {
+  font-size: 17px;
+  font-weight: 700;
+  text-anchor: middle;
+  fill: var(--color-ink-muted);
+}
+
+.nlp-num--neg {
+  fill: var(--color-blue-strong);
+}
+
+.nlp-num--pos {
+  fill: var(--color-orange-strong);
+}
+
+.nlp-num--zero {
+  fill: var(--color-ink);
+  font-size: 19px;
+}
+
+.nlp-side--neg {
+  fill: var(--color-blue-soft);
+}
+
+.nlp-side--pos {
+  fill: var(--color-orange-soft);
+}
+
+.nlp-side-cap {
+  font-family: var(--font-display);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.nlp-side-cap--neg {
+  fill: var(--color-blue-strong);
+  text-anchor: start;
+}
+
+.nlp-side-cap--pos {
+  fill: var(--color-orange-strong);
+  text-anchor: end;
+}
+
+.nlp-hit {
+  cursor: pointer;
+  outline: none;
+}
+
+.nlp-hit__area {
+  fill: transparent;
+}
+
+.nlp-hit__ring {
+  fill: transparent;
+  stroke: transparent;
+  stroke-width: 3;
+  transition:
+    fill 0.15s ease,
+    stroke 0.15s ease;
+}
+
+.nlp-hit:hover .nlp-hit__ring {
+  fill: var(--color-primary-soft);
+  stroke: var(--color-primary);
+}
+
+.nlp-hit:focus-visible .nlp-hit__ring {
+  fill: var(--color-primary-soft);
+  stroke: var(--color-focus);
+  stroke-dasharray: 4 3;
+}
+
+.nlp-hit.is-selected .nlp-hit__ring {
+  fill: var(--color-warning-soft);
+  stroke: var(--color-warning);
+}
+
+.nlp-mark {
+  pointer-events: none;
+}
+
+.nlp-mark circle {
+  stroke: var(--color-surface);
+  stroke-width: 3;
+}
+
+.nlp-mark--neg circle {
+  fill: var(--color-blue);
+}
+
+.nlp-mark--pos circle {
+  fill: var(--color-orange);
+}
+
+.nlp-mark--zero circle,
+.nlp-mark--target circle {
+  fill: var(--color-purple);
+}
+
+.nlp-mark--ok circle {
+  fill: var(--color-success);
+}
+
+.nlp-mark--bad circle {
+  fill: var(--color-error);
+}
+
+.nlp-mark__label {
+  font-size: 16px;
+  font-weight: 700;
+  text-anchor: middle;
+  fill: var(--color-ink);
+  paint-order: stroke;
+  stroke: var(--color-surface);
+  stroke-width: 4px;
+  stroke-linejoin: round;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .nlp-hit__ring {
+    transition: none;
+  }
+}
