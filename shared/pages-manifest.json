@@ -7,96 +7,6 @@
     "stageCount": 10,
     "extraBody": "partials/reset-modal.html"
   },
-  "fase-d/mpi-1.2": {
-    "title": "Membandingkan & Mengurutkan Bilangan Bulat — Matematika Fase D",
-    "description": "Media pembelajaran interaktif berbasis Cooperative Learning untuk membandingkan dan mengurutkan bilangan bulat menggunakan garis bilangan sebagai alat bantu.",
-    "kicker": "Matematika — Fase D (SMP)",
-    "h1": "Membandingkan & Mengurutkan Bilangan Bulat",
-    "stageCount": 8,
-    "extraBody": "partials/reset-modal.html"
-  },
-  "fase-d/mpi-1.3": {
-    "title": "Membaca & Menulis Pecahan Biasa dan Pecahan Campuran — Matematika Fase D",
-    "description": "Media pembelajaran interaktif berbasis Direct Instruction untuk membaca dan menuliskan pecahan biasa dan pecahan campuran sesuai notasi baku.",
-    "kicker": "Matematika — Fase D (SMP)",
-    "h1": "Membaca & Menulis Pecahan Biasa dan Campuran",
-    "stageCount": 9,
-    "extraBody": "partials/reset-modal.html"
-  },
-  "fase-d/mpi-1.4": {
-    "title": "Menyederhanakan & Menyamakan Penyebut Pecahan — Matematika Fase D",
-    "description": "Media pembelajaran interaktif berbasis Problem-Based Learning untuk menyederhanakan pecahan dan menyamakan penyebut dua pecahan atau lebih sebagai dasar perbandingan.",
-    "kicker": "Matematika — Fase D (SMP)",
-    "h1": "Menyederhanakan & Menyamakan Penyebut Pecahan",
-    "stageCount": 10,
-    "extraBody": "partials/reset-modal.html",
-    "extraScripts": [
-      "app-core.js",
-      "app-stage-orientasi.js",
-      "app-stage-organisasi.js",
-      "app-stage-selidik-sederhana.js",
-      "app-stage-latih-sederhana.js",
-      "app-stage-selidik-samakan.js",
-      "app-stage-latih-samakan.js",
-      "app-stage-karya.js",
-      "app-stage-evaluasi.js",
-      "app-stage-refleksi.js",
-      "app-stage-selesai.js"
-    ]
-  },
-  "fase-d/mpi-1.5": {
-    "title": "Membandingkan & Mengurutkan Pecahan — Matematika Fase D",
-    "description": "Media pembelajaran interaktif berbasis Cooperative Learning untuk membandingkan dan mengurutkan pecahan dengan penyebut berbeda melalui kerja kelompok berperan.",
-    "kicker": "Matematika — Fase D (SMP)",
-    "h1": "Membandingkan & Mengurutkan Pecahan",
-    "stageCount": 9,
-    "extraBody": "partials/reset-modal.html"
-  },
-  "fase-d/mpi-1.6": {
-    "title": "Bilangan Bulat & Pecahan dalam Kehidupan Sehari-hari — Matematika Fase D",
-    "description": "Media pembelajaran interaktif berbasis Problem-Based Learning untuk menerapkan pembacaan, penulisan, dan perbandingan bilangan bulat serta pecahan dalam menyelesaikan masalah kontekstual sehari-hari.",
-    "kicker": "Matematika — Fase D (SMP)",
-    "h1": "Bilangan Bulat & Pecahan dalam Kehidupan Sehari-hari",
-    "stageCount": 10,
-    "extraBody": "partials/reset-modal.html",
-    "extraScripts": [
-      "app-core.js",
-      "app-stage-orientasi.js",
-      "app-stage-organisasi.js",
-      "app-stage-selidik-bulat.js",
-      "app-stage-latih-bulat.js",
-      "app-stage-selidik-pecahan.js",
-      "app-stage-latih-pecahan.js",
-      "app-stage-karya.js",
-      "app-stage-evaluasi.js",
-      "app-stage-refleksi.js",
-      "app-stage-selesai.js"
-    ]
-  },
-  "fase-d/mpi-2.1": {
-    "title": "Penjumlahan & Pengurangan Bilangan Bulat — Matematika Fase D",
-    "description": "Media pembelajaran interaktif berbasis Discovery Learning untuk merepresentasikan bilangan bulat pada garis bilangan serta menjumlah dan mengurangkan bilangan bulat dalam masalah kontekstual suhu, saldo, dan ketinggian.",
-    "kicker": "Matematika — Fase D (SMP)",
-    "h1": "Penjumlahan & Pengurangan Bilangan Bulat",
-    "stageCount": 10,
-    "extraBody": "partials/reset-modal.html"
-  },
-  "fase-d/mpi-2.2": {
-    "title": "Perkalian & Pembagian Bilangan Bulat — Matematika Fase D",
-    "description": "Media pembelajaran interaktif berbasis Inquiry Learning untuk mengalikan dan membagi bilangan bulat serta menerapkan sifat-sifat operasi hitung dan urutan pengerjaan dalam menyelesaikan masalah kontekstual.",
-    "kicker": "Matematika — Fase D (SMP)",
-    "h1": "Perkalian & Pembagian Bilangan Bulat",
-    "stageCount": 11,
-    "extraBody": "partials/reset-modal.html"
-  },
-  "fase-d/mpi-3.1": {
-    "title": "Membaca & Menulis Bilangan Desimal — Matematika Fase D",
-    "description": "Media pembelajaran interaktif berbasis Discovery Learning untuk membaca dan menulis bilangan desimal dengan benar menggunakan konsep nilai tempat (persepuluhan, perseratusan, perseribuan) melalui pengamatan konteks nyata dan model visual.",
-    "kicker": "Matematika — Fase D (SMP)",
-    "h1": "Membaca & Menulis Bilangan Desimal",
-    "stageCount": 10,
-    "extraBody": "partials/reset-modal.html"
-  },
   "fase-f/mpi-1.1": {
     "title": "Konsep Barisan Aritmetika & Beda — Matematika Fase F",
     "description": "Media pembelajaran interaktif berbasis Inquiry Learning untuk mengidentifikasi dan menjelaskan konsep barisan aritmetika serta menentukan beda dari suatu barisan bilangan.",
@@ -105,75 +15,11 @@
     "stageCount": 10,
     "extraBody": "partials/reset-modal.html"
   },
-  "fase-f/mpi-1.2": {
-    "title": "Barisan dan Deret Geometri — Matematika Fase F",
-    "description": "Media pembelajaran interaktif berbasis Discovery Learning untuk menjelaskan pola barisan geometri, menurunkan rumus suku ke-n dan jumlah n suku deret geometri, serta membandingkan karakteristiknya dengan pola aritmetika dalam menyelesaikan masalah kontekstual.",
-    "kicker": "Matematika — Fase F (SMK RPL)",
-    "h1": "Barisan dan Deret Geometri",
-    "stageCount": 11,
-    "extraBody": "partials/reset-modal.html"
-  },
-  "fase-f/mpi-2.1": {
-    "title": "Jumlah n Suku Pertama Deret Aritmetika — Matematika Fase F",
-    "description": "Media pembelajaran interaktif berbasis Discovery Learning untuk menemukan dan membuktikan rumus jumlah n suku pertama deret aritmetika (Sₙ) secara visual dan aljabar, serta menggunakannya untuk menyelesaikan masalah sederhana.",
-    "kicker": "Matematika — Fase F (SMK RPL)",
-    "h1": "Jumlah n Suku Pertama Deret Aritmetika",
-    "stageCount": 10,
-    "extraBody": "partials/reset-modal.html"
-  },
-  "fase-f/mpi-2.2": {
-    "title": "Jumlah n Suku Pertama Deret Geometri — Matematika Fase F",
-    "description": "Media pembelajaran interaktif berbasis Problem Based Learning untuk menemukan dan membuktikan rumus jumlah n suku pertama deret geometri (Sₙ), serta menerapkannya untuk menyelesaikan masalah kontekstual yang melibatkan deret aritmetika dan geometri.",
-    "kicker": "Matematika — Fase F (SMK RPL)",
-    "h1": "Jumlah n Suku Pertama Deret Geometri",
-    "stageCount": 10,
-    "extraBody": "partials/reset-modal.html"
-  },
-  "fase-d/mpi-3.2": {
-    "title": "Membandingkan & Mengurutkan Bilangan Desimal — Matematika Fase D",
-    "description": "Media pembelajaran interaktif berbasis Inquiry Learning untuk membandingkan dan mengurutkan beberapa bilangan desimal dengan tepat menggunakan nilai tempat dan garis bilangan, serta menjelaskan alasannya.",
-    "kicker": "Matematika — Fase D (SMP)",
-    "h1": "Membandingkan & Mengurutkan Bilangan Desimal",
-    "stageCount": 11,
-    "extraBody": "partials/reset-modal.html"
-  },
-  "fase-f/mpi-3.1": {
-    "title": "Bunga Tunggal dengan Barisan & Deret Aritmetika — Matematika Fase F",
-    "description": "Media pembelajaran interaktif berbasis Discovery Learning untuk menerapkan konsep barisan dan deret aritmetika dalam menentukan bunga dan nilai akhir modal pada masalah bunga tunggal.",
-    "kicker": "Matematika — Fase F (SMK RPL)",
-    "h1": "Bunga Tunggal dengan Barisan & Deret Aritmetika",
-    "stageCount": 10,
-    "extraBody": "partials/reset-modal.html"
-  },
-  "fase-f/mpi-3.2": {
-    "title": "Bunga Majemuk dengan Barisan & Deret Geometri — Matematika Fase F",
-    "description": "Media pembelajaran interaktif berbasis Inquiry Learning untuk menerapkan konsep barisan dan deret geometri dalam menentukan nilai akhir modal pada masalah bunga majemuk.",
-    "kicker": "Matematika — Fase F (SMK RPL)",
-    "h1": "Bunga Majemuk dengan Barisan & Deret Geometri",
-    "stageCount": 11,
-    "extraBody": "partials/reset-modal.html"
-  },
-  "fase-f/mpi-3.3": {
-    "title": "Membandingkan Bunga Tunggal & Bunga Majemuk — Matematika Fase F",
-    "description": "Media pembelajaran interaktif berbasis Problem Based Learning untuk membandingkan bunga tunggal dan bunga majemuk serta menyelesaikan masalah keuangan kontekstual yang melibatkan keduanya secara tepat.",
-    "kicker": "Matematika — Fase F (SMK RPL)",
-    "h1": "Membandingkan Bunga Tunggal & Bunga Majemuk",
-    "stageCount": 9,
-    "extraBody": "partials/reset-modal.html"
-  },
   "fase-d/mpi-12.1": {
     "title": "Membaca & Menulis Bilangan Berpangkat — Matematika Fase D",
     "description": "Media pembelajaran interaktif berbasis Discovery Learning untuk membaca dan menulis bilangan berpangkat bulat positif, negatif, dan nol beserta unsur-unsurnya (basis dan pangkat) melalui percobaan lipat kertas, pola tangga pangkat, dan penulis pangkat.",
     "kicker": "Matematika — Fase D (SMP)",
     "h1": "Membaca & Menulis Bilangan Berpangkat",
-    "stageCount": 10,
-    "extraBody": "partials/reset-modal.html"
-  },
-  "fase-d/mpi-16.1": {
-    "title": "Relasi Antara Dua Himpunan — Matematika Fase D",
-    "description": "Media pembelajaran interaktif berbasis Discovery Learning untuk mengidentifikasi konsep relasi antara dua himpunan dan menyajikannya dalam bentuk diagram panah, tabel, dan himpunan pasangan berurutan pada berbagai situasi kehidupan sehari-hari.",
-    "kicker": "Matematika — Fase D (SMP)",
-    "h1": "Relasi Antara Dua Himpunan",
     "stageCount": 10,
     "extraBody": "partials/reset-modal.html"
   },
@@ -185,28 +31,12 @@
     "stageCount": 10,
     "extraBody": "partials/reset-modal.html"
   },
-  "fase-d/mpi-29.1": {
-    "title": "Bangun Kongruen & Sifat-sifatnya — Matematika Fase D",
-    "description": "Media pembelajaran interaktif berbasis Discovery Learning untuk menjelaskan pengertian bangun kongruen dan sifat-sifatnya (sisi dan sudut bersesuaian sama besar) serta membedakannya dari bangun sebangun melalui kegiatan menjiplak dan mengukur berbagai bangun datar.",
-    "kicker": "Matematika — Fase D (SMP)",
-    "h1": "Bangun Kongruen & Sifat-sifatnya",
-    "stageCount": 10,
-    "extraBody": "partials/reset-modal.html"
-  },
   "fase-e/mpi-1.1": {
     "title": "Sifat Operasi Bilangan Berpangkat — Matematika Fase E",
     "description": "Media pembelajaran interaktif berbasis Discovery Learning untuk menggeneralisasi sifat perkalian dan pembagian bilangan berpangkat bulat positif serta sifat pangkat dari pangkat melalui eksplorasi pola numerik: tabel pangkat, tabel pola, lab uji sifat, dan ubin faktor.",
     "kicker": "Matematika — Fase E (SMK RPL)",
     "h1": "Sifat Operasi Bilangan Berpangkat",
     "stageCount": 9,
-    "extraBody": "partials/reset-modal.html"
-  },
-  "fase-f/mpi-15.1": {
-    "title": "Peluang Kejadian Majemuk — Matematika Fase F",
-    "description": "Media pembelajaran interaktif berbasis Inquiry Learning untuk menyelidiki peluang kejadian majemuk (saling lepas, tidak saling lepas, dan saling bebas) melalui percobaan dadu, koin, dan kartu, lalu menentukan peluangnya dengan rumus yang sesuai pada masalah kontekstual.",
-    "kicker": "Matematika — Fase F (SMK RPL)",
-    "h1": "Peluang Kejadian Majemuk",
-    "stageCount": 10,
     "extraBody": "partials/reset-modal.html"
   }
 }
