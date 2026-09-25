@@ -8575,3 +8575,79 @@ button.pwr-anatomy__part:disabled {
     font-size: 0.85rem;
   }
 }
+
+/* =========================================================================
+   39. Bentuk aljabar berpangkat — monomial (shared/engine.js seksi 39)
+   (buildEkspresiMonomial, buildMonomialPositif, buildMonomialInput)
+   ========================================================================= */
+
+.mono-expr {
+  display: inline-flex;
+  align-items: center;
+  font-family: var(--font-mono);
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--color-ink);
+  max-width: 100%;
+  overflow-wrap: anywhere;
+}
+
+.mono-frac {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  vertical-align: middle;
+  gap: 2px;
+}
+
+.mono-frac__atas,
+.mono-frac__bawah {
+  padding: 0 var(--space-1);
+  white-space: nowrap;
+}
+
+.mono-frac__bar {
+  align-self: stretch;
+  height: 2px;
+  background: currentColor;
+}
+
+.mono-input {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: var(--space-2);
+}
+
+.mono-input__koef.input-text {
+  width: 84px;
+  min-height: 44px;
+  font-family: var(--font-mono);
+  font-size: 1.1rem;
+  text-align: center;
+}
+
+.mono-input__var {
+  display: inline-flex;
+  align-items: flex-start;
+  gap: 2px;
+  padding-top: 10px;
+}
+
+.mono-input__huruf {
+  font-family: var(--font-mono);
+  font-size: 1.35rem;
+  font-weight: 700;
+  font-style: italic;
+  line-height: 1.4;
+}
+
+.mono-input__exp.input-text {
+  width: 56px;
+  min-height: 36px;
+  margin-top: -12px;
+  padding: var(--space-1);
+  font-family: var(--font-mono);
+  font-size: 0.95rem;
+  text-align: center;
+}
