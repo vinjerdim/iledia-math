@@ -3085,6 +3085,47 @@ details.hint-reveal[open] summary::before {
   color: var(--color-success-strong);
 }
 
+/* Kalimat perbandingan pecahan (buildKalimatBandingPecahan, seksi 36) */
+.cmp-sentence--frac {
+  flex-wrap: wrap;
+}
+
+.cmp-sentence__frac {
+  display: inline-flex;
+  align-items: center;
+  padding: var(--space-1) var(--space-3);
+  border-radius: var(--radius-md);
+  background: var(--color-purple-soft);
+  color: var(--color-purple-strong);
+}
+
+/* Kartu strategi ahli (STRATEGI_BANDING_PECAHAN, seksi 36) */
+.strategi-card {
+  display: flex;
+  gap: var(--space-3);
+  align-items: flex-start;
+  padding: var(--space-3) var(--space-4);
+  border: 2px solid var(--color-border);
+  border-left: 6px solid var(--color-purple);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+}
+
+.strategi-card__ikon {
+  font-size: 1.6rem;
+  line-height: 1;
+}
+
+.strategi-card__nama {
+  margin: 0;
+  font-weight: 700;
+}
+
+.strategi-card__kunci {
+  margin: var(--space-1) 0 0;
+  font-size: 0.92rem;
+}
+
 /* Tombol lambang <, >, = */
 .cmp-symbols .challenge-options {
   display: grid;
@@ -3570,6 +3611,11 @@ details.hint-reveal[open] summary::before {
   font-weight: 700;
   text-anchor: middle;
   fill: var(--mark);
+}
+
+/* Tanda − dan/atau bilangan bulat di depan pecahan (campuran/negatif). */
+.frac-nl__pre {
+  text-anchor: end;
 }
 
 /* Papan urutan: slot hasil + kartu yang diketuk */

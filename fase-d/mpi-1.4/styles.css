@@ -1,0 +1,313 @@
+/* =========================================================================
+   fase-d/mpi-1.4/styles.css
+   Membandingkan & Mengurutkan Pecahan dalam Kehidupan Sehari-hari
+   — Fase D (SMP)
+
+   Hanya memuat gaya yang KHAS modul ini. Seluruh dasar design system
+   (panel, tombol, kotak umpan balik, pilihan ganda, pemilahan, pertanyaan
+   penuntun .quiz-item--guided, pita pecahan .frac-strip*, garis bilangan
+   pecahan .frac-nl*, papan urutan .order-board*, kalimat & lambang
+   perbandingan .cmp-*, kartu strategi .strategi-card*, komponen
+   Cooperative Learning .coop-*, kartu ringkasan, navigasi tahap, modal)
+   berasal dari shared/base.css.
+   ========================================================================= */
+
+/* -------------------------------------------------------------------------
+   Tahap 1 — Tujuan
+   ------------------------------------------------------------------------- */
+
+.tokoh-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: var(--space-3);
+  margin-top: var(--space-3);
+}
+
+.tokoh-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-1);
+  padding: var(--space-3);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  text-align: center;
+}
+
+.tokoh-card p {
+  margin: 0;
+}
+
+.tokoh-card__nama {
+  font-weight: 700;
+}
+
+.tp-teks {
+  margin: 0 0 var(--space-3);
+  font-size: 1.05rem;
+  font-weight: 600;
+}
+
+/* -------------------------------------------------------------------------
+   Tahap 2 — Aturan banding
+   ------------------------------------------------------------------------- */
+
+.aturan-list {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0;
+  padding-left: var(--space-5);
+}
+
+.aturan-list li {
+  line-height: 1.55;
+}
+
+/* -------------------------------------------------------------------------
+   Tahap 3 — Bentuk tim
+   ------------------------------------------------------------------------- */
+
+.tim-anggota,
+.sepakat {
+  margin: var(--space-4) 0 0;
+  padding: 0;
+  border: none;
+}
+
+.tim-anggota legend,
+.sepakat legend {
+  margin-bottom: var(--space-2);
+  padding: 0;
+  font-weight: 600;
+}
+
+.tim-anggota__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: var(--space-2);
+}
+
+.sepakat .sepakat-item {
+  display: flex;
+  gap: var(--space-3);
+  align-items: flex-start;
+  min-height: 44px;
+  padding: var(--space-2) 0;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.sepakat .sepakat-item input {
+  flex: 0 0 auto;
+  width: 22px;
+  height: 22px;
+  margin: 1px 0 0;
+  accent-color: var(--color-primary);
+}
+
+/* -------------------------------------------------------------------------
+   Tahap 4 — Kelompok ahli (Jigsaw)
+   ------------------------------------------------------------------------- */
+
+.ahli-tabs {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: var(--space-2);
+  margin: var(--space-4) 0;
+}
+
+.ahli-tab {
+  display: flex;
+  gap: var(--space-2);
+  align-items: center;
+  min-height: 56px;
+  padding: var(--space-2) var(--space-3);
+  border: 2px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  color: var(--color-ink);
+  font: inherit;
+  font-size: 0.88rem;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+}
+
+.ahli-tab:hover {
+  border-color: var(--color-primary);
+}
+
+.ahli-tab:focus-visible {
+  outline: 3px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+.ahli-tab.is-active {
+  border-color: var(--color-primary);
+  background: var(--color-primary-soft);
+}
+
+.ahli-tab.is-done {
+  border-color: var(--color-success);
+}
+
+.ahli-tab__ikon {
+  font-size: 1.4rem;
+  line-height: 1;
+}
+
+.ahli-tab__nama {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.ahli-tab__ahli {
+  display: block;
+  font-size: 0.78rem;
+  font-weight: 500;
+  color: var(--color-ink-muted);
+  overflow-wrap: anywhere;
+}
+
+.ahli-tab__cek {
+  color: var(--color-success-strong);
+  font-weight: 700;
+}
+
+.strategi-card__ahli {
+  font-weight: 500;
+  color: var(--color-ink-muted);
+}
+
+.ahli-ajar {
+  display: flex;
+  gap: var(--space-3);
+  align-items: flex-start;
+  margin-top: var(--space-4);
+  padding: var(--space-3);
+  border: 2px dashed var(--color-border-strong);
+  border-radius: var(--radius-md);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.ahli-ajar input {
+  flex: 0 0 auto;
+  width: 22px;
+  height: 22px;
+  margin: 1px 0 0;
+  accent-color: var(--color-primary);
+}
+
+.strategi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: var(--space-3);
+  margin-top: var(--space-3);
+}
+
+.strategi-ringkas summary {
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.ahli-rekap {
+  margin: 0;
+  padding-left: var(--space-5);
+}
+
+.ahli-rekap li + li {
+  margin-top: var(--space-2);
+}
+
+/* -------------------------------------------------------------------------
+   Tahap 5–7 — Misi tim
+   ------------------------------------------------------------------------- */
+
+.misi-langkah {
+  margin: 0;
+  padding-left: var(--space-5);
+  font-size: 0.92rem;
+}
+
+.misi-langkah li + li {
+  margin-top: var(--space-1);
+}
+
+.misi-konteks {
+  display: flex;
+  gap: var(--space-3);
+  align-items: center;
+  margin: var(--space-3) 0;
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-md);
+  background: var(--color-warning-soft);
+}
+
+.misi-konteks p {
+  margin: 0;
+  font-weight: 600;
+}
+
+.misi-konteks__ikon {
+  flex: 0 0 auto;
+  font-size: 2rem;
+  line-height: 1;
+}
+
+.misi-sub {
+  margin: var(--space-5) 0 var(--space-3);
+  font-size: 1.05rem;
+}
+
+.pasangan {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-3);
+  margin: var(--space-3) 0;
+}
+
+.pasangan__item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  border: 2px solid var(--color-border);
+  border-radius: var(--radius-md);
+  text-align: center;
+}
+
+.pasangan__teks {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--color-ink-muted);
+}
+
+.misi-label-ab {
+  margin: var(--space-1) 0 var(--space-3);
+  text-align: center;
+}
+
+.order-card__teks {
+  display: block;
+  margin-top: 2px;
+  font-size: 0.78rem;
+  font-weight: 500;
+  color: var(--color-ink-muted);
+}
+
+/* -------------------------------------------------------------------------
+   Tahap 8 — Kuis
+   ------------------------------------------------------------------------- */
+
+.kuis-tag {
+  display: inline-block;
+  margin-bottom: var(--space-2);
+  padding: 2px var(--space-2);
+  border-radius: var(--radius-sm);
+  background: var(--color-primary-soft);
+  color: var(--color-primary-strong);
+  font-size: 0.78rem;
+  font-weight: 700;
+}
