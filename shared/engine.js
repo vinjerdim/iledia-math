@@ -63,6 +63,11 @@
        predikat kejadian gabungan & irisan, saling lepas & saling
        bebas, diagnosa rumus, simulator percobaan, grid ruang sampel
        bertanda, diagram Venn banyak anggota)
+   29. Bilangan bulat dalam konteks sehari-hari (terbilang hingga
+       miliar, cara baca & notasi baku, parser isian, diagnosa
+       miskonsepsi menulis & membaca, tanda dari kata kunci konteks,
+       opsi cara baca teracak, skala konteks, langkah isian
+       berpemeriksa)
    ============================================================ */
 
 /* ============================================================
@@ -607,6 +612,8 @@ function createStageMachine(opts) {
  *   emptyMessage, invalidMessage   (opsional) pesan notice untuk input kosong/tidak valid
  *   showAttemptErrorWithHint  (opsional, default false) saat true, kotak "jawabanmu
  *                          belum tepat" tetap tampil berdampingan dengan petunjuk
+ *   inputErrorHTML(s, ex)  (opsional) HTML pengganti pesan "jawabanmu belum tepat",
+ *                          mis. diagnosa miskonsepsi dari jawaban ex.userInput
  *
  * Petunjuk berjenjang: soal boleh memakai `s.hints` (array) alih-alih `s.hint`
  * (string tunggal). Tombol Petunjuk lalu membuka satu tingkat per klik dan
@@ -715,9 +722,11 @@ function createExerciseStage(cfg) {
           ? buildFeedbackBox(
               'error',
               '✗',
-              'Jawabanmu <strong>' +
-                esc(ex.userInput) +
-                '</strong> belum tepat. Coba lagi atau lihat petunjuk.'
+              cfg.inputErrorHTML
+                ? cfg.inputErrorHTML(s, ex)
+                : 'Jawabanmu <strong>' +
+                    esc(ex.userInput) +
+                    '</strong> belum tepat. Coba lagi atau lihat petunjuk.'
             )
           : '';
       var hintHTML = hints
@@ -10168,6 +10177,629 @@ function bindProbSimulator(root, id, st, opts, save, rerender) {
       st.n = 0;
       st.frek = {};
       st.last = [];
+      save();
+      rerender();
+    });
+  }
+}
+
+/* ============================================================
+   29. BILANGAN BULAT DALAM KONTEKS SEHARI-HARI
+   Membaca & menuliskan bilangan bulat positif, negatif, dan nol
+   yang muncul dalam konteks nyata (suhu, lantai gedung, ketinggian
+   & kedalaman, uang, skor). Seksi 9 (terbilang, bacaBilanganBulat)
+   tetap dipakai modul lain apa adanya; seksi ini menambah:
+     • terbilangBesar / bacaBulat / tulisBulat — hingga miliar;
+     • parseBilanganBulat / diagnosaTulisBulat — memeriksa isian
+       notasi murid beserta miskonsepsinya (tanda di belakang,
+       lupa tanda, "min", nol bertanda, …);
+     • normalisasiBacaan / cekCaraBaca — memeriksa cara baca yang
+       diketik murid ("minus" dikenali sebagai tidak baku);
+     • KONTEKS_BULAT / tandaKataKunci / nilaiKonteks — menentukan
+       tanda bilangan dari kata kunci konteks;
+     • opsiCaraBaca — pilihan cara baca (benar + pengecoh khas);
+     • buildSkalaKonteks — skala tegak bertema dengan titik;
+     • makeCekStep / periksaCekStep / buildCekStep / bindCekStep —
+       langkah isian dengan umpan balik diagnosa.
+   Gaya .bbk-* ada di shared/base.css.
+   ============================================================ */
+
+/*
+ * Terbilang bilangan cacah hingga ratusan miliar. Di bawah sejuta sama
+ * persis dengan terbilang() seksi 9 (tanda diabaikan).
+ */
+function terbilangBesar(n) {
+  n = Math.round(Math.abs(n));
+  if (n < 1000000) return terbilang(n);
+  var skala = [
+    { nilai: 1000000000, nama: 'miliar' },
+    { nilai: 1000000, nama: 'juta' },
+  ];
+  var bagian = [];
+  var sisa = n;
+  skala.forEach(function (sk) {
+    var q = Math.floor(sisa / sk.nilai);
+    if (q > 0) {
+      bagian.push(terbilang(q) + ' ' + sk.nama);
+      sisa -= q * sk.nilai;
+    }
+  });
+  if (sisa > 0) bagian.push(terbilang(sisa));
+  return bagian.join(' ');
+}
+
+/*
+ * Cara baca baku bilangan bulat (hingga miliar): −15 → "negatif lima
+ * belas", 0 → "nol", 8 → "delapan" (atau "positif delapan" bila
+ * opts.positif). "Minus" tidak dipakai — itu nama operasi pengurangan.
+ */
+function bacaBulat(n, opts) {
+  opts = opts || {};
+  if (n < 0) return 'negatif ' + terbilangBesar(n);
+  if (n === 0) return 'nol';
+  return (opts.positif ? 'positif ' : '') + terbilangBesar(n);
+}
+
+/* Notasi baku: minus tipografis (−) dan titik ribuan; opts.plus → "+75". */
+function tulisBulat(n, opts) {
+  opts = opts || {};
+  return (opts.plus && n > 0 ? '+' : '') + formatNumber(n, '−');
+}
+
+var PESAN_TULIS_BULAT = {
+  kosong: 'Tuliskan bilangannya terlebih dahulu.',
+  'tanda-belakang':
+    'Tanda negatif ditulis <strong>di depan</strong> angka, bukan di belakangnya. Contoh: −5, bukan 5−.',
+  'kata-min':
+    'Tuliskan dengan lambang, bukan kata. Kata "min/minus" juga bukan cara baku; ketik tanda - di depan angka.',
+  kurung: 'Tanda kurung bukan tanda bilangan negatif. Ketik tanda - di depan angka.',
+  'bukan-bulat':
+    'Tulis sebuah bilangan bulat saja, mis. −12, 0, atau 1.250 (titik hanya untuk pemisah ribuan).',
+};
+
+/*
+ * Membaca isian notasi bilangan bulat murid.
+ *   Diterima: '-', '−', '–' sebagai tanda negatif; '+' di depan; spasi;
+ *   titik pemisah ribuan yang kelompoknya tepat tiga angka (1.250).
+ * Mengembalikan { ok, value, kode, pesan, bertanda } — kode null bila ok,
+ * selain itu 'kosong' | 'tanda-belakang' | 'kata-min' | 'kurung' |
+ * 'bukan-bulat'. `bertanda` true bila ada tanda eksplisit (untuk
+ * mendeteksi "−0" / "+0").
+ */
+function parseBilanganBulat(str) {
+  function gagal(kode) {
+    return { ok: false, value: null, kode: kode, pesan: PESAN_TULIS_BULAT[kode], bertanda: false };
+  }
+  if (str === null || str === undefined || String(str).trim() === '') return gagal('kosong');
+  var s = String(str).trim().toLowerCase().replace(/[−–—]/g, '-');
+  if (/^(min|minus)\b/.test(s)) return gagal('kata-min');
+  s = s.replace(/\s+/g, '');
+  if (/^\(\d[\d.]*\)$/.test(s)) return gagal('kurung');
+  if (/^\+?\d[\d.]*-$/.test(s)) return gagal('tanda-belakang');
+  var m = /^([-+]?)(\d{1,3}(?:\.\d{3})+|\d+)$/.exec(s);
+  if (!m) return gagal('bukan-bulat');
+  var v = parseInt(m[2].replace(/\./g, ''), 10);
+  if (m[1] === '-') v = -v;
+  if (v === 0) v = 0; /* buang −0 */
+  return { ok: true, value: v, kode: null, pesan: '', bertanda: m[1] !== '' };
+}
+
+/*
+ * Mendiagnosa isian notasi murid terhadap bilangan target.
+ * Mengembalikan { benar, kode, pesan }; kode:
+ *   'benar' | kode parseBilanganBulat | 'lupa-tanda' (4 untuk −4) |
+ *   'tanda-terbalik' (−7 untuk 7) | 'nol-bertanda' (−0/+0) |
+ *   'besar-salah' (angkanya berbeda).
+ */
+function diagnosaTulisBulat(str, target) {
+  var p = parseBilanganBulat(str);
+  if (!p.ok) return { benar: false, kode: p.kode, pesan: p.pesan };
+  var v = p.value;
+  if (target === 0 && v === 0 && p.bertanda) {
+    return {
+      benar: false,
+      kode: 'nol-bertanda',
+      pesan:
+        '0 bukan bilangan positif dan bukan bilangan negatif, jadi ditulis <strong>0</strong> saja tanpa tanda.',
+    };
+  }
+  if (v === target) {
+    return { benar: true, kode: 'benar', pesan: 'Tepat! Ditulis ' + tulisBulat(target) + '.' };
+  }
+  if (target < 0 && v === -target) {
+    return {
+      benar: false,
+      kode: 'lupa-tanda',
+      pesan:
+        'Angkanya sudah tepat, tetapi keadaan ini berada di sisi <strong>negatif</strong> dari titik acuan. Tanda apa yang perlu ditulis di depan angka?',
+    };
+  }
+  if (target > 0 && v === -target) {
+    return {
+      benar: false,
+      kode: 'tanda-terbalik',
+      pesan:
+        'Angkanya sudah tepat, tetapi keadaan ini berada di sisi <strong>positif</strong> dari titik acuan, jadi tidak diberi tanda negatif.',
+    };
+  }
+  return {
+    benar: false,
+    kode: 'besar-salah',
+    pesan: 'Angkanya belum tepat. Hitung lagi seberapa jauh keadaan itu dari titik acuan (nol).',
+  };
+}
+
+/* Huruf kecil, tanda baca → spasi, spasi dirapikan, "se ratus" → "seratus". */
+function normalisasiBacaan(teks) {
+  return String(teks || '')
+    .toLowerCase()
+    .replace(/[^a-z\s]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .replace(/\bse (puluh|belas|ratus|ribu)\b/g, 'se$1');
+}
+
+var PESAN_BACA_BULAT = {
+  kosong: 'Ketik cara membaca bilangan itu terlebih dahulu.',
+  minus:
+    'Nilainya benar, tetapi "minus" adalah nama operasi pengurangan (mis. 9 − 4). Tanda di depan bilangan dibaca <strong>negatif</strong>.',
+  'urutan-terbalik':
+    'Urutannya terbalik. Tanda ditulis di depan angka, jadi kata "negatif" juga dibaca <strong>lebih dulu</strong>.',
+  'lupa-negatif': 'Bilangan ini bertanda negatif. Jangan lupa membaca tandanya: "negatif …".',
+  'tanda-terbalik': 'Perhatikan tandanya lagi: apakah bilangan ini positif atau negatif?',
+  plus: 'Bilangan positif dibaca angkanya saja, atau dengan kata <strong>positif</strong> — bukan "plus".',
+  'nol-bertanda': '0 bukan positif dan bukan negatif, jadi cukup dibaca <strong>nol</strong>.',
+  'angka-salah':
+    'Tandanya sudah tepat, tetapi cara membaca angkanya belum tepat. Baca sebagai satu bilangan utuh, mis. 15 → "lima belas".',
+};
+
+/*
+ * Memeriksa cara baca yang diketik murid untuk bilangan n.
+ * Mengembalikan { benar, kode, pesan }; kode 'benar' | 'kosong' |
+ * 'minus' | 'urutan-terbalik' | 'lupa-negatif' | 'tanda-terbalik' |
+ * 'plus' | 'nol-bertanda' | 'angka-salah'.
+ */
+function cekCaraBaca(teks, n) {
+  function hasil(kode) {
+    if (kode === 'benar') {
+      return { benar: true, kode: kode, pesan: 'Tepat! Dibaca "' + bacaBulat(n) + '".' };
+    }
+    return { benar: false, kode: kode, pesan: PESAN_BACA_BULAT[kode] };
+  }
+  var t = normalisasiBacaan(teks);
+  if (!t) return hasil('kosong');
+  var inti = n === 0 ? 'nol' : terbilangBesar(n);
+
+  var tanda = '';
+  var sisa = t;
+  var m = /^(negatif|minus|min|positif|plus) (.+)$/.exec(t);
+  if (m) {
+    tanda = m[1] === 'min' ? 'minus' : m[1];
+    sisa = m[2];
+  }
+  var tandaBelakang = false;
+  if (!tanda && / negatif$/.test(sisa)) {
+    tandaBelakang = true;
+    sisa = sisa.replace(/ negatif$/, '');
+  }
+
+  if (n === 0) {
+    if (sisa !== 'nol') return hasil('angka-salah');
+    return tanda || tandaBelakang ? hasil('nol-bertanda') : hasil('benar');
+  }
+  var angkaCocok = sisa === inti;
+  if (n < 0) {
+    if (tanda === 'positif' || tanda === 'plus') return hasil('tanda-terbalik');
+    if (!angkaCocok) return hasil('angka-salah');
+    if (tanda === 'negatif') return hasil('benar');
+    if (tanda === 'minus') return hasil('minus');
+    if (tandaBelakang) return hasil('urutan-terbalik');
+    return hasil('lupa-negatif');
+  }
+  if (tanda === 'negatif' || tanda === 'minus' || tandaBelakang) return hasil('tanda-terbalik');
+  if (!angkaCocok) return hasil('angka-salah');
+  if (tanda === 'plus') return hasil('plus');
+  return hasil('benar');
+}
+
+/*
+ * Tema konteks sehari-hari: titik acuan (nilai 0), satuan, ikon, dan
+ * contoh frasa arah positif/negatif. Dipakai skala konteks & data modul.
+ */
+var KONTEKS_BULAT = {
+  suhu: {
+    nama: 'Suhu',
+    ikon: '🌡️',
+    acuan: '0 °C',
+    satuan: '°C',
+    positif: 'di atas nol derajat',
+    negatif: 'di bawah nol derajat',
+  },
+  gedung: {
+    nama: 'Lantai gedung',
+    ikon: '🛗',
+    acuan: 'Lantai dasar',
+    satuan: '',
+    positif: 'lantai di atas lantai dasar',
+    negatif: 'lantai di bawah lantai dasar (basement)',
+  },
+  laut: {
+    nama: 'Ketinggian & kedalaman',
+    ikon: '🌊',
+    acuan: 'Permukaan laut',
+    satuan: 'm',
+    positif: 'di atas permukaan laut',
+    negatif: 'di bawah permukaan laut',
+  },
+  uang: {
+    nama: 'Uang',
+    ikon: '💰',
+    acuan: 'Impas (Rp0)',
+    satuan: 'rupiah',
+    positif: 'untung atau menyetor tabungan',
+    negatif: 'rugi atau punya utang',
+  },
+  skor: {
+    nama: 'Skor permainan',
+    ikon: '🏆',
+    acuan: 'Skor awal 0',
+    satuan: 'poin',
+    positif: 'mendapat poin',
+    negatif: 'kehilangan poin',
+  },
+};
+
+/* Kata kunci arah; dicocokkan per kata utuh pada frasa berhuruf kecil. */
+var KATA_KUNCI_BULAT = {
+  nolKuat: ['tepat', 'impas', 'tidak naik', 'tidak turun'],
+  neg: [
+    'di bawah',
+    'bawah',
+    'turun',
+    'rugi',
+    'merugi',
+    'utang',
+    'hutang',
+    'berutang',
+    'tarik',
+    'menarik',
+    'ditarik',
+    'mundur',
+    'kehilangan',
+    'hilang',
+    'berkurang',
+    'dikurangi',
+    'basement',
+    'pengeluaran',
+    'defisit',
+    'terlambat',
+  ],
+  pos: [
+    'di atas',
+    'atas',
+    'naik',
+    'untung',
+    'laba',
+    'setor',
+    'menyetor',
+    'simpan',
+    'menyimpan',
+    'maju',
+    'mendapat',
+    'memperoleh',
+    'bertambah',
+    'ditambah',
+    'pemasukan',
+    'surplus',
+  ],
+  nol: ['lantai dasar', 'permukaan laut', 'nol derajat', 'titik acuan', 'skor awal'],
+};
+
+function adaKataKunci_(frasa, daftar) {
+  return daftar.some(function (k) {
+    return new RegExp('(^|[^a-z])' + k.replace(/ /g, '\\s+') + '($|[^a-z])').test(frasa);
+  });
+}
+
+/*
+ * Menentukan tanda bilangan dari kata kunci pada frasa konteks:
+ * 'neg' | 'pos' | 'nol' | null (tidak ada/ambigu). Kata "tepat"/"impas"
+ * menandai titik acuan lebih dulu, lalu kata arah, lalu nama acuan
+ * ("lantai dasar", "permukaan laut").
+ */
+function tandaKataKunci(frasa) {
+  var f = String(frasa || '').toLowerCase();
+  if (adaKataKunci_(f, KATA_KUNCI_BULAT.nolKuat)) return 'nol';
+  var neg = adaKataKunci_(f, KATA_KUNCI_BULAT.neg);
+  var pos = adaKataKunci_(f, KATA_KUNCI_BULAT.pos);
+  if (neg && !pos) return 'neg';
+  if (pos && !neg) return 'pos';
+  if (neg && pos) return null;
+  return adaKataKunci_(f, KATA_KUNCI_BULAT.nol) ? 'nol' : null;
+}
+
+/* Bilangan bulat dari besar (jarak dari acuan) + frasa konteks; null bila tak terbaca. */
+function nilaiKonteks(besar, frasa) {
+  var t = tandaKataKunci(frasa);
+  if (t === 'nol') return 0;
+  if (t === 'neg') return -Math.abs(besar);
+  if (t === 'pos') return Math.abs(besar);
+  return null;
+}
+
+/*
+ * Pilihan cara baca untuk bilangan n: satu bacaan baku + tiga pengecoh
+ * yang mewakili miskonsepsi khas. Urutan DATA tetap; acak dengan
+ * ensureShuffledOrder() saat state disiapkan.
+ * Mengembalikan [{ id, label, benar, umpan }], id unik.
+ */
+function opsiCaraBaca(n) {
+  var inti = n === 0 ? 'nol' : terbilangBesar(n);
+  var baku = bacaBulat(n);
+  var benarUmpan = 'Tepat! ' + tulisBulat(n) + ' dibaca "' + baku + '".';
+  var opsi;
+  if (n < 0) {
+    opsi = [
+      { id: 'baku', label: 'negatif ' + inti, benar: true, umpan: benarUmpan },
+      { id: 'minus', label: 'minus ' + inti, benar: false, umpan: PESAN_BACA_BULAT.minus },
+      {
+        id: 'terbalik',
+        label: inti + ' negatif',
+        benar: false,
+        umpan: PESAN_BACA_BULAT['urutan-terbalik'],
+      },
+      { id: 'lupa', label: inti, benar: false, umpan: PESAN_BACA_BULAT['lupa-negatif'] },
+    ];
+  } else if (n > 0) {
+    opsi = [
+      { id: 'baku', label: inti, benar: true, umpan: benarUmpan },
+      {
+        id: 'negatif',
+        label: 'negatif ' + inti,
+        benar: false,
+        umpan: 'Bilangan ini tidak bertanda negatif, jadi tidak dibaca "negatif".',
+      },
+      { id: 'plus', label: 'plus ' + inti, benar: false, umpan: PESAN_BACA_BULAT.plus },
+      {
+        id: 'terbalik',
+        label: inti + ' positif',
+        benar: false,
+        umpan: 'Kata tanda dibaca di depan angka, bukan di belakang.',
+      },
+    ];
+  } else {
+    opsi = [
+      { id: 'baku', label: 'nol', benar: true, umpan: benarUmpan },
+      {
+        id: 'negatif',
+        label: 'negatif nol',
+        benar: false,
+        umpan: PESAN_BACA_BULAT['nol-bertanda'],
+      },
+      {
+        id: 'positif',
+        label: 'positif nol',
+        benar: false,
+        umpan: PESAN_BACA_BULAT['nol-bertanda'],
+      },
+      {
+        id: 'kosong',
+        label: 'tidak ada bilangannya',
+        benar: false,
+        umpan: 'Keadaan tepat di titik acuan tetap punya bilangan, yaitu 0 (nol).',
+      },
+    ];
+  }
+  return opsi;
+}
+
+/*
+ * Skala tegak bertema (termometer, gedung, laut, uang, skor) dengan satu
+ * titik penanda. Secara default hanya 0 yang berlabel sehingga murid
+ * menghitung sendiri jarak titik dari acuan.
+ *   opts.tema        kunci KONTEKS_BULAT (default 'suhu')
+ *   opts.nilai       letak titik (kelipatan langkah)
+ *   opts.min, max    rentang (default −6 … 6)
+ *   opts.langkah     nilai satu garis skala (default 1)
+ *   opts.labelSetiap label angka setiap k garis (0/undefined → hanya 0)
+ *   opts.tampilNilai true → tulis bilangan di samping titik
+ *   opts.satuan      satuan di samping bilangan (default dari tema)
+ *   opts.ikon        ikon titik (default dari tema)
+ *   opts.judul       teks kepala skala (default nama tema)
+ */
+function buildSkalaKonteks(opts) {
+  opts = opts || {};
+  var tema = KONTEKS_BULAT[opts.tema] ? opts.tema : 'suhu';
+  var K = KONTEKS_BULAT[tema];
+  var min = typeof opts.min === 'number' ? opts.min : -6;
+  var max = typeof opts.max === 'number' ? opts.max : 6;
+  var langkah = opts.langkah || 1;
+  var labelSetiap = opts.labelSetiap || 0;
+  var satuan = opts.satuan !== undefined ? opts.satuan : K.satuan;
+  var ikon = opts.ikon || K.ikon;
+  var nilai = opts.nilai;
+  function denganSatuan(v) {
+    return tulisBulat(v) + (satuan && satuan !== 'rupiah' ? ' ' + satuan : '');
+  }
+
+  var rows = '';
+  for (var v = max; v >= min; v -= langkah) {
+    var cls = 'bbk-skala__row';
+    if (v === 0) cls += ' bbk-skala__row--nol';
+    else if (v > 0) cls += ' bbk-skala__row--pos';
+    else cls += ' bbk-skala__row--neg';
+    var titik = v === nilai;
+    var idx = Math.round(v / langkah);
+    var label = '';
+    if (v === 0) label = '0';
+    else if (labelSetiap && idx % labelSetiap === 0) label = tulisBulat(v);
+    rows +=
+      '<div class="' +
+      cls +
+      (titik ? ' is-titik' : '') +
+      '">' +
+      '<span class="bbk-skala__num">' +
+      label +
+      '</span>' +
+      '<span class="bbk-skala__tick"></span>' +
+      (v === 0 ? '<span class="bbk-skala__acuan">' + esc(K.acuan) + '</span>' : '') +
+      (titik
+        ? '<span class="bbk-skala__marker"><span aria-hidden="true">' +
+          ikon +
+          '</span>' +
+          (opts.tampilNilai ? '<strong>' + esc(denganSatuan(v)) + '</strong>' : '') +
+          '</span>'
+        : '') +
+      '</div>';
+  }
+
+  var jarak = Math.round(Math.abs(nilai) / langkah);
+  var posisi =
+    nilai === 0
+      ? 'tepat di ' + K.acuan.toLowerCase()
+      : jarak + ' langkah di ' + (nilai < 0 ? 'bawah' : 'atas') + ' ' + K.acuan.toLowerCase();
+  var skalaInfo =
+    langkah !== 1
+      ? '1 langkah = ' + formatNumber(langkah) + (satuan && satuan !== 'rupiah' ? ' ' + satuan : '')
+      : '';
+  if (satuan === 'rupiah' && langkah !== 1) skalaInfo = '1 langkah = Rp' + formatNumber(langkah);
+
+  return (
+    '<div class="bbk-skala bbk-skala--' +
+    tema +
+    '" role="img" aria-label="' +
+    esc(
+      'Skala ' +
+        (opts.judul || K.nama) +
+        ': titik berada ' +
+        posisi +
+        (skalaInfo ? ', ' + skalaInfo : '')
+    ) +
+    '">' +
+    '<span class="bbk-skala__cap"><span aria-hidden="true">' +
+    K.ikon +
+    '</span> ' +
+    esc(opts.judul || K.nama) +
+    '</span>' +
+    (skalaInfo ? '<span class="bbk-skala__info">' + esc(skalaInfo) + '</span>' : '') +
+    '<div class="bbk-skala__rows">' +
+    rows +
+    '</div>' +
+    '</div>'
+  );
+}
+
+/* State default langkah isian berpemeriksa. */
+function makeCekStep() {
+  return { input: '', done: false, kode: null, pesan: '', attempts: 0, hintLevel: 0 };
+}
+
+/*
+ * Memeriksa isian langkah dan menyimpan hasilnya ke st.
+ *   step.jenis 'tulis' → diagnosaTulisBulat(input, step.jawab)
+ *   step.jenis 'baca'  → cekCaraBaca(input, step.jawab)
+ * Isian kosong tidak dihitung sebagai percobaan.
+ */
+function periksaCekStep(st, step, input) {
+  var r =
+    step.jenis === 'baca' ? cekCaraBaca(input, step.jawab) : diagnosaTulisBulat(input, step.jawab);
+  st.input = String(input || '').trim();
+  st.kode = r.kode;
+  st.pesan = r.pesan;
+  if (r.kode === 'kosong') return r;
+  st.attempts += 1;
+  st.done = r.benar;
+  return r;
+}
+
+/*
+ * Satu langkah isian berpemeriksa (notasi atau cara baca) dengan umpan
+ * balik diagnosa miskonsepsi.
+ *   id    awalan id DOM (→ idInput, idCheck, idHint)
+ *   step  { jenis: 'tulis'|'baca', jawab, label, hints, temuan,
+ *           satuan, placeholder }
+ *   num   nomor langkah opsional
+ */
+function buildCekStep(id, st, step, num) {
+  var head =
+    '<p class="dl-step__label">' +
+    (num ? '<span class="dl-step__num">' + num + '</span>' : '') +
+    step.label +
+    '</p>';
+  if (st.done) {
+    return (
+      '<div class="dl-step dl-step--done">' +
+      head +
+      '<p class="dl-step__answer">✓ ' +
+      esc(step.jenis === 'baca' ? '"' + bacaBulat(step.jawab) + '"' : tulisBulat(step.jawab)) +
+      (step.satuan ? ' ' + esc(step.satuan) : '') +
+      '</p>' +
+      (step.temuan ? buildFeedbackBox('success', '💡', step.temuan) : '') +
+      '</div>'
+    );
+  }
+  var salah = st.attempts > 0 && st.kode && st.kode !== 'benar' && st.kode !== 'kosong';
+  var baca = step.jenis === 'baca';
+  return (
+    '<div class="dl-step">' +
+    head +
+    '<div class="dl-input-row">' +
+    '<input type="text" class="input-text ' +
+    (baca ? 'bbk-baca-input' : 'dl-num-input') +
+    (salah ? ' has-error' : '') +
+    '" id="' +
+    id +
+    'Input"' +
+    (baca ? ' inputmode="text" autocapitalize="off" spellcheck="false"' : '') +
+    ' autocomplete="off" value="' +
+    esc(st.input || '') +
+    '" aria-label="' +
+    esc(baca ? 'Cara membaca bilangan' : 'Tulisan bilangan') +
+    '" placeholder="' +
+    esc(step.placeholder || (baca ? 'ketik cara bacanya…' : 'mis. −5')) +
+    '">' +
+    (step.satuan && !baca ? '<span class="bbk-satuan">' + esc(step.satuan) + '</span>' : '') +
+    '<button type="button" class="btn btn--primary" id="' +
+    id +
+    'Check">Periksa</button>' +
+    buildHintToggle(id + 'Hint', step.hints, st.hintLevel) +
+    '</div>' +
+    (salah
+      ? '<div style="margin-top:var(--space-3);">' +
+        buildFeedbackBox('error', '✗', '<strong>' + esc(st.input) + '</strong> — ' + st.pesan) +
+        '</div>'
+      : '') +
+    buildHintStack(step.hints, st.hintLevel) +
+    '</div>'
+  );
+}
+
+/* Memasang event buildCekStep; `save` lalu `rerender` dipanggil setelah perubahan. */
+function bindCekStep(id, st, step, save, rerender) {
+  var inp = document.getElementById(id + 'Input');
+  var btn = document.getElementById(id + 'Check');
+  var hint = document.getElementById(id + 'Hint');
+  if (inp && btn) {
+    inp.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter') btn.click();
+    });
+    btn.addEventListener('click', function () {
+      var r = periksaCekStep(st, step, inp.value);
+      if (r.kode === 'kosong') {
+        showNotice(r.pesan);
+        return;
+      }
+      save();
+      rerender();
+      if (!st.done) {
+        var again = document.getElementById(id + 'Input');
+        if (again) again.focus();
+      }
+    });
+  }
+  if (hint) {
+    hint.addEventListener('click', function () {
+      st.hintLevel = Math.min(st.hintLevel + 1, (step.hints || []).length);
       save();
       rerender();
     });

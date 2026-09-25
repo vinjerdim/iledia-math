@@ -2,90 +2,175 @@
 
 /* ============================================================
    data.js — Konten media pembelajaran
-   Matematika: Membaca, Menulis & Menempatkan Bilangan Bulat
-   Fase D — SMP Kelas 7
+   Matematika: Membaca & Menulis Bilangan Bulat dalam Kehidupan
+   Sehari-hari — Fase D, SMP Kelas VII
 
    Tujuan Pembelajaran:
-   Membaca dan menuliskan bilangan bulat positif dan negatif sesuai
-   notasi baku, serta menempatkannya pada garis bilangan.
+   Membaca dan menuliskan bilangan bulat (positif, negatif, nol)
+   dalam konteks kehidupan sehari-hari.
 
    Notasi baku yang dipakai di seluruh modul:
-     • bilangan negatif ditulis dengan tanda negatif menempel di depan
-       angka (−5) dan dibaca "negatif lima";
-     • bilangan positif ditulis tanpa tanda (5) atau dengan tanda +
-       (+5), dibaca "lima" atau "positif lima";
-     • 0 dibaca "nol", bukan positif dan bukan negatif;
+     • keadaan di sisi negatif titik acuan (di bawah nol, di bawah
+       lantai dasar/permukaan laut, rugi, utang, turun, kehilangan
+       poin) ditulis dengan tanda − menempel di depan angka (−5) dan
+       dibaca "negatif lima";
+     • keadaan di sisi positif ditulis tanpa tanda (5) atau dengan
+       tanda + (+5), dibaca "lima" atau "positif lima";
+     • titik acuan ditulis 0, dibaca "nol" — bukan positif dan bukan
+       negatif;
      • "minus" adalah nama operasi pengurangan (7 − 2), bukan cara
        baku membaca tanda bilangan negatif.
 
    Model pembelajaran: DISCOVERY LEARNING (Penemuan Terbimbing).
    Pemetaan sintaks ke tahap media:
 
-     Sintaks 1 — Stimulation ................ tahap 'stimulasi'
-     Sintaks 2 — Problem statement .......... tahap 'masalah'
-     Sintaks 3 — Data collection ............ tahap 'koleksi'
-     Sintaks 4 — Data processing ............ tahap 'olahBaca' & 'olahGaris'
-     Sintaks 5 — Verification ............... tahap 'verifikasi'
-     Sintaks 6 — Generalization ............. tahap 'generalisasi'
-     Penerapan & penutup .................... 'terapkan', 'refleksi', 'selesai'
+     Sintaks 1 — Stimulation ........... 'stimulasi'
+     Sintaks 2 — Problem statement ..... 'masalah'
+     Sintaks 3 — Data collection ....... 'koleksi'
+     Sintaks 4 — Data processing ....... 'olahPilah' & 'olahBaca'
+     Sintaks 5 — Verification .......... 'verifikasi'
+     Sintaks 6 — Generalization ........ 'generalisasi'
+     Penerapan & penutup ............... 'terapkan', 'refleksi', 'selesai'
 
    Rangkaian aktivitas (± 2 × 40 menit, murid berpasangan):
-     1. Stimulasi     (7')  — "Catatan Reporter Cilik": empat teman
-                              menulis "3 derajat di bawah nol" dengan
-                              cara berbeda; murid menduga yang tepat.
-     2. Masalah       (5')  — memilih pertanyaan inti & menulis hipotesis.
-     3. Data          (12') — membaca enam situasi nyata (termometer,
-                              lift, laut) pada skala tegak, menuliskan
-                              bilangannya, lalu mengamati pola tabel.
-     4a. Baca & Tulis (12') — memilah positif/negatif/nol, lalu
-                              memasangkan notasi ↔ cara baca baku.
-     4b. Garis Bilangan (12') — menempatkan bilangan dari tabel data
-                              pada garis bilangan & menemukan pola letak
-                              (kiri/kanan nol, jarak, pasangan lawan).
-     5. Pembuktian    (10') — menguji pernyataan & menempatkan bilangan
-                              baru; membandingkan dengan dugaan awal.
-     6. Simpulan      (7')  — menyusun kesimpulan dari bank kalimat acak.
-     7. Uji terap     (10') — delapan soal (isian & pilihan ganda).
-     8. Refleksi      (5')  — refleksi tertulis & penilaian diri.
+     1. Stimulasi   (7')  — "Papan Kabar Pagi": empat potongan kabar
+                            (cuaca Dieng, layar lift, papan selam,
+                            catatan kas kelas). Murid menduga cara
+                            membaca & menulis bilangannya.
+     2. Masalah     (5')  — memilih pertanyaan inti & menulis hipotesis.
+     3. Data        (15') — "Jelajah Kota": delapan situasi pada skala
+                            bertema (suhu, lift, laut, uang, skor).
+                            Murid menulis bilangannya (diperiksa dengan
+                            diagnosa miskonsepsi) lalu memilih cara
+                            bacanya; tabel data terisi otomatis.
+     4a. Kata Kunci (10') — memilah frasa sehari-hari ke positif /
+                            negatif / nol dan menemukan pola kata kunci.
+     4b. Baca-Tulis (13') — memasangkan notasi ↔ cara baca, menulis
+                            notasi dari dikte, dan mengetik cara baca.
+     5. Bukti       (10') — menguji pernyataan & membandingkan dengan
+                            dugaan awal serta hipotesis.
+     6. Simpulan    (7')  — menyusun kesimpulan dari bank kalimat acak.
+     7. Uji terap   (10') — delapan soal diambil acak dari bank dua
+                            belas soal (isian notasi, isian cara baca,
+                            pilihan ganda).
+     8. Refleksi    (3')  — refleksi tertulis & penilaian diri.
 
-   Catatan: seluruh daftar pilihan jawaban di berkas ini ditulis dalam
-   urutan "wajar". Pengacakan dilakukan app.js memakai
-   ensureShuffledOrder()/ensureSortStates()/shuffleArray() dari
-   shared/engine.js, satu kali saat state disiapkan, sehingga tiap murid
-   (dan tiap Reset) mendapat urutan berbeda.
+   Catatan pengacakan: seluruh daftar pilihan di berkas ini ditulis
+   dalam urutan "wajar". app.js mengacaknya SEKALI saat state disiapkan
+   (ensureShuffledOrder / ensureSortStates / shuffleArray dari
+   shared/engine.js), sehingga tiap murid dan tiap Reset mendapat
+   urutan berbeda. Pilihan cara baca pada tahap Data dibuat engine
+   (opsiCaraBaca) lalu diacak dengan cara yang sama.
+
+   Konsistensi kunci jawaban diuji tests/mpi-1.1-data.test.js terhadap
+   engine seksi 29 (nilaiKonteks, tandaKataKunci, bacaBulat, …).
    ============================================================ */
 
 var DL = 'Discovery Learning';
 
 var DATA = {
+  meta: {
+    judul: 'Membaca & Menulis Bilangan Bulat dalam Kehidupan Sehari-hari',
+  },
+
+  tahap: [
+    { id: 'stimulasi', label: 'Stimulasi' },
+    { id: 'masalah', label: 'Masalah' },
+    { id: 'koleksi', label: 'Data' },
+    { id: 'olahPilah', label: 'Kata Kunci' },
+    { id: 'olahBaca', label: 'Baca & Tulis' },
+    { id: 'verifikasi', label: 'Bukti' },
+    { id: 'generalisasi', label: 'Simpulan' },
+    { id: 'terapkan', label: 'Uji Terap' },
+    { id: 'refleksi', label: 'Refleksi' },
+    { id: 'selesai', label: 'Selesai' },
+  ],
+
   /* ----------------------------------------------------------
      TAHAP 1 — STIMULASI
-     Dugaan TIDAK dinilai; diuji sendiri pada tahap Pembuktian.
+     Dugaan TIDAK dinilai; diuji sendiri pada tahap Bukti.
      ---------------------------------------------------------- */
   stimulasi: {
     kicker: 'Tahap 1 · Stimulasi',
     syntax: DL + ' · Sintaks 1',
-    goal: 'Mengamati berbagai cara menuliskan keadaan "di bawah nol" dan menyampaikan dugaan awal.',
-    guru: 'Bacakan cerita dengan ekspresif, lalu minta pasangan murid berdiskusi 2 menit sebelum memilih. Jangan membenarkan atau menyalahkan pilihan apa pun — dugaan ini akan diuji murid sendiri di tahap Pembuktian. Pancing dengan pertanyaan: "Kalau kamu pembaca majalah, tulisan mana yang langsung kamu pahami?"',
-    judul: 'Catatan Reporter Cilik',
-    cerita:
-      'Raka menjadi reporter cilik majalah sekolah saat karyawisata ke Dataran Tinggi Dieng. Pagi itu termometer menunjukkan suhu 3 derajat di bawah nol, sampai rumput tertutup embun beku! Empat temannya menuliskan suhu itu di buku catatan dengan cara yang berbeda-beda:',
-    tulisan: [
-      { nama: 'Ani', teks: '−3 °C' },
-      { nama: 'Budi', teks: '3− °C' },
-      { nama: 'Citra', teks: 'min 3 °C' },
-      { nama: 'Dodi', teks: '3 °C' },
+    goal: 'Mengamati bilangan bulat dalam kabar sehari-hari dan menyampaikan dugaan cara membaca serta menuliskannya.',
+    guru: 'Bacakan setiap kabar dengan ekspresif. Minta pasangan murid membaca lantang bilangan yang disorot sebelum menjawab dugaan — dengarkan apakah muncul kata "minus", "min", atau "negatif", tetapi jangan membenarkan atau menyalahkan dulu. Dugaan ini akan diuji murid sendiri di tahap Bukti.',
+    judul: 'Papan Kabar Pagi',
+    pengantar:
+      'Sebelum berangkat sekolah, Sari membuka grup kelas dan menemukan empat kabar ini. Semuanya memuat bilangan — tetapi ada yang ditulis dengan tanda, huruf, atau kata-kata.',
+    kabar: [
+      {
+        id: 'cuaca',
+        ikon: '🌡️',
+        sumber: 'Info Cuaca Dieng',
+        teks: 'Pagi ini suhu di kompleks Candi Arjuna turun sampai 3 derajat di bawah nol. Embun upas menyelimuti kebun kentang!',
+        sorot: '−3 °C',
+      },
+      {
+        id: 'lift',
+        ikon: '🛗',
+        sumber: 'Layar lift Mal Kota',
+        teks: 'Parkir motor ada di lantai B2, dua lantai di bawah lantai dasar (lobi).',
+        sorot: 'B2',
+      },
+      {
+        id: 'selam',
+        ikon: '🤿',
+        sumber: 'Papan Klub Selam Bunaken',
+        teks: 'Terumbu karang favorit berada 12 meter di bawah permukaan laut.',
+        sorot: '12 m ↓',
+      },
+      {
+        id: 'kas',
+        ikon: '💰',
+        sumber: 'Catatan Kas Kelas VII-B',
+        teks: 'Bulan ini kas kelas rugi karena membeli spidol. Bendahara menulis sisa kas: −Rp15.000.',
+        sorot: '−Rp15.000',
+      },
     ],
-    pertanyaan:
-      'Menurut dugaanmu, tulisan siapa yang paling tepat dan tidak membuat pembaca salah paham?',
-    opsi: [
-      { id: 'ani', label: 'Tulisan Ani: <strong>−3 °C</strong>' },
-      { id: 'budi', label: 'Tulisan Budi: <strong>3− °C</strong>' },
-      { id: 'citra', label: 'Tulisan Citra: <strong>min 3 °C</strong>' },
-      { id: 'dodi', label: 'Tulisan Dodi: <strong>3 °C</strong>' },
+    dugaan: [
+      {
+        id: 'd1',
+        tanya: 'Bagaimana dugaanmu cara membaca suhu <strong>−3 °C</strong> di Dieng?',
+        opsi: [
+          { id: 'a', label: '"negatif tiga derajat Celsius"' },
+          { id: 'b', label: '"minus tiga derajat Celsius"' },
+          { id: 'c', label: '"tiga derajat Celsius negatif"' },
+          { id: 'd', label: '"tiga derajat Celsius"' },
+        ],
+        baku: 'a',
+        pembahasan: '−3 °C dibaca "negatif tiga derajat Celsius".',
+      },
+      {
+        id: 'd2',
+        tanya:
+          'Jika lantai dasar (lobi) diberi bilangan <strong>0</strong>, bagaimana dugaanmu menuliskan lantai B2 dengan bilangan bulat?',
+        opsi: [
+          { id: 'a', label: '−2' },
+          { id: 'b', label: '2−' },
+          { id: 'c', label: '2' },
+          { id: 'd', label: '(2)' },
+        ],
+        baku: 'a',
+        pembahasan: 'Dua lantai di bawah lantai dasar ditulis −2, dibaca "negatif dua".',
+      },
+      {
+        id: 'd3',
+        tanya:
+          'Bagaimana dugaanmu menuliskan letak terumbu <strong>12 meter di bawah permukaan laut</strong> sebagai bilangan bulat?',
+        opsi: [
+          { id: 'a', label: '−12 m' },
+          { id: 'b', label: '12 m' },
+          { id: 'c', label: '12− m' },
+          { id: 'd', label: 'min 12 m' },
+        ],
+        baku: 'a',
+        pembahasan:
+          'Permukaan laut adalah titik acuan 0; di bawahnya ditulis negatif: −12 m, dibaca "negatif dua belas meter".',
+      },
     ],
-    alasanLabel: 'Mengapa kamu memilih tulisan itu? (boleh singkat)',
-    alasanPlaceholder: 'Menurutku tulisan itu paling tepat karena …',
+    alasanLabel: 'Mengapa kamu memilih dugaan-dugaan itu? (boleh singkat)',
+    alasanPlaceholder: 'Menurutku … karena …',
     catatan:
       'Tidak ada jawaban salah di tahap ini. Simpan dugaanmu — kamu akan mengujinya sendiri di tahap Bukti.',
     nextLabel: 'Lanjut: Rumuskan Masalah →',
@@ -98,338 +183,558 @@ var DATA = {
     kicker: 'Tahap 2 · Identifikasi Masalah',
     syntax: DL + ' · Sintaks 2',
     goal: 'Merumuskan pertanyaan inti yang akan diselidiki dan menuliskan hipotesis.',
-    guru: 'Arahkan murid bahwa pertanyaan yang baik dapat dijawab dengan menyelidiki, bukan dengan menghafal fakta. Hipotesis boleh keliru; yang penting murid berani menuliskannya dengan kalimat sendiri.',
+    guru: 'Tanyakan: "Kalau setiap orang menulis dan membaca bilangan ini dengan caranya sendiri, apa yang bisa terjadi?" (salah paham suhu, salah turun lantai, salah hitung kas). Hipotesis boleh keliru; yang penting murid berani menuliskannya dengan kalimat sendiri.',
     pengantar:
-      'Tulisan teman-teman Raka berbeda-beda. Supaya semua orang membaca dan menulis keadaan seperti ini dengan cara yang sama, kita perlu menyelidiki sesuatu.',
+      'Teman-teman Sari membaca kabar itu dengan cara berbeda-beda: ada yang bilang "min tiga", ada yang bilang "negatif tiga", ada juga yang menulis "2−" untuk lantai B2. Supaya semua orang paham dengan cara yang sama, kita perlu menyelidiki sesuatu.',
     pertanyaan: 'Pertanyaan mana yang paling tepat untuk kita selidiki?',
     opsi: [
       {
         id: 'inti',
         label:
-          'Bagaimana cara baku menulis dan membaca bilangan di bawah nol dan di atas nol, serta di mana letaknya pada garis bilangan?',
+          'Bagaimana cara baku menuliskan dan membaca bilangan bulat positif, negatif, dan nol yang muncul dalam kehidupan sehari-hari?',
       },
-      { id: 'rata', label: 'Berapa suhu rata-rata Dataran Tinggi Dieng dalam setahun?' },
-      { id: 'sebab', label: 'Mengapa suhu di pegunungan lebih dingin daripada di pantai?' },
-      { id: 'alat', label: 'Termometer jenis apa yang paling akurat untuk mengukur suhu?' },
+      { id: 'cuaca', label: 'Mengapa suhu di Dieng bisa lebih dingin daripada di Jakarta?' },
+      { id: 'lift', label: 'Berapa banyak lantai parkir yang sebaiknya dimiliki sebuah mal?' },
+      { id: 'kas', label: 'Bagaimana cara berhemat agar kas kelas tidak rugi lagi?' },
     ],
     correct: 'inti',
     umpan: {
-      inti: 'Tepat! Pertanyaan ini bisa kamu jawab sendiri dengan mengumpulkan dan mengolah data bilangan.',
-      rata: 'Menarik, tetapi itu soal data cuaca, bukan soal cara menulis dan membaca bilangannya. Coba pilih lagi.',
-      sebab:
-        'Itu pertanyaan IPA yang bagus, tetapi tidak menjawab kebingungan cara menulis −3 atau 3−. Coba pilih lagi.',
-      alat: 'Alat ukur memang penting, tetapi masalah kita adalah cara menuliskan hasilnya. Coba pilih lagi.',
+      inti: 'Tepat! Pertanyaan ini bisa kamu jawab sendiri dengan mengumpulkan dan mengolah data bilangan dari berbagai situasi.',
+      cuaca:
+        'Itu pertanyaan IPA yang menarik, tetapi tidak menjawab kebingungan cara membaca "−3 °C". Coba pilih lagi.',
+      lift: 'Itu soal desain gedung. Masalah kita adalah cara menuliskan nomor lantainya. Coba pilih lagi.',
+      kas: 'Berhemat memang penting, tetapi masalah kita adalah cara menulis dan membaca "−Rp15.000". Coba pilih lagi.',
     },
     hipotesisLabel:
-      'Tulis hipotesismu: "Bilangan di bawah nol ditulis dengan …, dibaca …, dan letaknya pada garis bilangan di sebelah … nol."',
-    hipotesisPlaceholder: 'Bilangan di bawah nol ditulis dengan …',
+      'Tulis hipotesismu: "Keadaan di bawah titik acuan ditulis dengan …, dibaca …, sedangkan titik acuannya ditulis …"',
+    hipotesisPlaceholder: 'Keadaan di bawah titik acuan ditulis dengan …',
     nextLabel: 'Lanjut: Kumpulkan Data →',
   },
 
   /* ----------------------------------------------------------
-     TAHAP 3 — PENGUMPULAN DATA
-     Setiap situasi ditampilkan pada skala tegak; hanya angka 0 yang
-     berlabel sehingga murid menghitung sendiri jaraknya dari nol.
+     TAHAP 3 — PENGUMPULAN DATA: JELAJAH KOTA
+     Setiap situasi ditampilkan pada skala konteks (buildSkalaKonteks);
+     hanya titik acuan 0 yang berlabel, sehingga murid menghitung
+     sendiri jaraknya. `jawab` = nilaiKonteks(besar, frasa) — diuji.
      ---------------------------------------------------------- */
   koleksi: {
     kicker: 'Tahap 3 · Pengumpulan Data',
     syntax: DL + ' · Sintaks 3',
-    goal: 'Mengumpulkan data: menuliskan bilangan untuk berbagai keadaan di atas dan di bawah nol.',
-    guru: 'Biarkan murid menghitung jarak dari titik nol pada skala tegak. Bila murid menulis "4" untuk keadaan di bawah nol, tanyakan: "Kalau begitu, bagaimana pembaca membedakannya dengan 4 derajat di atas nol?"',
+    goal: 'Mengumpulkan data: menuliskan dan membaca bilangan untuk berbagai keadaan sehari-hari di atas, di bawah, dan tepat di titik acuan.',
+    guru: 'Biarkan murid menghitung langkah dari titik acuan pada skala. Bila murid menulis "4" untuk keadaan di bawah nol, tanyakan: "Bagaimana pembaca membedakannya dengan 4 derajat di atas nol?" Pada skala yang satu langkahnya bernilai 50 atau 10.000, minta murid menjelaskan cara menghitungnya.',
     instruksi:
-      'Amati titik pada setiap skala. Hitung berapa langkah titik itu dari 0, perhatikan apakah di atas atau di bawah 0, lalu tuliskan bilangannya. Untuk keadaan di bawah nol, ketik tanda - di depan angka.',
+      'Jelajahi delapan tempat di kota. Pada setiap skala, cari titik acuan (0), hitung berapa langkah titik itu dari 0, perhatikan apakah di atas atau di bawah 0, lalu tuliskan bilangannya. Untuk keadaan di bawah titik acuan, ketik tanda - di depan angka. Setelah itu, pilih cara membacanya.',
+    tanyaBaca: 'Bagaimana cara baku membaca bilangan ini (tanpa satuan)?',
     situasi: [
       {
-        id: 'jayawijaya',
-        ikon: '🌡️',
-        konteks: 'Termometer',
+        id: 'puncak',
+        tema: 'suhu',
+        tempat: 'Puncak Jaya, Papua',
+        frasa: 'Suhu dini hari 4 derajat di bawah nol',
         label:
-          'Suhu Puncak Jaya pada dini hari: 4 derajat <strong>di bawah</strong> nol. Tulis suhunya (°C).',
-        posisi: 'di bawah nol',
+          'Suhu di Puncak Jaya pada dini hari: 4 derajat <strong>di bawah</strong> nol. Tulis suhunya.',
+        besar: 4,
         jawab: -4,
-        allowNegative: true,
+        satuan: '°C',
+        skala: { min: -6, max: 6 },
         hints: [
-          'Titiknya berada 4 langkah di bawah 0. Keadaan di bawah nol perlu tanda khusus agar tidak tertukar dengan 4 derajat di atas nol.',
+          'Titiknya 4 langkah di bawah 0. Keadaan di bawah nol perlu tanda khusus agar tidak tertukar dengan 4 derajat di atas nol.',
           'Ketik tanda - lalu angka 4.',
         ],
+        temuan: 'Di bawah nol derajat → bilangan negatif: −4 °C.',
       },
       {
         id: 'kulkas',
-        ikon: '🌡️',
-        konteks: 'Termometer',
+        tema: 'suhu',
+        tempat: 'Lemari es warung',
+        frasa: 'Suhu lemari es 5 derajat di atas nol',
         label:
-          'Suhu di dalam lemari es: 6 derajat <strong>di atas</strong> nol. Tulis suhunya (°C).',
-        posisi: 'di atas nol',
-        jawab: 6,
-        hints: ['Titiknya 6 langkah di atas 0. Keadaan di atas nol cukup ditulis angkanya saja.'],
+          'Suhu di dalam lemari es warung: 5 derajat <strong>di atas</strong> nol. Tulis suhunya.',
+        besar: 5,
+        jawab: 5,
+        satuan: '°C',
+        skala: { min: -6, max: 6 },
+        hints: ['Titiknya 5 langkah di atas 0. Keadaan di atas nol cukup ditulis angkanya saja.'],
+        temuan: 'Di atas nol derajat → bilangan positif: 5 °C (boleh ditulis +5 °C).',
       },
       {
         id: 'parkir',
-        ikon: '🛗',
-        konteks: 'Lift gedung',
+        tema: 'gedung',
+        tempat: 'Mal Kota',
+        frasa: 'Parkir mobil 3 lantai di bawah lantai dasar',
         label:
-          'Lift berhenti di lantai parkir 2 lantai <strong>di bawah</strong> lantai dasar (lantai dasar = 0). Tulis nomor lantainya.',
-        posisi: 'di bawah nol',
-        jawab: -2,
-        allowNegative: true,
+          'Parkir mobil berada 3 lantai <strong>di bawah</strong> lantai dasar (lantai dasar = 0). Tulis nomor lantainya.',
+        besar: 3,
+        jawab: -3,
+        satuan: '',
+        skala: { min: -4, max: 5 },
         hints: [
-          'Lantai dasar adalah 0. Lantai parkir berada 2 lantai di bawahnya.',
+          'Lantai dasar adalah 0. Parkir mobil berada 3 lantai di bawahnya.',
           'Gunakan cara yang sama seperti suhu di bawah nol: tanda - di depan angka.',
         ],
+        temuan: 'Di bawah lantai dasar → bilangan negatif: lantai −3.',
       },
       {
-        id: 'dasar',
-        ikon: '🛗',
-        konteks: 'Lift gedung',
-        label: 'Lift kembali ke lantai dasar, tempat pintu masuk utama. Tulis nomor lantainya.',
-        posisi: 'tepat di nol',
+        id: 'lobi',
+        tema: 'gedung',
+        tempat: 'Mal Kota',
+        frasa: 'Lift berhenti di lantai dasar',
+        label:
+          'Lift berhenti di <strong>lantai dasar</strong>, tempat lobi. Tulis nomor lantainya.',
+        besar: 0,
         jawab: 0,
+        satuan: '',
+        skala: { min: -4, max: 5 },
         hints: ['Lantai dasar adalah titik acuan — tidak di atas, tidak di bawah.'],
+        temuan: 'Titik acuan ditulis 0 — tanpa tanda, karena 0 bukan positif dan bukan negatif.',
       },
       {
-        id: 'penyelam',
-        ikon: '🤿',
-        konteks: 'Permukaan laut',
+        id: 'kapal',
+        tema: 'laut',
+        tempat: 'Selat Makassar',
+        frasa: 'Kapal selam berada 150 meter di bawah permukaan laut',
         label:
-          'Seorang penyelam berada 8 meter <strong>di bawah</strong> permukaan laut (permukaan laut = 0). Tulis posisinya (meter).',
-        posisi: 'di bawah nol',
-        jawab: -8,
-        allowNegative: true,
+          'Sebuah kapal selam berada 150 meter <strong>di bawah</strong> permukaan laut. Perhatikan: 1 langkah = 50 m. Tulis posisinya (meter).',
+        besar: 150,
+        jawab: -150,
+        satuan: 'm',
+        skala: { min: -250, max: 150, langkah: 50 },
         hints: [
-          'Hitung langkah dari 0 ke titik penyelam, lalu ingat ia berada di bawah permukaan.',
-          'Ketik tanda - lalu angka 8.',
+          'Hitung langkahnya dari permukaan laut: ada 3 langkah ke bawah, dan setiap langkah bernilai 50 m.',
+          '3 × 50 = 150, dan posisinya di bawah permukaan laut. Ketik tanda - di depan 150.',
         ],
+        temuan: 'Di bawah permukaan laut → bilangan negatif: −150 m.',
       },
       {
-        id: 'camar',
-        ikon: '🕊️',
-        konteks: 'Permukaan laut',
+        id: 'elang',
+        tema: 'laut',
+        tempat: 'Tebing Uluwatu',
+        frasa: 'Burung elang terbang 100 meter di atas permukaan laut',
         label:
-          'Seekor burung camar terbang 7 meter <strong>di atas</strong> permukaan laut. Tulis posisinya (meter).',
-        posisi: 'di atas nol',
-        jawab: 7,
-        hints: ['Burung camar berada 7 langkah di atas 0.'],
+          'Seekor elang terbang 100 meter <strong>di atas</strong> permukaan laut. Perhatikan: 1 langkah = 50 m. Tulis posisinya (meter).',
+        besar: 100,
+        jawab: 100,
+        satuan: 'm',
+        skala: { min: -250, max: 150, langkah: 50 },
+        hints: ['Ada 2 langkah ke atas dari permukaan laut; 2 × 50 = 100.'],
+        temuan: 'Di atas permukaan laut → bilangan positif: 100 m (boleh +100 m).',
+      },
+      {
+        id: 'koperasi',
+        tema: 'uang',
+        tempat: 'Koperasi sekolah',
+        frasa: 'Koperasi sekolah rugi Rp20.000 bulan lalu',
+        label:
+          'Bulan lalu koperasi sekolah <strong>rugi</strong> Rp20.000. Perhatikan: 1 langkah = Rp10.000. Tulis keadaan kas itu sebagai bilangan bulat (rupiah).',
+        besar: 20000,
+        jawab: -20000,
+        satuan: 'rupiah',
+        skala: { min: -50000, max: 30000, langkah: 10000 },
+        hints: [
+          'Titik acuannya impas (Rp0). Rugi berarti berada di bawah titik acuan.',
+          'Tulis tanda - di depan 20000 (boleh dengan titik ribuan: 20.000).',
+        ],
+        temuan: 'Rugi → bilangan negatif: −20.000 (rupiah).',
+      },
+      {
+        id: 'kuis',
+        tema: 'skor',
+        tempat: 'Lomba cerdas cermat',
+        frasa: 'Tim Biru kehilangan 30 poin dari skor awal',
+        label:
+          'Di babak pertama lomba cerdas cermat, Tim Biru <strong>kehilangan</strong> 30 poin dari skor awal 0. Perhatikan: 1 langkah = 10 poin. Tulis skornya.',
+        besar: 30,
+        jawab: -30,
+        satuan: 'poin',
+        skala: { min: -50, max: 50, langkah: 10 },
+        hints: [
+          'Kehilangan poin berarti skornya turun di bawah skor awal 0.',
+          '3 langkah × 10 poin = 30 poin di bawah 0.',
+        ],
+        temuan: 'Kehilangan poin → bilangan negatif: skor −30.',
       },
     ],
-    skalaMax: 8,
-    amati: {
-      pertanyaan:
-        'Amati kolom "Tulisan" pada tabel. Apa kesamaan cara menulis semua keadaan di bawah nol?',
-      opsi: [
-        { id: 'depan', label: 'Diberi tanda negatif (−) di <strong>depan</strong> angka' },
-        { id: 'belakang', label: 'Diberi tanda negatif (−) di <strong>belakang</strong> angka' },
-        { id: 'kurung', label: 'Angkanya ditulis di dalam tanda kurung' },
-        { id: 'polos', label: 'Tidak diberi tanda apa pun, sama seperti di atas nol' },
-      ],
-      correct: 'depan',
-      umpan: {
-        depan:
-          'Betul! Semua keadaan di bawah nol ditulis dengan tanda negatif di depan angka: −4, −2, −8. Bilangan seperti ini disebut <strong>bilangan bulat negatif</strong>.',
-        belakang: 'Lihat lagi kolom Tulisan: tanda − ada di sebelah mana angkanya?',
-        kurung: 'Tidak ada tanda kurung di tabel. Lihat lagi kolom Tulisan.',
-        polos: 'Kalau tanpa tanda, −4 dan 4 akan terlihat sama. Lihat lagi kolom Tulisan.',
+    amati: [
+      {
+        id: 'a1',
+        tanya:
+          'Amati kolom <strong>Tulisan</strong> pada tabel. Apa kesamaan cara menulis semua keadaan di bawah titik acuan?',
+        opsi: [
+          { id: 'depan', label: 'Diberi tanda negatif (−) di <strong>depan</strong> angka' },
+          { id: 'belakang', label: 'Diberi tanda negatif (−) di <strong>belakang</strong> angka' },
+          { id: 'kurung', label: 'Angkanya ditulis di dalam tanda kurung' },
+          { id: 'polos', label: 'Tidak diberi tanda apa pun, sama seperti di atas titik acuan' },
+        ],
+        correct: 'depan',
+        umpan: {
+          depan:
+            'Betul! −4, −3, −150, −20.000, dan −30 semuanya memakai tanda negatif di depan angka. Bilangan seperti ini disebut <strong>bilangan bulat negatif</strong>.',
+          belakang: 'Lihat lagi kolom Tulisan: tanda − berada di sebelah mana angkanya?',
+          kurung: 'Tidak ada tanda kurung di tabel. Lihat lagi kolom Tulisan.',
+          polos: 'Kalau tanpa tanda, −4 dan 4 akan terlihat sama. Lihat lagi kolom Tulisan.',
+        },
       },
-    },
+      {
+        id: 'a2',
+        tanya:
+          'Amati kolom <strong>Dibaca</strong>. Bilangan yang bertanda − selalu dibaca dengan diawali kata …',
+        opsi: [
+          { id: 'negatif', label: '"negatif"' },
+          { id: 'minus', label: '"minus"' },
+          { id: 'kurang', label: '"kurang"' },
+          { id: 'bawah', label: '"bawah"' },
+        ],
+        correct: 'negatif',
+        umpan: {
+          negatif:
+            'Betul! Tanda di depan bilangan dibaca lebih dulu dengan kata <strong>negatif</strong>: −4 dibaca "negatif empat".',
+          minus:
+            'Kata "minus" dipakai untuk operasi pengurangan, mis. 9 − 4. Lihat lagi kolom Dibaca.',
+          kurang: '"Kurang" juga kata untuk pengurangan. Lihat lagi kolom Dibaca.',
+          bawah:
+            '"Di bawah" menjelaskan keadaannya, tetapi bukan cara membaca tandanya. Lihat lagi kolom Dibaca.',
+        },
+      },
+      {
+        id: 'a3',
+        tanya:
+          'Bagaimana cara menulis dan membaca keadaan yang <strong>tepat di titik acuan</strong> (lantai dasar)?',
+        opsi: [
+          { id: 'nol', label: 'Ditulis 0 tanpa tanda, dibaca "nol"' },
+          { id: 'negnol', label: 'Ditulis −0, dibaca "negatif nol"' },
+          { id: 'posnol', label: 'Ditulis +0, dibaca "positif nol"' },
+          { id: 'kosong', label: 'Tidak bisa ditulis dengan bilangan' },
+        ],
+        correct: 'nol',
+        umpan: {
+          nol: 'Betul! Titik acuan ditulis 0 dan dibaca "nol". Nol bukan bilangan positif dan bukan bilangan negatif.',
+          negnol:
+            'Titik acuan tidak berada di bawah dirinya sendiri, jadi tidak perlu tanda negatif.',
+          posnol:
+            'Titik acuan tidak berada di atas dirinya sendiri, jadi tidak perlu tanda positif.',
+          kosong: 'Lihat baris lantai dasar pada tabel: ada bilangannya, bukan?',
+        },
+      },
+    ],
     nextLabel: 'Lanjut: Olah Data →',
   },
 
   /* ----------------------------------------------------------
-     TAHAP 4a — PENGOLAHAN DATA: BACA & TULIS
+     TAHAP 4a — PENGOLAHAN DATA: KATA KUNCI
+     `correct` = tandaKataKunci(teks) dan `jawab` = nilaiKonteks(besar,
+     teks) — diuji.
      ---------------------------------------------------------- */
-  olahBaca: {
-    kicker: 'Tahap 4a · Pengolahan Data — Baca & Tulis',
+  olahPilah: {
+    kicker: 'Tahap 4a · Pengolahan Data — Kata Kunci',
     syntax: DL + ' · Sintaks 4',
-    goal: 'Mengolah data untuk menemukan jenis bilangan bulat serta cara menulis dan membacanya secara baku.',
-    guru: 'Diskusikan mengapa 0 bukan positif dan bukan negatif (0 adalah titik acuan). Tekankan bahwa kata "minus" dipakai untuk operasi pengurangan, sedangkan tanda di depan bilangan dibaca "negatif".',
-    judulA: 'A. Pilah bilangan menurut jenisnya',
+    goal: 'Mengolah data untuk menemukan kata-kata dalam kehidupan sehari-hari yang menunjukkan bilangan bulat positif, negatif, atau nol.',
+    guru: 'Minta murid melingkari (menyebutkan) kata yang membuat mereka memilih jawaban, mis. "di bawah", "rugi", "tepat". Tekankan bahwa titik acuan harus ditentukan lebih dulu: lantai dasar, permukaan laut, 0 °C, impas, skor awal.',
+    judulA: 'A. Pilah keadaan sehari-hari',
     instruksiA:
-      'Untuk setiap bilangan, pilih jenisnya. Petunjuk: ingat kembali tabel data — mana yang di atas nol, di bawah nol, atau tepat di nol?',
-    pilah: [
-      {
-        id: 'p1',
-        teks: '−9',
-        correct: 'neg',
-        explanation: 'Ada tanda negatif di depan angka, jadi −9 adalah bilangan bulat negatif.',
-      },
-      {
-        id: 'p2',
-        teks: '14',
-        correct: 'pos',
-        explanation: 'Tanpa tanda berarti positif: 14 terletak di atas (di kanan) nol.',
-      },
-      {
-        id: 'p3',
-        teks: '0',
-        correct: 'nol',
-        explanation: '0 adalah titik acuan — tidak di atas dan tidak di bawah nol.',
-      },
-      {
-        id: 'p4',
-        teks: '+3',
-        correct: 'pos',
-        explanation: 'Tanda + menegaskan positif. +3 sama dengan 3.',
-      },
-      {
-        id: 'p5',
-        teks: '−1',
-        correct: 'neg',
-        explanation: '−1 adalah bilangan bulat negatif yang paling dekat dengan 0.',
-      },
-    ],
+      'Setiap kalimat menggambarkan keadaan di sekitar kita. Tentukan apakah keadaan itu dinyatakan dengan bilangan bulat positif, negatif, atau nol.',
     opsiPilah: [
       { id: 'pos', label: 'Bilangan bulat positif' },
       { id: 'neg', label: 'Bilangan bulat negatif' },
-      { id: 'nol', label: 'Bukan positif, bukan negatif' },
+      { id: 'nol', label: 'Nol (titik acuan)' },
     ],
-    judulB: 'B. Pasangkan tulisan dan cara bacanya',
-    instruksiB:
+    pilah: [
+      {
+        id: 'p1',
+        teks: 'Suhu di kutub selatan mencapai 25 derajat di bawah nol.',
+        besar: 25,
+        jawab: -25,
+        correct: 'neg',
+        explanation: 'Kata kunci "di bawah" nol → negatif: −25 °C.',
+      },
+      {
+        id: 'p2',
+        teks: 'Pesawat terbang 9.000 meter di atas permukaan laut.',
+        besar: 9000,
+        jawab: 9000,
+        correct: 'pos',
+        explanation: 'Kata kunci "di atas" permukaan laut → positif: 9.000 m.',
+      },
+      {
+        id: 'p3',
+        teks: 'Kantin sekolah untung Rp50.000 hari ini.',
+        besar: 50000,
+        jawab: 50000,
+        correct: 'pos',
+        explanation: 'Kata kunci "untung" → positif: 50.000 (rupiah).',
+      },
+      {
+        id: 'p4',
+        teks: 'Paman punya utang Rp200.000 di toko bangunan.',
+        besar: 200000,
+        jawab: -200000,
+        correct: 'neg',
+        explanation: 'Kata kunci "utang" → negatif: −200.000 (rupiah).',
+      },
+      {
+        id: 'p5',
+        teks: 'Lift berhenti di lantai dasar.',
+        besar: 0,
+        jawab: 0,
+        correct: 'nol',
+        explanation: 'Lantai dasar adalah titik acuan → 0.',
+      },
+      {
+        id: 'p6',
+        teks: 'Harga cabai turun Rp3.000 per kilogram.',
+        besar: 3000,
+        jawab: -3000,
+        correct: 'neg',
+        explanation: 'Kata kunci "turun" → perubahan negatif: −3.000 (rupiah).',
+      },
+      {
+        id: 'p7',
+        teks: 'Doni mendapat 15 poin di babak pertama.',
+        besar: 15,
+        jawab: 15,
+        correct: 'pos',
+        explanation: 'Kata kunci "mendapat" poin → positif: 15.',
+      },
+      {
+        id: 'p8',
+        teks: 'Seorang penyelam mengapung tepat di permukaan laut.',
+        besar: 0,
+        jawab: 0,
+        correct: 'nol',
+        explanation: 'Kata kunci "tepat" di permukaan laut (titik acuan) → 0.',
+      },
+      {
+        id: 'p9',
+        teks: 'Lina menarik tabungan Rp25.000 untuk membeli buku.',
+        besar: 25000,
+        jawab: -25000,
+        correct: 'neg',
+        explanation: 'Kata kunci "menarik" tabungan (uang keluar) → negatif: −25.000 (rupiah).',
+      },
+      {
+        id: 'p10',
+        teks: 'Ayah menyetor tabungan Rp100.000 ke bank.',
+        besar: 100000,
+        jawab: 100000,
+        correct: 'pos',
+        explanation: 'Kata kunci "menyetor" tabungan (uang masuk) → positif: 100.000 (rupiah).',
+      },
+    ],
+    judulB: 'B. Temukan polanya',
+    pola: [
+      {
+        id: 'k1',
+        tanya:
+          'Kata-kata seperti <em>di bawah, turun, rugi, utang, menarik (tabungan), kehilangan</em> menunjukkan bilangan bulat …',
+        opsi: [
+          { id: 'neg', label: 'negatif' },
+          { id: 'pos', label: 'positif' },
+          { id: 'nol', label: 'nol' },
+          { id: 'bebas', label: 'bisa positif atau negatif, tergantung angkanya' },
+        ],
+        correct: 'neg',
+        umpan: {
+          neg: 'Betul! Kata-kata itu menunjukkan keadaan di sisi negatif titik acuan.',
+          pos: 'Lihat lagi kalimat yang memuat kata "rugi" atau "di bawah" — jenis apa yang kamu pilih?',
+          nol: 'Nol hanya untuk keadaan yang tepat di titik acuan.',
+          bebas:
+            'Angkanya menyatakan jarak dari titik acuan; kata kuncinyalah yang menentukan tanda.',
+        },
+      },
+      {
+        id: 'k2',
+        tanya:
+          'Kata-kata seperti <em>di atas, naik, untung, menyetor, mendapat</em> menunjukkan bilangan bulat …',
+        opsi: [
+          { id: 'pos', label: 'positif' },
+          { id: 'neg', label: 'negatif' },
+          { id: 'nol', label: 'nol' },
+          { id: 'bebas', label: 'tidak dapat ditentukan' },
+        ],
+        correct: 'pos',
+        umpan: {
+          pos: 'Betul! Keadaan di sisi positif ditulis tanpa tanda atau dengan tanda +.',
+          neg: 'Lihat lagi kalimat tentang untung dan menyetor tabungan.',
+          nol: 'Nol hanya untuk keadaan yang tepat di titik acuan.',
+          bebas: 'Kata kuncinya sudah cukup untuk menentukan tanda. Coba lagi.',
+        },
+      },
+      {
+        id: 'k3',
+        tanya: 'Mengapa kita perlu menentukan <strong>titik acuan</strong> (nol) terlebih dahulu?',
+        opsi: [
+          {
+            id: 'acuan',
+            label:
+              'Karena tanda positif atau negatif menyatakan letak keadaan terhadap titik acuan itu',
+          },
+          { id: 'besar', label: 'Karena titik acuan selalu bilangan yang paling besar' },
+          { id: 'hias', label: 'Karena tanpa titik acuan tulisan terlihat kurang rapi' },
+          {
+            id: 'tidak',
+            label: 'Sebenarnya tidak perlu; semua bilangan boleh ditulis tanpa tanda',
+          },
+        ],
+        correct: 'acuan',
+        umpan: {
+          acuan:
+            'Tepat! Lantai dasar, permukaan laut, 0 °C, impas, dan skor awal adalah titik acuan. Di atasnya positif, di bawahnya negatif.',
+          besar: 'Titik acuan tidak selalu terbesar — di atasnya masih ada bilangan positif.',
+          hias: 'Titik acuan bukan soal kerapian, tetapi soal makna tanda bilangan.',
+          tidak: 'Tanpa tanda, "3 lantai di bawah" dan "3 lantai di atas" akan tertulis sama.',
+        },
+      },
+    ],
+    temuan: [
+      'Tentukan dulu <strong>titik acuan</strong> (nol): 0 °C, lantai dasar, permukaan laut, impas, atau skor awal.',
+      'Keadaan di bawah/berkurang dari titik acuan (<em>di bawah, turun, rugi, utang, menarik, kehilangan</em>) dinyatakan dengan bilangan bulat <strong>negatif</strong>.',
+      'Keadaan di atas/bertambah dari titik acuan (<em>di atas, naik, untung, menyetor, mendapat</em>) dinyatakan dengan bilangan bulat <strong>positif</strong>.',
+      'Keadaan tepat di titik acuan dinyatakan dengan <strong>0</strong>.',
+    ],
+    nextLabel: 'Lanjut: Baca & Tulis →',
+  },
+
+  /* ----------------------------------------------------------
+     TAHAP 4b — PENGOLAHAN DATA: BACA & TULIS
+     tulisNotasi diperiksa diagnosaTulisBulat, tulisBacaan diperiksa
+     cekCaraBaca (lihat buildCekStep di engine).
+     ---------------------------------------------------------- */
+  olahBaca: {
+    kicker: 'Tahap 4b · Pengolahan Data — Baca & Tulis',
+    syntax: DL + ' · Sintaks 4',
+    goal: 'Mengolah data untuk menemukan cara baku menuliskan dan membaca bilangan bulat, termasuk bilangan besar.',
+    guru: 'Lakukan "dikte bilangan" singkat: satu murid membaca lantang, pasangannya menulis. Tekankan bahwa angka bilangan besar dibaca utuh ("seribu dua ratus lima puluh", bukan "satu dua lima nol") dan tanda dibaca lebih dulu.',
+    judulA: 'A. Pasangkan tulisan dan cara bacanya',
+    instruksiA:
       'Pilih jawaban yang menurutmu baku. Jika belum tepat, baca umpan baliknya lalu coba lagi.',
-    baca: [
+    pasang: [
       {
         id: 'b1',
-        tanya: 'Bagaimana cara baku membaca <span class="num-chip">−7</span>?',
+        tanya: 'Cara baku membaca <span class="num-chip">−7</span> adalah …',
         opsi: [
           { id: 'a', label: 'negatif tujuh' },
           { id: 'b', label: 'tujuh negatif' },
           { id: 'c', label: 'minus tujuh' },
-          { id: 'd', label: 'positif tujuh' },
+          { id: 'd', label: 'kurang tujuh' },
         ],
         correct: 'a',
         umpan: {
           a: 'Tepat! Tanda di depan bilangan dibaca lebih dulu: "negatif", lalu angkanya.',
           b: 'Urutannya terbalik. Tanda ditulis di depan, jadi dibaca lebih dulu.',
           c: '"Minus" adalah nama operasi pengurangan, misalnya 9 − 7. Tanda bilangan negatif dibaca dengan kata lain.',
-          d: 'Ada tanda − di depan angka, jadi bukan positif.',
+          d: '"Kurang" juga kata untuk pengurangan, bukan cara membaca tanda bilangan.',
         },
       },
       {
         id: 'b2',
-        tanya: 'Tuliskan dengan notasi baku: <em>"negatif dua puluh lima"</em>',
+        tanya: 'Notasi baku untuk <em>"negatif dua puluh lima"</em> adalah …',
         opsi: [
           { id: 'a', label: '−25' },
           { id: 'b', label: '25−' },
           { id: 'c', label: '(25)' },
-          { id: 'd', label: '25' },
+          { id: 'd', label: '−2 5' },
         ],
         correct: 'a',
         umpan: {
           a: 'Tepat! Kata "negatif" menjadi tanda − yang menempel di depan angka.',
           b: 'Tanda negatif tidak ditulis di belakang angka.',
           c: 'Tanda kurung bukan tanda bilangan negatif.',
-          d: 'Tanpa tanda, 25 adalah bilangan positif.',
+          d: 'Bilangan 25 ditulis rapat, tanpa spasi di antara angkanya.',
         },
       },
       {
         id: 'b3',
-        tanya: 'Bagaimana cara baku membaca <span class="num-chip">+12</span>?',
+        tanya: 'Cara baku membaca <span class="num-chip">+12</span> adalah …',
         opsi: [
-          { id: 'a', label: 'positif dua belas (atau cukup "dua belas")' },
-          { id: 'b', label: 'plus dua belas negatif' },
-          { id: 'c', label: 'negatif dua belas' },
-          { id: 'd', label: 'satu dua positif' },
+          { id: 'a', label: '"positif dua belas" atau cukup "dua belas"' },
+          { id: 'b', label: '"plus dua belas"' },
+          { id: 'c', label: '"negatif dua belas"' },
+          { id: 'd', label: '"satu dua positif"' },
         ],
         correct: 'a',
         umpan: {
           a: 'Tepat! +12 sama dengan 12, dibaca "positif dua belas" atau "dua belas".',
-          b: 'Tidak ada tanda negatif pada +12.',
+          b: '"Plus" adalah nama operasi penjumlahan. Tanda + di depan bilangan dibaca "positif".',
           c: 'Tanda + berarti positif, bukan negatif.',
-          d: '12 dibaca sebagai satu bilangan: "dua belas".',
+          d: '12 dibaca sebagai satu bilangan: "dua belas", dan tandanya dibaca di depan.',
         },
       },
       {
         id: 'b4',
-        tanya: 'Tuliskan dengan notasi baku: <em>"negatif seratus"</em>',
+        tanya: 'Cara baku membaca <span class="num-chip">−1.250</span> adalah …',
         opsi: [
-          { id: 'a', label: '−100' },
-          { id: 'b', label: '−1 00' },
-          { id: 'c', label: '100−' },
-          { id: 'd', label: '− 100 −' },
+          { id: 'a', label: 'negatif seribu dua ratus lima puluh' },
+          { id: 'b', label: 'negatif satu dua lima nol' },
+          { id: 'c', label: 'minus seribu dua ratus lima puluh' },
+          { id: 'd', label: 'negatif satu koma dua lima nol' },
         ],
         correct: 'a',
         umpan: {
-          a: 'Tepat! Satu tanda negatif menempel di depan bilangan 100.',
-          b: 'Bilangan 100 ditulis rapat tanpa spasi.',
-          c: 'Tanda negatif tidak ditulis di belakang angka.',
-          d: 'Cukup satu tanda negatif, di depan angka.',
+          a: 'Tepat! Tandanya dibaca "negatif", lalu bilangannya dibaca utuh: seribu dua ratus lima puluh.',
+          b: 'Bilangan dibaca utuh sesuai nilai tempatnya, bukan angka demi angka.',
+          c: 'Kata "minus" bukan cara baku membaca tanda bilangan negatif.',
+          d: 'Titik pada 1.250 adalah pemisah ribuan, bukan koma desimal.',
         },
+      },
+    ],
+    judulB: 'B. Dikte bilangan: tuliskan dengan angka',
+    instruksiB:
+      'Petugas koperasi membacakan catatan keuangan. Tuliskan bilangannya dengan notasi baku. Ketik tanda - untuk negatif; titik ribuan boleh dipakai atau tidak.',
+    tulisNotasi: [
+      {
+        id: 'n1',
+        bacaan: 'negatif dua ratus lima puluh',
+        label:
+          'Kas kelas: <em>"negatif dua ratus lima puluh"</em> ribu rupiah. Tulis bilangannya (dalam ribu).',
+        jawab: -250,
+        hints: ['"Negatif" berarti tanda − di depan.', 'Dua ratus lima puluh ditulis 250.'],
+      },
+      {
+        id: 'n2',
+        bacaan: 'negatif seribu lima ratus',
+        label: 'Selisih harga: <em>"negatif seribu lima ratus"</em> rupiah. Tulis bilangannya.',
+        jawab: -1500,
+        hints: ['Seribu lima ratus ditulis 1.500 (atau 1500).', 'Jangan lupa tanda − di depan.'],
+      },
+      {
+        id: 'n3',
+        bacaan: 'tujuh puluh lima ribu',
+        label: 'Untung penjualan: <em>"tujuh puluh lima ribu"</em> rupiah. Tulis bilangannya.',
+        jawab: 75000,
+        hints: ['Tidak ada kata "negatif", jadi bilangannya positif — ditulis tanpa tanda.'],
+      },
+    ],
+    judulC: 'C. Bacakan: ketik cara membacanya',
+    instruksiC:
+      'Ketik cara membaca setiap bilangan dengan huruf, seperti saat kamu membacakannya dengan lantang. Satuan tidak perlu diketik.',
+    tulisBacaan: [
+      {
+        id: 'c1',
+        label: 'Suhu freezer es krim: <span class="num-chip">−18</span> °C',
+        jawab: -18,
+        hints: ['Baca tandanya lebih dulu, lalu angkanya sebagai satu bilangan.'],
+      },
+      {
+        id: 'c2',
+        label: 'Kedalaman Palung Weber di Laut Banda: <span class="num-chip">−7.200</span> m',
+        jawab: -7200,
+        hints: [
+          'Titik pada 7.200 adalah pemisah ribuan: tujuh ribu dua ratus.',
+          'Awali dengan kata "negatif".',
+        ],
+      },
+      {
+        id: 'c3',
+        label:
+          'Tinggi Gunung Rinjani: <span class="num-chip">3.726</span> m di atas permukaan laut',
+        jawab: 3726,
+        hints: ['Tiga ribu … ratus … puluh … — bilangan positif cukup dibaca angkanya.'],
       },
     ],
     temuan: [
-      'Bilangan bulat terdiri atas bilangan bulat <strong>negatif</strong> (−1, −2, −3, …), <strong>nol</strong>, dan bilangan bulat <strong>positif</strong> (1, 2, 3, …).',
-      'Bilangan negatif ditulis dengan tanda <strong>−</strong> menempel di depan angka dan dibaca <strong>"negatif …"</strong>.',
-      'Bilangan positif boleh ditulis tanpa tanda atau dengan tanda +, dibaca "…" atau "positif …".',
+      'Bilangan negatif ditulis dengan tanda <strong>−</strong> menempel di depan angka dan dibaca <strong>"negatif …"</strong> — bukan "minus".',
+      'Bilangan positif ditulis tanpa tanda atau dengan tanda +, dibaca "…" atau "positif …".',
+      'Angkanya dibaca utuh sesuai nilai tempat: −1.250 dibaca "negatif seribu dua ratus lima puluh".',
     ],
-    nextLabel: 'Lanjut: Garis Bilangan →',
-  },
-
-  /* ----------------------------------------------------------
-     TAHAP 4b — PENGOLAHAN DATA: GARIS BILANGAN
-     ---------------------------------------------------------- */
-  olahGaris: {
-    kicker: 'Tahap 4b · Pengolahan Data — Garis Bilangan',
-    syntax: DL + ' · Sintaks 4',
-    goal: 'Menempatkan bilangan bulat dari data pada garis bilangan dan menemukan pola letaknya.',
-    guru: 'Kaitkan skala tegak (termometer, lift) dengan garis bilangan mendatar: "Putar termometer ke kanan — bagian di bawah nol pindah ke mana?" Minta murid menghitung langkah dari 0, bukan menebak.',
-    instruksi:
-      'Garis bilangan adalah termometer yang "direbahkan": bagian di atas nol pindah ke kanan, bagian di bawah nol pindah ke kiri. Ketuk titik yang tepat untuk setiap bilangan dari tabel datamu.',
-    min: -10,
-    max: 10,
-    labelEvery: 5,
-    tanya: [
-      {
-        id: 'q1',
-        teks: 'Semua bilangan negatif yang kamu tempatkan berada di sebelah … 0.',
-        opsi: [
-          { id: 'a', label: 'kiri' },
-          { id: 'b', label: 'kanan' },
-          { id: 'c', label: 'tepat di atas' },
-          { id: 'd', label: 'kadang kiri, kadang kanan' },
-        ],
-        correct: 'a',
-        umpan: {
-          a: 'Betul! Bilangan negatif selalu di kiri 0, bilangan positif di kanan 0.',
-          b: 'Lihat lagi titik biru (−4, −2, −8) pada garis bilangan.',
-          c: 'Semua titik berada tepat pada garis. Perhatikan sisinya terhadap 0.',
-          d: 'Perhatikan lagi: adakah titik negatif di kanan 0?',
-        },
-      },
-      {
-        id: 'q2',
-        teks: 'Titik −4 berjarak berapa satuan dari 0?',
-        opsi: [
-          { id: 'a', label: '4 satuan' },
-          { id: 'b', label: '−4 satuan' },
-          { id: 'c', label: '0 satuan' },
-          { id: 'd', label: '8 satuan' },
-        ],
-        correct: 'a',
-        umpan: {
-          a: 'Betul! Angka di belakang tanda menunjukkan jaraknya dari 0; tandanya menunjukkan arahnya (kiri).',
-          b: 'Jarak selalu dihitung sebagai banyak langkah, tidak pernah negatif. Tanda − hanya menunjukkan arah kiri.',
-          c: 'Hitung langkah dari 0 ke −4.',
-          d: 'Hitung lagi langkah dari 0 sampai −4.',
-        },
-      },
-      {
-        id: 'q3',
-        teks: 'Bilangan manakah yang jaraknya dari 0 SAMA dengan 6, tetapi berada di sisi berlawanan?',
-        opsi: [
-          { id: 'a', label: '−6' },
-          { id: 'b', label: '0' },
-          { id: 'c', label: '7' },
-          { id: 'd', label: '−4' },
-        ],
-        correct: 'a',
-        umpan: {
-          a: 'Betul! 6 dan −6 sama-sama 6 langkah dari 0, tetapi di sisi berlawanan. Pasangan seperti ini disebut <strong>lawan</strong> bilangan.',
-          b: '0 adalah titik tengahnya, jaraknya 0 langkah.',
-          c: '7 berada di sisi yang sama dengan 6.',
-          d: '−4 memang di sisi berlawanan, tetapi jaraknya 4 langkah, bukan 6.',
-        },
-      },
-    ],
-    temuan:
-      'Pada garis bilangan mendatar, 0 menjadi titik acuan. Bilangan negatif terletak di <strong>kiri</strong> 0, bilangan positif di <strong>kanan</strong> 0. Angka pada bilangan menyatakan <strong>jarak</strong> (banyak langkah) dari 0, sedangkan tandanya menyatakan <strong>arah</strong>.',
     nextLabel: 'Lanjut: Buktikan →',
   },
 
@@ -439,63 +744,59 @@ var DATA = {
   verifikasi: {
     kicker: 'Tahap 5 · Pembuktian',
     syntax: DL + ' · Sintaks 5',
-    goal: 'Menguji temuan pada pernyataan dan bilangan baru, lalu membandingkannya dengan dugaan awal.',
-    guru: 'Minta pasangan murid menjelaskan alasan setiap pernyataan benar/salah dengan menunjuk garis bilangan. Pada bagian dugaan, ajak murid yang dugaannya berubah untuk bercerita apa yang membuatnya berubah pikiran.',
+    goal: 'Menguji temuan pada pernyataan baru, lalu membandingkannya dengan dugaan awal dan hipotesis.',
+    guru: 'Minta pasangan murid menjelaskan alasan setiap pernyataan benar/salah dengan menunjuk data dari tahap sebelumnya. Pada bagian dugaan, ajak murid yang dugaannya berubah untuk bercerita apa yang membuatnya berubah pikiran.',
     judulA: 'A. Benar atau salah?',
+    opsiPernyataan: [
+      { id: 'benar', label: 'Benar' },
+      { id: 'salah', label: 'Salah' },
+    ],
     pernyataan: [
       {
         id: 'v1',
-        teks: '−12 dibaca "negatif dua belas".',
-        correct: 'benar',
-        explanation: 'Tanda − di depan bilangan dibaca "negatif".',
+        teks: '−12 °C dibaca "minus dua belas derajat Celsius".',
+        correct: 'salah',
+        explanation:
+          'Cara bakunya "negatif dua belas derajat Celsius". "Minus" adalah nama operasi pengurangan.',
       },
       {
         id: 'v2',
-        teks: 'Bilangan 0 termasuk bilangan bulat positif.',
-        correct: 'salah',
-        explanation: '0 adalah titik acuan: bukan positif dan bukan negatif.',
+        teks: 'Lantai dasar ditulis 0, dan 0 bukan bilangan positif maupun negatif.',
+        correct: 'benar',
+        explanation: 'Lantai dasar adalah titik acuan; 0 tidak bertanda.',
       },
       {
         id: 'v3',
-        teks: 'Suhu 9 derajat di bawah nol ditulis 9− °C.',
-        correct: 'salah',
-        explanation: 'Notasi bakunya −9 °C: tanda negatif di depan angka.',
+        teks: 'Utang Rp5.000 dapat dinyatakan dengan bilangan −5.000 (rupiah).',
+        correct: 'benar',
+        explanation: 'Utang berada di bawah titik impas, jadi dinyatakan dengan bilangan negatif.',
       },
       {
         id: 'v4',
-        teks: 'Pada garis bilangan, −3 terletak 3 satuan di sebelah kiri 0.',
-        correct: 'benar',
-        explanation: 'Angka 3 adalah jaraknya, tanda − menunjukkan arah kiri.',
+        teks: '"Lima negatif" adalah cara baku membaca −5.',
+        correct: 'salah',
+        explanation: 'Tanda dibaca lebih dulu: −5 dibaca "negatif lima".',
       },
       {
         id: 'v5',
-        teks: '+8 dan 8 adalah bilangan yang sama.',
+        teks: 'Ketinggian +300 m dan 300 m menyatakan hal yang sama.',
         correct: 'benar',
         explanation: 'Tanda + boleh ditulis atau tidak untuk bilangan positif.',
       },
       {
         id: 'v6',
-        teks: 'Titik −7 terletak di sebelah kanan titik −2.',
+        teks: 'Kedalaman 40 meter di bawah permukaan laut ditulis 40− m.',
         correct: 'salah',
-        explanation:
-          '−7 berjarak 7 langkah ke kiri dari 0, lebih jauh daripada −2. Jadi −7 di sebelah kiri −2.',
+        explanation: 'Notasi bakunya −40 m: tanda negatif di depan angka.',
+      },
+      {
+        id: 'v7',
+        teks: 'Skor −20 dibaca "negatif dua puluh" dan berarti 20 poin di bawah skor awal.',
+        correct: 'benar',
+        explanation: 'Tanda − dibaca "negatif" dan menunjukkan keadaan di bawah titik acuan.',
       },
     ],
-    opsiPernyataan: [
-      { id: 'benar', label: 'Benar' },
-      { id: 'salah', label: 'Salah' },
-    ],
-    judulB: 'B. Uji pada garis bilangan yang lebih panjang',
-    instruksiB:
-      'Tempatkan bilangan-bilangan baru ini. Angka berlabel hanya kelipatan 5 — hitung langkahnya!',
-    min: -15,
-    max: 15,
-    labelEvery: 5,
-    /* Empat bilangan diambil acak dari kumpulan ini (lihat initExerciseArrays). */
-    kumpulan: [-13, -11, -7, -3, -1, 2, 4, 9, 12, 14],
-    banyakUji: 4,
-    judulC: 'C. Bandingkan dengan dugaan awalmu',
-    dugaanBenar: 'ani',
+    judulB: 'B. Bandingkan dengan dugaan awalmu',
     nextLabel: 'Lanjut: Tarik Kesimpulan →',
   },
 
@@ -505,66 +806,162 @@ var DATA = {
   generalisasi: {
     kicker: 'Tahap 6 · Menarik Kesimpulan',
     syntax: DL + ' · Sintaks 6',
-    goal: 'Merumuskan kesimpulan tentang notasi baku bilangan bulat dan letaknya pada garis bilangan.',
-    guru: 'Setelah kesimpulan lengkap, minta beberapa murid membacakannya dengan kalimat sendiri. Tuliskan rangkuman di papan tulis sebagai catatan bersama.',
+    goal: 'Merumuskan kesimpulan tentang cara menuliskan dan membaca bilangan bulat dalam kehidupan sehari-hari.',
+    guru: 'Setelah kesimpulan lengkap, minta beberapa murid membacakannya dengan kalimat sendiri dan memberi satu contoh baru dari kehidupan mereka. Tuliskan rangkuman di papan tulis sebagai catatan bersama.',
     instruksi:
       'Lengkapi setiap kalimat dengan potongan yang tepat dari daftar pilihan. Setiap potongan hanya dipakai satu kali.',
     selectPlaceholder: '— pilih potongan kalimat —',
     kalimat: [
-      { id: 'k1', awal: 'Bilangan bulat negatif ditulis dengan', correct: 'tandaDepan' },
-      { id: 'k2', awal: 'Bilangan −6 dibaca', correct: 'bacaNegatif' },
-      { id: 'k3', awal: 'Bilangan bulat positif ditulis', correct: 'tanpaTanda' },
-      { id: 'k4', awal: 'Bilangan 0', correct: 'nolNetral' },
       {
-        id: 'k5',
-        awal: 'Pada garis bilangan mendatar, bilangan negatif terletak',
-        correct: 'kiri',
+        id: 'k1',
+        awal: 'Keadaan di bawah titik acuan (di bawah nol, turun, rugi, utang) dinyatakan dengan',
+        correct: 'negatif',
       },
-      { id: 'k6', awal: 'Bilangan 6 dan −6', correct: 'lawan' },
+      { id: 'k2', awal: 'Bilangan bulat negatif ditulis dengan', correct: 'tandaDepan' },
+      { id: 'k3', awal: 'Bilangan −20 dibaca', correct: 'bacaNegatif' },
+      {
+        id: 'k4',
+        awal: 'Keadaan di atas titik acuan (di atas nol, naik, untung) ditulis',
+        correct: 'tanpaTanda',
+      },
+      { id: 'k5', awal: 'Titik acuan ditulis 0, dibaca "nol", dan', correct: 'nolNetral' },
+      { id: 'k6', awal: 'Kata "minus"', correct: 'minusOperasi' },
     ],
     bank: [
-      { id: 'tandaDepan', teks: 'tanda − menempel di depan angka, misalnya −6' },
-      { id: 'bacaNegatif', teks: '"negatif enam"' },
-      { id: 'tanpaTanda', teks: 'tanpa tanda atau dengan tanda +, misalnya 6 atau +6' },
-      { id: 'nolNetral', teks: 'bukan bilangan positif dan bukan bilangan negatif' },
-      { id: 'kiri', teks: 'di sebelah kiri 0, sedangkan bilangan positif di sebelah kanan 0' },
-      { id: 'lawan', teks: 'sama jauh dari 0 tetapi berada di sisi yang berlawanan' },
-      { id: 'tandaBelakang', teks: 'tanda − di belakang angka, misalnya 6−' },
-      { id: 'bacaTerbalik', teks: '"enam negatif"' },
-      { id: 'kanan', teks: 'di sebelah kanan 0, sedangkan bilangan positif di sebelah kiri 0' },
+      { id: 'negatif', teks: 'bilangan bulat negatif' },
+      { id: 'tandaDepan', teks: 'tanda − menempel di depan angka, misalnya −20' },
+      { id: 'bacaNegatif', teks: '"negatif dua puluh"' },
+      {
+        id: 'tanpaTanda',
+        teks: 'tanpa tanda atau dengan tanda +, dibaca angkanya saja atau "positif …"',
+      },
+      { id: 'nolNetral', teks: 'bukan bilangan positif maupun bilangan negatif' },
+      {
+        id: 'minusOperasi',
+        teks: 'adalah nama operasi pengurangan, bukan cara baku membaca tanda bilangan negatif',
+      },
+      { id: 'tandaBelakang', teks: 'tanda − di belakang angka, misalnya 20−' },
+      { id: 'bacaMinus', teks: '"minus dua puluh"' },
+      { id: 'positif', teks: 'bilangan bulat positif' },
     ],
     rangkuman: [
-      'Bilangan bulat: …, −3, −2, −1, 0, 1, 2, 3, …',
-      'Notasi baku negatif: <strong>−a</strong> dibaca "negatif a" (contoh: −15 dibaca "negatif lima belas").',
-      'Notasi baku positif: <strong>a</strong> atau <strong>+a</strong> dibaca "a" atau "positif a".',
-      'Pada garis bilangan: negatif di kiri 0, positif di kanan 0; angkanya = jarak dari 0.',
+      'Tentukan titik acuan (0): 0 °C, lantai dasar, permukaan laut, impas, skor awal.',
+      'Di bawah titik acuan → negatif: <strong>−a</strong> dibaca "negatif a" (−15 dibaca "negatif lima belas").',
+      'Di atas titik acuan → positif: <strong>a</strong> atau <strong>+a</strong> dibaca "a" atau "positif a".',
+      'Tepat di titik acuan → <strong>0</strong>, dibaca "nol" (bukan positif, bukan negatif).',
     ],
     nextLabel: 'Lanjut: Uji Terap →',
   },
 
   /* ----------------------------------------------------------
      TAHAP 7 — UJI TERAP (createExerciseStage)
-     Soal bertanda `garis` menampilkan garis bilangan statis.
+     Bank 12 soal; `banyak` soal diambil ACAK sesuai `komposisi`
+     (lihat pilihSoalTerap di app.js). type 'input' punya mode:
+       'tulis' → isian notasi, diperiksa diagnosaTulisBulat
+       'baca'  → isian cara baca, diperiksa cekCaraBaca
      ---------------------------------------------------------- */
   terapkan: {
     kicker: 'Tahap 7 · Uji Terap',
     syntax: 'Penerapan konsep',
-    goal: 'Menerapkan notasi baku bilangan bulat dan garis bilangan pada soal baru.',
-    guru: 'Murid mengerjakan mandiri. Amati murid yang masih menulis tanda di belakang angka atau membaca "minus", lalu berikan penguatan singkat secara individual.',
+    goal: 'Menerapkan cara menulis dan membaca bilangan bulat pada situasi sehari-hari yang baru.',
+    guru: 'Murid mengerjakan mandiri. Setiap murid mendapat kombinasi soal acak, jadi dorong mereka menjelaskan jawabannya kepada pasangan setelah selesai. Amati murid yang masih menulis tanda di belakang angka atau membaca "minus".',
     instruksi:
-      'Kerjakan setiap soal. Pada soal isian, ketik tanda - di depan angka untuk bilangan negatif.',
+      'Kerjakan setiap soal. Pada isian notasi, ketik tanda - di depan angka untuk bilangan negatif. Pada isian cara baca, ketik dengan huruf tanpa satuan.',
+    banyak: 8,
+    komposisi: { tulis: 3, baca: 2, choice: 3 },
     soal: [
       {
+        id: 't1',
         type: 'input',
-        cerita: 'Suhu di dalam freezer sebuah toko es krim adalah 18 derajat di bawah nol.',
-        pertanyaan: 'Tuliskan suhu itu dengan notasi bilangan bulat baku (dalam °C).',
+        mode: 'tulis',
+        cerita: 'Suhu di dalam freezer toko es krim adalah 18 derajat di bawah nol.',
+        frasa: '18 derajat di bawah nol',
+        besar: 18,
+        pertanyaan: 'Tuliskan suhu itu sebagai bilangan bulat (°C).',
         jawab: -18,
         explanation:
           'Di bawah nol → negatif: −18 °C, dibaca "negatif delapan belas derajat Celsius".',
         hints: ['Di bawah nol → bilangan negatif.', 'Tanda − ditulis di depan angka 18.'],
-        reveal: 'Jawaban: <strong>−18</strong> °C, dibaca "negatif delapan belas derajat Celsius".',
+        reveal: 'Jawaban: <strong>−18</strong> °C.',
       },
       {
+        id: 't2',
+        type: 'input',
+        mode: 'tulis',
+        cerita: 'Guru mendiktekan sebuah bilangan: "negatif seratus dua puluh".',
+        pertanyaan: 'Tuliskan bilangan itu dengan angka.',
+        jawab: -120,
+        explanation: '"Negatif" menjadi tanda − di depan angka: −120.',
+        hints: ['"Negatif" berarti tanda − di depan.', 'Seratus dua puluh ditulis 120.'],
+        reveal: 'Jawaban: <strong>−120</strong>.',
+      },
+      {
+        id: 't3',
+        type: 'input',
+        mode: 'tulis',
+        cerita:
+          'Lantai parkir paling bawah sebuah rumah sakit berada 3 lantai di bawah lantai dasar (lantai dasar = 0).',
+        frasa: '3 lantai di bawah lantai dasar',
+        besar: 3,
+        pertanyaan: 'Tuliskan nomor lantai parkir itu sebagai bilangan bulat.',
+        jawab: -3,
+        explanation: '3 lantai di bawah lantai dasar ditulis −3, dibaca "negatif tiga".',
+        hints: ['Di bawah lantai dasar → bilangan negatif.'],
+        reveal: 'Jawaban: <strong>−3</strong>.',
+      },
+      {
+        id: 't4',
+        type: 'input',
+        mode: 'tulis',
+        cerita: 'Puncak Gunung Semeru berada 3.676 meter di atas permukaan laut.',
+        frasa: '3.676 meter di atas permukaan laut',
+        besar: 3676,
+        pertanyaan: 'Tuliskan ketinggian itu sebagai bilangan bulat (meter).',
+        jawab: 3676,
+        explanation: 'Di atas permukaan laut → positif: 3.676 m (boleh ditulis +3.676 m).',
+        hints: ['Di atas permukaan laut → bilangan positif, boleh tanpa tanda.'],
+        reveal: 'Jawaban: <strong>3.676</strong> m.',
+      },
+      {
+        id: 't5',
+        type: 'input',
+        mode: 'baca',
+        cerita: 'Termometer di Ranu Kumbolo pada malam hari menunjukkan −5 °C.',
+        pertanyaan: 'Ketik cara membaca bilangan <strong>−5</strong> (tanpa satuan).',
+        jawab: -5,
+        explanation: '−5 dibaca "negatif lima".',
+        hints: ['Tanda − di depan bilangan dibaca dengan kata apa?'],
+        reveal: 'Jawaban: "<strong>negatif lima</strong>".',
+      },
+      {
+        id: 't6',
+        type: 'input',
+        mode: 'baca',
+        cerita: 'Buku kas koperasi mencatat kerugian bulan Maret: −12.500 (rupiah).',
+        pertanyaan: 'Ketik cara membaca bilangan <strong>−12.500</strong>.',
+        jawab: -12500,
+        explanation: '−12.500 dibaca "negatif dua belas ribu lima ratus".',
+        hints: [
+          'Titik pada 12.500 adalah pemisah ribuan: dua belas ribu lima ratus.',
+          'Awali dengan kata "negatif".',
+        ],
+        reveal: 'Jawaban: "<strong>negatif dua belas ribu lima ratus</strong>".',
+      },
+      {
+        id: 't7',
+        type: 'input',
+        mode: 'baca',
+        cerita: 'Di papan skor, Tim Hijau memperoleh +40 poin.',
+        pertanyaan: 'Ketik cara membaca bilangan <strong>+40</strong>.',
+        jawab: 40,
+        explanation: '+40 dibaca "empat puluh" atau "positif empat puluh".',
+        hints: [
+          'Tanda + boleh dibaca "positif" atau tidak dibaca sama sekali — tetapi bukan "plus".',
+        ],
+        reveal: 'Jawaban: "<strong>empat puluh</strong>" atau "positif empat puluh".',
+      },
+      {
+        id: 't8',
         type: 'choice',
         cerita: 'Pada papan skor kuis, tim Merah memperoleh nilai −35.',
         pertanyaan: 'Bagaimana cara baku membaca nilai tim Merah?',
@@ -579,78 +976,63 @@ var DATA = {
           '−35 dibaca "negatif tiga puluh lima". Kata "minus" dipakai untuk operasi pengurangan.',
       },
       {
-        type: 'input',
-        cerita: 'Guru mendiktekan sebuah bilangan: "negatif seratus dua puluh".',
-        pertanyaan: 'Tuliskan bilangan itu dengan angka.',
-        jawab: -120,
-        explanation: '"Negatif" menjadi tanda − di depan angka: −120.',
-        hints: ['"Negatif" berarti tanda − di depan.', 'Seratus dua puluh ditulis 120.'],
-        reveal: 'Jawaban: <strong>−120</strong>.',
-      },
-      {
-        type: 'input',
-        garis: { min: -10, max: 10, labelEvery: 5, titik: -7, label: 'A' },
-        cerita: 'Perhatikan titik A pada garis bilangan berikut.',
-        pertanyaan: 'Bilangan berapakah yang ditunjukkan titik A?',
-        jawab: -7,
-        explanation: 'Titik A berada 7 langkah di kiri 0, jadi A = −7 (dibaca "negatif tujuh").',
-        hints: [
-          'Titik A berada di sebelah kiri 0, jadi bilangannya negatif.',
-          'Hitung langkah dari 0 ke titik A: ada berapa langkah?',
-        ],
-        reveal: 'Jawaban: <strong>−7</strong>. Titik A berada 7 langkah di kiri 0.',
-      },
-      {
+        id: 't9',
         type: 'choice',
         cerita:
           'Sebuah kapal selam berada 150 meter di bawah permukaan laut, sedangkan sebuah helikopter terbang 150 meter di atas permukaan laut.',
         pertanyaan: 'Pernyataan manakah yang tepat?',
         options: [
-          {
-            id: 'a',
-            label: 'Posisi kapal selam −150 dan helikopter 150; keduanya sama jauh dari 0.',
-          },
-          { id: 'b', label: 'Posisi kapal selam 150 dan helikopter −150.' },
-          { id: 'c', label: 'Keduanya ditulis 150 karena jaraknya sama.' },
-          { id: 'd', label: 'Kapal selam −150 lebih jauh dari 0 daripada helikopter.' },
+          { id: 'a', label: 'Posisi kapal selam −150 m dan helikopter 150 m.' },
+          { id: 'b', label: 'Posisi kapal selam 150 m dan helikopter −150 m.' },
+          { id: 'c', label: 'Keduanya ditulis 150 m karena jaraknya sama.' },
+          { id: 'd', label: 'Posisi kapal selam 150− m dan helikopter +150 m.' },
         ],
         correct: 'a',
         explanation:
-          '−150 dan 150 berjarak sama (150) dari 0, tetapi berlawanan arah. Tanda − membedakan keadaan di bawah permukaan laut.',
+          'Keduanya berjarak 150 m dari permukaan laut, tetapi berlawanan arah. Tanda − di depan angka membedakan posisi di bawah permukaan laut.',
       },
       {
-        type: 'input',
-        garis: { min: -10, max: 10, labelEvery: 5, titik: 4, label: 'B' },
-        cerita: 'Perhatikan titik B pada garis bilangan berikut.',
-        pertanyaan: 'Bilangan berapakah yang ditunjukkan titik B?',
-        jawab: 4,
-        explanation: 'Titik B berada 4 langkah di kanan 0, jadi B = 4 (boleh ditulis +4).',
-        hints: ['Titik B berada di sebelah kanan 0.', 'Hitung langkah dari 0 ke titik B.'],
-        reveal:
-          'Jawaban: <strong>4</strong> (boleh ditulis +4). Titik B berada 4 langkah di kanan 0.',
-      },
-      {
+        id: 't10',
         type: 'choice',
-        cerita: 'Rina berjalan dari titik 0 sejauh 6 satuan ke kiri pada garis bilangan.',
-        pertanyaan: 'Di bilangan berapakah Rina berhenti?',
+        cerita: 'Keadaan manakah yang dinyatakan dengan bilangan 0?',
+        pertanyaan: 'Pilih satu keadaan yang tepat.',
         options: [
-          { id: 'a', label: '−6' },
-          { id: 'b', label: '6' },
-          { id: 'c', label: '6−' },
-          { id: 'd', label: '−60' },
+          { id: 'a', label: 'Warung tidak untung dan tidak rugi (impas).' },
+          { id: 'b', label: 'Suhu turun 1 derajat di bawah nol.' },
+          { id: 'c', label: 'Lift naik satu lantai dari lantai dasar.' },
+          { id: 'd', label: 'Rudi kehilangan 10 poin.' },
         ],
         correct: 'a',
-        explanation: '6 satuan di kiri 0 adalah −6 (tanda − di depan angka).',
+        explanation: 'Impas adalah titik acuan keuangan, jadi dinyatakan dengan 0.',
       },
       {
-        type: 'input',
-        cerita:
-          'Lantai parkir paling bawah sebuah mal berada 3 lantai di bawah lantai dasar (lantai dasar = 0).',
-        pertanyaan: 'Tuliskan nomor lantai parkir itu sebagai bilangan bulat.',
-        jawab: -3,
-        explanation: '3 lantai di bawah lantai dasar ditulis −3, dibaca "negatif tiga".',
-        hints: ['Di bawah lantai dasar → bilangan negatif.'],
-        reveal: 'Jawaban: <strong>−3</strong>, dibaca "negatif tiga".',
+        id: 't11',
+        type: 'choice',
+        cerita: 'Rina menulis di buku catatannya: "suhu malam ini min 7 derajat".',
+        pertanyaan: 'Bagaimana notasi baku suhu itu?',
+        options: [
+          { id: 'a', label: '−7 °C' },
+          { id: 'b', label: '7− °C' },
+          { id: 'c', label: '(7) °C' },
+          { id: 'd', label: '7 °C' },
+        ],
+        correct: 'a',
+        explanation: 'Suhu di bawah nol ditulis −7 °C dan dibaca "negatif tujuh derajat Celsius".',
+      },
+      {
+        id: 't12',
+        type: 'choice',
+        cerita: 'Permukaan Laut Mati berada 430 meter di bawah permukaan laut lepas.',
+        pertanyaan: 'Pasangan tulisan dan cara baca manakah yang tepat?',
+        options: [
+          { id: 'a', label: '−430 m, dibaca "negatif empat ratus tiga puluh meter"' },
+          { id: 'b', label: '−430 m, dibaca "minus empat ratus tiga puluh meter"' },
+          { id: 'c', label: '430 m, dibaca "empat ratus tiga puluh meter"' },
+          { id: 'd', label: '430− m, dibaca "empat tiga nol negatif meter"' },
+        ],
+        correct: 'a',
+        explanation:
+          'Di bawah permukaan laut → negatif: −430 m, dibaca "negatif empat ratus tiga puluh meter".',
       },
     ],
     nextLabel: 'Lanjut: Refleksi →',
@@ -662,13 +1044,13 @@ var DATA = {
   refleksi: {
     kicker: 'Tahap 8 · Refleksi',
     syntax: 'Penutup',
-    goal: 'Merefleksikan proses menemukan notasi baku bilangan bulat dan letaknya pada garis bilangan.',
-    guru: 'Beri waktu hening 3 menit untuk menulis. Jawaban penilaian diri bisa menjadi dasar pengelompokan pada pertemuan berikutnya.',
+    goal: 'Merefleksikan proses menemukan cara menulis dan membaca bilangan bulat dalam kehidupan sehari-hari.',
+    guru: 'Beri waktu hening 3 menit untuk menulis. Jawaban penilaian diri bisa menjadi dasar pengelompokan pada pertemuan berikutnya (membandingkan & mengurutkan bilangan bulat).',
     pertanyaan: [
       {
         id: 'r1',
-        teks: 'Bagaimana caramu menjelaskan perbedaan −5 dan 5 kepada adik kelas? Gunakan contoh suhu atau lantai gedung.',
-        placeholder: '−5 berarti … sedangkan 5 berarti …',
+        teks: 'Tuliskan satu contoh bilangan bulat negatif yang pernah kamu temui di rumah atau di sekitarmu. Bagaimana menulis dan membacanya?',
+        placeholder: 'Contohnya … ditulis … dan dibaca …',
       },
       {
         id: 'r2',
@@ -681,7 +1063,7 @@ var DATA = {
         placeholder: 'Aku masih bingung tentang …',
       },
     ],
-    diriLabel: 'Seberapa yakin kamu membaca, menulis, dan menempatkan bilangan bulat sekarang?',
+    diriLabel: 'Seberapa yakin kamu membaca dan menuliskan bilangan bulat sekarang?',
     diriOpsi: [
       { id: 'sangat', label: '🌟 Sangat yakin — aku bisa menjelaskannya ke teman' },
       { id: 'cukup', label: '🙂 Cukup yakin — sesekali masih perlu berpikir' },
@@ -696,12 +1078,17 @@ var DATA = {
      ---------------------------------------------------------- */
   selesai: {
     judul: 'Hebat, kamu menemukannya sendiri!',
-    teks: 'Kamu telah menemukan cara baku menulis, membaca, dan menempatkan bilangan bulat positif dan negatif.',
+    teks: 'Kamu telah menemukan cara baku menuliskan dan membaca bilangan bulat positif, negatif, dan nol dalam kehidupan sehari-hari.',
+    contoh: [
+      { tema: 'suhu', teks: '−3 °C', baca: 'negatif tiga derajat Celsius' },
+      { tema: 'gedung', teks: '0', baca: 'nol (lantai dasar)' },
+      { tema: 'laut', teks: '3.676 m', baca: 'tiga ribu enam ratus tujuh puluh enam meter' },
+    ],
     capaian: [
-      'Menuliskan keadaan di bawah nol dengan tanda negatif di depan angka (mis. −3 °C).',
-      'Membaca bilangan negatif dengan kata "negatif" dan bilangan positif dengan atau tanpa kata "positif".',
-      'Mengenali 0 sebagai bilangan yang bukan positif dan bukan negatif.',
-      'Menempatkan bilangan bulat pada garis bilangan: negatif di kiri 0, positif di kanan 0.',
+      'Menentukan titik acuan (0) dan kata kunci arah pada situasi sehari-hari.',
+      'Menuliskan keadaan di bawah titik acuan dengan tanda negatif di depan angka (mis. −20.000 untuk rugi Rp20.000).',
+      'Membaca bilangan negatif dengan kata "negatif" — bukan "minus" — dan bilangan positif dengan atau tanpa kata "positif".',
+      'Mengenali 0 sebagai titik acuan yang bukan positif dan bukan negatif.',
     ],
   },
 };

@@ -6700,3 +6700,159 @@ details.hint-reveal[open] summary::before {
     font-size: 0.8rem;
   }
 }
+
+/* =========================================================================
+   BILANGAN BULAT DALAM KONTEKS SEHARI-HARI (.bbk-*)
+   Skala konteks bertema (buildSkalaKonteks), isian cara baca
+   (buildCekStep jenis 'baca'), satuan isian, dan label jenis soal.
+   Warna: sisi positif oranye, sisi negatif biru, titik acuan tinta —
+   sama dengan garis bilangan interaktif .nlp-*.
+   ========================================================================= */
+
+.bbk-skala {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  padding: var(--space-2) var(--space-2) var(--space-3) 0;
+  border-radius: var(--radius-md);
+  background: var(--color-bg-grid);
+  border-left: 6px solid var(--color-border-strong);
+}
+
+.bbk-skala--suhu {
+  border-left-color: var(--color-error);
+}
+
+.bbk-skala--gedung {
+  border-left-color: var(--color-purple);
+}
+
+.bbk-skala--laut {
+  border-left-color: var(--color-blue);
+}
+
+.bbk-skala--uang {
+  border-left-color: var(--color-success);
+}
+
+.bbk-skala--skor {
+  border-left-color: var(--color-warning);
+}
+
+.bbk-skala__cap {
+  margin: 0 0 var(--space-1) var(--space-3);
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--color-ink-muted);
+}
+
+.bbk-skala__info {
+  margin: 0 0 var(--space-2) var(--space-3);
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--color-ink);
+}
+
+.bbk-skala__rows {
+  display: flex;
+  flex-direction: column;
+}
+
+.bbk-skala__row {
+  position: relative;
+  display: flex;
+  align-items: center;
+  height: 14px;
+}
+
+.bbk-skala__num {
+  flex: 0 0 34px;
+  padding-right: 4px;
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+  font-weight: 700;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.bbk-skala__tick {
+  flex: 0 0 auto;
+  width: 12px;
+  height: 2px;
+  background: var(--color-ink-muted);
+  border-right: 4px solid var(--color-ink-muted);
+}
+
+.bbk-skala__row--pos .bbk-skala__tick {
+  border-right-color: var(--color-orange);
+}
+
+.bbk-skala__row--neg .bbk-skala__tick {
+  border-right-color: var(--color-blue);
+}
+
+.bbk-skala__row--nol .bbk-skala__tick {
+  width: 26px;
+  height: 3px;
+  background: var(--color-ink);
+  border-right-color: var(--color-ink);
+}
+
+.bbk-skala__acuan {
+  margin-left: var(--space-2);
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--color-ink);
+  white-space: nowrap;
+}
+
+.bbk-skala__marker {
+  position: absolute;
+  left: 58px;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: 0 var(--space-2);
+  border: 2px solid var(--color-warning);
+  border-radius: 999px;
+  background: var(--color-warning-soft);
+  font-size: 0.95rem;
+  line-height: 1.35;
+  white-space: nowrap;
+  z-index: 1;
+}
+
+.bbk-skala__row--nol.is-titik .bbk-skala__marker {
+  left: auto;
+  right: var(--space-2);
+}
+
+.bbk-skala__marker strong {
+  font-family: var(--font-mono);
+}
+
+.dl-input-row .bbk-baca-input {
+  flex: 1 1 16rem;
+  max-width: 26rem;
+  font-family: inherit;
+  font-size: 1rem;
+  text-align: left;
+}
+
+.bbk-satuan {
+  font-weight: 700;
+  color: var(--color-ink-muted);
+}
+
+.bbk-soal-tag {
+  display: inline-block;
+  margin-bottom: var(--space-2);
+  padding: 2px var(--space-2);
+  border-radius: 999px;
+  background: var(--color-primary-soft);
+  color: var(--color-primary-strong);
+  font-size: 0.75rem;
+  font-weight: 700;
+}

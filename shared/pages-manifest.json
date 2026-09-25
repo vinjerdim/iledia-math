@@ -1,9 +1,9 @@
 {
   "fase-d/mpi-1.1": {
-    "title": "Membaca, Menulis & Menempatkan Bilangan Bulat — Matematika Fase D",
-    "description": "Media pembelajaran interaktif berbasis Discovery Learning untuk membaca dan menuliskan bilangan bulat positif dan negatif sesuai notasi baku, serta menempatkannya pada garis bilangan.",
+    "title": "Membaca & Menulis Bilangan Bulat dalam Kehidupan Sehari-hari — Matematika Fase D",
+    "description": "Media pembelajaran interaktif berbasis Discovery Learning untuk membaca dan menuliskan bilangan bulat positif, negatif, dan nol dalam konteks kehidupan sehari-hari: suhu, lantai gedung, ketinggian dan kedalaman, uang, serta skor.",
     "kicker": "Matematika — Fase D (SMP)",
-    "h1": "Membaca, Menulis & Menempatkan Bilangan Bulat",
+    "h1": "Membaca & Menulis Bilangan Bulat dalam Kehidupan Sehari-hari",
     "stageCount": 10,
     "extraBody": "partials/reset-modal.html"
   },
