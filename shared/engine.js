@@ -68,6 +68,10 @@
        miskonsepsi menulis & membaca, tanda dari kata kunci konteks,
        opsi cara baca teracak, skala konteks, langkah isian
        berpemeriksa)
+   30. Bilangan berpangkat: membaca & menulis
+   31. Prisma: unsur & jaring-jaring (model 3D, proyeksi & visibilitas,
+       penjelajah titik/rusuk/sisi, tabel unsur berdiagnosa, jaring
+       sabuk, simulasi lipat beranimasi, perakit jaring)
    ============================================================ */
 
 /* ============================================================
@@ -11540,4 +11544,1701 @@ function bindPangkatStep(id, st, step, save, rerender) {
       rerender();
     });
   }
+}
+
+/* ============================================================
+   31. PRISMA — UNSUR & JARING-JARING
+   Dipakai modul unsur-unsur & jaring-jaring prisma (fase-d/mpi-22.1).
+
+   Model 3D prisma tegak segi-n beraturan:
+     titik  [{ id, nama, pos: [x, y, z], sisi: [idSisi ×3] }]
+            indeks 0..n−1 titik alas (A, B, C, …), n..2n−1 titik atas
+     rusuk  [{ id, jenis: 'alas'|'atas'|'tegak', a, b, nama, sisi: [×2] }]
+            id 'a<i>' rusuk alas, 'b<i>' rusuk atas, 'c<i>' rusuk tegak
+     sisi   [{ id, jenis: 'alas'|'atas'|'tegak', idx: [...], nama }]
+            id 'alas', 'atas', 't<i>' (sisi tegak ke-i)
+   Sumbu z ke atas. Proyeksi ortografis: diputar `azimut` derajat
+   mengelilingi sumbu z, lalu dilihat dari ketinggian `elevasi` derajat.
+
+   Jaring-jaring "sabuk": rangkaian `sabuk` persegi panjang (lebar s,
+   tinggi h) berjajar mendatar; segi-n tutup ditempel pada tepi atas
+   persegi panjang ke-i (spec.atas) dan segi-n alas pada tepi bawahnya
+   (spec.alas). Kepingan membentuk pohon engsel yang bisa dilipat:
+   antarpersegi panjang sebesar sudut luar 360°/n, persegi panjang–segi-n
+   sebesar 90°. Koordinat jaring: x ke kanan, y ke bawah, z = 0; lipatan
+   selalu ke arah +z.
+
+   Komponen UI: penjelajah prisma (putar, tandai titik/rusuk/sisi),
+   tabel isian unsur berdiagnosa, gambar jaring datar, tampilan lipat
+   beranimasi, dan perakit jaring (tempel alas & tutup lalu uji lipat).
+   Gaya .psm-* ada di shared/base.css.
+   ============================================================ */
+
+var PSM_NAMA_SEGI = {
+  3: 'segitiga',
+  4: 'segiempat',
+  5: 'segilima',
+  6: 'segienam',
+  7: 'segitujuh',
+  8: 'segidelapan',
+  9: 'segisembilan',
+  10: 'segisepuluh',
+};
+
+function namaSegiN(n) {
+  return PSM_NAMA_SEGI[n] || 'segi-' + n;
+}
+
+function namaPrisma(n) {
+  return 'prisma ' + namaSegiN(n);
+}
+
+/* Label titik sudut: alas A, B, C, … lalu atas melanjutkan abjad (n ≤ 13). */
+function labelTitikPrisma(n) {
+  var huruf = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+  return {
+    alas: huruf.slice(0, n).split(''),
+    atas: huruf.slice(n, 2 * n).split(''),
+  };
+}
+
+function notasiPrisma(n) {
+  var L = labelTitikPrisma(n);
+  return L.alas.join('') + '.' + L.atas.join('');
+}
+
+function unsurPrisma(n) {
+  return {
+    titik: 2 * n,
+    rusukAlas: n,
+    rusukAtas: n,
+    rusukTegak: n,
+    rusuk: 3 * n,
+    sisiAlas: 1,
+    sisiAtas: 1,
+    sisiTegak: n,
+    sisi: n + 2,
+  };
+}
+
+/*
+ * opts.r        jari-jari lingkaran luar alas (default 1)
+ * opts.tinggi   tinggi prisma (default 1,5)
+ * opts.sumbu    'tegak' (default) atau 'rebah' — prisma berbaring pada
+ *               sisi tegaknya, sumbu mendatar (tenda, cokelat batang)
+ * opts.sudutAwal  sudut titik A pada lingkaran alas (radian)
+ */
+function modelPrisma(n, opts) {
+  opts = opts || {};
+  var r = opts.r || 1;
+  var h = opts.tinggi || 1.5;
+  var rebah = opts.sumbu === 'rebah';
+  /* Rebah: titik puncak di atas (n ganjil) atau sisi datar di bawah (n genap). */
+  var awal =
+    typeof opts.sudutAwal === 'number'
+      ? opts.sudutAwal
+      : rebah
+      ? -Math.PI / 2 + (n % 2 ? 0 : Math.PI / n)
+      : -Math.PI / 2 - Math.PI / n;
+  var L = labelTitikPrisma(n);
+  var titik = [];
+  [0, h].forEach(function (z, lapis) {
+    for (var i = 0; i < n; i++) {
+      var a = awal + (2 * Math.PI * i) / n;
+      var u = r * Math.cos(a);
+      var v = r * Math.sin(a);
+      var pos = rebah ? [u, z - h / 2, -v] : [u, v, z];
+      var idx = lapis * n + i;
+      var prev = (i - 1 + n) % n;
+      titik.push({
+        id: 'p' + idx,
+        nama: lapis ? L.atas[i] : L.alas[i],
+        pos: pos,
+        sisi: [lapis ? 'atas' : 'alas', 't' + prev, 't' + i],
+      });
+    }
+  });
+  function nm(list) {
+    return list
+      .map(function (k) {
+        return titik[k].nama;
+      })
+      .join('');
+  }
+  var rusuk = [];
+  var sisi = [];
+  var alasIdx = [];
+  var atasIdx = [];
+  for (var i = 0; i < n; i++) {
+    var j = (i + 1) % n;
+    alasIdx.push(i);
+    atasIdx.push(n + i);
+    rusuk.push({ id: 'a' + i, jenis: 'alas', a: i, b: j, sisi: ['alas', 't' + i] });
+    rusuk.push({ id: 'b' + i, jenis: 'atas', a: n + i, b: n + j, sisi: ['atas', 't' + i] });
+    rusuk.push({
+      id: 'c' + i,
+      jenis: 'tegak',
+      a: i,
+      b: n + i,
+      sisi: ['t' + ((i - 1 + n) % n), 't' + i],
+    });
+  }
+  rusuk.forEach(function (e) {
+    e.nama = nm([e.a, e.b]);
+  });
+  sisi.push({ id: 'alas', jenis: 'alas', idx: alasIdx, nama: nm(alasIdx) });
+  sisi.push({ id: 'atas', jenis: 'atas', idx: atasIdx, nama: nm(atasIdx) });
+  for (var k = 0; k < n; k++) {
+    var q = (k + 1) % n;
+    var idx = [k, q, n + q, n + k];
+    sisi.push({ id: 't' + k, jenis: 'tegak', idx: idx, nama: nm(idx) });
+  }
+  var pusat = [0, 0, 0];
+  titik.forEach(function (t) {
+    for (var d = 0; d < 3; d++) pusat[d] += t.pos[d] / titik.length;
+  });
+  return { n: n, titik: titik, rusuk: rusuk, sisi: sisi, pusat: pusat, tinggi: h };
+}
+
+function psmSub(p, q) {
+  return [p[0] - q[0], p[1] - q[1], p[2] - q[2]];
+}
+
+function psmCross(p, q) {
+  return [p[1] * q[2] - p[2] * q[1], p[2] * q[0] - p[0] * q[2], p[0] * q[1] - p[1] * q[0]];
+}
+
+function psmDot(p, q) {
+  return p[0] * q[0] + p[1] * q[1] + p[2] * q[2];
+}
+
+function psmPusat(pts) {
+  var c = [0, 0, 0];
+  pts.forEach(function (p) {
+    for (var d = 0; d < 3; d++) c[d] += p[d] / pts.length;
+  });
+  return c;
+}
+
+/* Proyeksi ortografis: { x, y (ke bawah layar), d (kedalaman ke arah pengamat) }. */
+function proyeksiPrisma(p, view) {
+  var az = ((view.azimut || 0) * Math.PI) / 180;
+  var el = ((view.elevasi || 0) * Math.PI) / 180;
+  var x1 = p[0] * Math.cos(az) - p[1] * Math.sin(az);
+  var y1 = p[0] * Math.sin(az) + p[1] * Math.cos(az);
+  var z = p[2];
+  return {
+    x: x1,
+    y: -(y1 * Math.sin(el) + z * Math.cos(el)),
+    d: -y1 * Math.cos(el) + z * Math.sin(el),
+  };
+}
+
+/* Arah dari benda ke pengamat, dalam koordinat model. */
+function psmArahPengamat(view) {
+  var az = ((view.azimut || 0) * Math.PI) / 180;
+  var el = ((view.elevasi || 0) * Math.PI) / 180;
+  /* v' = (0, −cos el, sin el) diputar balik sebesar −az. */
+  var vy = -Math.cos(el);
+  return [vy * Math.sin(az), vy * Math.cos(az), Math.sin(el)];
+}
+
+function psmNormalLuar(pts, pusatBenda) {
+  var nrm = psmCross(psmSub(pts[1], pts[0]), psmSub(pts[2], pts[0]));
+  if (psmDot(nrm, psmSub(psmPusat(pts), pusatBenda)) < 0) nrm = [-nrm[0], -nrm[1], -nrm[2]];
+  return nrm;
+}
+
+function sisiTerlihatPrisma(model, view) {
+  var v = psmArahPengamat(view);
+  var out = {};
+  model.sisi.forEach(function (s) {
+    var pts = s.idx.map(function (k) {
+      return model.titik[k].pos;
+    });
+    out[s.id] = psmDot(psmNormalLuar(pts, model.pusat), v) > 1e-9;
+  });
+  return out;
+}
+
+function rusukTerlihatPrisma(model, view) {
+  var vs = sisiTerlihatPrisma(model, view);
+  var out = {};
+  model.rusuk.forEach(function (e) {
+    out[e.id] = !!(vs[e.sisi[0]] || vs[e.sisi[1]]);
+  });
+  return out;
+}
+
+function titikTerlihatPrisma(model, view) {
+  var vs = sisiTerlihatPrisma(model, view);
+  var out = {};
+  model.titik.forEach(function (t) {
+    out[t.id] = t.sisi.some(function (id) {
+      return vs[id];
+    });
+  });
+  return out;
+}
+
+/* ---------- Diagnosa isian tabel unsur ---------- */
+
+var PSM_PESAN_UNSUR = {
+  benar: 'Tepat!',
+  'titik-satu-alas':
+    'Sepertinya kamu baru menghitung titik sudut pada satu alas. Jangan lupa titik sudut pada sisi atasnya juga.',
+  'rusuk-lupa-tegak':
+    'Kamu sudah menghitung rusuk alas dan rusuk atas. Masih ada rusuk tegak yang menghubungkan keduanya.',
+  'rusuk-satu-alas': 'Itu baru rusuk pada satu alas. Hitung juga rusuk atas dan rusuk tegak.',
+  'sisi-lupa-alas': 'Itu baru sisi tegaknya. Sisi alas dan sisi atas juga termasuk sisi prisma.',
+  'sisi-lupa-satu': 'Hampir! Masih ada satu sisi yang terlewat: sisi alas atau sisi atas.',
+  salah: 'Belum tepat. Tandai unsurnya satu per satu pada model, lalu hitung lagi.',
+};
+
+function diagnosaUnsur(n, jenis, nilai) {
+  var u = unsurPrisma(n);
+  var kode = 'salah';
+  if (jenis === 'titik') {
+    if (nilai === u.titik) kode = 'benar';
+    else if (nilai === n) kode = 'titik-satu-alas';
+  } else if (jenis === 'rusuk') {
+    if (nilai === u.rusuk) kode = 'benar';
+    else if (nilai === 2 * n) kode = 'rusuk-lupa-tegak';
+    else if (nilai === n) kode = 'rusuk-satu-alas';
+  } else if (jenis === 'sisi') {
+    if (nilai === u.sisi) kode = 'benar';
+    else if (nilai === n) kode = 'sisi-lupa-alas';
+    else if (nilai === n + 1) kode = 'sisi-lupa-satu';
+  }
+  return { kode: kode, pesan: PSM_PESAN_UNSUR[kode] };
+}
+
+/* ---------- Jaring-jaring sabuk ---------- */
+
+function psmIndeksUnik(list, m) {
+  var out = [];
+  (list || []).forEach(function (i) {
+    if (Number.isInteger(i) && i >= 0 && i < m && out.indexOf(i) === -1) out.push(i);
+  });
+  return out;
+}
+
+/* Segi-n beraturan bersisi s pada tepi p0→p1; arah = −1 ke atas (y < 0), +1 ke bawah. */
+function psmSegiPadaTepi(p0, s, n, arah) {
+  var ext = (2 * Math.PI) / n;
+  var pts = [[p0[0], p0[1]]];
+  for (var k = 0; k < n - 1; k++) {
+    var a = arah * k * ext;
+    var last = pts[pts.length - 1];
+    pts.push([last[0] + s * Math.cos(a), last[1] + s * Math.sin(a)]);
+  }
+  return pts;
+}
+
+/*
+ * spec = { n, sabuk (banyak persegi panjang, default n), atas: [i…],
+ *          alas: [i…], s (default 1), h (default 1,5) }
+ * Mengembalikan { spec, pieces: [{ id, jenis, pts2, parent, hinge, sudut }] }.
+ */
+function jaringPrisma(spec) {
+  var n = spec.n;
+  var m = spec.sabuk || n;
+  var s = spec.s || 1;
+  var h = spec.h || 1.5;
+  var atas = psmIndeksUnik(spec.atas, m);
+  var alas = psmIndeksUnik(spec.alas, m);
+  var root = Math.floor((m - 1) / 2);
+  var pieces = [];
+  for (var i = 0; i < m; i++) {
+    var x0 = i * s;
+    var x1 = (i + 1) * s;
+    var pc = {
+      id: 't' + i,
+      jenis: 'tegak',
+      pts2: [
+        [x0, 0],
+        [x1, 0],
+        [x1, h],
+        [x0, h],
+      ],
+      parent: null,
+      hinge: null,
+      sudut: 0,
+    };
+    if (i < root) {
+      pc.parent = 't' + (i + 1);
+      pc.hinge = [
+        [x1, 0],
+        [x1, h],
+      ];
+      pc.sudut = (2 * Math.PI) / n;
+    } else if (i > root) {
+      pc.parent = 't' + (i - 1);
+      pc.hinge = [
+        [x0, 0],
+        [x0, h],
+      ];
+      pc.sudut = (2 * Math.PI) / n;
+    }
+    pieces.push(pc);
+  }
+  var ganda = atas.length > 1;
+  atas.forEach(function (i) {
+    pieces.push({
+      id: ganda ? 'atas' + i : 'atas',
+      jenis: 'atas',
+      pts2: psmSegiPadaTepi([i * s, 0], s, n, -1),
+      parent: 't' + i,
+      hinge: [
+        [i * s, 0],
+        [(i + 1) * s, 0],
+      ],
+      sudut: Math.PI / 2,
+    });
+  });
+  var gandaAlas = alas.length > 1;
+  alas.forEach(function (i) {
+    pieces.push({
+      id: gandaAlas ? 'alas' + i : 'alas',
+      jenis: 'alas',
+      pts2: psmSegiPadaTepi([i * s, h], s, n, 1),
+      parent: 't' + i,
+      hinge: [
+        [i * s, h],
+        [(i + 1) * s, h],
+      ],
+      sudut: Math.PI / 2,
+    });
+  });
+  return { spec: { n: n, sabuk: m, atas: atas, alas: alas, s: s, h: h }, pieces: pieces };
+}
+
+var PSM_PESAN_JARING = {
+  valid:
+    'Bisa! Rangkaian persegi panjang menutup menjadi sisi tegak, dan kedua segi-n menutup bagian atas serta bawah.',
+  'alas-sepihak':
+    'Tidak bisa. Kedua segi-n berada di sisi yang sama, jadi saat dilipat keduanya menumpuk di satu ujung, sedangkan ujung lainnya tetap terbuka.',
+  'alas-kurang': 'Tidak bisa. Prisma butuh dua segi-n (alas dan tutup), tetapi segi-n-nya kurang.',
+  'alas-lebih': 'Tidak bisa. Segi-n-nya terlalu banyak, jadi ada sisi yang menumpuk saat dilipat.',
+  'sabuk-kurang':
+    'Tidak bisa. Persegi panjangnya kurang, jadi sisi tegak tidak bisa menutup dan tersisa celah.',
+  'sabuk-lebih':
+    'Tidak bisa. Persegi panjangnya terlalu banyak, jadi saat dilipat ada sisi tegak yang menumpuk.',
+};
+
+function cekJaring(spec) {
+  var n = spec.n;
+  var m = spec.sabuk || n;
+  var atas = psmIndeksUnik(spec.atas, m);
+  var alas = psmIndeksUnik(spec.alas, m);
+  var alasan = 'valid';
+  if (m < n) alasan = 'sabuk-kurang';
+  else if (m > n) alasan = 'sabuk-lebih';
+  else if (atas.length + alas.length < 2) alasan = 'alas-kurang';
+  else if (atas.length + alas.length > 2) alasan = 'alas-lebih';
+  else if (atas.length !== 1) alasan = 'alas-sepihak';
+  return { valid: alasan === 'valid', alasan: alasan, pesan: PSM_PESAN_JARING[alasan] };
+}
+
+/* Matriks rotasi Rodrigues untuk sumbu satuan d dan sudut th. */
+function psmRotasi(d, th) {
+  var c = Math.cos(th);
+  var s = Math.sin(th);
+  var t = 1 - c;
+  var x = d[0];
+  var y = d[1];
+  var z = d[2];
+  return [
+    [t * x * x + c, t * x * y - s * z, t * x * z + s * y],
+    [t * x * y + s * z, t * y * y + c, t * y * z - s * x],
+    [t * x * z - s * y, t * y * z + s * x, t * z * z + c],
+  ];
+}
+
+/* Transformasi afine { R, T }: p ↦ R·p + T. */
+function psmTerapkan(M, p) {
+  var R = M.R;
+  return [
+    R[0][0] * p[0] + R[0][1] * p[1] + R[0][2] * p[2] + M.T[0],
+    R[1][0] * p[0] + R[1][1] * p[1] + R[1][2] * p[2] + M.T[1],
+    R[2][0] * p[0] + R[2][1] * p[1] + R[2][2] * p[2] + M.T[2],
+  ];
+}
+
+function psmKomposisi(A, B) {
+  /* (A ∘ B)(p) = A(B(p)) */
+  var R = [];
+  for (var i = 0; i < 3; i++) {
+    R.push([]);
+    for (var j = 0; j < 3; j++) {
+      R[i].push(A.R[i][0] * B.R[0][j] + A.R[i][1] * B.R[1][j] + A.R[i][2] * B.R[2][j]);
+    }
+  }
+  return { R: R, T: psmTerapkan(A, B.T) };
+}
+
+/* Posisi 3D setiap kepingan pada fraksi lipat t (0 = datar, 1 = terlipat penuh). */
+function lipatJaring(jaring, t) {
+  var byId = {};
+  jaring.pieces.forEach(function (p) {
+    byId[p.id] = p;
+  });
+  var memo = {};
+  var I = {
+    R: [
+      [1, 0, 0],
+      [0, 1, 0],
+      [0, 0, 1],
+    ],
+    T: [0, 0, 0],
+  };
+  function transf(p) {
+    if (memo[p.id]) return memo[p.id];
+    if (!p.parent) {
+      memo[p.id] = I;
+      return I;
+    }
+    var a = [p.hinge[0][0], p.hinge[0][1], 0];
+    var b = [p.hinge[1][0], p.hinge[1][1], 0];
+    var d = psmSub(b, a);
+    var len = Math.sqrt(psmDot(d, d));
+    d = [d[0] / len, d[1] / len, 0];
+    var c = psmPusat(
+      p.pts2.map(function (q) {
+        return [q[0], q[1], 0];
+      })
+    );
+    var w = psmSub(c, a);
+    var arah = d[0] * w[1] - d[1] * w[0] > 0 ? 1 : -1;
+    var R = psmRotasi(d, arah * t * p.sudut);
+    var Ra = psmTerapkan({ R: R, T: [0, 0, 0] }, a);
+    var M = { R: R, T: psmSub(a, Ra) };
+    memo[p.id] = psmKomposisi(transf(byId[p.parent]), M);
+    return memo[p.id];
+  }
+  return jaring.pieces.map(function (p) {
+    var M = transf(p);
+    return {
+      id: p.id,
+      jenis: p.jenis,
+      pts3: p.pts2.map(function (q) {
+        return psmTerapkan(M, [q[0], q[1], 0]);
+      }),
+    };
+  });
+}
+
+/* ---------- UI: gambar prisma ---------- */
+
+var PSM_JENIS_LABEL = {
+  alas: 'alas',
+  atas: 'atas',
+  tegak: 'tegak',
+};
+
+function psmLabelUnsur(kind, obj) {
+  if (kind === 'titik') return 'Titik sudut ' + obj.nama;
+  if (kind === 'rusuk') return 'Rusuk ' + obj.nama + ' (rusuk ' + PSM_JENIS_LABEL[obj.jenis] + ')';
+  return 'Sisi ' + obj.nama + ' (sisi ' + PSM_JENIS_LABEL[obj.jenis] + ')';
+}
+
+function psmFmt(v) {
+  return String(Math.round(v * 10) / 10);
+}
+
+function psmPoints(list) {
+  return list
+    .map(function (p) {
+      return psmFmt(p.x) + ',' + psmFmt(p.y);
+    })
+    .join(' ');
+}
+
+/*
+ * Gambar SVG prisma dari `model` (modelPrisma) pada sudut pandang `view`.
+ *   opts.skala     piksel per satuan (default 70)
+ *   opts.mode      'titik' | 'rusuk' | 'sisi' | null — unsur yang bisa diketuk
+ *   opts.terpilih  { titik: {id: true}, rusuk: {...}, sisi: {...} } disorot
+ *   opts.label     true (default) → tulis nama titik sudut
+ *   opts.aria      teks aksesibel gambar
+ *   opts.kelas     class tambahan pada <svg>
+ */
+function buildPrismSVG(model, view, opts) {
+  opts = opts || {};
+  var sk = opts.skala || 70;
+  var mode = opts.mode || null;
+  var pilih = opts.terpilih || {};
+  var pilihT = pilih.titik || {};
+  var pilihR = pilih.rusuk || {};
+  var pilihS = pilih.sisi || {};
+  var o = model.pusat;
+  var R = 0;
+  var P = model.titik.map(function (t) {
+    var rel = psmSub(t.pos, o);
+    R = Math.max(R, Math.sqrt(psmDot(rel, rel)));
+    var q = proyeksiPrisma(rel, view);
+    return { x: q.x * sk, y: q.y * sk, d: q.d };
+  });
+  var pad = opts.label === false ? 8 : 24;
+  var half = R * sk + pad;
+  var vs = sisiTerlihatPrisma(model, view);
+  var vr = rusukTerlihatPrisma(model, view);
+  var vt = titikTerlihatPrisma(model, view);
+
+  function hitAttr(kind, obj) {
+    return (
+      ' data-psm-kind="' +
+      kind +
+      '" data-psm-id="' +
+      obj.id +
+      '" tabindex="0" role="button" aria-pressed="' +
+      (pilih[kind] && pilih[kind][obj.id] ? 'true' : 'false') +
+      '" aria-label="' +
+      esc(psmLabelUnsur(kind, obj)) +
+      '"'
+    );
+  }
+
+  var faces = model.sisi
+    .map(function (s) {
+      var pts = s.idx.map(function (k) {
+        return P[k];
+      });
+      var d =
+        pts.reduce(function (a, p) {
+          return a + p.d;
+        }, 0) / pts.length;
+      return { s: s, pts: pts, d: d };
+    })
+    .sort(function (a, b) {
+      return a.d - b.d;
+    });
+
+  var sisiHTML = faces
+    .map(function (f) {
+      var s = f.s;
+      var depan = vs[s.id];
+      var cls =
+        'psm-face psm-face--' +
+        s.jenis +
+        (depan ? ' is-front' : ' is-back') +
+        (pilihS[s.id] ? ' is-sorot' : '');
+      var hit = mode === 'sisi' && depan;
+      return (
+        '<polygon class="' +
+        cls +
+        (hit ? ' psm-hit-face' : '') +
+        '" points="' +
+        psmPoints(f.pts) +
+        '"' +
+        (hit ? hitAttr('sisi', s) : '') +
+        '/>'
+      );
+    })
+    .join('');
+
+  function garis(e, cls, extra) {
+    var a = P[e.a];
+    var b = P[e.b];
+    return (
+      '<line class="' +
+      cls +
+      '" x1="' +
+      psmFmt(a.x) +
+      '" y1="' +
+      psmFmt(a.y) +
+      '" x2="' +
+      psmFmt(b.x) +
+      '" y2="' +
+      psmFmt(b.y) +
+      '"' +
+      (extra || '') +
+      '/>'
+    );
+  }
+
+  var urutRusuk = model.rusuk.slice().sort(function (a, b) {
+    return (vr[a.id] ? 1 : 0) - (vr[b.id] ? 1 : 0);
+  });
+  var rusukHTML = urutRusuk
+    .map(function (e) {
+      return garis(
+        e,
+        'psm-edge psm-edge--' +
+          e.jenis +
+          (vr[e.id] ? '' : ' is-hidden') +
+          (pilihR[e.id] ? ' is-sorot' : '')
+      );
+    })
+    .join('');
+  var rusukHit =
+    mode === 'rusuk'
+      ? urutRusuk
+          .map(function (e) {
+            return garis(e, 'psm-hit psm-hit--rusuk', hitAttr('rusuk', e));
+          })
+          .join('')
+      : '';
+
+  var cx = 0;
+  var cy = 0;
+  P.forEach(function (p) {
+    cx += p.x / P.length;
+    cy += p.y / P.length;
+  });
+  var titikHTML = model.titik
+    .map(function (t, i) {
+      var p = P[i];
+      var sor = pilihT[t.id];
+      var html =
+        '<circle class="psm-vertex' +
+        (vt[t.id] ? '' : ' is-hidden') +
+        (sor ? ' is-sorot' : '') +
+        '" cx="' +
+        psmFmt(p.x) +
+        '" cy="' +
+        psmFmt(p.y) +
+        '" r="' +
+        (sor ? 6 : 3.5) +
+        '"/>';
+      if (opts.label !== false) {
+        var dx = p.x - cx;
+        var dy = p.y - cy;
+        var len = Math.sqrt(dx * dx + dy * dy) || 1;
+        html +=
+          '<text class="psm-label' +
+          (vt[t.id] ? '' : ' is-hidden') +
+          '" x="' +
+          psmFmt(p.x + (dx / len) * 14) +
+          '" y="' +
+          psmFmt(p.y + (dy / len) * 14) +
+          '">' +
+          esc(t.nama) +
+          '</text>';
+      }
+      return html;
+    })
+    .join('');
+  var titikHit =
+    mode === 'titik'
+      ? model.titik
+          .map(function (t, i) {
+            return (
+              '<circle class="psm-hit psm-hit--titik" cx="' +
+              psmFmt(P[i].x) +
+              '" cy="' +
+              psmFmt(P[i].y) +
+              '" r="13"' +
+              hitAttr('titik', t) +
+              '/>'
+            );
+          })
+          .join('')
+      : '';
+
+  return (
+    '<svg class="psm-svg' +
+    (opts.kelas ? ' ' + opts.kelas : '') +
+    (mode ? ' psm-svg--' + mode : '') +
+    '" viewBox="' +
+    psmFmt(-half) +
+    ' ' +
+    psmFmt(-half) +
+    ' ' +
+    psmFmt(2 * half) +
+    ' ' +
+    psmFmt(2 * half) +
+    '" xmlns="http://www.w3.org/2000/svg" role="group" aria-label="' +
+    esc(opts.aria || namaPrisma(model.n) + ' ' + notasiPrisma(model.n)) +
+    '">' +
+    sisiHTML +
+    rusukHTML +
+    rusukHit +
+    titikHTML +
+    titikHit +
+    '</svg>'
+  );
+}
+
+/* ---------- UI: penjelajah prisma ---------- */
+
+var PSM_MODES = [
+  { id: 'titik', label: 'Titik sudut', ikon: '●' },
+  { id: 'rusuk', label: 'Rusuk', ikon: '╱' },
+  { id: 'sisi', label: 'Sisi', ikon: '▰' },
+];
+
+/*
+ * State penjelajah: { n, azimut, elevasi, mode, terpilih: {titik, rusuk,
+ * sisi}, info: {kind, id} | null, dicoba: {<n>: true} }.
+ *   opts.pilihanN  daftar n yang boleh dipilih (default [3, 4, 5, 6])
+ *   opts.n         n awal (default pilihanN[0])
+ */
+function ensureJelajahState(state, key, opts) {
+  opts = opts || {};
+  var pil = opts.pilihanN || [3, 4, 5, 6];
+  var st = state[key] && typeof state[key] === 'object' ? state[key] : {};
+  if (pil.indexOf(st.n) === -1) st.n = opts.n || pil[0];
+  if (typeof st.azimut !== 'number') st.azimut = -25;
+  if (typeof st.elevasi !== 'number') st.elevasi = 25;
+  if (
+    !PSM_MODES.some(function (m) {
+      return m.id === st.mode;
+    })
+  )
+    st.mode = 'titik';
+  if (!st.terpilih || typeof st.terpilih !== 'object') st.terpilih = {};
+  PSM_MODES.forEach(function (m) {
+    if (!st.terpilih[m.id] || typeof st.terpilih[m.id] !== 'object') st.terpilih[m.id] = {};
+  });
+  if (!st.dicoba || typeof st.dicoba !== 'object') st.dicoba = {};
+  st.dicoba[st.n] = true;
+  if (st.info && typeof st.info !== 'object') st.info = null;
+  state[key] = st;
+  return st;
+}
+
+function banyakTerpilih(st, mode) {
+  return Object.keys((st.terpilih && st.terpilih[mode]) || {}).length;
+}
+
+function psmModelJelajah(st, opts) {
+  return modelPrisma(st.n, { r: 1, tinggi: (opts && opts.tinggi) || 1.5 });
+}
+
+function psmInfoJelajah(model, st) {
+  if (!st.info) return 'Ketuk sebuah unsur pada gambar untuk menandainya dan melihat namanya.';
+  var list =
+    st.info.kind === 'titik' ? model.titik : st.info.kind === 'rusuk' ? model.rusuk : model.sisi;
+  for (var i = 0; i < list.length; i++) {
+    if (list[i].id === st.info.id) {
+      return (
+        psmLabelUnsur(st.info.kind, list[i]) +
+        (st.terpilih[st.info.kind][st.info.id] ? ' — ditandai' : ' — tanda dihapus')
+      );
+    }
+  }
+  return '';
+}
+
+function psmStageJelajah(id, st, opts) {
+  var model = psmModelJelajah(st, opts);
+  return buildPrismSVG(model, st, {
+    mode: st.mode,
+    terpilih: st.terpilih,
+    skala: 80,
+    aria: namaPrisma(st.n) + ' ' + notasiPrisma(st.n) + '. ' + (opts.ariaTambahan || ''),
+  });
+}
+
+function psmCounterJelajah(st) {
+  return PSM_MODES.map(function (m) {
+    return (
+      '<span class="psm-count' +
+      (st.mode === m.id ? ' is-active' : '') +
+      '"><span aria-hidden="true">' +
+      m.ikon +
+      '</span> ' +
+      m.label +
+      ' ditandai: <strong>' +
+      banyakTerpilih(st, m.id) +
+      '</strong></span>'
+    );
+  }).join('');
+}
+
+function buildPrismExplorer(id, st, opts) {
+  opts = opts || {};
+  var pil = opts.pilihanN || [3, 4, 5, 6];
+  var model = psmModelJelajah(st, opts);
+  var pilihN =
+    pil.length > 1
+      ? '<div class="psm-toolbar" role="group" aria-label="Pilih prisma">' +
+        pil
+          .map(function (n) {
+            return (
+              '<button type="button" class="psm-tool-btn' +
+              (st.n === n ? ' is-active' : '') +
+              '" data-psm-n="' +
+              n +
+              '" aria-pressed="' +
+              (st.n === n ? 'true' : 'false') +
+              '">' +
+              esc(namaPrisma(n).replace('prisma ', 'Prisma ')) +
+              '</button>'
+            );
+          })
+          .join('') +
+        '</div>'
+      : '';
+  return (
+    '<div class="psm-explorer" id="' +
+    id +
+    '">' +
+    pilihN +
+    '<div class="psm-toolbar" role="group" aria-label="Unsur yang ditandai">' +
+    PSM_MODES.map(function (m) {
+      return (
+        '<button type="button" class="psm-tool-btn psm-tool-btn--mode' +
+        (st.mode === m.id ? ' is-active' : '') +
+        '" data-psm-mode="' +
+        m.id +
+        '" aria-pressed="' +
+        (st.mode === m.id ? 'true' : 'false') +
+        '"><span aria-hidden="true">' +
+        m.ikon +
+        '</span> Tandai ' +
+        m.label.toLowerCase() +
+        '</button>'
+      );
+    }).join('') +
+    '</div>' +
+    '<p class="psm-explorer__nama"><strong>' +
+    esc(namaPrisma(st.n).replace('prisma ', 'Prisma ')) +
+    '</strong> ' +
+    esc(notasiPrisma(st.n)) +
+    '</p>' +
+    '<div class="psm-stage" data-psm-stage>' +
+    psmStageJelajah(id, st, opts) +
+    '</div>' +
+    '<div class="psm-rotate">' +
+    '<label class="psm-range"><span>↻ Putar</span><input type="range" min="-180" max="180" step="5" value="' +
+    st.azimut +
+    '" data-psm-range="azimut" aria-label="Putar prisma"></label>' +
+    '<label class="psm-range"><span>⤢ Miringkan</span><input type="range" min="-60" max="80" step="5" value="' +
+    st.elevasi +
+    '" data-psm-range="elevasi" aria-label="Miringkan prisma"></label>' +
+    '</div>' +
+    '<p class="psm-info" data-psm-info aria-live="polite">' +
+    esc(psmInfoJelajah(model, st)) +
+    '</p>' +
+    '<div class="psm-counter" data-psm-counter>' +
+    psmCounterJelajah(st) +
+    '</div>' +
+    '<div class="btn-group">' +
+    '<button type="button" class="btn btn--ghost btn--small" data-psm-clear>Hapus tanda ' +
+    esc(
+      PSM_MODES.filter(function (m) {
+        return m.id === st.mode;
+      })[0].label.toLowerCase()
+    ) +
+    '</button>' +
+    '</div>' +
+    '</div>'
+  );
+}
+
+/*
+ * Memasang event penjelajah. `onChange(jenis)` dipanggil setiap state
+ * berubah ('putar' saat slider digeser — gambar diperbarui di tempat
+ * tanpa merender ulang tahap; 'n' | 'mode' | 'tandai' | 'hapus').
+ */
+function bindPrismExplorer(root, id, st, opts, onChange) {
+  opts = opts || {};
+  var el = root.querySelector('#' + id);
+  if (!el) return;
+
+  function perbaruiGambar() {
+    var model = psmModelJelajah(st, opts);
+    el.querySelector('[data-psm-stage]').innerHTML = psmStageJelajah(id, st, opts);
+    el.querySelector('[data-psm-info]').textContent = psmInfoJelajah(model, st);
+    el.querySelector('[data-psm-counter]').innerHTML = psmCounterJelajah(st);
+    pasangHit();
+  }
+
+  function renderUlang(fokusSel) {
+    var baru = buildPrismExplorer(id, st, opts);
+    var wadah = document.createElement('div');
+    wadah.innerHTML = baru;
+    el.replaceWith(wadah.firstChild);
+    bindPrismExplorer(root, id, st, opts, onChange);
+    if (fokusSel) {
+      var f = root.querySelector('#' + id + ' ' + fokusSel);
+      if (f) f.focus();
+    }
+  }
+
+  function toggle(kind, uid) {
+    var map = st.terpilih[kind];
+    if (map[uid]) delete map[uid];
+    else map[uid] = true;
+    st.info = { kind: kind, id: uid };
+    perbaruiGambar();
+    var f = el.querySelector('[data-psm-kind="' + kind + '"][data-psm-id="' + uid + '"]');
+    if (f) f.focus();
+    if (onChange) onChange('tandai');
+  }
+
+  function pasangHit() {
+    el.querySelectorAll('[data-psm-kind]').forEach(function (h) {
+      h.addEventListener('click', function () {
+        toggle(h.getAttribute('data-psm-kind'), h.getAttribute('data-psm-id'));
+      });
+      h.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          toggle(h.getAttribute('data-psm-kind'), h.getAttribute('data-psm-id'));
+        }
+      });
+    });
+  }
+  pasangHit();
+
+  el.querySelectorAll('[data-psm-n]').forEach(function (b) {
+    b.addEventListener('click', function () {
+      var n = parseInt(b.getAttribute('data-psm-n'), 10);
+      if (n === st.n) return;
+      st.n = n;
+      st.dicoba[n] = true;
+      st.info = null;
+      PSM_MODES.forEach(function (m) {
+        st.terpilih[m.id] = {};
+      });
+      renderUlang('[data-psm-n="' + n + '"]');
+      if (onChange) onChange('n');
+    });
+  });
+
+  el.querySelectorAll('[data-psm-mode]').forEach(function (b) {
+    b.addEventListener('click', function () {
+      st.mode = b.getAttribute('data-psm-mode');
+      st.info = null;
+      renderUlang('[data-psm-mode="' + st.mode + '"]');
+      if (onChange) onChange('mode');
+    });
+  });
+
+  el.querySelectorAll('[data-psm-range]').forEach(function (inp) {
+    inp.addEventListener('input', function () {
+      st[inp.getAttribute('data-psm-range')] = parseInt(inp.value, 10);
+      perbaruiGambar();
+    });
+    inp.addEventListener('change', function () {
+      if (onChange) onChange('putar');
+    });
+  });
+
+  var clear = el.querySelector('[data-psm-clear]');
+  if (clear) {
+    clear.addEventListener('click', function () {
+      st.terpilih[st.mode] = {};
+      st.info = null;
+      perbaruiGambar();
+      if (onChange) onChange('hapus');
+    });
+  }
+}
+
+/* ---------- UI: tabel isian unsur ---------- */
+
+var PSM_KOLOM_UNSUR = [
+  { id: 'titik', label: 'Titik sudut' },
+  { id: 'rusuk', label: 'Rusuk' },
+  { id: 'sisi', label: 'Sisi' },
+];
+
+/* st = { isian: {<n>: {titik, rusuk, sisi}}, hasil: {<n>: {<kolom>: kode}}, dicek } */
+function ensureUnsurTableState(state, key, rows) {
+  var st = state[key] && typeof state[key] === 'object' ? state[key] : {};
+  if (!st.isian || typeof st.isian !== 'object') st.isian = {};
+  if (!st.hasil || typeof st.hasil !== 'object') st.hasil = {};
+  rows.forEach(function (n) {
+    if (!st.isian[n] || typeof st.isian[n] !== 'object') st.isian[n] = {};
+    if (!st.hasil[n] || typeof st.hasil[n] !== 'object') st.hasil[n] = {};
+    PSM_KOLOM_UNSUR.forEach(function (k) {
+      if (typeof st.isian[n][k.id] !== 'string') st.isian[n][k.id] = '';
+    });
+  });
+  st.dicek = !!st.dicek;
+  state[key] = st;
+  return st;
+}
+
+function tabelUnsurBenar(st, rows) {
+  return rows.every(function (n) {
+    return PSM_KOLOM_UNSUR.every(function (k) {
+      return st.hasil[n] && st.hasil[n][k.id] === 'benar';
+    });
+  });
+}
+
+/*
+ *   opts.judulBaris  function(n) → label baris (default "Prisma segi-n")
+ *   opts.caption     keterangan tabel
+ */
+function buildUnsurTable(id, rows, st, opts) {
+  opts = opts || {};
+  var semua = tabelUnsurBenar(st, rows);
+  var pesan = [];
+  var body = rows
+    .map(function (n) {
+      return (
+        '<tr><th scope="row">' +
+        esc(opts.judulBaris ? opts.judulBaris(n) : namaPrisma(n).replace('prisma ', 'Prisma ')) +
+        '</th>' +
+        PSM_KOLOM_UNSUR.map(function (k) {
+          var kode = st.hasil[n] ? st.hasil[n][k.id] : null;
+          var benar = kode === 'benar';
+          if (kode && !benar) {
+            var p = PSM_PESAN_UNSUR[kode];
+            var baris = namaPrisma(n) + ' — ' + k.label.toLowerCase() + ': ' + p;
+            if (pesan.indexOf(baris) === -1) pesan.push(baris);
+          }
+          return (
+            '<td>' +
+            '<input type="text" inputmode="numeric" autocomplete="off" class="input-text psm-cell' +
+            (benar ? ' is-correct' : kode ? ' has-error' : '') +
+            '" data-psm-cell="' +
+            n +
+            '-' +
+            k.id +
+            '" id="' +
+            id +
+            '-' +
+            n +
+            '-' +
+            k.id +
+            '" value="' +
+            esc(st.isian[n][k.id]) +
+            '" aria-label="' +
+            esc('Banyak ' + k.label.toLowerCase() + ' ' + namaPrisma(n)) +
+            '"' +
+            (benar ? ' disabled' : '') +
+            '>' +
+            '</td>'
+          );
+        }).join('') +
+        '</tr>'
+      );
+    })
+    .join('');
+  return (
+    '<div class="psm-table-wrap" id="' +
+    id +
+    '">' +
+    '<table class="psm-table">' +
+    (opts.caption ? '<caption>' + esc(opts.caption) + '</caption>' : '') +
+    '<thead><tr><th scope="col">Prisma</th>' +
+    PSM_KOLOM_UNSUR.map(function (k) {
+      return '<th scope="col">' + esc(k.label) + '</th>';
+    }).join('') +
+    '</tr></thead><tbody>' +
+    body +
+    '</tbody></table>' +
+    '</div>' +
+    (semua
+      ? buildFeedbackBox('success', '✓', '<strong>Semua isian tepat.</strong>')
+      : '<div class="btn-group" style="margin-top:var(--space-3);"><button type="button" class="btn btn--primary" id="' +
+        id +
+        'Check">Periksa Tabel</button></div>' +
+        (pesan.length
+          ? buildFeedbackBox(
+              'error',
+              '✗',
+              '<ul class="psm-diagnosa">' +
+                pesan
+                  .map(function (p) {
+                    return '<li>' + esc(p) + '</li>';
+                  })
+                  .join('') +
+                '</ul>'
+            )
+          : ''))
+  );
+}
+
+function bindUnsurTable(root, id, rows, st, save, rerender) {
+  root.querySelectorAll('#' + id + ' [data-psm-cell]').forEach(function (inp) {
+    inp.addEventListener('input', function () {
+      var parts = inp.getAttribute('data-psm-cell').split('-');
+      st.isian[parts[0]][parts[1]] = inp.value;
+      save();
+    });
+    inp.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter') {
+        var b = document.getElementById(id + 'Check');
+        if (b) b.click();
+      }
+    });
+  });
+  var btn = document.getElementById(id + 'Check');
+  if (!btn) return;
+  btn.addEventListener('click', function () {
+    var kosong = false;
+    var invalid = false;
+    rows.forEach(function (n) {
+      PSM_KOLOM_UNSUR.forEach(function (k) {
+        var r = parseInputInt(st.isian[n][k.id]);
+        if (r.error === 'empty') kosong = true;
+        else if (r.error) invalid = true;
+      });
+    });
+    if (kosong) {
+      showNotice('Lengkapi semua kotak pada tabel lebih dulu.');
+      return;
+    }
+    if (invalid) {
+      showNotice('Isi setiap kotak dengan bilangan bulat, mis. 6.');
+      return;
+    }
+    rows.forEach(function (n) {
+      PSM_KOLOM_UNSUR.forEach(function (k) {
+        st.hasil[n][k.id] = diagnosaUnsur(n, k.id, parseInputInt(st.isian[n][k.id]).value).kode;
+      });
+    });
+    st.dicek = true;
+    save();
+    rerender();
+  });
+}
+
+/* ---------- UI: jaring datar & tampilan lipat ---------- */
+
+function psmBatas(list) {
+  var b = { x0: Infinity, y0: Infinity, x1: -Infinity, y1: -Infinity };
+  list.forEach(function (p) {
+    b.x0 = Math.min(b.x0, p[0]);
+    b.y0 = Math.min(b.y0, p[1]);
+    b.x1 = Math.max(b.x1, p[0]);
+    b.y1 = Math.max(b.y1, p[1]);
+  });
+  return b;
+}
+
+function psmPoly2(pts, sk) {
+  return pts
+    .map(function (q) {
+      return psmFmt(q[0] * sk) + ',' + psmFmt(q[1] * sk);
+    })
+    .join(' ');
+}
+
+/*
+ * Gambar jaring-jaring datar.
+ *   opts.skala  piksel per satuan (default 40)
+ *   opts.aria   teks aksesibel
+ *   opts.slot   { n } → tampilkan slot kosong untuk menempel segi-n
+ *               (perakit jaring); slot yang terisi digambar sebagai kepingan
+ */
+function buildNetSVG(jaring, opts) {
+  opts = opts || {};
+  var sk = opts.skala || 40;
+  var spec = jaring.spec;
+  var semua = [];
+  jaring.pieces.forEach(function (p) {
+    semua = semua.concat(p.pts2);
+  });
+  var slotHTML = '';
+  if (opts.slot) {
+    var hantu = [];
+    for (var i = 0; i < spec.sabuk; i++) {
+      if (spec.atas.indexOf(i) === -1) {
+        hantu.push({
+          sisi: 'atas',
+          i: i,
+          pts: psmSegiPadaTepi([i * spec.s, 0], spec.s, spec.n, -1),
+        });
+      }
+      if (spec.alas.indexOf(i) === -1) {
+        hantu.push({
+          sisi: 'alas',
+          i: i,
+          pts: psmSegiPadaTepi([i * spec.s, spec.h], spec.s, spec.n, 1),
+        });
+      }
+    }
+    for (var s = 0; s < spec.sabuk; s++) {
+      semua = semua.concat(psmSegiPadaTepi([s * spec.s, 0], spec.s, spec.n, -1));
+      semua = semua.concat(psmSegiPadaTepi([s * spec.s, spec.h], spec.s, spec.n, 1));
+    }
+    slotHTML = hantu
+      .map(function (g) {
+        var c = psmPusat(
+          g.pts.map(function (q) {
+            return [q[0], q[1], 0];
+          })
+        );
+        return (
+          '<g class="psm-slot" data-psm-slot="' +
+          g.sisi +
+          '-' +
+          g.i +
+          '" tabindex="0" role="button" aria-label="' +
+          esc(
+            'Tempel segi-n pada tepi ' +
+              (g.sisi === 'atas' ? 'atas' : 'bawah') +
+              ' persegi panjang ke-' +
+              (g.i + 1)
+          ) +
+          '"><polygon points="' +
+          psmPoly2(g.pts, sk) +
+          '"/><text x="' +
+          psmFmt(c[0] * sk) +
+          '" y="' +
+          psmFmt(c[1] * sk) +
+          '">+</text></g>'
+        );
+      })
+      .join('');
+  }
+  var b = psmBatas(semua);
+  var pad = 6;
+  var byId = {};
+  jaring.pieces.forEach(function (p) {
+    byId[p.id] = p;
+  });
+  var kepingHTML = jaring.pieces
+    .map(function (p) {
+      var cls = 'psm-net-piece psm-face--' + p.jenis;
+      var attr = '';
+      if (opts.slot && p.jenis !== 'tegak') {
+        var idx = p.parent ? parseInt(p.parent.slice(1), 10) : 0;
+        attr =
+          ' data-psm-slot="' +
+          p.jenis +
+          '-' +
+          idx +
+          '" tabindex="0" role="button" aria-label="' +
+          esc(
+            'Lepas segi-n dari tepi ' +
+              (p.jenis === 'atas' ? 'atas' : 'bawah') +
+              ' persegi panjang ke-' +
+              (idx + 1)
+          ) +
+          '"';
+        cls += ' psm-net-piece--lepas';
+      }
+      return '<polygon class="' + cls + '" points="' + psmPoly2(p.pts2, sk) + '"' + attr + '/>';
+    })
+    .join('');
+  var lipatan = jaring.pieces
+    .filter(function (p) {
+      return p.hinge;
+    })
+    .map(function (p) {
+      return (
+        '<line class="psm-lipatan" x1="' +
+        psmFmt(p.hinge[0][0] * sk) +
+        '" y1="' +
+        psmFmt(p.hinge[0][1] * sk) +
+        '" x2="' +
+        psmFmt(p.hinge[1][0] * sk) +
+        '" y2="' +
+        psmFmt(p.hinge[1][1] * sk) +
+        '"/>'
+      );
+    })
+    .join('');
+  return (
+    '<svg class="psm-net' +
+    (opts.kelas ? ' ' + opts.kelas : '') +
+    '" viewBox="' +
+    psmFmt(b.x0 * sk - pad) +
+    ' ' +
+    psmFmt(b.y0 * sk - pad) +
+    ' ' +
+    psmFmt((b.x1 - b.x0) * sk + 2 * pad) +
+    ' ' +
+    psmFmt((b.y1 - b.y0) * sk + 2 * pad) +
+    '" xmlns="http://www.w3.org/2000/svg" role="' +
+    (opts.slot ? 'group' : 'img') +
+    '" aria-label="' +
+    esc(opts.aria || 'Jaring-jaring ' + namaPrisma(spec.n)) +
+    '">' +
+    slotHTML +
+    kepingHTML +
+    lipatan +
+    '</svg>'
+  );
+}
+
+/* Koordinat jaring (x kanan, y bawah, z lipatan) → koordinat tampilan (z ke atas). */
+function psmKeDunia(q, h) {
+  return [q[0], q[2], h - q[1]];
+}
+
+var PSM_VIEW_LIPAT = { azimut: -35, elevasi: 35 };
+
+/* Gambar SVG jaring-jaring pada fraksi lipat t, dengan kotak tampilan tetap. */
+function buildFoldSVG(jaring, t, opts) {
+  opts = opts || {};
+  var view = opts.view || PSM_VIEW_LIPAT;
+  var sk = opts.skala || 44;
+  var h = jaring.spec.h;
+  var proyek = function (q) {
+    var p = proyeksiPrisma(psmKeDunia(q, h), view);
+    return { x: p.x * sk, y: p.y * sk, d: p.d };
+  };
+  /* Kotak tampilan dihitung dari beberapa sampel t agar tidak "melompat". */
+  var b = { x0: Infinity, y0: Infinity, x1: -Infinity, y1: -Infinity };
+  [0, 0.25, 0.5, 0.75, 1].forEach(function (ts) {
+    lipatJaring(jaring, ts).forEach(function (p) {
+      p.pts3.forEach(function (q) {
+        var r = proyek(q);
+        b.x0 = Math.min(b.x0, r.x);
+        b.y0 = Math.min(b.y0, r.y);
+        b.x1 = Math.max(b.x1, r.x);
+        b.y1 = Math.max(b.y1, r.y);
+      });
+    });
+  });
+  var pad = 8;
+  var polys = lipatJaring(jaring, t)
+    .map(function (p) {
+      var pts = p.pts3.map(proyek);
+      var d =
+        pts.reduce(function (a, r) {
+          return a + r.d;
+        }, 0) / pts.length;
+      return { p: p, pts: pts, d: d };
+    })
+    .sort(function (a, b2) {
+      return a.d - b2.d;
+    });
+  return (
+    '<svg class="psm-fold-svg" viewBox="' +
+    psmFmt(b.x0 - pad) +
+    ' ' +
+    psmFmt(b.y0 - pad) +
+    ' ' +
+    psmFmt(b.x1 - b.x0 + 2 * pad) +
+    ' ' +
+    psmFmt(b.y1 - b.y0 + 2 * pad) +
+    '" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="' +
+    esc(
+      (opts.aria || 'Jaring-jaring ' + namaPrisma(jaring.spec.n)) +
+        ', terlipat ' +
+        Math.round(t * 100) +
+        '%'
+    ) +
+    '">' +
+    polys
+      .map(function (f) {
+        return (
+          '<polygon class="psm-fold-piece psm-face--' +
+          f.p.jenis +
+          '" points="' +
+          psmPoints(f.pts) +
+          '"/>'
+        );
+      })
+      .join('') +
+    '</svg>'
+  );
+}
+
+function psmReduceMotion() {
+  try {
+    return !!(
+      typeof window !== 'undefined' &&
+      window.matchMedia &&
+      window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    );
+  } catch (e) {
+    return false;
+  }
+}
+
+/* Pegangan requestAnimationFrame per komponen (tidak disimpan di State). */
+var PSM_ANIM = {};
+
+function psmHentikanAnimasi(key) {
+  if (PSM_ANIM[key]) {
+    cancelAnimationFrame(PSM_ANIM[key]);
+    delete PSM_ANIM[key];
+  }
+}
+
+/*
+ * Menganimasikan st.t menuju `target` (0 atau 1) dengan memanggil
+ * draw(t) di setiap bingkai; done() setelah selesai. Menghormati
+ * prefers-reduced-motion (langsung melompat ke target).
+ */
+function psmAnimasiLipat(key, st, target, draw, done) {
+  psmHentikanAnimasi(key);
+  var awal = typeof st.t === 'number' ? st.t : 0;
+  if (psmReduceMotion() || typeof requestAnimationFrame === 'undefined') {
+    st.t = target;
+    draw(target);
+    if (done) done();
+    return;
+  }
+  var durasi = 1400 * Math.abs(target - awal) || 1;
+  var mulai = null;
+  function langkah(now) {
+    if (mulai === null) mulai = now;
+    var f = Math.min(1, (now - mulai) / durasi);
+    var e = f < 0.5 ? 2 * f * f : 1 - Math.pow(-2 * f + 2, 2) / 2;
+    st.t = awal + (target - awal) * e;
+    draw(st.t);
+    if (f < 1) PSM_ANIM[key] = requestAnimationFrame(langkah);
+    else {
+      delete PSM_ANIM[key];
+      st.t = target;
+      if (done) done();
+    }
+  }
+  PSM_ANIM[key] = requestAnimationFrame(langkah);
+}
+
+/* ---------- UI: pelipat jaring ---------- */
+
+/*
+ * st = { n, t }.
+ *   opts.specs  { <n>: spec } jaring untuk setiap pilihan n
+ *   opts.judul  function(n) → nama benda (opsional)
+ */
+function ensureLipatState(state, key, opts) {
+  var ns = Object.keys(opts.specs).map(Number);
+  var st = state[key] && typeof state[key] === 'object' ? state[key] : {};
+  if (ns.indexOf(st.n) === -1) st.n = ns[0];
+  if (typeof st.t !== 'number' || st.t < 0 || st.t > 1) st.t = 0;
+  if (!st.dilipat || typeof st.dilipat !== 'object') st.dilipat = {};
+  state[key] = st;
+  return st;
+}
+
+function psmLipatInner(st, opts) {
+  var jaring = jaringPrisma(opts.specs[st.n]);
+  return buildFoldSVG(jaring, st.t, { aria: opts.judul ? opts.judul(st.n) : null });
+}
+
+function buildNetFolder(id, st, opts) {
+  var ns = Object.keys(opts.specs).map(Number);
+  return (
+    '<div class="psm-folder" id="' +
+    id +
+    '">' +
+    (ns.length > 1
+      ? '<div class="psm-toolbar" role="group" aria-label="Pilih kemasan">' +
+        ns
+          .map(function (n) {
+            return (
+              '<button type="button" class="psm-tool-btn' +
+              (st.n === n ? ' is-active' : '') +
+              '" data-psm-fn="' +
+              n +
+              '" aria-pressed="' +
+              (st.n === n ? 'true' : 'false') +
+              '">' +
+              esc(opts.judul ? opts.judul(n) : namaPrisma(n)) +
+              '</button>'
+            );
+          })
+          .join('') +
+        '</div>'
+      : '') +
+    '<div class="psm-stage psm-stage--fold" data-psm-fold>' +
+    psmLipatInner(st, opts) +
+    '</div>' +
+    '<label class="psm-range psm-range--wide"><span>Lipat</span><input type="range" min="0" max="100" step="1" value="' +
+    Math.round(st.t * 100) +
+    '" data-psm-t aria-label="Seberapa jauh jaring-jaring dilipat (persen)"></label>' +
+    '<div class="btn-group">' +
+    '<button type="button" class="btn btn--primary btn--small" data-psm-play="1">▶ Lipat</button>' +
+    '<button type="button" class="btn btn--ghost btn--small" data-psm-play="0">◀ Buka</button>' +
+    '</div>' +
+    '</div>'
+  );
+}
+
+/* onChange('lipat'|'n') dipanggil setelah animasi/slider selesai. */
+function bindNetFolder(root, id, st, opts, onChange) {
+  var el = root.querySelector('#' + id);
+  if (!el) return;
+  var stage = el.querySelector('[data-psm-fold]');
+  var range = el.querySelector('[data-psm-t]');
+  function draw(t) {
+    stage.innerHTML = buildFoldSVG(jaringPrisma(opts.specs[st.n]), t, {
+      aria: opts.judul ? opts.judul(st.n) : null,
+    });
+    if (range) range.value = Math.round(t * 100);
+  }
+  function catat() {
+    if (st.t >= 0.999) st.dilipat[st.n] = true;
+    if (onChange) onChange('lipat');
+  }
+  if (range) {
+    range.addEventListener('input', function () {
+      st.t = parseInt(range.value, 10) / 100;
+      draw(st.t);
+    });
+    range.addEventListener('change', catat);
+  }
+  el.querySelectorAll('[data-psm-play]').forEach(function (b) {
+    b.addEventListener('click', function () {
+      psmAnimasiLipat(id, st, b.getAttribute('data-psm-play') === '1' ? 1 : 0, draw, catat);
+    });
+  });
+  el.querySelectorAll('[data-psm-fn]').forEach(function (b) {
+    b.addEventListener('click', function () {
+      var n = parseInt(b.getAttribute('data-psm-fn'), 10);
+      if (n === st.n) return;
+      psmHentikanAnimasi(id);
+      st.n = n;
+      st.t = 0;
+      var wadah = document.createElement('div');
+      wadah.innerHTML = buildNetFolder(id, st, opts);
+      el.replaceWith(wadah.firstChild);
+      bindNetFolder(root, id, st, opts, onChange);
+      var f = root.querySelector('#' + id + ' [data-psm-fn="' + n + '"]');
+      if (f) f.focus();
+      if (onChange) onChange('n');
+    });
+  });
+}
+
+/* ---------- UI: perakit jaring ---------- */
+
+/* st = { atas: [i], alas: [i], hasil: null | {valid, alasan}, t, ditemukan: [kunci] } */
+function ensureRakitState(state, key, n) {
+  var st = state[key] && typeof state[key] === 'object' ? state[key] : {};
+  st.atas = psmIndeksUnik(st.atas, n);
+  st.alas = psmIndeksUnik(st.alas, n);
+  if (!st.hasil || typeof st.hasil !== 'object') st.hasil = null;
+  if (typeof st.t !== 'number') st.t = 0;
+  if (!Array.isArray(st.ditemukan)) st.ditemukan = [];
+  if (typeof st.gagal !== 'number') st.gagal = 0;
+  state[key] = st;
+  return st;
+}
+
+function kunciJaring(spec) {
+  return 'atas' + spec.atas.join('.') + '-alas' + spec.alas.join('.');
+}
+
+function psmSpecRakit(n, st, opts) {
+  return { n: n, atas: st.atas, alas: st.alas, s: opts.s || 1, h: opts.h || 1.5 };
+}
+
+/*
+ *   opts.n  segi-n alas prisma
+ *   opts.s, opts.h  ukuran persegi panjang
+ */
+function buildNetBuilder(id, st, opts) {
+  var n = opts.n;
+  var spec = psmSpecRakit(n, st, opts);
+  var jaring = jaringPrisma(spec);
+  var hasil = st.hasil;
+  return (
+    '<div class="psm-builder" id="' +
+    id +
+    '">' +
+    '<div class="psm-builder__grid">' +
+    '<figure class="psm-builder__pane">' +
+    '<figcaption>Jaring-jaring rakitanmu</figcaption>' +
+    '<div class="psm-stage psm-stage--net">' +
+    buildNetSVG(jaring, { slot: true, skala: 44, aria: 'Papan perakit jaring-jaring' }) +
+    '</div>' +
+    '</figure>' +
+    '<figure class="psm-builder__pane">' +
+    '<figcaption>Hasil lipatan</figcaption>' +
+    '<div class="psm-stage psm-stage--fold" data-psm-fold>' +
+    (hasil
+      ? buildFoldSVG(jaring, st.t, { aria: 'Hasil melipat jaring-jaring rakitan' })
+      : '<p class="psm-placeholder">Tempel dua segi-n, lalu tekan <strong>Lipat &amp; Uji</strong>.</p>') +
+    '</div>' +
+    '</figure>' +
+    '</div>' +
+    '<div class="btn-group">' +
+    '<button type="button" class="btn btn--primary" data-psm-uji>📦 Lipat &amp; Uji</button>' +
+    '<button type="button" class="btn btn--ghost btn--small" data-psm-kosong>Kosongkan</button>' +
+    '</div>' +
+    (hasil
+      ? '<div data-psm-hasil>' +
+        buildFeedbackBox(
+          hasil.valid ? 'success' : 'warning',
+          hasil.valid ? '✓' : '💭',
+          esc(PSM_PESAN_JARING[hasil.alasan])
+        ) +
+        '</div>'
+      : '') +
+    '<p class="psm-info">Jaring-jaring berbeda yang berhasil kamu temukan: <strong>' +
+    st.ditemukan.length +
+    '</strong></p>' +
+    '</div>'
+  );
+}
+
+/* onChange('tempel'|'uji'|'kosong') dipanggil setelah state berubah. */
+function bindNetBuilder(root, id, st, opts, onChange) {
+  var el = root.querySelector('#' + id);
+  if (!el) return;
+  function renderUlang(fokusSel) {
+    psmHentikanAnimasi(id);
+    var wadah = document.createElement('div');
+    wadah.innerHTML = buildNetBuilder(id, st, opts);
+    el.replaceWith(wadah.firstChild);
+    bindNetBuilder(root, id, st, opts, onChange);
+    if (fokusSel) {
+      var f = root.querySelector('#' + id + ' ' + fokusSel);
+      if (f) f.focus();
+    }
+  }
+  function tempel(slot) {
+    var parts = slot.split('-');
+    var list = st[parts[0]];
+    var i = parseInt(parts[1], 10);
+    var pos = list.indexOf(i);
+    if (pos === -1) list.push(i);
+    else list.splice(pos, 1);
+    list.sort(function (a, b) {
+      return a - b;
+    });
+    st.hasil = null;
+    st.t = 0;
+    renderUlang('[data-psm-slot="' + slot + '"]');
+    if (onChange) onChange('tempel');
+  }
+  el.querySelectorAll('[data-psm-slot]').forEach(function (g) {
+    g.addEventListener('click', function () {
+      tempel(g.getAttribute('data-psm-slot'));
+    });
+    g.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        tempel(g.getAttribute('data-psm-slot'));
+      }
+    });
+  });
+  var uji = el.querySelector('[data-psm-uji]');
+  uji.addEventListener('click', function () {
+    var spec = psmSpecRakit(opts.n, st, opts);
+    if (spec.atas.length + spec.alas.length === 0) {
+      showNotice('Tempel segi-n pada tepi persegi panjang lebih dulu.');
+      return;
+    }
+    var r = cekJaring(spec);
+    st.hasil = { valid: r.valid, alasan: r.alasan };
+    if (r.valid) {
+      var k = kunciJaring(spec);
+      if (st.ditemukan.indexOf(k) === -1) st.ditemukan.push(k);
+    } else {
+      st.gagal += 1;
+    }
+    st.t = 0;
+    renderUlang('[data-psm-uji]');
+    var baru = root.querySelector('#' + id);
+    var stage = baru.querySelector('[data-psm-fold]');
+    var jaring = jaringPrisma(spec);
+    psmAnimasiLipat(
+      id,
+      st,
+      1,
+      function (t) {
+        stage.innerHTML = buildFoldSVG(jaring, t, { aria: 'Hasil melipat jaring-jaring rakitan' });
+      },
+      function () {
+        if (onChange) onChange('uji');
+      }
+    );
+  });
+  el.querySelector('[data-psm-kosong]').addEventListener('click', function () {
+    st.atas = [];
+    st.alas = [];
+    st.hasil = null;
+    st.t = 0;
+    renderUlang('[data-psm-kosong]');
+    if (onChange) onChange('kosong');
+  });
 }

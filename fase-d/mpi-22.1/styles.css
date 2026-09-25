@@ -1,0 +1,173 @@
+/* =========================================================================
+   fase-d/mpi-22.1/styles.css
+   Unsur-unsur & Jaring-jaring Prisma — Fase D (SMP Kelas IX)
+
+   Hanya memuat gaya yang KHAS modul ini. Gambar prisma, penjelajah,
+   tabel unsur, jaring-jaring, pelipat & perakit jaring (.psm-*),
+   pilihan ganda, chip konteks, dan komponen Discovery Learning lainnya
+   berasal dari shared/base.css.
+   ========================================================================= */
+
+/* -------------------------------------------------------------------------
+   Stimulasi — cerita & etalase kemasan
+   ------------------------------------------------------------------------- */
+
+.stimulasi-cerita {
+  margin: 0 0 var(--space-4);
+  font-size: 1.05rem;
+  line-height: 1.6;
+}
+
+.psm-galeri {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: var(--space-3);
+}
+
+.psm-galeri__item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0;
+  padding: var(--space-3);
+  border: 2px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  min-width: 0;
+}
+
+.psm-galeri__item .psm-svg {
+  max-width: 150px;
+}
+
+.psm-galeri__item figcaption {
+  font-weight: 700;
+  text-align: center;
+}
+
+/* -------------------------------------------------------------------------
+   Olah & pembuktian — kartu rancangan, dua jaring berdampingan
+   ------------------------------------------------------------------------- */
+
+.psm-pilah {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.psm-pilah .psm-net {
+  max-width: 320px;
+  max-height: 220px;
+  margin: 0;
+}
+
+.psm-duo {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: var(--space-4);
+}
+
+.psm-verif-jaring {
+  min-width: 0;
+}
+
+.psm-verif-jaring h4 {
+  margin: 0 0 var(--space-2);
+}
+
+.psm-verif-jaring .psm-stage--net {
+  margin-bottom: var(--space-3);
+}
+
+/* -------------------------------------------------------------------------
+   Kesimpulan — prisma & jaring-jaringnya berdampingan
+   ------------------------------------------------------------------------- */
+
+.psm-rangkum {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: var(--space-4);
+  margin-bottom: var(--space-4);
+}
+
+.psm-rangkum figure {
+  margin: 0;
+  min-width: 0;
+}
+
+.psm-rangkum figcaption {
+  margin-bottom: var(--space-2);
+  font-family: var(--font-display);
+  font-weight: 700;
+  text-align: center;
+}
+
+/* -------------------------------------------------------------------------
+   Uji terap — satuan isian, petunjuk soal pilihan, opsi bergambar jaring
+   ------------------------------------------------------------------------- */
+
+.psm-suffix {
+  align-self: center;
+  font-weight: 700;
+  color: var(--color-ink-muted);
+}
+
+.psm-opt-net {
+  display: block;
+  width: 100%;
+  max-width: 220px;
+}
+
+.psm-opt-net .psm-net {
+  max-height: 150px;
+}
+
+.soal-hint {
+  margin-top: var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-md);
+  background: var(--color-warning-soft);
+  color: var(--color-warning-strong);
+}
+
+.soal-hint summary {
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.soal-hint ul {
+  margin: var(--space-2) 0 0;
+  padding-left: var(--space-5);
+}
+
+/* -------------------------------------------------------------------------
+   Selesai — tiga rumus unsur
+   ------------------------------------------------------------------------- */
+
+.sajian-trio {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--space-3);
+  margin: var(--space-4) 0;
+}
+
+.sajian-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-1);
+  min-width: 140px;
+  max-width: 200px;
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-md);
+  background: var(--color-primary-soft);
+  color: var(--color-primary-strong);
+  font-weight: 700;
+  text-align: center;
+}
+
+.sajian-card__ikon {
+  font-size: 1.4rem;
+}
