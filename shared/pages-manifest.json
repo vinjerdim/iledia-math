@@ -7,6 +7,14 @@
     "stageCount": 10,
     "extraBody": "partials/reset-modal.html"
   },
+  "fase-d/mpi-1.2": {
+    "title": "Membandingkan & Mengurutkan Bilangan Bulat dalam Kehidupan Sehari-hari — Matematika Fase D",
+    "description": "Media pembelajaran interaktif berbasis Cooperative Learning untuk membandingkan dan mengurutkan bilangan bulat menggunakan garis bilangan dalam konteks kehidupan sehari-hari: suhu, kedalaman laut, lantai gedung, saldo kas, dan skor, melalui misi tim dengan peran bergiliran, kuis individu, dan penghargaan tim.",
+    "kicker": "Matematika — Fase D (SMP)",
+    "h1": "Membandingkan & Mengurutkan Bilangan Bulat dalam Kehidupan Sehari-hari",
+    "stageCount": 10,
+    "extraBody": "partials/reset-modal.html"
+  },
   "fase-f/mpi-1.1": {
     "title": "Konsep Barisan Aritmetika & Beda — Matematika Fase F",
     "description": "Media pembelajaran interaktif berbasis Inquiry Learning untuk mengidentifikasi dan menjelaskan konsep barisan aritmetika serta menentukan beda dari suatu barisan bilangan.",
