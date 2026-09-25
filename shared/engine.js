@@ -87,6 +87,10 @@
        (notasi & cara baca baku biasa/campuran/negatif, pemeriksa
        cara baca & tulis berdiagnosa, opsi cara baca teracak, langkah
        isian pecahan, pengarsir pecahan interaktif)
+   36. Pecahan: membandingkan & mengurutkan dalam konteks (nilai
+       pecahan bertanda/campuran, strategi ahli penyebut sama/pembilang
+       sama/patokan/samakan penyebut, diagnosa miskonsepsi lambang,
+       kata perbandingan per tema, kalimat & tombol lambang pecahan)
    ============================================================ */
 
 /* ============================================================
@@ -3408,7 +3412,8 @@ function bindOrderPicker(root, id, items, st, correctOrder, save, rerender) {
 
 /* ============================================================
    15. PECAHAN — MEMBANDINGKAN & MENGURUTKAN
-   Dipakai modul membandingkan & mengurutkan pecahan (fase-d/mpi-1.5).
+   Dipakai modul membandingkan & mengurutkan pecahan (fase-d/mpi-1.4,
+   bersama seksi 36).
    Pecahan ditulis sebagai objek { num, den } (boleh berisi field lain
    seperti id/nama). Gaya .frac-strip*, .frac-nl*, .order-board*,
    .role-card* ada di shared/base.css.
@@ -3525,35 +3530,47 @@ function buildFracStripCompare(fracs, opts) {
 }
 
 /*
- * Garis bilangan 0 … 1 (SVG, tidak interaktif) dengan titik-titik pecahan
- * berlabel. Label yang berdekatan diletakkan selang-seling atas/bawah
- * agar tidak bertumpuk.
- *   fracs        [{ num, den, nama? }]
- *   opts.ticks   penyebut garis bantu (mis. KPK); 0/undefined → tanpa
+ * Garis bilangan pecahan (SVG, tidak interaktif) dengan titik-titik
+ * pecahan berlabel. Default 0 … 1; label yang berdekatan diletakkan
+ * selang-seling atas/bawah agar tidak bertumpuk.
+ *   fracs        [{ num, den, whole?, neg?, nama? }] — pecahan campuran &
+ *                negatif didukung (tanda/bilangan bulat digambar di
+ *                depan pecahan, kelas .frac-nl__pre)
+ *   opts.min     ujung kiri (bilangan bulat, default 0)
+ *   opts.max     ujung kanan (bilangan bulat, default 1)
+ *   opts.ticks   banyak bagian per satuan (mis. KPK); 0/undefined → tanpa
  *   opts.aria    label aksesibel
  */
 function buildFracNumberLine(fracs, opts) {
   opts = opts || {};
+  var min = typeof opts.min === 'number' ? opts.min : 0;
+  var max = typeof opts.max === 'number' && opts.max > min ? opts.max : min + 1;
   var W = 420;
   var H = 136;
   var padX = 24;
   var axisY = 70;
   function xOf(v) {
-    return padX + v * (W - 2 * padX);
+    return padX + ((v - min) / (max - min)) * (W - 2 * padX);
+  }
+  function nilai(f) {
+    var v = pecahanBiasaBertanda(f);
+    return v.num / v.den;
   }
   var html =
     '<line class="frac-nl__axis" x1="' +
-    xOf(0) +
+    xOf(min) +
     '" y1="' +
     axisY +
     '" x2="' +
-    xOf(1) +
+    xOf(max) +
     '" y2="' +
     axisY +
     '"/>';
-  if (opts.ticks && opts.ticks <= 60) {
-    for (var t = 1; t < opts.ticks; t++) {
-      var tx = xOf(t / opts.ticks);
+  var totalTicks = opts.ticks ? opts.ticks * (max - min) : 0;
+  if (totalTicks && totalTicks <= 60) {
+    for (var t = 1; t < totalTicks; t++) {
+      if (t % opts.ticks === 0) continue;
+      var tx = xOf(min + t / opts.ticks);
       html +=
         '<line class="frac-nl__tick" x1="' +
         tx +
@@ -3566,7 +3583,7 @@ function buildFracNumberLine(fracs, opts) {
         '"/>';
     }
   }
-  [0, 1].forEach(function (v) {
+  for (var v = min; v <= max; v++) {
     html +=
       '<line class="frac-nl__tick frac-nl__tick--major" x1="' +
       xOf(v) +
@@ -3582,15 +3599,19 @@ function buildFracNumberLine(fracs, opts) {
       '" y="' +
       (axisY + 30) +
       '">' +
-      v +
+      formatNumber(v, '−') +
       '</text>';
+  }
+  var urut = fracs.slice().sort(function (a, b) {
+    return bandingPecahan(a, b);
   });
-  var urut = sortFractions(fracs);
   var lastX = -Infinity;
   var atas = true;
   urut.forEach(function (f) {
-    var x = xOf(f.num / f.den);
-    atas = x - lastX < 36 ? !atas : true;
+    var x = xOf(nilai(f));
+    var pre = (f.neg ? '−' : '') + (f.whole ? f.whole : '');
+    /* Label berawalan tanda/bilangan bulat lebih lebar → jarak aman lebih besar. */
+    atas = x - lastX < (pre ? 48 : 36) ? !atas : true;
     lastX = x;
     var ly = atas ? axisY - 50 : axisY + 32;
     html +=
@@ -3611,6 +3632,15 @@ function buildFracNumberLine(fracs, opts) {
       '" cy="' +
       axisY +
       '" r="7"/>' +
+      (pre
+        ? '<text class="frac-nl__num frac-nl__pre" x="' +
+          (x - 14) +
+          '" y="' +
+          (ly + 14) +
+          '">' +
+          pre +
+          '</text>'
+        : '') +
       '<text class="frac-nl__num" x="' +
       x +
       '" y="' +
@@ -3644,10 +3674,14 @@ function buildFracNumberLine(fracs, opts) {
     '" role="img" aria-label="' +
     esc(
       opts.aria ||
-        'Garis bilangan 0 sampai 1 dengan titik ' +
+        'Garis bilangan ' +
+          formatNumber(min, '−') +
+          ' sampai ' +
+          formatNumber(max, '−') +
+          ' dengan titik ' +
           urut
             .map(function (f) {
-              return bacaPecahan(f.num, f.den);
+              return bacaPecahanKonteks(f);
             })
             .join(', ')
     ) +
@@ -16641,6 +16675,613 @@ function bindFracShader(root, id, st, save, rerender) {
       });
       var again = document.querySelector('#' + id + ' [data-shader-cell="' + i + '"]');
       if (again) again.focus();
+    });
+  });
+}
+
+/* ============================================================
+   36. PECAHAN: MEMBANDINGKAN & MENGURUTKAN DALAM KONTEKS
+   Dipakai modul membandingkan & mengurutkan bilangan rasional
+   (pecahan) dalam kehidupan sehari-hari (fase-d/mpi-1.4). Memakai
+   ulang seksi 11 (COMPARE_SYMBOLS, compareSymbolId/Text), seksi 15
+   (compareFractions, buildFracNumberLine), seksi 35 (parseTeksPecahan,
+   tulisPecahan, bacaPecahanKonteks, buildPecahanTampil), serta kpk.
+
+   Pecahan boleh ditulis sebagai teks ("3/4", "−1 1/2") atau objek
+   { num, den, whole, neg } seperti seksi 35. Isinya:
+     • pecahanDari / pecahanBiasaBertanda — teks → objek → pecahan biasa
+       bertanda { num, den };
+     • bandingPecahan, simbolBandingPecahan, urutkanPecahan,
+       urutanIdPecahan — perbandingan eksak (perkalian silang) dan
+       pengurutan naik/turun;
+     • STRATEGI_BANDING_PECAHAN — empat strategi "ahli" (penyebut sama,
+       pembilang sama, patokan ½/1, samakan penyebut) yang juga
+       berbentuk peran { id, ikon, nama, tugas } untuk
+       coopRoleAssignment (Jigsaw); strategiBerlaku /
+       strategiBandingPecahan / penjelasanStrategi;
+     • diagnosaBandingPecahan / pesanBandingPecahan — miskonsepsi khas
+       (penyebut besar = besar, pembilang sama = sama, membandingkan
+       angka terpisah, "sama-sama kurang satu bagian", mengabaikan
+       bilangan bulat, mengabaikan tanda negatif);
+     • KATA_BANDING_PECAHAN — kata perbandingan per tema konteks;
+     • garisPecahanRentang — ujung garis bilangan untuk sekumpulan
+       pecahan;
+     • buildKalimatBandingPecahan, buildPilihSimbolPecahan,
+       bindPilihSimbolPecahan — kalimat [a] ☐ [b] dan tombol lambang
+       <, >, = (urutan acak dari State) untuk pecahan.
+   Gaya .cmp-sentence--frac & .strategi-* ada di shared/base.css.
+   ============================================================ */
+
+/* Teks atau objek → objek pecahan { num, den, whole, neg }. */
+function pecahanDari(x) {
+  if (x && typeof x === 'object') return x;
+  var r = parseTeksPecahan(x);
+  if (r.error) throw new Error('Pecahan tidak sah: ' + x);
+  return r.value;
+}
+
+/* Pecahan biasa bertanda: "−1 1/2" → { num: −3, den: 2 }. */
+function pecahanBiasaBertanda(x) {
+  var p = pecahanDari(x);
+  var n = (p.whole || 0) * p.den + p.num;
+  return { num: p.neg ? -n : n, den: p.den };
+}
+
+/* −1 bila a < b, 0 bila a = b, 1 bila a > b (eksak). */
+function bandingPecahan(a, b) {
+  return compareFractions(pecahanBiasaBertanda(a), pecahanBiasaBertanda(b));
+}
+
+/* 'lt' | 'eq' | 'gt' — selaras dengan compareSymbolId seksi 11. */
+function simbolBandingPecahan(a, b) {
+  var c = bandingPecahan(a, b);
+  return c < 0 ? 'lt' : c > 0 ? 'gt' : 'eq';
+}
+
+/* Salinan terurut berupa objek pecahan; arah 'naik' (default) atau 'turun'. */
+function urutkanPecahan(list, arah) {
+  var out = list.map(pecahanDari).sort(bandingPecahan);
+  return arah === 'turun' ? out.reverse() : out;
+}
+
+/* Id item { id, p } dalam urutan nilai naik/turun. */
+function urutanIdPecahan(items, arah) {
+  var out = items.slice().sort(function (x, y) {
+    return bandingPecahan(x.p, y.p);
+  });
+  if (arah === 'turun') out.reverse();
+  return out.map(function (it) {
+    return it.id;
+  });
+}
+
+/* Teks pecahan tebal untuk umpan balik. */
+function teksPecahanTebal(x) {
+  return '<strong>' + esc(tulisPecahan(pecahanDari(x))) + '</strong>';
+}
+
+/* Kalimat "a ☐ b" tebal dengan lambang yang benar. */
+function kalimatBandingPecahan(a, b) {
+  return (
+    teksPecahanTebal(a) +
+    ' <strong>' +
+    esc(compareSymbolText(simbolBandingPecahan(a, b))) +
+    '</strong> ' +
+    teksPecahanTebal(b)
+  );
+}
+
+/*
+ * Strategi membandingkan pecahan. Setiap strategi juga berbentuk peran
+ * { id, ikon, nama, tugas } sehingga bisa dibagikan sebagai kartu ahli
+ * (coopRoleAssignment(anggota, ronde, STRATEGI_BANDING_PECAHAN)).
+ */
+var STRATEGI_BANDING_PECAHAN = [
+  {
+    id: 'penyebutSama',
+    ikon: '🟰',
+    nama: 'Ahli Penyebut Sama',
+    ringkas: 'Penyebut sama → bandingkan pembilangnya',
+    tugas: 'Mengajarkan cara membandingkan pecahan yang penyebutnya sama.',
+    kunci:
+      'Jika penyebutnya sama, ukuran tiap bagian sama. Pecahan dengan pembilang lebih besar bernilai lebih besar.',
+  },
+  {
+    id: 'pembilangSama',
+    ikon: '✂️',
+    nama: 'Ahli Pembilang Sama',
+    ringkas: 'Pembilang sama → penyebut lebih kecil, bagian lebih besar',
+    tugas: 'Mengajarkan cara membandingkan pecahan yang pembilangnya sama.',
+    kunci:
+      'Jika pembilangnya sama, banyak bagiannya sama. Penyebut lebih kecil berarti tiap bagian lebih besar, jadi pecahannya lebih besar.',
+  },
+  {
+    id: 'patokan',
+    ikon: '🎯',
+    nama: 'Ahli Patokan',
+    ringkas: 'Bandingkan dengan patokan 1/2 atau 1',
+    tugas: 'Mengajarkan cara membandingkan pecahan dengan patokan 1/2 dan 1.',
+    kunci:
+      'Bandingkan setiap pecahan dengan patokan 1/2 atau 1. Pecahan yang berada di bawah patokan lebih kecil daripada pecahan di atas patokan.',
+  },
+  {
+    id: 'samakanPenyebut',
+    ikon: '🔁',
+    nama: 'Ahli Samakan Penyebut',
+    ringkas: 'Samakan penyebut dengan KPK, lalu bandingkan pembilangnya',
+    tugas: 'Mengajarkan cara menyamakan penyebut dengan KPK sebelum membandingkan.',
+    kunci:
+      'Ubah kedua pecahan menjadi pecahan senilai berpenyebut KPK, lalu bandingkan pembilangnya. Cara ini selalu berhasil.',
+  },
+];
+
+var STRATEGI_TANDA = {
+  id: 'tanda',
+  ikon: '➖',
+  nama: 'Cek Tanda',
+  ringkas: 'Negatif selalu lebih kecil daripada positif',
+  tugas: 'Memeriksa tanda pecahan lebih dulu.',
+  kunci: 'Pecahan negatif berada di kiri 0, jadi selalu lebih kecil daripada pecahan positif.',
+};
+
+function strategiBandingInfo(id) {
+  if (id === 'tanda') return STRATEGI_TANDA;
+  for (var i = 0; i < STRATEGI_BANDING_PECAHAN.length; i++) {
+    if (STRATEGI_BANDING_PECAHAN[i].id === id) return STRATEGI_BANDING_PECAHAN[i];
+  }
+  return null;
+}
+
+/* Opsi { id, label } strategi ahli untuk diacak (ensureShuffledOrder). */
+function opsiStrategiBanding() {
+  return STRATEGI_BANDING_PECAHAN.map(function (s) {
+    return {
+      id: s.id,
+      label:
+        '<span aria-hidden="true">' +
+        s.ikon +
+        '</span> <strong>' +
+        esc(s.nama) +
+        '</strong> — ' +
+        esc(s.ringkas),
+    };
+  });
+}
+
+/* Besaran (nilai mutlak) pecahan biasa. */
+function besaranPecahan(v) {
+  return { num: Math.abs(v.num), den: v.den };
+}
+
+/*
+ * Patokan kelipatan ½ di antara dua besaran x ≠ y, atau null.
+ * Mengembalikan h dengan patokan = h/2.
+ */
+function patokanSetengah(x, y) {
+  if (compareFractions(x, y) === 0) return null;
+  var lo = compareFractions(x, y) < 0 ? x : y;
+  var hi = lo === x ? y : x;
+  var h = Math.floor((2 * hi.num) / hi.den);
+  return h >= Math.ceil((2 * lo.num) / lo.den) ? h : null;
+}
+
+/* Teks patokan h/2: 1/2, 1, 1 1/2, 2, … */
+function teksPatokan(h) {
+  if (h % 2 === 0) return String(h / 2);
+  return (h > 1 ? (h - 1) / 2 + ' ' : '') + '1/2';
+}
+
+/*
+ * Strategi yang dapat dipakai untuk membandingkan a dan b, terurut dari
+ * yang paling cepat. 'samakanPenyebut' selalu berlaku. Penyebut/pembilang
+ * sama hanya dilihat pada pecahan biasa (bukan campuran) sebagaimana
+ * tertulis; dua pecahan negatif dinilai dari besarannya.
+ */
+function strategiBerlaku(a, b) {
+  var pa = pecahanDari(a);
+  var pb = pecahanDari(b);
+  var va = pecahanBiasaBertanda(pa);
+  var vb = pecahanBiasaBertanda(pb);
+  if (va.num < 0 !== vb.num < 0) return ['tanda', 'samakanPenyebut'];
+  var out = [];
+  var biasa = !pa.whole && !pb.whole;
+  if (biasa && pa.den === pb.den) out.push('penyebutSama');
+  else if (biasa && pa.num === pb.num) out.push('pembilangSama');
+  if (patokanSetengah(besaranPecahan(va), besaranPecahan(vb)) !== null) out.push('patokan');
+  out.push('samakanPenyebut');
+  return out;
+}
+
+function strategiBandingPecahan(a, b) {
+  return strategiBerlaku(a, b)[0];
+}
+
+/* Penyebut disamakan dengan KPK: { kpk, a: {num, den}, b: {num, den} }. */
+function samakanPenyebutPecahan(a, b) {
+  var va = pecahanBiasaBertanda(a);
+  var vb = pecahanBiasaBertanda(b);
+  var k = kpk(va.den, vb.den);
+  return {
+    kpk: k,
+    a: { num: (va.num * k) / va.den, den: k },
+    b: { num: (vb.num * k) / vb.den, den: k },
+  };
+}
+
+/* Penjelasan HTML cara strategi `id` memutuskan perbandingan a dan b. */
+function penjelasanStrategi(id, a, b) {
+  var pa = pecahanDari(a);
+  var pb = pecahanDari(b);
+  var va = pecahanBiasaBertanda(pa);
+  var vb = pecahanBiasaBertanda(pb);
+  var negatif = va.num < 0 && vb.num < 0;
+  var catatanNeg = negatif
+    ? ' Karena keduanya negatif, yang besarannya lebih besar justru letaknya lebih kiri — lebih kecil.'
+    : '';
+  var jadi = ' Jadi ' + kalimatBandingPecahan(a, b) + '.';
+  if (id === 'tanda') {
+    return (
+      'Satu pecahan negatif dan satu tidak. Pecahan negatif berada di kiri 0, jadi selalu lebih kecil.' +
+      jadi
+    );
+  }
+  if (id === 'penyebutSama') {
+    return (
+      'Penyebutnya sama (' +
+      pa.den +
+      '), jadi ukuran tiap bagian sama. Cukup bandingkan pembilangnya: ' +
+      pa.num +
+      ' dan ' +
+      pb.num +
+      '.' +
+      catatanNeg +
+      jadi
+    );
+  }
+  if (id === 'pembilangSama') {
+    return (
+      'Pembilangnya sama (' +
+      pa.num +
+      ' bagian). Penyebut lebih kecil berarti satu utuh dibagi lebih sedikit, sehingga tiap bagian lebih besar.' +
+      catatanNeg +
+      jadi
+    );
+  }
+  if (id === 'patokan') {
+    var x = besaranPecahan(va);
+    var y = besaranPecahan(vb);
+    var h = patokanSetengah(x, y);
+    if (h === null) return penjelasanStrategi('samakanPenyebut', a, b);
+    var m = { num: h, den: 2 };
+    var rel = function (v) {
+      return { '-1': 'kurang dari', 0: 'sama dengan', 1: 'lebih dari' }[compareFractions(v, m)];
+    };
+    return (
+      'Pakai patokan <strong>' +
+      teksPatokan(h) +
+      '</strong>: ' +
+      (negatif ? 'besaran ' : '') +
+      teksPecahanTebal(pa.neg ? Object.assign({}, pa, { neg: false }) : pa) +
+      ' ' +
+      rel(x) +
+      ' ' +
+      teksPatokan(h) +
+      ', sedangkan ' +
+      teksPecahanTebal(pb.neg ? Object.assign({}, pb, { neg: false }) : pb) +
+      ' ' +
+      rel(y) +
+      ' ' +
+      teksPatokan(h) +
+      '.' +
+      catatanNeg +
+      jadi
+    );
+  }
+  var s = samakanPenyebutPecahan(a, b);
+  return (
+    'KPK dari ' +
+    va.den +
+    ' dan ' +
+    vb.den +
+    ' adalah ' +
+    s.kpk +
+    '. ' +
+    teksPecahanTebal(a) +
+    ' = ' +
+    esc(formatNumber(s.a.num, '−')) +
+    '/' +
+    s.kpk +
+    ' dan ' +
+    teksPecahanTebal(b) +
+    ' = ' +
+    esc(formatNumber(s.b.num, '−')) +
+    '/' +
+    s.kpk +
+    '. Bandingkan pembilangnya: ' +
+    esc(formatNumber(s.a.num, '−')) +
+    ' dan ' +
+    esc(formatNumber(s.b.num, '−')) +
+    '.' +
+    jadi
+  );
+}
+
+/*
+ * Diagnosa lambang pilihan murid untuk kalimat a ☐ b:
+ *   'benar'            lambang tepat
+ *   'abaikanTanda'     cocok dengan membandingkan besarannya saja
+ *                      (−3/4 > −1/2 karena 3/4 > 1/2)
+ *   'selisihSisa'      memilih = karena "sama-sama kurang k bagian"
+ *                      (3/4 = 5/6)
+ *   'abaikanBulat'     cocok dengan membandingkan bagian pecahannya saja
+ *                      (1 1/4 < 3/4 karena 1/4 < 3/4)
+ *   'bandingAngka'     cocok dengan membandingkan pembilang DAN penyebut
+ *                      sebagai bilangan bulat (3/8 > 2/5 karena 3 > 2, 8 > 5)
+ *   'penyebutBesar'    menganggap penyebut lebih besar = pecahan lebih
+ *                      besar (1/3 > 1/2 karena 3 > 2)
+ *   'bandingPembilang' memilih = karena pembilangnya sama (2/5 = 2/7)
+ *   'terbalik'         kesalahan arah lainnya
+ */
+function diagnosaBandingPecahan(a, b, symbolId) {
+  if (symbolId === simbolBandingPecahan(a, b)) return 'benar';
+  var pa = pecahanDari(a);
+  var pb = pecahanDari(b);
+  var va = pecahanBiasaBertanda(pa);
+  var vb = pecahanBiasaBertanda(pb);
+  if (va.num < 0 || vb.num < 0) {
+    var abs = compareFractions(besaranPecahan(va), besaranPecahan(vb));
+    return symbolId === (abs < 0 ? 'lt' : abs > 0 ? 'gt' : 'eq') ? 'abaikanTanda' : 'terbalik';
+  }
+  var biasa = !pa.whole && !pb.whole;
+  if (
+    symbolId === 'eq' &&
+    biasa &&
+    pa.num < pa.den &&
+    pb.num < pb.den &&
+    pa.den - pa.num === pb.den - pb.num
+  ) {
+    return 'selisihSisa';
+  }
+  if (!biasa) {
+    var bag = compareFractions(pa, pb);
+    if (symbolId === (bag < 0 ? 'lt' : bag > 0 ? 'gt' : 'eq')) return 'abaikanBulat';
+    return 'terbalik';
+  }
+  if (pa.den !== pb.den) {
+    var symDen = compareSymbolId(pa.den, pb.den);
+    var symNum = compareSymbolId(pa.num, pb.num);
+    if (symbolId === symDen && symbolId === symNum) return 'bandingAngka';
+    if (symbolId === symDen) return 'penyebutBesar';
+    if (symbolId === symNum) return 'bandingPembilang';
+  }
+  return 'terbalik';
+}
+
+/* Umpan balik HTML untuk hasil diagnosaBandingPecahan. */
+function pesanBandingPecahan(diag, a, b) {
+  var pa = pecahanDari(a);
+  var pb = pecahanDari(b);
+  if (diag === 'benar') {
+    return '<strong>Tepat!</strong> ' + penjelasanStrategi(strategiBandingPecahan(a, b), a, b);
+  }
+  if (diag === 'abaikanTanda') {
+    return 'Perhatikan tanda negatifnya! Kamu seperti membandingkan besarannya saja. Pada garis bilangan, pecahan negatif yang besarannya lebih besar letaknya <strong>lebih kiri</strong>, jadi nilainya lebih kecil. Coba lagi.';
+  }
+  if (diag === 'selisihSisa') {
+    return (
+      'Keduanya memang sama-sama kurang ' +
+      (pa.den - pa.num) +
+      ' bagian dari 1 utuh, tetapi <strong>ukuran bagiannya berbeda</strong>: 1/' +
+      pa.den +
+      ' dan 1/' +
+      pb.den +
+      ' tidak sama besar. Bagian yang kurang lebih kecil berarti pecahannya lebih dekat ke 1. Coba lagi.'
+    );
+  }
+  if (diag === 'abaikanBulat') {
+    return 'Jangan lupakan <strong>bilangan bulat</strong> pada pecahan campuran! Bandingkan bilangan bulatnya lebih dulu; bagian pecahannya baru dilihat bila bilangan bulatnya sama. Coba lagi.';
+  }
+  if (diag === 'bandingAngka') {
+    return 'Sepertinya kamu membandingkan pembilang dengan pembilang dan penyebut dengan penyebut seperti bilangan bulat biasa. Pecahan adalah <strong>satu bilangan</strong>: samakan penyebutnya atau pakai patokan 1/2. Coba lagi.';
+  }
+  if (diag === 'penyebutBesar') {
+    return 'Hati-hati: penyebut lebih besar berarti satu utuh dibagi menjadi <strong>lebih banyak</strong> bagian, sehingga tiap bagian justru <strong>lebih kecil</strong>. Coba lagi.';
+  }
+  if (diag === 'bandingPembilang') {
+    return (
+      'Pembilangnya sama (' +
+      pa.num +
+      ' bagian), tetapi ukuran bagiannya berbeda karena penyebutnya berbeda (' +
+      pa.den +
+      ' dan ' +
+      pb.den +
+      '). Mana yang bagiannya lebih besar? Coba lagi.'
+    );
+  }
+  return (
+    'Belum tepat. Pilih strategi yang cocok — samakan penyebut dengan KPK selalu berhasil — lalu periksa lagi ' +
+    teksPecahanTebal(pa) +
+    ' dan ' +
+    teksPecahanTebal(pb) +
+    '.'
+  );
+}
+
+/*
+ * Kata perbandingan per tema konteks pecahan. `kecil` menjelaskan
+ * pecahan yang lebih kecil. Tema tinggi memakai `bawah` bila kedua
+ * pecahan berada di atau di bawah permukaan (lebih dalam/dangkal).
+ */
+var KATA_BANDING_PECAHAN = {
+  banyak: {
+    ikon: '🥣',
+    kecil: 'lebih sedikit',
+    besar: 'lebih banyak',
+    sama: 'sama banyaknya',
+    terkecil: 'paling sedikit',
+    terbesar: 'paling banyak',
+  },
+  panjang: {
+    ikon: '🎀',
+    kecil: 'lebih pendek',
+    besar: 'lebih panjang',
+    sama: 'sama panjangnya',
+    terkecil: 'paling pendek',
+    terbesar: 'paling panjang',
+  },
+  jarak: {
+    ikon: '🚶',
+    kecil: 'lebih dekat',
+    besar: 'lebih jauh',
+    sama: 'sama jauhnya',
+    terkecil: 'paling dekat',
+    terbesar: 'paling jauh',
+  },
+  waktu: {
+    ikon: '⏱️',
+    kecil: 'lebih singkat',
+    besar: 'lebih lama',
+    sama: 'sama lamanya',
+    terkecil: 'paling singkat',
+    terbesar: 'paling lama',
+  },
+  berat: {
+    ikon: '⚖️',
+    kecil: 'lebih ringan',
+    besar: 'lebih berat',
+    sama: 'sama beratnya',
+    terkecil: 'paling ringan',
+    terbesar: 'paling berat',
+  },
+  tinggi: {
+    ikon: '🌊',
+    kecil: 'lebih rendah',
+    besar: 'lebih tinggi',
+    sama: 'sama tingginya',
+    terkecil: 'paling rendah',
+    terbesar: 'paling tinggi',
+    bawah: {
+      ikon: '🌊',
+      kecil: 'lebih dalam',
+      besar: 'lebih dangkal',
+      sama: 'sama dalamnya',
+      terkecil: 'paling dalam',
+      terbesar: 'paling dangkal',
+    },
+  },
+};
+
+/* 'kecil' bila a < b, 'besar' bila a > b, 'sama' bila a = b. */
+function idMaknaBandingPecahan(a, b) {
+  var c = bandingPecahan(a, b);
+  return c < 0 ? 'kecil' : c > 0 ? 'besar' : 'sama';
+}
+
+/* Kamus kata untuk pasangan (a, b) pada tema tertentu. */
+function kataBandingPecahanUntuk(tema, a, b) {
+  var K = KATA_BANDING_PECAHAN[tema] || KATA_BANDING_PECAHAN.banyak;
+  if (K.bawah && pecahanBiasaBertanda(a).num <= 0 && pecahanBiasaBertanda(b).num <= 0)
+    return K.bawah;
+  return K;
+}
+
+/* Frasa makna a terhadap b, mis. ('3/4', '2/3', 'banyak') → 'lebih banyak'. */
+function maknaBandingPecahan(a, b, tema) {
+  return kataBandingPecahanUntuk(tema, a, b)[idMaknaBandingPecahan(a, b)];
+}
+
+/* Opsi { id, label } kecil/besar/sama untuk diacak (ensureShuffledOrder). */
+function opsiMaknaBandingPecahan(tema, a, b) {
+  var K = kataBandingPecahanUntuk(tema, a, b);
+  return [
+    { id: 'kecil', label: K.kecil },
+    { id: 'besar', label: K.besar },
+    { id: 'sama', label: K.sama },
+  ];
+}
+
+/* Ujung garis bilangan { min, max } (bilangan bulat, memuat 0) untuk sekumpulan pecahan. */
+function garisPecahanRentang(list) {
+  var lo = 0;
+  var hi = 0;
+  list.forEach(function (x) {
+    var v = pecahanBiasaBertanda(x);
+    lo = Math.min(lo, Math.floor(v.num / v.den));
+    hi = Math.max(hi, Math.ceil(v.num / v.den));
+  });
+  if (hi === lo) hi = lo + 1;
+  return { min: lo, max: hi };
+}
+
+var KATA_SIMBOL = { lt: 'kurang dari', gt: 'lebih dari', eq: 'sama dengan' };
+
+/* Kalimat perbandingan besar: [a] ☐ [b] untuk pecahan. `symbolId` null → '?'. */
+function buildKalimatBandingPecahan(a, b, symbolId) {
+  var pa = pecahanDari(a);
+  var pb = pecahanDari(b);
+  return (
+    '<div class="cmp-sentence cmp-sentence--frac" aria-label="' +
+    esc(
+      bacaPecahanKonteks(pa) +
+        ' ' +
+        (symbolId ? KATA_SIMBOL[symbolId] : 'kotak kosong') +
+        ' ' +
+        bacaPecahanKonteks(pb)
+    ) +
+    '">' +
+    '<span class="cmp-sentence__frac">' +
+    buildPecahanTampil(pa, 'large') +
+    '</span>' +
+    '<span class="cmp-sentence__sym' +
+    (symbolId ? ' is-filled' : '') +
+    '">' +
+    esc(symbolId ? compareSymbolText(symbolId) : '?') +
+    '</span>' +
+    '<span class="cmp-sentence__frac">' +
+    buildPecahanTampil(pb, 'large') +
+    '</span>' +
+    '</div>'
+  );
+}
+
+/*
+ * Tombol lambang <, >, = untuk pecahan yang boleh dicoba lagi sampai
+ * benar, lalu terkunci. `order` = urutan acak id COMPARE_SYMBOLS dari State.
+ *   st  { chosen, wrong }
+ *   opts.group  nilai data-group pembeda antarsoal
+ */
+function buildPilihSimbolPecahan(a, b, order, st, opts) {
+  opts = opts || {};
+  var benarId = simbolBandingPecahan(a, b);
+  var benar = st.chosen === benarId;
+  return (
+    '<div class="cmp-symbols">' +
+    buildChoiceGroup(COMPARE_SYMBOLS, order, {
+      chosen: st.chosen,
+      correctId: benar ? benarId : null,
+      grade: true,
+      locked: benar,
+      group: opts.group || 'frac-cmp',
+      attr: 'data-frac-sym',
+    }) +
+    '</div>'
+  );
+}
+
+/* Memasang event buildPilihSimbolPecahan; pasangan & state dicari lewat group. */
+function bindPilihSimbolPecahan(root, getPair, getState, save, rerender) {
+  root.querySelectorAll('[data-frac-sym]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var group = btn.dataset.group;
+      var pair = getPair(group);
+      var st = getState(group);
+      if (!pair || !st) return;
+      var benarId = simbolBandingPecahan(pair[0], pair[1]);
+      if (st.chosen === benarId) return;
+      st.chosen = btn.dataset.fracSym;
+      if (st.chosen !== benarId) st.wrong = (st.wrong || 0) + 1;
+      save();
+      rerender();
     });
   });
 }

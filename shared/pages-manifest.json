@@ -23,6 +23,14 @@
     "stageCount": 10,
     "extraBody": "partials/reset-modal.html"
   },
+  "fase-d/mpi-1.4": {
+    "title": "Membandingkan & Mengurutkan Pecahan dalam Kehidupan Sehari-hari — Matematika Fase D",
+    "description": "Media pembelajaran interaktif berbasis Cooperative Learning tipe Jigsaw untuk membandingkan dan mengurutkan bilangan rasional (pecahan) — pecahan biasa, campuran, dan negatif — dalam konteks kehidupan sehari-hari: martabak, resep, pita, jarak, waktu, dan permukaan air, melalui kartu ahli empat strategi (penyebut sama, pembilang sama, patokan ½, samakan penyebut), misi tim, kuis individu, dan penghargaan tim.",
+    "kicker": "Matematika — Fase D (SMP)",
+    "h1": "Membandingkan & Mengurutkan Pecahan dalam Kehidupan Sehari-hari",
+    "stageCount": 11,
+    "extraBody": "partials/reset-modal.html"
+  },
   "fase-f/mpi-1.1": {
     "title": "Konsep Barisan Aritmetika & Beda — Matematika Fase F",
     "description": "Media pembelajaran interaktif berbasis Inquiry Learning untuk mengidentifikasi dan menjelaskan konsep barisan aritmetika serta menentukan beda dari suatu barisan bilangan.",
