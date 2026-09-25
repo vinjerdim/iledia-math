@@ -8541,3 +8541,37 @@ button.pwr-anatomy__part:disabled {
     padding: 6px 4px;
   }
 }
+
+/* =========================================================================
+   Bilangan terpadu — bulat, pecahan & desimal (engine seksi 38)
+   (buildBilanganChip, buildTabelBentukTerpadu)
+   ========================================================================= */
+
+.num-chip--frac {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  vertical-align: middle;
+}
+
+.num-chip--frac .frac-mixed {
+  font-family: var(--font-sans, inherit);
+}
+
+.num-chip__sign {
+  font-weight: 700;
+}
+
+.bentuk-tabel td,
+.bentuk-tabel th {
+  white-space: nowrap;
+}
+
+@media (max-width: 480px) {
+  .bentuk-tabel th,
+  .bentuk-tabel td {
+    padding: var(--space-1) var(--space-2);
+    font-size: 0.85rem;
+  }
+}

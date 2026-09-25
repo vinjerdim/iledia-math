@@ -95,6 +95,11 @@
        & membandingkan (pemeriksa cara baca & tulis berdiagnosa, opsi
        cara baca & notasi teracak, langkah isian desimal, kata
        perbandingan per tema, tombol lambang desimal berdiagnosa)
+   38. Bilangan terpadu: membandingkan bulat, pecahan & desimal
+       (nilai eksak lintas bentuk, ubah bentuk pecahan ↔ desimal,
+       opsi bentuk setara berdiagnosa, diagnosa lambang lintas bentuk,
+       kata perbandingan per tema, isian berbentuk, tabel bentuk setara,
+       garis bilangan berlangkah 1/n & penempatan)
    ============================================================ */
 
 /* ============================================================
@@ -17786,5 +17791,952 @@ function bindPilihSimbolDesimal(root, getPair, getState, save, rerender) {
       save();
       rerender();
     });
+  });
+}
+
+/* ============================================================
+   38. BILANGAN TERPADU — MEMBANDINGKAN BULAT, PECAHAN & DESIMAL
+   Dipakai modul fase-d/mpi-1.6 (membandingkan bilangan bulat,
+   pecahan, dan desimal secara terpadu dalam masalah kontekstual).
+   Bilangan ditulis sebagai STRING dalam bentuk aslinya — bulat
+   ("-18"), pecahan ("3/4", "-1 1/4"), atau desimal berkoma ("-2,5").
+   Tanda − tipografis, "-", dan titik desimal juga diterima.
+   Isinya:
+     • jenisBilangan / nilaiTerpadu / tulisTerpadu — bentuk, nilai
+       eksak { num, den } (paling sederhana), dan notasi baku;
+     • bandingTerpadu / simbolBandingTerpadu / urutkanTerpadu /
+       urutanIdTerpadu — perbandingan eksak lintas bentuk;
+     • keDesimalTerpadu / kePecahanTerpadu / penyebutPersepuluhan —
+       mengubah bentuk (pecahan berpenyebut 10, 100, 1000 …);
+     • opsiBentukSetara — pilihan bentuk setara (benar + pengecoh
+       khas: angka dipisah koma, tanda hilang, penyebut salah, …);
+     • diagnosaBandingTerpadu / pesanDiagnosaTerpadu /
+       alasanBandingTerpadu — miskonsepsi saat memilih lambang dan
+       alasan baku;
+     • KATA_BANDING_TERPADU — kata perbandingan per tema konteks;
+     • periksaIsianTerpadu — memeriksa isian bilangan dalam bentuk
+       yang diminta;
+     • buildBilanganChip, buildKalimatBandingTerpadu,
+       buildPilihSimbolTerpadu, buildTabelBentukTerpadu — tampilan;
+     • buildGarisTerpadu / buildPenempatanTerpadu — garis bilangan
+       berlangkah 1/n untuk menempatkan bilangan campuran bentuk.
+   Gaya .num-chip--frac & .bentuk-tabel ada di shared/base.css.
+   ============================================================ */
+
+/* Menormalkan tanda minus & spasi. */
+function normalTerpadu(str) {
+  return String(str == null ? '' : str)
+    .trim()
+    .replace(/[−–]/g, '-')
+    .replace(/\s+/g, ' ');
+}
+
+/* Mengurai string → { jenis, num, den } (belum disederhanakan) atau null. */
+function uraiTerpadu(str) {
+  var s = normalTerpadu(str);
+  if (!s) return null;
+  var m = /^([+-])?(\d+)$/.exec(s);
+  if (m) {
+    return { jenis: 'bulat', num: (m[1] === '-' ? -1 : 1) * parseInt(m[2], 10), den: 1 };
+  }
+  m = /^([+-])?(\d+)[.,](\d+)$/.exec(s);
+  if (m) {
+    var den = Math.pow(10, m[3].length);
+    var n = parseInt(m[2], 10) * den + parseInt(m[3], 10);
+    return { jenis: 'desimal', num: m[1] === '-' ? -n : n, den: den, digits: m };
+  }
+  var r = parseTeksPecahan(s);
+  if (r.error) return null;
+  var b = pecahanBiasaBertanda(r.value);
+  return { jenis: 'pecahan', num: b.num, den: b.den, p: r.value };
+}
+
+/* 'bulat' | 'pecahan' | 'desimal' | null. */
+function jenisBilangan(str) {
+  var u = uraiTerpadu(str);
+  return u ? u.jenis : null;
+}
+
+/* Nilai eksak paling sederhana { num, den } (den > 0) atau null. */
+function nilaiTerpadu(str) {
+  var u = uraiTerpadu(str);
+  if (!u) return null;
+  if (u.num === 0) return { num: 0, den: 1 };
+  var g = gcd(u.num, u.den);
+  return { num: u.num / g, den: u.den / g };
+}
+
+/* Notasi baku bentuk aslinya dengan minus tipografis. */
+function tulisTerpadu(str) {
+  var u = uraiTerpadu(str);
+  if (!u) return String(str);
+  if (u.jenis === 'bulat') return formatNumber(u.num, '−');
+  if (u.jenis === 'pecahan') {
+    var p = u.p;
+    return tulisPecahan({ num: p.num, den: p.den, whole: p.whole, neg: p.neg && u.num !== 0 });
+  }
+  var d = u.digits;
+  return (d[1] === '-' && u.num !== 0 ? '−' : '') + parseInt(d[2], 10) + ',' + d[3];
+}
+
+/* −1 bila a < b, 0 bila sama, 1 bila a > b; null bila tidak valid. */
+function bandingTerpadu(a, b) {
+  var x = nilaiTerpadu(a);
+  var y = nilaiTerpadu(b);
+  if (!x || !y) return null;
+  return compareFractions(x, y);
+}
+
+/* 'lt' | 'eq' | 'gt' — selaras dengan COMPARE_SYMBOLS. */
+function simbolBandingTerpadu(a, b) {
+  var c = bandingTerpadu(a, b);
+  if (c === null) return null;
+  return c < 0 ? 'lt' : c > 0 ? 'gt' : 'eq';
+}
+
+/* Salinan terurut; arah 'naik' (default) atau 'turun'. */
+function urutkanTerpadu(list, arah) {
+  var out = list.slice().sort(bandingTerpadu);
+  return arah === 'turun' ? out.reverse() : out;
+}
+
+/* Id item { id, nilai } dalam urutan nilai naik/turun. */
+function urutanIdTerpadu(items, arah) {
+  var out = items.slice().sort(function (x, y) {
+    return bandingTerpadu(x.nilai, y.nilai);
+  });
+  if (arah === 'turun') out.reverse();
+  return out.map(function (it) {
+    return it.id;
+  });
+}
+
+/* Banyak angka di belakang koma agar penyebut den menjadi 10^k; null bila tidak bisa. */
+function pangkatSepuluhUntuk(den) {
+  var a = 0;
+  var b = 0;
+  while (den % 2 === 0) {
+    den /= 2;
+    a += 1;
+  }
+  while (den % 5 === 0) {
+    den /= 5;
+    b += 1;
+  }
+  return den === 1 ? Math.max(a, b) : null;
+}
+
+/* Teks desimal berkoma dari nilai { num, den } yang penyebutnya membagi 10^k. */
+function teksDesimalNilai(v, k) {
+  var sign = v.num < 0 ? '−' : '';
+  var skala = Math.pow(10, k);
+  var n = (Math.abs(v.num) * skala) / v.den;
+  var bulat = Math.floor(n / skala);
+  if (!k) return sign + bulat;
+  var sisa = String(n - bulat * skala);
+  while (sisa.length < k) sisa = '0' + sisa;
+  sisa = sisa.replace(/0+$/, '');
+  return sign + bulat + (sisa ? ',' + sisa : '');
+}
+
+/* Bentuk desimal (berhenti) atau null bila desimalnya berulang. */
+function keDesimalTerpadu(str) {
+  var v = nilaiTerpadu(str);
+  if (!v) return null;
+  var k = pangkatSepuluhUntuk(v.den);
+  if (k === null) return null;
+  return teksDesimalNilai(v, k);
+}
+
+/* Teks pecahan paling sederhana dari nilai { num, den } (campuran bila |nilai| > 1). */
+function teksPecahanNilai(v) {
+  var sign = v.num < 0 ? '−' : '';
+  var n = Math.abs(v.num);
+  if (v.den === 1) return sign + n;
+  var w = Math.floor(n / v.den);
+  var r = n - w * v.den;
+  return sign + (w ? w + ' ' : '') + r + '/' + v.den;
+}
+
+/* Bentuk pecahan paling sederhana: "−2,5" → "−2 1/2", "0,75" → "3/4". */
+function kePecahanTerpadu(str) {
+  var v = nilaiTerpadu(str);
+  return v ? teksPecahanNilai(v) : null;
+}
+
+/*
+ * Langkah antara pecahan → desimal: penyebut dijadikan 10, 100, 1000 …
+ * "3/4" → "75/100", "−1 1/4" → "−1 25/100". null bila tidak bisa.
+ */
+function penyebutPersepuluhan(str) {
+  var v = nilaiTerpadu(str);
+  if (!v) return null;
+  var k = pangkatSepuluhUntuk(v.den);
+  if (k === null) return null;
+  var d = Math.pow(10, Math.max(k, 1));
+  var n = Math.abs(v.num);
+  var w = Math.floor(n / v.den);
+  var r = n - w * v.den;
+  return (v.num < 0 ? '−' : '') + (w ? w + ' ' : '') + (r * d) / v.den + '/' + d;
+}
+
+var UMPAN_BENTUK = {
+  baku: function (s, hasil) {
+    return (
+      'Tepat! ' +
+      tulisTerpadu(s) +
+      ' = ' +
+      hasil +
+      (jenisBilangan(s) === 'pecahan' && penyebutPersepuluhan(s)
+        ? ' (karena ' + tulisTerpadu(s) + ' = ' + penyebutPersepuluhan(s) + ').'
+        : '. Nilainya sama, hanya bentuknya berbeda.')
+    );
+  },
+  tanda: function (s) {
+    return (
+      'Angkanya sudah benar, tetapi tandanya hilang. ' +
+      tulisTerpadu(s) +
+      ' bilangan negatif, jadi bentuk setaranya juga harus bertanda −.'
+    );
+  },
+  'angka-koma': function () {
+    return 'Garis pecahan bukan tanda koma. Pecahan berarti pembilang DIBAGI penyebut — jadikan penyebutnya 10, 100, atau 1000 lebih dulu.';
+  },
+  'nol-koma': function () {
+    return 'Pembilang dan penyebut tidak boleh ditulis berjajar di belakang koma. Ubah dulu penyebutnya menjadi 10, 100, atau 1000.';
+  },
+  penyebut: function () {
+    return 'Angka di belakang koma bukan penyebutnya. Cari pecahan senilai yang penyebutnya 10, 100, atau 1000.';
+  },
+  pembilang: function () {
+    return 'Pembilang saja belum cukup; penyebutnya menentukan nilai tempat. Samakan dulu penyebutnya menjadi 10, 100, atau 1000.';
+  },
+  'angka-pisah': function () {
+    return 'Tanda koma bukan garis pecahan. Angka di belakang koma menunjukkan persepuluhan, perseratusan, dst. — itulah penyebutnya.';
+  },
+  'penyebut-salah': function (s) {
+    var u = uraiTerpadu(s);
+    var k = u && u.digits ? u.digits[3].length : 1;
+    return (
+      'Penyebutnya belum tepat. ' +
+      tulisTerpadu(s) +
+      ' punya ' +
+      k +
+      ' angka di belakang koma, jadi penyebutnya ' +
+      Math.pow(10, k) +
+      ', bukan yang lain.'
+    );
+  },
+  terbalik: function () {
+    return 'Pecahannya terbalik: pembilang dan penyebut tertukar sehingga nilainya berubah jauh.';
+  },
+  'penyebut-bulat': function () {
+    return 'Bagian bulat dan bagian desimal tertukar tempat. Bagian desimal menunjukkan persepuluhan/perseratusan dari satu utuh.';
+  },
+  'koma-geser': function () {
+    return 'Letak komanya bergeser. Bilangan bulat tidak berubah nilainya bila ditulis dengan ,0 di belakangnya.';
+  },
+};
+
+/*
+ * Pilihan bentuk setara (urutan wajar; acak di app):
+ *   pecahan → desimal, desimal → pecahan, bulat → desimal ",0".
+ * Setiap opsi { id, label, benar, umpan } — id 'baku' untuk yang benar.
+ */
+function opsiBentukSetara(str) {
+  var u = uraiTerpadu(str);
+  if (!u) return [];
+  var v = nilaiTerpadu(str);
+  var neg = v.num < 0;
+  var sg = neg ? '−' : '';
+  var benar;
+  var calon = [];
+  if (u.jenis === 'pecahan') {
+    benar = keDesimalTerpadu(str);
+    var p = u.p;
+    var w = p.whole || 0;
+    if (neg) calon.push(['tanda', benar.replace('−', '')]);
+    calon.push(['angka-koma', sg + (w ? w + ',' + p.num + p.den : p.num + ',' + p.den)]);
+    calon.push(['nol-koma', sg + w + ',' + p.num + p.den]);
+    calon.push(['penyebut', sg + w + ',' + p.den]);
+    calon.push(['pembilang', sg + w + ',' + p.num]);
+  } else if (u.jenis === 'desimal') {
+    benar = kePecahanTerpadu(str);
+    var bulat = String(parseInt(u.digits[2], 10));
+    var pec = u.digits[3];
+    var kk = pec.length;
+    var D = Math.abs(u.num);
+    if (neg) calon.push(['tanda', benar.replace('−', '')]);
+    if (bulat !== '0') calon.push(['angka-pisah', sg + bulat + '/' + parseInt(pec, 10)]);
+    else if (pec.length >= 2) calon.push(['angka-pisah', sg + pec.charAt(0) + '/' + pec.slice(1)]);
+    else calon.push(['angka-pisah', sg + '1/' + pec]);
+    calon.push(['penyebut-salah', sg + D + '/' + (kk === 1 ? 100 : 10)]);
+    calon.push(['terbalik', sg + Math.abs(v.den) + '/' + Math.abs(v.num)]);
+    calon.push([
+      'penyebut-salah',
+      sg + (bulat !== '0' ? bulat + ' ' : '') + parseInt(pec, 10) + '/' + Math.pow(10, kk + 1),
+    ]);
+  } else {
+    var n = Math.abs(v.num);
+    benar = sg + n + ',0';
+    if (neg) calon.push(['tanda', n + ',0']);
+    calon.push(['koma-geser', sg + '0,' + n]);
+    calon.push(['terbalik', sg + '1/' + n]);
+    calon.push(['koma-geser', sg + n + '0,0']);
+  }
+  var opsi = [{ id: 'baku', label: benar, benar: true, umpan: UMPAN_BENTUK.baku(str, benar) }];
+  var sudah = {};
+  sudah[benar] = true;
+  calon.forEach(function (c) {
+    if (opsi.length >= 4) return;
+    var label = c[1];
+    if (sudah[label] || !nilaiTerpadu(label)) return;
+    if (bandingTerpadu(label, str) === 0) return;
+    sudah[label] = true;
+    opsi.push({
+      id: c[0] + '-' + opsi.length,
+      label: label,
+      benar: false,
+      umpan: UMPAN_BENTUK[c[0]](str),
+    });
+  });
+  return opsi;
+}
+
+/* "Angka yang tampak" (tanpa memikirkan nilai tempat) untuk diagnosa. */
+function angkaTampakTerpadu(str) {
+  var u = uraiTerpadu(str);
+  if (!u) return null;
+  if (u.jenis === 'pecahan') return u.p.whole ? null : u.p.num;
+  if (u.jenis === 'desimal')
+    return parseInt(u.digits[2], 10) === 0 ? parseInt(u.digits[3], 10) : null;
+  return null;
+}
+
+/*
+ * Diagnosa lambang yang dipilih murid untuk a ☐ b:
+ *   null               benar
+ *   'abaikan-negatif'  membandingkan angkanya saja tanpa memikirkan tanda −
+ *   'beda-bentuk'      nilainya sama tetapi dianggap berbeda karena bentuknya lain
+ *   'penyebut-besar'   penyebut lebih besar dianggap pecahan lebih besar
+ *   'angka-lepas'      angka yang tampak dibandingkan langsung (25 vs 1)
+ *   'lain'
+ */
+function diagnosaBandingTerpadu(a, b, symbolId) {
+  var benar = simbolBandingTerpadu(a, b);
+  if (benar === null || symbolId === benar) return null;
+  var x = nilaiTerpadu(a);
+  var y = nilaiTerpadu(b);
+  if (x.num < 0 || y.num < 0) {
+    var c = compareFractions(
+      { num: Math.abs(x.num), den: x.den },
+      { num: Math.abs(y.num), den: y.den }
+    );
+    var mutlak = c < 0 ? 'lt' : c > 0 ? 'gt' : 'eq';
+    if (symbolId === mutlak) return 'abaikan-negatif';
+  }
+  if (benar === 'eq' && jenisBilangan(a) !== jenisBilangan(b)) return 'beda-bentuk';
+  if (jenisBilangan(a) === 'pecahan' && jenisBilangan(b) === 'pecahan') {
+    var pa = uraiTerpadu(a).p;
+    var pb = uraiTerpadu(b).p;
+    if (pa.den !== pb.den && symbolId === compareSymbolId(pa.den, pb.den)) return 'penyebut-besar';
+  }
+  if (jenisBilangan(a) !== jenisBilangan(b)) {
+    var ta = angkaTampakTerpadu(a);
+    var tb = angkaTampakTerpadu(b);
+    if (ta !== null && tb !== null && symbolId === compareSymbolId(ta, tb)) return 'angka-lepas';
+  }
+  return 'lain';
+}
+
+function pesanDiagnosaTerpadu(kode, a, b) {
+  var A = tulisTerpadu(a);
+  var B = tulisTerpadu(b);
+  switch (kode) {
+    case 'abaikan-negatif':
+      return (
+        'Kamu membandingkan angkanya saja tanpa tanda. Untuk bilangan negatif, yang angkanya lebih besar justru letaknya lebih jauh di kiri 0 — jadi lebih KECIL. Bayangkan ' +
+        A +
+        ' dan ' +
+        B +
+        ' pada garis bilangan.'
+      );
+    case 'beda-bentuk':
+      return (
+        'Bentuknya memang berbeda, tetapi coba ubah ke bentuk yang sama. Apakah ' +
+        A +
+        ' dan ' +
+        B +
+        ' ternyata bernilai sama?'
+      );
+    case 'penyebut-besar':
+      return 'Penyebut yang lebih besar berarti satu utuh dipotong lebih banyak, sehingga tiap potongnya lebih KECIL. Samakan penyebutnya dulu, lalu bandingkan.';
+    case 'angka-lepas':
+      return (
+        'Angka yang tampak tidak bisa dibandingkan langsung karena ' +
+        A +
+        ' dan ' +
+        B +
+        ' bentuknya berbeda. Ubah dulu keduanya ke bentuk yang sama (misalnya desimal), baru bandingkan.'
+      );
+    default:
+      return 'Belum tepat. Ubah kedua bilangan ke bentuk yang sama, lalu bayangkan letaknya pada garis bilangan: yang lebih kanan lebih besar.';
+  }
+}
+
+/* Kalimat alasan baku "a ☐ b" (teks biasa, tanpa HTML). */
+function alasanBandingTerpadu(a, b) {
+  var A = tulisTerpadu(a);
+  var B = tulisTerpadu(b);
+  var sym = compareSymbolText(simbolBandingTerpadu(a, b));
+  var simpul = ', jadi ' + A + ' ' + sym + ' ' + B + '.';
+  var x = nilaiTerpadu(a);
+  var y = nilaiTerpadu(b);
+  if ((x.num < 0 && y.num >= 0) || (y.num < 0 && x.num >= 0)) {
+    var negS = x.num < 0 ? A : B;
+    var posS = x.num < 0 ? B : A;
+    return (
+      negS +
+      ' bilangan negatif (di kiri 0), sedangkan ' +
+      posS +
+      (nilaiTerpadu(posS).num === 0 ? ' adalah nol' : ' positif') +
+      '. Bilangan negatif selalu lebih kecil' +
+      simpul
+    );
+  }
+  var catatanNeg =
+    x.num < 0 && y.num < 0 ? ' Pada bilangan negatif, yang lebih dekat ke 0 lebih besar.' : '';
+  var da = keDesimalTerpadu(a);
+  var db = keDesimalTerpadu(b);
+  if (da !== null && db !== null) {
+    var ubah = [];
+    if (jenisBilangan(a) === 'pecahan') ubah.push(A + ' = ' + da);
+    if (jenisBilangan(b) === 'pecahan') ubah.push(B + ' = ' + db);
+    return (
+      (ubah.length ? 'Ubah ke bentuk desimal: ' + ubah.join(' dan ') + '. ' : '') +
+      'Bandingkan ' +
+      da +
+      ' dengan ' +
+      db +
+      ': ' +
+      da +
+      ' ' +
+      sym +
+      ' ' +
+      db +
+      '.' +
+      catatanNeg +
+      simpul.replace(/^, j/, ' J')
+    );
+  }
+  var L = kpk(x.den, y.den);
+  var fa = (x.num < 0 ? '−' : '') + (Math.abs(x.num) * L) / x.den + '/' + L;
+  var fb = (y.num < 0 ? '−' : '') + (Math.abs(y.num) * L) / y.den + '/' + L;
+  return (
+    'Salah satunya tidak bisa menjadi desimal berhenti, jadi samakan penyebutnya: ' +
+    A +
+    ' = ' +
+    fa +
+    ' dan ' +
+    B +
+    ' = ' +
+    fb +
+    '. Karena ' +
+    fa +
+    ' ' +
+    sym +
+    ' ' +
+    fb +
+    '.' +
+    catatanNeg +
+    simpul.replace(/^, j/, ' J')
+  );
+}
+
+/* Kata perbandingan per tema: kecil = bilangan yang lebih kecil. */
+var KATA_BANDING_TERPADU = {
+  suhu: { kecil: 'lebih dingin', besar: 'lebih hangat', sama: 'sama suhunya' },
+  volume: { kecil: 'lebih sedikit', besar: 'lebih banyak', sama: 'sama banyak' },
+  kas: { kecil: 'lebih buruk hasilnya', besar: 'lebih baik hasilnya', sama: 'sama hasilnya' },
+  panjang: { kecil: 'lebih pendek', besar: 'lebih panjang', sama: 'sama panjang' },
+  tinggi: { kecil: 'lebih rendah', besar: 'lebih tinggi', sama: 'sama tinggi' },
+  berat: { kecil: 'lebih ringan', besar: 'lebih berat', sama: 'sama berat' },
+};
+
+function kataBandingTerpadu(tema) {
+  return KATA_BANDING_TERPADU[tema] || KATA_BANDING_TERPADU.tinggi;
+}
+
+/* 'kecil' | 'besar' | 'sama' untuk a dibanding b. */
+function idMaknaBandingTerpadu(a, b) {
+  var c = bandingTerpadu(a, b);
+  return c < 0 ? 'kecil' : c > 0 ? 'besar' : 'sama';
+}
+
+function maknaBandingTerpadu(a, b, tema) {
+  return kataBandingTerpadu(tema)[idMaknaBandingTerpadu(a, b)];
+}
+
+/* Opsi makna perbandingan (urutan wajar; acak di app). */
+function opsiMaknaBandingTerpadu(tema) {
+  var K = kataBandingTerpadu(tema);
+  return [
+    { id: 'kecil', label: esc(K.kecil) },
+    { id: 'besar', label: esc(K.besar) },
+    { id: 'sama', label: esc(K.sama) },
+  ];
+}
+
+/*
+ * Memeriksa isian bilangan: nilai harus sama dengan `jawab`; `bentuk`
+ * opsional ('desimal' | 'pecahan') mewajibkan bentuk tertentu.
+ * Mengembalikan { benar, pesan } (pesan berupa HTML aman).
+ */
+function periksaIsianTerpadu(input, jawab, bentuk) {
+  var s = normalTerpadu(input);
+  if (!s) return { benar: false, pesan: 'Isi jawabanmu terlebih dahulu.' };
+  var j = jenisBilangan(s);
+  if (!j) {
+    return {
+      benar: false,
+      pesan: 'Tulis bilangannya dengan benar, misalnya −2,25 (desimal pakai koma) atau 3/4.',
+    };
+  }
+  var target = nilaiTerpadu(jawab);
+  var v = nilaiTerpadu(s);
+  var sama = compareFractions(v, target) === 0;
+  var bentukOk = !bentuk || j === bentuk || (j === 'bulat' && target.den === 1);
+  if (sama && bentukOk) return { benar: true, pesan: 'Tepat!' };
+  if (sama) {
+    return {
+      benar: false,
+      pesan:
+        'Nilainya sudah sama, tetapi soal meminta bentuk <strong>' +
+        esc(bentuk) +
+        '</strong>' +
+        (bentuk === 'desimal' ? ' (pakai tanda koma).' : ' (pakai garis pecahan, mis. 3/4).'),
+    };
+  }
+  if (target.num !== 0 && compareFractions(v, { num: -target.num, den: target.den }) === 0) {
+    return {
+      benar: false,
+      pesan:
+        'Angkanya sudah benar, tetapi periksa <strong>tanda</strong>-nya: bilangan ini negatif atau positif?',
+    };
+  }
+  var langkah = penyebutPersepuluhan(jawab);
+  return {
+    benar: false,
+    pesan:
+      'Belum tepat.' +
+      (langkah && jenisBilangan(jawab) === 'pecahan'
+        ? ' Coba jadikan penyebutnya 10, 100, atau 1000 lebih dulu.'
+        : ' Periksa lagi nilai tempatnya.'),
+  };
+}
+
+/* Chip bilangan: pecahan bersusun, desimal/bulat dengan minus tipografis. */
+function buildBilanganChip(str, big) {
+  var u = uraiTerpadu(str);
+  var cls = 'num-chip' + (big ? ' num-chip--lg' : '');
+  if (u && u.jenis === 'pecahan') {
+    return (
+      '<span class="' +
+      cls +
+      ' num-chip--frac">' +
+      (u.num < 0 ? '<span class="num-chip__sign">−</span>' : '') +
+      buildFracInline(u.p.num, u.p.den, u.p.whole || null) +
+      '</span>'
+    );
+  }
+  return '<span class="' + cls + '">' + esc(tulisTerpadu(str)) + '</span>';
+}
+
+/* Kalimat perbandingan besar [a] ☐ [b]; symbolId null → '?'. */
+function buildKalimatBandingTerpadu(a, b, symbolId) {
+  return (
+    '<div class="cmp-sentence" aria-label="' +
+    esc(
+      tulisTerpadu(a) +
+        ' ' +
+        (symbolId ? compareSymbolText(symbolId) : 'kotak kosong') +
+        ' ' +
+        tulisTerpadu(b)
+    ) +
+    '">' +
+    buildBilanganChip(a, true) +
+    '<span class="cmp-sentence__sym' +
+    (symbolId ? ' is-filled' : '') +
+    '">' +
+    esc(symbolId ? compareSymbolText(symbolId) : '?') +
+    '</span>' +
+    buildBilanganChip(b, true) +
+    '</div>'
+  );
+}
+
+/* Tombol lambang <, >, = (urutan dari State) dengan umpan balik berdiagnosa. */
+function buildPilihSimbolTerpadu(a, b, order, st, opts) {
+  opts = opts || {};
+  var benarId = simbolBandingTerpadu(a, b);
+  var benar = st.chosen === benarId;
+  var salah = !!st.chosen && !benar;
+  return (
+    '<div class="cmp-symbols">' +
+    buildChoiceGroup(COMPARE_SYMBOLS, order, {
+      chosen: st.chosen,
+      correctId: benar ? benarId : null,
+      grade: true,
+      locked: benar,
+      group: opts.group || 'ter-cmp',
+      attr: 'data-ter-sym',
+    }) +
+    '</div>' +
+    (benar
+      ? buildFeedbackBox('success', '✓', esc(alasanBandingTerpadu(a, b)))
+      : salah
+      ? buildFeedbackBox(
+          'warning',
+          '💭',
+          esc(pesanDiagnosaTerpadu(diagnosaBandingTerpadu(a, b, st.chosen), a, b))
+        )
+      : '')
+  );
+}
+
+function bindPilihSimbolTerpadu(root, getPair, getState, save, rerender) {
+  root.querySelectorAll('[data-ter-sym]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var group = btn.dataset.group;
+      var pair = getPair(group);
+      var st = getState(group);
+      if (!pair || !st) return;
+      var benarId = simbolBandingTerpadu(pair[0], pair[1]);
+      if (st.chosen === benarId) return;
+      st.chosen = btn.dataset.terSym;
+      if (st.chosen !== benarId) st.wrong = (st.wrong || 0) + 1;
+      save();
+      rerender();
+    });
+  });
+}
+
+/*
+ * Tabel bentuk setara: satu baris per bilangan dengan kolom bentuk
+ * asli, pecahan paling sederhana, dan desimal ("≈ berulang" bila tidak
+ * berhenti). rows [{ label, nilai }]; opts.caption opsional.
+ */
+function buildTabelBentukTerpadu(rows, opts) {
+  opts = opts || {};
+  return (
+    '<div class="table-scroll"><table class="data-table bentuk-tabel">' +
+    (opts.caption ? '<caption>' + esc(opts.caption) + '</caption>' : '') +
+    '<thead><tr><th scope="col">Data</th><th scope="col">Tertulis</th><th scope="col">Pecahan</th><th scope="col">Desimal</th></tr></thead><tbody>' +
+    rows
+      .map(function (r) {
+        var d = keDesimalTerpadu(r.nilai);
+        return (
+          '<tr><th scope="row">' +
+          esc(r.label) +
+          '</th><td>' +
+          buildBilanganChip(r.nilai) +
+          '</td><td>' +
+          buildBilanganChip(kePecahanTerpadu(r.nilai)) +
+          '</td><td>' +
+          (d !== null ? buildBilanganChip(d) : '<span class="dl-caption">berulang</span>') +
+          '</td></tr>'
+        );
+      })
+      .join('') +
+    '</tbody></table></div>'
+  );
+}
+
+/* Posisi bilangan pada garis berlangkah 1/n (bilangan bulat k) atau null. */
+function skalaTerpadu(str, n) {
+  var v = nilaiTerpadu(str);
+  if (!v) return null;
+  var k = (v.num * n) / v.den;
+  return k === Math.round(k) ? k : null;
+}
+
+/* k langkah 1/n → teks pecahan apa adanya: (−6, 4) → "−1 2/4". */
+function teksSkalaTerpadu(k, n) {
+  var sign = k < 0 ? '−' : '';
+  var a = Math.abs(k);
+  var w = Math.floor(a / n);
+  var r = a - w * n;
+  if (!r) return sign + w;
+  return sign + (w ? w + ' ' : '') + r + '/' + n;
+}
+
+function petunjukLetakTerpadu(str, n) {
+  var k = skalaTerpadu(str, n);
+  var S = tulisTerpadu(str);
+  if (k === null) return S + ' tidak tepat berada pada titik garis ini.';
+  if (k === 0) return '0 adalah titik acuan di tengah garis.';
+  return (
+    S +
+    ' = ' +
+    teksSkalaTerpadu(k, n) +
+    ', yaitu ' +
+    Math.abs(k) +
+    ' langkah kecil (tiap langkah 1/' +
+    n +
+    ') di sebelah ' +
+    (k < 0 ? 'kiri' : 'kanan') +
+    ' 0. Hitung langkahnya mulai dari 0.'
+  );
+}
+
+/*
+ * Garis bilangan (SVG) dari min sampai max (bulat) berlangkah 1/langkah.
+ *   opts.marks        [{ k, label, tone }] — k posisi dalam langkah
+ *   opts.interactive  false → hanya gambar
+ * Titik yang bisa diketuk membawa data-nl-value = k (bilangan bulat).
+ * Pasang event dengan bindNumberLinePicker(root, id, onPick).
+ */
+function buildGarisTerpadu(id, opts) {
+  opts = opts || {};
+  var n = opts.langkah || 4;
+  var kMin = (opts.min !== undefined ? opts.min : -2) * n;
+  var kMax = (opts.max !== undefined ? opts.max : 2) * n;
+  var interactive = opts.interactive !== false;
+  var unit = opts.unit || 46;
+  var padX = 36;
+  var H = 116;
+  var axisY = 70;
+  var W = padX * 2 + (kMax - kMin) * unit;
+  function xOf(k) {
+    return padX + (k - kMin) * unit;
+  }
+  var x0 = xOf(kMin) - 22;
+  var x1 = xOf(kMax) + 22;
+  var html =
+    '<line class="nlp-axis" x1="' +
+    x0 +
+    '" y1="' +
+    axisY +
+    '" x2="' +
+    x1 +
+    '" y2="' +
+    axisY +
+    '"/>' +
+    '<polygon class="nlp-arrow" points="' +
+    (x1 + 4) +
+    ',' +
+    axisY +
+    ' ' +
+    (x1 - 8) +
+    ',' +
+    (axisY - 6) +
+    ' ' +
+    (x1 - 8) +
+    ',' +
+    (axisY + 6) +
+    '"/>' +
+    '<polygon class="nlp-arrow" points="' +
+    (x0 - 4) +
+    ',' +
+    axisY +
+    ' ' +
+    (x0 + 8) +
+    ',' +
+    (axisY - 6) +
+    ' ' +
+    (x0 + 8) +
+    ',' +
+    (axisY + 6) +
+    '"/>';
+  for (var k = kMin; k <= kMax; k++) {
+    var x = xOf(k);
+    var major = k % n === 0;
+    var h = major ? 14 : 8;
+    var label = teksSkalaTerpadu(k, n);
+    var tick =
+      '<line class="nlp-tick' +
+      (major ? ' nlp-tick--major' : '') +
+      '" x1="' +
+      x +
+      '" y1="' +
+      (axisY - h) +
+      '" x2="' +
+      x +
+      '" y2="' +
+      (axisY + h) +
+      '"/>' +
+      (major
+        ? '<text class="nlp-num nlp-num--major" x="' +
+          x +
+          '" y="' +
+          (axisY + 34) +
+          '">' +
+          esc(label) +
+          '</text>'
+        : '');
+    if (interactive) {
+      html +=
+        '<g class="nlp-hit" role="button" tabindex="0" data-nl-value="' +
+        k +
+        '" aria-label="Titik ' +
+        esc(label) +
+        '">' +
+        '<rect class="nlp-hit__area" x="' +
+        (x - unit / 2) +
+        '" y="22" width="' +
+        unit +
+        '" height="' +
+        (H - 22) +
+        '"/>' +
+        '<circle class="nlp-hit__ring" cx="' +
+        x +
+        '" cy="' +
+        axisY +
+        '" r="12"/>' +
+        tick +
+        '</g>';
+    } else {
+      html += tick;
+    }
+  }
+  (opts.marks || []).forEach(function (m) {
+    if (m.k === null || m.k === undefined || m.k < kMin || m.k > kMax) return;
+    var mx = xOf(m.k);
+    html +=
+      '<g class="nlp-mark nlp-mark--' +
+      (m.tone || 'pos') +
+      '">' +
+      '<circle cx="' +
+      mx +
+      '" cy="' +
+      axisY +
+      '" r="9"/>' +
+      (m.label !== undefined && m.label !== ''
+        ? '<text class="nlp-mark__label" x="' +
+          mx +
+          '" y="' +
+          (axisY - 20) +
+          '">' +
+          esc(m.label) +
+          '</text>'
+        : '') +
+      '</g>';
+  });
+  return (
+    '<div class="nlp-wrap">' +
+    '<svg class="nlp nlp--dec' +
+    (interactive ? ' nlp--interactive' : '') +
+    '" id="' +
+    id +
+    '" data-zero="' +
+    xOf(0) +
+    '" viewBox="0 0 ' +
+    W +
+    ' ' +
+    H +
+    '" style="min-width:' +
+    Math.round(W * 0.62) +
+    'px" ' +
+    (interactive ? 'role="group"' : 'role="img"') +
+    ' aria-label="' +
+    esc(
+      opts.aria ||
+        'Garis bilangan dari ' +
+          teksSkalaTerpadu(kMin, n) +
+          ' sampai ' +
+          teksSkalaTerpadu(kMax, n) +
+          ', setiap langkah kecil 1/' +
+          n
+    ) +
+    '">' +
+    html +
+    '</svg>' +
+    '</div>'
+  );
+}
+
+/*
+ * Menempatkan bilangan campuran bentuk satu per satu pada garis
+ * berlangkah 1/langkah. State: ensureNumberLinePlacementState() (seksi 11)
+ * dengan `salah` berupa posisi k.
+ *   items  [{ nilai, teks? }] dalam urutan tampil (sudah diacak)
+ *   cfg    { min, max, langkah, doneText }
+ */
+function buildPenempatanTerpadu(pid, items, st, cfg) {
+  cfg = cfg || {};
+  var n = cfg.langkah || 4;
+  var done = numberLinePlacementDone(items, st);
+  var marks = items.slice(0, Math.min(st.idx, items.length)).map(function (it) {
+    return { k: skalaTerpadu(it.nilai, n), label: tulisTerpadu(it.nilai), tone: 'ok' };
+  });
+  var adaSalah = !done && st.salah !== null && st.salah !== undefined;
+  if (adaSalah) marks.push({ k: st.salah, label: '?', tone: 'bad' });
+  var head = '';
+  var feedback = '';
+  if (done) {
+    feedback = buildFeedbackBox(
+      'success',
+      '✓',
+      cfg.doneText || '<strong>Semua bilangan sudah menempati titik yang tepat.</strong>'
+    );
+  } else {
+    var target = items[st.idx];
+    head =
+      '<div class="place-target">' +
+      '<span class="place-target__count">Bilangan ' +
+      (st.idx + 1) +
+      ' dari ' +
+      items.length +
+      '</span>' +
+      '<span>Ketuk letak ' +
+      buildBilanganChip(target.nilai, true) +
+      (target.teks ? ' <span class="dl-caption">(' + esc(target.teks) + ')</span>' : '') +
+      '</span>' +
+      '</div>';
+    if (adaSalah) {
+      var nSalah = st.wrong[st.idx] || 0;
+      feedback = buildFeedbackBox(
+        'warning',
+        '💭',
+        esc(
+          'Titik yang kamu ketuk adalah ' +
+            teksSkalaTerpadu(st.salah, n) +
+            ', bukan ' +
+            tulisTerpadu(target.nilai) +
+            '. ' +
+            (nSalah >= 2
+              ? petunjukLetakTerpadu(target.nilai, n)
+              : 'Apakah ' +
+                tulisTerpadu(target.nilai) +
+                ' di kiri atau kanan 0? Terletak di antara dua bilangan bulat yang mana?')
+        )
+      );
+    }
+  }
+  return (
+    head +
+    buildGarisTerpadu(pid, {
+      min: cfg.min,
+      max: cfg.max,
+      langkah: n,
+      marks: marks,
+      interactive: !done,
+    }) +
+    feedback
+  );
+}
+
+function bindPenempatanTerpadu(root, pid, items, st, langkah, save, rerender) {
+  bindNumberLinePicker(root, pid, function (k) {
+    if (numberLinePlacementDone(items, st)) return;
+    if (k === skalaTerpadu(items[st.idx].nilai, langkah)) {
+      st.idx += 1;
+      st.salah = null;
+    } else {
+      st.salah = k;
+      st.wrong[st.idx] = (st.wrong[st.idx] || 0) + 1;
+    }
+    save();
+    rerender();
   });
 }
