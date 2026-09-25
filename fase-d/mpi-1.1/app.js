@@ -557,7 +557,9 @@ function situasiSelesai(sit, i) {
 }
 
 function koleksiSemuaSelesai() {
-  return DATA.koleksi.situasi.every(situasiSelesai);
+  return DATA.koleksi.situasi.every(function (sit, i) {
+    return situasiSelesai(sit, i);
+  });
 }
 
 function buildTabelData() {
