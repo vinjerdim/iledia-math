@@ -39,6 +39,14 @@
     "stageCount": 10,
     "extraBody": "partials/reset-modal.html"
   },
+  "fase-d/mpi-1.6": {
+    "title": "Membandingkan Bilangan Bulat, Pecahan & Desimal dalam Kehidupan Sehari-hari — Matematika Fase D",
+    "description": "Media pembelajaran interaktif berbasis Problem Based Learning untuk membandingkan bilangan bulat, pecahan, dan desimal secara terpadu dalam masalah kontekstual: menentukan tempat penyimpanan es paling dingin, botol sirup yang pas, dan peringkat kas kelompok di Festival Pangan Sekolah, melalui Lab Samakan Bentuk, garis bilangan terpadu, tombol lambang berdiagnosa, dan Papan Keputusan Stand.",
+    "kicker": "Matematika — Fase D (SMP)",
+    "h1": "Membandingkan Bilangan Bulat, Pecahan & Desimal dalam Kehidupan Sehari-hari",
+    "stageCount": 10,
+    "extraBody": "partials/reset-modal.html"
+  },
   "fase-f/mpi-1.1": {
     "title": "Konsep Barisan Aritmetika & Beda — Matematika Fase F",
     "description": "Media pembelajaran interaktif berbasis Inquiry Learning untuk mengidentifikasi dan menjelaskan konsep barisan aritmetika serta menentukan beda dari suatu barisan bilangan.",
