@@ -80,6 +80,9 @@
        keputusan asosiasi kategorikal, korelasi & garis tren, arah &
        kekuatan asosiasi, diagram pencar, plotter titik berdiagnosa,
        kartu turus, batang tersegmen 100%, lab data kelas)
+   34. Bilangan bulat: membandingkan & mengurutkan dalam konteks
+       (urut naik/turun, kata perbandingan per tema, diagnosa
+       miskonsepsi lambang, rentang garis bilangan)
    ============================================================ */
 
 /* ============================================================
@@ -15640,4 +15643,192 @@ function bindClassDataLab(root, id, st, opts, save, rerender) {
     });
   }
   pasangTren();
+}
+
+/* ============================================================
+   34. BILANGAN BULAT: MEMBANDINGKAN & MENGURUTKAN DALAM KONTEKS
+   Pengurutan naik/turun, kata perbandingan per tema konteks
+   (lebih dingin, lebih dalam, lebih bawah, …) berdasar
+   KONTEKS_BULAT seksi 29, diagnosa miskonsepsi saat memilih
+   lambang <, >, = (mengabaikan tanda negatif, menganggap nol
+   paling kecil), serta rentang garis bilangan yang memuat
+   semua bilangan pada satu soal.
+   ============================================================ */
+
+/* Salinan terurut; arah 'naik' (default, terkecil dulu) atau 'turun'. */
+function urutkanBulat(arr, arah) {
+  var out = arr.slice().sort(function (a, b) {
+    return a - b;
+  });
+  return arah === 'turun' ? out.reverse() : out;
+}
+
+/* Id item { id, value } dalam urutan nilai naik/turun. */
+function urutanIdBulat(items, arah) {
+  var out = items.slice().sort(function (a, b) {
+    return a.value - b.value;
+  });
+  if (arah === 'turun') out.reverse();
+  return out.map(function (it) {
+    return it.id;
+  });
+}
+
+/*
+ * Kata perbandingan per tema KONTEKS_BULAT. `kecil` menjelaskan bilangan
+ * yang lebih kecil (di kiri pada garis bilangan), `besar` yang lebih
+ * besar. Tema laut memakai `bawah` bila kedua bilangan berada di atau di
+ * bawah permukaan laut (kedalaman: lebih dalam / lebih dangkal).
+ */
+var KATA_BANDING = {
+  suhu: {
+    kecil: 'lebih dingin',
+    besar: 'lebih hangat',
+    sama: 'sama suhunya',
+    terkecil: 'paling dingin',
+    terbesar: 'paling hangat',
+  },
+  gedung: {
+    kecil: 'lebih bawah',
+    besar: 'lebih atas',
+    sama: 'di lantai yang sama',
+    terkecil: 'paling bawah',
+    terbesar: 'paling atas',
+  },
+  laut: {
+    kecil: 'lebih rendah',
+    besar: 'lebih tinggi',
+    sama: 'sama tingginya',
+    terkecil: 'paling rendah',
+    terbesar: 'paling tinggi',
+    bawah: {
+      kecil: 'lebih dalam',
+      besar: 'lebih dangkal',
+      sama: 'sama dalamnya',
+      terkecil: 'paling dalam',
+      terbesar: 'paling dangkal',
+    },
+  },
+  uang: {
+    kecil: 'lebih sedikit',
+    besar: 'lebih banyak',
+    sama: 'sama banyaknya',
+    terkecil: 'paling sedikit',
+    terbesar: 'paling banyak',
+  },
+  skor: {
+    kecil: 'lebih rendah',
+    besar: 'lebih tinggi',
+    sama: 'sama besarnya',
+    terkecil: 'paling rendah',
+    terbesar: 'paling tinggi',
+  },
+};
+
+/* 'kecil' bila a < b, 'besar' bila a > b, 'sama' bila a = b. */
+function idMaknaBanding(a, b) {
+  if (a < b) return 'kecil';
+  if (a > b) return 'besar';
+  return 'sama';
+}
+
+/* Kamus kata untuk pasangan (a, b) pada tema tertentu. */
+function kataBandingUntuk(tema, a, b) {
+  var K = KATA_BANDING[tema] || KATA_BANDING.skor;
+  if (K.bawah && typeof a === 'number' && typeof b === 'number' && a <= 0 && b <= 0) {
+    return K.bawah;
+  }
+  return K;
+}
+
+/* Frasa makna a terhadap b, mis. maknaBanding(−8, −3, 'suhu') → 'lebih dingin'. */
+function maknaBanding(a, b, tema) {
+  return kataBandingUntuk(tema, a, b)[idMaknaBanding(a, b)];
+}
+
+/* Opsi { id, label } kecil/besar/sama untuk diacak (ensureShuffledOrder). */
+function opsiMaknaBanding(tema, a, b) {
+  var K = kataBandingUntuk(tema, a, b);
+  return [
+    { id: 'kecil', label: K.kecil },
+    { id: 'besar', label: K.besar },
+    { id: 'sama', label: K.sama },
+  ];
+}
+
+/*
+ * Diagnosa lambang pilihan murid untuk kalimat a ☐ b:
+ *   'benar'        lambang tepat
+ *   'nolTerkecil'  menganggap 0 lebih kecil daripada bilangan negatif
+ *   'abaikanTanda' jawaban cocok dengan membandingkan angkanya saja
+ *                  (−8 > −3 karena 8 > 3)
+ *   'terbalik'     kesalahan arah lainnya
+ */
+function diagnosaBanding(a, b, symbolId) {
+  if (symbolId === compareSymbolId(a, b)) return 'benar';
+  if ((a === 0 && b < 0 && symbolId === 'lt') || (b === 0 && a < 0 && symbolId === 'gt')) {
+    return 'nolTerkecil';
+  }
+  if ((a < 0 || b < 0) && symbolId === compareSymbolId(Math.abs(a), Math.abs(b))) {
+    return 'abaikanTanda';
+  }
+  return 'terbalik';
+}
+
+/* Umpan balik HTML untuk hasil diagnosaBanding. */
+function pesanBanding(diag, a, b) {
+  var fa = '<strong>' + formatNumber(a, '−') + '</strong>';
+  var fb = '<strong>' + formatNumber(b, '−') + '</strong>';
+  var benar = compareSymbolText(compareSymbolId(a, b));
+  var letak =
+    a === b
+      ? fa + ' dan ' + fb + ' menempati titik yang sama'
+      : fa + ' berada di sebelah ' + (a < b ? 'kiri' : 'kanan') + ' ' + fb;
+  if (diag === 'benar') {
+    return (
+      'Tepat! ' +
+      fa +
+      ' ' +
+      esc(benar) +
+      ' ' +
+      fb +
+      ' karena pada garis bilangan ' +
+      letak +
+      '. Makin ke kanan, makin besar.'
+    );
+  }
+  if (diag === 'nolTerkecil') {
+    return (
+      'Nol bukan bilangan terkecil. Bandingkan ' +
+      fa +
+      ' dan ' +
+      fb +
+      ': bilangan negatif berada di sebelah kiri 0, jadi lebih kecil daripada 0.'
+    );
+  }
+  if (diag === 'abaikanTanda') {
+    return (
+      'Sepertinya kamu hanya membandingkan angkanya tanpa tanda negatif. Pada garis bilangan, ' +
+      letak +
+      '. Untuk bilangan negatif, angka yang tampak lebih besar justru letaknya lebih ke kiri — lebih kecil.'
+    );
+  }
+  return (
+    'Belum tepat. Cari letak ' +
+    fa +
+    ' dan ' +
+    fb +
+    ' pada garis bilangan: yang berada di sebelah kiri adalah bilangan yang lebih kecil.'
+  );
+}
+
+/*
+ * Rentang garis bilangan { min, max } yang memuat semua `values` dengan
+ * tepi `pad` (default 2) dan selalu memuat 0 di bagian dalam garis.
+ */
+function rentangGaris(values, pad) {
+  var p = typeof pad === 'number' ? pad : 2;
+  var lo = Math.min.apply(null, values);
+  var hi = Math.max.apply(null, values);
+  return { min: Math.min(lo - p, -p), max: Math.max(hi + p, p) };
 }

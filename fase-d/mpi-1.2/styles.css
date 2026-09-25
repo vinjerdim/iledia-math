@@ -1,0 +1,148 @@
+/* =========================================================================
+   fase-d/mpi-1.2/styles.css
+   Membandingkan & Mengurutkan Bilangan Bulat dalam Kehidupan Sehari-hari
+   — Fase D (SMP)
+
+   Hanya memuat gaya yang KHAS modul ini. Seluruh dasar design system
+   (panel, tombol, kotak umpan balik, pilihan ganda, pemilahan, pertanyaan
+   penuntun .quiz-item--guided, garis bilangan interaktif .nlp-*, chip
+   bilangan .num-chip, penempatan titik .place-target, lambang
+   perbandingan .cmp-*, susun kartu .tap-order*, termometer .thermo*,
+   komponen Cooperative Learning .coop-*, kartu ringkasan, navigasi tahap,
+   modal) berasal dari shared/base.css.
+   ========================================================================= */
+
+/* -------------------------------------------------------------------------
+   Tahap 1 — Tujuan
+   ------------------------------------------------------------------------- */
+
+.tp-teks {
+  margin: 0 0 var(--space-3);
+  font-size: 1.05rem;
+  font-weight: 600;
+}
+
+/* -------------------------------------------------------------------------
+   Tahap 2 — Aturan banding
+   ------------------------------------------------------------------------- */
+
+.aturan-list {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0;
+  padding-left: var(--space-5);
+}
+
+.aturan-list li {
+  line-height: 1.55;
+}
+
+/* -------------------------------------------------------------------------
+   Tahap 3 — Bentuk tim
+   ------------------------------------------------------------------------- */
+
+.tim-anggota,
+.sepakat {
+  margin: var(--space-4) 0 0;
+  padding: 0;
+  border: none;
+}
+
+.tim-anggota legend,
+.sepakat legend {
+  margin-bottom: var(--space-2);
+  padding: 0;
+  font-weight: 600;
+}
+
+.tim-anggota__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: var(--space-2);
+}
+
+.sepakat .sepakat-item {
+  display: flex;
+  gap: var(--space-3);
+  align-items: flex-start;
+  min-height: 44px;
+  padding: var(--space-2) 0;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.sepakat .sepakat-item input {
+  flex: 0 0 auto;
+  width: 22px;
+  height: 22px;
+  margin: 1px 0 0;
+  accent-color: var(--color-primary);
+}
+
+/* -------------------------------------------------------------------------
+   Tahap 4–6 — Misi tim
+   ------------------------------------------------------------------------- */
+
+.misi-langkah {
+  margin: 0;
+  padding-left: var(--space-5);
+  font-size: 0.92rem;
+}
+
+.misi-langkah li + li {
+  margin-top: var(--space-1);
+}
+
+.misi-konteks {
+  display: flex;
+  gap: var(--space-3);
+  align-items: center;
+  margin: var(--space-3) 0;
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-md);
+  background: var(--color-warning-soft);
+}
+
+.misi-konteks p {
+  margin: 0;
+  font-weight: 600;
+}
+
+.misi-konteks__ikon {
+  flex: 0 0 auto;
+  font-size: 2rem;
+  line-height: 1;
+}
+
+.misi-sub {
+  margin: var(--space-5) 0 var(--space-3);
+  font-size: 1.05rem;
+}
+
+.misi-label-ab {
+  margin: var(--space-1) 0 var(--space-3);
+  text-align: center;
+}
+
+.tap-order__teks {
+  display: block;
+  margin-top: 2px;
+  font-size: 0.78rem;
+  font-weight: 500;
+  color: var(--color-ink-muted);
+}
+
+/* -------------------------------------------------------------------------
+   Tahap 7 — Kuis
+   ------------------------------------------------------------------------- */
+
+.kuis-tag {
+  display: inline-block;
+  margin-bottom: var(--space-2);
+  padding: 2px var(--space-2);
+  border-radius: var(--radius-sm);
+  background: var(--color-primary-soft);
+  color: var(--color-primary-strong);
+  font-size: 0.78rem;
+  font-weight: 700;
+}
