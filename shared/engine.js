@@ -10805,3 +10805,739 @@ function bindCekStep(id, st, step, save, rerender) {
     });
   }
 }
+
+/* ============================================================
+   30. BILANGAN BERPANGKAT — MEMBACA & MENULIS
+   Dipakai modul membaca & menulis bilangan berpangkat bulat
+   positif, negatif, dan nol beserta unsurnya (fase-d/mpi-12.1).
+   Memakai ulang seksi 27 (superskrip, formatBasis, formatPangkat,
+   pangkatBulat, faktorPangkat, parseInputPecahan, samaPecahan),
+   seksi 9 (terbilang, bacaBilanganBulat) dan seksi 29
+   (normalisasiBacaan). Isi:
+     • bacaPangkat / ekspresiPangkat / unsurPangkat — cara baca
+       baku, notasi, serta basis & pangkat; `negLuar` menandai tanda
+       negatif DI LUAR pangkat (−3⁴, basisnya 3) yang berbeda dari
+       basis negatif berkurung ((−3)⁴, basisnya −3);
+     • tulisPerkalianBerulang — 2³ → "2 × 2 × 2", 2⁻³ → "1 : (2 × 2 × 2)";
+     • angkaDariKata / parseBacaPangkat / cekBacaPangkat — memeriksa
+       cara baca yang diketik murid + diagnosa miskonsepsi ("minus",
+       "kali", basis–pangkat tertukar, tanda, kurung);
+     • cekTulisPangkat / pratinjauTulisPangkat — memeriksa isian
+       "penulis pangkat" (kotak basis + kotak pangkat);
+     • buildPowerWriter, buildPowerAnatomy, buildFoldSimulator (+ bind*)
+       — komponen UI; gaya .pwr-* ada di shared/base.css.
+   ============================================================ */
+
+function tandaNegatif(p) {
+  return p.num < 0;
+}
+
+function absPecahan(p) {
+  return pecahan(Math.abs(p.num), p.den);
+}
+
+/* Cara baca bilangan bulat atau pecahan: −3 → "negatif tiga", 2/3 → "dua per tiga". */
+function bacaBasisPangkat(a) {
+  if (typeof a === 'object' && a !== null) {
+    var p = keFraksi(a);
+    var teks = terbilang(Math.abs(p.num)) + (p.den === 1 ? '' : ' per ' + terbilang(p.den));
+    return (p.num < 0 ? 'negatif ' : '') + teks;
+  }
+  return bacaBilanganBulat(a);
+}
+
+/*
+ * Cara baca baku aⁿ: "dua pangkat tiga", "lima pangkat negatif dua",
+ * "negatif tiga pangkat empat" ((−3)⁴). opts.negLuar → −aⁿ dibaca
+ * "negatif dari a pangkat n".
+ */
+function bacaPangkat(a, n, opts) {
+  opts = opts || {};
+  return (
+    (opts.negLuar ? 'negatif dari ' : '') + bacaBasisPangkat(a) + ' pangkat ' + bacaBilanganBulat(n)
+  );
+}
+
+/* Notasi baku: (−3)⁴, 5⁻², atau −3⁴ bila opts.negLuar. */
+function ekspresiPangkat(a, n, opts) {
+  opts = opts || {};
+  return (opts.negLuar ? '−' : '') + formatPangkat(a, n);
+}
+
+/* Unsur-unsur bilangan berpangkat. Tanda di luar pangkat bukan bagian basis. */
+function unsurPangkat(a, n, opts) {
+  opts = opts || {};
+  return {
+    basis: a,
+    pangkat: n,
+    teksBasis: formatBasis(a),
+    teksPangkat: fmtBulat(n),
+    banyakFaktor: n > 0 ? n : 0,
+    negLuar: !!opts.negLuar,
+  };
+}
+
+/*
+ * Bentuk perkalian berulang: n > 0 → "a × a × …", n = 0 → "1",
+ * n < 0 → "1 : (a × a …)". Lebih dari opts.maks faktor (default 12)
+ * disingkat "a × a × … × a (n faktor)".
+ */
+function tulisPerkalianBerulang(a, n, opts) {
+  opts = opts || {};
+  var maks = opts.maks || 12;
+  var b = formatBasis(a);
+  var k = Math.abs(n);
+  if (k === 0) return '1';
+  var kali =
+    k > maks
+      ? b + ' × ' + b + ' × … × ' + b + ' (' + k + ' faktor)'
+      : faktorPangkat(b, k).join(' × ');
+  if (n > 0) return kali;
+  return k === 1 ? '1 : ' + b : '1 : (' + kali + ')';
+}
+
+var KATA_ANGKA_CACHE = null;
+
+/* Kata bilangan cacah 0 … 1.000 → bilangan ("enam belas" → 16); null bila tak dikenal. */
+function angkaDariKata(teks) {
+  if (!KATA_ANGKA_CACHE) {
+    KATA_ANGKA_CACHE = {};
+    for (var i = 0; i <= 1000; i++) KATA_ANGKA_CACHE[terbilang(i)] = i;
+  }
+  var t = normalisasiBacaan(teks);
+  return Object.prototype.hasOwnProperty.call(KATA_ANGKA_CACHE, t) ? KATA_ANGKA_CACHE[t] : null;
+}
+
+/*
+ * Mengurai bacaan "[negatif dari] [negatif] BASIS pangkat [negatif] PANGKAT"
+ * (juga "BASIS kuadrat" dan basis "X per Y").
+ * Kembalian { negLuar, basisNeg, basis: {num, den} (tanpa tanda), pangkat } atau null.
+ */
+function parseBacaPangkat(teks) {
+  var t = normalisasiBacaan(teks).replace(/ kuadrat$/, ' pangkat dua');
+  var bagian = t.split(' pangkat ');
+  if (bagian.length !== 2 || !bagian[0] || !bagian[1]) return null;
+  var kiri = bagian[0];
+  var kanan = bagian[1];
+  var negLuar = false;
+  var basisNeg = false;
+  if (/^negatif dari /.test(kiri)) {
+    negLuar = true;
+    kiri = kiri.replace(/^negatif dari /, '');
+  }
+  if (/^negatif /.test(kiri)) {
+    basisNeg = true;
+    kiri = kiri.replace(/^negatif /, '');
+  }
+  var basis;
+  var per = kiri.split(' per ');
+  if (per.length === 2) {
+    var num = angkaDariKata(per[0]);
+    var den = angkaDariKata(per[1]);
+    if (num === null || !den) return null;
+    basis = { num: num, den: den };
+  } else if (per.length === 1) {
+    var v = angkaDariKata(kiri);
+    if (v === null) return null;
+    basis = { num: v, den: 1 };
+  } else {
+    return null;
+  }
+  var pangkatNeg = /^negatif /.test(kanan);
+  var p = angkaDariKata(kanan.replace(/^negatif /, ''));
+  if (p === null) return null;
+  return {
+    negLuar: negLuar,
+    basisNeg: basisNeg,
+    basis: basis,
+    pangkat: pangkatNeg ? -p : p,
+  };
+}
+
+var PESAN_BACA_PANGKAT = {
+  kosong: 'Ketik cara membacanya terlebih dahulu.',
+  angka:
+    'Tuliskan cara bacanya dengan <strong>kata-kata</strong>, bukan angka. Contoh: 4² dibaca "empat pangkat dua".',
+  minus:
+    'Hampir tepat! Tanda negatif dibaca <strong>negatif</strong>, bukan "minus". "Minus" adalah nama operasi pengurangan.',
+  kali: 'Bilangan berpangkat tidak dibaca "kali". Angka kecil di kanan atas dibaca dengan kata <strong>pangkat</strong>.',
+  tanpaPangkat:
+    'Ada kata yang hilang. Di antara basis dan angka kecil di kanan atas ada kata <strong>pangkat</strong>.',
+  tertukar:
+    'Basis dan pangkatnya tertukar. Baca dulu <strong>basis</strong> (angka besar), lalu kata "pangkat", lalu <strong>pangkat</strong> (angka kecil di kanan atas).',
+  tandaBasis:
+    'Perhatikan tanda basisnya. Apakah basisnya bilangan negatif (ditulis di dalam kurung) atau positif?',
+  tandaPangkat:
+    'Perhatikan tanda pangkatnya. Pangkat negatif dibaca "pangkat <strong>negatif</strong> …", pangkat positif dibaca tanpa kata negatif.',
+  kurung:
+    'Perhatikan kurungnya. (−3)⁴ basisnya −3, dibaca "negatif tiga pangkat empat"; −3⁴ basisnya 3, dibaca "negatif <strong>dari</strong> tiga pangkat empat".',
+  lain: 'Belum tepat. Tentukan basis (angka besar) dan pangkat (angka kecil di kanan atas), lalu baca: "[basis] pangkat [pangkat]".',
+};
+
+/*
+ * Memeriksa cara baca aⁿ (atau −aⁿ bila opts.negLuar) yang diketik murid.
+ * Kembalian { benar, kode, pesan }; kode 'benar' | 'kosong' | 'angka' |
+ * 'minus' | 'kali' | 'tanpaPangkat' | 'tertukar' | 'tandaBasis' |
+ * 'tandaPangkat' | 'kurung' | 'lain'.
+ */
+function cekBacaPangkat(teks, a, n, opts) {
+  opts = opts || {};
+  function hasil(kode) {
+    if (kode === 'benar') {
+      return {
+        benar: true,
+        kode: kode,
+        pesan:
+          'Tepat! ' +
+          esc(ekspresiPangkat(a, n, opts)) +
+          ' dibaca "' +
+          esc(bacaPangkat(a, n, opts)) +
+          '".',
+      };
+    }
+    return { benar: false, kode: kode, pesan: PESAN_BACA_PANGKAT[kode] };
+  }
+  var mentah = String(teks || '').trim();
+  if (!mentah) return hasil('kosong');
+  if (/\d/.test(mentah)) return hasil('angka');
+  var t = normalisasiBacaan(mentah);
+  var pakaiMinus = /\bmin(us)?\b/.test(t);
+  t = t.replace(/\bmin(us)?\b/g, 'negatif');
+  if (!/\b(pangkat|kuadrat)\b/.test(t)) {
+    return hasil(/\b(kali|dikali|dikalikan)\b/.test(t) ? 'kali' : 'tanpaPangkat');
+  }
+  var p = parseBacaPangkat(t);
+  if (!p) return hasil('lain');
+  var target = keFraksi(a);
+  var tNeg = tandaNegatif(target);
+  var tLuar = !!opts.negLuar;
+  var basisSama = samaPecahan(p.basis, absPecahan(target));
+  if (basisSama && p.pangkat === n && p.basisNeg === tNeg && p.negLuar === tLuar) {
+    return hasil(pakaiMinus ? 'minus' : 'benar');
+  }
+  if (
+    target.den === 1 &&
+    p.basis.den === 1 &&
+    p.basis.num === Math.abs(n) &&
+    Math.abs(p.pangkat) === Math.abs(target.num)
+  ) {
+    return hasil('tertukar');
+  }
+  if (basisSama && p.pangkat === n) {
+    return hasil((p.negLuar || p.basisNeg) && (tLuar || tNeg) ? 'kurung' : 'tandaBasis');
+  }
+  if (
+    basisSama &&
+    p.basisNeg === tNeg &&
+    p.negLuar === tLuar &&
+    Math.abs(p.pangkat) === Math.abs(n)
+  ) {
+    return hasil('tandaPangkat');
+  }
+  return hasil('lain');
+}
+
+/* Basis dari isian: "(−3)", "-3", "2/3" → pecahan eksak; null bila tidak valid. */
+function bacaIsianBasis(str) {
+  var s = String(str || '')
+    .replace(/\s/g, '')
+    .replace(/^\((.*)\)$/, '$1');
+  var r = parseInputPecahan(s);
+  return r.error ? { value: null, error: r.error } : r;
+}
+
+function bacaIsianPangkat(str) {
+  return parseInputInt(String(str || ''));
+}
+
+var PESAN_TULIS_PANGKAT = {
+  kosong: 'Isi kotak basis dan kotak pangkat terlebih dahulu.',
+  invalid: 'Tuliskan basis dan pangkat dengan angka, mis. basis 5 dan pangkat −2.',
+  nilai:
+    'Itu nilai hasilnya. Yang diminta adalah <strong>bentuk pangkatnya</strong>: tulis basis dan pangkatnya.',
+  tertukar:
+    'Basis dan pangkatnya tertukar. Basis ditulis besar di bawah; pangkat ditulis kecil di kanan atas.',
+  tandaBasis: 'Periksa tanda basisnya: apakah basisnya bilangan negatif atau positif?',
+  tandaPangkat:
+    'Periksa tanda pangkatnya: pangkat negatif ditulis dengan tanda − di kotak pangkat.',
+  pangkatSalah:
+    'Basisnya sudah tepat. Periksa lagi pangkatnya: berapa kali basis dikalikan, atau pangkat berapa yang disebut?',
+  basisSalah:
+    'Pangkatnya sudah tepat. Periksa lagi basisnya: bilangan apa yang dikalikan berulang?',
+  lain: 'Belum tepat. Tentukan dulu basisnya (bilangan yang dikalikan) dan pangkatnya.',
+};
+
+/*
+ * Memeriksa isian penulis pangkat { basis, pangkat } (string) terhadap aⁿ.
+ * Kembalian { benar, kode, pesan }; kode 'benar' | 'kosong' | 'invalid' |
+ * 'nilai' | 'tertukar' | 'tandaBasis' | 'tandaPangkat' | 'pangkatSalah' |
+ * 'basisSalah' | 'lain'.
+ */
+function cekTulisPangkat(isian, a, n) {
+  function hasil(kode) {
+    if (kode === 'benar') {
+      return {
+        benar: true,
+        kode: kode,
+        pesan:
+          'Tepat! Ditulis ' +
+          esc(formatPangkat(a, n)) +
+          ' dan dibaca "' +
+          esc(bacaPangkat(a, n)) +
+          '".',
+      };
+    }
+    return { benar: false, kode: kode, pesan: PESAN_TULIS_PANGKAT[kode] };
+  }
+  isian = isian || {};
+  var b = bacaIsianBasis(isian.basis);
+  var p = bacaIsianPangkat(isian.pangkat);
+  if (b.error === 'empty' || p.error === 'empty') return hasil('kosong');
+  if (b.error || p.error) return hasil('invalid');
+  var target = keFraksi(a);
+  var basis = b.value;
+  var pangkat = p.value;
+  if (samaPecahan(basis, target) && pangkat === n) return hasil('benar');
+  if (pangkat === 1 && n !== 1 && samaPecahan(basis, pangkatBulat(a, n))) return hasil('nilai');
+  if (target.den === 1 && basis.den === 1 && basis.num === n && pangkat === target.num) {
+    return hasil('tertukar');
+  }
+  var besarSama = samaPecahan(absPecahan(basis), absPecahan(target));
+  if (besarSama && !samaPecahan(basis, target) && pangkat === n) return hasil('tandaBasis');
+  if (samaPecahan(basis, target) && pangkat === -n) return hasil('tandaPangkat');
+  if (samaPecahan(basis, target)) return hasil('pangkatSalah');
+  if (pangkat === n) return hasil('basisSalah');
+  return hasil('lain');
+}
+
+/* Notasi dari isian penulis pangkat; '' bila salah satu kotak kosong/tidak valid. */
+function pratinjauTulisPangkat(isian) {
+  isian = isian || {};
+  var b = bacaIsianBasis(isian.basis);
+  var p = bacaIsianPangkat(isian.pangkat);
+  if (b.error || p.error) return '';
+  var basis = b.value.den === 1 ? b.value.num : b.value;
+  return formatPangkat(basis, p.value);
+}
+
+/* Banyak lapisan kertas setelah k kali dilipat dua. */
+function lapisanKertas(k) {
+  return Math.pow(2, k);
+}
+
+/* ------------------------------------------------------------
+   Penulis pangkat: kotak basis (besar) + kotak pangkat (kecil,
+   terangkat di kanan atas) dengan pratinjau notasi.
+     st           { basis: '', pangkat: '' }
+     opts.locked  true → isian dinonaktifkan
+     opts.status  'ok' | 'bad' — bingkai hijau/merah
+   ------------------------------------------------------------ */
+
+function teksPratinjauPangkat(st) {
+  var notasi = pratinjauTulisPangkat(st);
+  return notasi ? 'Tertulis: ' + notasi : 'Tertulis: …';
+}
+
+function buildPowerWriter(id, st, opts) {
+  opts = opts || {};
+  st = st || {};
+  function kotak(part, label) {
+    return (
+      '<span class="pwr-writer__slot pwr-writer__slot--' +
+      part +
+      '">' +
+      '<input type="text" class="pwr-writer__input pwr-writer__input--' +
+      part +
+      '" id="' +
+      esc(id) +
+      '-' +
+      part +
+      '" data-pwr="' +
+      esc(id) +
+      '" data-part="' +
+      part +
+      '" inputmode="text" autocomplete="off" spellcheck="false" aria-label="' +
+      label +
+      '" placeholder="' +
+      label.toLowerCase() +
+      '" value="' +
+      esc(st[part] || '') +
+      '"' +
+      (opts.locked ? ' disabled' : '') +
+      '>' +
+      '</span>'
+    );
+  }
+  return (
+    '<div class="pwr-writer' +
+    (opts.status ? ' is-' + opts.status : '') +
+    '" id="' +
+    esc(id) +
+    '">' +
+    '<div class="pwr-writer__expr">' +
+    kotak('basis', 'Basis') +
+    kotak('pangkat', 'Pangkat') +
+    '</div>' +
+    '<p class="pwr-writer__preview" id="' +
+    esc(id) +
+    '-preview" aria-live="polite">' +
+    esc(teksPratinjauPangkat(st)) +
+    '</p>' +
+    '</div>'
+  );
+}
+
+/* Memasang event penulis pangkat; pratinjau diperbarui tanpa render ulang. */
+function bindPowerWriter(root, id, st, save, onEnter) {
+  var preview = root.querySelector('#' + id + '-preview');
+  root.querySelectorAll('[data-pwr="' + id + '"]').forEach(function (inp) {
+    inp.addEventListener('input', function () {
+      st[inp.dataset.part] = inp.value;
+      if (preview) preview.textContent = teksPratinjauPangkat(st);
+      save();
+    });
+    inp.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter' && onEnter) onEnter();
+    });
+  });
+}
+
+/* ------------------------------------------------------------
+   Anatomi bilangan berpangkat: basis besar + pangkat kecil di
+   kanan atas (+ tanda di luar pangkat bila opts.negLuar).
+     opts.label  true → chip keterangan "basis" dan "pangkat"
+     opts.pick   { chosen, correct } → setiap bagian menjadi tombol
+                 yang bisa diketuk; `correct` diisi hanya setelah
+                 bagian benar dipilih (terkunci) atau untuk menandai
+                 pilihan salah
+   ------------------------------------------------------------ */
+
+function buildPowerAnatomy(id, a, n, opts) {
+  opts = opts || {};
+  var pick = opts.pick || null;
+  var parts = [];
+  if (opts.negLuar) parts.push({ part: 'tanda', teks: '−', aria: 'Tanda − di depan' });
+  parts.push({ part: 'basis', teks: formatBasis(a), aria: 'Angka besar ' + formatBasis(a) });
+  parts.push({
+    part: 'pangkat',
+    teks: fmtBulat(n),
+    aria: 'Angka kecil ' + fmtBulat(n) + ' di kanan atas',
+  });
+  var terkunci = !!(pick && pick.chosen && pick.chosen === pick.correct);
+  var expr = parts
+    .map(function (p) {
+      var cls = 'pwr-anatomy__part pwr-anatomy__' + p.part;
+      if (!pick) return '<span class="' + cls + '">' + esc(p.teks) + '</span>';
+      if (pick.chosen === p.part && pick.correct) {
+        cls += p.part === pick.correct ? ' is-correct' : ' is-incorrect';
+      }
+      return (
+        '<button type="button" class="' +
+        cls +
+        '" data-anatomy="' +
+        esc(id) +
+        '" data-part="' +
+        p.part +
+        '" aria-pressed="' +
+        (pick.chosen === p.part ? 'true' : 'false') +
+        '" aria-label="' +
+        esc(p.aria) +
+        '"' +
+        (terkunci ? ' disabled' : '') +
+        '>' +
+        esc(p.teks) +
+        '</button>'
+      );
+    })
+    .join('');
+  var legend = opts.label
+    ? '<div class="pwr-anatomy__legend">' +
+      '<span class="pwr-chip pwr-chip--basis">basis: ' +
+      esc(formatBasis(a).replace(/^\((.*)\)$/, '$1')) +
+      '</span>' +
+      '<span class="pwr-chip pwr-chip--pangkat">pangkat: ' +
+      esc(fmtBulat(n)) +
+      '</span>' +
+      '</div>'
+    : '';
+  return (
+    '<div class="pwr-anatomy" id="' +
+    esc(id) +
+    '">' +
+    '<span class="pwr-anatomy__expr" aria-label="' +
+    esc(ekspresiPangkat(a, n, opts)) +
+    '">' +
+    expr +
+    '</span>' +
+    legend +
+    '</div>'
+  );
+}
+
+/* onPick(part) dipanggil saat sebuah bagian diketuk. */
+function bindPowerAnatomy(root, id, onPick) {
+  root.querySelectorAll('[data-anatomy="' + id + '"]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      onPick(btn.dataset.part);
+    });
+  });
+}
+
+/* ------------------------------------------------------------
+   Simulator kertas lipat: selembar kertas dilipat dua berulang.
+   Garis lipatan pada kertas terbuka membagi kertas menjadi 2ᵏ
+   bagian = banyak lapisan kertas yang terlipat.
+     k              banyak lipatan saat ini
+     opts.max       lipatan terbanyak (default 6)
+     opts.tercapai  lipatan terbanyak yang pernah dicapai; baris
+                    tabel catatan 0 … tercapai ditampilkan
+   ------------------------------------------------------------ */
+
+function buildFoldSimulator(id, k, opts) {
+  opts = opts || {};
+  var max = opts.max || 6;
+  var tercapai = Math.max(k, opts.tercapai || 0);
+  var W = 240;
+  var H = 150;
+  var kol = Math.pow(2, Math.ceil(k / 2));
+  var bar = Math.pow(2, Math.floor(k / 2));
+  var cw = W / kol;
+  var ch = H / bar;
+  var garis = '';
+  for (var i = 1; i < kol; i++) {
+    garis +=
+      '<line class="pwr-fold__crease" x1="' +
+      i * cw +
+      '" y1="0" x2="' +
+      i * cw +
+      '" y2="' +
+      H +
+      '"/>';
+  }
+  for (var j = 1; j < bar; j++) {
+    garis +=
+      '<line class="pwr-fold__crease" x1="0" y1="' +
+      j * ch +
+      '" x2="' +
+      W +
+      '" y2="' +
+      j * ch +
+      '"/>';
+  }
+  var lapis = lapisanKertas(k);
+  var svg =
+    '<svg class="pwr-fold__svg" viewBox="-4 -4 ' +
+    (W + 8) +
+    ' ' +
+    (H + 8) +
+    '" role="img" aria-label="Kertas yang dibuka kembali terbagi menjadi ' +
+    lapis +
+    ' bagian oleh garis lipatan">' +
+    '<rect class="pwr-fold__sheet" x="0" y="0" width="' +
+    W +
+    '" height="' +
+    H +
+    '"/>' +
+    garis +
+    '<rect class="pwr-fold__piece" x="0" y="0" width="' +
+    cw +
+    '" height="' +
+    ch +
+    '"/>' +
+    '</svg>';
+  var readout =
+    k === 0
+      ? 'Belum dilipat · Banyak lapisan: <strong>1</strong>'
+      : 'Lipatan: <strong>' +
+        k +
+        '</strong> · Banyak lapisan: <strong>' +
+        esc(tulisPerkalianBerulang(2, k)) +
+        ' = ' +
+        formatNumber(lapis) +
+        '</strong>';
+  var rows = '';
+  for (var r = 0; r <= tercapai; r++) {
+    rows +=
+      '<tr' +
+      (r === k ? ' class="is-current"' : '') +
+      '><td>' +
+      r +
+      '</td><td>' +
+      (r === 0 ? '— (belum dilipat)' : esc(tulisPerkalianBerulang(2, r))) +
+      '</td><td>' +
+      formatNumber(lapisanKertas(r)) +
+      '</td></tr>';
+  }
+  return (
+    '<div class="pwr-fold" id="' +
+    esc(id) +
+    '">' +
+    '<div class="pwr-fold__stage">' +
+    svg +
+    '<p class="pwr-fold__readout" aria-live="polite">' +
+    readout +
+    '</p>' +
+    '<div class="btn-group">' +
+    '<button type="button" class="btn btn--primary" data-fold="lipat" data-fold-id="' +
+    esc(id) +
+    '"' +
+    (k >= max ? ' disabled' : '') +
+    '>📄 Lipat dua</button>' +
+    '<button type="button" class="btn btn--ghost" data-fold="buka" data-fold-id="' +
+    esc(id) +
+    '"' +
+    (k <= 0 ? ' disabled' : '') +
+    '>↩ Buka satu lipatan</button>' +
+    '</div>' +
+    '</div>' +
+    '<div class="table-scroll"><table class="data-table pwr-fold__table">' +
+    '<caption>Catatan percobaan</caption>' +
+    '<thead><tr><th scope="col">Banyak lipatan</th><th scope="col">Perkalian berulang</th><th scope="col">Banyak lapisan</th></tr></thead>' +
+    '<tbody>' +
+    rows +
+    '</tbody></table></div>' +
+    '</div>'
+  );
+}
+
+/* onChange(delta) dipanggil dengan +1 (lipat) atau −1 (buka). */
+function bindFoldSimulator(root, id, onChange) {
+  root.querySelectorAll('[data-fold-id="' + id + '"]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      onChange(btn.dataset.fold === 'lipat' ? 1 : -1);
+    });
+  });
+}
+
+/* ------------------------------------------------------------
+   Langkah isian bilangan berpangkat berpemeriksa:
+     step.jenis 'tulis' → penulis pangkat (basis + pangkat),
+                          diperiksa cekTulisPangkat
+     step.jenis 'baca'  → cara baca diketik, diperiksa cekBacaPangkat
+     step { jenis, a, n, negLuar, label, hints, temuan, placeholder }
+   State: makePangkatStep(). Isian kosong/tidak valid tidak dihitung
+   sebagai percobaan.
+   ------------------------------------------------------------ */
+
+function makePangkatStep() {
+  return {
+    isian: { basis: '', pangkat: '' },
+    input: '',
+    done: false,
+    kode: null,
+    pesan: '',
+    attempts: 0,
+    hintLevel: 0,
+  };
+}
+
+function periksaPangkatStep(st, step, input) {
+  var r;
+  if (step.jenis === 'baca') {
+    r = cekBacaPangkat(input, step.a, step.n, { negLuar: step.negLuar });
+    st.input = String(input || '').trim();
+  } else {
+    input = input || {};
+    r = cekTulisPangkat(input, step.a, step.n);
+    st.isian = { basis: String(input.basis || ''), pangkat: String(input.pangkat || '') };
+  }
+  st.kode = r.kode;
+  st.pesan = r.pesan;
+  if (r.kode === 'kosong' || r.kode === 'invalid') return r;
+  st.attempts += 1;
+  st.done = r.benar;
+  return r;
+}
+
+function buildPangkatStep(id, st, step, num) {
+  var opts = { negLuar: step.negLuar };
+  var head =
+    '<p class="dl-step__label">' +
+    (num ? '<span class="dl-step__num">' + num + '</span>' : '') +
+    step.label +
+    '</p>';
+  if (st.done) {
+    return (
+      '<div class="dl-step dl-step--done">' +
+      head +
+      '<p class="dl-step__answer">✓ <span class="pwr-answer">' +
+      esc(ekspresiPangkat(step.a, step.n, opts)) +
+      '</span> — dibaca "' +
+      esc(bacaPangkat(step.a, step.n, opts)) +
+      '"</p>' +
+      (step.temuan ? buildFeedbackBox('success', '💡', step.temuan) : '') +
+      '</div>'
+    );
+  }
+  var salah = st.attempts > 0 && st.kode && st.kode !== 'benar';
+  var baca = step.jenis === 'baca';
+  var isian = baca
+    ? '<input type="text" class="input-text bbk-baca-input' +
+      (salah ? ' has-error' : '') +
+      '" id="' +
+      id +
+      'Input" inputmode="text" autocapitalize="off" spellcheck="false" autocomplete="off" value="' +
+      esc(st.input || '') +
+      '" aria-label="Cara membaca bilangan berpangkat" placeholder="' +
+      esc(step.placeholder || 'ketik cara bacanya…') +
+      '">'
+    : buildPowerWriter(id + 'W', st.isian, { status: salah ? 'bad' : null });
+  var tertulis = baca ? esc(st.input) : esc(pratinjauTulisPangkat(st.isian) || '…');
+  return (
+    '<div class="dl-step">' +
+    head +
+    '<div class="dl-input-row pwr-step-row">' +
+    isian +
+    '<button type="button" class="btn btn--primary" id="' +
+    id +
+    'Check">Periksa</button>' +
+    buildHintToggle(id + 'Hint', step.hints, st.hintLevel) +
+    '</div>' +
+    (salah
+      ? '<div style="margin-top:var(--space-3);">' +
+        buildFeedbackBox('error', '✗', '<strong>' + tertulis + '</strong> — ' + st.pesan) +
+        '</div>'
+      : '') +
+    buildHintStack(step.hints, st.hintLevel) +
+    '</div>'
+  );
+}
+
+/* Memasang event buildPangkatStep; `save` lalu `rerender` dipanggil setelah pemeriksaan. */
+function bindPangkatStep(id, st, step, save, rerender) {
+  var btn = document.getElementById(id + 'Check');
+  var hint = document.getElementById(id + 'Hint');
+  var inp = document.getElementById(id + 'Input');
+  if (btn) {
+    if (step.jenis === 'baca' && inp) {
+      inp.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter') btn.click();
+      });
+    } else {
+      bindPowerWriter(document, id + 'W', st.isian, save, function () {
+        btn.click();
+      });
+    }
+    btn.addEventListener('click', function () {
+      var r = periksaPangkatStep(st, step, step.jenis === 'baca' && inp ? inp.value : st.isian);
+      if (r.kode === 'kosong' || r.kode === 'invalid') {
+        showNotice(r.pesan);
+        return;
+      }
+      save();
+      rerender();
+      if (!st.done) {
+        var again =
+          document.getElementById(id + 'Input') || document.getElementById(id + 'W-basis');
+        if (again) again.focus();
+      }
+    });
+  }
+  if (hint) {
+    hint.addEventListener('click', function () {
+      st.hintLevel = Math.min(st.hintLevel + 1, (step.hints || []).length);
+      save();
+      rerender();
+    });
+  }
+}

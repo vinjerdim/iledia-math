@@ -161,6 +161,14 @@
     "stageCount": 9,
     "extraBody": "partials/reset-modal.html"
   },
+  "fase-d/mpi-12.1": {
+    "title": "Membaca & Menulis Bilangan Berpangkat — Matematika Fase D",
+    "description": "Media pembelajaran interaktif berbasis Discovery Learning untuk membaca dan menulis bilangan berpangkat bulat positif, negatif, dan nol beserta unsur-unsurnya (basis dan pangkat) melalui percobaan lipat kertas, pola tangga pangkat, dan penulis pangkat.",
+    "kicker": "Matematika — Fase D (SMP)",
+    "h1": "Membaca & Menulis Bilangan Berpangkat",
+    "stageCount": 10,
+    "extraBody": "partials/reset-modal.html"
+  },
   "fase-d/mpi-16.1": {
     "title": "Relasi Antara Dua Himpunan — Matematika Fase D",
     "description": "Media pembelajaran interaktif berbasis Discovery Learning untuk mengidentifikasi konsep relasi antara dua himpunan dan menyajikannya dalam bentuk diagram panah, tabel, dan himpunan pasangan berurutan pada berbagai situasi kehidupan sehari-hari.",

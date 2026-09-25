@@ -1,0 +1,222 @@
+/* =========================================================================
+   fase-d/mpi-12.1/styles.css
+   Membaca & Menulis Bilangan Berpangkat — Fase D (SMP Kelas VIII)
+
+   Hanya memuat gaya yang KHAS modul ini. Penulis pangkat, anatomi
+   basis–pangkat, simulator kertas lipat (.pwr-*), tangga pangkat
+   (.pw-ladder*), pilihan ganda, chip konteks, dan komponen Discovery
+   Learning lainnya berasal dari shared/base.css.
+   ========================================================================= */
+
+/* -------------------------------------------------------------------------
+   Stimulasi — cerita & catatan Bima
+   ------------------------------------------------------------------------- */
+
+.stimulasi-cerita {
+  margin: 0 0 var(--space-4);
+  font-size: 1.05rem;
+  line-height: 1.6;
+}
+
+.catatan-bima {
+  margin: 0;
+  padding: var(--space-3) var(--space-4);
+  border-left: 6px solid var(--color-orange);
+  border-radius: var(--radius-md);
+  background: #fffbe8;
+  background-image: repeating-linear-gradient(
+    to bottom,
+    transparent 0,
+    transparent 27px,
+    var(--color-blue-soft) 27px,
+    var(--color-blue-soft) 28px
+  );
+}
+
+.catatan-bima figcaption {
+  font-weight: 700;
+  color: var(--color-orange-strong);
+}
+
+.catatan-bima__isi {
+  margin: var(--space-2) 0;
+  font-family: var(--font-mono);
+  font-size: 1.05rem;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+.catatan-bima__keluh {
+  margin: 0;
+  font-style: italic;
+  color: var(--color-ink-muted);
+}
+
+/* -------------------------------------------------------------------------
+   Lipat — notasi pangkat & baris isian penulis pangkat
+   ------------------------------------------------------------------------- */
+
+.pwr-notasi__ex {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-3);
+  margin-bottom: var(--space-3);
+}
+
+.pwr-notasi__kali {
+  font-family: var(--font-mono);
+  font-size: 1.4rem;
+  font-weight: 700;
+}
+
+.pwr-notasi__teks {
+  margin: 0;
+  line-height: 1.6;
+}
+
+.pwr-step-row {
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.pwr-answer {
+  font-family: var(--font-mono);
+  font-size: 1.15rem;
+}
+
+/* -------------------------------------------------------------------------
+   Pola — dua tangga pangkat berdampingan
+   ------------------------------------------------------------------------- */
+
+.pwr-tangga-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: var(--space-4);
+  margin-bottom: var(--space-3);
+}
+
+.pwr-tangga__judul {
+  margin: 0 0 var(--space-2);
+  font-size: 1rem;
+  text-align: center;
+}
+
+/* -------------------------------------------------------------------------
+   Olah data — ketuk basis/pangkat & notasi pada butir pilah
+   ------------------------------------------------------------------------- */
+
+.pwr-anatomi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: var(--space-3);
+}
+
+.pwr-anatomi-item {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+}
+
+.pwr-anatomi-item__tanya {
+  margin: 0;
+  text-align: center;
+}
+
+.pwr-anatomi-item .feedback-box {
+  margin: 0;
+  font-size: 0.9rem;
+}
+
+.pwr-pilah__notasi {
+  display: inline-block;
+  min-width: 3.5ch;
+  font-family: var(--font-mono);
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--color-blue-strong);
+}
+
+/* -------------------------------------------------------------------------
+   Kesimpulan — contoh anatomi
+   ------------------------------------------------------------------------- */
+
+.pwr-rangkum {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
+}
+
+.pwr-rangkum__item {
+  margin: 0;
+  padding: var(--space-3);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  text-align: center;
+}
+
+.pwr-rangkum__item figcaption {
+  margin-top: var(--space-2);
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+/* -------------------------------------------------------------------------
+   Uji terap — petunjuk soal pilihan
+   ------------------------------------------------------------------------- */
+
+.soal-hint {
+  margin-top: var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-md);
+  background: var(--color-warning-soft);
+  color: var(--color-warning-strong);
+}
+
+.soal-hint summary {
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.soal-hint ul {
+  margin: var(--space-2) 0 0;
+  padding-left: var(--space-5);
+}
+
+/* -------------------------------------------------------------------------
+   Selesai — tiga bentuk pangkat
+   ------------------------------------------------------------------------- */
+
+.sajian-trio {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--space-3);
+  margin: var(--space-4) 0;
+}
+
+.sajian-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-1);
+  min-width: 140px;
+  max-width: 200px;
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-md);
+  background: var(--color-primary-soft);
+  color: var(--color-primary-strong);
+  font-weight: 700;
+  text-align: center;
+}
+
+.sajian-card__ikon {
+  font-family: var(--font-mono);
+  font-size: 1.4rem;
+}
