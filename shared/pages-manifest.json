@@ -177,6 +177,14 @@
     "stageCount": 10,
     "extraBody": "partials/reset-modal.html"
   },
+  "fase-d/mpi-22.1": {
+    "title": "Unsur-unsur & Jaring-jaring Prisma — Matematika Fase D",
+    "description": "Media pembelajaran interaktif berbasis Discovery Learning untuk mengidentifikasi unsur-unsur prisma (titik sudut, rusuk, sisi, dan tinggi) serta jaring-jaring prisma melalui kegiatan memutar model 3D, melipat, dan merakit bentangan karton kemasan.",
+    "kicker": "Matematika — Fase D (SMP)",
+    "h1": "Unsur-unsur & Jaring-jaring Prisma",
+    "stageCount": 10,
+    "extraBody": "partials/reset-modal.html"
+  },
   "fase-d/mpi-29.1": {
     "title": "Bangun Kongruen & Sifat-sifatnya — Matematika Fase D",
     "description": "Media pembelajaran interaktif berbasis Discovery Learning untuk menjelaskan pengertian bangun kongruen dan sifat-sifatnya (sisi dan sudut bersesuaian sama besar) serta membedakannya dari bangun sebangun melalui kegiatan menjiplak dan mengukur berbagai bangun datar.",

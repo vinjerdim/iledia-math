@@ -7093,3 +7093,429 @@ button.pwr-anatomy__part:disabled {
   background: var(--color-primary-soft);
   font-weight: 700;
 }
+
+/* =========================================================================
+   31. Prisma — unsur & jaring-jaring (engine.js seksi 31): gambar prisma
+   (.psm-svg, .psm-face*, .psm-edge*, .psm-vertex, .psm-label, .psm-hit*),
+   penjelajah (.psm-explorer, .psm-toolbar, .psm-tool-btn, .psm-range,
+   .psm-counter), tabel unsur (.psm-table*), jaring datar & lipatan
+   (.psm-net*, .psm-lipatan, .psm-fold-*), perakit jaring (.psm-builder*,
+   .psm-slot).
+   Warna konsisten antara model 3D dan jaring-jaring: sisi alas & atas
+   oranye (dua sisi kongruen), sisi tegak biru, unsur yang ditandai ungu.
+   ========================================================================= */
+
+.psm-svg,
+.psm-net,
+.psm-fold-svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  margin: 0 auto;
+  overflow: visible;
+}
+
+.psm-svg {
+  max-width: 340px;
+}
+
+.psm-face {
+  stroke: none;
+  stroke-linejoin: round;
+}
+
+.psm-face--tegak {
+  fill: var(--color-blue-soft);
+}
+
+.psm-face--alas,
+.psm-face--atas {
+  fill: var(--color-orange-soft);
+}
+
+.psm-face.is-back {
+  fill-opacity: 0.25;
+}
+
+.psm-face.is-front {
+  fill-opacity: 0.85;
+}
+
+.psm-face.is-sorot {
+  fill: var(--color-purple-soft);
+  fill-opacity: 1;
+  stroke: var(--color-purple);
+  stroke-width: 3;
+}
+
+.psm-face.is-sorot.is-back {
+  fill-opacity: 0.5;
+  stroke-dasharray: 6 4;
+}
+
+.psm-edge {
+  stroke: var(--color-ink);
+  stroke-width: 2.2;
+  stroke-linecap: round;
+}
+
+.psm-edge.is-hidden {
+  stroke: var(--color-ink-muted);
+  stroke-width: 1.5;
+  stroke-dasharray: 5 4;
+}
+
+.psm-edge.is-sorot {
+  stroke: var(--color-purple);
+  stroke-width: 5;
+  stroke-dasharray: none;
+}
+
+.psm-edge.is-sorot.is-hidden {
+  stroke-width: 4;
+  stroke-dasharray: 7 4;
+}
+
+.psm-vertex {
+  fill: var(--color-ink);
+}
+
+.psm-vertex.is-hidden {
+  fill: var(--color-ink-muted);
+}
+
+.psm-vertex.is-sorot {
+  fill: var(--color-purple);
+  stroke: var(--color-purple-strong);
+  stroke-width: 2;
+}
+
+.psm-label {
+  font-family: var(--font-display);
+  font-size: 13px;
+  font-weight: 700;
+  fill: var(--color-ink);
+  text-anchor: middle;
+  dominant-baseline: central;
+  paint-order: stroke;
+  stroke: var(--color-surface);
+  stroke-width: 3px;
+  stroke-linejoin: round;
+  pointer-events: none;
+}
+
+.psm-label.is-hidden {
+  fill: var(--color-ink-muted);
+}
+
+.psm-hit {
+  fill: transparent;
+  stroke: transparent;
+  cursor: pointer;
+}
+
+.psm-hit--rusuk {
+  stroke-width: 16;
+  stroke-linecap: round;
+}
+
+.psm-hit--rusuk:hover,
+.psm-hit--rusuk:focus-visible {
+  stroke: rgba(37, 99, 235, 0.22);
+}
+
+.psm-hit--titik:hover,
+.psm-hit--titik:focus-visible {
+  fill: rgba(37, 99, 235, 0.22);
+}
+
+.psm-hit-face {
+  cursor: pointer;
+}
+
+.psm-hit-face:hover,
+.psm-hit-face:focus-visible {
+  stroke: var(--color-primary);
+  stroke-width: 3;
+}
+
+.psm-svg [data-psm-kind]:focus {
+  outline: none;
+}
+
+.psm-svg [data-psm-kind]:focus-visible {
+  stroke: var(--color-focus);
+}
+
+/* ---- Penjelajah prisma ---- */
+
+.psm-explorer {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.psm-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--space-2);
+}
+
+.psm-tool-btn {
+  min-height: 44px;
+  padding: var(--space-2) var(--space-3);
+  border: 2px solid var(--color-border-strong);
+  border-radius: 999px;
+  background: var(--color-surface);
+  color: var(--color-ink);
+  font: inherit;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.psm-tool-btn:hover {
+  border-color: var(--color-primary);
+}
+
+.psm-tool-btn:focus-visible {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+.psm-tool-btn.is-active {
+  border-color: var(--color-primary);
+  background: var(--color-primary);
+  color: #fff;
+}
+
+.psm-explorer__nama {
+  margin: 0;
+  text-align: center;
+  font-family: var(--font-display);
+}
+
+.psm-stage {
+  padding: var(--space-3);
+  border: 2px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  min-width: 0;
+}
+
+.psm-stage--fold .psm-fold-svg {
+  max-height: 320px;
+}
+
+.psm-stage--net .psm-net {
+  max-height: 320px;
+}
+
+.psm-rotate {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: var(--space-3);
+}
+
+.psm-range {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.psm-range span {
+  white-space: nowrap;
+}
+
+.psm-range input[type='range'] {
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 44px;
+  accent-color: var(--color-primary);
+}
+
+.psm-range--wide {
+  margin-top: var(--space-3);
+}
+
+.psm-info {
+  margin: 0;
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-md);
+  background: var(--color-bg);
+  text-align: center;
+  font-size: 0.92rem;
+}
+
+.psm-counter {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--space-2);
+}
+
+.psm-count {
+  padding: var(--space-1) var(--space-3);
+  border-radius: 999px;
+  background: var(--color-bg);
+  font-size: 0.85rem;
+}
+
+.psm-count.is-active {
+  background: var(--color-purple-soft);
+  color: var(--color-purple-strong);
+}
+
+/* ---- Tabel unsur ---- */
+
+.psm-table-wrap {
+  overflow-x: auto;
+}
+
+.psm-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.92rem;
+}
+
+.psm-table caption {
+  margin-bottom: var(--space-2);
+  font-weight: 700;
+  text-align: left;
+}
+
+.psm-table th,
+.psm-table td {
+  padding: var(--space-2);
+  border: 1px solid var(--color-border);
+  text-align: center;
+}
+
+.psm-table thead th {
+  background: var(--color-primary-soft);
+}
+
+.psm-table tbody th {
+  text-align: left;
+  font-weight: 600;
+}
+
+.psm-cell {
+  width: 4.2em;
+  min-height: 44px;
+  text-align: center;
+}
+
+.psm-cell.is-correct {
+  border-color: var(--color-success);
+  background: var(--color-success-soft);
+  color: var(--color-success-strong);
+  font-weight: 700;
+}
+
+.psm-diagnosa {
+  margin: 0;
+  padding-left: 1.2em;
+}
+
+/* ---- Jaring datar, lipatan & perakit ---- */
+
+.psm-net-piece,
+.psm-fold-piece {
+  stroke: var(--color-ink);
+  stroke-width: 1.6;
+  stroke-linejoin: round;
+}
+
+.psm-fold-piece {
+  fill-opacity: 0.88;
+}
+
+.psm-lipatan {
+  stroke: var(--color-ink-muted);
+  stroke-width: 1.4;
+  stroke-dasharray: 4 3;
+}
+
+.psm-net-piece--lepas {
+  cursor: pointer;
+}
+
+.psm-net-piece--lepas:hover,
+.psm-net-piece--lepas:focus-visible {
+  stroke: var(--color-error);
+  stroke-width: 3;
+  outline: none;
+}
+
+.psm-slot {
+  cursor: pointer;
+}
+
+.psm-slot polygon {
+  fill: transparent;
+  stroke: var(--color-border-strong);
+  stroke-width: 1.5;
+  stroke-dasharray: 4 4;
+}
+
+.psm-slot text {
+  font-family: var(--font-display);
+  font-size: 18px;
+  font-weight: 700;
+  fill: var(--color-ink-muted);
+  text-anchor: middle;
+  dominant-baseline: central;
+  pointer-events: none;
+}
+
+.psm-slot:hover polygon,
+.psm-slot:focus-visible polygon {
+  fill: var(--color-orange-soft);
+  fill-opacity: 0.5;
+  stroke: var(--color-orange);
+}
+
+.psm-slot:focus {
+  outline: none;
+}
+
+.psm-builder {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.psm-builder__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: var(--space-3);
+}
+
+.psm-builder__pane {
+  margin: 0;
+  min-width: 0;
+}
+
+.psm-builder__pane figcaption {
+  margin-bottom: var(--space-2);
+  font-weight: 700;
+  text-align: center;
+}
+
+.psm-placeholder {
+  margin: 0;
+  padding: var(--space-6) var(--space-3);
+  color: var(--color-ink-muted);
+  text-align: center;
+}
+
+.psm-folder {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin-bottom: var(--space-4);
+}
