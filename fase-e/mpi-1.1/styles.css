@@ -1,28 +1,17 @@
 /* =========================================================================
    fase-e/mpi-1.1/styles.css
-   Sifat-sifat Eksponen Bulat — Fase E (SMK RPL), Discovery Learning
+   Sifat Operasi Bilangan Berpangkat — Fase E (SMK RPL), Discovery Learning
 
-   Hanya memuat gaya yang KHAS modul ini (tata letak cerita + tangga
-   pangkat, pita aturan zoom, jarak antarlangkah ubin, kisi kartu rumus).
-   Dasar design system — panel, tombol, umpan balik, pilihan ganda,
-   petunjuk, langkah isian, pemilahan, tangga pangkat, ubin faktor, lab
-   uji sifat, kartu rumus, perbandingan dugaan, kartu ringkasan,
-   navigasi tahap, modal — berasal dari shared/base.css.
+   Hanya memuat gaya yang KHAS modul ini (pita aturan cerita, judul
+   tabel, kamus pangkat yang dapat dilipat, pemisah antartabel pola,
+   jarak antarlangkah ubin, kisi kartu rumus). Dasar design system —
+   panel, tombol, umpan balik, pilihan ganda, petunjuk, langkah isian,
+   pemilahan, tabel pangkat, tabel pola eksponen, ubin faktor, lab uji
+   sifat, kartu rumus, perbandingan dugaan, kartu ringkasan, navigasi
+   tahap, modal — berasal dari shared/base.css.
    ========================================================================= */
 
-/* Cerita/langkah di kiri, tangga pangkat di kanan (bertumpuk di ponsel) */
-.eks-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-  gap: var(--space-4);
-  align-items: start;
-}
-
-.eks-grid > * {
-  min-width: 0;
-}
-
-/* Pita aturan zoom PixelKu */
+/* Pita aturan pada cerita stimulasi */
 .eks-rule {
   display: flex;
   gap: var(--space-2);
@@ -36,10 +25,40 @@
 }
 
 .eks-ladder-title {
-  margin: 0 0 var(--space-1);
+  margin: var(--space-3) 0 0;
   font-weight: 700;
-  text-align: center;
   color: var(--color-ink-muted);
+}
+
+/* Kamus tabel pangkat (dapat dilipat) di atas tabel pola */
+.eks-kamus {
+  margin-bottom: var(--space-4);
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-bg);
+}
+
+.eks-kamus summary {
+  cursor: pointer;
+  font-weight: 700;
+}
+
+/* Setiap tabel pola dipisah garis putus-putus */
+.eks-pola + .eks-pola,
+.eks-kamus + .eks-pola {
+  margin-top: var(--space-4);
+  padding-top: var(--space-4);
+  border-top: 1px dashed var(--color-border);
+}
+
+.eks-pola__judul {
+  margin: 0 0 var(--space-1);
+}
+
+.eks-olah-grid {
+  display: grid;
+  gap: var(--space-4);
 }
 
 /* Langkah isian berubin: beri jarak antarlangkah */
@@ -50,12 +69,12 @@
 }
 
 .eks-diagnosa {
-  margin-top: var(--space-3);
+  margin: var(--space-3) 0;
   display: grid;
   gap: var(--space-2);
 }
 
-/* Kartu rumus: lebih lebar dari .formula-duo bawaan agar muat 5–7 kartu */
+/* Kartu rumus: tiga kartu sejajar di layar lebar */
 .eks-formula-grid {
   max-width: 900px;
 }

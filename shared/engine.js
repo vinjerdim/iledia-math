@@ -58,7 +58,8 @@
        sebangun, papan ukur, tabel perbandingan)
    27. Eksponen bulat (pecahan eksak, pangkat nol & negatif, tangga
        pangkat, ubin faktor, sifat-sifat eksponen & dugaan keliru,
-       diagnosa miskonsepsi, lab uji sifat)
+       diagnosa miskonsepsi, lab uji sifat, tabel pangkat, tabel
+       eksplorasi pola eksponen bulat positif)
    28. Peluang kejadian majemuk (ruang sampel dadu/koin/kartu,
        predikat kejadian gabungan & irisan, saling lepas & saling
        bebas, diagnosa rumus, simulator percobaan, grid ruang sampel
@@ -8535,8 +8536,13 @@ function buildCompareTable(p, q, map, opts) {
        dari pangkat, pangkat dari perkalian)
      - sifat-sifat eksponen + dugaan keliru untuk disangkal
      - diagnosa miskonsepsi nilai pangkat
-     - lab uji sifat eksponen (stepper a, m, n, b + catatan uji)
-   Gaya .pw-ladder*, .fx-*, .xlab* ada di shared/base.css.
+     - lab uji sifat eksponen (stepper a, m, n, b + catatan uji;
+       mode eksponen positif, nama sifat kustom)
+     - tabel pangkat aⁿ (n naik) sebagai kamus nilai
+     - tabel eksplorasi pola perkalian, pembagian, dan pangkat dari
+       pangkat (nilai → aᵏ) dengan diagnosa eksponen keliru
+   Gaya .pw-ladder*, .pw-table*, .pola-tbl*, .fx-*, .xlab* ada di
+   shared/base.css.
    ============================================================ */
 
 var SUPERSKRIP_MAP = {
@@ -8704,22 +8710,37 @@ var SIFAT_EKSPONEN = {
   },
   salahKali: { nama: 'Dugaan A', rumus: 'aᵐ × aⁿ = aᵐˣⁿ ?', keliru: true, pakaiB: false },
   salahNegatif: { nama: 'Dugaan B', rumus: 'a⁻ⁿ = −aⁿ ?', keliru: true, pakaiB: false },
+  salahBagi: {
+    nama: 'Dugaan pembagian',
+    rumus: 'aᵐ : aⁿ = a^(m : n) ?',
+    keliru: true,
+    pakaiB: false,
+  },
+  salahPangkat: {
+    nama: 'Dugaan pangkat',
+    rumus: '(aᵐ)ⁿ = aᵐ⁺ⁿ ?',
+    keliru: true,
+    pakaiB: false,
+  },
 };
 
 /* Apakah sifat memakai eksponen m (sifat basis & dugaan B hanya memakai n). */
 function sifatPakaiM(id) {
-  return ['kali', 'bagi', 'pangkat', 'salahKali'].indexOf(id) !== -1;
+  return ['kali', 'bagi', 'pangkat', 'salahKali', 'salahBagi', 'salahPangkat'].indexOf(id) !== -1;
 }
 
 /*
  * Menghitung kedua ruas sebuah sifat untuk nilai a, m, n (dan b).
- * Kembalian { kiri, kanan, teksKiri, teksKanan, catatan, terdefinisi, sama }.
- * Ruas yang memuat 0⁰, 0⁻ⁿ atau pembagian dengan 0 → terdefinisi false.
+ * Kembalian { kiri, kanan, teksKiri, teksKanan, catatan, terdefinisi, sama, alasan }.
+ * Ruas yang memuat 0⁰, 0⁻ⁿ atau pembagian dengan 0 → terdefinisi false,
+ * alasan 'nol'. Dugaan salahBagi dengan m : n bukan bilangan bulat →
+ * terdefinisi false, alasan 'bukanBulat'. Selain itu alasan null.
  */
 function cekSifatEksponen(id, a, m, n, b) {
   var P = pangkatBulat;
   var F = formatPangkat;
   var kiri, kanan, teksKiri, teksKanan, catatan;
+  var alasan = null;
   if (id === 'kali') {
     kiri = kaliPecahan(P(a, m), P(a, n));
     kanan = P(a, m + n);
@@ -8763,10 +8784,29 @@ function cekSifatEksponen(id, a, m, n, b) {
     teksKiri = F(a, -n);
     teksKanan = '−' + F(a, n);
     catatan = 'bandingkan tanda dan besar kedua ruas';
+  } else if (id === 'salahBagi') {
+    kiri = bagiPecahan(P(a, m), P(a, n));
+    var bulat = n !== 0 && m % n === 0;
+    kanan = bulat ? P(a, m / n) : null;
+    teksKiri = F(a, m) + ' : ' + F(a, n);
+    teksKanan = bulat
+      ? F(a, m / n)
+      : formatBasis(a) + '^(' + fmtBulat(m) + ' : ' + fmtBulat(n) + ')';
+    catatan = bulat
+      ? tulisSuku(m) + ' : ' + tulisSuku(n) + ' = ' + fmtBulat(m / n)
+      : tulisSuku(m) + ' : ' + tulisSuku(n) + ' bukan bilangan bulat';
+    if (!bulat && n !== 0) alasan = 'bukanBulat';
+  } else if (id === 'salahPangkat') {
+    kiri = P(a, m) === null ? null : P(P(a, m), n);
+    kanan = P(a, m + n);
+    teksKiri = '(' + F(a, m) + ')' + superskrip(n);
+    teksKanan = F(a, m + n);
+    catatan = tulisSuku(m) + ' + ' + tulisSuku(n) + ' = ' + fmtBulat(m + n);
   } else {
     throw new Error('sifat eksponen tidak dikenal: ' + id);
   }
-  var terdefinisi = kiri !== null && kanan !== null;
+  var terdefinisi = kiri !== null && kanan !== null && alasan === null;
+  if (!terdefinisi && alasan === null) alasan = 'nol';
   return {
     kiri: kiri,
     kanan: kanan,
@@ -8775,6 +8815,7 @@ function cekSifatEksponen(id, a, m, n, b) {
     catatan: catatan,
     terdefinisi: terdefinisi,
     sama: terdefinisi && samaPecahan(kiri, kanan),
+    alasan: alasan,
   };
 }
 
@@ -9079,7 +9120,9 @@ function buildFactorTiles(spec, opts) {
 /* ------------------------------------------------------------
    Lab uji sifat eksponen: murid memilih sifat, mengatur a, m, n
    (dan b) dengan stepper, melihat kedua ruas dihitung, lalu
-   mencatat uji. Syarat selesai per sifat:
+   mencatat uji. opts.positif true membatasi lab pada eksponen bulat
+   positif: pembagian aᵐ : aⁿ hanya dicatat bila m > n.
+   Syarat selesai per sifat:
      { sifat, min, nonPositif, sangkal }
        min         banyak uji tercatat minimal
        nonPositif  harus ada uji dengan eksponen 0 atau negatif
@@ -9097,14 +9140,27 @@ function labKunci(st) {
   );
 }
 
-function labHasil(st) {
-  return cekSifatEksponen(st.sifat, st.a, st.m, st.n, st.b);
+function labHasil(st, opts) {
+  var r = cekSifatEksponen(st.sifat, st.a, st.m, st.n, st.b);
+  var bagi = st.sifat === 'bagi' || st.sifat === 'salahBagi';
+  if (opts && opts.positif && bagi && st.m <= st.n) {
+    r.terdefinisi = false;
+    r.sama = false;
+    r.alasan = 'diLuarCakupan';
+  }
+  return r;
 }
 
-/* Mencatat uji saat ini: 'ok' | 'duplikat' | 'tidakTerdefinisi'. */
-function labCatat(st) {
-  var r = labHasil(st);
-  if (!r.terdefinisi) return 'tidakTerdefinisi';
+/*
+ * Mencatat uji saat ini: 'ok' | 'duplikat' | 'tidakTerdefinisi' |
+ * 'bukanBulat' | 'diLuarCakupan'.
+ */
+function labCatat(st, opts) {
+  var r = labHasil(st, opts);
+  if (!r.terdefinisi) {
+    if (r.alasan === 'bukanBulat' || r.alasan === 'diLuarCakupan') return r.alasan;
+    return 'tidakTerdefinisi';
+  }
   var kunci = labKunci(st);
   var ada = st.log.some(function (u) {
     return u.kunci === kunci;
@@ -9163,13 +9219,26 @@ function ubahExponentLab(st, key, step, opts) {
  * opts.sifat   daftar id sifat yang bisa dipilih
  * opts.syarat  syarat selesai (untuk daftar periksa)
  * opts.batasA, opts.batasE  batas stepper
+ * opts.nama    { <idSifat>: 'nama tampilan' } pengganti nama bawaan
+ * opts.positif true → mode eksponen bulat positif (lihat labHasil)
  */
+function namaSifatLab(sid, opts) {
+  return (opts.nama && opts.nama[sid]) || SIFAT_EKSPONEN[sid].nama;
+}
+
+var VONIS_LAB_TAK = {
+  nol: '⚠ Tak terdefinisi — ada pembagian dengan 0 (0⁰ atau 0 berpangkat negatif). Pilih a ≠ 0.',
+  bukanBulat: '⚠ m : n bukan bilangan bulat — pilih m kelipatan n agar dugaan ini bisa diuji.',
+  diLuarCakupan:
+    '⚠ Di luar cakupan — untuk eksponen bulat positif, pembagian aᵐ : aⁿ memerlukan m &gt; n.',
+};
+
 function buildExponentLab(id, st, opts) {
   opts = opts || {};
   var batasA = opts.batasA || [-5, 5];
   var batasE = opts.batasE || [-4, 4];
   var d = SIFAT_EKSPONEN[st.sifat];
-  var r = labHasil(st);
+  var r = labHasil(st, opts);
   var pilihan = (opts.sifat || Object.keys(SIFAT_EKSPONEN))
     .map(function (sid) {
       var s = SIFAT_EKSPONEN[sid];
@@ -9181,7 +9250,7 @@ function buildExponentLab(id, st, opts) {
         '" aria-pressed="' +
         (sid === st.sifat ? 'true' : 'false') +
         '"><span class="xlab__sifat-nama">' +
-        esc(s.nama) +
+        esc(namaSifatLab(sid, opts)) +
         '</span><span class="xlab__sifat-rumus">' +
         esc(s.rumus) +
         '</span></button>'
@@ -9196,7 +9265,9 @@ function buildExponentLab(id, st, opts) {
   var vonis;
   if (!r.terdefinisi) {
     vonis =
-      '<p class="xlab__vonis xlab__vonis--undef">⚠ Tak terdefinisi — ada pembagian dengan 0 (0⁰ atau 0 berpangkat negatif). Pilih a ≠ 0.</p>';
+      '<p class="xlab__vonis xlab__vonis--undef">' +
+      (VONIS_LAB_TAK[r.alasan] || VONIS_LAB_TAK.nol) +
+      '</p>';
   } else if (r.sama) {
     vonis = '<p class="xlab__vonis xlab__vonis--ok">✓ Kedua ruas SAMA</p>';
   } else {
@@ -9208,7 +9279,6 @@ function buildExponentLab(id, st, opts) {
     ? '<ul class="xlab__cek">' +
       labRingkasan(st, opts.syarat)
         .map(function (s) {
-          var info = SIFAT_EKSPONEN[s.sifat];
           var ket = s.jumlah + '/' + s.min + ' uji';
           var syaratIni = opts.syarat.filter(function (x) {
             return x.sifat === s.sifat;
@@ -9223,7 +9293,7 @@ function buildExponentLab(id, st, opts) {
             '"><span aria-hidden="true">' +
             (s.selesai ? '✅' : '⬜') +
             '</span> <strong>' +
-            esc(info.nama) +
+            esc(namaSifatLab(s.sifat, opts)) +
             '</strong> <span class="xlab__cek-ket">' +
             esc(ket) +
             '</span></li>'
@@ -9317,15 +9387,422 @@ function bindExponentLab(root, id, st, opts, onChange) {
   var catat = root.querySelector('#' + id + '-catat');
   if (catat) {
     catat.addEventListener('click', function () {
-      var hasil = labCatat(st);
+      var hasil = labCatat(st, opts);
       var pesan = {
         ok: 'Uji dicatat.',
         duplikat: 'Uji ini sudah dicatat. Coba nilai a, m, atau n yang lain.',
         tidakTerdefinisi: 'Uji dengan hasil tak terdefinisi tidak dicatat. Pilih a ≠ 0.',
+        bukanBulat: 'm : n bukan bilangan bulat. Pilih m kelipatan n, mis. m = 6 dan n = 2.',
+        diLuarCakupan: 'Untuk eksponen bulat positif, pilih m lebih besar daripada n.',
       };
       onChange(pesan[hasil]);
     });
   }
+}
+
+/* ------------------------------------------------------------
+   Tabel pangkat: kisi aⁿ untuk n = `dari` NAIK sampai `sampai`
+   (mis. 2¹ … 2¹²) sebagai "kamus" nilai untuk eksplorasi pola.
+     cfg     { a, dari, sampai, diketahui: [n, …] }
+     inputs  { '<n>': 'isian' }
+     opts.tanya      true → sel yang belum diketahui ditampilkan '?'
+     opts.checked    true → tandai sel terisi ✓/✗
+     opts.locked     true → isian dinonaktifkan
+     opts.highlight  [n, …] → sel disorot (mis. nilai yang sedang dicari)
+     opts.compact    true → sel lebih kecil (kamus rujukan)
+     opts.caption    label aksesibel
+   Isian dibaca eksak oleh parseInputPecahan ('1.024' = 1024).
+   ------------------------------------------------------------ */
+
+function powerTableEditable(cfg) {
+  var out = [];
+  for (var n = cfg.dari; n <= cfg.sampai; n++) {
+    if ((cfg.diketahui || []).indexOf(n) === -1) out.push(n);
+  }
+  return out;
+}
+
+function powerTableFilled(cfg, inputs) {
+  return powerTableEditable(cfg).every(function (n) {
+    return String((inputs || {})[n] || '').trim() !== '';
+  });
+}
+
+function powerTableAllCorrect(cfg, inputs) {
+  return powerTableEditable(cfg).every(function (n) {
+    return powerLadderCellCorrect(cfg.a, n, (inputs || {})[n]);
+  });
+}
+
+function buildPowerTable(id, cfg, inputs, opts) {
+  opts = opts || {};
+  inputs = inputs || {};
+  var a = cfg.a;
+  var sorot = opts.highlight || [];
+  var html = '';
+  for (var n = cfg.dari; n <= cfg.sampai; n++) {
+    var diketahui = (cfg.diketahui || []).indexOf(n) !== -1;
+    var sel;
+    var tanda = '';
+    if (diketahui) {
+      sel = '<span class="pw-table__val">' + esc(formatPecahan(pangkatBulat(a, n))) + '</span>';
+    } else if (opts.tanya) {
+      sel = '<span class="pw-table__val pw-table__val--tanya">?</span>';
+    } else {
+      var isi = inputs[n] || '';
+      var terisi = String(isi).trim() !== '';
+      var benar = terisi && powerLadderCellCorrect(a, n, isi);
+      if (opts.checked && terisi) {
+        tanda =
+          '<span class="pw-table__mark pw-table__mark--' +
+          (benar ? 'ok' : 'no') +
+          '" aria-label="' +
+          (benar ? 'benar' : 'belum tepat') +
+          '">' +
+          (benar ? '✓' : '✗') +
+          '</span>';
+      }
+      sel =
+        '<input type="text" class="input-text pw-table__input' +
+        (opts.checked && terisi && !benar ? ' has-error' : '') +
+        '" id="' +
+        id +
+        '-in-' +
+        n +
+        '" data-ptable="' +
+        esc(id) +
+        '" data-n="' +
+        n +
+        '" inputmode="numeric" autocomplete="off" value="' +
+        esc(isi) +
+        '" aria-label="Nilai ' +
+        esc(formatBasis(a)) +
+        ' pangkat ' +
+        fmtBulat(n) +
+        '" placeholder="…"' +
+        (opts.locked ? ' disabled' : '') +
+        '>';
+    }
+    html +=
+      '<li class="pw-table__cell' +
+      (sorot.indexOf(n) !== -1 ? ' pw-table__cell--hl' : '') +
+      '">' +
+      '<span class="pw-table__pow">' +
+      esc(formatPangkat(a, n)) +
+      '</span>' +
+      sel +
+      tanda +
+      '</li>';
+  }
+  return (
+    '<ol class="pw-table' +
+    (opts.compact ? ' pw-table--compact' : '') +
+    '" aria-label="' +
+    esc(opts.caption || 'Tabel pangkat ' + formatBasis(a)) +
+    '">' +
+    html +
+    '</ol>'
+  );
+}
+
+/* onEnter dipanggil saat murid menekan Enter di salah satu isian. */
+function bindPowerTable(root, id, inputs, save, onEnter) {
+  root.querySelectorAll('[data-ptable="' + id + '"]').forEach(function (inp) {
+    inp.addEventListener('input', function () {
+      inputs[inp.dataset.n] = inp.value;
+      save();
+    });
+    inp.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter' && onEnter) onEnter();
+    });
+  });
+}
+
+/* ------------------------------------------------------------
+   Tabel eksplorasi pola eksponen (bilangan berpangkat bulat
+   positif). Setiap baris satu bentuk aᵐ × aⁿ, aᵐ : aⁿ (m > n), atau
+   (aᵐ)ⁿ; murid menghitung NILAI-nya (dibantu tabel pangkat) lalu
+   menuliskannya sebagai satu bilangan berpangkat aᵏ. Setelah semua
+   benar, kolom m, n, k dapat ditampilkan agar polanya terlihat.
+     cfg     { operasi: 'kali' | 'bagi' | 'pangkat', baris: [{ a, m, n }] }
+     inputs  { '<i>': { nilai: 'isian', k: 'isian' } }
+     opts.checked   true → tandai baris terisi ✓/✗
+     opts.locked    true → tampilkan jawaban tanpa isian
+     opts.tampilMN  true → tambah kolom m, n, k
+     opts.caption   judul tabel (aksesibel)
+   ------------------------------------------------------------ */
+
+var OPERASI_POLA = {
+  kali: { nama: 'Perkalian', kolomM: 'm', kolomN: 'n' },
+  bagi: { nama: 'Pembagian', kolomM: 'm', kolomN: 'n' },
+  pangkat: { nama: 'Pangkat dari pangkat', kolomM: 'm', kolomN: 'n' },
+};
+
+function teksPolaEksponen(op, a, m, n) {
+  if (op === 'kali') return formatPangkat(a, m) + ' × ' + formatPangkat(a, n);
+  if (op === 'bagi') return formatPangkat(a, m) + ' : ' + formatPangkat(a, n);
+  if (op === 'pangkat') return '(' + formatPangkat(a, m) + ')' + superskrip(n);
+  throw new Error('operasi pola tidak dikenal: ' + op);
+}
+
+/*
+ * Kunci satu baris: nilai dihitung dari DEFINISI (perkalian berulang
+ * lewat pangkatBulat), bukan dari rumus sifat; k = eksponen hasil.
+ */
+function polaEksponenKunci(op, a, m, n) {
+  var teks = teksPolaEksponen(op, a, m, n);
+  var nilai;
+  var k;
+  if (op === 'kali') {
+    nilai = kaliPecahan(pangkatBulat(a, m), pangkatBulat(a, n));
+    k = m + n;
+  } else if (op === 'bagi') {
+    nilai = bagiPecahan(pangkatBulat(a, m), pangkatBulat(a, n));
+    k = m - n;
+  } else {
+    nilai = pangkatBulat(pangkatBulat(a, m), n);
+    k = m * n;
+  }
+  return { teks: teks, nilai: nilaiPecahan(nilai), k: k };
+}
+
+/* Kode diagnosa eksponen hasil: 'benar' | 'jumlah' | 'selisih' | 'kali' | 'bagi' | 'pangkatBertingkat' | 'lain'. */
+function diagnosaPolaEksponen(op, m, n, k) {
+  var benar = op === 'kali' ? m + n : op === 'bagi' ? m - n : m * n;
+  if (k === benar) return 'benar';
+  if (k === m + n) return 'jumlah';
+  if (k === m - n || k === n - m) return 'selisih';
+  if (k === m * n) return 'kali';
+  if (n !== 0 && k === m / n) return 'bagi';
+  if (op === 'pangkat' && k === Math.pow(m, n)) return 'pangkatBertingkat';
+  return 'lain';
+}
+
+/* Pesan diagnosa: membandingkan nilai aᵏ tebakan murid dengan nilai sebenarnya. */
+function pesanDiagnosaPolaEksponen(kode, op, a, m, n, k) {
+  var kunci = polaEksponenKunci(op, a, m, n);
+  var tebak = Math.pow(a, k);
+  var nilaiTebak = tebak > 1e15 ? 'bilangan yang sangat besar' : formatNumber(tebak);
+  var alasan = {
+    jumlah: 'Menjumlahkan eksponen belum cocok untuk operasi ini.',
+    selisih: 'Mengurangkan eksponen belum cocok untuk operasi ini.',
+    kali: 'Mengalikan eksponen belum cocok untuk operasi ini.',
+    bagi: 'Membagi eksponen belum cocok untuk operasi ini.',
+    pangkatBertingkat: 'Memangkatkan eksponen dengan eksponen membuat hasilnya terlalu besar.',
+    lain: 'Cari nilai hasilnya di tabel pangkat, lalu baca eksponennya.',
+  };
+  return (
+    'Cek di tabel pangkat: ' +
+    formatPangkat(a, k) +
+    ' = ' +
+    nilaiTebak +
+    ', padahal ' +
+    kunci.teks +
+    ' = ' +
+    formatNumber(kunci.nilai) +
+    '. ' +
+    (alasan[kode] || alasan.lain)
+  );
+}
+
+function bacaEksponenPola(str) {
+  var s = String(str || '').trim();
+  return /^\d+$/.test(s) ? parseInt(s, 10) : null;
+}
+
+function isianPola(inputs, i) {
+  var isi = (inputs || {})[i];
+  return isi && typeof isi === 'object' ? isi : {};
+}
+
+/* { terisi, nilaiBenar, kBenar, benar } untuk baris ke-i. */
+function polaBarisStatus(cfg, i, inputs) {
+  var b = cfg.baris[i];
+  var kunci = polaEksponenKunci(cfg.operasi, b.a, b.m, b.n);
+  var isi = isianPola(inputs, i);
+  var terisi = String(isi.nilai || '').trim() !== '' && String(isi.k || '').trim() !== '';
+  var p = parseInputPecahan(String(isi.nilai || ''));
+  var nilaiBenar = !p.error && p.value.den === 1 && p.value.num === kunci.nilai;
+  var kBenar = bacaEksponenPola(isi.k) === kunci.k;
+  return { terisi: terisi, nilaiBenar: nilaiBenar, kBenar: kBenar, benar: nilaiBenar && kBenar };
+}
+
+function polaSemuaTerisi(cfg, inputs) {
+  return cfg.baris.every(function (b, i) {
+    return polaBarisStatus(cfg, i, inputs).terisi;
+  });
+}
+
+function polaSemuaBenar(cfg, inputs) {
+  return cfg.baris.every(function (b, i) {
+    return polaBarisStatus(cfg, i, inputs).benar;
+  });
+}
+
+/* Diagnosa baris yang belum tepat: { kode, pesan } atau null bila benar/kosong. */
+function diagnosaPolaBaris(cfg, i, inputs) {
+  var st = polaBarisStatus(cfg, i, inputs);
+  if (!st.terisi || st.benar) return null;
+  var b = cfg.baris[i];
+  var teks = teksPolaEksponen(cfg.operasi, b.a, b.m, b.n);
+  if (!st.nilaiBenar) {
+    var bantu =
+      cfg.operasi === 'pangkat'
+        ? 'Hitung dulu ' +
+          formatPangkat(b.a, b.m) +
+          ', lalu kalikan dengan dirinya sendiri ' +
+          b.n +
+          ' kali.'
+        : 'Baca nilai ' +
+          formatPangkat(b.a, b.m) +
+          ' dan ' +
+          formatPangkat(b.a, b.n) +
+          ' dari tabel pangkat, lalu ' +
+          (cfg.operasi === 'kali' ? 'kalikan' : 'bagi') +
+          '.';
+    return { kode: 'nilai', pesan: 'Nilai ' + teks + ' belum tepat. ' + bantu };
+  }
+  var k = bacaEksponenPola(isianPola(inputs, i).k);
+  if (k === null) {
+    return { kode: 'format', pesan: 'Tulis eksponen k sebagai bilangan bulat positif, mis. 5.' };
+  }
+  var kode = diagnosaPolaEksponen(cfg.operasi, b.m, b.n, k);
+  return { kode: kode, pesan: pesanDiagnosaPolaEksponen(kode, cfg.operasi, b.a, b.m, b.n, k) };
+}
+
+function buildPolaEksponen(id, cfg, inputs, opts) {
+  opts = opts || {};
+  var kepala =
+    '<tr><th scope="col">Bentuk</th><th scope="col">Nilai</th><th scope="col">Sebagai aᵏ</th>' +
+    (opts.tampilMN
+      ? '<th scope="col" class="pola-tbl__mn">m</th><th scope="col" class="pola-tbl__mn">n</th><th scope="col" class="pola-tbl__mn pola-tbl__mn--k">k</th>'
+      : '') +
+    '</tr>';
+  var badan = cfg.baris
+    .map(function (b, i) {
+      var kunci = polaEksponenKunci(cfg.operasi, b.a, b.m, b.n);
+      var isi = isianPola(inputs, i);
+      var st = polaBarisStatus(cfg, i, inputs);
+      var basis = esc(formatBasis(b.a));
+      var nilaiSel;
+      var kSel;
+      var tanda = '';
+      if (opts.locked) {
+        nilaiSel = '<span class="pola-tbl__val">' + esc(formatNumber(kunci.nilai)) + '</span>';
+        kSel =
+          '<span class="pola-tbl__pow">' +
+          basis +
+          '<sup class="pola-tbl__sup">' +
+          kunci.k +
+          '</sup></span>';
+      } else {
+        var adaN = String(isi.nilai || '').trim() !== '';
+        var adaK = String(isi.k || '').trim() !== '';
+        var salahN = opts.checked && adaN && !st.nilaiBenar;
+        var salahK = opts.checked && adaK && !st.kBenar;
+        nilaiSel =
+          '<input type="text" class="input-text pola-tbl__input' +
+          (salahN ? ' has-error' : '') +
+          '" id="' +
+          id +
+          '-n-' +
+          i +
+          '" data-pola="' +
+          esc(id) +
+          '" data-i="' +
+          i +
+          '" data-f="nilai" inputmode="numeric" autocomplete="off" value="' +
+          esc(isi.nilai || '') +
+          '" aria-label="Nilai ' +
+          esc(kunci.teks) +
+          '" placeholder="…">';
+        kSel =
+          '<span class="pola-tbl__pow">' +
+          basis +
+          '<input type="text" class="input-text pola-tbl__input pola-tbl__input--k' +
+          (salahK ? ' has-error' : '') +
+          '" id="' +
+          id +
+          '-k-' +
+          i +
+          '" data-pola="' +
+          esc(id) +
+          '" data-i="' +
+          i +
+          '" data-f="k" inputmode="numeric" autocomplete="off" value="' +
+          esc(isi.k || '') +
+          '" aria-label="Eksponen k untuk ' +
+          esc(kunci.teks) +
+          ' = ' +
+          basis +
+          ' pangkat k" placeholder="k"></span>';
+        if (opts.checked && (adaN || adaK)) {
+          tanda =
+            '<span class="pola-tbl__mark pola-tbl__mark--' +
+            (st.benar ? 'ok' : 'no') +
+            '" aria-label="' +
+            (st.benar ? 'benar' : 'belum tepat') +
+            '">' +
+            (st.benar ? '✓' : '✗') +
+            '</span>';
+        }
+      }
+      return (
+        '<tr' +
+        (opts.checked && st.benar ? ' class="pola-tbl__row--ok"' : '') +
+        '>' +
+        '<th scope="row" class="pola-tbl__bentuk">' +
+        esc(kunci.teks) +
+        '</th>' +
+        '<td>' +
+        nilaiSel +
+        '</td>' +
+        '<td>' +
+        kSel +
+        tanda +
+        '</td>' +
+        (opts.tampilMN
+          ? '<td class="pola-tbl__mn">' +
+            b.m +
+            '</td><td class="pola-tbl__mn">' +
+            b.n +
+            '</td><td class="pola-tbl__mn pola-tbl__mn--k">' +
+            kunci.k +
+            '</td>'
+          : '') +
+        '</tr>'
+      );
+    })
+    .join('');
+  return (
+    '<div class="pola-tbl-wrap">' +
+    '<table class="pola-tbl">' +
+    '<caption class="' +
+    (opts.caption ? 'pola-tbl__caption' : 'sr-only') +
+    '">' +
+    esc(opts.caption || 'Tabel pola ' + OPERASI_POLA[cfg.operasi].nama.toLowerCase()) +
+    '</caption>' +
+    '<thead>' +
+    kepala +
+    '</thead><tbody>' +
+    badan +
+    '</tbody></table></div>'
+  );
+}
+
+/* onEnter dipanggil saat murid menekan Enter di salah satu isian. */
+function bindPolaEksponen(root, id, inputs, save, onEnter) {
+  root.querySelectorAll('[data-pola="' + id + '"]').forEach(function (inp) {
+    inp.addEventListener('input', function () {
+      var i = inp.dataset.i;
+      if (!inputs[i] || typeof inputs[i] !== 'object') inputs[i] = {};
+      inputs[i][inp.dataset.f] = inp.value;
+      save();
+    });
+    inp.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter' && onEnter) onEnter();
+    });
+  });
 }
 
 /* ============================================================

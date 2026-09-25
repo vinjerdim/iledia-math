@@ -5938,6 +5938,7 @@ details.hint-reveal[open] summary::before {
 
 /* =========================================================================
    Eksponen bulat (engine.js seksi 27): tangga pangkat (.pw-ladder*),
+   tabel pangkat (.pw-table*), tabel pola eksponen (.pola-tbl*),
    ubin faktor (.fx-*), lab uji sifat eksponen (.xlab*).
    Warna: pangkat positif biru, pangkat nol ungu, pangkat negatif oranye.
    ========================================================================= */
@@ -6320,6 +6321,189 @@ details.hint-reveal[open] summary::before {
   color: var(--color-error-strong);
 }
 
+/* Tabel pangkat (kisi aⁿ naik) */
+.pw-table {
+  list-style: none;
+  margin: var(--space-3) 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(92px, 1fr));
+  gap: var(--space-2);
+}
+
+.pw-table__cell {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-1);
+  padding: var(--space-2);
+  border: 2px solid var(--color-blue);
+  border-radius: var(--radius-md);
+  background: var(--color-blue-soft);
+  min-width: 0;
+}
+
+.pw-table__cell--hl {
+  border-color: var(--color-orange);
+  background: var(--color-orange-soft);
+  box-shadow: 0 0 0 2px var(--color-orange-soft);
+}
+
+.pw-table__pow {
+  font-family: var(--font-mono);
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+
+.pw-table__val {
+  font-family: var(--font-mono);
+  font-size: 1.05rem;
+  font-weight: 700;
+}
+
+.pw-table__val--tanya {
+  color: var(--color-orange-strong);
+}
+
+.pw-table__input.input-text {
+  width: 100%;
+  min-height: 40px;
+  padding: var(--space-1);
+  font-family: var(--font-mono);
+  font-size: 1rem;
+  text-align: center;
+}
+
+.pw-table__mark {
+  position: absolute;
+  top: 2px;
+  right: 6px;
+  font-weight: 700;
+}
+
+.pw-table__mark--ok {
+  color: var(--color-success);
+}
+
+.pw-table__mark--no {
+  color: var(--color-error);
+}
+
+.pw-table--compact {
+  grid-template-columns: repeat(auto-fill, minmax(64px, 1fr));
+  gap: var(--space-1);
+}
+
+.pw-table--compact .pw-table__cell {
+  padding: 2px var(--space-1);
+  border-width: 1px;
+}
+
+.pw-table--compact .pw-table__pow,
+.pw-table--compact .pw-table__val {
+  font-size: 0.85rem;
+}
+
+/* Tabel eksplorasi pola eksponen */
+.pola-tbl-wrap {
+  max-width: 100%;
+  overflow-x: auto;
+  margin: var(--space-3) 0;
+}
+
+.pola-tbl {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: var(--font-mono);
+}
+
+.pola-tbl__caption {
+  caption-side: top;
+  padding-bottom: var(--space-2);
+  font-family: var(--font-body);
+  font-weight: 700;
+  text-align: left;
+}
+
+.pola-tbl th,
+.pola-tbl td {
+  padding: var(--space-2);
+  border-bottom: 1px solid var(--color-border);
+  text-align: center;
+  vertical-align: middle;
+}
+
+.pola-tbl thead th {
+  font-family: var(--font-body);
+  font-size: 0.85rem;
+  color: var(--color-ink-muted);
+}
+
+.pola-tbl__bentuk {
+  font-size: 1.1rem;
+  white-space: nowrap;
+}
+
+.pola-tbl__row--ok {
+  background: var(--color-success-soft);
+}
+
+.pola-tbl__input.input-text {
+  width: 88px;
+  min-height: 40px;
+  padding: var(--space-1);
+  font-family: var(--font-mono);
+  font-size: 1rem;
+  text-align: center;
+}
+
+.pola-tbl__pow {
+  display: inline-flex;
+  align-items: flex-start;
+  gap: 2px;
+  font-size: 1.15rem;
+  font-weight: 700;
+}
+
+.pola-tbl__input--k.input-text {
+  width: 48px;
+  min-height: 34px;
+  font-size: 0.9rem;
+  transform: translateY(-0.45em);
+}
+
+.pola-tbl__sup {
+  font-size: 0.75em;
+}
+
+.pola-tbl__val {
+  font-weight: 700;
+}
+
+.pola-tbl__mark {
+  margin-left: var(--space-1);
+  font-family: var(--font-body);
+  font-weight: 700;
+}
+
+.pola-tbl__mark--ok {
+  color: var(--color-success);
+}
+
+.pola-tbl__mark--no {
+  color: var(--color-error);
+}
+
+.pola-tbl__mn {
+  background: var(--color-purple-soft);
+  font-weight: 700;
+}
+
+.pola-tbl__mn--k {
+  color: var(--color-purple-strong);
+}
+
 @media (max-width: 480px) {
   .pw-ladder__faktor {
     display: none;
@@ -6332,6 +6516,23 @@ details.hint-reveal[open] summary::before {
   .fx-tile {
     min-width: 28px;
     height: 28px;
+  }
+
+  .pola-tbl th,
+  .pola-tbl td {
+    padding: var(--space-1);
+  }
+
+  .pola-tbl__bentuk {
+    font-size: 0.95rem;
+  }
+
+  .pola-tbl__input.input-text {
+    width: 68px;
+  }
+
+  .pola-tbl__input--k.input-text {
+    width: 40px;
   }
 }
 
