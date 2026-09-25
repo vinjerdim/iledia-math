@@ -98,10 +98,10 @@
     "extraBody": "partials/reset-modal.html"
   },
   "fase-f/mpi-1.1": {
-    "title": "Barisan dan Deret Aritmetika — Matematika Fase F",
-    "description": "Media pembelajaran interaktif berbasis Discovery Learning untuk menjelaskan pola barisan aritmetika, menurunkan rumus suku ke-n dan jumlah n suku deret aritmetika, serta menerapkannya dalam menyelesaikan masalah kontekstual.",
+    "title": "Konsep Barisan Aritmetika & Beda — Matematika Fase F",
+    "description": "Media pembelajaran interaktif berbasis Inquiry Learning untuk mengidentifikasi dan menjelaskan konsep barisan aritmetika serta menentukan beda dari suatu barisan bilangan.",
     "kicker": "Matematika — Fase F (SMK RPL)",
-    "h1": "Barisan dan Deret Aritmetika",
+    "h1": "Konsep Barisan Aritmetika & Beda",
     "stageCount": 10,
     "extraBody": "partials/reset-modal.html"
   },

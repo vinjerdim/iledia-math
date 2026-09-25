@@ -73,6 +73,9 @@
    31. Prisma: unsur & jaring-jaring (model 3D, proyeksi & visibilitas,
        penjelajah titik/rusuk/sisi, tabel unsur berdiagnosa, jaring
        sabuk, simulasi lipat beranimasi, perakit jaring)
+   32. Barisan aritmetika: selisih & beda (selisih berurutan, beda,
+       diagnosa miskonsepsi selisih, pelacak selisih, lab barisan
+       dengan garis bilangan lompatan)
    ============================================================ */
 
 /* ============================================================
@@ -775,8 +778,8 @@ function createExerciseStage(cfg) {
         (cfg.inputMode
           ? ' inputmode="' + esc(cfg.inputMode) + '"'
           : cfg.allowNegative
-          ? ''
-          : ' inputmode="numeric"') +
+            ? ''
+            : ' inputmode="numeric"') +
         ' id="' +
         prefix +
         'Input" class="input-text" placeholder="' +
@@ -866,8 +869,8 @@ function createExerciseStage(cfg) {
       feedbackHTML = cfg.buildChoiceFeedback
         ? cfg.buildChoiceFeedback(s, ex)
         : ex.correct
-        ? buildFeedbackBox('success', '✓', '<strong>Benar!</strong> ' + s.explanation)
-        : buildFeedbackBox('error', '✗', '<strong>Belum tepat.</strong> ' + s.explanation);
+          ? buildFeedbackBox('success', '✓', '<strong>Benar!</strong> ' + s.explanation)
+          : buildFeedbackBox('error', '✗', '<strong>Belum tepat.</strong> ' + s.explanation);
     }
 
     return (
@@ -1487,8 +1490,8 @@ function readDlNumber(val, rational) {
       parsed.error === 'empty'
         ? 'Isi jawabanmu terlebih dahulu.'
         : rational
-        ? 'Tulis jawaban berupa bilangan, pecahan, atau desimal, mis. 3, 1/2, atau 0,5.'
-        : 'Tulis jawaban berupa bilangan bulat, mis. 12 atau −40.'
+          ? 'Tulis jawaban berupa bilangan, pecahan, atau desimal, mis. 3, 1/2, atau 0,5.'
+          : 'Tulis jawaban berupa bilangan bulat, mis. 12 atau −40.'
     );
     return null;
   }
@@ -4527,8 +4530,8 @@ function buildIntegerOpSimulator(id, sim, opts) {
     (r.by > 0
       ? 'Lompatan <strong>' + r.by + ' langkah ke kanan</strong>.'
       : r.by < 0
-      ? 'Lompatan <strong>' + -r.by + ' langkah ke kiri</strong>.'
-      : 'Tidak ada lompatan — titiknya diam.') +
+        ? 'Lompatan <strong>' + -r.by + ' langkah ke kiri</strong>.'
+        : 'Tidak ada lompatan — titiknya diam.') +
     '</p>' +
     '</div>'
   );
@@ -5061,8 +5064,8 @@ function buildPlaceValueTable(str, opts) {
             c.pos <= 0
               ? nilaiBulat[-c.pos]
               : DESIMAL_TEMPAT[c.pos]
-              ? DESIMAL_TEMPAT[c.pos].pecahan
-              : '';
+                ? DESIMAL_TEMPAT[c.pos].pecahan
+                : '';
           return '<td class="' + cls(c) + '">' + esc(t) + '</td>';
         })
         .join('') +
@@ -12115,8 +12118,8 @@ function modelPrisma(n, opts) {
     typeof opts.sudutAwal === 'number'
       ? opts.sudutAwal
       : rebah
-      ? -Math.PI / 2 + (n % 2 ? 0 : Math.PI / n)
-      : -Math.PI / 2 - Math.PI / n;
+        ? -Math.PI / 2 + (n % 2 ? 0 : Math.PI / n)
+        : -Math.PI / 2 - Math.PI / n;
   var L = labelTitikPrisma(n);
   var titik = [];
   [0, h].forEach(function (z, lapis) {
@@ -13718,4 +13721,537 @@ function bindNetBuilder(root, id, st, opts, onChange) {
     renderUlang('[data-psm-kosong]');
     if (onChange) onChange('kosong');
   });
+}
+
+/* ============================================================
+   32. BARISAN ARITMETIKA: SELISIH & BEDA
+   Mengidentifikasi barisan aritmetika dan menentukan bedanya
+   (fase-f/mpi-1.1, Inquiry Learning). Dibangun di atas seksi 21
+   (jenisDeret, sukuAritmetika, subskrip) dan seksi 7–8
+   (buildSequenceTiles, buildDlNumInput):
+     • fmtSuku — suku bulat/desimal gaya Indonesia (−8; 0,5);
+     • selisihBerurutan / bedaBarisan / sifatBarisanAritmetika /
+       bedaDariDuaSuku — perhitungan murni;
+     • parseSelisih / diagnosaSelisih / pesanSelisih — memeriksa
+       isian selisih murid beserta miskonsepsinya (pengurangan
+       terbalik, menjumlahkan, menyalin suku);
+     • pelacak selisih — kartu suku dengan isian selisih di setiap
+       "jembatan" antara dua suku berurutan;
+     • lab barisan — murid mengatur a dan b dengan stepper lalu
+       mengamati barisan & lompatannya pada garis bilangan.
+   Gaya .bar-* ada di shared/base.css.
+   ============================================================ */
+
+/* Membulatkan galat biner (2.9000000000000004 → 2.9). */
+function bulatkanSuku(n) {
+  return Math.round(n * 1e6) / 1e6;
+}
+
+/* Suku barisan: bulat dengan pemisah ribuan, desimal berkoma, minus '−'. */
+function fmtSuku(n) {
+  var v = bulatkanSuku(n);
+  if (v === 0) return '0';
+  if (Number.isInteger(v)) return formatNumber(v, '−');
+  return (v < 0 ? '−' : '') + formatDesimal(Math.abs(v), 4);
+}
+
+/* [U₁, U₂, …] → [U₂ − U₁, U₃ − U₂, …]. */
+function selisihBerurutan(terms) {
+  var out = [];
+  for (var i = 1; i < terms.length; i++) out.push(bulatkanSuku(terms[i] - terms[i - 1]));
+  return out;
+}
+
+/* Beda b bila barisan aritmetika (termasuk konstan, b = 0); null bila bukan. */
+function bedaBarisan(terms) {
+  if (!terms || terms.length < 2) return null;
+  var jenis = jenisDeret(terms);
+  if (jenis !== 'aritmetika' && jenis !== 'konstan') return null;
+  return bulatkanSuku(terms[1] - terms[0]);
+}
+
+function sifatBarisanAritmetika(b) {
+  if (hampirSama(b, 0)) return 'konstan';
+  return b > 0 ? 'naik' : 'turun';
+}
+
+/* Beda dari dua suku tak berurutan: b = (Uₙ − Uₘ)/(n − m); NaN bila m = n. */
+function bedaDariDuaSuku(m, um, n, un) {
+  if (m === n) return NaN;
+  return bulatkanSuku((un - um) / (n - m));
+}
+
+/*
+ * Membaca isian selisih: bilangan bulat/desimal bertanda. Tanda '+',
+ * '-', '−' dan koma/titik desimal diterima; pemisah ribuan ("1.000")
+ * ditolak agar tidak rancu dengan desimal.
+ */
+function parseSelisih(str) {
+  if (str === null || str === undefined || String(str).trim() === '') {
+    return { value: null, error: 'empty' };
+  }
+  var s = String(str).trim().replace(/\s/g, '').replace(/−/g, '-').replace(',', '.');
+  if (!/^[+-]?\d+(\.\d+)?$/.test(s) || /^[+-]?\d+\.\d{3}$/.test(s)) {
+    return { value: null, error: 'invalid' };
+  }
+  return { value: parseFloat(s), error: null };
+}
+
+/*
+ * Diagnosa isian selisih pasangan (u1, u2):
+ *   'benar'     jawaban = u2 − u1
+ *   'terbalik'  jawaban = u1 − u2 (suku sebelum dikurangi suku sesudah)
+ *   'jumlah'    jawaban = u1 + u2
+ *   'suku'      jawaban menyalin salah satu suku
+ *   'salah'     lainnya
+ */
+function diagnosaSelisih(u1, u2, jawaban) {
+  var d = u2 - u1;
+  if (hampirSama(jawaban, d)) return 'benar';
+  if (!hampirSama(d, 0) && hampirSama(jawaban, -d)) return 'terbalik';
+  if (hampirSama(jawaban, u1 + u2)) return 'jumlah';
+  if (hampirSama(jawaban, u1) || hampirSama(jawaban, u2)) return 'suku';
+  return 'salah';
+}
+
+/* Umpan balik (HTML) untuk kode diagnosaSelisih. */
+function pesanSelisih(kode, u1, u2) {
+  var a = fmtSuku(u1);
+  var b = fmtSuku(u2);
+  switch (kode) {
+    case 'benar':
+      return 'Tepat: ' + b + ' − ' + a + ' = ' + fmtSuku(u2 - u1) + '.';
+    case 'terbalik':
+      return (
+        'Urutan pengurangannya terbalik. Selisih selalu <strong>suku sesudah dikurangi suku sebelum</strong>: ' +
+        b +
+        ' − ' +
+        a +
+        '. Perhatikan tandanya — barisan yang turun menghasilkan selisih negatif.'
+      );
+    case 'jumlah':
+      return (
+        'Kamu menjumlahkan kedua suku. Selisih diperoleh dengan <strong>mengurangkan</strong>: ' +
+        b +
+        ' − ' +
+        a +
+        '.'
+      );
+    case 'suku':
+      return (
+        'Itu nilai suku, bukan selisihnya. Hitung berapa perubahan dari ' + a + ' ke ' + b + '.'
+      );
+    default:
+      return 'Belum tepat. Hitung ' + b + ' − ' + a + ' dengan teliti.';
+  }
+}
+
+/* ---------- Pelacak selisih ---------- */
+
+function makeSelisihState(terms) {
+  var n = Math.max(terms.length - 1, 0);
+  var inputs = [];
+  var status = [];
+  for (var i = 0; i < n; i++) {
+    inputs.push('');
+    status.push(null);
+  }
+  return { inputs: inputs, status: status, attempts: 0 };
+}
+
+/* Menyiapkan state[key] untuk barisan `terms`; state lama yang cocok dipertahankan. */
+function ensureSelisihState(state, key, terms) {
+  var st = state[key];
+  var n = Math.max(terms.length - 1, 0);
+  var cocok =
+    st &&
+    typeof st === 'object' &&
+    Array.isArray(st.inputs) &&
+    Array.isArray(st.status) &&
+    st.inputs.length === n &&
+    st.status.length === n;
+  if (!cocok) state[key] = makeSelisihState(terms);
+  return state[key];
+}
+
+function selisihTrackerSelesai(st) {
+  return (
+    st.status.length > 0 &&
+    st.status.every(function (s) {
+      return s === 'benar';
+    })
+  );
+}
+
+/*
+ * Memeriksa setiap isian yang terisi dan belum benar. Mengembalikan
+ * { kosong, tidakValid } — banyaknya isian kosong & tidak valid.
+ */
+function periksaSelisihTracker(terms, st) {
+  var kosong = 0;
+  var tidakValid = 0;
+  st.inputs.forEach(function (val, i) {
+    if (st.status[i] === 'benar') return;
+    var p = parseSelisih(val);
+    if (p.error === 'empty') {
+      kosong += 1;
+      st.status[i] = null;
+      return;
+    }
+    if (p.error) {
+      tidakValid += 1;
+      st.status[i] = 'salah';
+      return;
+    }
+    st.status[i] = diagnosaSelisih(terms[i], terms[i + 1], p.value);
+  });
+  st.attempts += 1;
+  return { kosong: kosong, tidakValid: tidakValid };
+}
+
+/*
+ * Kartu suku dengan "jembatan" selisih di antara setiap dua suku
+ * berurutan. Jembatan yang belum benar berisi kotak isian; yang benar
+ * menampilkan selisihnya (hijau).
+ *   id     awalan id DOM (isian: <id>In0, <id>In1, …; tombol: <id>Check)
+ *   terms  suku-suku barisan
+ *   st     state (makeSelisihState)
+ *   opts.labels  label kartu (default U₁, U₂, …)
+ *   opts.satuan  satuan untuk teks aria
+ */
+function buildSelisihTracker(id, terms, st, opts) {
+  opts = opts || {};
+  var html = '';
+  terms.forEach(function (t, i) {
+    if (i > 0) {
+      var k = i - 1;
+      var status = st.status[k];
+      var labelAria =
+        'Selisih ' +
+        (opts.labels ? opts.labels[i] : 'U' + subskrip(i + 1)) +
+        ' dikurangi ' +
+        (opts.labels ? opts.labels[k] : 'U' + subskrip(k + 1));
+      html +=
+        '<span class="bar-bridge' +
+        (status === 'benar' ? ' bar-bridge--ok' : status ? ' bar-bridge--salah' : '') +
+        '">' +
+        '<span class="bar-bridge__arc" aria-hidden="true"></span>' +
+        (status === 'benar'
+          ? '<span class="bar-bridge__val">' +
+            (terms[i] - terms[k] > 0 ? '+' : '') +
+            fmtSuku(terms[i] - terms[k]) +
+            '</span>'
+          : buildDlNumInput(id + 'In' + k, st.inputs[k], {
+              error: !!status,
+              allowNegative: true,
+              aria: labelAria,
+              placeholder: '?',
+            })) +
+        '</span>';
+    }
+    html +=
+      '<span class="seq-tile bar-tile">' +
+      '<span class="seq-tile__label">' +
+      esc(opts.labels ? opts.labels[i] : 'U' + subskrip(i + 1)) +
+      '</span>' +
+      '<span class="seq-tile__val">' +
+      fmtSuku(t) +
+      '</span>' +
+      '</span>';
+  });
+
+  var selesai = selisihTrackerSelesai(st);
+  var umpan = '';
+  st.status.forEach(function (s, k) {
+    if (s && s !== 'benar') {
+      umpan += buildFeedbackBox(
+        'error',
+        '✗',
+        '<strong>Jembatan ' + (k + 1) + ':</strong> ' + pesanSelisih(s, terms[k], terms[k + 1])
+      );
+    }
+  });
+  if (selesai) {
+    umpan = buildFeedbackBox(
+      'success',
+      '✓',
+      'Selisih yang kamu temukan: <strong>' +
+        selisihBerurutan(terms)
+          .map(function (d) {
+            return (d > 0 ? '+' : '') + fmtSuku(d);
+          })
+          .join(', ') +
+        '</strong>' +
+        (opts.satuan ? ' ' + esc(opts.satuan) : '') +
+        '.'
+    );
+  }
+
+  return (
+    '<div class="bar-tracker" id="' +
+    id +
+    '">' +
+    '<div class="bar-tracker__row" role="group" aria-label="Suku dan selisih barisan">' +
+    html +
+    '</div>' +
+    (selesai
+      ? ''
+      : '<div class="btn-group">' +
+        '<button type="button" class="btn btn--primary" id="' +
+        id +
+        'Check">Periksa Selisih</button>' +
+        '</div>') +
+    (umpan ? '<div class="bar-tracker__umpan">' + umpan + '</div>' : '') +
+    '</div>'
+  );
+}
+
+/* Memasang event pelacak selisih; `save` lalu `rerender` setelah Periksa. */
+function bindSelisihTracker(root, id, terms, st, save, rerender) {
+  var btn = root.querySelector('#' + id + 'Check');
+  st.inputs.forEach(function (_, k) {
+    var inp = root.querySelector('#' + id + 'In' + k);
+    if (!inp) return;
+    inp.addEventListener('input', function () {
+      st.inputs[k] = inp.value;
+      save();
+    });
+    inp.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter' && btn) btn.click();
+    });
+  });
+  if (!btn) return;
+  btn.addEventListener('click', function () {
+    var hasil = periksaSelisihTracker(terms, st);
+    save();
+    rerender();
+    if (hasil.tidakValid) showNotice('Tulis selisih berupa bilangan, mis. 5, −8, atau −0,3.');
+    else if (hasil.kosong) showNotice('Masih ada jembatan yang belum diisi.');
+  });
+}
+
+/* ---------- Lab barisan ---------- */
+
+function makeLabBarisan(a, b) {
+  return { a: a, b: b, dicoba: { naik: false, turun: false, konstan: false } };
+}
+
+function sukuLabBarisan(lab, n) {
+  var out = [];
+  for (var k = 1; k <= n; k++) out.push(sukuAritmetika(lab.a, lab.b, k));
+  return out;
+}
+
+/* Menandai kategori beda (naik/turun/konstan) yang sudah dicoba murid. */
+function catatLabBarisan(lab) {
+  if (!lab.dicoba || typeof lab.dicoba !== 'object') {
+    lab.dicoba = { naik: false, turun: false, konstan: false };
+  }
+  lab.dicoba[sifatBarisanAritmetika(lab.b)] = true;
+}
+
+function labBarisanLengkap(lab) {
+  return !!(lab.dicoba && lab.dicoba.naik && lab.dicoba.turun && lab.dicoba.konstan);
+}
+
+/*
+ * Garis bilangan dengan busur lompatan dari setiap suku ke suku
+ * berikutnya; label busur menunjukkan selisihnya (+3, −2, +0).
+ */
+function buildLompatanSVG(terms, opts) {
+  opts = opts || {};
+  var W = 640;
+  var H = 150;
+  var padX = 36;
+  var axisY = 108;
+  var lo = Math.min.apply(null, terms);
+  var hi = Math.max.apply(null, terms);
+  if (hi - lo < 4) {
+    var tengah = (hi + lo) / 2;
+    lo = tengah - 2;
+    hi = tengah + 2;
+  }
+  function xOf(v) {
+    return padX + ((v - lo) / (hi - lo)) * (W - 2 * padX);
+  }
+  var out =
+    '<line class="bar-axis" x1="' +
+    (padX - 18) +
+    '" y1="' +
+    axisY +
+    '" x2="' +
+    (W - padX + 18) +
+    '" y2="' +
+    axisY +
+    '"/>';
+
+  for (var i = 0; i < terms.length - 1; i++) {
+    var d = bulatkanSuku(terms[i + 1] - terms[i]);
+    var sifat = sifatBarisanAritmetika(d);
+    var label = (d >= 0 ? '+' : '') + fmtSuku(d);
+    var x1 = xOf(terms[i]);
+    var x2 = xOf(terms[i + 1]);
+    if (sifat === 'konstan') {
+      var r = 12 + i * 7;
+      out +=
+        '<circle class="bar-arc bar-arc--konstan" cx="' +
+        x1 +
+        '" cy="' +
+        (axisY - r) +
+        '" r="' +
+        r +
+        '"/>';
+      if (i === 0) {
+        out +=
+          '<text class="bar-arc__label" x="' +
+          x1 +
+          '" y="' +
+          (axisY - 2 * r - 30) +
+          '">' +
+          label +
+          '</text>';
+      }
+    } else {
+      var mid = (x1 + x2) / 2;
+      var tinggi = Math.min(70, 26 + Math.abs(x2 - x1) * 0.35);
+      out +=
+        '<path class="bar-arc bar-arc--' +
+        sifat +
+        '" d="M' +
+        x1 +
+        ' ' +
+        axisY +
+        ' Q' +
+        mid +
+        ' ' +
+        (axisY - tinggi * 2) +
+        ' ' +
+        x2 +
+        ' ' +
+        axisY +
+        '"/>' +
+        '<text class="bar-arc__label" x="' +
+        mid +
+        '" y="' +
+        (axisY - tinggi - 6) +
+        '">' +
+        label +
+        '</text>';
+    }
+  }
+  terms.forEach(function (t, k) {
+    var x = xOf(t);
+    out +=
+      '<circle class="bar-dot" cx="' +
+      x +
+      '" cy="' +
+      axisY +
+      '" r="6"/>' +
+      (k === 0 || !hampirSama(t, terms[k - 1])
+        ? '<text class="bar-dot__label" x="' +
+          x +
+          '" y="' +
+          (axisY + 24) +
+          '">' +
+          fmtSuku(t) +
+          '</text>'
+        : '');
+  });
+  return (
+    '<svg class="bar-lompatan" viewBox="0 0 ' +
+    W +
+    ' ' +
+    H +
+    '" role="img" aria-label="' +
+    esc(opts.aria || 'Lompatan suku-suku barisan pada garis bilangan') +
+    '">' +
+    out +
+    '</svg>'
+  );
+}
+
+/*
+ * Lab barisan: stepper suku pertama (a) dan beda (b), kartu suku dengan
+ * selisihnya, garis bilangan lompatan, serta penanda kategori beda yang
+ * sudah dicoba.
+ *   id    id elemen pembungkus (stepper: <id>A…, <id>B…)
+ *   lab   state (makeLabBarisan)
+ *   opts  { n (default 6), rangeA {min,max} (default −10…20),
+ *           rangeB {min,max} (default −6…6) }
+ * Pasang event dengan bindLabBarisan(); lab merender ulang dirinya.
+ */
+function buildLabBarisan(id, lab, opts) {
+  opts = opts || {};
+  var n = opts.n || 6;
+  var ra = opts.rangeA || { min: -10, max: 20 };
+  var rb = opts.rangeB || { min: -6, max: 6 };
+  var terms = sukuLabBarisan(lab, n);
+  var sifat = sifatBarisanAritmetika(lab.b);
+  var namaSifat = { naik: 'NAIK', turun: 'TURUN', konstan: 'KONSTAN (tetap)' };
+  var chip = function (k, teks) {
+    var sudah = lab.dicoba && lab.dicoba[k];
+    return (
+      '<li class="bar-chip' +
+      (sudah ? ' bar-chip--done' : '') +
+      '">' +
+      (sudah ? '✓ ' : '○ ') +
+      teks +
+      '</li>'
+    );
+  };
+  return (
+    '<div class="bar-lab" id="' +
+    id +
+    '">' +
+    '<div class="bar-lab__controls">' +
+    buildIntegerStepper(id + 'A', 'Suku pertama (a)', lab.a, ra) +
+    buildIntegerStepper(id + 'B', 'Beda (b)', lab.b, rb) +
+    '</div>' +
+    buildSequenceTiles(terms, { showDiff: true, more: true, format: fmtSuku }) +
+    buildLompatanSVG(terms) +
+    '<p class="bar-lab__sifat bar-lab__sifat--' +
+    sifat +
+    '" aria-live="polite">Barisan ini <strong>' +
+    namaSifat[sifat] +
+    '</strong>: setiap langkah berubah ' +
+    (lab.b >= 0 ? '+' : '') +
+    fmtSuku(lab.b) +
+    '.</p>' +
+    '<ul class="bar-chips" aria-label="Jenis beda yang sudah dicoba">' +
+    chip('naik', 'b positif') +
+    chip('turun', 'b negatif') +
+    chip('konstan', 'b = 0') +
+    '</ul>' +
+    '</div>'
+  );
+}
+
+/* onChange(lab) dipanggil setelah setiap perubahan a/b. */
+function bindLabBarisan(root, id, lab, save, onChange, opts) {
+  opts = opts || {};
+  var ra = opts.rangeA || { min: -10, max: 20 };
+  var rb = opts.rangeB || { min: -6, max: 6 };
+  function pasang(scope) {
+    bindIntegerStepper(scope, id + 'A', function (delta) {
+      lab.a = Math.max(ra.min, Math.min(ra.max, lab.a + delta));
+      ubah(id + 'A' + (delta < 0 ? 'Dec' : 'Inc'));
+    });
+    bindIntegerStepper(scope, id + 'B', function (delta) {
+      lab.b = Math.max(rb.min, Math.min(rb.max, lab.b + delta));
+      ubah(id + 'B' + (delta < 0 ? 'Dec' : 'Inc'));
+    });
+  }
+  function ubah(fokusId) {
+    catatLabBarisan(lab);
+    save();
+    var el = root.querySelector('#' + id);
+    if (el) {
+      el.outerHTML = buildLabBarisan(id, lab, opts);
+      pasang(root);
+      var f = root.querySelector('#' + fokusId);
+      if (f && !f.disabled) f.focus();
+    }
+    if (onChange) onChange(lab);
+  }
+  pasang(root);
 }
