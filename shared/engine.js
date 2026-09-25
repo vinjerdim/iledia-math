@@ -83,6 +83,10 @@
    34. Bilangan bulat: membandingkan & mengurutkan dalam konteks
        (urut naik/turun, kata perbandingan per tema, diagnosa
        miskonsepsi lambang, rentang garis bilangan)
+   35. Pecahan dalam konteks sehari-hari: membaca & menuliskan
+       (notasi & cara baca baku biasa/campuran/negatif, pemeriksa
+       cara baca & tulis berdiagnosa, opsi cara baca teracak, langkah
+       isian pecahan, pengarsir pecahan interaktif)
    ============================================================ */
 
 /* ============================================================
@@ -785,8 +789,8 @@ function createExerciseStage(cfg) {
         (cfg.inputMode
           ? ' inputmode="' + esc(cfg.inputMode) + '"'
           : cfg.allowNegative
-            ? ''
-            : ' inputmode="numeric"') +
+          ? ''
+          : ' inputmode="numeric"') +
         ' id="' +
         prefix +
         'Input" class="input-text" placeholder="' +
@@ -876,8 +880,8 @@ function createExerciseStage(cfg) {
       feedbackHTML = cfg.buildChoiceFeedback
         ? cfg.buildChoiceFeedback(s, ex)
         : ex.correct
-          ? buildFeedbackBox('success', '✓', '<strong>Benar!</strong> ' + s.explanation)
-          : buildFeedbackBox('error', '✗', '<strong>Belum tepat.</strong> ' + s.explanation);
+        ? buildFeedbackBox('success', '✓', '<strong>Benar!</strong> ' + s.explanation)
+        : buildFeedbackBox('error', '✗', '<strong>Belum tepat.</strong> ' + s.explanation);
     }
 
     return (
@@ -1497,8 +1501,8 @@ function readDlNumber(val, rational) {
       parsed.error === 'empty'
         ? 'Isi jawabanmu terlebih dahulu.'
         : rational
-          ? 'Tulis jawaban berupa bilangan, pecahan, atau desimal, mis. 3, 1/2, atau 0,5.'
-          : 'Tulis jawaban berupa bilangan bulat, mis. 12 atau −40.'
+        ? 'Tulis jawaban berupa bilangan, pecahan, atau desimal, mis. 3, 1/2, atau 0,5.'
+        : 'Tulis jawaban berupa bilangan bulat, mis. 12 atau −40.'
     );
     return null;
   }
@@ -2433,6 +2437,8 @@ function buildFractionModel(num, den, whole, opts) {
  *   opts.disabled   true → kunci isian
  *   opts.status     'ok' | 'bad' | '' → warna bingkai
  *   opts.aria       awalan label aksesibel (default 'Jawaban')
+ *   opts.signed     true → pilihan tanda (kosong/−) di kiri, id <id>Sign,
+ *                   untuk pecahan negatif; value.sign '' | '-'
  */
 function buildFractionInput(id, value, opts) {
   opts = opts || {};
@@ -2455,10 +2461,24 @@ function buildFractionInput(id, value, opts) {
       '/>'
     );
   }
+  var neg = value.sign === '-';
   return (
     '<div class="frac-input' +
     (opts.status ? ' frac-input--' + opts.status : '') +
     '">' +
+    (opts.signed
+      ? '<select class="frac-input__sign" id="' +
+        id +
+        'Sign" aria-label="' +
+        esc(aria + ': tanda bilangan') +
+        '"' +
+        dis +
+        '><option value=""' +
+        (neg ? '' : ' selected') +
+        '>+</option><option value="-"' +
+        (neg ? ' selected' : '') +
+        '>−</option></select>'
+      : '') +
     (opts.mixed
       ? '<div class="frac-input__whole">' +
         box(
@@ -2482,8 +2502,9 @@ function buildFractionInput(id, value, opts) {
 /*
  * Membaca kotak isian buildFractionInput di dalam `root`.
  * Mengembalikan { raw, value, error }:
- *   raw    { whole, num, den } string apa adanya (untuk disimpan di State)
- *   value  { whole, num, den } bilangan cacah (whole null bila kosong)
+ *   raw    { sign, whole, num, den } string apa adanya (untuk disimpan di State)
+ *   value  { whole, num, den, neg } bilangan cacah (whole null bila kosong;
+ *          neg true bila pilihan tanda opts.signed bernilai −)
  *   error  null | 'empty' (pembilang/penyebut kosong) | 'invalid' | 'zero-den'
  */
 function readFractionInput(root, id) {
@@ -2491,7 +2512,7 @@ function readFractionInput(root, id) {
     var el = root.querySelector('#' + id + suffix);
     return el ? el.value.trim() : '';
   }
-  var raw = { whole: get('Whole'), num: get('Num'), den: get('Den') };
+  var raw = { sign: get('Sign'), whole: get('Whole'), num: get('Num'), den: get('Den') };
   if (raw.num === '' || raw.den === '') return { raw: raw, value: null, error: 'empty' };
   var cacah = /^\d+$/;
   if (
@@ -2505,6 +2526,7 @@ function readFractionInput(root, id) {
     whole: raw.whole === '' ? null : parseInt(raw.whole, 10),
     num: parseInt(raw.num, 10),
     den: parseInt(raw.den, 10),
+    neg: raw.sign === '-',
   };
   if (value.den === 0) return { raw: raw, value: value, error: 'zero-den' };
   return { raw: raw, value: value, error: null };
@@ -4540,8 +4562,8 @@ function buildIntegerOpSimulator(id, sim, opts) {
     (r.by > 0
       ? 'Lompatan <strong>' + r.by + ' langkah ke kanan</strong>.'
       : r.by < 0
-        ? 'Lompatan <strong>' + -r.by + ' langkah ke kiri</strong>.'
-        : 'Tidak ada lompatan — titiknya diam.') +
+      ? 'Lompatan <strong>' + -r.by + ' langkah ke kiri</strong>.'
+      : 'Tidak ada lompatan — titiknya diam.') +
     '</p>' +
     '</div>'
   );
@@ -5074,8 +5096,8 @@ function buildPlaceValueTable(str, opts) {
             c.pos <= 0
               ? nilaiBulat[-c.pos]
               : DESIMAL_TEMPAT[c.pos]
-                ? DESIMAL_TEMPAT[c.pos].pecahan
-                : '';
+              ? DESIMAL_TEMPAT[c.pos].pecahan
+              : '';
           return '<td class="' + cls(c) + '">' + esc(t) + '</td>';
         })
         .join('') +
@@ -12128,8 +12150,8 @@ function modelPrisma(n, opts) {
     typeof opts.sudutAwal === 'number'
       ? opts.sudutAwal
       : rebah
-        ? -Math.PI / 2 + (n % 2 ? 0 : Math.PI / n)
-        : -Math.PI / 2 - Math.PI / n;
+      ? -Math.PI / 2 + (n % 2 ? 0 : Math.PI / n)
+      : -Math.PI / 2 - Math.PI / n;
   var L = labelTitikPrisma(n);
   var titik = [];
   [0, h].forEach(function (z, lapis) {
@@ -15831,4 +15853,794 @@ function rentangGaris(values, pad) {
   var lo = Math.min.apply(null, values);
   var hi = Math.max.apply(null, values);
   return { min: Math.min(lo - p, -p), max: Math.max(hi + p, p) };
+}
+
+/* ============================================================
+   35. PECAHAN DALAM KONTEKS SEHARI-HARI — MEMBACA & MENULISKAN
+   Dipakai modul membaca & menuliskan bilangan rasional (pecahan)
+   dalam kehidupan sehari-hari (fase-d/mpi-1.3). Memakai ulang seksi
+   10 (bacaPecahan, buildFracBlock, buildFractionInput,
+   readFractionInput), seksi 16 (mixedToImproper), seksi 14
+   (pecahanSetara), dan seksi 29 (normalisasiBacaan).
+
+   Pecahan ditulis sebagai objek { num, den, whole, neg }:
+     num/den  pembilang & penyebut (bilangan cacah, den > 0)
+     whole    bilangan bulat pecahan campuran (null/0 bila tidak ada)
+     neg      true untuk pecahan negatif
+   Isinya:
+     • tulisPecahan / bacaPecahanKonteks — notasi & cara baca baku
+       ("negatif dua satu per empat");
+     • parseTeksPecahan / periksaTeksPecahan — isian teks "3/4",
+       "2 1/2", "-3/4";
+     • cekCaraBacaPecahan — memeriksa cara baca yang diketik murid
+       beserta miskonsepsinya (terbalik, tanpa "per", "dari", lupa
+       bilangan bulat, "minus", …); sebutan sehari-hari (setengah,
+       seperempat, tiga perempat) diterima dengan catatan bentuk baku;
+     • opsiCaraBacaPecahan / opsiNotasiPecahan — pilihan cara baca &
+       notasi (benar + pengecoh khas);
+     • diagnosaTulisPecahan — memeriksa notasi yang ditulis murid
+       (terbalik, menulis bagian tersisa, bagian-per-sisa, lupa
+       bilangan bulat, senilai tetapi bukan yang diminta, tanda);
+     • makePecahanStep / periksaPecahanStep / buildPecahanStep /
+       bindPecahanStep — langkah isian (bersusun atau teks) dengan
+       umpan balik diagnosa;
+     • buildPecahanTampil — pecahan bersusun bertanda untuk tampilan;
+     • pengarsir pecahan (buildFracShader & kawan-kawan) — murid
+       memilih banyak bagian sama besar lalu mengetuk bagian yang
+       diarsir.
+   Gaya .frac-shader*, .frac-signed*, .frac-input__sign ada di
+   shared/base.css.
+   ============================================================ */
+
+/* Notasi baku: { num: 1, den: 4, whole: 1, neg: true } → "−1 1/4". */
+function tulisPecahan(p) {
+  return (p.neg ? '−' : '') + (p.whole ? p.whole + ' ' : '') + p.num + '/' + p.den;
+}
+
+/* Cara baca baku tanpa tanda: "dua satu per empat". */
+function bacaBesaranPecahan(p) {
+  return bacaPecahan(p.num, p.den, p.whole || null);
+}
+
+/* Cara baca baku lengkap: tanda − dibaca "negatif" lebih dulu. */
+function bacaPecahanKonteks(p) {
+  return (p.neg ? 'negatif ' : '') + bacaBesaranPecahan(p);
+}
+
+/*
+ * Mengurai isian teks pecahan: "3/4", "2 1/2", "-3/4", "−1 1/4"
+ * (spasi di sekitar "/" diabaikan). Mengembalikan { value, error }:
+ *   error null | 'kosong' | 'format' | 'nol-penyebut'
+ */
+function parseTeksPecahan(str) {
+  var s = String(str == null ? '' : str).trim();
+  if (!s) return { value: null, error: 'kosong' };
+  s = s
+    .replace(/[−–]/g, '-')
+    .replace(/\s*\/\s*/g, '/')
+    .replace(/\s+/g, ' ');
+  var m = /^([+-])? ?(?:(\d{1,4}) )?(\d{1,4})\/(\d{1,4})$/.exec(s);
+  if (!m) return { value: null, error: 'format' };
+  var value = {
+    num: parseInt(m[3], 10),
+    den: parseInt(m[4], 10),
+    whole: m[2] ? parseInt(m[2], 10) : null,
+    neg: m[1] === '-',
+  };
+  return { value: value, error: value.den === 0 ? 'nol-penyebut' : null };
+}
+
+var PESAN_BACA_PECAHAN = {
+  kosong: 'Ketik cara membaca pecahan itu terlebih dahulu.',
+  terbalik:
+    'Urutannya terbalik. Yang dibaca lebih dulu adalah <strong>pembilang</strong> (angka di atas), baru kemudian "per" dan <strong>penyebut</strong> (angka di bawah).',
+  'tanpa-per':
+    'Ada kata yang hilang. Di antara pembilang dan penyebut, garis pecahan dibaca <strong>"per"</strong>.',
+  penghubung:
+    'Maknanya mendekati, tetapi cara baca baku garis pecahan adalah kata <strong>"per"</strong> — bukan "dari", "bagi", atau "banding".',
+  'lupa-bulat':
+    'Ini pecahan campuran. Bilangan bulatnya ikut dibaca, dan dibaca <strong>lebih dulu</strong> sebelum pecahannya.',
+  'urutan-campuran':
+    'Pada pecahan campuran, bilangan bulat ditulis di kiri, jadi dibaca <strong>lebih dulu</strong>, baru pecahannya.',
+  'angka-salah':
+    'Angkanya belum tepat. Baca pembilang (atas) dan penyebut (bawah) masing-masing sebagai satu bilangan utuh.',
+  minus:
+    'Bentuknya benar, tetapi "minus" adalah nama operasi pengurangan. Tanda − di depan bilangan dibaca <strong>negatif</strong>.',
+  'urutan-terbalik':
+    'Tanda − ditulis di depan, jadi kata "negatif" juga dibaca <strong>lebih dulu</strong>.',
+  'lupa-negatif': 'Pecahan ini bertanda negatif. Jangan lupa membaca tandanya: "negatif …".',
+  'tanda-terbalik': 'Perhatikan tandanya lagi: apakah pecahan ini positif atau negatif?',
+  plus: 'Pecahan positif dibaca angkanya saja, atau dengan kata <strong>positif</strong> — bukan "plus".',
+};
+
+/* Peta bentuk bacaan (tanpa tanda) → kode, untuk pecahan p. */
+function bentukBacaPecahan(p) {
+  var W = p.whole ? terbilang(p.whole) : '';
+  var n = terbilang(p.num);
+  var d = terbilang(p.den);
+  var peta = {};
+  function add(teks, kode) {
+    if (!Object.prototype.hasOwnProperty.call(peta, teks)) peta[teks] = kode;
+  }
+  function pre(x) {
+    return W ? W + ' ' + x : x;
+  }
+  var baku = n + ' per ' + d;
+  add(pre(baku), 'benar');
+  if (W) add(W + ' dan ' + baku, 'benar');
+  var sehari = [];
+  if (p.num === 1) sehari.push('seper' + d);
+  if (p.num === 1 && p.den === 2) sehari.push('setengah');
+  sehari.push(n + ' per' + d);
+  sehari.forEach(function (f) {
+    add(pre(f), 'sehari');
+    if (W) add(W + ' dan ' + f, 'sehari');
+  });
+  if (p.num !== p.den) add(pre(d + ' per ' + n), 'terbalik');
+  add(pre(n + ' ' + d), 'tanpa-per');
+  ['dari', 'bagi', 'banding', 'dibagi'].forEach(function (k) {
+    add(pre(n + ' ' + k + ' ' + d), 'penghubung');
+  });
+  if (W) {
+    add(baku, 'lupa-bulat');
+    add(baku + ' ' + W, 'urutan-campuran');
+  }
+  return peta;
+}
+
+/*
+ * Memeriksa cara baca yang diketik murid untuk pecahan p.
+ * Mengembalikan { benar, kode, pesan }; kode 'benar' | 'sehari' (benar,
+ * sebutan sehari-hari) | 'kosong' | 'terbalik' | 'tanpa-per' |
+ * 'penghubung' | 'lupa-bulat' | 'urutan-campuran' | 'angka-salah' |
+ * 'minus' | 'urutan-terbalik' | 'lupa-negatif' | 'tanda-terbalik' | 'plus'.
+ */
+function cekCaraBacaPecahan(teks, p) {
+  var baku = bacaPecahanKonteks(p);
+  function hasil(kode) {
+    if (kode === 'benar') {
+      return { benar: true, kode: kode, pesan: 'Tepat! Dibaca "' + baku + '".' };
+    }
+    if (kode === 'sehari') {
+      return {
+        benar: true,
+        kode: kode,
+        pesan:
+          'Benar, itu sebutan sehari-hari. Cara baca bakunya: "<strong>' +
+          esc(baku) +
+          '</strong>".',
+      };
+    }
+    return { benar: false, kode: kode, pesan: PESAN_BACA_PECAHAN[kode] };
+  }
+  var t = normalisasiBacaan(teks).replace(/\bse per /g, 'seper');
+  if (!t) return hasil('kosong');
+
+  var tanda = '';
+  var sisa = t;
+  var m = /^(negatif|minus|min|positif|plus) (.+)$/.exec(t);
+  if (m) {
+    tanda = m[1] === 'min' ? 'minus' : m[1];
+    sisa = m[2];
+  }
+  var tandaBelakang = false;
+  if (!tanda && / negatif$/.test(sisa)) {
+    tandaBelakang = true;
+    sisa = sisa.replace(/ negatif$/, '');
+  }
+
+  var peta = bentukBacaPecahan(p);
+  var kode = Object.prototype.hasOwnProperty.call(peta, sisa) ? peta[sisa] : 'angka-salah';
+  var bentukOk = kode === 'benar' || kode === 'sehari';
+
+  if (p.neg) {
+    if (tanda === 'positif' || tanda === 'plus') return hasil('tanda-terbalik');
+    if (!bentukOk) return hasil(kode);
+    if (tanda === 'negatif') return hasil(kode);
+    if (tanda === 'minus') return hasil('minus');
+    if (tandaBelakang) return hasil('urutan-terbalik');
+    return hasil('lupa-negatif');
+  }
+  if (tanda === 'negatif' || tanda === 'minus' || tandaBelakang) return hasil('tanda-terbalik');
+  if (!bentukOk) return hasil(kode);
+  if (tanda === 'plus') return hasil('plus');
+  return hasil(kode);
+}
+
+/*
+ * Pilihan cara baca untuk pecahan p: satu benar (id 'baku') dan tiga
+ * pengecoh khas — terbalik, tanpa "per", serta "minus" (pecahan
+ * negatif) / bulat di belakang (pecahan campuran) / "dari" (lainnya).
+ * Urutan wajar; app.js mengacaknya (ensureShuffledOrder).
+ * Setiap opsi: { id, label, benar, umpan }.
+ */
+function opsiCaraBacaPecahan(p) {
+  var W = p.whole ? terbilang(p.whole) : '';
+  var n = terbilang(p.num);
+  var d = terbilang(p.den);
+  var tanda = p.neg ? 'negatif ' : '';
+  function pre(x) {
+    return W ? W + ' ' + x : x;
+  }
+  var baku = bacaPecahanKonteks(p);
+  var opsi = [
+    {
+      id: 'baku',
+      label: baku,
+      benar: true,
+      umpan: 'Tepat! ' + tulisPecahan(p) + ' dibaca "' + baku + '".',
+    },
+    {
+      id: 'terbalik',
+      label: tanda + pre(d + ' per ' + n),
+      benar: false,
+      umpan: PESAN_BACA_PECAHAN.terbalik,
+    },
+    {
+      id: 'tanpa-per',
+      label: tanda + pre(n + ' ' + d),
+      benar: false,
+      umpan: PESAN_BACA_PECAHAN['tanpa-per'],
+    },
+  ];
+  if (p.neg) {
+    opsi.push({
+      id: 'minus',
+      label: 'minus ' + bacaBesaranPecahan(p),
+      benar: false,
+      umpan: PESAN_BACA_PECAHAN.minus,
+    });
+  } else if (W) {
+    opsi.push({
+      id: 'urutan-campuran',
+      label: n + ' per ' + d + ' ' + W,
+      benar: false,
+      umpan: PESAN_BACA_PECAHAN['urutan-campuran'],
+    });
+  } else {
+    opsi.push({
+      id: 'penghubung',
+      label: n + ' dari ' + d,
+      benar: false,
+      umpan: PESAN_BACA_PECAHAN.penghubung,
+    });
+  }
+  return opsi;
+}
+
+var PESAN_TULIS_PECAHAN = {
+  kosong: 'Isi pembilang dan penyebutnya terlebih dahulu.',
+  format: 'Tulis pecahan dengan garis miring, misalnya 3/4 atau 2 1/2.',
+  'nol-penyebut':
+    'Penyebut tidak boleh 0. Penyebut menunjukkan menjadi berapa bagian sama besar satu benda utuh dibagi.',
+  terbalik:
+    'Letaknya tertukar. <strong>Pembilang</strong> (atas) = banyak bagian yang diambil/diarsir; <strong>penyebut</strong> (bawah) = banyak seluruh bagian sama besar.',
+  komplemen:
+    'Kamu menulis bagian yang <strong>tersisa</strong> (tidak diambil/tidak diarsir). Baca lagi: bagian mana yang ditanyakan?',
+  'bagian-per-sisa':
+    'Penyebut bukan banyak bagian yang tersisa, melainkan banyak <strong>seluruh</strong> bagian sama besar.',
+  'lupa-bulat':
+    'Masih ada benda yang utuh. Tuliskan banyak benda utuh sebagai <strong>bilangan bulat</strong> di sebelah kiri pecahan.',
+  senilai:
+    'Nilainya sama, tetapi tuliskan sesuai yang diamati: pembilang = banyak bagian yang diambil, penyebut = banyak seluruh bagian (dan benda utuh sebagai bilangan bulat).',
+  'lupa-negatif':
+    'Angkanya tepat, tetapi keadaan ini berada di bawah titik acuan (nol). Beri tanda <strong>−</strong> di depan pecahan.',
+  'tanda-lebih':
+    'Angkanya tepat, tetapi keadaan ini tidak berada di bawah titik acuan, jadi tidak perlu tanda −.',
+  salah:
+    'Belum tepat. Hitung lagi: ada berapa bagian sama besar seluruhnya (penyebut), dan berapa bagian yang diambil (pembilang)?',
+};
+
+/*
+ * Pilihan notasi untuk pecahan p (mis. dari dikte): satu benar (id
+ * 'baku') dan tiga pengecoh khas —
+ *   semua bentuk      'terbalik'   pembilang & penyebut tertukar
+ *   pecahan negatif   'tanpa-tanda', 'tanda-belakang' (3/4−)
+ *   pecahan campuran  'lupa-bulat', 'digabung' (1 3/4 → 13/4)
+ *   pecahan biasa     'komplemen' (bagian tersisa) atau 'tanpa-garis'
+ *                     (34), serta 'koma' (3,4)
+ * Urutan wajar; app.js mengacaknya. Setiap opsi: { id, label, benar, umpan }.
+ */
+function opsiNotasiPecahan(p) {
+  var tanda = p.neg ? '−' : '';
+  var W = p.whole || 0;
+  function tulis(num, den, whole) {
+    return tanda + (whole ? whole + ' ' : '') + num + '/' + den;
+  }
+  var opsi = [
+    {
+      id: 'baku',
+      label: tulisPecahan(p),
+      benar: true,
+      umpan: 'Tepat! "' + bacaPecahanKonteks(p) + '" ditulis ' + tulisPecahan(p) + '.',
+    },
+    {
+      id: 'terbalik',
+      label: tulis(p.den, p.num, W),
+      benar: false,
+      umpan: PESAN_TULIS_PECAHAN.terbalik,
+    },
+  ];
+  function tambah(id, label, umpan) {
+    opsi.push({ id: id, label: label, benar: false, umpan: umpan });
+  }
+  if (p.neg) {
+    tambah(
+      'tanpa-tanda',
+      tulisPecahan({ num: p.num, den: p.den, whole: W, neg: false }),
+      'Kata "negatif" ditulis sebagai tanda − di depan pecahan. Tanpa tanda, pecahan ini menjadi positif.'
+    );
+    tambah(
+      'tanda-belakang',
+      tulisPecahan({ num: p.num, den: p.den, whole: W, neg: false }) + '−',
+      'Tanda − ditulis di <strong>depan</strong> pecahan, bukan di belakang.'
+    );
+  } else if (W) {
+    tambah('lupa-bulat', p.num + '/' + p.den, PESAN_TULIS_PECAHAN['lupa-bulat']);
+    if (p.den === 10) {
+      tambah(
+        'bulat-kanan',
+        p.num + '/' + p.den + ' ' + W,
+        'Bilangan bulat pecahan campuran ditulis di <strong>kiri</strong> pecahan.'
+      );
+    } else {
+      tambah(
+        'digabung',
+        '' + W + p.num + '/' + p.den,
+        'Bilangan bulat dan pembilang tidak digabung menjadi satu bilangan. Beri jarak: bilangan bulat di kiri, lalu pecahannya.'
+      );
+    }
+  } else {
+    var sisa = p.den - p.num;
+    if (sisa > 0 && sisa !== p.num) {
+      tambah('komplemen', sisa + '/' + p.den, PESAN_TULIS_PECAHAN.komplemen);
+    } else {
+      tambah(
+        'tanpa-garis',
+        '' + p.num + p.den,
+        'Tanpa garis pecahan, tulisan itu terbaca sebagai bilangan bulat. Pembilang dan penyebut dipisah garis pecahan.'
+      );
+    }
+    tambah(
+      'koma',
+      p.num + ',' + p.den,
+      'Tanda koma dipakai untuk bilangan desimal. Pecahan ditulis dengan <strong>garis pecahan</strong>: pembilang di atas, penyebut di bawah.'
+    );
+  }
+  return opsi;
+}
+
+/*
+ * Memeriksa notasi pecahan yang ditulis murid (v, mis. dari
+ * readFractionInput atau parseTeksPecahan) terhadap jawaban p.
+ * Notasi harus sama persis dengan yang diamati (bukan sekadar senilai).
+ * Mengembalikan { benar, kode, pesan }; kode 'benar' | 'nol-penyebut' |
+ * 'lupa-negatif' | 'tanda-lebih' | 'terbalik' | 'lupa-bulat' |
+ * 'komplemen' | 'bagian-per-sisa' | 'senilai' | 'salah'.
+ */
+function diagnosaTulisPecahan(v, p) {
+  function hasil(kode) {
+    if (kode === 'benar') {
+      return {
+        benar: true,
+        kode: kode,
+        pesan: 'Tepat! Ditulis ' + tulisPecahan(p) + ', dibaca "' + bacaPecahanKonteks(p) + '".',
+      };
+    }
+    return { benar: false, kode: kode, pesan: PESAN_TULIS_PECAHAN[kode] };
+  }
+  var vw = v.whole || 0;
+  var pw = p.whole || 0;
+  var vNeg = !!v.neg;
+  var pNeg = !!p.neg;
+  if (v.den === 0) return hasil('nol-penyebut');
+  if (vw === pw && v.num === p.num && v.den === p.den) {
+    if (vNeg === pNeg) return hasil('benar');
+    return hasil(pNeg ? 'lupa-negatif' : 'tanda-lebih');
+  }
+  if (vw === pw && v.num === p.den && v.den === p.num) return hasil('terbalik');
+  if (pw && !vw && v.num === p.num && v.den === p.den) return hasil('lupa-bulat');
+  if (!pw && !vw) {
+    var sisa = p.den - p.num;
+    if (v.den === p.den && v.num === sisa && sisa !== p.num) return hasil('komplemen');
+    if (v.num === p.num && sisa > 0 && v.den === sisa) return hasil('bagian-per-sisa');
+  }
+  if (
+    vNeg === pNeg &&
+    pecahanSetara(mixedToImproper(vw, v.num, v.den), mixedToImproper(pw, p.num, p.den))
+  ) {
+    return hasil('senilai');
+  }
+  return hasil('salah');
+}
+
+/* Isian teks → parseTeksPecahan → diagnosaTulisPecahan. */
+function periksaTeksPecahan(str, p) {
+  var r = parseTeksPecahan(str);
+  if (r.error) return { benar: false, kode: r.error, pesan: PESAN_TULIS_PECAHAN[r.error] };
+  return diagnosaTulisPecahan(r.value, p);
+}
+
+/*
+ * Pecahan bersusun bertanda untuk tampilan (tanda − di kiri), dengan
+ * label aksesibel cara baca baku.
+ */
+function buildPecahanTampil(p, size) {
+  return (
+    '<span class="frac-signed" role="img" aria-label="' +
+    esc(bacaPecahanKonteks(p)) +
+    '"><span aria-hidden="true" class="frac-signed__inner">' +
+    (p.neg ? '<span class="frac-signed__sign">−</span>' : '') +
+    buildFracBlock(p.num, p.den, p.whole || null, size) +
+    '</span></span>'
+  );
+}
+
+/* State default langkah isian pecahan. */
+function makePecahanStep() {
+  return {
+    input: '',
+    raw: null,
+    done: false,
+    kode: null,
+    pesan: '',
+    attempts: 0,
+    hintLevel: 0,
+  };
+}
+
+/* Teks isian bersusun untuk umpan balik: { sign, whole, num, den } → "−1 3/4". */
+function teksRawPecahan(raw) {
+  if (!raw) return '';
+  return (
+    (raw.sign === '-' ? '−' : '') +
+    (raw.whole ? raw.whole + ' ' : '') +
+    (raw.num || '?') +
+    '/' +
+    (raw.den || '?')
+  );
+}
+
+/*
+ * Memeriksa isian langkah dan menyimpan hasilnya ke st.
+ *   step.jenis 'baca'  → input berupa teks, cekCaraBacaPecahan
+ *   step.jenis 'tulis' → input berupa hasil readFractionInput,
+ *                        diagnosaTulisPecahan
+ * Isian kosong tidak dihitung sebagai percobaan.
+ */
+function periksaPecahanStep(st, step, input) {
+  var r;
+  if (step.jenis === 'baca') {
+    st.input = String(input || '').trim();
+    r = cekCaraBacaPecahan(input, step.jawab);
+  } else {
+    st.raw = input.raw;
+    st.input = teksRawPecahan(input.raw);
+    if (input.error === 'empty') {
+      r = { benar: false, kode: 'kosong', pesan: PESAN_TULIS_PECAHAN.kosong };
+    } else if (input.error === 'invalid') {
+      r = {
+        benar: false,
+        kode: 'format',
+        pesan: 'Isi setiap kotak hanya dengan angka (bilangan cacah).',
+      };
+    } else {
+      r = diagnosaTulisPecahan(input.value, step.jawab);
+    }
+  }
+  st.kode = r.kode;
+  st.pesan = r.pesan;
+  if (r.kode === 'kosong') return r;
+  st.attempts += 1;
+  st.done = r.benar;
+  return r;
+}
+
+/*
+ * Satu langkah isian pecahan dengan umpan balik diagnosa.
+ *   id    awalan id DOM (→ idFrac…, idInput, idCheck, idHint)
+ *   step  { jenis: 'tulis'|'baca', jawab, label, hints, temuan,
+ *           mixed, signed, satuan, placeholder }
+ *   num   nomor langkah opsional
+ */
+function buildPecahanStep(id, st, step, num) {
+  var head =
+    '<p class="dl-step__label">' +
+    (num ? '<span class="dl-step__num">' + num + '</span>' : '') +
+    step.label +
+    '</p>';
+  var baca = step.jenis === 'baca';
+  if (st.done) {
+    return (
+      '<div class="dl-step dl-step--done">' +
+      head +
+      '<p class="dl-step__answer">✓ ' +
+      (baca
+        ? '"' + esc(bacaPecahanKonteks(step.jawab)) + '"'
+        : buildPecahanTampil(step.jawab, 'small')) +
+      (step.satuan && !baca ? ' ' + esc(step.satuan) : '') +
+      '</p>' +
+      (baca && st.kode === 'sehari' ? buildFeedbackBox('info', 'ℹ️', st.pesan) : '') +
+      (step.temuan ? buildFeedbackBox('success', '💡', step.temuan) : '') +
+      '</div>'
+    );
+  }
+  var salah = st.attempts > 0 && st.kode && st.kode !== 'benar' && st.kode !== 'kosong';
+  var field = baca
+    ? '<input type="text" class="input-text bbk-baca-input' +
+      (salah ? ' has-error' : '') +
+      '" id="' +
+      id +
+      'Input" inputmode="text" autocapitalize="off" spellcheck="false" autocomplete="off" value="' +
+      esc(st.input || '') +
+      '" aria-label="Cara membaca pecahan" placeholder="' +
+      esc(step.placeholder || 'ketik cara bacanya…') +
+      '">'
+    : buildFractionInput(id + 'Frac', st.raw || {}, {
+        mixed: step.mixed,
+        signed: step.signed,
+        status: salah ? 'bad' : '',
+        aria: 'Pecahan',
+      }) + (step.satuan ? '<span class="bbk-satuan">' + esc(step.satuan) + '</span>' : '');
+  return (
+    '<div class="dl-step">' +
+    head +
+    '<div class="dl-input-row pecahan-step__row">' +
+    field +
+    '<button type="button" class="btn btn--primary" id="' +
+    id +
+    'Check">Periksa</button>' +
+    buildHintToggle(id + 'Hint', step.hints, st.hintLevel) +
+    '</div>' +
+    (salah
+      ? '<div style="margin-top:var(--space-3);">' +
+        buildFeedbackBox(
+          'error',
+          '✗',
+          '<strong>' + esc(st.input || '') + '</strong> — ' + st.pesan
+        ) +
+        '</div>'
+      : '') +
+    buildHintStack(step.hints, st.hintLevel) +
+    '</div>'
+  );
+}
+
+/* Memasang event buildPecahanStep; `save` lalu `rerender` dipanggil setelah perubahan. */
+function bindPecahanStep(id, st, step, save, rerender) {
+  var btn = document.getElementById(id + 'Check');
+  var hint = document.getElementById(id + 'Hint');
+  var baca = step.jenis === 'baca';
+  if (btn) {
+    var fokus = function () {
+      var el = document.getElementById(baca ? id + 'Input' : id + 'FracNum');
+      if (el) el.focus();
+    };
+    btn.addEventListener('click', function () {
+      var input = baca
+        ? (document.getElementById(id + 'Input') || {}).value
+        : readFractionInput(document, id + 'Frac');
+      var r = periksaPecahanStep(st, step, input);
+      if (r.kode === 'kosong') {
+        showNotice(r.pesan);
+        return;
+      }
+      save();
+      rerender();
+      if (!st.done) fokus();
+    });
+    var fields = baca
+      ? [document.getElementById(id + 'Input')]
+      : ['Sign', 'Whole', 'Num', 'Den'].map(function (s) {
+          return document.getElementById(id + 'Frac' + s);
+        });
+    fields.forEach(function (el) {
+      if (!el) return;
+      el.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter') btn.click();
+      });
+    });
+  }
+  if (hint) {
+    hint.addEventListener('click', function () {
+      st.hintLevel = Math.min(st.hintLevel + 1, (step.hints || []).length);
+      save();
+      rerender();
+    });
+  }
+}
+
+/* ---------- Pengarsir pecahan ---------- */
+
+var FRAC_SHADER_MAX = 12;
+
+function batasBagianShader(den) {
+  var d = Math.round(Number(den) || 1);
+  return Math.min(FRAC_SHADER_MAX, Math.max(1, d));
+}
+
+function bagianKosong(den) {
+  var on = [];
+  for (var i = 0; i < den; i++) on.push(false);
+  return on;
+}
+
+/*
+ * Memastikan state[key] berupa { den, on: [bool × den] } yang sah. State
+ * rusak dipulihkan: banyak bagian lama dipertahankan bila masih bulat,
+ * arsiran dikosongkan.
+ */
+function ensureFracShaderState(state, key, denAwal) {
+  var st = state[key];
+  var sah =
+    st &&
+    typeof st === 'object' &&
+    isBulat(st.den) &&
+    st.den >= 1 &&
+    st.den <= FRAC_SHADER_MAX &&
+    Array.isArray(st.on) &&
+    st.on.length === st.den;
+  if (!sah) {
+    var denLama = st && typeof st === 'object' && isBulat(st.den) ? st.den : null;
+    var d = batasBagianShader(denLama || denAwal);
+    state[key] = { den: d, on: bagianKosong(d) };
+  }
+  return state[key];
+}
+
+/* Mengubah banyak bagian sama besar (1 … FRAC_SHADER_MAX); arsiran dikosongkan. */
+function fracShaderSetDen(st, den) {
+  st.den = batasBagianShader(den);
+  st.on = bagianKosong(st.den);
+}
+
+function fracShaderToggle(st, i) {
+  if (i >= 0 && i < st.den) st.on[i] = !st.on[i];
+}
+
+/* { num: banyak bagian terarsir, den: banyak seluruh bagian }. */
+function fracShaderValue(st) {
+  return {
+    num: st.on.filter(function (x) {
+      return x;
+    }).length,
+    den: st.den,
+  };
+}
+
+var PESAN_SHADER = {
+  penyebut:
+    'Periksa dulu banyak bagiannya. Penyebut menunjukkan benda dibagi menjadi berapa bagian sama besar.',
+  komplemen:
+    'Kamu mengarsir bagian yang tersisa. Pembilang menunjukkan banyak bagian yang <strong>diarsir</strong>.',
+  pembilang:
+    'Banyak bagiannya sudah tepat. Sekarang cocokkan banyak bagian yang diarsir dengan pembilangnya.',
+};
+
+/* Memeriksa arsiran terhadap pecahan biasa p: { benar, kode, pesan }. */
+function cekFracShader(st, p) {
+  var v = fracShaderValue(st);
+  var kode;
+  if (v.den !== p.den) kode = 'penyebut';
+  else if (v.num === p.num) kode = 'benar';
+  else if (v.num === p.den - p.num) kode = 'komplemen';
+  else kode = 'pembilang';
+  if (kode === 'benar') {
+    return {
+      benar: true,
+      kode: kode,
+      pesan:
+        'Tepat! ' +
+        v.num +
+        ' dari ' +
+        v.den +
+        ' bagian sama besar diarsir: ' +
+        tulisPecahan(p) +
+        '.',
+    };
+  }
+  return { benar: false, kode: kode, pesan: PESAN_SHADER[kode] };
+}
+
+/*
+ * Pengarsir pecahan: pita yang bisa diatur banyak bagian sama besarnya
+ * (tombol − / +) dan setiap bagiannya bisa diketuk untuk diarsir.
+ *   opts.label   label aksesibel grup (default 'Pengarsir pecahan')
+ *   opts.locked  true → tidak bisa diubah (setelah benar)
+ */
+function buildFracShader(id, st, opts) {
+  opts = opts || {};
+  var dis = opts.locked ? ' disabled' : '';
+  var v = fracShaderValue(st);
+  var cells = '';
+  for (var i = 0; i < st.den; i++) {
+    cells +=
+      '<button type="button" class="frac-shader__cell' +
+      (st.on[i] ? ' is-on' : '') +
+      '" data-shader-cell="' +
+      i +
+      '" aria-pressed="' +
+      (st.on[i] ? 'true' : 'false') +
+      '" aria-label="Bagian ' +
+      (i + 1) +
+      ' dari ' +
+      st.den +
+      '"' +
+      dis +
+      '></button>';
+  }
+  return (
+    '<div class="frac-shader" id="' +
+    id +
+    '" role="group" aria-label="' +
+    esc(opts.label || 'Pengarsir pecahan') +
+    '">' +
+    '<div class="frac-shader__ctrl">' +
+    '<button type="button" class="btn btn--ghost btn--small frac-shader__step" id="' +
+    id +
+    'Minus" aria-label="Kurangi banyak bagian"' +
+    (opts.locked || st.den <= 1 ? ' disabled' : '') +
+    '>−</button>' +
+    '<span class="frac-shader__den" aria-live="polite">Dibagi <strong>' +
+    st.den +
+    '</strong> bagian sama besar</span>' +
+    '<button type="button" class="btn btn--ghost btn--small frac-shader__step" id="' +
+    id +
+    'Plus" aria-label="Tambah banyak bagian"' +
+    (opts.locked || st.den >= FRAC_SHADER_MAX ? ' disabled' : '') +
+    '>+</button>' +
+    '</div>' +
+    '<div class="frac-shader__bar" style="grid-template-columns:repeat(' +
+    st.den +
+    ',1fr)">' +
+    cells +
+    '</div>' +
+    '<p class="frac-shader__readout">Diarsir: <strong>' +
+    v.num +
+    '</strong> dari <strong>' +
+    v.den +
+    '</strong> bagian</p>' +
+    '</div>'
+  );
+}
+
+/* Memasang event buildFracShader; `save` lalu `rerender` dipanggil setelah perubahan. */
+function bindFracShader(root, id, st, save, rerender) {
+  var wrap = root.querySelector('#' + id);
+  if (!wrap) return;
+  function ubah(fn) {
+    fn();
+    save();
+    rerender();
+  }
+  var minus = root.querySelector('#' + id + 'Minus');
+  var plus = root.querySelector('#' + id + 'Plus');
+  if (minus) {
+    minus.addEventListener('click', function () {
+      ubah(function () {
+        fracShaderSetDen(st, st.den - 1);
+      });
+      var again = document.getElementById(id + 'Minus');
+      if (again && !again.disabled) again.focus();
+    });
+  }
+  if (plus) {
+    plus.addEventListener('click', function () {
+      ubah(function () {
+        fracShaderSetDen(st, st.den + 1);
+      });
+      var again = document.getElementById(id + 'Plus');
+      if (again && !again.disabled) again.focus();
+    });
+  }
+  wrap.querySelectorAll('[data-shader-cell]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var i = parseInt(btn.dataset.shaderCell, 10);
+      ubah(function () {
+        fracShaderToggle(st, i);
+      });
+      var again = document.querySelector('#' + id + ' [data-shader-cell="' + i + '"]');
+      if (again) again.focus();
+    });
+  });
 }
