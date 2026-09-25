@@ -8786,6 +8786,13 @@ var SIFAT_EKSPONEN = {
     keliru: false,
     pakaiB: true,
   },
+  nol: { nama: 'Pangkat nol', rumus: 'aⁿ : aⁿ = a⁰ = 1', keliru: false, pakaiB: false },
+  negatif: {
+    nama: 'Pangkat negatif',
+    rumus: 'a¹ : aⁿ⁺¹ = a⁻ⁿ = 1/aⁿ',
+    keliru: false,
+    pakaiB: false,
+  },
   salahKali: { nama: 'Dugaan A', rumus: 'aᵐ × aⁿ = aᵐˣⁿ ?', keliru: true, pakaiB: false },
   salahNegatif: { nama: 'Dugaan B', rumus: 'a⁻ⁿ = −aⁿ ?', keliru: true, pakaiB: false },
   salahBagi: {
@@ -8800,6 +8807,7 @@ var SIFAT_EKSPONEN = {
     keliru: true,
     pakaiB: false,
   },
+  salahNol: { nama: 'Dugaan pangkat nol', rumus: 'a⁰ = 0 ?', keliru: true, pakaiB: false },
 };
 
 /* Apakah sifat memakai eksponen m (sifat basis & dugaan B hanya memakai n). */
@@ -8849,6 +8857,21 @@ function cekSifatEksponen(id, a, m, n, b) {
     teksKiri = '(' + a + ' : ' + b + ')' + superskrip(n);
     teksKanan = F(a, n) + ' : ' + F(b, n);
     catatan = 'pembilang dan penyebut dipangkatkan ' + fmtBulat(n);
+  } else if (id === 'nol' || id === 'salahNol') {
+    /* aⁿ : aⁿ dihitung dari pangkat positif; sifat pembagian memberi a⁰. */
+    kiri = bagiPecahan(P(a, n), P(a, n));
+    kanan = id === 'nol' ? P(a, 0) : pecahan(0, 1);
+    if (kiri === null) kanan = null;
+    teksKiri = F(a, n) + ' : ' + F(a, n);
+    teksKanan = id === 'nol' ? F(a, 0) : '0';
+    catatan = tulisSuku(n) + ' − ' + tulisSuku(n) + ' = 0';
+  } else if (id === 'negatif') {
+    /* a¹ : aⁿ⁺¹ dihitung dari pangkat positif; sifat pembagian memberi a⁻ⁿ. */
+    kiri = bagiPecahan(P(a, 1), P(a, n + 1));
+    kanan = P(a, -n);
+    teksKiri = F(a, 1) + ' : ' + F(a, n + 1);
+    teksKanan = F(a, -n);
+    catatan = '1 − ' + tulisSuku(n + 1) + ' = ' + fmtBulat(-n);
   } else if (id === 'salahKali') {
     kiri = kaliPecahan(P(a, m), P(a, n));
     kanan = P(a, m * n);
@@ -18738,5 +18761,342 @@ function bindPenempatanTerpadu(root, pid, items, st, langkah, save, rerender) {
     }
     save();
     rerender();
+  });
+}
+
+/* ============================================================
+   39. BENTUK ALJABAR BERPANGKAT (MONOMIAL)
+   Monomial { koef: {num, den}, pangkat: { <var>: n } } dengan eksponen
+   bulat (boleh nol/negatif) untuk latihan menyederhanakan bentuk
+   aljabar berpangkat: operasi kali, bagi, pangkat; pohon ekspresi;
+   penulisan dengan eksponen positif; diagnosa miskonsepsi; isian
+   koefisien & eksponen. Memakai pecahan eksak dari seksi 27. Gaya
+   .mono-* ada di shared/base.css.
+
+   Pohon ekspresi:
+     daun      { koef, pangkat }          koef bulat atau {num, den};
+                                          eksponen 0 tetap ditampilkan
+     { op: 'kali', a, b }   a × b
+     { op: 'bagi', a, b }   a : b (ditampilkan sebagai pecahan)
+     { op: 'pangkat', a, k } (a)ᵏ
+   ============================================================ */
+
+function monomial(koef, pangkat) {
+  var p = {};
+  Object.keys(pangkat || {}).forEach(function (v) {
+    if (pangkat[v] !== 0) p[v] = pangkat[v];
+  });
+  return { koef: keFraksi(koef), pangkat: p };
+}
+
+function gabungPangkatMonomial(p, q, tanda) {
+  var out = {};
+  Object.keys(p.pangkat).forEach(function (v) {
+    out[v] = p.pangkat[v];
+  });
+  Object.keys(q.pangkat).forEach(function (v) {
+    out[v] = (out[v] || 0) + tanda * q.pangkat[v];
+  });
+  return out;
+}
+
+function kaliMonomial(p, q) {
+  if (!p || !q) return null;
+  return monomial(kaliPecahan(p.koef, q.koef), gabungPangkatMonomial(p, q, 1));
+}
+
+/* null bila pembagi berkoefisien 0. */
+function bagiMonomial(p, q) {
+  if (!p || !q || q.koef.num === 0) return null;
+  return monomial(bagiPecahan(p.koef, q.koef), gabungPangkatMonomial(p, q, -1));
+}
+
+/* null bila koefisien 0 dipangkatkan 0 atau negatif. */
+function pangkatMonomial(p, k) {
+  if (!p) return null;
+  var koef = pangkatBulat(p.koef, k);
+  if (koef === null) return null;
+  var out = {};
+  Object.keys(p.pangkat).forEach(function (v) {
+    out[v] = p.pangkat[v] * k;
+  });
+  return monomial(koef, out);
+}
+
+function samaMonomial(p, q) {
+  if (!p || !q || !samaPecahan(p.koef, q.koef)) return false;
+  var vars = Object.keys(p.pangkat).concat(Object.keys(q.pangkat));
+  return vars.every(function (v) {
+    return (p.pangkat[v] || 0) === (q.pangkat[v] || 0);
+  });
+}
+
+/* Nilai monomial untuk nilai variabel `vals` (bulat); null bila tak terdefinisi. */
+function nilaiMonomial(m, vals) {
+  var hasil = m.koef;
+  var vars = Object.keys(m.pangkat);
+  for (var i = 0; i < vars.length; i++) {
+    hasil = kaliPecahan(hasil, pangkatBulat(vals[vars[i]], m.pangkat[vars[i]]));
+    if (hasil === null) return null;
+  }
+  return hasil;
+}
+
+function hitungEkspresiMonomial(e) {
+  if (e.op === 'kali')
+    return kaliMonomial(hitungEkspresiMonomial(e.a), hitungEkspresiMonomial(e.b));
+  if (e.op === 'bagi')
+    return bagiMonomial(hitungEkspresiMonomial(e.a), hitungEkspresiMonomial(e.b));
+  if (e.op === 'pangkat') return pangkatMonomial(hitungEkspresiMonomial(e.a), e.k);
+  return monomial(e.koef, e.pangkat);
+}
+
+/* Bagian variabel: 'x⁻²y³'; eksponen 1 tidak ditulis; urut abjad. */
+function tulisVariabel(pangkat, keepZero) {
+  return Object.keys(pangkat || {})
+    .sort()
+    .filter(function (v) {
+      return keepZero || pangkat[v] !== 0;
+    })
+    .map(function (v) {
+      return v + (pangkat[v] === 1 ? '' : superskrip(fmtBulat(pangkat[v])));
+    })
+    .join('');
+}
+
+/* Koefisien di depan variabel: 1 → '', −1 → '−', 1/4 → '(1/4)'. */
+function tulisKoefisien(koef, adaVar) {
+  if (!adaVar) return formatPecahan(koef);
+  if (koef.den !== 1) return '(' + formatPecahan(koef) + ')';
+  if (koef.num === 1) return '';
+  if (koef.num === -1) return '−';
+  return formatPecahan(koef);
+}
+
+function formatSuku(koef, pangkat, keepZero) {
+  var vars = tulisVariabel(pangkat, keepZero);
+  return tulisKoefisien(keFraksi(koef), vars !== '') + vars;
+}
+
+/*
+ * Bentuk dengan eksponen positif: { atas, bawah }. Tanda ikut pembilang;
+ * eksponen negatif (dan penyebut koefisien) pindah ke penyebut.
+ * bawah '' bila penyebutnya 1.
+ */
+function bentukPositifMonomial(m) {
+  var atasVar = {};
+  var bawahVar = {};
+  Object.keys(m.pangkat).forEach(function (v) {
+    if (m.pangkat[v] > 0) atasVar[v] = m.pangkat[v];
+    else bawahVar[v] = -m.pangkat[v];
+  });
+  var tanda = m.koef.num < 0 ? '−' : '';
+  var num = Math.abs(m.koef.num);
+  var av = tulisVariabel(atasVar);
+  var bv = tulisVariabel(bawahVar);
+  var atas = tanda + (av ? (num === 1 ? '' : formatNumber(num)) + av : formatNumber(num));
+  var bawah = m.koef.den === 1 ? bv : formatNumber(m.koef.den) + bv;
+  return {
+    atas: atas,
+    bawah: bawah,
+    faktorBawah: (m.koef.den === 1 ? 0 : 1) + Object.keys(bawahVar).length,
+  };
+}
+
+/* opts.positif true → '3y⁴/x⁵', 'a²/(4b²)'; selain itu bentuk mentah '6x⁻²y³'. */
+function formatMonomial(m, opts) {
+  if (!(opts && opts.positif)) return formatSuku(m.koef, m.pangkat);
+  var b = bentukPositifMonomial(m);
+  if (!b.bawah) return b.atas;
+  return b.atas + '/' + (b.faktorBawah > 1 ? '(' + b.bawah + ')' : b.bawah);
+}
+
+function formatEkspresiMonomial(e) {
+  function anak(x, induk, kanan) {
+    var t = formatEkspresiMonomial(x);
+    if (x.op === 'pangkat') return t;
+    if (induk === 'bagi') return '(' + t + ')';
+    if (x.op === 'bagi') return '(' + t + ')';
+    if (!x.op && kanan && keFraksi(x.koef).num < 0) return '(' + t + ')';
+    return t;
+  }
+  if (e.op === 'kali') return anak(e.a, 'kali') + ' × ' + anak(e.b, 'kali', true);
+  if (e.op === 'bagi') return anak(e.a, 'bagi') + ' : ' + anak(e.b, 'bagi', true);
+  if (e.op === 'pangkat') {
+    return '(' + formatEkspresiMonomial(e.a) + ')' + superskrip(fmtBulat(e.k));
+  }
+  return formatSuku(e.koef, e.pangkat, true);
+}
+
+function buildMonoFrac(atas, bawah) {
+  return (
+    '<span class="mono-frac" aria-hidden="true">' +
+    '<span class="mono-frac__atas">' +
+    esc(atas) +
+    '</span>' +
+    '<span class="mono-frac__bar"></span>' +
+    '<span class="mono-frac__bawah">' +
+    esc(bawah) +
+    '</span>' +
+    '</span>'
+  );
+}
+
+/* Ekspresi soal; pembagian di tingkat teratas ditampilkan sebagai pecahan bersusun. */
+function buildEkspresiMonomial(e) {
+  var teks = formatEkspresiMonomial(e);
+  var isi =
+    e.op === 'bagi'
+      ? buildMonoFrac(formatEkspresiMonomial(e.a), formatEkspresiMonomial(e.b))
+      : '<span aria-hidden="true">' + esc(teks) + '</span>';
+  return '<span class="mono-expr" role="math" aria-label="' + esc(teks) + '">' + isi + '</span>';
+}
+
+/* Monomial dengan eksponen positif; berpenyebut → pecahan bersusun. */
+function buildMonomialPositif(m) {
+  var b = bentukPositifMonomial(m);
+  var teks = formatMonomial(m, { positif: true });
+  var isi = b.bawah
+    ? buildMonoFrac(b.atas, b.bawah)
+    : '<span aria-hidden="true">' + esc(b.atas) + '</span>';
+  return '<span class="mono-expr" role="math" aria-label="' + esc(teks) + '">' + isi + '</span>';
+}
+
+/*
+ * Diagnosa jawaban monomial terhadap kunci:
+ *   'benar'
+ *   eksponen semua benar, koefisien salah:
+ *     'negatifJadiMinus' (koef = −1/kunci, mis. 2⁻² ditulis −4)
+ *     'koefisienTerbalik' (koef = 1/kunci)
+ *     'tandaKoefisien'   (koef = −kunci)
+ *     'koefisien'
+ *   koefisien benar, eksponen salah:
+ *     'tandaEksponen' (ada eksponen yang tandanya terbalik)
+ *     'eksponen'
+ *   'lain'
+ */
+function diagnosaMonomial(kunci, jawab) {
+  if (!jawab) return 'lain';
+  if (samaMonomial(kunci, jawab)) return 'benar';
+  var k = kunci.koef;
+  var j = jawab.koef;
+  var pangkatSama = samaMonomial(monomial(1, kunci.pangkat), monomial(1, jawab.pangkat));
+  if (pangkatSama) {
+    if (k.num !== 0) {
+      if (samaPecahan(j, pecahan(-k.den, k.num))) return 'negatifJadiMinus';
+      if (samaPecahan(j, pecahan(k.den, k.num))) return 'koefisienTerbalik';
+    }
+    if (samaPecahan(j, pecahan(-k.num, k.den))) return 'tandaKoefisien';
+    return 'koefisien';
+  }
+  if (samaPecahan(j, k)) {
+    var vars = Object.keys(kunci.pangkat).concat(Object.keys(jawab.pangkat));
+    var terbalik = vars.some(function (v) {
+      var a = kunci.pangkat[v] || 0;
+      return a !== 0 && (jawab.pangkat[v] || 0) === -a;
+    });
+    return terbalik ? 'tandaEksponen' : 'eksponen';
+  }
+  return 'lain';
+}
+
+function pesanDiagnosaMonomial(kode) {
+  var pesan = {
+    negatifJadiMinus:
+      'Eksponennya sudah tepat, tetapi koefisiennya belum. Pangkat negatif pada bilangan berarti <strong>kebalikan</strong>, bukan bilangan negatif: 2⁻² = 1/4, bukan −4.',
+    koefisienTerbalik:
+      'Eksponen variabel sudah tepat. Periksa koefisiennya: kamu menuliskan kebalikannya. Hitung ulang koefisien dengan sifat pangkat yang sama seperti variabelnya.',
+    tandaKoefisien:
+      'Hampir tepat — hanya tanda koefisiennya yang terbalik. Ingat: pangkat negatif tidak mengubah tanda bilangan.',
+    koefisien:
+      'Eksponen variabel sudah tepat. Koefisien belum: kalikan/bagi koefisien sebagai bilangan biasa, dan pangkatkan koefisien juga bila seluruh suku dipangkatkan.',
+    tandaEksponen:
+      'Ada eksponen yang tandanya terbalik. Saat membagi, eksponen penyebut <em>dikurangkan</em>: aᵐ : aⁿ = aᵐ⁻ⁿ, dan pengurangan bilangan negatif menjadi penjumlahan.',
+    eksponen:
+      'Koefisiennya tepat, tetapi ada eksponen yang belum. Kumpulkan eksponen tiap variabel: dijumlah saat dikali, dikurangi saat dibagi, dikali saat dipangkatkan.',
+    lain: 'Belum tepat. Kerjakan per bagian: koefisien dulu, lalu eksponen setiap variabel satu per satu.',
+  };
+  return pesan[kode] || pesan.lain;
+}
+
+/*
+ * Membaca isian { koef, <var>: eksponen } → { value: monomial|null,
+ * error: null|'empty'|'invalid' }. Koefisien 0 tidak valid.
+ */
+function bacaMonomialInput(vars, inputs) {
+  inputs = inputs || {};
+  var k = parseInputPecahan(String(inputs.koef || ''));
+  if (k.error) return { value: null, error: k.error };
+  if (k.value.num === 0) return { value: null, error: 'invalid' };
+  var pangkat = {};
+  for (var i = 0; i < vars.length; i++) {
+    var s = String(inputs[vars[i]] || '')
+      .trim()
+      .replace(/−/g, '-');
+    if (s === '') return { value: null, error: 'empty' };
+    if (!/^[-+]?\d+$/.test(s)) return { value: null, error: 'invalid' };
+    pangkat[vars[i]] = parseInt(s, 10);
+  }
+  return { value: monomial(k.value, pangkat), error: null };
+}
+
+/*
+ * Isian monomial: koefisien lalu setiap variabel dengan kotak eksponen
+ * kecil di posisi superskrip.
+ *   opts.locked  isian dinonaktifkan
+ *   opts.error   tandai isian salah
+ */
+function buildMonomialInput(id, vars, inputs, opts) {
+  opts = opts || {};
+  inputs = inputs || {};
+  function kotak(key, cls, aria) {
+    return (
+      '<input type="text" class="input-text ' +
+      cls +
+      (opts.error ? ' has-error' : '') +
+      '" id="' +
+      id +
+      '-' +
+      key +
+      '" data-mono="' +
+      esc(id) +
+      '" data-key="' +
+      esc(key) +
+      '" inputmode="text" autocomplete="off" value="' +
+      esc(inputs[key] || '') +
+      '" aria-label="' +
+      esc(aria) +
+      '" placeholder="…"' +
+      (opts.locked ? ' disabled' : '') +
+      '>'
+    );
+  }
+  return (
+    '<div class="mono-input" role="group" aria-label="Isian bentuk sederhana">' +
+    kotak('koef', 'mono-input__koef', 'Koefisien') +
+    vars
+      .map(function (v) {
+        return (
+          '<span class="mono-input__var"><span class="mono-input__huruf">' +
+          esc(v) +
+          '</span>' +
+          kotak(v, 'mono-input__exp', 'Eksponen ' + v) +
+          '</span>'
+        );
+      })
+      .join('') +
+    '</div>'
+  );
+}
+
+function bindMonomialInput(root, id, inputs, save, onEnter) {
+  root.querySelectorAll('[data-mono="' + id + '"]').forEach(function (inp) {
+    inp.addEventListener('input', function () {
+      inputs[inp.dataset.key] = inp.value;
+      save();
+    });
+    inp.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter' && onEnter) onEnter();
+    });
   });
 }

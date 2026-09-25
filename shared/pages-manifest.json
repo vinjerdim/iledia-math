@@ -79,6 +79,14 @@
     "stageCount": 9,
     "extraBody": "partials/reset-modal.html"
   },
+  "fase-e/mpi-1.2": {
+    "title": "Pangkat Nol & Pangkat Negatif — Matematika Fase E",
+    "description": "Media pembelajaran interaktif berbasis Discovery Learning untuk menggeneralisasi sifat pangkat nol dan pangkat negatif bilangan berpangkat bulat serta menerapkannya untuk menyederhanakan bentuk aljabar berpangkat melalui konsol JavaScript, tangga pangkat, jalur sifat pembagian, lab uji sifat, kalkulator berdiagnosa, dan kasus uji fungsi sederhanakan().",
+    "kicker": "Matematika — Fase E (SMK RPL)",
+    "h1": "Pangkat Nol & Pangkat Negatif",
+    "stageCount": 9,
+    "extraBody": "partials/reset-modal.html"
+  },
   "fase-f/mpi-11.1": {
     "title": "Asosiasi Dua Variabel: Tabel Kontingensi & Diagram Pencar — Matematika Fase F",
     "description": "Media pembelajaran interaktif berbasis Discovery Learning untuk mengidentifikasi asosiasi antara dua variabel kategorikal dan numerikal melalui tabel kontingensi dan diagram pencar pada data nyata: survei siswa RPL, penghitung turus, plotter diagram pencar, persen baris, dan lab data kelas.",
