@@ -6856,3 +6856,240 @@ details.hint-reveal[open] summary::before {
   font-size: 0.75rem;
   font-weight: 700;
 }
+
+/* =========================================================================
+   Bilangan berpangkat — membaca & menulis (engine.js seksi 30):
+   penulis pangkat (.pwr-writer*), anatomi basis–pangkat (.pwr-anatomy*,
+   .pwr-chip*), simulator kertas lipat (.pwr-fold*).
+   Warna tetap: BASIS biru, PANGKAT oranye, tanda di luar pangkat ungu.
+   ========================================================================= */
+
+.pwr-writer {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4);
+  border: 2px dashed var(--color-border-strong);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  max-width: 100%;
+}
+
+.pwr-writer.is-ok {
+  border-style: solid;
+  border-color: var(--color-success);
+  background: var(--color-success-soft);
+}
+
+.pwr-writer.is-bad {
+  border-style: solid;
+  border-color: var(--color-error);
+}
+
+.pwr-writer__expr {
+  display: flex;
+  align-items: flex-start;
+  gap: 2px;
+}
+
+.pwr-writer__slot--pangkat {
+  margin-top: -10px;
+}
+
+.pwr-writer__input {
+  min-height: 44px;
+  border: 2px solid var(--color-blue);
+  border-radius: var(--radius-sm);
+  background: var(--color-blue-soft);
+  color: var(--color-blue-strong);
+  font-family: var(--font-mono);
+  font-weight: 700;
+  text-align: center;
+}
+
+.pwr-writer__input--basis {
+  width: 5.2ch;
+  min-height: 60px;
+  font-size: 1.7rem;
+}
+
+.pwr-writer__input--pangkat {
+  width: 4.6ch;
+  font-size: 1.05rem;
+  border-color: var(--color-orange);
+  background: var(--color-orange-soft);
+  color: var(--color-orange-strong);
+}
+
+.pwr-writer__input::placeholder {
+  font-family: inherit;
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--color-ink-muted);
+}
+
+.pwr-writer__input:disabled {
+  opacity: 0.85;
+}
+
+.pwr-writer__preview {
+  margin: 0;
+  font-size: 0.95rem;
+  color: var(--color-ink-muted);
+}
+
+/* Anatomi: basis besar biru, pangkat kecil oranye terangkat */
+.pwr-anatomy {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.pwr-anatomy__expr {
+  display: inline-flex;
+  align-items: flex-start;
+  gap: 2px;
+  font-family: var(--font-mono);
+  font-weight: 700;
+  line-height: 1;
+}
+
+.pwr-anatomy__part {
+  padding: 4px 6px;
+  border: 2px solid transparent;
+  border-radius: var(--radius-sm);
+  background: none;
+  font: inherit;
+  color: inherit;
+}
+
+.pwr-anatomy__basis {
+  font-size: 2.6rem;
+  color: var(--color-blue-strong);
+}
+
+.pwr-anatomy__pangkat {
+  margin-top: -6px;
+  font-size: 1.3rem;
+  color: var(--color-orange-strong);
+}
+
+.pwr-anatomy__tanda {
+  font-size: 2.6rem;
+  color: var(--color-purple-strong);
+}
+
+button.pwr-anatomy__part {
+  min-width: 44px;
+  min-height: 44px;
+  border-color: var(--color-border-strong);
+  border-style: dashed;
+  background: var(--color-surface);
+  cursor: pointer;
+}
+
+button.pwr-anatomy__part:hover:not(:disabled) {
+  background: var(--color-primary-soft);
+}
+
+button.pwr-anatomy__part.is-correct {
+  border-style: solid;
+  border-color: var(--color-success);
+  background: var(--color-success-soft);
+}
+
+button.pwr-anatomy__part.is-incorrect {
+  border-style: solid;
+  border-color: var(--color-error);
+  background: var(--color-error-soft);
+}
+
+button.pwr-anatomy__part:disabled {
+  cursor: default;
+}
+
+.pwr-anatomy__legend {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--space-2);
+}
+
+.pwr-chip {
+  display: inline-block;
+  padding: 2px var(--space-3);
+  border-radius: 999px;
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+.pwr-chip--basis {
+  background: var(--color-blue-soft);
+  color: var(--color-blue-strong);
+}
+
+.pwr-chip--pangkat {
+  background: var(--color-orange-soft);
+  color: var(--color-orange-strong);
+}
+
+/* Simulator kertas lipat */
+.pwr-fold {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-4);
+}
+
+@media (min-width: 720px) {
+  .pwr-fold {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    align-items: start;
+  }
+}
+
+.pwr-fold__svg {
+  display: block;
+  width: 100%;
+  max-width: 320px;
+  height: auto;
+  margin: 0 auto var(--space-2);
+}
+
+.pwr-fold__sheet {
+  fill: #fffbe8;
+  stroke: var(--color-border-strong);
+  stroke-width: 2;
+}
+
+.pwr-fold__crease {
+  stroke: var(--color-orange);
+  stroke-width: 1.5;
+  stroke-dasharray: 4 3;
+}
+
+.pwr-fold__piece {
+  fill: var(--color-blue-soft);
+  stroke: var(--color-blue);
+  stroke-width: 2.5;
+}
+
+.pwr-fold__readout {
+  margin: 0 0 var(--space-3);
+  text-align: center;
+  font-size: 1rem;
+}
+
+.pwr-fold__stage .btn-group {
+  justify-content: center;
+}
+
+.pwr-fold__table td:nth-child(2) {
+  font-family: var(--font-mono);
+}
+
+.pwr-fold__table tr.is-current td {
+  background: var(--color-primary-soft);
+  font-weight: 700;
+}
