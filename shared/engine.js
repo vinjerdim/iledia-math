@@ -76,6 +76,10 @@
    32. Barisan aritmetika: selisih & beda (selisih berurutan, beda,
        diagnosa miskonsepsi selisih, pelacak selisih, lab barisan
        dengan garis bilangan lompatan)
+   33. Asosiasi dua variabel (tabel kontingensi, persen baris,
+       keputusan asosiasi kategorikal, korelasi & garis tren, arah &
+       kekuatan asosiasi, diagram pencar, plotter titik berdiagnosa,
+       kartu turus, batang tersegmen 100%, lab data kelas)
    ============================================================ */
 
 /* ============================================================
@@ -1636,7 +1640,9 @@ function sortItemsCorrectCount(items, states) {
 /*
  * Merender butir pemilahan. Setiap butir dijawab sekali (terkunci) lalu
  * langsung diberi umpan balik beserta alasannya.
- *   opts.mono  true → teks butir bergaya kode/angka (untuk barisan)
+ *   opts.mono    true → teks butir bergaya kode/angka (untuk barisan)
+ *   opts.visual  function(it) → HTML blok (tabel/diagram) di bawah teks
+ *                butir; dipisah dari <p> teks agar markup blok tetap valid
  */
 function buildSortItems(items, itemOrder, options, states, opts) {
   opts = opts || {};
@@ -1652,6 +1658,7 @@ function buildSortItems(items, itemOrder, options, states, opts) {
           '">' +
           it.teks +
           '</p>' +
+          (opts.visual ? '<div class="sort-item__visual">' + opts.visual(it) + '</div>' : '') +
           buildChoiceGroup(options, st.optionOrder, {
             chosen: st.chosen,
             correctId: it.correct,
@@ -14254,4 +14261,1383 @@ function bindLabBarisan(root, id, lab, save, onChange, opts) {
     if (onChange) onChange(lab);
   }
   pasang(root);
+}
+
+/* ============================================================
+   33. ASOSIASI DUA VARIABEL — TABEL KONTINGENSI & DIAGRAM PENCAR
+   Variabel kategorikal: tabel kontingensi dari data mentah atau
+   frekuensi sel, persen baris/kolom, selisih poin persen, keputusan
+   ada/tidak ada asosiasi, pemeriksa isian tabel. Variabel numerik:
+   korelasi Pearson (hanya untuk kunci/tes, tidak ditampilkan ke
+   murid), garis tren, arah & kekuatan asosiasi, sumbu rapi, plotter
+   titik diagram pencar berdiagnosa sumbu tertukar. Lab data kelas
+   untuk mengolah data nyata yang dikumpulkan murid sendiri.
+
+   Bentuk tabel:
+     { baris: [{id,label}], kolom: [{id,label}], sel: [[n]],
+       totalBaris: [n], totalKolom: [n], total: n }
+   Kunci isian tabel: 'sel-i-j', 'tb-i' (total baris), 'tk-j'
+   (total kolom), 'total'.
+   Gaya .aso-* ada di shared/base.css.
+   ============================================================ */
+
+/* Tabel kontingensi dari frekuensi sel (array baris × kolom). */
+function tabelDariSel(sel, baris, kolom) {
+  var sl = sel.map(function (r) {
+    return r.slice();
+  });
+  var totalBaris = sl.map(function (r) {
+    return r.reduce(function (a, b) {
+      return a + b;
+    }, 0);
+  });
+  var totalKolom = kolom.map(function (k, j) {
+    return sl.reduce(function (a, r) {
+      return a + r[j];
+    }, 0);
+  });
+  return {
+    baris: baris,
+    kolom: kolom,
+    sel: sl,
+    totalBaris: totalBaris,
+    totalKolom: totalKolom,
+    total: totalBaris.reduce(function (a, b) {
+      return a + b;
+    }, 0),
+  };
+}
+
+/*
+ * Tabel kontingensi dari data mentah: setiap record dihitung pada sel
+ * (record[kBaris], record[kKolom]). Kategori di luar daftar diabaikan.
+ */
+function tabelKontingensi(records, kBaris, kKolom, baris, kolom) {
+  var ib = optionIds(baris);
+  var ik = optionIds(kolom);
+  var sel = baris.map(function () {
+    return kolom.map(function () {
+      return 0;
+    });
+  });
+  records.forEach(function (r) {
+    var i = ib.indexOf(r[kBaris]);
+    var j = ik.indexOf(r[kKolom]);
+    if (i !== -1 && j !== -1) sel[i][j] += 1;
+  });
+  return tabelDariSel(sel, baris, kolom);
+}
+
+/* Persen baris: sel ÷ total barisnya × 100 (baris kosong → 0). */
+function persenBaris(t) {
+  return t.sel.map(function (r, i) {
+    return r.map(function (n) {
+      return t.totalBaris[i] ? (n * 100) / t.totalBaris[i] : 0;
+    });
+  });
+}
+
+/* Persen kolom: sel ÷ total kolomnya × 100 (kolom kosong → 0). */
+function persenKolom(t) {
+  return t.sel.map(function (r) {
+    return r.map(function (n, j) {
+      return t.totalKolom[j] ? (n * 100) / t.totalKolom[j] : 0;
+    });
+  });
+}
+
+/* Selisih persen baris pertama dan kedua pada kolom j (poin persen). */
+function selisihPoinPersen(t, j) {
+  var p = persenBaris(t);
+  return p[0][j] - p[1][j];
+}
+
+/*
+ * 'ada' bila persen baris dua kategori mana pun berbeda sedikitnya
+ * `ambang` poin persen (default 10) pada suatu kolom; selain itu 'tidak'.
+ * Keputusan memakai PERSEN BARIS agar kelompok yang tidak sama besar
+ * tetap adil dibandingkan.
+ */
+function asosiasiKategori(t, ambang) {
+  var batas = typeof ambang === 'number' ? ambang : 10;
+  var p = persenBaris(t);
+  var maks = 0;
+  for (var j = 0; j < t.kolom.length; j++) {
+    for (var a = 0; a < p.length; a++) {
+      for (var b = a + 1; b < p.length; b++) {
+        maks = Math.max(maks, Math.abs(p[a][j] - p[b][j]));
+      }
+    }
+  }
+  return maks > 0.0001 && maks >= batas ? 'ada' : 'tidak';
+}
+
+/* Daftar kunci isian tabel (sel dulu, lalu total bila `denganTotal`). */
+function kunciIsianKontingensi(t, denganTotal) {
+  var out = [];
+  t.sel.forEach(function (r, i) {
+    r.forEach(function (n, j) {
+      out.push('sel-' + i + '-' + j);
+    });
+  });
+  if (denganTotal) {
+    t.totalBaris.forEach(function (n, i) {
+      out.push('tb-' + i);
+    });
+    t.totalKolom.forEach(function (n, j) {
+      out.push('tk-' + j);
+    });
+    out.push('total');
+  }
+  return out;
+}
+
+function nilaiKunciKontingensi(t, key) {
+  if (key === 'total') return t.total;
+  var p = key.split('-');
+  if (p[0] === 'sel') return t.sel[+p[1]][+p[2]];
+  if (p[0] === 'tb') return t.totalBaris[+p[1]];
+  return t.totalKolom[+p[1]];
+}
+
+/*
+ * Memeriksa isian tabel kontingensi { kunci: teks }.
+ *   opts.total  true → total baris/kolom/keseluruhan ikut diperiksa
+ * Mengembalikan { lengkap, benar, salah: [kunci], kosong: [kunci] }.
+ */
+function cekIsianKontingensi(t, isian, opts) {
+  opts = opts || {};
+  var salah = [];
+  var kosong = [];
+  kunciIsianKontingensi(t, !!opts.total).forEach(function (k) {
+    var v = isian && isian[k] !== undefined ? String(isian[k]).trim() : '';
+    if (v === '') {
+      kosong.push(k);
+      return;
+    }
+    var p = parseInputInt(v, true);
+    if (p.error || p.value !== nilaiKunciKontingensi(t, k)) salah.push(k);
+  });
+  return {
+    lengkap: kosong.length === 0,
+    benar: kosong.length === 0 && salah.length === 0,
+    salah: salah,
+    kosong: kosong,
+  };
+}
+
+/* Membaca isian persen: "80", "80%", "37,5", "37.5 %". */
+function parseInputPersen(str) {
+  if (str === null || str === undefined || String(str).trim() === '') {
+    return { value: null, error: 'empty', message: 'Isi jawabanmu terlebih dahulu.' };
+  }
+  var p = parseInputDecimal(String(str).replace(/%/g, '').replace(/−/g, '-'));
+  if (p.error) {
+    return {
+      value: null,
+      error: 'invalid',
+      message: 'Tulis jawaban berupa bilangan persen, mis. 80 atau 37,5.',
+    };
+  }
+  return { value: p.value, error: null };
+}
+
+/* Persen berkoma dengan paling banyak `d` angka desimal (default 1). */
+function formatPersenAso(v, d) {
+  return formatDesimal(v, typeof d === 'number' ? d : 1) + '%';
+}
+
+function rerata_(arr) {
+  return (
+    arr.reduce(function (a, b) {
+      return a + b;
+    }, 0) / arr.length
+  );
+}
+
+/* Koefisien korelasi Pearson; null bila < 2 titik atau variansi nol. */
+function korelasiPearson(xs, ys) {
+  if (!xs || xs.length < 2 || xs.length !== ys.length) return null;
+  var mx = rerata_(xs);
+  var my = rerata_(ys);
+  var sxy = 0;
+  var sxx = 0;
+  var syy = 0;
+  for (var i = 0; i < xs.length; i++) {
+    sxy += (xs[i] - mx) * (ys[i] - my);
+    sxx += (xs[i] - mx) * (xs[i] - mx);
+    syy += (ys[i] - my) * (ys[i] - my);
+  }
+  if (sxx === 0 || syy === 0) return null;
+  return sxy / Math.sqrt(sxx * syy);
+}
+
+/* Garis tren kuadrat terkecil y = m·x + c; null bila semua x sama. */
+function garisTren(xs, ys) {
+  if (!xs || xs.length < 2) return null;
+  var mx = rerata_(xs);
+  var my = rerata_(ys);
+  var sxy = 0;
+  var sxx = 0;
+  for (var i = 0; i < xs.length; i++) {
+    sxy += (xs[i] - mx) * (ys[i] - my);
+    sxx += (xs[i] - mx) * (xs[i] - mx);
+  }
+  if (sxx === 0) return null;
+  var m = sxy / sxx;
+  return { m: m, c: my - m * mx };
+}
+
+/* Arah asosiasi dari r: |r| < 0,3 dianggap tidak ada asosiasi linear. */
+function arahAsosiasi(r) {
+  if (r === null || r === undefined || Math.abs(r) < 0.3) return 'tidak';
+  return r > 0 ? 'positif' : 'negatif';
+}
+
+/* Kekuatan asosiasi: |r| ≥ 0,7 kuat, ≥ 0,4 sedang, selebihnya lemah. */
+function kekuatanAsosiasi(r) {
+  if (r === null || r === undefined) return 'lemah';
+  var a = Math.abs(r);
+  if (a >= 0.7) return 'kuat';
+  if (a >= 0.4) return 'sedang';
+  return 'lemah';
+}
+
+/* Ringkasan asosiasi dari titik [{x, y}]: { r, arah, kekuatan }. */
+function asosiasiTitik(points) {
+  var r = korelasiPearson(
+    points.map(function (p) {
+      return p.x;
+    }),
+    points.map(function (p) {
+      return p.y;
+    })
+  );
+  return { r: r, arah: arahAsosiasi(r), kekuatan: kekuatanAsosiasi(r) };
+}
+
+/* Langkah tick "rapi" (1, 2, 5 × 10ⁿ) untuk rentang tertentu. */
+function langkahRapi_(rentang, banyak) {
+  var kasar = rentang / (banyak || 5);
+  if (kasar <= 0) return 1;
+  var pangkat = Math.pow(10, Math.floor(Math.log10(kasar)));
+  var f = kasar / pangkat;
+  var rapi = f <= 1 ? 1 : f <= 2 ? 2 : f <= 5 ? 5 : 10;
+  return rapi * pangkat;
+}
+
+/*
+ * Sumbu diagram pencar { min, max, step } dari nilai data. opts.min,
+ * opts.max, opts.step (bila ada) dipakai apa adanya.
+ */
+function sumbuPencar(values, opts) {
+  opts = opts || {};
+  if (
+    typeof opts.min === 'number' &&
+    typeof opts.max === 'number' &&
+    typeof opts.step === 'number'
+  ) {
+    return { min: opts.min, max: opts.max, step: opts.step };
+  }
+  var lo = values.length ? Math.min.apply(null, values) : 0;
+  var hi = values.length ? Math.max.apply(null, values) : 10;
+  if (lo >= 0 && lo <= (hi - lo) * 0.5) lo = 0;
+  if (hi === lo) hi = lo + 1;
+  var step = opts.step || langkahRapi_(hi - lo, 5);
+  var min = typeof opts.min === 'number' ? opts.min : Math.floor(lo / step) * step;
+  var max = typeof opts.max === 'number' ? opts.max : Math.ceil(hi / step) * step;
+  if (max === min) max = min + step;
+  return { min: min, max: max, step: step };
+}
+
+/* Nilai tick dari min sampai max dengan langkah step. */
+function tickSumbu(ax) {
+  var out = [];
+  var n = Math.round((ax.max - ax.min) / ax.step);
+  for (var i = 0; i <= n; i++) out.push(Math.round((ax.min + i * ax.step) * 1e6) / 1e6);
+  return out;
+}
+
+/* Membulatkan nilai ke kelipatan step terdekat di dalam [min, max]. */
+function snapKeSumbu(v, ax) {
+  var k = Math.round((v - ax.min) / ax.step);
+  var s = Math.round((ax.min + k * ax.step) * 1e6) / 1e6;
+  return Math.max(ax.min, Math.min(ax.max, s));
+}
+
+/* ---------- Plotter titik diagram pencar ---------- */
+
+function makePlotterState() {
+  return { placed: {}, salah: null, attempts: 0, cursor: null };
+}
+
+/* Target pertama yang belum ditempatkan; null bila semua sudah. */
+function plotterAktif(target, st) {
+  for (var i = 0; i < target.length; i++) {
+    if (!st.placed[target[i].id]) return target[i];
+  }
+  return null;
+}
+
+function plotterSelesai(target, st) {
+  return plotterAktif(target, st) === null;
+}
+
+/* 'benar' | 'tertukar' (x dan y tertukar) | 'salah'. */
+function diagnosaTitik(t, x, y) {
+  if (hampirSama(x, t.x) && hampirSama(y, t.y)) return 'benar';
+  if (hampirSama(x, t.y) && hampirSama(y, t.x)) return 'tertukar';
+  return 'salah';
+}
+
+/*
+ * Mencoba menempatkan titik (x, y) untuk target aktif. Titik benar
+ * disimpan di st.placed; yang keliru dicatat di st.salah.
+ */
+function plotterCoba(target, st, x, y) {
+  var t = plotterAktif(target, st);
+  if (!t) return 'selesai';
+  st.attempts += 1;
+  var kode = diagnosaTitik(t, x, y);
+  if (kode === 'benar') {
+    st.placed[t.id] = { x: t.x, y: t.y };
+    st.salah = null;
+  } else {
+    st.salah = { x: x, y: y, kode: kode };
+  }
+  return kode;
+}
+
+/* Umpan balik titik keliru; x, y opsional untuk menyebut sumbu yang meleset. */
+function pesanDiagnosaTitik(kode, t, opts, x, y) {
+  opts = opts || {};
+  var xl = opts.xLabel || 'sumbu mendatar';
+  var yl = opts.yLabel || 'sumbu tegak';
+  if (kode === 'tertukar') {
+    return (
+      'Nilai x dan y tertukar. <strong>' +
+      esc(xl) +
+      '</strong> dibaca pada sumbu mendatar, <strong>' +
+      esc(yl) +
+      '</strong> pada sumbu tegak.'
+    );
+  }
+  if (typeof x === 'number' && typeof y === 'number') {
+    var xOk = hampirSama(x, t.x);
+    var yOk = hampirSama(y, t.y);
+    if (xOk && !yOk) {
+      return (
+        'Posisi mendatarnya sudah tepat. Periksa lagi ketinggian titik pada sumbu tegak (' +
+        esc(yl) +
+        ').'
+      );
+    }
+    if (!xOk && yOk) {
+      return 'Ketinggiannya sudah tepat. Periksa lagi posisi mendatar titik (' + esc(xl) + ').';
+    }
+  }
+  return (
+    'Titik belum tepat. Cari nilai ' +
+    esc(xl) +
+    ' pada sumbu mendatar, lalu naik sampai nilai ' +
+    esc(yl) +
+    '.'
+  );
+}
+
+/* ---------- Lab data kelas ---------- */
+
+function makeLabDataKelas() {
+  return {
+    mode: 'numerik',
+    numerik: [
+      { x: '', y: '' },
+      { x: '', y: '' },
+      { x: '', y: '' },
+    ],
+    kategori: [
+      { a: '', b: '' },
+      { a: '', b: '' },
+      { a: '', b: '' },
+    ],
+    tren: false,
+    catatan: '',
+  };
+}
+
+/* Titik valid (kedua kolom berisi bilangan) dari isian lab numerik. */
+function labTitikNumerik(st) {
+  var out = [];
+  (st.numerik || []).forEach(function (r) {
+    var px = parseInputDecimal(r.x);
+    var py = parseInputDecimal(r.y);
+    if (!px.error && !py.error) out.push({ x: px.value, y: py.value });
+  });
+  return out;
+}
+
+/* Tabel kontingensi dari isian lab kategori (kolom a × kolom b). */
+function labTabelKategori(st, baris, kolom) {
+  return tabelKontingensi(st.kategori || [], 'a', 'b', baris, kolom);
+}
+
+function labTambahBaris(st) {
+  if (st.mode === 'kategori') st.kategori.push({ a: '', b: '' });
+  else st.numerik.push({ x: '', y: '' });
+}
+
+function labHapusBaris(st, i) {
+  var list = st.mode === 'kategori' ? st.kategori : st.numerik;
+  if (i >= 0 && i < list.length) list.splice(i, 1);
+}
+
+/* ---------- Komponen tampilan ---------- */
+
+/*
+ * Tabel kontingensi.
+ *   opts.mode        'frekuensi' (default) | 'persen' (persen baris)
+ *   opts.judulBaris  judul kolom kategori baris (sudut kiri atas)
+ *   opts.judulKolom  judul di atas kategori kolom
+ *   opts.caption     keterangan tabel
+ *   opts.sorotKolom  indeks kolom yang disorot
+ *   opts.tanpaTotal  true → tanpa baris/kolom total
+ */
+function buildContingencyTable(t, opts) {
+  opts = opts || {};
+  var persen = opts.mode === 'persen';
+  var pb = persen ? persenBaris(t) : null;
+  var total = !opts.tanpaTotal;
+  function sorot(j) {
+    return opts.sorotKolom === j ? ' aso-sorot' : '';
+  }
+  var head =
+    (opts.judulKolom
+      ? '<tr><td class="aso-tabel__sudut"></td><th scope="colgroup" colspan="' +
+        (t.kolom.length + (total ? 1 : 0)) +
+        '" class="aso-tabel__grup">' +
+        esc(opts.judulKolom) +
+        '</th></tr>'
+      : '') +
+    '<tr><th scope="col" class="aso-tabel__sudut">' +
+    esc(opts.judulBaris || '') +
+    '</th>' +
+    t.kolom
+      .map(function (k, j) {
+        return '<th scope="col" class="' + sorot(j).trim() + '">' + esc(k.label) + '</th>';
+      })
+      .join('') +
+    (total ? '<th scope="col" class="aso-tabel__total">Total</th>' : '') +
+    '</tr>';
+  var body = t.baris
+    .map(function (b, i) {
+      return (
+        '<tr><th scope="row">' +
+        esc(b.label) +
+        '</th>' +
+        t.sel[i]
+          .map(function (n, j) {
+            return (
+              '<td class="aso-num' +
+              sorot(j) +
+              '">' +
+              (persen ? formatPersenAso(pb[i][j]) : formatNumber(n)) +
+              (persen ? '<span class="aso-tabel__n">(' + n + ')</span>' : '') +
+              '</td>'
+            );
+          })
+          .join('') +
+        (total
+          ? '<td class="aso-num aso-tabel__total">' +
+            (persen ? '100%' : formatNumber(t.totalBaris[i])) +
+            (persen ? '<span class="aso-tabel__n">(' + t.totalBaris[i] + ')</span>' : '') +
+            '</td>'
+          : '') +
+        '</tr>'
+      );
+    })
+    .join('');
+  var foot =
+    total && !persen
+      ? '<tr class="aso-tabel__total"><th scope="row">Total</th>' +
+        t.totalKolom
+          .map(function (n, j) {
+            return '<td class="aso-num' + sorot(j) + '">' + formatNumber(n) + '</td>';
+          })
+          .join('') +
+        '<td class="aso-num">' +
+        formatNumber(t.total) +
+        '</td></tr>'
+      : '';
+  return (
+    '<div class="aso-tabel-wrap"><table class="aso-tabel">' +
+    (opts.caption
+      ? '<caption class="aso-tabel__caption">' + esc(opts.caption) + '</caption>'
+      : '') +
+    '<thead>' +
+    head +
+    '</thead><tbody>' +
+    body +
+    foot +
+    '</tbody></table></div>'
+  );
+}
+
+/*
+ * Tabel kontingensi berisi kotak isian (id DOM: `${id}-${kunci}`).
+ *   opts.total    true → total baris/kolom/keseluruhan ikut diisi
+ *   opts.salah    daftar kunci yang ditandai salah
+ *   opts.terkunci true → semua kotak dinonaktifkan
+ *   opts.judulBaris, opts.judulKolom, opts.caption seperti buildContingencyTable
+ */
+function buildContingencyInput(id, t, isian, opts) {
+  opts = opts || {};
+  isian = isian || {};
+  var salah = opts.salah || [];
+  function kotak(key, aria) {
+    return (
+      '<input type="text" inputmode="numeric" autocomplete="off" class="input-text aso-input' +
+      (salah.indexOf(key) !== -1 ? ' has-error' : '') +
+      '" id="' +
+      id +
+      '-' +
+      key +
+      '" data-aso-key="' +
+      key +
+      '" value="' +
+      esc(isian[key] || '') +
+      '" aria-label="' +
+      esc(aria) +
+      '"' +
+      (opts.terkunci ? ' disabled' : '') +
+      '>'
+    );
+  }
+  var total = !!opts.total;
+  var head =
+    (opts.judulKolom
+      ? '<tr><td class="aso-tabel__sudut"></td><th scope="colgroup" colspan="' +
+        (t.kolom.length + (total ? 1 : 0)) +
+        '" class="aso-tabel__grup">' +
+        esc(opts.judulKolom) +
+        '</th></tr>'
+      : '') +
+    '<tr><th scope="col" class="aso-tabel__sudut">' +
+    esc(opts.judulBaris || '') +
+    '</th>' +
+    t.kolom
+      .map(function (k) {
+        return '<th scope="col">' + esc(k.label) + '</th>';
+      })
+      .join('') +
+    (total ? '<th scope="col" class="aso-tabel__total">Total</th>' : '') +
+    '</tr>';
+  var body = t.baris
+    .map(function (b, i) {
+      return (
+        '<tr><th scope="row">' +
+        esc(b.label) +
+        '</th>' +
+        t.kolom
+          .map(function (k, j) {
+            return '<td>' + kotak('sel-' + i + '-' + j, b.label + ' dan ' + k.label) + '</td>';
+          })
+          .join('') +
+        (total
+          ? '<td class="aso-tabel__total">' + kotak('tb-' + i, 'Total ' + b.label) + '</td>'
+          : '') +
+        '</tr>'
+      );
+    })
+    .join('');
+  var foot = total
+    ? '<tr class="aso-tabel__total"><th scope="row">Total</th>' +
+      t.kolom
+        .map(function (k, j) {
+          return '<td>' + kotak('tk-' + j, 'Total ' + k.label) + '</td>';
+        })
+        .join('') +
+      '<td>' +
+      kotak('total', 'Total keseluruhan') +
+      '</td></tr>'
+    : '';
+  return (
+    '<div class="aso-tabel-wrap"><table class="aso-tabel aso-tabel--isian">' +
+    (opts.caption
+      ? '<caption class="aso-tabel__caption">' + esc(opts.caption) + '</caption>'
+      : '') +
+    '<thead>' +
+    head +
+    '</thead><tbody>' +
+    body +
+    foot +
+    '</tbody></table></div>'
+  );
+}
+
+/* Menyimpan isian tabel ke objek `isian` setiap diketik (tanpa render ulang). */
+function bindContingencyInput(root, id, isian, save, onEnter) {
+  root.querySelectorAll('[id^="' + id + '-"][data-aso-key]').forEach(function (inp) {
+    inp.addEventListener('input', function () {
+      isian[inp.dataset.asoKey] = inp.value;
+      save();
+    });
+    if (onEnter) {
+      inp.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter') onEnter();
+      });
+    }
+  });
+}
+
+/*
+ * Batang tersegmen 100% per kategori baris (persen baris), untuk
+ * membandingkan komposisi kelompok yang tidak sama besar.
+ *   opts.caption  teks aksesibel tambahan
+ */
+function buildSegmentedBar(t, opts) {
+  opts = opts || {};
+  var pb = persenBaris(t);
+  var aria =
+    (opts.caption ? opts.caption + '. ' : '') +
+    t.baris
+      .map(function (b, i) {
+        return (
+          b.label +
+          ': ' +
+          t.kolom
+            .map(function (k, j) {
+              return k.label + ' ' + formatPersenAso(pb[i][j]);
+            })
+            .join(', ')
+        );
+      })
+      .join('; ');
+  return (
+    '<div class="aso-segbar" role="img" aria-label="' +
+    esc(aria) +
+    '">' +
+    t.baris
+      .map(function (b, i) {
+        return (
+          '<div class="aso-segbar__row">' +
+          '<span class="aso-segbar__label">' +
+          esc(b.label) +
+          ' <span class="aso-segbar__n">(n = ' +
+          t.totalBaris[i] +
+          ')</span></span>' +
+          '<div class="aso-segbar__bar">' +
+          t.kolom
+            .map(function (k, j) {
+              var w = Math.round(pb[i][j] * 10) / 10;
+              return (
+                '<span class="aso-seg aso-seg--' +
+                (j % 4) +
+                '" style="width:' +
+                w +
+                '%">' +
+                (w >= 14 ? formatPersenAso(pb[i][j], 0) : '') +
+                '</span>'
+              );
+            })
+            .join('') +
+          '</div></div>'
+        );
+      })
+      .join('') +
+    '<div class="aso-segbar__legend" aria-hidden="true">' +
+    t.kolom
+      .map(function (k, j) {
+        return '<span><i class="aso-seg aso-seg--' + (j % 4) + '"></i>' + esc(k.label) + '</span>';
+      })
+      .join('') +
+    '</div></div>'
+  );
+}
+
+/* Geometri bersama diagram pencar (viewBox tetap, diskalakan CSS). */
+var ASO_PLOT = { W: 560, H: 380, L: 64, R: 18, T: 18, B: 58 };
+
+function asoSkala_(ax, ay) {
+  var g = ASO_PLOT;
+  return {
+    x: function (v) {
+      return g.L + ((v - ax.min) / (ax.max - ax.min)) * (g.W - g.L - g.R);
+    },
+    y: function (v) {
+      return g.H - g.B - ((v - ay.min) / (ay.max - ay.min)) * (g.H - g.T - g.B);
+    },
+  };
+}
+
+function asoAngka_(v) {
+  return Number.isInteger(v) ? formatNumber(v, '−') : formatDesimal(v, 2);
+}
+
+/* Sumbu, grid, tick, dan label sumbu (tanpa titik). */
+function asoKerangka_(ax, ay, s, opts) {
+  var g = ASO_PLOT;
+  var out = '';
+  tickSumbu(ax).forEach(function (v) {
+    var x = s.x(v);
+    out +=
+      '<line class="aso-grid" x1="' +
+      x +
+      '" y1="' +
+      g.T +
+      '" x2="' +
+      x +
+      '" y2="' +
+      (g.H - g.B) +
+      '"/>' +
+      '<text class="aso-tick aso-tick--x" x="' +
+      x +
+      '" y="' +
+      (g.H - g.B + 18) +
+      '">' +
+      asoAngka_(v) +
+      '</text>';
+  });
+  tickSumbu(ay).forEach(function (v) {
+    var y = s.y(v);
+    out +=
+      '<line class="aso-grid" x1="' +
+      g.L +
+      '" y1="' +
+      y +
+      '" x2="' +
+      (g.W - g.R) +
+      '" y2="' +
+      y +
+      '"/>' +
+      '<text class="aso-tick aso-tick--y" x="' +
+      (g.L - 8) +
+      '" y="' +
+      (y + 4) +
+      '">' +
+      asoAngka_(v) +
+      '</text>';
+  });
+  out +=
+    '<line class="aso-axis" x1="' +
+    g.L +
+    '" y1="' +
+    (g.H - g.B) +
+    '" x2="' +
+    (g.W - g.R) +
+    '" y2="' +
+    (g.H - g.B) +
+    '"/>' +
+    '<line class="aso-axis" x1="' +
+    g.L +
+    '" y1="' +
+    g.T +
+    '" x2="' +
+    g.L +
+    '" y2="' +
+    (g.H - g.B) +
+    '"/>';
+  if (opts.xLabel) {
+    out +=
+      '<text class="aso-axis-label" x="' +
+      (g.L + (g.W - g.L - g.R) / 2) +
+      '" y="' +
+      (g.H - 12) +
+      '">' +
+      esc(opts.xLabel) +
+      '</text>';
+  }
+  if (opts.yLabel) {
+    var cy = g.T + (g.H - g.T - g.B) / 2;
+    out +=
+      '<text class="aso-axis-label" x="16" y="' +
+      cy +
+      '" transform="rotate(-90 16 ' +
+      cy +
+      ')">' +
+      esc(opts.yLabel) +
+      '</text>';
+  }
+  return out;
+}
+
+function asoSumbuDari_(points, opts) {
+  return {
+    x: sumbuPencar(
+      points.map(function (p) {
+        return p.x;
+      }),
+      opts.x || {}
+    ),
+    y: sumbuPencar(
+      points.map(function (p) {
+        return p.y;
+      }),
+      opts.y || {}
+    ),
+  };
+}
+
+function asoGarisTren_(points, ax, ay, s) {
+  var g = garisTren(
+    points.map(function (p) {
+      return p.x;
+    }),
+    points.map(function (p) {
+      return p.y;
+    })
+  );
+  if (!g) return '';
+  /* Potong garis pada batas y agar tidak keluar dari area grafik. */
+  var x1 = ax.min;
+  var x2 = ax.max;
+  function klip(x) {
+    var y = g.m * x + g.c;
+    if (y < ay.min && g.m !== 0) return (ay.min - g.c) / g.m;
+    if (y > ay.max && g.m !== 0) return (ay.max - g.c) / g.m;
+    return x;
+  }
+  x1 = Math.max(ax.min, Math.min(ax.max, klip(x1)));
+  x2 = Math.max(ax.min, Math.min(ax.max, klip(x2)));
+  return (
+    '<line class="aso-trend" x1="' +
+    s.x(x1) +
+    '" y1="' +
+    s.y(g.m * x1 + g.c) +
+    '" x2="' +
+    s.x(x2) +
+    '" y2="' +
+    s.y(g.m * x2 + g.c) +
+    '"/>'
+  );
+}
+
+/*
+ * Diagram pencar (SVG).
+ *   points        [{x, y, id?}]
+ *   opts.x, opts.y   { min, max, step } opsional (default dari data)
+ *   opts.xLabel, opts.yLabel   label sumbu
+ *   opts.trend    true → garis tren kuadrat terkecil
+ *   opts.sorot    daftar id titik yang disorot
+ *   opts.caption  label aksesibel (role="img")
+ *   opts.kecil    true → versi ringkas (untuk kartu pemilahan/soal)
+ */
+function buildScatterPlot(points, opts) {
+  opts = opts || {};
+  var ax = asoSumbuDari_(points, opts);
+  var s = asoSkala_(ax.x, ax.y);
+  var sorot = opts.sorot || [];
+  var dots = points
+    .map(function (p) {
+      var cls = p.id && sorot.indexOf(p.id) !== -1 ? 'aso-dot aso-dot--sorot' : 'aso-dot';
+      return '<circle class="' + cls + '" cx="' + s.x(p.x) + '" cy="' + s.y(p.y) + '" r="6"/>';
+    })
+    .join('');
+  return (
+    '<svg class="aso-plot' +
+    (opts.kecil ? ' aso-plot--kecil' : '') +
+    '" viewBox="0 0 ' +
+    ASO_PLOT.W +
+    ' ' +
+    ASO_PLOT.H +
+    '" role="img" aria-label="' +
+    esc(opts.caption || 'Diagram pencar') +
+    '">' +
+    asoKerangka_(ax.x, ax.y, s, opts) +
+    (opts.trend ? asoGarisTren_(points, ax.x, ax.y, s) : '') +
+    dots +
+    '</svg>'
+  );
+}
+
+/*
+ * Plotter titik: murid menempatkan titik target satu per satu dengan
+ * klik/ketuk pada grid, atau keyboard (panah menggeser kursor, Enter
+ * menempatkan). Titik menempel ke kelipatan step sumbu.
+ *   target   [{id, x, y, label}]
+ *   st       makePlotterState()
+ *   opts.x, opts.y (wajib) sumbu; opts.xLabel, opts.yLabel; opts.satuanX, opts.satuanY
+ */
+function buildScatterPlotter(id, target, st, opts) {
+  var ax = opts.x;
+  var ay = opts.y;
+  var s = asoSkala_(ax, ay);
+  var aktif = plotterAktif(target, st);
+  var cur = st.cursor || { x: ax.min, y: ay.min };
+  var dots = target
+    .filter(function (t) {
+      return st.placed[t.id];
+    })
+    .map(function (t) {
+      return '<circle class="aso-dot" cx="' + s.x(t.x) + '" cy="' + s.y(t.y) + '" r="6"/>';
+    })
+    .join('');
+  var salah = st.salah
+    ? '<g class="aso-dot--salah"><line x1="' +
+      (s.x(st.salah.x) - 7) +
+      '" y1="' +
+      (s.y(st.salah.y) - 7) +
+      '" x2="' +
+      (s.x(st.salah.x) + 7) +
+      '" y2="' +
+      (s.y(st.salah.y) + 7) +
+      '"/><line x1="' +
+      (s.x(st.salah.x) - 7) +
+      '" y1="' +
+      (s.y(st.salah.y) + 7) +
+      '" x2="' +
+      (s.x(st.salah.x) + 7) +
+      '" y2="' +
+      (s.y(st.salah.y) - 7) +
+      '"/></g>'
+    : '';
+  var cursor = aktif
+    ? '<g class="aso-cursor" id="' +
+      id +
+      '-cursor" transform="translate(' +
+      s.x(cur.x) +
+      ' ' +
+      s.y(cur.y) +
+      ')">' +
+      '<circle r="9"/><line x1="-14" y1="0" x2="14" y2="0"/><line x1="0" y1="-14" x2="0" y2="14"/></g>'
+    : '';
+  var fmtT = function (t) {
+    return (
+      esc(t.label) +
+      ': ' +
+      asoAngka_(t.x) +
+      (opts.satuanX ? ' ' + esc(opts.satuanX) : '') +
+      ', ' +
+      asoAngka_(t.y) +
+      (opts.satuanY ? ' ' + esc(opts.satuanY) : '')
+    );
+  };
+  return (
+    '<div class="aso-plotter" id="' +
+    id +
+    '">' +
+    '<ol class="aso-plotter__list">' +
+    target
+      .map(function (t) {
+        var cls = st.placed[t.id] ? 'is-done' : aktif && t.id === aktif.id ? 'is-active' : '';
+        return (
+          '<li class="' +
+          cls +
+          '">' +
+          (st.placed[t.id] ? '✓ ' : aktif && t.id === aktif.id ? '▶ ' : '') +
+          fmtT(t) +
+          '</li>'
+        );
+      })
+      .join('') +
+    '</ol>' +
+    '<div class="aso-plotter__stage">' +
+    '<svg class="aso-plot aso-plot--input" id="' +
+    id +
+    '-svg" tabindex="0" viewBox="0 0 ' +
+    ASO_PLOT.W +
+    ' ' +
+    ASO_PLOT.H +
+    '" role="application" aria-roledescription="grid diagram pencar" aria-describedby="' +
+    id +
+    '-help" aria-label="' +
+    esc(
+      aktif
+        ? 'Tempatkan titik ' +
+            aktif.label +
+            '. Kursor di x ' +
+            asoAngka_(cur.x) +
+            ', y ' +
+            asoAngka_(cur.y)
+        : 'Semua titik sudah ditempatkan'
+    ) +
+    '">' +
+    asoKerangka_(ax, ay, s, opts) +
+    dots +
+    salah +
+    cursor +
+    '</svg>' +
+    '<p class="dl-caption" id="' +
+    id +
+    '-help">' +
+    (aktif
+      ? 'Ketuk posisi titik pada grid. Dengan keyboard: fokus ke grafik, geser kursor dengan tombol panah, lalu tekan Enter.'
+      : 'Semua titik sudah ditempatkan.') +
+    '</p>' +
+    '<p class="aso-plotter__pos" id="' +
+    id +
+    '-pos" aria-live="polite">' +
+    (aktif ? 'Kursor: (' + asoAngka_(cur.x) + ', ' + asoAngka_(cur.y) + ')' : '') +
+    '</p>' +
+    '</div></div>'
+  );
+}
+
+/*
+ * Memasang interaksi plotter. onTry(kode) dipanggil setelah setiap
+ * percobaan penempatan (st sudah diperbarui), biasanya untuk save +
+ * render ulang.
+ */
+function bindScatterPlotter(root, id, target, st, opts, onTry) {
+  var svg = root.querySelector('#' + id + '-svg');
+  if (!svg || !plotterAktif(target, st)) return;
+  var ax = opts.x;
+  var ay = opts.y;
+  var s = asoSkala_(ax, ay);
+  var g = ASO_PLOT;
+  if (!st.cursor) st.cursor = { x: ax.min, y: ay.min };
+
+  function tampilkanKursor() {
+    var c = root.querySelector('#' + id + '-cursor');
+    if (c)
+      c.setAttribute('transform', 'translate(' + s.x(st.cursor.x) + ' ' + s.y(st.cursor.y) + ')');
+    var pos = root.querySelector('#' + id + '-pos');
+    if (pos)
+      pos.textContent = 'Kursor: (' + asoAngka_(st.cursor.x) + ', ' + asoAngka_(st.cursor.y) + ')';
+  }
+  function dariPointer(e) {
+    var r = svg.getBoundingClientRect();
+    if (!r.width || !r.height) return null;
+    var vx = ((e.clientX - r.left) / r.width) * g.W;
+    var vy = ((e.clientY - r.top) / r.height) * g.H;
+    var x = ax.min + ((vx - g.L) / (g.W - g.L - g.R)) * (ax.max - ax.min);
+    var y = ay.min + ((g.H - g.B - vy) / (g.H - g.T - g.B)) * (ay.max - ay.min);
+    return { x: snapKeSumbu(x, ax), y: snapKeSumbu(y, ay) };
+  }
+  function coba() {
+    var kode = plotterCoba(target, st, st.cursor.x, st.cursor.y);
+    if (onTry) onTry(kode);
+  }
+  svg.addEventListener('pointermove', function (e) {
+    var p = dariPointer(e);
+    if (!p) return;
+    st.cursor = p;
+    tampilkanKursor();
+  });
+  svg.addEventListener('click', function (e) {
+    var p = dariPointer(e);
+    if (!p) return;
+    st.cursor = p;
+    coba();
+  });
+  svg.addEventListener('keydown', function (e) {
+    var dx = 0;
+    var dy = 0;
+    if (e.key === 'ArrowRight') dx = 1;
+    else if (e.key === 'ArrowLeft') dx = -1;
+    else if (e.key === 'ArrowUp') dy = 1;
+    else if (e.key === 'ArrowDown') dy = -1;
+    else if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      coba();
+      return;
+    } else return;
+    e.preventDefault();
+    st.cursor = {
+      x: snapKeSumbu(st.cursor.x + dx * ax.step, ax),
+      y: snapKeSumbu(st.cursor.y + dy * ay.step, ay),
+    };
+    tampilkanKursor();
+  });
+}
+
+/*
+ * Kartu data untuk menghitung turus: setiap kartu satu record, ketuk
+ * untuk menandai "sudah dihitung".
+ *   records      [{id, nama, <key>: idKategori}]
+ *   ditandai     { idRecord: true }
+ *   opts.fields  [{ key, label, kategori: [{id, label}] }]
+ */
+function buildTallyCards(id, records, ditandai, opts) {
+  var fields = opts.fields || [];
+  return (
+    '<div class="aso-tally" id="' +
+    id +
+    '">' +
+    records
+      .map(function (r) {
+        var on = !!ditandai[r.id];
+        return (
+          '<button type="button" class="aso-tally__card' +
+          (on ? ' is-marked' : '') +
+          '" data-tally="' +
+          esc(r.id) +
+          '" aria-pressed="' +
+          (on ? 'true' : 'false') +
+          '">' +
+          '<span class="aso-tally__nama">' +
+          (on ? '✓ ' : '') +
+          esc(r.nama) +
+          '</span>' +
+          fields
+            .map(function (f, k) {
+              return (
+                '<span class="aso-chip aso-chip--' +
+                k +
+                '"><span class="sr-only">' +
+                esc(f.label) +
+                ': </span>' +
+                esc(findOptionLabel(f.kategori, r[f.key])) +
+                '</span>'
+              );
+            })
+            .join('') +
+          '</button>'
+        );
+      })
+      .join('') +
+    '</div>'
+  );
+}
+
+function bindTallyCards(root, id, ditandai, save, rerender) {
+  root.querySelectorAll('#' + id + ' [data-tally]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var rid = btn.dataset.tally;
+      if (ditandai[rid]) delete ditandai[rid];
+      else ditandai[rid] = true;
+      save();
+      rerender(rid);
+    });
+  });
+}
+
+/* Hasil lab data kelas: diagram pencar (numerik) atau tabel + batang (kategori). */
+function labHasilHTML(st, opts) {
+  var hasil;
+  if (st.mode !== 'kategori') {
+    var on = opts.numerik;
+    var pts = labTitikNumerik(st);
+    hasil =
+      pts.length >= 3
+        ? '<label class="aso-lab__toggle"><input type="checkbox" data-lab-tren' +
+          (st.tren ? ' checked' : '') +
+          '> Tampilkan garis tren</label>' +
+          buildScatterPlot(pts, {
+            xLabel: on.xLabel,
+            yLabel: on.yLabel,
+            trend: st.tren,
+            caption: 'Diagram pencar data kelas: ' + pts.length + ' titik',
+          })
+        : '<p class="dl-caption">Isi minimal 3 pasangan data untuk melihat diagram pencar.</p>';
+  } else {
+    var ok = opts.kategori;
+    var t = labTabelKategori(st, ok.a.kategori, ok.b.kategori);
+    hasil =
+      t.total >= 2
+        ? buildContingencyTable(t, {
+            judulBaris: ok.a.label,
+            judulKolom: ok.b.label,
+            caption: 'Frekuensi data kelas',
+          }) +
+          buildContingencyTable(t, {
+            mode: 'persen',
+            judulBaris: ok.a.label,
+            judulKolom: ok.b.label,
+            caption: 'Persen baris data kelas',
+          }) +
+          buildSegmentedBar(t, { caption: 'Persen baris data kelas' })
+        : '<p class="dl-caption">Isi minimal 2 baris lengkap untuk melihat tabel kontingensi.</p>';
+  }
+  return hasil;
+}
+
+/*
+ * Lab data kelas: murid memasukkan data nyata kelasnya sendiri (numerik
+ * berpasangan atau dua kategori) dan langsung melihat diagram pencar
+ * atau tabel kontingensi + batang tersegmen. Tidak dinilai.
+ *   st   makeLabDataKelas()
+ *   opts.numerik  { xLabel, yLabel }
+ *   opts.kategori { a: {label, kategori}, b: {label, kategori} }
+ */
+function buildClassDataLab(id, st, opts) {
+  var num = st.mode !== 'kategori';
+  var tabs =
+    '<div class="aso-lab__tabs" role="group" aria-label="Jenis data">' +
+    '<button type="button" class="aso-lab__tab' +
+    (num ? ' is-active' : '') +
+    '" data-lab-mode="numerik" aria-pressed="' +
+    num +
+    '">Dua variabel numerik</button>' +
+    '<button type="button" class="aso-lab__tab' +
+    (!num ? ' is-active' : '') +
+    '" data-lab-mode="kategori" aria-pressed="' +
+    !num +
+    '">Dua variabel kategorikal</button>' +
+    '</div>';
+  var rows;
+  if (num) {
+    var on = opts.numerik;
+    rows =
+      '<table class="aso-lab__table"><thead><tr><th scope="col">No</th><th scope="col">' +
+      esc(on.xLabel) +
+      '</th><th scope="col">' +
+      esc(on.yLabel) +
+      '</th><th scope="col"><span class="sr-only">Hapus</span></th></tr></thead><tbody>' +
+      st.numerik
+        .map(function (r, i) {
+          return (
+            '<tr><td>' +
+            (i + 1) +
+            '</td>' +
+            '<td><input type="text" inputmode="decimal" class="input-text aso-input" data-lab-row="' +
+            i +
+            '" data-lab-col="x" value="' +
+            esc(r.x) +
+            '" aria-label="' +
+            esc(on.xLabel) +
+            ' baris ' +
+            (i + 1) +
+            '"></td>' +
+            '<td><input type="text" inputmode="decimal" class="input-text aso-input" data-lab-row="' +
+            i +
+            '" data-lab-col="y" value="' +
+            esc(r.y) +
+            '" aria-label="' +
+            esc(on.yLabel) +
+            ' baris ' +
+            (i + 1) +
+            '"></td>' +
+            '<td><button type="button" class="btn btn--ghost btn--small" data-lab-del="' +
+            i +
+            '" aria-label="Hapus baris ' +
+            (i + 1) +
+            '">✕</button></td></tr>'
+          );
+        })
+        .join('') +
+      '</tbody></table>';
+  } else {
+    var ok = opts.kategori;
+    function pilih(i, col, v) {
+      var kat = ok[col].kategori;
+      return (
+        '<select class="input-select aso-lab__select" data-lab-row="' +
+        i +
+        '" data-lab-col="' +
+        col +
+        '" aria-label="' +
+        esc(ok[col].label) +
+        ' baris ' +
+        (i + 1) +
+        '">' +
+        '<option value="">—</option>' +
+        kat
+          .map(function (k) {
+            return (
+              '<option value="' +
+              esc(k.id) +
+              '"' +
+              (v === k.id ? ' selected' : '') +
+              '>' +
+              esc(k.label) +
+              '</option>'
+            );
+          })
+          .join('') +
+        '</select>'
+      );
+    }
+    rows =
+      '<table class="aso-lab__table"><thead><tr><th scope="col">No</th><th scope="col">' +
+      esc(ok.a.label) +
+      '</th><th scope="col">' +
+      esc(ok.b.label) +
+      '</th><th scope="col"><span class="sr-only">Hapus</span></th></tr></thead><tbody>' +
+      st.kategori
+        .map(function (r, i) {
+          return (
+            '<tr><td>' +
+            (i + 1) +
+            '</td><td>' +
+            pilih(i, 'a', r.a) +
+            '</td><td>' +
+            pilih(i, 'b', r.b) +
+            '</td>' +
+            '<td><button type="button" class="btn btn--ghost btn--small" data-lab-del="' +
+            i +
+            '" aria-label="Hapus baris ' +
+            (i + 1) +
+            '">✕</button></td></tr>'
+          );
+        })
+        .join('') +
+      '</tbody></table>';
+  }
+  return (
+    '<div class="aso-lab" id="' +
+    id +
+    '">' +
+    tabs +
+    '<div class="aso-lab__grid"><div class="aso-lab__input">' +
+    '<div class="aso-tabel-wrap">' +
+    rows +
+    '</div>' +
+    '<button type="button" class="btn btn--ghost btn--small" data-lab-add>+ Tambah baris</button>' +
+    '</div><div class="aso-lab__hasil" aria-live="polite">' +
+    labHasilHTML(st, opts) +
+    '</div></div></div>'
+  );
+}
+
+/*
+ * Memasang interaksi lab. Isian disimpan setiap diketik dan hanya panel
+ * hasil yang dihitung ulang (fokus isian tidak hilang); tambah/hapus
+ * baris dan ganti mode merender ulang lab lewat `rerender`.
+ */
+function bindClassDataLab(root, id, st, opts, save, rerender) {
+  var el = root.querySelector('#' + id);
+  if (!el) return;
+  var hasil = el.querySelector('.aso-lab__hasil');
+  function segarkanHasil() {
+    if (!hasil) return;
+    hasil.innerHTML = labHasilHTML(st, opts);
+    pasangTren();
+  }
+  function pasangTren() {
+    var tren = el.querySelector('[data-lab-tren]');
+    if (tren) {
+      tren.addEventListener('change', function () {
+        st.tren = tren.checked;
+        save();
+        segarkanHasil();
+        var t = el.querySelector('[data-lab-tren]');
+        if (t) t.focus();
+      });
+    }
+  }
+  el.querySelectorAll('[data-lab-mode]').forEach(function (b) {
+    b.addEventListener('click', function () {
+      st.mode = b.dataset.labMode;
+      save();
+      rerender();
+    });
+  });
+  el.querySelectorAll('[data-lab-row]').forEach(function (inp) {
+    var list = st.mode === 'kategori' ? st.kategori : st.numerik;
+    var row = list[+inp.dataset.labRow];
+    function ubah() {
+      if (row[inp.dataset.labCol] === inp.value) return;
+      row[inp.dataset.labCol] = inp.value;
+      save();
+      segarkanHasil();
+    }
+    inp.addEventListener('input', ubah);
+    inp.addEventListener('change', ubah);
+  });
+  el.querySelectorAll('[data-lab-del]').forEach(function (b) {
+    b.addEventListener('click', function () {
+      labHapusBaris(st, +b.dataset.labDel);
+      save();
+      rerender();
+    });
+  });
+  var add = el.querySelector('[data-lab-add]');
+  if (add) {
+    add.addEventListener('click', function () {
+      labTambahBaris(st);
+      save();
+      rerender();
+    });
+  }
+  pasangTren();
 }

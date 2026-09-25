@@ -38,5 +38,13 @@
     "h1": "Sifat Operasi Bilangan Berpangkat",
     "stageCount": 9,
     "extraBody": "partials/reset-modal.html"
+  },
+  "fase-f/mpi-11.1": {
+    "title": "Asosiasi Dua Variabel: Tabel Kontingensi & Diagram Pencar — Matematika Fase F",
+    "description": "Media pembelajaran interaktif berbasis Discovery Learning untuk mengidentifikasi asosiasi antara dua variabel kategorikal dan numerikal melalui tabel kontingensi dan diagram pencar pada data nyata: survei siswa RPL, penghitung turus, plotter diagram pencar, persen baris, dan lab data kelas.",
+    "kicker": "Matematika — Fase F (SMK RPL)",
+    "h1": "Asosiasi Dua Variabel: Tabel Kontingensi & Diagram Pencar",
+    "stageCount": 10,
+    "extraBody": "partials/reset-modal.html"
   }
 }
