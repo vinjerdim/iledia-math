@@ -319,21 +319,6 @@ function renderOrientasi(container) {
     '<section aria-label="Orientasi">' +
     buildHead(D) +
     panel(
-      '<p class="bar-tp"><strong>Tujuan Pembelajaran:</strong> ' +
-        esc(DATA.meta.goal) +
-        '</p>' +
-        '<p class="bar-tp" style="margin-top:var(--space-3);"><strong>Alur penyelidikanmu:</strong></p>' +
-        '<ol class="bar-alur">' +
-        DATA.tahap
-          .slice(0, 7)
-          .map(function (t) {
-            return '<li>' + esc(t.label) + '</li>';
-          })
-          .join('') +
-        '</ol>',
-      'panel--info'
-    ) +
-    panel(
       '<h2 class="bar-judul">' +
         esc(D.judul) +
         '</h2>' +
