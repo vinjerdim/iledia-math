@@ -1,0 +1,132 @@
+/* =========================================================================
+   fase-f/mpi-11.1/styles.css
+   Asosiasi Dua Variabel: Tabel Kontingensi & Diagram Pencar — Fase F
+   (SMK RPL), Discovery Learning
+
+   Hanya memuat gaya yang KHAS modul ini (mading klaim, lembar survei
+   mentah, penghitung kartu, banding dugaan vs data). Tabel kontingensi,
+   diagram pencar, plotter, kartu turus, batang tersegmen, dan lab data
+   kelas (.aso-*) serta design system dasar berasal dari shared/base.css.
+   ========================================================================= */
+
+.aso-judul {
+  margin-top: 0;
+}
+
+.aso-label-atas {
+  display: block;
+  margin-top: var(--space-5);
+}
+
+/* -------------------------------------------------------------------------
+   Tahap 1 — mading klaim & lembar survei mentah
+   ------------------------------------------------------------------------- */
+
+.aso-mading {
+  display: grid;
+  gap: var(--space-3);
+  margin: var(--space-4) 0;
+}
+
+@media (min-width: 720px) {
+  .aso-mading {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.aso-klaim {
+  display: flex;
+  gap: var(--space-3);
+  align-items: flex-start;
+  margin: 0;
+  padding: var(--space-3) var(--space-4);
+  border-left: 5px solid var(--color-orange);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+.aso-klaim p {
+  margin: 0;
+  font-weight: 600;
+  line-height: 1.45;
+}
+
+.aso-klaim__ikon {
+  font-size: 1.6rem;
+  line-height: 1;
+}
+
+.aso-lembar {
+  font-size: 0.85rem;
+}
+
+.aso-lembar td {
+  font-family: var(--font-mono);
+}
+
+.aso-lembar__more {
+  font-family: var(--font-body) !important;
+  font-style: italic;
+  color: var(--color-ink-muted);
+}
+
+/* -------------------------------------------------------------------------
+   Tahap 3 — penghitung kartu
+   ------------------------------------------------------------------------- */
+
+.aso-turus-count {
+  margin: 0 0 var(--space-3);
+  font-size: 0.9rem;
+}
+
+/* -------------------------------------------------------------------------
+   Tahap 6 — dugaan vs data
+   ------------------------------------------------------------------------- */
+
+.aso-banding {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.aso-banding__row {
+  padding: var(--space-3);
+  border-left: 4px solid var(--color-success);
+  border-radius: var(--radius-sm);
+  background: var(--color-success-soft);
+}
+
+.aso-banding__row--beda {
+  border-color: var(--color-warning);
+  background: var(--color-warning-soft);
+}
+
+.aso-banding__row p {
+  margin: 0 0 var(--space-1);
+}
+
+.aso-banding__row p span {
+  font-weight: 600;
+}
+
+.aso-banding__label {
+  font-weight: 700;
+}
+
+.aso-kutip {
+  margin: var(--space-3) 0 0;
+  padding: var(--space-3);
+  border-radius: var(--radius-md);
+  background: var(--color-bg-grid);
+  font-style: italic;
+}
+
+/* -------------------------------------------------------------------------
+   Tahap 8 — satuan jawaban isian
+   ------------------------------------------------------------------------- */
+
+.aso-satuan {
+  align-self: center;
+  font-weight: 700;
+  white-space: nowrap;
+}

@@ -2336,6 +2336,10 @@ details.hint-reveal[open] summary::before {
   color: var(--color-blue-strong);
 }
 
+.sort-item__visual {
+  margin: 0 0 var(--space-3);
+}
+
 .sort-item .challenge-options {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
@@ -7927,5 +7931,444 @@ button.pwr-anatomy__part:disabled {
 
   .bar-dot__label {
     font-size: 24px;
+  }
+}
+
+/* =========================================================================
+   33. Asosiasi dua variabel (shared/engine.js seksi 33)
+   Tabel kontingensi (.aso-tabel), batang tersegmen 100% (.aso-segbar),
+   diagram pencar & plotter (.aso-plot, .aso-plotter), kartu turus
+   (.aso-tally), lab data kelas (.aso-lab).
+   ========================================================================= */
+
+.aso-tabel-wrap {
+  position: relative;
+  max-width: 100%;
+  overflow-x: auto;
+  margin: var(--space-3) 0;
+}
+
+.aso-tabel {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.92rem;
+  background: var(--color-surface);
+}
+
+.aso-tabel__caption {
+  caption-side: top;
+  padding-bottom: var(--space-2);
+  text-align: left;
+  font-weight: 700;
+}
+
+.aso-tabel th,
+.aso-tabel td {
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--color-border);
+  text-align: center;
+}
+
+.aso-tabel thead th,
+.aso-tabel__grup {
+  background: var(--color-bg-grid);
+  font-weight: 700;
+}
+
+.aso-tabel tbody th {
+  text-align: left;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.aso-tabel__sudut {
+  background: var(--color-bg-grid);
+  text-align: left;
+  font-size: 0.82rem;
+  color: var(--color-ink-muted);
+}
+
+.aso-tabel__total,
+.aso-tabel tr.aso-tabel__total th,
+.aso-tabel tr.aso-tabel__total td {
+  background: var(--color-primary-soft);
+  font-weight: 700;
+}
+
+.aso-num {
+  font-family: var(--font-mono);
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.aso-tabel__n {
+  display: block;
+  font-size: 0.75rem;
+  font-weight: 400;
+  color: var(--color-ink-muted);
+}
+
+.aso-tabel .aso-sorot {
+  background: var(--color-warning-soft);
+}
+
+.aso-tabel--isian td {
+  padding: var(--space-1);
+}
+
+.aso-input {
+  min-width: 64px;
+  text-align: center;
+  font-family: var(--font-mono);
+  font-weight: 700;
+}
+
+/* Batang tersegmen 100% */
+.aso-segbar {
+  display: grid;
+  gap: var(--space-3);
+  margin: var(--space-3) 0;
+}
+
+.aso-segbar__row {
+  display: grid;
+  gap: var(--space-1);
+}
+
+.aso-segbar__label {
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.aso-segbar__n {
+  font-weight: 400;
+  color: var(--color-ink-muted);
+}
+
+.aso-segbar__bar {
+  display: flex;
+  height: 36px;
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  border: 1px solid var(--color-border-strong);
+}
+
+.aso-seg {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #fff;
+  white-space: nowrap;
+}
+
+.aso-seg--0 {
+  background: var(--color-blue);
+}
+
+.aso-seg--1 {
+  background: var(--color-orange);
+}
+
+.aso-seg--2 {
+  background: var(--color-purple);
+}
+
+.aso-seg--3 {
+  background: var(--color-success);
+}
+
+.aso-segbar__legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  font-size: 0.85rem;
+}
+
+.aso-segbar__legend i {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  margin-right: var(--space-1);
+  border-radius: 3px;
+  vertical-align: -2px;
+}
+
+/* Diagram pencar */
+.aso-plot {
+  display: block;
+  width: 100%;
+  max-width: 560px;
+  height: auto;
+  margin: var(--space-3) auto;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+}
+
+.aso-plot--kecil {
+  max-width: 340px;
+}
+
+.aso-plot--input {
+  cursor: crosshair;
+  touch-action: manipulation;
+}
+
+.aso-plot--input:focus-visible {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+.aso-grid {
+  stroke: var(--color-bg-grid);
+  stroke-width: 1;
+}
+
+.aso-axis {
+  stroke: var(--color-ink);
+  stroke-width: 2;
+}
+
+.aso-tick {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  fill: var(--color-ink-muted);
+}
+
+.aso-tick--x {
+  text-anchor: middle;
+}
+
+.aso-tick--y {
+  text-anchor: end;
+}
+
+.aso-axis-label {
+  font-family: var(--font-body);
+  font-size: 14px;
+  font-weight: 700;
+  fill: var(--color-ink);
+  text-anchor: middle;
+}
+
+.aso-dot {
+  fill: var(--color-blue);
+  fill-opacity: 0.85;
+  stroke: #fff;
+  stroke-width: 1.5;
+}
+
+.aso-dot--sorot {
+  fill: var(--color-orange);
+  stroke: var(--color-orange-strong);
+  stroke-width: 2;
+}
+
+.aso-dot--salah line {
+  stroke: var(--color-error);
+  stroke-width: 3;
+  stroke-linecap: round;
+}
+
+.aso-trend {
+  stroke: var(--color-orange);
+  stroke-width: 3;
+  stroke-dasharray: 8 6;
+}
+
+.aso-cursor circle {
+  fill: none;
+  stroke: var(--color-primary);
+  stroke-width: 2;
+}
+
+.aso-cursor line {
+  stroke: var(--color-primary);
+  stroke-width: 1.5;
+}
+
+.aso-plotter {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.aso-plotter__list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.aso-plotter__list li {
+  padding: var(--space-1) var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  background: var(--color-surface);
+  font-size: 0.85rem;
+}
+
+.aso-plotter__list li.is-active {
+  border-color: var(--color-primary);
+  background: var(--color-primary-soft);
+  font-weight: 700;
+}
+
+.aso-plotter__list li.is-done {
+  border-color: var(--color-success);
+  color: var(--color-success-strong);
+}
+
+.aso-plotter__pos {
+  margin: 0;
+  text-align: center;
+  font-family: var(--font-mono);
+  font-size: 0.9rem;
+}
+
+/* Kartu turus */
+.aso-tally {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: var(--space-2);
+}
+
+.aso-tally__card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-1);
+  min-height: 44px;
+  padding: var(--space-2) var(--space-3);
+  border: 2px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  font-family: var(--font-body);
+  color: var(--color-ink);
+  text-align: left;
+  cursor: pointer;
+}
+
+.aso-tally__card:hover {
+  border-color: var(--color-primary);
+}
+
+.aso-tally__card.is-marked {
+  border-color: var(--color-success);
+  background: var(--color-success-soft);
+  opacity: 0.75;
+}
+
+.aso-tally__nama {
+  font-weight: 700;
+  font-size: 0.9rem;
+}
+
+.aso-chip {
+  display: inline-block;
+  padding: 1px var(--space-2);
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+.aso-chip--0 {
+  background: var(--color-blue-soft);
+  color: var(--color-blue-strong);
+}
+
+.aso-chip--1 {
+  background: var(--color-orange-soft);
+  color: var(--color-orange-strong);
+}
+
+/* Lab data kelas */
+.aso-lab__tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-bottom: var(--space-3);
+}
+
+.aso-lab__tab {
+  min-height: 44px;
+  padding: var(--space-2) var(--space-4);
+  border: 2px solid var(--color-border);
+  border-radius: 999px;
+  background: var(--color-surface);
+  font-family: var(--font-body);
+  font-weight: 600;
+  color: var(--color-ink);
+  cursor: pointer;
+}
+
+.aso-lab__tab.is-active {
+  border-color: var(--color-primary);
+  background: var(--color-primary-soft);
+  color: var(--color-primary-strong);
+}
+
+.aso-lab__grid {
+  display: grid;
+  gap: var(--space-4);
+}
+
+@media (min-width: 860px) {
+  .aso-lab__grid {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr);
+    align-items: start;
+  }
+}
+
+.aso-lab__table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.88rem;
+}
+
+.aso-lab__table th,
+.aso-lab__table td {
+  padding: var(--space-1);
+  text-align: center;
+}
+
+.aso-lab__table td:first-child {
+  width: 2.5em;
+  color: var(--color-ink-muted);
+}
+
+.aso-lab__select {
+  min-width: 96px;
+}
+
+.aso-lab__toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: 44px;
+  font-weight: 600;
+}
+
+@media (max-width: 480px) {
+  .aso-tabel th,
+  .aso-tabel td {
+    padding: var(--space-1) var(--space-2);
+    font-size: 0.82rem;
+  }
+
+  .aso-tabel--isian td {
+    padding: 2px;
+  }
+
+  .aso-tabel tbody th {
+    white-space: normal;
+  }
+
+  .aso-input {
+    min-width: 44px;
+    padding: 6px 4px;
   }
 }
