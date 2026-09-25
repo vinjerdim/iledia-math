@@ -91,6 +91,10 @@
        pecahan bertanda/campuran, strategi ahli penyebut sama/pembilang
        sama/patokan/samakan penyebut, diagnosa miskonsepsi lambang,
        kata perbandingan per tema, kalimat & tombol lambang pecahan)
+   37. Bilangan desimal dalam konteks sehari-hari: membaca, menuliskan
+       & membandingkan (pemeriksa cara baca & tulis berdiagnosa, opsi
+       cara baca & notasi teracak, langkah isian desimal, kata
+       perbandingan per tema, tombol lambang desimal berdiagnosa)
    ============================================================ */
 
 /* ============================================================
@@ -17279,6 +17283,505 @@ function bindPilihSimbolPecahan(root, getPair, getState, save, rerender) {
       var benarId = simbolBandingPecahan(pair[0], pair[1]);
       if (st.chosen === benarId) return;
       st.chosen = btn.dataset.fracSym;
+      if (st.chosen !== benarId) st.wrong = (st.wrong || 0) + 1;
+      save();
+      rerender();
+    });
+  });
+}
+
+/* ============================================================
+   37. BILANGAN DESIMAL DALAM KONTEKS SEHARI-HARI — MEMBACA,
+       MENULISKAN & MEMBANDINGKAN
+   Dipakai fase-d/mpi-1.5. Memakai ulang seksi 19 (desimalDigits,
+   bacaDesimalKoma, bacaDesimalNilaiTempat, DESIMAL_TEMPAT), seksi 20
+   (bandingkanDesimal, simbolBandingDesimal, alasanBandingDesimal,
+   diagnosaBandingDesimal, pesanDiagnosaDesimal, buildDecChip), seksi 29
+   (normalisasiBacaan) dan seksi 36 (KATA_BANDING_PECAHAN).
+   Bilangan desimal tetap diolah sebagai STRING berkoma ("3,07").
+   Isinya:
+     • cekCaraBacaDesimal — memeriksa cara baca yang diketik murid:
+       cara baca "koma" ("tiga koma nol tujuh") dan cara baca nilai
+       tempat ("tiga dan tujuh perseratus") sama-sama diterima;
+       miskonsepsi dikenali (angka di belakang koma dibaca sebagai
+       bilangan bulat, angka 0 terlewat, "titik", koma dilewati, nama
+       nilai tempat salah, bagian bulat 0 tidak dibaca);
+     • opsiCaraBacaDesimal / opsiNotasiDesimal — pilihan cara baca &
+       notasi (satu benar + tiga pengecoh khas), diacak oleh app.js;
+     • diagnosaTulisDesimal — memeriksa notasi yang ditulis murid
+       (titik, 0 pengisi tempat hilang/berlebih, koma bergeser, tanpa
+       koma); notasi senilai (3,070 untuk 3,07) diterima;
+     • makeDesimalStep / periksaDesimalStep / buildDesimalStep /
+       bindDesimalStep — langkah isian teks (tulis atau baca) dengan
+       umpan balik diagnosa;
+     • kata perbandingan per tema (lebih cepat, lebih jauh, lebih
+       dingin, …) dan tombol lambang <, >, = berdiagnosa.
+   ============================================================ */
+
+var PESAN_BACA_DESIMAL = {
+  kosong: 'Ketik cara membaca bilangan desimal itu terlebih dahulu.',
+  'koma-bulat':
+    'Angka di belakang koma tidak dibaca sebagai satu bilangan bulat. Setelah kata <strong>koma</strong>, baca angkanya <strong>satu per satu</strong>, misalnya 12,45 → "dua belas koma empat lima".',
+  'nol-hilang':
+    'Ada angka 0 yang terlewat. Angka 0 di belakang koma menjaga nilai tempat angka sesudahnya, jadi tetap dibaca: "koma <strong>nol</strong> …".',
+  titik:
+    'Di Indonesia, pemisah desimal adalah tanda <strong>koma</strong>, jadi dibaca "koma" — bukan "titik".',
+  'lupa-bulat':
+    'Bagian bulat (angka di depan koma) ikut dibaca lebih dulu, walaupun nilainya 0: "<strong>nol</strong> koma …".',
+  'tanpa-koma':
+    'Tanda koma tidak boleh dilewati. Tanpa koma, bilangan itu terbaca jauh lebih besar. Baca bagian bulat, lalu kata "koma", lalu angka di belakang koma satu per satu.',
+  'tempat-salah':
+    'Nama nilai tempatnya belum tepat. Lihat angka <strong>paling kanan</strong>: 1 angka di belakang koma → persepuluh, 2 angka → perseratus, 3 angka → perseribu.',
+  'angka-salah':
+    'Angkanya belum tepat. Baca bagian bulat sebagai satu bilangan, lalu kata "koma", lalu setiap angka di belakang koma satu per satu.',
+};
+
+var PESAN_TULIS_DESIMAL = {
+  kosong: 'Isi jawabanmu terlebih dahulu.',
+  format: 'Tulis bilangan desimal dengan angka dan satu tanda koma, misalnya 0,5 atau 3,07.',
+  titik:
+    'Gunakan tanda <strong>koma</strong> (,) sebagai pemisah desimal, misalnya 3,07. Di Indonesia, titik dipakai sebagai pemisah ribuan.',
+  'nol-hilang':
+    'Ada angka 0 pengisi tempat yang hilang. Perhatikan nama nilai tempatnya: "perseratus" berarti ada <strong>dua</strong> angka di belakang koma, "perseribu" berarti <strong>tiga</strong>. Isi tempat yang kosong dengan 0.',
+  'nol-lebih':
+    'Ada angka 0 yang berlebih di belakang koma sehingga angkanya bergeser ke nilai tempat yang lebih kecil. Hitung lagi banyak angka di belakang koma.',
+  'tempat-bergeser':
+    'Angka-angkanya sudah tepat, tetapi letak komanya bergeser. Bagian bulat ditulis di depan koma, lalu angka persepuluhan, perseratusan, … di belakangnya.',
+  'tanpa-koma':
+    'Tanda koma belum ditulis. Tanpa koma, bilangan itu menjadi bilangan bulat yang jauh lebih besar.',
+  salah:
+    'Belum tepat. Tulis bagian bulat, tanda koma, lalu angka di belakang koma sesuai nilai tempatnya.',
+};
+
+/* "07" → "nol tujuh": setiap angka dibaca satu per satu. */
+function bacaAngkaSatuSatu(digits) {
+  return String(digits)
+    .split('')
+    .map(function (d) {
+      return terbilang(+d);
+    })
+    .join(' ');
+}
+
+/*
+ * Cara baca nilai tempat dengan nama tempat ke-k (1–3), dipakai untuk
+ * pengecoh: ({3, "07"}, 1) → "tiga dan tujuh persepuluh".
+ */
+function bacaNilaiTempatDi(p, k) {
+  var bulat = parseInt(p.bulat, 10);
+  var frac = terbilang(parseInt(p.pecahan, 10)) + ' ' + DESIMAL_TEMPAT[k].baca;
+  return bulat === 0 ? frac : terbilang(bulat) + ' dan ' + frac;
+}
+
+/*
+ * Pengecoh cara baca untuk desimal `str`, urut prioritas:
+ * 'koma-bulat' / 'nol-hilang', 'tempat-salah', 'tanpa-koma', 'titik',
+ * 'lupa-bulat'. [] bila tidak ada angka di belakang koma.
+ */
+function pengecohBacaDesimal(str) {
+  var p = desimalDigits(str);
+  if (!p || !p.pecahan) return [];
+  var W = terbilang(parseInt(p.bulat, 10));
+  var n = p.pecahan.length;
+  var angka = parseInt(p.pecahan, 10);
+  var list = [];
+  if (n >= 2 && angka > 0) {
+    list.push({
+      id: /^0/.test(p.pecahan) ? 'nol-hilang' : 'koma-bulat',
+      label: W + ' koma ' + terbilang(angka),
+    });
+  }
+  if (angka > 0)
+    list.push({ id: 'tempat-salah', label: bacaNilaiTempatDi(p, n < 3 ? n + 1 : n - 1) });
+  var gabung = parseInt(p.bulat + p.pecahan, 10);
+  if (gabung < 1000000) list.push({ id: 'tanpa-koma', label: terbilang(gabung) });
+  list.push({ id: 'titik', label: W + ' titik ' + bacaAngkaSatuSatu(p.pecahan) });
+  list.push({ id: 'lupa-bulat', label: 'koma ' + bacaAngkaSatuSatu(p.pecahan) });
+  return list;
+}
+
+/* Peta bentuk bacaan (sudah dinormalisasi) → kode, untuk desimal `str`. */
+function bentukBacaDesimal(str) {
+  var p = desimalDigits(str);
+  var peta = {};
+  function add(teks, kode) {
+    if (teks && !Object.prototype.hasOwnProperty.call(peta, teks)) peta[teks] = kode;
+  }
+  add(bacaDesimalKoma(str), 'benar');
+  var nilai = bacaDesimalNilaiTempat(str);
+  add(nilai, 'nilai-tempat');
+  add(nilai.replace(' dan ', ' '), 'nilai-tempat');
+  pengecohBacaDesimal(str).forEach(function (o) {
+    add(o.label, o.id);
+  });
+  if (p && p.pecahan && parseInt(p.pecahan, 10) > 0) {
+    for (var k = 1; k <= 3; k++) {
+      if (k !== p.pecahan.length) add(bacaNilaiTempatDi(p, k), 'tempat-salah');
+    }
+  }
+  return peta;
+}
+
+/*
+ * Memeriksa cara baca yang diketik murid untuk desimal `str`.
+ * Mengembalikan { benar, kode, pesan }; kode 'benar' | 'nilai-tempat'
+ * (benar, cara baca nilai tempat) | 'kosong' | 'koma-bulat' |
+ * 'nol-hilang' | 'titik' | 'lupa-bulat' | 'tanpa-koma' |
+ * 'tempat-salah' | 'angka-salah'.
+ */
+function cekCaraBacaDesimal(teks, str) {
+  var baku = bacaDesimalKoma(str);
+  var t = normalisasiBacaan(teks).replace(/\bper (sepuluh|seratus|seribu)\b/g, 'per$1');
+  if (!t) return { benar: false, kode: 'kosong', pesan: PESAN_BACA_DESIMAL.kosong };
+  var peta = bentukBacaDesimal(str);
+  var kode = Object.prototype.hasOwnProperty.call(peta, t) ? peta[t] : 'angka-salah';
+  if (kode === 'benar') {
+    return {
+      benar: true,
+      kode: kode,
+      pesan: 'Tepat! ' + esc(str) + ' dibaca "' + esc(baku) + '".',
+    };
+  }
+  if (kode === 'nilai-tempat') {
+    return {
+      benar: true,
+      kode: kode,
+      pesan:
+        'Benar, itu cara baca berdasarkan nilai tempat. Cara baca lain yang juga tepat: "<strong>' +
+        esc(baku) +
+        '</strong>".',
+    };
+  }
+  return { benar: false, kode: kode, pesan: PESAN_BACA_DESIMAL[kode] };
+}
+
+/*
+ * Pilihan cara baca untuk desimal `str`: satu benar (id 'baku', cara
+ * baca koma) dan tiga pengecoh pertama dari pengecohBacaDesimal() yang
+ * labelnya unik. Urutan wajar; app.js mengacaknya (ensureShuffledOrder).
+ * Setiap opsi: { id, label, benar, umpan }.
+ */
+function opsiCaraBacaDesimal(str) {
+  var baku = bacaDesimalKoma(str);
+  var nilai = bacaDesimalNilaiTempat(str);
+  var opsi = [
+    {
+      id: 'baku',
+      label: baku,
+      benar: true,
+      umpan: 'Tepat! ' + esc(str) + ' dibaca "' + esc(baku) + '" atau "' + esc(nilai) + '".',
+    },
+  ];
+  var dipakai = {};
+  dipakai[baku] = true;
+  dipakai[nilai] = true;
+  pengecohBacaDesimal(str).forEach(function (o) {
+    if (opsi.length >= 4 || dipakai[o.label]) return;
+    dipakai[o.label] = true;
+    opsi.push({ id: o.id, label: o.label, benar: false, umpan: PESAN_BACA_DESIMAL[o.id] });
+  });
+  return opsi;
+}
+
+function tanpaNolKanan(s) {
+  return s.replace(/0+$/, '');
+}
+
+/*
+ * Memeriksa notasi desimal yang ditulis murid terhadap `str`. Notasi
+ * senilai (3,070 untuk 3,07) diterima. Mengembalikan { benar, kode,
+ * pesan }; kode 'benar' | 'kosong' | 'format' | 'titik' | 'nol-hilang' |
+ * 'nol-lebih' | 'tempat-bergeser' | 'tanpa-koma' | 'salah'.
+ */
+function diagnosaTulisDesimal(isian, str) {
+  function hasil(kode) {
+    if (kode === 'benar') {
+      return {
+        benar: true,
+        kode: kode,
+        pesan: 'Tepat! Ditulis ' + esc(str) + ', dibaca "' + esc(bacaDesimalKoma(str)) + '".',
+      };
+    }
+    return { benar: false, kode: kode, pesan: PESAN_TULIS_DESIMAL[kode] };
+  }
+  var target = desimalDigits(str);
+  var s = String(isian == null ? '' : isian).replace(/\s/g, '');
+  if (!s) return hasil('kosong');
+  if (s.indexOf('.') !== -1) return hasil('titik');
+  var p = /^\d+(,\d+)?$/.test(s) ? desimalDigits(s) : null;
+  if (!p) return hasil('format');
+  if (bandingkanDesimal(s, str) === 0) return hasil('benar');
+  var bulatSama = bulatDesimalNormal(p) === bulatDesimalNormal(target);
+  var fp = tanpaNolKanan(p.pecahan);
+  var fq = tanpaNolKanan(target.pecahan);
+  if (bulatSama && /^0/.test(fq) && fp === fq.replace(/^0+/, '')) return hasil('nol-hilang');
+  if (bulatSama && fq && fp === '0' + fq) return hasil('nol-lebih');
+  var dp = tanpaNolKanan((p.bulat + p.pecahan).replace(/^0+/, ''));
+  var dq = tanpaNolKanan((target.bulat + target.pecahan).replace(/^0+/, ''));
+  if (dp && dp === dq) return hasil(p.pecahan ? 'tempat-bergeser' : 'tanpa-koma');
+  return hasil('salah');
+}
+
+/*
+ * Pilihan notasi untuk desimal `str` (mis. dari dikte): satu benar (id
+ * 'baku') dan tiga pengecoh pertama yang unik dari: 'nol-hilang'
+ * (3,07 → 3,7), 'nol-lebih' (3,007), 'geser' (30,7), 'titik' (3.07),
+ * 'tanpa-koma' (307). Urutan wajar; app.js mengacaknya.
+ * Setiap opsi: { id, label, benar, umpan }.
+ */
+function opsiNotasiDesimal(str) {
+  var p = desimalDigits(str);
+  var bulat = bulatDesimalNormal(p);
+  var f = p.pecahan;
+  var kandidat = [];
+  if (/^0+[1-9]/.test(f))
+    kandidat.push({ id: 'nol-hilang', label: bulat + ',' + f.replace(/^0+/, '') });
+  if (f) kandidat.push({ id: 'nol-lebih', label: bulat + ',0' + f });
+  if (f) {
+    var depan = (bulat + f.charAt(0)).replace(/^0+(?=\d)/, '');
+    var sisa = f.slice(1);
+    kandidat.push({ id: 'geser', label: sisa ? depan + ',' + sisa : depan });
+    kandidat.push({ id: 'titik', label: bulat + '.' + f });
+  }
+  kandidat.push({ id: 'tanpa-koma', label: String(parseInt(bulat + f, 10)) });
+  var opsi = [
+    {
+      id: 'baku',
+      label: str,
+      benar: true,
+      umpan: 'Tepat! "' + esc(bacaDesimalKoma(str)) + '" ditulis ' + esc(str) + '.',
+    },
+  ];
+  var dipakai = {};
+  dipakai[str] = true;
+  kandidat.forEach(function (o) {
+    if (opsi.length >= 4 || dipakai[o.label]) return;
+    dipakai[o.label] = true;
+    opsi.push({
+      id: o.id,
+      label: o.label,
+      benar: false,
+      umpan: PESAN_TULIS_DESIMAL[o.id === 'geser' ? 'tempat-bergeser' : o.id],
+    });
+  });
+  return opsi;
+}
+
+/* State default langkah isian desimal. */
+function makeDesimalStep() {
+  return { input: '', done: false, kode: null, pesan: '', attempts: 0, hintLevel: 0 };
+}
+
+/*
+ * Memeriksa isian langkah dan menyimpan hasilnya ke st.
+ *   step.jenis 'baca'  → cekCaraBacaDesimal
+ *   step.jenis 'tulis' → diagnosaTulisDesimal
+ * Isian kosong tidak dihitung sebagai percobaan.
+ */
+function periksaDesimalStep(st, step, input) {
+  st.input = String(input == null ? '' : input).trim();
+  var r =
+    step.jenis === 'baca'
+      ? cekCaraBacaDesimal(st.input, step.jawab)
+      : diagnosaTulisDesimal(st.input, step.jawab);
+  st.kode = r.kode;
+  st.pesan = r.pesan;
+  if (r.kode === 'kosong') return r;
+  st.attempts += 1;
+  st.done = r.benar;
+  return r;
+}
+
+/*
+ * Satu langkah isian desimal dengan umpan balik diagnosa.
+ *   id    awalan id DOM (→ idInput, idCheck, idHint)
+ *   step  { jenis: 'tulis'|'baca', jawab, label, hints, temuan,
+ *           satuan, placeholder }
+ *   num   nomor langkah opsional
+ */
+function buildDesimalStep(id, st, step, num) {
+  var head =
+    '<p class="dl-step__label">' +
+    (num ? '<span class="dl-step__num">' + num + '</span>' : '') +
+    step.label +
+    '</p>';
+  var baca = step.jenis === 'baca';
+  if (st.done) {
+    return (
+      '<div class="dl-step dl-step--done">' +
+      head +
+      '<p class="dl-step__answer">✓ ' +
+      (baca ? '"' + esc(bacaDesimalKoma(step.jawab)) + '"' : buildDecChip(step.jawab)) +
+      (step.satuan && !baca ? ' ' + esc(step.satuan) : '') +
+      '</p>' +
+      (baca && st.kode === 'nilai-tempat' ? buildFeedbackBox('info', 'ℹ️', st.pesan) : '') +
+      (step.temuan ? buildFeedbackBox('success', '💡', step.temuan) : '') +
+      '</div>'
+    );
+  }
+  var salah = st.attempts > 0 && st.kode && st.kode !== 'benar' && st.kode !== 'kosong';
+  return (
+    '<div class="dl-step">' +
+    head +
+    '<div class="dl-input-row dec-step__row">' +
+    '<input type="text" class="input-text ' +
+    (baca ? 'bbk-baca-input' : 'dec-step__input') +
+    (salah ? ' has-error' : '') +
+    '" id="' +
+    id +
+    'Input" inputmode="' +
+    (baca ? 'text' : 'decimal') +
+    '" autocapitalize="off" spellcheck="false" autocomplete="off" value="' +
+    esc(st.input || '') +
+    '" aria-label="' +
+    (baca ? 'Cara membaca bilangan desimal' : 'Bilangan desimal') +
+    '" placeholder="' +
+    esc(step.placeholder || (baca ? 'ketik cara bacanya…' : 'mis. 3,07')) +
+    '">' +
+    (step.satuan && !baca ? '<span class="bbk-satuan">' + esc(step.satuan) + '</span>' : '') +
+    '<button type="button" class="btn btn--primary" id="' +
+    id +
+    'Check">Periksa</button>' +
+    buildHintToggle(id + 'Hint', step.hints, st.hintLevel) +
+    '</div>' +
+    (salah
+      ? '<div style="margin-top:var(--space-3);">' +
+        buildFeedbackBox('error', '✗', '<strong>' + esc(st.input) + '</strong> — ' + st.pesan) +
+        '</div>'
+      : '') +
+    buildHintStack(step.hints, st.hintLevel) +
+    '</div>'
+  );
+}
+
+/* Memasang event buildDesimalStep; `save` lalu `rerender` dipanggil setelah perubahan. */
+function bindDesimalStep(id, st, step, save, rerender) {
+  var btn = document.getElementById(id + 'Check');
+  var inp = document.getElementById(id + 'Input');
+  var hint = document.getElementById(id + 'Hint');
+  if (btn && inp) {
+    btn.addEventListener('click', function () {
+      var r = periksaDesimalStep(st, step, inp.value);
+      if (r.kode === 'kosong') {
+        showNotice(r.pesan);
+        return;
+      }
+      save();
+      rerender();
+      if (!st.done) {
+        var el = document.getElementById(id + 'Input');
+        if (el) el.focus();
+      }
+    });
+    inp.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter') btn.click();
+    });
+  }
+  if (hint) {
+    hint.addEventListener('click', function () {
+      st.hintLevel = Math.min(st.hintLevel + 1, (step.hints || []).length);
+      save();
+      rerender();
+    });
+  }
+}
+
+/*
+ * Kata perbandingan per tema konteks desimal. Tema yang tidak ada di
+ * sini memakai KATA_BANDING_PECAHAN (banyak, panjang, jarak, waktu,
+ * berat, tinggi). `kecil` menjelaskan bilangan yang lebih kecil.
+ */
+var KATA_BANDING_DESIMAL = {
+  suhu: {
+    ikon: '🌡️',
+    kecil: 'lebih dingin',
+    besar: 'lebih panas',
+    sama: 'sama suhunya',
+    terkecil: 'paling dingin',
+    terbesar: 'paling panas',
+  },
+  lari: {
+    ikon: '🏃',
+    kecil: 'lebih cepat',
+    besar: 'lebih lambat',
+    sama: 'sama cepatnya',
+    terkecil: 'paling cepat',
+    terbesar: 'paling lambat',
+  },
+};
+
+function kataBandingDesimal(tema) {
+  return KATA_BANDING_DESIMAL[tema] || KATA_BANDING_PECAHAN[tema] || KATA_BANDING_PECAHAN.banyak;
+}
+
+/* 'kecil' bila a < b, 'besar' bila a > b, 'sama' bila a = b. */
+function idMaknaBandingDesimal(a, b) {
+  var c = bandingkanDesimal(a, b);
+  return c < 0 ? 'kecil' : c > 0 ? 'besar' : 'sama';
+}
+
+/* Frasa makna a terhadap b, mis. ('3,7', '3,68', 'jarak') → 'lebih jauh'. */
+function maknaBandingDesimal(a, b, tema) {
+  return kataBandingDesimal(tema)[idMaknaBandingDesimal(a, b)];
+}
+
+/* Opsi { id, label } kecil/besar/sama untuk diacak (ensureShuffledOrder). */
+function opsiMaknaBandingDesimal(tema) {
+  var K = kataBandingDesimal(tema);
+  return [
+    { id: 'kecil', label: K.kecil },
+    { id: 'besar', label: K.besar },
+    { id: 'sama', label: K.sama },
+  ];
+}
+
+/*
+ * Tombol lambang <, >, = untuk sepasang desimal yang boleh dicoba lagi
+ * sampai benar, lalu terkunci. Pilihan salah memunculkan pesan diagnosa
+ * miskonsepsi (seksi 20); pilihan benar memunculkan alasan berdasarkan
+ * nilai tempat. `order` = urutan acak id COMPARE_SYMBOLS dari State.
+ *   st          { chosen, wrong }
+ *   opts.group  nilai data-group pembeda antarsoal
+ */
+function buildPilihSimbolDesimal(a, b, order, st, opts) {
+  opts = opts || {};
+  var benarId = simbolBandingDesimal(a, b);
+  var benar = st.chosen === benarId;
+  var salah = !!st.chosen && !benar;
+  return (
+    '<div class="cmp-symbols">' +
+    buildChoiceGroup(COMPARE_SYMBOLS, order, {
+      chosen: st.chosen,
+      correctId: benar ? benarId : null,
+      grade: true,
+      locked: benar,
+      group: opts.group || 'dec-cmp',
+      attr: 'data-dec-sym',
+    }) +
+    '</div>' +
+    (benar
+      ? buildFeedbackBox('success', '✓', esc(alasanBandingDesimal(a, b)))
+      : salah
+      ? buildFeedbackBox(
+          'warning',
+          '💭',
+          esc(pesanDiagnosaDesimal(diagnosaBandingDesimal(a, b, st.chosen), a, b))
+        )
+      : '')
+  );
+}
+
+/* Memasang event buildPilihSimbolDesimal; pasangan & state dicari lewat group. */
+function bindPilihSimbolDesimal(root, getPair, getState, save, rerender) {
+  root.querySelectorAll('[data-dec-sym]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var group = btn.dataset.group;
+      var pair = getPair(group);
+      var st = getState(group);
+      if (!pair || !st) return;
+      var benarId = simbolBandingDesimal(pair[0], pair[1]);
+      if (st.chosen === benarId) return;
+      st.chosen = btn.dataset.decSym;
       if (st.chosen !== benarId) st.wrong = (st.wrong || 0) + 1;
       save();
       rerender();

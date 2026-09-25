@@ -1,0 +1,302 @@
+/* =========================================================================
+   fase-d/mpi-1.5/styles.css
+   Membaca, Menuliskan & Membandingkan Bilangan Desimal dalam Kehidupan
+   Sehari-hari — Fase D
+
+   Hanya memuat gaya yang KHAS modul ini. Seluruh dasar design system
+   (panel, tombol, kotak umpan balik, pilihan ganda, pemilahan, pertanyaan
+   penuntun .quiz-item--guided, perbandingan dugaan .dugaan-row, kartu
+   ringkasan, urut-ketuk, navigasi tahap, modal) dan komponen desimal
+   (.dec-pv, .dec-block, .dec-builder, .dec-cmp, .nlp--dec, .num-chip,
+   .cmp-sentence) berasal dari shared/base.css.
+   ========================================================================= */
+
+/* -------------------------------------------------------------------------
+   Layar alat ukur (stopwatch, timbangan, termometer, pita ukur)
+   ------------------------------------------------------------------------- */
+
+.layar {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--space-2);
+  max-width: 100%;
+  padding: var(--space-2) var(--space-4);
+  border: 3px solid var(--color-ink);
+  border-radius: var(--radius-md);
+  background: var(--color-ink);
+  color: #c9f7d3;
+  font-family: var(--font-mono);
+}
+
+.layar__alat {
+  flex-basis: 100%;
+  font-family: var(--font-sans, inherit);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #9fd8ad;
+}
+
+.layar__angka {
+  font-size: 1.9rem;
+  font-weight: 700;
+  line-height: 1.1;
+  letter-spacing: 0.04em;
+}
+
+.layar__satuan {
+  font-size: 1rem;
+}
+
+/* -------------------------------------------------------------------------
+   Tahap 1 — Stimulasi: papan kabar
+   ------------------------------------------------------------------------- */
+
+.kabar-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: var(--space-3);
+  margin-top: var(--space-4);
+}
+
+.kabar-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--color-border);
+  border-top: 5px solid var(--color-warning);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+}
+
+.kabar-card__head {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.kabar-card__ikon {
+  font-size: 1.6rem;
+  line-height: 1;
+}
+
+.kabar-card__sumber {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--color-ink-muted);
+}
+
+.kabar-card__teks {
+  margin: 0;
+  font-size: 0.92rem;
+}
+
+/* -------------------------------------------------------------------------
+   Tahap 3 — Lab Nilai Tempat: layar + perakit desimal
+   ------------------------------------------------------------------------- */
+
+.situasi-progress {
+  margin: 0 0 var(--space-2);
+  font-weight: 700;
+}
+
+.rakit-list,
+.banding-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  margin-bottom: var(--space-5);
+}
+
+.banding-list {
+  margin-bottom: 0;
+}
+
+.rakit-card,
+.banding-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  min-width: 0;
+  padding: var(--space-4);
+  border: 2px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+}
+
+.rakit-card.is-done,
+.banding-card.is-done {
+  border-color: var(--color-success);
+}
+
+.rakit-card__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.rakit-card__head .dl-step__label {
+  flex: 1 1 16rem;
+  margin: 0;
+}
+
+.rakit-card .quiz-item,
+.banding-card .quiz-item {
+  margin: 0;
+}
+
+.rakit-card .btn-group,
+.banding-card .dl-caption {
+  margin: 0;
+}
+
+/* Tabel data */
+.table-scroll {
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.92rem;
+}
+
+.data-table th,
+.data-table td {
+  padding: var(--space-2) var(--space-3);
+  border-bottom: 1px solid var(--color-border);
+  text-align: left;
+}
+
+.data-table th {
+  background: var(--color-bg-grid);
+  font-size: 0.8rem;
+}
+
+.data-table__num {
+  font-family: var(--font-mono);
+  font-size: 1.05rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+/* Angka paling kanan menentukan nama "per…" pada cara baca nilai tempat. */
+.data-table__num.is-kanan {
+  text-decoration: underline;
+  text-decoration-thickness: 3px;
+  text-underline-offset: 4px;
+  color: var(--color-purple-strong);
+}
+
+/* Isian desimal + tombol Periksa boleh turun baris di layar sempit. */
+.dec-step__row {
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.dec-step__input {
+  flex: 0 1 9rem;
+  font-family: var(--font-mono);
+  font-size: 1.1rem;
+}
+
+.dec-step__row .bbk-baca-input {
+  flex: 1 1 14rem;
+  max-width: 24rem;
+}
+
+/* -------------------------------------------------------------------------
+   Tahap 4b — membandingkan
+   ------------------------------------------------------------------------- */
+
+.blank-slot {
+  display: inline-block;
+  min-width: 4.5em;
+  border-bottom: 2px dashed var(--color-purple);
+  text-align: center;
+  color: var(--color-purple-strong);
+}
+
+.banding-card .cmp-sentence {
+  margin: 0;
+}
+
+/* -------------------------------------------------------------------------
+   Tahap 4–5 — temuan & hipotesis
+   ------------------------------------------------------------------------- */
+
+.temuan-list {
+  margin: 0;
+  padding-left: var(--space-5);
+  line-height: 1.7;
+}
+
+.hipotesis-box {
+  margin-top: var(--space-4);
+  padding: var(--space-3) var(--space-4);
+  border-left: 4px solid var(--color-purple);
+  border-radius: var(--radius-md);
+  background: var(--color-purple-soft);
+}
+
+.hipotesis-box__label {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--color-purple-strong);
+}
+
+.hipotesis-box p {
+  margin: var(--space-1) 0 var(--space-2);
+  font-style: italic;
+}
+
+/* -------------------------------------------------------------------------
+   Tahap 7 — uji terap: isian cara baca butuh kotak lebih lebar
+   ------------------------------------------------------------------------- */
+
+.dl-exercise .dl-input-row .input-text {
+  flex: 1 1 14rem;
+  max-width: 24rem;
+}
+
+.terap-tampil {
+  margin: var(--space-2) 0;
+}
+
+/* -------------------------------------------------------------------------
+   Tahap Selesai — contoh
+   ------------------------------------------------------------------------- */
+
+.contoh-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: var(--space-3);
+  margin: var(--space-4) 0;
+}
+
+.contoh-grid .formula-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+/* -------------------------------------------------------------------------
+   Responsif
+   ------------------------------------------------------------------------- */
+
+@media (max-width: 600px) {
+  .rakit-card,
+  .banding-card {
+    padding: var(--space-3);
+  }
+
+  .layar__angka {
+    font-size: 1.5rem;
+  }
+}
