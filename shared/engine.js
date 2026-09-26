@@ -119,6 +119,11 @@
        diagnosa miskonsepsi eksponen, langkah sifat pilih sifat →
        eksponen → nilai, rantai sifat, pembagian kartu ahli Jigsaw,
        form tim kooperatif, tab stasiun ahli)
+   45. Bentuk akar & pangkat pecahan (faktor prima, akar bulat,
+       menyederhanakan bentuk akar, konversi ⁿ√(aᵐ) ⇄ a^(m/n), teks →
+       HTML tanda akar & pangkat pecahan, diagnosa miskonsepsi, ubin
+       faktor kembar, konverter akar–pangkat, lab persegi & kubus,
+       langkah isian akar sederhana, tabel bentuk pangkat ⇄ akar)
    ============================================================ */
 
 /* ============================================================
@@ -23005,4 +23010,1041 @@ function bindCoopTeamSetup(root, id, st, cfg, save, rerender) {
       rerender();
     });
   }
+}
+
+/* ============================================================
+   45. BENTUK AKAR & PANGKAT PECAHAN
+   Blok bangun untuk mengonversi bentuk akar ⇄ pangkat pecahan dan
+   menyederhanakan bentuk akar (Discovery Learning, fase-d/mpi-12.3):
+     • faktorPrima, akarBulat, sederhanakanAkar, faktorPangkatTerbesar,
+       akarSederhana — aritmetika bilangan bulat positif;
+     • akarKePangkat / pangkatKeAkar / eksponenSetara /
+       nilaiPangkatPecahan — ⁿ√(aᵐ) = a^(m/n), nilai eksak bila akarnya
+       bulat, selain itu hampiran desimal;
+     • formatAkar, formatPangkatPecahan, bacaAkar — teks baku
+       ('6√2', '∛(5²)', '5^(2/3)') dan bacaan untuk label aria;
+     • tulisAkarHTML — mengubah teks bernotasi di DATA menjadi HTML:
+       a^(p/q) → pangkat pecahan bersuperskrip, √ ∛ ∜ ⁿ√ → tanda akar
+       dengan garis atas (vinculum);
+     • diagnosaKonversi & diagnosaSederhanaAkar (+ pesan) — miskonsepsi
+       khas (pembilang/penyebut tertukar, akar belum paling sederhana,
+       faktor dikeluarkan tanpa diakarkan, koefisien & radikan
+       tertukar) tanpa membocorkan jawaban;
+     • ubin faktor kembar — faktor prima diacak di dalam akar, murid
+       mengetuk n faktor sama untuk mengeluarkannya dari akar;
+     • konverter akar–pangkat (stepper a, m, n) dengan pewarnaan
+       m → pembilang, n → penyebut;
+     • lab persegi & kubus — luas/volume → sisi/rusuk (√ dan ∛);
+     • langkah isian akar sederhana (koefisien & radikan) berdiagnosa;
+     • tabel ringkas bentuk pangkat ⇄ bentuk akar ⇄ nilai.
+   Memakai superskrip, formatNumber, formatDesimal, esc, shuffleArray,
+   buildFeedbackBox, buildHintToggle, buildHintStack, showNotice.
+   Gaya .akar* ada di shared/base.css.
+   ============================================================ */
+
+/* Faktor prima bilangan asli, urut naik (72 → [2, 2, 2, 3, 3]). */
+function faktorPrima(n) {
+  var out = [];
+  var x = Math.abs(Math.round(n));
+  for (var p = 2; p * p <= x; p++) {
+    while (x % p === 0) {
+      out.push(p);
+      x /= p;
+    }
+  }
+  if (x > 1) out.push(x);
+  return out;
+}
+
+/* Akar pangkat n yang bulat dari a ≥ 0; null bila tidak bulat. */
+function akarBulat(a, n) {
+  if (a < 0 || n < 1) return null;
+  var r = Math.round(Math.pow(a, 1 / n));
+  for (var c = Math.max(0, r - 1); c <= r + 1; c++) {
+    if (Math.pow(c, n) === a) return c;
+  }
+  return null;
+}
+
+/*
+ * ⁿ√r = luar · ⁿ√dalam dengan `dalam` bebas faktor pangkat-n (selain 1).
+ * sederhanakanAkar(72, 2) → { luar: 6, dalam: 2 }.
+ */
+function sederhanakanAkar(r, n) {
+  var hitung = {};
+  faktorPrima(r).forEach(function (p) {
+    hitung[p] = (hitung[p] || 0) + 1;
+  });
+  var luar = 1;
+  var dalam = 1;
+  Object.keys(hitung).forEach(function (k) {
+    var p = Number(k);
+    luar *= Math.pow(p, Math.floor(hitung[k] / n));
+    dalam *= Math.pow(p, hitung[k] % n);
+  });
+  return { luar: luar, dalam: dalam };
+}
+
+/* Faktor bilangan berpangkat n terbesar dari r (72, 2 → 36). */
+function faktorPangkatTerbesar(r, n) {
+  return Math.pow(sederhanakanAkar(r, n).luar, n);
+}
+
+/* true bila ⁿ√r sudah paling sederhana (tidak ada faktor pangkat-n > 1). */
+function akarSederhana(r, n) {
+  return sederhanakanAkar(r, n).luar === 1;
+}
+
+/* ⁿ√(rᵐ) → { a: r, p: m, q: n }, yaitu r^(m/n). m default 1. */
+function akarKePangkat(n, r, m) {
+  return { a: r, p: m || 1, q: n };
+}
+
+/* a^(p/q) → { n: q, r: a, m: p }, yaitu q√(aᵖ). */
+function pangkatKeAkar(a, p, q) {
+  return { n: q, r: a, m: p };
+}
+
+/* p1/q1 = p2/q2 ? */
+function eksponenSetara(p1, q1, p2, q2) {
+  return p1 * q2 === p2 * q1;
+}
+
+/*
+ * Nilai a^(p/q) untuk a, p, q bulat positif.
+ * { eksak: true, nilai } bila (q√a)ᵖ atau q√(aᵖ) bulat; selain itu
+ * { eksak: false, nilai: hampiran }.
+ */
+function nilaiPangkatPecahan(a, p, q) {
+  var akar = akarBulat(a, q);
+  if (akar !== null) return { eksak: true, nilai: Math.pow(akar, p) };
+  var ap = Math.pow(a, p);
+  if (ap <= Number.MAX_SAFE_INTEGER) {
+    var akar2 = akarBulat(ap, q);
+    if (akar2 !== null) return { eksak: true, nilai: akar2 };
+  }
+  return { eksak: false, nilai: Math.pow(a, p / q) };
+}
+
+/* Lambang akar berindeks n: √ ∛ ∜, selebihnya indeks superskrip + √. */
+function lambangAkar(n) {
+  if (n === 2) return '√';
+  if (n === 3) return '∛';
+  if (n === 4) return '∜';
+  return superskrip(n) + '√';
+}
+
+/*
+ * Teks bentuk akar k · ⁿ√(rᵐ): formatAkar(6, 2, 2) → '6√2',
+ * formatAkar(1, 3, 5, 2) → '∛(5²)'. Radikan 1 (m = 1) → koefisien saja.
+ */
+function formatAkar(k, n, r, m) {
+  m = m || 1;
+  if (r === 1 && m === 1) return formatNumber(k);
+  var isi = m > 1 ? '(' + formatNumber(r) + superskrip(m) + ')' : formatNumber(r);
+  return (k === 1 ? '' : formatNumber(k)) + lambangAkar(n) + isi;
+}
+
+/* Teks pangkat pecahan: '5^(2/3)'; penyebut 1 → pangkat biasa '7²'. */
+function formatPangkatPecahan(a, p, q) {
+  if (q === 1) return formatNumber(a) + superskrip(p);
+  return formatNumber(a) + '^(' + p + '/' + q + ')';
+}
+
+/* Bacaan bentuk akar untuk label aria: '6 akar kuadrat dari 2'. */
+function bacaAkar(k, n, r, m) {
+  var nama = n === 2 ? 'akar kuadrat' : n === 3 ? 'akar pangkat tiga' : 'akar pangkat ' + n;
+  return (
+    (k === 1 ? '' : formatNumber(k) + ' ') +
+    nama +
+    ' dari ' +
+    formatNumber(r) +
+    (m && m > 1 ? ' pangkat ' + m : '')
+  );
+}
+
+var AKAR_SUP_BIASA = {
+  '⁰': '0',
+  '¹': '1',
+  '²': '2',
+  '³': '3',
+  '⁴': '4',
+  '⁵': '5',
+  '⁶': '6',
+  '⁷': '7',
+  '⁸': '8',
+  '⁹': '9',
+  ⁿ: 'n',
+  ᵐ: 'm',
+};
+
+function supKeBiasa_(str) {
+  return String(str)
+    .split('')
+    .map(function (ch) {
+      return AKAR_SUP_BIASA[ch] || ch;
+    })
+    .join('');
+}
+
+var AKAR_RE_PP = /(\d{1,3}(?:\.\d{3})+|\d+|[a-zA-Z]|\([^()]*\))\^\(([^()/]+)\/([^()]+)\)/g;
+var AKAR_RE_SUP = /(\d{1,3}(?:\.\d{3})+|\d+|[a-zA-Z]|\([^()]*\))\^\(([^()/]+)\)/g;
+var AKAR_RE_AKAR =
+  /([⁰¹²³⁴⁵⁶⁷⁸⁹ⁿᵐ]*)(√|∛|∜)(\(([^()]*)\)|(?:\d{1,3}(?:\.\d{3})+|\d+|[a-zA-Z]+)[⁰¹²³⁴⁵⁶⁷⁸⁹ⁿᵐ⁻]*)/g;
+
+/*
+ * Satu tanda akar ber-vinculum; `isiHTML` sudah aman (ter-escape).
+ * opts.besar → lambang √ digambar SVG yang memanjang setinggi isinya
+ * (untuk ubin, kotak isian, dan layar konverter), sehingga lambang
+ * dan garis atasnya selalu menyambung.
+ */
+function buildRadikalHTML(n, isiHTML, indeksHTML, opts) {
+  opts = opts || {};
+  var indeks =
+    indeksHTML !== undefined && indeksHTML !== null ? indeksHTML : n === 2 ? '' : String(n);
+  var tanda = opts.besar
+    ? '<svg class="akar__tanda akar__tanda--svg" viewBox="0 0 24 60" preserveAspectRatio="none" aria-hidden="true" focusable="false">' +
+      '<path d="M1 36 L7 32 L13 58 L23 1.5 L24 1.5" fill="none" stroke="currentColor" stroke-width="3" vector-effect="non-scaling-stroke" stroke-linejoin="round"/></svg>'
+    : '<span class="akar__tanda" aria-hidden="true">√</span>';
+  return (
+    '<span class="akar' +
+    (opts.besar ? ' akar--besar' : '') +
+    '">' +
+    (indeks ? '<span class="akar__indeks">' + indeks + '</span>' : '') +
+    tanda +
+    '<span class="akar__isi">' +
+    isiHTML +
+    '</span>' +
+    '</span>'
+  );
+}
+
+/* Pangkat pecahan a^(p/q) sebagai HTML; bagian sudah aman (ter-escape). */
+function buildPangkatPecahanHTML(basisHTML, pHTML, qHTML) {
+  return (
+    '<span class="akar-pp">' +
+    basisHTML +
+    '<sup class="akar-pp__eks">' +
+    pHTML +
+    '⁄' +
+    qHTML +
+    '</sup></span>'
+  );
+}
+
+/*
+ * Mengubah teks bernotasi menjadi HTML aman: a^(p/q) → pangkat pecahan,
+ * a^(ekspresi) → pangkat bersuperskrip,
+ * √x, ∛(…), ⁿ√(aᵐ) → tanda akar ber-vinculum. Teks lain di-escape apa
+ * adanya, sehingga fungsi ini aman dipakai langsung pada teks DATA.
+ */
+function tulisAkarHTML(teks) {
+  var s = esc(teks);
+  s = s.replace(AKAR_RE_PP, function (_, basis, p, q) {
+    return buildPangkatPecahanHTML(basis, p, q);
+  });
+  s = s.replace(AKAR_RE_SUP, function (_, basis, eks) {
+    return '<span class="akar-pp">' + basis + '<sup class="akar-pp__eks">' + eks + '</sup></span>';
+  });
+  s = s.replace(AKAR_RE_AKAR, function (_, sup, tanda, isi, dalamKurung) {
+    var indeks = tanda === '∛' ? '3' : tanda === '∜' ? '4' : supKeBiasa_(sup);
+    var n = indeks === '' ? 2 : indeks;
+    return buildRadikalHTML(n, dalamKurung !== undefined ? dalamKurung : isi, indeks);
+  });
+  return s;
+}
+
+/*
+ * Diagnosa jawaban konversi ke pangkat pecahan.
+ *   kunci, jawab: { a, p, q }
+ * 'benar' (termasuk eksponen setara, mis. 4/6 = 2/3) | 'basis' (basis
+ * keliru) | 'terbalik' (indeks dijadikan pembilang) | 'lain'.
+ */
+function diagnosaKonversi(kunci, jawab) {
+  if (jawab.a !== kunci.a) return 'basis';
+  if (eksponenSetara(jawab.p, jawab.q, kunci.p, kunci.q)) return 'benar';
+  if (eksponenSetara(jawab.p, jawab.q, kunci.q, kunci.p)) return 'terbalik';
+  return 'lain';
+}
+
+function pesanDiagnosaKonversi(kode) {
+  var pesan = {
+    benar: 'Tepat! Pangkat di dalam akar menjadi pembilang dan indeks akar menjadi penyebut.',
+    basis:
+      'Basisnya berubah. Bilangan di dalam akar tetap menjadi basis; yang berubah hanya cara menulis pangkatnya.',
+    terbalik:
+      'Pembilang dan penyebutnya tertukar. Ingat: INDEKS akar (angka kecil di kiri akar) menjadi PENYEBUT, pangkat di dalam akar menjadi PEMBILANG.',
+    lain: 'Belum tepat. Tentukan dulu indeks akar dan pangkat bilangan di dalam akar, lalu susun pecahan pangkatnya.',
+  };
+  return pesan[kode] || pesan.lain;
+}
+
+/*
+ * Diagnosa jawaban menyederhanakan ⁿ√r menjadi luar · ⁿ√dalam.
+ *   'benar' | 'tertukar' (koefisien & radikan tertukar) |
+ *   'belumSederhana' (setara, tetapi radikan masih memuat faktor
+ *   pangkat-n) | 'lupaAkar' (faktor dikeluarkan tanpa diakarkan:
+ *   luar × dalam = r) | 'tidakSetara'.
+ */
+function diagnosaSederhanaAkar(r, n, jawab) {
+  var kunci = sederhanakanAkar(r, n);
+  if (jawab.luar === kunci.luar && jawab.dalam === kunci.dalam) return 'benar';
+  if (jawab.luar === kunci.dalam && jawab.dalam === kunci.luar) return 'tertukar';
+  if (Math.pow(jawab.luar, n) * jawab.dalam === r) return 'belumSederhana';
+  if (jawab.luar > 1 && jawab.luar * jawab.dalam === r) return 'lupaAkar';
+  return 'tidakSetara';
+}
+
+function pesanDiagnosaSederhanaAkar(kode, r, n) {
+  var jenis = n === 2 ? 'kuadrat' : n === 3 ? 'kubik (pangkat tiga)' : 'berpangkat ' + n;
+  var akarR = formatAkar(1, n, r);
+  var pesan = {
+    benar: 'Tepat! Bentuk akarmu sudah paling sederhana.',
+    tertukar:
+      'Bilangan di luar dan di dalam akar tertukar. Yang keluar dari akar adalah HASIL akar dari faktor bilangan ' +
+      jenis +
+      ', sisanya tetap di dalam akar.',
+    belumSederhana:
+      'Nilainya sudah sama dengan ' +
+      akarR +
+      ', tetapi bilangan di dalam akar masih memuat faktor bilangan ' +
+      jenis +
+      '. Gunakan faktor bilangan ' +
+      jenis +
+      ' yang TERBESAR.',
+    lupaAkar:
+      'Faktor yang dikeluarkan belum diakarkan. Faktor bilangan ' +
+      jenis +
+      ' harus diakarkan dulu sebelum ditulis di luar akar, mis. √(4 × 3) = 2√3, bukan 4√3.',
+    tidakSetara:
+      'Bentuk ini tidak sama nilainya dengan ' +
+      akarR +
+      '. Tulis ulang ' +
+      formatNumber(r) +
+      ' sebagai perkalian faktor bilangan ' +
+      jenis +
+      ' dengan faktor lain.',
+  };
+  return pesan[kode] || pesan.tidakSetara;
+}
+
+/* ------------------------------------------------------------
+   Ubin faktor kembar
+   State: { urutan: [indeks faktor teracak], pilih: [indeks],
+            kelompok: [[indeks …]] } — indeks mengacu pada
+   faktorPrima(r). urutan hanya untuk tampilan (diacak sekali).
+   ------------------------------------------------------------ */
+
+function makeTwinTileState(r) {
+  var idx = faktorPrima(r).map(function (_, i) {
+    return i;
+  });
+  return { urutan: shuffleArray(idx), pilih: [], kelompok: [] };
+}
+
+function ensureTwinTileState(st, r, n) {
+  var len = faktorPrima(r).length;
+  var sah =
+    st &&
+    typeof st === 'object' &&
+    Array.isArray(st.urutan) &&
+    st.urutan.length === len &&
+    Array.isArray(st.pilih) &&
+    Array.isArray(st.kelompok);
+  return sah ? st : makeTwinTileState(r, n);
+}
+
+function twinTileTerkelompok_(st, idx) {
+  return st.kelompok.some(function (g) {
+    return g.indexOf(idx) !== -1;
+  });
+}
+
+/*
+ * Mengetuk ubin faktor ke-idx. Kembalian:
+ *   'terkunci' (sudah keluar dari akar) | 'batal' (pilihan dilepas) |
+ *   'beda' (faktor tidak sama dengan pilihan sebelumnya) | 'pilih' |
+ *   'kelompok' (n faktor sama terkumpul → keluar dari akar).
+ */
+function ketukUbin(st, r, n, idx) {
+  var f = faktorPrima(r);
+  if (twinTileTerkelompok_(st, idx)) return 'terkunci';
+  var pos = st.pilih.indexOf(idx);
+  if (pos !== -1) {
+    st.pilih.splice(pos, 1);
+    return 'batal';
+  }
+  if (st.pilih.length && f[st.pilih[0]] !== f[idx]) return 'beda';
+  st.pilih.push(idx);
+  if (st.pilih.length === n) {
+    st.kelompok.push(st.pilih.slice());
+    st.pilih = [];
+    return 'kelompok';
+  }
+  return 'pilih';
+}
+
+function twinTileSisa_(st, r) {
+  return faktorPrima(r).filter(function (_, i) {
+    return !twinTileTerkelompok_(st, i);
+  });
+}
+
+/* Selesai bila tidak ada lagi n faktor sama di dalam akar. */
+function twinTileSelesai(st, r, n) {
+  var hitung = {};
+  return !twinTileSisa_(st, r).some(function (p) {
+    hitung[p] = (hitung[p] || 0) + 1;
+    return hitung[p] >= n;
+  });
+}
+
+function twinTileHasil(st, r) {
+  var f = faktorPrima(r);
+  var luar = st.kelompok.reduce(function (acc, g) {
+    return acc * f[g[0]];
+  }, 1);
+  var dalam = twinTileSisa_(st, r).reduce(function (acc, p) {
+    return acc * p;
+  }, 1);
+  return { luar: luar, dalam: dalam };
+}
+
+/*
+ * Ubin faktor di dalam tanda akar; kelompok yang sudah keluar tampil di
+ * depan akar sebagai satu ubin. opts.selesai → ubin terkunci.
+ */
+function buildTwinFactorTiles(id, r, n, st, opts) {
+  opts = opts || {};
+  var f = faktorPrima(r);
+  var luarHTML = st.kelompok.length
+    ? st.kelompok
+        .map(function (g) {
+          return (
+            '<span class="akar-tile akar-tile--luar" title="' +
+            esc(g.length + ' faktor ' + f[g[0]] + ' keluar sebagai ' + f[g[0]]) +
+            '">' +
+            f[g[0]] +
+            '</span>'
+          );
+        })
+        .join('<span class="akar-tiles__op" aria-hidden="true">×</span>')
+    : '<span class="akar-tiles__kosong">…</span>';
+  var sisa = st.urutan.filter(function (i) {
+    return !twinTileTerkelompok_(st, i);
+  });
+  var dalamHTML = sisa.length
+    ? sisa
+        .map(function (i) {
+          var dipilih = st.pilih.indexOf(i) !== -1;
+          return (
+            '<button type="button" class="akar-tile' +
+            (dipilih ? ' is-pilih' : '') +
+            '" data-tile-id="' +
+            esc(id) +
+            '" data-tile-idx="' +
+            i +
+            '" aria-pressed="' +
+            (dipilih ? 'true' : 'false') +
+            '" aria-label="faktor ' +
+            f[i] +
+            '"' +
+            (opts.selesai ? ' disabled' : '') +
+            '>' +
+            f[i] +
+            '</button>'
+          );
+        })
+        .join('')
+    : '<span class="akar-tile akar-tile--satu">1</span>';
+  return (
+    '<div class="akar-tiles" role="group" aria-label="' +
+    esc('Ubin faktor prima dari ' + formatAkar(1, n, r)) +
+    '">' +
+    '<div class="akar-tiles__luar" aria-label="Di luar akar">' +
+    luarHTML +
+    '</div>' +
+    buildRadikalHTML(n, '<span class="akar-tiles__dalam">' + dalamHTML + '</span>', null, {
+      besar: true,
+    }) +
+    '</div>'
+  );
+}
+
+function bindTwinFactorTiles(root, id, r, n, st, onTap) {
+  root.querySelectorAll('[data-tile-id="' + id + '"]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      onTap(ketukUbin(st, r, n, Number(btn.dataset.tileIdx)));
+    });
+  });
+}
+
+/* ------------------------------------------------------------
+   Konverter akar–pangkat: ⁿ√(aᵐ) ⇄ a^(m/n)
+   ------------------------------------------------------------ */
+
+var ROOT_CONVERTER_RENTANG = {
+  a: { min: 2, max: 30, label: 'Basis a' },
+  m: { min: 1, max: 6, label: 'Pangkat di dalam akar m' },
+  n: { min: 2, max: 6, label: 'Indeks akar n' },
+};
+
+function makeRootConverterState(awal) {
+  awal = awal || {};
+  return { a: awal.a || 8, m: awal.m || 1, n: awal.n || 3 };
+}
+
+function ubahRootConverter(st, key, delta) {
+  var r = ROOT_CONVERTER_RENTANG[key];
+  if (!r) return st;
+  st[key] = Math.min(r.max, Math.max(r.min, (st[key] || r.min) + delta));
+  return st;
+}
+
+function konverterCocok(st, target) {
+  return st.a === target.a && st.m === target.m && st.n === target.n;
+}
+
+function teksNilaiAkar_(a, m, n) {
+  var v = nilaiPangkatPecahan(a, m, n);
+  return v.eksak ? '= ' + formatNumber(v.nilai) : '≈ ' + formatDesimal(v.nilai, 3);
+}
+
+function buildRootConverter(id, st) {
+  var mHTML = '<span class="akar-kv__m">' + st.m + '</span>';
+  var nHTML = '<span class="akar-kv__n">' + st.n + '</span>';
+  var isi = st.a + (st.m > 1 ? '<sup>' + mHTML + '</sup>' : '');
+  var akarHTML = buildRadikalHTML(st.n, isi, nHTML, { besar: true });
+  var ppHTML = buildPangkatPecahanHTML(String(st.a), mHTML, nHTML);
+  var kontrol = ['a', 'm', 'n']
+    .map(function (key) {
+      var r = ROOT_CONVERTER_RENTANG[key];
+      return (
+        '<div class="akar-kv__kontrol akar-kv__kontrol--' +
+        key +
+        '">' +
+        '<span class="akar-kv__label" id="' +
+        id +
+        '-' +
+        key +
+        '-lbl">' +
+        esc(r.label) +
+        '</span>' +
+        '<div class="akar-kv__stepper" role="group" aria-labelledby="' +
+        id +
+        '-' +
+        key +
+        '-lbl">' +
+        '<button type="button" class="btn btn--ghost btn--small" data-kv-id="' +
+        id +
+        '" data-kv-key="' +
+        key +
+        '" data-kv-step="-1" aria-label="Kurangi ' +
+        esc(r.label) +
+        '"' +
+        (st[key] <= r.min ? ' disabled' : '') +
+        '>−</button>' +
+        '<output class="akar-kv__nilai" aria-live="polite">' +
+        st[key] +
+        '</output>' +
+        '<button type="button" class="btn btn--ghost btn--small" data-kv-id="' +
+        id +
+        '" data-kv-key="' +
+        key +
+        '" data-kv-step="1" aria-label="Tambah ' +
+        esc(r.label) +
+        '"' +
+        (st[key] >= r.max ? ' disabled' : '') +
+        '>+</button>' +
+        '</div>' +
+        '</div>'
+      );
+    })
+    .join('');
+  return (
+    '<div class="akar-kv" data-kv-id="' +
+    id +
+    '">' +
+    '<div class="akar-kv__kontrols">' +
+    kontrol +
+    '</div>' +
+    '<div class="akar-kv__layar" aria-live="polite" aria-label="' +
+    esc(
+      bacaAkar(1, st.n, st.a, st.m) + ' sama dengan ' + st.a + ' pangkat ' + st.m + ' per ' + st.n
+    ) +
+    '">' +
+    '<span class="akar-kv__bentuk">' +
+    akarHTML +
+    '</span>' +
+    '<span class="akar-kv__panah" aria-hidden="true">⇄</span>' +
+    '<span class="akar-kv__bentuk">' +
+    ppHTML +
+    '</span>' +
+    '<span class="akar-kv__hasil">' +
+    esc(teksNilaiAkar_(st.a, st.m, st.n)) +
+    '</span>' +
+    '</div>' +
+    '<p class="akar-kv__aturan">Pangkat di dalam akar <strong class="akar-kv__m">m</strong> → pembilang; indeks akar <strong class="akar-kv__n">n</strong> → penyebut.</p>' +
+    '</div>'
+  );
+}
+
+function bindRootConverter(root, id, st, onChange) {
+  root.querySelectorAll('button[data-kv-id="' + id + '"]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      ubahRootConverter(st, btn.dataset.kvKey, Number(btn.dataset.kvStep));
+      onChange(btn.dataset.kvKey, Number(btn.dataset.kvStep));
+    });
+  });
+}
+
+/* ------------------------------------------------------------
+   Lab persegi & kubus: luas → sisi (√), volume → rusuk (∛)
+   ------------------------------------------------------------ */
+
+var ROOT_SHAPE_LAB = {
+  persegi: { indeks: 2, max: 144, awal: 1, besaran: 'Luas', ukuran: 'sisi', satuan: 'satuan²' },
+  kubus: { indeks: 3, max: 216, awal: 1, besaran: 'Volume', ukuran: 'rusuk', satuan: 'satuan³' },
+};
+
+function makeRootShapeLabState() {
+  return { mode: 'persegi', nilai: 1, jejak: { persegi: [], kubus: [] } };
+}
+
+function ensureRootShapeLabState(st) {
+  var sah =
+    st &&
+    typeof st === 'object' &&
+    ROOT_SHAPE_LAB[st.mode] &&
+    typeof st.nilai === 'number' &&
+    st.jejak &&
+    Array.isArray(st.jejak.persegi) &&
+    Array.isArray(st.jejak.kubus);
+  return sah ? st : makeRootShapeLabState();
+}
+
+/* key 'mode' → ganti bangun (nilai kembali ke awal); key 'nilai' → catat jejak. */
+function ubahRootShapeLab(st, key, val) {
+  if (key === 'mode') {
+    if (!ROOT_SHAPE_LAB[val] || st.mode === val) return st;
+    st.mode = val;
+    st.nilai = ROOT_SHAPE_LAB[val].awal;
+    return st;
+  }
+  var cfg = ROOT_SHAPE_LAB[st.mode];
+  var v = Math.min(cfg.max, Math.max(1, Math.round(val)));
+  st.nilai = v;
+  if (st.jejak[st.mode].indexOf(v) === -1) st.jejak[st.mode].push(v);
+  return st;
+}
+
+function rootShapeLabInfo(st) {
+  var cfg = ROOT_SHAPE_LAB[st.mode];
+  var bulat = akarBulat(st.nilai, cfg.indeks);
+  return {
+    indeks: cfg.indeks,
+    akar: bulat !== null ? bulat : Math.round(Math.pow(st.nilai, 1 / cfg.indeks) * 1000) / 1000,
+    bulat: bulat !== null,
+  };
+}
+
+/* Banyak nilai berbeda yang sudah dicoba pada bangun `mode`. */
+function rootShapeLabJejak(st, mode) {
+  return st.jejak[mode].length;
+}
+
+function rootShapeSVG_(st, info) {
+  var W = 220;
+  var s;
+  var body = '';
+  if (st.mode === 'persegi') {
+    var satuan = 180 / 12;
+    s = Math.max(6, info.akar * satuan);
+    var x0 = (W - s) / 2;
+    var y0 = (W - s) / 2;
+    body +=
+      '<rect x="' +
+      x0 +
+      '" y="' +
+      y0 +
+      '" width="' +
+      s +
+      '" height="' +
+      s +
+      '" class="akar-lab__bangun' +
+      (info.bulat ? ' is-bulat' : '') +
+      '"/>';
+    if (info.bulat) {
+      for (var i = 1; i < info.akar; i++) {
+        var d = i * satuan;
+        body +=
+          '<line class="akar-lab__grid" x1="' +
+          (x0 + d) +
+          '" y1="' +
+          y0 +
+          '" x2="' +
+          (x0 + d) +
+          '" y2="' +
+          (y0 + s) +
+          '"/><line class="akar-lab__grid" x1="' +
+          x0 +
+          '" y1="' +
+          (y0 + d) +
+          '" x2="' +
+          (x0 + s) +
+          '" y2="' +
+          (y0 + d) +
+          '"/>';
+      }
+    }
+    body +=
+      '<text class="akar-lab__teks" x="' +
+      W / 2 +
+      '" y="' +
+      Math.min(W - 4, y0 + s + 16) +
+      '" text-anchor="middle">' +
+      esc(formatDesimal(info.akar, 3)) +
+      '</text>';
+  } else {
+    var satuanK = 110 / 6;
+    s = Math.max(6, info.akar * satuanK);
+    var o = s * 0.45;
+    var bx = (W - s - o) / 2;
+    var by = (W - s + o) / 2;
+    var p = function (x, y) {
+      return x.toFixed(1) + ',' + y.toFixed(1);
+    };
+    body +=
+      '<polygon class="akar-lab__atas' +
+      (info.bulat ? ' is-bulat' : '') +
+      '" points="' +
+      [p(bx, by), p(bx + o, by - o), p(bx + o + s, by - o), p(bx + s, by)].join(' ') +
+      '"/>' +
+      '<polygon class="akar-lab__samping' +
+      (info.bulat ? ' is-bulat' : '') +
+      '" points="' +
+      [p(bx + s, by), p(bx + s + o, by - o), p(bx + s + o, by + s - o), p(bx + s, by + s)].join(
+        ' '
+      ) +
+      '"/>' +
+      '<rect class="akar-lab__bangun' +
+      (info.bulat ? ' is-bulat' : '') +
+      '" x="' +
+      bx.toFixed(1) +
+      '" y="' +
+      by.toFixed(1) +
+      '" width="' +
+      s.toFixed(1) +
+      '" height="' +
+      s.toFixed(1) +
+      '"/>' +
+      '<text class="akar-lab__teks" x="' +
+      (bx + s / 2).toFixed(1) +
+      '" y="' +
+      Math.min(W - 4, by + s + 16).toFixed(1) +
+      '" text-anchor="middle">' +
+      esc(formatDesimal(info.akar, 3)) +
+      '</text>';
+  }
+  return (
+    '<svg class="akar-lab__svg" viewBox="0 0 ' +
+    W +
+    ' ' +
+    W +
+    '" role="img" aria-label="' +
+    esc(
+      (st.mode === 'persegi' ? 'Persegi dengan luas ' : 'Kubus dengan volume ') +
+        st.nilai +
+        ', ' +
+        ROOT_SHAPE_LAB[st.mode].ukuran +
+        ' ' +
+        formatDesimal(info.akar, 3)
+    ) +
+    '">' +
+    body +
+    '</svg>'
+  );
+}
+
+/* Bagian tampilan lab (label, gambar, hasil) — diperbarui langsung saat slider digeser. */
+function buildRootShapeLabTampil_(st) {
+  var cfg = ROOT_SHAPE_LAB[st.mode];
+  var info = rootShapeLabInfo(st);
+  var hasil = info.bulat
+    ? '= <strong>' + info.akar + '</strong> satuan'
+    : '≈ <strong>' + esc(formatDesimal(info.akar, 3)) + '</strong> satuan (bukan bilangan bulat)';
+  return (
+    rootShapeSVG_(st, info) +
+    '<p class="akar-lab__hasil' +
+    (info.bulat ? ' is-bulat' : '') +
+    '">' +
+    esc(cfg.besaran) +
+    ' ' +
+    st.nilai +
+    ' ' +
+    esc(cfg.satuan) +
+    ' → panjang ' +
+    esc(cfg.ukuran) +
+    ' = ' +
+    tulisAkarHTML(formatAkar(1, cfg.indeks, st.nilai)) +
+    ' ' +
+    hasil +
+    '</p>'
+  );
+}
+
+function buildRootShapeLab(id, st) {
+  var cfg = ROOT_SHAPE_LAB[st.mode];
+  var modeBtn = ['persegi', 'kubus']
+    .map(function (m) {
+      return (
+        '<button type="button" class="akar-lab__mode' +
+        (st.mode === m ? ' is-aktif' : '') +
+        '" data-lab-id="' +
+        id +
+        '" data-lab-mode="' +
+        m +
+        '" aria-pressed="' +
+        (st.mode === m ? 'true' : 'false') +
+        '">' +
+        (m === 'persegi' ? '⬛ Persegi (√)' : '🧊 Kubus (∛)') +
+        '</button>'
+      );
+    })
+    .join('');
+  return (
+    '<div class="akar-lab" data-lab-id="' +
+    id +
+    '">' +
+    '<div class="akar-lab__modes" role="group" aria-label="Pilih bangun">' +
+    modeBtn +
+    '</div>' +
+    '<div class="akar-lab__slider">' +
+    '<label class="akar-lab__label" for="' +
+    id +
+    'Range">' +
+    esc(cfg.besaran) +
+    '</label>' +
+    '<button type="button" class="btn btn--ghost btn--small" data-lab-id="' +
+    id +
+    '" data-lab-step="-1" aria-label="Kurangi ' +
+    esc(cfg.besaran.toLowerCase()) +
+    '">−</button>' +
+    '<input type="range" id="' +
+    id +
+    'Range" min="1" max="' +
+    cfg.max +
+    '" step="1" value="' +
+    st.nilai +
+    '" data-lab-id="' +
+    id +
+    '" data-lab-range="1" aria-valuetext="' +
+    esc(cfg.besaran + ' ' + st.nilai + ' ' + cfg.satuan) +
+    '">' +
+    '<button type="button" class="btn btn--ghost btn--small" data-lab-id="' +
+    id +
+    '" data-lab-step="1" aria-label="Tambah ' +
+    esc(cfg.besaran.toLowerCase()) +
+    '">+</button>' +
+    '</div>' +
+    '<div class="akar-lab__tampil" data-lab-tampil="' +
+    id +
+    '" aria-live="polite">' +
+    buildRootShapeLabTampil_(st) +
+    '</div>' +
+    '</div>'
+  );
+}
+
+/*
+ * onChange(jenis, arah) dipanggil setelah state berubah: 'mode', 'step'
+ * (arah '1' / '-1'), atau 'range' (saat slider dilepas). Selama slider digeser ('input'),
+ * tampilan diperbarui langsung tanpa merender ulang kontrol.
+ */
+function bindRootShapeLab(root, id, st, onChange) {
+  root.querySelectorAll('[data-lab-id="' + id + '"][data-lab-mode]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      ubahRootShapeLab(st, 'mode', btn.dataset.labMode);
+      onChange('mode');
+    });
+  });
+  root.querySelectorAll('[data-lab-id="' + id + '"][data-lab-step]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      ubahRootShapeLab(st, 'nilai', st.nilai + Number(btn.dataset.labStep));
+      onChange('step', btn.dataset.labStep);
+    });
+  });
+  var range = root.querySelector('[data-lab-id="' + id + '"][data-lab-range]');
+  var tampil = root.querySelector('[data-lab-tampil="' + id + '"]');
+  if (range) {
+    range.addEventListener('input', function () {
+      ubahRootShapeLab(st, 'nilai', Number(range.value));
+      var cfg = ROOT_SHAPE_LAB[st.mode];
+      range.setAttribute('aria-valuetext', cfg.besaran + ' ' + st.nilai + ' ' + cfg.satuan);
+      if (tampil) tampil.innerHTML = buildRootShapeLabTampil_(st);
+    });
+    range.addEventListener('change', function () {
+      onChange('range');
+    });
+  }
+}
+
+/* ------------------------------------------------------------
+   Langkah isian bentuk akar sederhana: luar · ⁿ√dalam
+   step: { r, n, label, hints, temuan }
+   ------------------------------------------------------------ */
+
+function makeAkarStep() {
+  return { luar: '', dalam: '', done: false, kode: null, attempts: 0, hintLevel: 0 };
+}
+
+/*
+ * Memeriksa isian { luar, dalam } (teks). Kembalian 'kosong' |
+ * 'tidakValid' (tanpa menghitung percobaan) atau kode diagnosa.
+ */
+function periksaAkarStep(step, st, input) {
+  if (String(input.luar).trim() === '' || String(input.dalam).trim() === '') return 'kosong';
+  var l = parseInputInt(String(input.luar), true);
+  var d = parseInputInt(String(input.dalam), true);
+  if (l.error || d.error || l.value < 1 || d.value < 1) return 'tidakValid';
+  st.luar = String(input.luar).trim();
+  st.dalam = String(input.dalam).trim();
+  st.attempts += 1;
+  st.kode = diagnosaSederhanaAkar(step.r, step.n, { luar: l.value, dalam: d.value });
+  st.done = st.kode === 'benar';
+  return st.kode;
+}
+
+function buildAkarStep(id, step, st, opts) {
+  opts = opts || {};
+  var kunci = sederhanakanAkar(step.r, step.n);
+  var head =
+    '<p class="akar-step__label">' +
+    (opts.num ? '<span class="dl-step__num">' + opts.num + '</span>' : '') +
+    tulisAkarHTML(opts.label || step.label || 'Sederhanakan ' + formatAkar(1, step.n, step.r)) +
+    '</p>';
+  if (st.done) {
+    return (
+      '<div class="akar-step akar-step--done">' +
+      head +
+      '<p class="akar-step__jawab">✓ ' +
+      tulisAkarHTML(
+        formatAkar(1, step.n, step.r) + ' = ' + formatAkar(kunci.luar, step.n, kunci.dalam)
+      ) +
+      '</p>' +
+      (step.temuan ? buildFeedbackBox('success', '💡', tulisAkarHTML(step.temuan)) : '') +
+      '</div>'
+    );
+  }
+  var salah = !!st.kode && st.kode !== 'benar';
+  return (
+    '<div class="akar-step">' +
+    head +
+    '<div class="akar-step__baris">' +
+    '<span class="akar-step__soal">' +
+    tulisAkarHTML(formatAkar(1, step.n, step.r)) +
+    ' =</span>' +
+    '<span class="akar-step__isian">' +
+    '<input type="text" inputmode="numeric" autocomplete="off" class="input-text akar-step__input' +
+    (salah ? ' has-error' : '') +
+    '" id="' +
+    id +
+    'Luar" value="' +
+    esc(st.luar) +
+    '" aria-label="Bilangan di luar akar" placeholder="…">' +
+    buildRadikalHTML(
+      step.n,
+      '<input type="text" inputmode="numeric" autocomplete="off" class="input-text akar-step__input' +
+        (salah ? ' has-error' : '') +
+        '" id="' +
+        id +
+        'Dalam" value="' +
+        esc(st.dalam) +
+        '" aria-label="Bilangan di dalam akar" placeholder="…">',
+      null,
+      { besar: true }
+    ) +
+    '</span>' +
+    '<button type="button" class="btn btn--primary" id="' +
+    id +
+    'Check">Periksa</button>' +
+    buildHintToggle(id + 'Hint', step.hints, st.hintLevel) +
+    '</div>' +
+    (salah
+      ? '<div style="margin-top:var(--space-3);">' +
+        buildFeedbackBox(
+          'error',
+          '✗',
+          tulisAkarHTML(pesanDiagnosaSederhanaAkar(st.kode, step.r, step.n))
+        ) +
+        '</div>'
+      : '') +
+    buildHintStack(
+      (step.hints || []).map(function (h) {
+        return tulisAkarHTML(h);
+      }),
+      st.hintLevel
+    ) +
+    '</div>'
+  );
+}
+
+function bindAkarStep(id, step, st, save, rerender) {
+  var luar = document.getElementById(id + 'Luar');
+  var dalam = document.getElementById(id + 'Dalam');
+  var btn = document.getElementById(id + 'Check');
+  var hint = document.getElementById(id + 'Hint');
+  if (luar && dalam && btn) {
+    [luar, dalam].forEach(function (inp) {
+      inp.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter') btn.click();
+      });
+    });
+    btn.addEventListener('click', function () {
+      var kode = periksaAkarStep(step, st, { luar: luar.value, dalam: dalam.value });
+      if (kode === 'kosong') {
+        showNotice('Isi bilangan di luar dan di dalam akar terlebih dahulu.');
+        return;
+      }
+      if (kode === 'tidakValid') {
+        showNotice('Tulis bilangan asli (1, 2, 3, …) pada kedua kotak.');
+        return;
+      }
+      save();
+      rerender();
+    });
+  }
+  if (hint) {
+    hint.addEventListener('click', function () {
+      st.hintLevel = Math.min(st.hintLevel + 1, step.hints.length);
+      save();
+      rerender();
+    });
+  }
+}
+
+/* Tabel ringkas: bentuk pangkat | bentuk akar | nilai. rows [{ a, p, q }]. */
+function buildTabelAkarPangkat(rows, opts) {
+  opts = opts || {};
+  return (
+    '<div class="table-scroll"><table class="akar-tabel">' +
+    (opts.caption ? '<caption>' + esc(opts.caption) + '</caption>' : '') +
+    '<thead><tr><th scope="col">Bentuk pangkat</th><th scope="col">Bentuk akar</th><th scope="col">Nilai</th></tr></thead>' +
+    '<tbody>' +
+    rows
+      .map(function (r) {
+        var v = nilaiPangkatPecahan(r.a, r.p, r.q);
+        return (
+          '<tr><td>' +
+          tulisAkarHTML(formatPangkatPecahan(r.a, r.p, r.q)) +
+          '</td><td>' +
+          tulisAkarHTML(formatAkar(1, r.q, r.a, r.p)) +
+          '</td><td>' +
+          esc(v.eksak ? formatNumber(v.nilai) : '≈ ' + formatDesimal(v.nilai, 3)) +
+          '</td></tr>'
+        );
+      })
+      .join('') +
+    '</tbody></table></div>'
+  );
 }
