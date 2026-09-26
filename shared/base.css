@@ -9686,3 +9686,247 @@ button.pwr-anatomy__part:disabled {
     grid-template-columns: 1fr;
   }
 }
+
+/* =========================================================================
+   Seksi 44 — Sifat operasi bilangan berpangkat bulat (penerapan) &
+   komponen Jigsaw: langkah sifat (.sifat-step*), opsi sifat
+   (.sifat-opt*), kartu ahli (.sifat-kartu*), tab stasiun ahli
+   (.jigsaw-tab*), dan form tim kooperatif (.coop-setup*).
+   ========================================================================= */
+
+.sifat-step {
+  margin: var(--space-4) 0;
+  padding: var(--space-4);
+  border: 2px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+}
+
+.sifat-step--done {
+  border-color: var(--color-success);
+}
+
+.sifat-step__label {
+  margin: 0 0 var(--space-2);
+  font-weight: 600;
+  line-height: 1.5;
+}
+
+.sifat-step__soal {
+  margin: 0 0 var(--space-3);
+  font-family: var(--font-mono);
+  font-size: 1.5rem;
+  font-weight: 700;
+  text-align: center;
+  overflow-wrap: anywhere;
+}
+
+.sifat-step__tanya {
+  margin: 0 0 var(--space-2);
+  font-weight: 600;
+}
+
+.sifat-step .challenge-options {
+  margin-bottom: var(--space-3);
+}
+
+.sifat-step .feedback-box {
+  margin-top: var(--space-3);
+}
+
+.sifat-step__row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-3);
+  align-items: center;
+  margin-top: var(--space-3);
+}
+
+.sifat-step__eq {
+  font-family: var(--font-mono);
+  font-size: 1.2rem;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+.sifat-step__pow {
+  display: inline-flex;
+  gap: 2px;
+  align-items: flex-start;
+  font-family: var(--font-mono);
+  font-size: 1.2rem;
+  font-weight: 700;
+}
+
+.sifat-step__pow > span {
+  align-self: center;
+}
+
+.sifat-step__exp.input-text {
+  width: 4.2rem;
+  min-height: 40px;
+  padding: 4px 6px;
+  font-size: 1rem;
+  text-align: center;
+  transform: translateY(-0.45em);
+}
+
+.sifat-step__nilai.input-text {
+  width: 8rem;
+  min-height: 44px;
+  text-align: center;
+}
+
+.sifat-step__satuan {
+  font-weight: 600;
+  color: var(--color-ink-muted);
+}
+
+.sifat-step__hasil {
+  margin: var(--space-3) 0 0;
+  font-family: var(--font-mono);
+  font-size: 1.1rem;
+  color: var(--color-success-strong);
+  overflow-wrap: anywhere;
+}
+
+.sifat-step__hasil .dl-caption {
+  font-family: var(--font-body);
+}
+
+.sifat-step__pemimpin {
+  display: block;
+  margin-top: var(--space-1);
+  font-weight: 600;
+}
+
+.sifat-opt__rumus {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+  color: var(--color-ink-muted);
+}
+
+.sifat-kartu__rumus {
+  margin: var(--space-1) 0;
+  font-family: var(--font-mono);
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--color-primary-strong);
+}
+
+.sifat-kartu__ahli {
+  font-weight: 500;
+  color: var(--color-ink-muted);
+}
+
+.jigsaw-tabs {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: var(--space-2);
+  margin: var(--space-4) 0;
+}
+
+.jigsaw-tab {
+  display: flex;
+  gap: var(--space-2);
+  align-items: center;
+  min-height: 56px;
+  padding: var(--space-2) var(--space-3);
+  border: 2px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  color: var(--color-ink);
+  font: inherit;
+  font-size: 0.9rem;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+}
+
+.jigsaw-tab:hover {
+  border-color: var(--color-primary);
+}
+
+.jigsaw-tab:focus-visible {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+.jigsaw-tab.is-active {
+  border-color: var(--color-primary);
+  background: var(--color-primary-soft);
+}
+
+.jigsaw-tab.is-done {
+  border-color: var(--color-success);
+}
+
+.jigsaw-tab__ikon {
+  font-size: 1.4rem;
+  line-height: 1;
+}
+
+.jigsaw-tab__nama {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.jigsaw-tab__ahli {
+  display: block;
+  font-size: 0.78rem;
+  font-weight: 500;
+  color: var(--color-ink-muted);
+  overflow-wrap: anywhere;
+}
+
+.jigsaw-tab__cek {
+  color: var(--color-success-strong);
+  font-weight: 700;
+}
+
+.coop-setup__set {
+  margin: var(--space-4) 0 0;
+  padding: 0;
+  border: none;
+}
+
+.coop-setup__set legend {
+  margin-bottom: var(--space-2);
+  padding: 0;
+  font-weight: 600;
+}
+
+.coop-setup__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: var(--space-2);
+}
+
+.coop-setup__cek {
+  display: flex;
+  gap: var(--space-3);
+  align-items: flex-start;
+  min-height: 44px;
+  padding: var(--space-2) 0;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.coop-setup__cek input {
+  flex: 0 0 auto;
+  width: 22px;
+  height: 22px;
+  margin: 1px 0 0;
+  accent-color: var(--color-primary);
+}
+
+@media (max-width: 480px) {
+  .sifat-step {
+    padding: var(--space-3);
+  }
+
+  .sifat-step__soal {
+    font-size: 1.25rem;
+  }
+}

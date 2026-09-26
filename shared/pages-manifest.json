@@ -87,6 +87,14 @@
     "stageCount": 10,
     "extraBody": "partials/reset-modal.html"
   },
+  "fase-d/mpi-12.2": {
+    "title": "Sifat-sifat Operasi Bilangan Berpangkat Bulat — Matematika Fase D",
+    "description": "Media pembelajaran interaktif berbasis Cooperative Learning tipe Jigsaw untuk menerapkan sifat-sifat operasi bilangan berpangkat bulat (perkalian, pembagian, dan pangkat dari pangkat) dalam penyelesaian soal: kartu ahli yang dibagikan acak, kelompok ahli dengan ubin faktor dan tabel pola, misi tim memilih sifat dan menghitung eksponen berdiagnosa miskonsepsi, rantai sifat kontekstual, kuis individu, dan penghargaan tim.",
+    "kicker": "Matematika — Fase D (SMP)",
+    "h1": "Sifat-sifat Operasi Bilangan Berpangkat Bulat",
+    "stageCount": 11,
+    "extraBody": "partials/reset-modal.html"
+  },
   "fase-d/mpi-22.1": {
     "title": "Unsur-unsur & Jaring-jaring Prisma — Matematika Fase D",
     "description": "Media pembelajaran interaktif berbasis Discovery Learning untuk mengidentifikasi unsur-unsur prisma (titik sudut, rusuk, sisi, dan tinggi) serta jaring-jaring prisma melalui kegiatan memutar model 3D, melipat, dan merakit bentangan karton kemasan.",
