@@ -77,6 +77,14 @@ var DATA = {
     kicker: 'Tahap 1 · Stimulasi',
     syntax: DL + ' · Sintaks 1',
     goal: 'Mengamati tabel pangkat 2 lalu menduga hasil 2³ × 2⁴ sebagai satu bilangan berpangkat.',
+    tp: 'Menggeneralisasi sifat perkalian dan pembagian bilangan berpangkat bulat positif serta sifat perpangkatan dari perpangkatan melalui eksplorasi pola numerik.',
+    tpJudul: 'Tujuan belajar hari ini',
+    kriteria: [
+      'Mengumpulkan data hasil perkalian, pembagian, dan perpangkatan bilangan berpangkat.',
+      'Menemukan hubungan eksponen hasil dengan eksponen awal dari pola numerik.',
+      'Menguji pola pada basis lain dan menyangkal dugaan keliru dengan contoh penyangkal.',
+      'Menerapkan sifat-sifat bilangan berpangkat pada soal dan konteks RPL.',
+    ],
     guru: 'Tayangkan tabel pangkat 2. Tanyakan: "Bisakah kita menulis 2³ × 2⁴ sebagai satu bilangan berpangkat 2 tanpa kalkulator?" Tampung semua dugaan (termasuk 2¹² dan 4⁷) tanpa dikoreksi — murid akan mengujinya sendiri.',
     judul: 'Folder di Server Raka',
     cerita:

@@ -83,6 +83,14 @@ var DATA = {
     kicker: 'Tahap 1 · Orientasi',
     syntax: IL + ' · Sintaks 1',
     goal: 'Mengamati tiga barisan bilangan dari dunia RPL dan menduga mana yang berubah secara teratur.',
+    tp: 'Mengidentifikasi dan menjelaskan konsep barisan aritmetika serta menentukan beda dari suatu barisan bilangan.',
+    tpJudul: 'Tujuan belajar hari ini',
+    kriteria: [
+      'Merumuskan pertanyaan penyelidikan dan hipotesis tentang pola barisan bilangan.',
+      'Mengumpulkan data selisih suku berurutan untuk menguji hipotesis.',
+      'Membedakan barisan aritmetika dan bukan barisan aritmetika.',
+      'Menentukan beda barisan naik, turun, konstan, dan berdesimal.',
+    ],
     guru: 'Tampilkan papan log di layar. Ajak murid membaca ketiga barisan dengan suara keras, lalu minta mereka menduga <em>tanpa menghitung rinci</em>. Jangan membenarkan atau menyalahkan dugaan — dugaan ini akan diuji sendiri oleh murid pada tahap Uji Hipotesis.',
     judul: 'Papan Log Tim Dev "Kode Nusantara"',
     cerita:

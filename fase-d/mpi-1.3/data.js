@@ -106,6 +106,14 @@ var DATA = {
     kicker: 'Tahap 1 · Stimulasi',
     syntax: DL + ' · Sintaks 1',
     goal: 'Mengamati pecahan dalam kabar sehari-hari dan menyampaikan dugaan cara membaca serta menuliskannya.',
+    tp: 'Membaca dan menuliskan bilangan rasional (pecahan) dalam konteks kehidupan sehari-hari.',
+    tpJudul: 'Tujuan belajar hari ini',
+    kriteria: [
+      'Menentukan pembilang dan penyebut dari benda yang dibagi sama besar.',
+      'Menuliskan pecahan biasa, pecahan campuran, dan pecahan negatif dengan benar.',
+      'Membaca pecahan dengan kata "per", termasuk pecahan campuran dan pecahan negatif.',
+      'Menghubungkan sebutan sehari-hari (setengah, seperempat) dengan bentuk baku pecahannya.',
+    ],
     guru: 'Bacakan setiap kabar dengan ekspresif. Minta pasangan murid membaca lantang pecahan yang disorot sebelum menjawab dugaan — dengarkan apakah muncul "tiga empat", "tiga dari empat", "setengah", atau "min". Jangan membenarkan atau menyalahkan dulu; dugaan ini akan diuji murid sendiri di tahap Bukti.',
     judul: 'Dapur & Pasar Bu Sari',
     pengantar:

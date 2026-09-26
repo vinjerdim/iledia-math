@@ -456,6 +456,7 @@ function renderStimulasi(container) {
         '</div>',
       'panel--hero'
     ) +
+    buildTpPanel(D) +
     buildDlPanel(
       '<h3 style="margin-top:0;">🤔 Apa dugaanmu?</h3>' +
         dugaanHTML +

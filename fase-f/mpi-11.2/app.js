@@ -683,6 +683,7 @@ function renderOrientasi(container) {
         buildTabelProyek(),
       'panel--hero'
     ) +
+    buildTpPanel(D) +
     buildDlPanel(
       '<h3 style="margin-top:0;">🤔 Apa dugaan kelompokmu?</h3>' +
         caption('Dugaan tidak dinilai. Kalian akan mengujinya sendiri di tahap Evaluasi.') +

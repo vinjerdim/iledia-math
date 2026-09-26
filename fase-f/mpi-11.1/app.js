@@ -419,6 +419,7 @@ function renderStimulasi(container) {
         lembarMentah(),
       'panel--hero'
     ) +
+    buildTpPanel(D) +
     panel(
       D.klaim
         .map(function (k, i) {

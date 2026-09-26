@@ -954,6 +954,7 @@ function renderPertanyaan(container) {
         '</div>',
       'panel--hero'
     ) +
+    buildTpPanel(D) +
     panelJudul(
       '📋 ' + D.judulBrief,
       '<div class="brief-grid">' +

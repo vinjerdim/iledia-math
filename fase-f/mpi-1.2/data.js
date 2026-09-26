@@ -142,7 +142,7 @@ var DATA = {
     alasanLabel: 'Tulis cara yang kamu pikirkan:',
     alasanPlaceholder: 'Contoh: dari baris 1 ke baris 25, angka 4 ditambahkan …',
     catatan: 'Dugaanmu tidak dinilai. Kalian akan mengeceknya sendiri di tahap berikutnya.',
-    tpJudul: 'Tujuan pembelajaran hari ini',
+    tpJudul: 'Tujuan belajar hari ini',
     tp: 'Menentukan rumus suku ke-n barisan aritmetika dan menggunakannya untuk menyelesaikan masalah kontekstual sederhana.',
     kriteria: [
       'Menyusun rumus Uₙ = a + (n − 1)b dan menyederhanakannya menjadi Uₙ = bn + (a − b).',

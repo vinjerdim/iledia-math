@@ -391,6 +391,7 @@ function renderStimulasi(container) {
         ),
       'panel--hero'
     ) +
+    buildTpPanel(D) +
     buildDlPanel(
       '<p class="exercise-label">' +
         esc(D.pertanyaan) +

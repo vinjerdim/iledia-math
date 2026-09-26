@@ -140,6 +140,14 @@ var DATA = {
     kicker: 'Tahap 1 · Orientasi pada Masalah',
     syntax: PBL + ' · Sintaks 1',
     goal: 'Memahami masalah nyata yang memuat bilangan bulat, pecahan, dan desimal sekaligus, lalu menyampaikan dugaan awal.',
+    tp: 'Membandingkan bilangan bulat, rasional, dan desimal secara terpadu untuk menyelesaikan masalah kontekstual kehidupan sehari-hari.',
+    tpJudul: 'Tujuan belajar hari ini',
+    kriteria: [
+      'Mengubah pecahan ke desimal dan desimal ke pecahan tanpa mengubah nilainya.',
+      'Menempatkan bilangan bulat, pecahan, dan desimal pada satu garis bilangan.',
+      'Membandingkan dan mengurutkan bilangan yang bentuknya berbeda dengan lambang <, >, dan =.',
+      'Mengambil keputusan dalam masalah sehari-hari berdasarkan hasil perbandingan.',
+    ],
     guru: 'Bacakan cerita dengan antusias, lalu tanyakan: "Apa yang membuat catatan panitia ini sulit dibandingkan?" Biarkan kelompok berdebat tentang −3½ dan −2,5 atau 0,75 L dan ¾ L. Jangan membenarkan dugaan dulu — dugaan ini akan diuji murid sendiri di tahap Evaluasi.',
     judul: 'Stand Es Buah 7B di Festival Pangan Sekolah',
     pengantar:

@@ -163,6 +163,14 @@ var DATA = {
     kicker: 'Tahap 1 · Orientasi pada Masalah',
     syntax: PBL + ' · Sintaks 1',
     goal: 'Memahami masalah estimasi proyek dari data dua variabel numerik, lalu menyampaikan dugaan awal tentang garis yang paling cocok.',
+    tp: 'Menentukan model linear terbaik untuk menggambarkan hubungan antara dua variabel numerikal menggunakan bantuan teknologi digital.',
+    tpJudul: 'Tujuan belajar hari ini',
+    kriteria: [
+      'Menghitung prediksi dan residu, lalu menafsirkan residu positif, negatif, dan nol.',
+      'Membandingkan garis dengan jumlah kuadrat residu (JKR).',
+      'Menentukan garis kuadrat terkecil dengan spreadsheet atau kode, lalu menafsirkan m, c, dan r².',
+      'Memakai model untuk estimasi dan membedakan interpolasi dengan ekstrapolasi.',
+    ],
     guru: 'Bacakan pesan klien, lalu tanyakan: "Tiga garis, tiga jawaban berbeda — siapa yang benar?" Biarkan kelompok berdebat. Catat di papan argumen seperti "Sari paling benar karena garisnya kena banyak titik". Jangan memberi jawaban; argumen ini akan diuji di tahap Kriteria.',
     judul: 'Estimasi Proyek Teaching Factory RPL',
     pesanKlien:

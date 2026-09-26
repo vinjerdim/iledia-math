@@ -245,6 +245,14 @@ var DATA = {
     kicker: 'Tahap 1 · Pertanyaan Mendasar',
     syntax: PJBL + ' · Sintaks 1',
     goal: 'Memahami tantangan proyek dan merumuskan pertanyaan mendasar yang akan dijawab mini app kelompok.',
+    tp: 'Menyelesaikan masalah kontekstual yang melibatkan barisan dan deret aritmetika melalui proyek mini terapan.',
+    tpJudul: 'Tujuan belajar hari ini',
+    kriteria: [
+      'Memetakan informasi masalah kontekstual ke a, b, n, dan target.',
+      'Menggunakan Uₙ dan Sₙ untuk menjawab pertanyaan klien dan memeriksa kewajarannya.',
+      'Menentukan kapan target tercapai dan mengatur ulang a atau b agar tenggat terpenuhi.',
+      'Menyajikan hasil proyek dan menilai hasil kerja teman secara matematis.',
+    ],
     guru: 'Bacakan pesan Bu Wulan dan tunjukkan ketiga brief. Tanyakan: "Apa kesamaan ketiga brief ini?" (ada sesuatu yang bertambah tetap setiap periode). Pemanasan menghidupkan kembali Uₙ dan Sₙ dari MPI 1.2–1.3. Jangan menentukan brief untuk kelompok; biarkan mereka memilih di tahap Rencana.',
     judul: 'Pameran Mini App Perencana',
     pesan:

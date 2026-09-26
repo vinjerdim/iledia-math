@@ -198,6 +198,14 @@ var DATA = {
     kicker: 'Tahap 1 · Stimulasi',
     syntax: DL + ' · Sintaks 1',
     goal: 'Mengamati dua klaim di mading sekolah beserta lembar data mentahnya, lalu menduga apakah klaim itu didukung data.',
+    tp: 'Mengidentifikasi asosiasi antara dua variabel kategorikal dan numerikal melalui tabel kontingensi dan diagram pencar pada data nyata.',
+    tpJudul: 'Tujuan belajar hari ini',
+    kriteria: [
+      'Membedakan variabel kategorikal dan numerik.',
+      'Menyusun tabel kontingensi dan membandingkan persen baris.',
+      'Memplot diagram pencar dan membaca arah serta kerapatan pola titik.',
+      'Membedakan asosiasi dengan sebab-akibat.',
+    ],
     guru: 'Bacakan kedua klaim dengan nada "berita viral". Tanyakan: <em>"Bagaimana kita tahu klaim ini benar?"</em> Biarkan murid menduga tanpa menghitung. Jangan membenarkan atau menyalahkan — dugaan akan diuji sendiri di tahap Pembuktian.',
     judul: 'Mading Digital XII RPL',
     cerita:

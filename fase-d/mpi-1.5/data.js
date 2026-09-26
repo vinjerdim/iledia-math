@@ -106,6 +106,14 @@ var DATA = {
     kicker: 'Tahap 1 · Stimulasi',
     syntax: DL + ' · Sintaks 1',
     goal: 'Mengamati bilangan desimal pada alat ukur sehari-hari dan menyampaikan dugaan cara membaca, menuliskan, dan membandingkannya.',
+    tp: 'Membaca, menuliskan, dan membandingkan bilangan desimal dalam konteks kehidupan sehari-hari.',
+    tpJudul: 'Tujuan belajar hari ini',
+    kriteria: [
+      'Menentukan nilai tempat angka di belakang koma: persepuluhan, perseratusan, dan perseribuan.',
+      'Membaca bilangan desimal dengan cara "koma" maupun cara nilai tempat.',
+      'Menuliskan bilangan desimal dari kata-kata, termasuk angka 0 pengisi tempat.',
+      'Membandingkan dan mengurutkan bilangan desimal berdasarkan nilai tempat, lalu memaknainya dalam konteks.',
+    ],
     guru: 'Bila ada, tunjukkan stopwatch, timbangan digital, atau termometer sungguhan. Minta pasangan murid membaca lantang angka pada setiap layar sebelum menjawab dugaan — dengarkan apakah muncul "koma empat puluh lima", "titik", atau "koma lima" untuk 1,05. Jangan membenarkan atau menyalahkan dulu; dugaan ini akan diuji murid sendiri di tahap Bukti.',
     judul: 'Pekan Olahraga & Kantin Sekolah',
     pengantar:

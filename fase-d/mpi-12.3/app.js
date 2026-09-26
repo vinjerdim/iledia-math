@@ -465,6 +465,7 @@ function renderStimulasi(container) {
         '</div>',
       'panel--hero'
     ) +
+    buildTpPanel(D, T) +
     buildDlPanel(
       '<p class="exercise-label">' +
         T(D.pertanyaan) +

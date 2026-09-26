@@ -94,6 +94,14 @@ var DATA = {
     kicker: 'Tahap 1 · Stimulasi',
     syntax: DL + ' · Sintaks 1',
     goal: 'Mengamati bilangan bulat dalam kabar sehari-hari dan menyampaikan dugaan cara membaca serta menuliskannya.',
+    tp: 'Membaca dan menuliskan bilangan bulat (positif, negatif, nol) dalam konteks kehidupan sehari-hari.',
+    tpJudul: 'Tujuan belajar hari ini',
+    kriteria: [
+      'Menentukan titik acuan (0) dan kata kunci arah pada situasi sehari-hari.',
+      'Menuliskan keadaan di bawah titik acuan sebagai bilangan negatif dengan tanda − di depan angka.',
+      'Membaca bilangan negatif dengan kata "negatif", bukan "minus", dan bilangan positif dengan atau tanpa kata "positif".',
+      'Menjelaskan mengapa 0 bukan bilangan positif dan bukan bilangan negatif.',
+    ],
     guru: 'Bacakan setiap kabar dengan ekspresif. Minta pasangan murid membaca lantang bilangan yang disorot sebelum menjawab dugaan — dengarkan apakah muncul kata "minus", "min", atau "negatif", tetapi jangan membenarkan atau menyalahkan dulu. Dugaan ini akan diuji murid sendiri di tahap Bukti.',
     judul: 'Papan Kabar Pagi',
     pengantar:
