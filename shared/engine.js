@@ -105,6 +105,10 @@
    41. Model linear terbaik: regresi kuadrat terkecil (residu, JKR,
        banding model, interpolasi/ekstrapolasi, Lab Garis, panel
        regresi spreadsheet & kode JS, lab regresi data sendiri)
+   42. Deret aritmetika: jumlah n suku pertama (rumus dari suku
+       pertama & terakhir, penulisan deret, pasangan Gauss, n minimal
+       Sₙ ≥ target, diagnosa miskonsepsi & opsi berpengecoh, tabel
+       pasangan Gauss, tangga batang SVG, lab jumlah berjalan)
    ============================================================ */
 
 /* ============================================================
@@ -20660,4 +20664,767 @@ function bindRegressionLab(root, id, st, opts, save) {
     save();
     root.querySelector('#' + id + '-hasil').innerHTML = regressionLabHasilHTML(st, opts);
   });
+}
+
+/* ============================================================
+   42. DERET ARITMETIKA: JUMLAH n SUKU PERTAMA
+   Konsep deret (jumlah suku-suku barisan) dan penemuan rumus
+   Sₙ = n/2 (a + Uₙ) = n/2 (2a + (n − 1)b) lewat "trik Gauss":
+     • rumus dari suku pertama & suku terakhir, penulisan deret,
+       pasangan suku maju–mundur, n minimal agar Sₙ ≥ target;
+     • diagnosa miskonsepsi rumus Sₙ & opsi pilihan ganda
+       berpengecoh;
+     • tabel pasangan Gauss (ketuk kolom → jumlah pasangan),
+       tangga batang SVG dengan salinan terbalik yang membentuk
+       persegi panjang n × (a + Uₙ), dan lab jumlah berjalan
+       (slider n, batang Sₙ terhadap garis target).
+   Memakai sukuAritmetika, jumlahAritmetika & subskrip (seksi 21).
+   Gaya .gauss-*, .stair-*, .psum-* ada di shared/base.css.
+   ============================================================ */
+
+/* Sₙ = n/2 × (a + Uₙ) — jumlah dari suku pertama dan suku terakhir. */
+function jumlahAritmetikaUjung(a, un, n) {
+  return (n * (a + un)) / 2;
+}
+
+/* Angka suku/jumlah deret: 2625 → '2.625', −8 → '−8', 2.5 → '2,5'. */
+function fmtAngkaDeret(v) {
+  if (hampirSama(v, Math.round(v))) return formatNumber(Math.round(v), '−');
+  return (v < 0 ? '−' : '') + formatDesimal(Math.abs(v), 3);
+}
+
+/*
+ * Penulisan deret a + (a + b) + … + Uₙ. Bila n > maks (default 6) hanya
+ * tiga suku pertama dan suku terakhir yang ditulis: '15 + 20 + 25 + … + 160'.
+ * Suku negatif diberi kurung: '7 + 4 + 1 + (−2)'.
+ */
+function tulisDeret(a, b, n, maks) {
+  var batas = typeof maks === 'number' ? maks : 6;
+  function suku(v) {
+    var t = fmtAngkaDeret(v);
+    return v < 0 ? '(' + t + ')' : t;
+  }
+  var bagian = [];
+  if (n <= batas) {
+    for (var i = 1; i <= n; i++) bagian.push(suku(sukuAritmetika(a, b, i)));
+  } else {
+    for (var k = 1; k <= 3; k++) bagian.push(suku(sukuAritmetika(a, b, k)));
+    bagian.push('…');
+    bagian.push(suku(sukuAritmetika(a, b, n)));
+  }
+  return bagian.join(' + ');
+}
+
+/*
+ * Pasangan Gauss: suku ke-i dari depan dipasangkan dengan suku ke-i dari
+ * belakang. Untuk deret aritmetika setiap pasangan berjumlah a + Uₙ.
+ *   [15, 20, 25, 30] → [{ kiri: 15, kanan: 30, jumlah: 45 }, …]
+ */
+function pasanganGauss(terms) {
+  var n = terms.length;
+  return terms.map(function (t, i) {
+    var kanan = terms[n - 1 - i];
+    return { kiri: t, kanan: kanan, jumlah: t + kanan };
+  });
+}
+
+/*
+ * n terkecil (1 ≤ n ≤ batas, default 1000) dengan Sₙ ≥ target; null bila
+ * target tidak tercapai (mis. deret turun atau batas terlalu kecil).
+ */
+function nMinimalJumlahMencapai(a, b, target, batas) {
+  var maks = typeof batas === 'number' ? batas : 1000;
+  for (var n = 1; n <= maks; n++) {
+    if (jumlahAritmetika(a, b, n) >= target - 0.0001) return n;
+  }
+  return null;
+}
+
+/*
+ * Diagnosa jawaban Sₙ yang diketik murid untuk deret a, b, n:
+ *   null                  jawaban benar
+ *   'suku-bukan-jumlah'   menjawab Uₙ (suku terakhir), bukan jumlahnya
+ *   'n-kali-un'           Sₙ = n × Uₙ (menganggap semua suku = suku terakhir)
+ *   'lupa-bagi-dua'       Sₙ = n(a + Uₙ) — lupa membagi 2
+ *   'n-bukan-n-kurang-1'  Sₙ = n/2 (2a + nb) — memakai n, bukan (n − 1)
+ *   'kurang-satu-suku'    menjawab Sₙ₋₁ (satu suku terlewat)
+ *   'lain'                salah dengan pola lain
+ */
+var POLA_SALAH_JUMLAH_DERET = [
+  {
+    id: 'suku-bukan-jumlah',
+    nilai: function (a, b, n) {
+      return sukuAritmetika(a, b, n);
+    },
+  },
+  {
+    id: 'n-kali-un',
+    nilai: function (a, b, n) {
+      return n * sukuAritmetika(a, b, n);
+    },
+  },
+  {
+    id: 'lupa-bagi-dua',
+    nilai: function (a, b, n) {
+      return n * (a + sukuAritmetika(a, b, n));
+    },
+  },
+  {
+    id: 'n-bukan-n-kurang-1',
+    nilai: function (a, b, n) {
+      return (n * (2 * a + n * b)) / 2;
+    },
+  },
+  {
+    id: 'kurang-satu-suku',
+    nilai: function (a, b, n) {
+      return jumlahAritmetika(a, b, n - 1);
+    },
+  },
+];
+
+function diagnosaJumlahDeret(a, b, n, jawab) {
+  if (typeof jawab !== 'number' || isNaN(jawab)) return 'lain';
+  if (hampirSama(jawab, jumlahAritmetika(a, b, n))) return null;
+  for (var i = 0; i < POLA_SALAH_JUMLAH_DERET.length; i++) {
+    var p = POLA_SALAH_JUMLAH_DERET[i];
+    if (hampirSama(jawab, p.nilai(a, b, n))) return p.id;
+  }
+  return 'lain';
+}
+
+/* Pesan umpan balik (teks biasa, belum di-escape) untuk kode diagnosa. */
+function pesanDiagnosaJumlahDeret(kode, a, b, n) {
+  if (!kode) return '';
+  var un = sukuAritmetika(a, b, n);
+  var U = 'U' + subskrip(n);
+  var S = 'S' + subskrip(n);
+  var pesan = {
+    'suku-bukan-jumlah':
+      'Itu nilai ' +
+      U +
+      ' = ' +
+      fmtAngkaDeret(un) +
+      ', yaitu suku terakhir saja. Yang ditanya ' +
+      S +
+      ': jumlah SEMUA suku dari U₁ sampai ' +
+      U +
+      '.',
+    'n-kali-un':
+      'Kamu mengalikan ' +
+      n +
+      ' × ' +
+      U +
+      ', seolah-olah semua suku sebesar suku terakhir. Suku-suku awal lebih kecil, jadi hasilnya terlalu besar. Pasangkan suku depan dengan suku belakang: tiap pasangan = a + ' +
+      U +
+      '.',
+    'lupa-bagi-dua':
+      'Hasilmu = ' +
+      n +
+      ' × (a + ' +
+      U +
+      '). Itu jumlah deret maju DITAMBAH deret mundur, yaitu 2' +
+      S +
+      '. Jangan lupa bagi 2.',
+    'n-bukan-n-kurang-1':
+      'Periksa suku terakhirnya: ' +
+      U +
+      ' = a + (n − 1)b, bukan a + nb. Pada rumus ' +
+      S +
+      ' = n/2 (2a + (n − 1)b) yang dikalikan dengan b adalah (n − 1) = ' +
+      (n - 1) +
+      '.',
+    'kurang-satu-suku':
+      'Hasilmu sama dengan S' +
+      subskrip(n - 1) +
+      ' — satu suku terlewat. Pastikan banyak suku n = ' +
+      n +
+      '.',
+    lain:
+      'Belum tepat. Tentukan a, b, dan n, hitung ' +
+      U +
+      ' lebih dulu, lalu pakai ' +
+      S +
+      ' = n/2 (a + ' +
+      U +
+      ').',
+  };
+  return pesan[kode] || pesan.lain;
+}
+
+/*
+ * Nilai Sₙ menurut sebuah "cara": pola null → rumus yang benar, id pola
+ * miskonsepsi → hasil cara keliru itu (mis. 'n-kali-un' → n × Uₙ).
+ * null bila id pola tidak dikenal. Dipakai untuk menguji usulan teman.
+ */
+function nilaiPolaJumlahDeret(pola, a, b, n) {
+  if (!pola) return jumlahAritmetika(a, b, n);
+  for (var i = 0; i < POLA_SALAH_JUMLAH_DERET.length; i++) {
+    if (POLA_SALAH_JUMLAH_DERET[i].id === pola) return POLA_SALAH_JUMLAH_DERET[i].nilai(a, b, n);
+  }
+  return null;
+}
+
+/* Urutan pengecoh: miskonsepsi yang paling sering & paling bermakna dulu. */
+var PRIORITAS_PENGECOH_JUMLAH_DERET = [
+  'lupa-bagi-dua',
+  'n-kali-un',
+  'n-bukan-n-kurang-1',
+  'suku-bukan-jumlah',
+  'kurang-satu-suku',
+];
+
+/*
+ * Opsi pilihan ganda Sₙ: kunci (id 'benar') lalu pengecoh dari pola
+ * miskonsepsi (id = kode diagnosa). Nilai kembar dan nilai ≤ 0 yang
+ * tidak masuk akal untuk deret positif dibuang.
+ *   opts.satuan  akhiran label, mis. 'XP' → '2.625 XP'
+ *   opts.maks    banyak opsi maksimum (termasuk kunci)
+ * Urutan kembalian "wajar" (kunci di depan) — app.js wajib mengacaknya.
+ */
+function opsiJumlahDeret(a, b, n, opts) {
+  opts = opts || {};
+  var akhir = opts.satuan ? ' ' + opts.satuan : '';
+  var benar = jumlahAritmetika(a, b, n);
+  var out = [{ id: 'benar', nilai: benar, label: fmtAngkaDeret(benar) + akhir }];
+  PRIORITAS_PENGECOH_JUMLAH_DERET.forEach(function (id) {
+    if (opts.maks && out.length >= opts.maks) return;
+    var v = nilaiPolaJumlahDeret(id, a, b, n);
+    var kembar = out.some(function (o) {
+      return hampirSama(o.nilai, v);
+    });
+    if (kembar || (benar > 0 && v <= 0)) return;
+    out.push({ id: id, nilai: v, label: fmtAngkaDeret(v) + akhir });
+  });
+  return out;
+}
+
+/* ---------- Langkah isian Sₙ berdiagnosa ---------- */
+
+/* State default langkah isian Sₙ. */
+function makeJumlahDeretStep() {
+  return { input: '', done: false, kode: null, attempts: 0, hintLevel: 0 };
+}
+
+/*
+ * Memeriksa teks isian untuk langkah Sₙ (a, b, n dari `step`) dan
+ * memperbarui `st`. Isian dibaca parseInputAngka (titik ribuan / koma
+ * desimal). false bila isian kosong/tidak valid (state tidak berubah).
+ */
+function periksaJumlahDeretStep(st, step, teks) {
+  var parsed = parseInputAngka(teks);
+  if (parsed.error) return false;
+  st.input = String(teks).trim();
+  st.attempts += 1;
+  var kode = diagnosaJumlahDeret(step.a, step.b, step.n, parsed.value);
+  st.done = kode === null;
+  st.kode = kode;
+  return true;
+}
+
+/*
+ * Langkah isian Sₙ dengan diagnosa miskonsepsi (lupa ÷ 2, n × Uₙ, nb, …).
+ *   id    awalan id DOM (→ idInput, idCheck, idHint)
+ *   st    makeJumlahDeretStep()
+ *   step  { label (HTML), a, b, n, hints: [teks], temuan (teks), satuan }
+ */
+function buildJumlahDeretStep(id, st, step) {
+  var head = '<p class="dl-step__label">' + step.label + '</p>';
+  var hints = (step.hints || []).map(esc);
+  if (st.done) {
+    return (
+      '<div class="dl-step dl-step--done">' +
+      head +
+      '<p class="dl-step__answer">✓ ' +
+      esc(st.input) +
+      (step.satuan ? ' ' + esc(step.satuan) : '') +
+      '</p>' +
+      (step.temuan ? buildFeedbackBox('success', '💡', esc(step.temuan)) : '') +
+      '</div>'
+    );
+  }
+  return (
+    '<div class="dl-step">' +
+    head +
+    '<div class="dl-input-row">' +
+    buildDlNumInput(id + 'Input', st.input, {
+      error: !!st.kode,
+      allowNegative: step.b < 0 || step.a < 0,
+      aria: 'Jumlah ' + step.n + ' suku pertama',
+    }) +
+    (step.satuan ? '<span class="dl-caption">' + esc(step.satuan) + '</span>' : '') +
+    '<button type="button" class="btn btn--primary" id="' +
+    id +
+    'Check">Periksa</button>' +
+    buildHintToggle(id + 'Hint', hints, st.hintLevel) +
+    '</div>' +
+    (st.kode
+      ? '<div style="margin-top:var(--space-3);">' +
+        buildFeedbackBox(
+          'warning',
+          '💭',
+          '<strong>' +
+            esc(st.input) +
+            '</strong> — ' +
+            esc(pesanDiagnosaJumlahDeret(st.kode, step.a, step.b, step.n))
+        ) +
+        '</div>'
+      : '') +
+    buildHintStack(hints, st.hintLevel) +
+    '</div>'
+  );
+}
+
+/* Memasang event buildJumlahDeretStep; `save` lalu `rerender` setelah perubahan. */
+function bindJumlahDeretStep(id, st, step, save, rerender) {
+  var inp = document.getElementById(id + 'Input');
+  var btn = document.getElementById(id + 'Check');
+  var hint = document.getElementById(id + 'Hint');
+  if (inp && btn) {
+    inp.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter') btn.click();
+    });
+    btn.addEventListener('click', function () {
+      if (!periksaJumlahDeretStep(st, step, inp.value)) {
+        showNotice(
+          inp.value.trim() === ''
+            ? 'Isi jawabanmu terlebih dahulu.'
+            : 'Tulis jawaban berupa bilangan, mis. 2625 atau 2.625.'
+        );
+        return;
+      }
+      save();
+      rerender();
+    });
+  }
+  if (hint) {
+    hint.addEventListener('click', function () {
+      st.hintLevel = Math.min(st.hintLevel + 1, (step.hints || []).length);
+      save();
+      rerender();
+    });
+  }
+}
+
+/* ---------- Tabel pasangan Gauss ---------- */
+
+/* true bila `tapped` berisi n kolom yang semuanya sudah diketuk. */
+function gaussPairAllTapped(tapped, n) {
+  return (
+    Array.isArray(tapped) &&
+    tapped.length === n &&
+    tapped.every(function (t) {
+      return t === true;
+    })
+  );
+}
+
+/*
+ * Tabel pasangan Gauss: baris Sₙ ditulis maju, baris kedua Sₙ ditulis
+ * mundur, baris ketiga 2Sₙ berisi tombol yang diketuk untuk menjumlahkan
+ * pasangan satu kolom. Setelah semua kolom diketuk tampil hasil
+ * 2Sₙ = n × (a + Uₙ).
+ *   terms   suku-suku deret (bilangan)
+ *   tapped  array boolean sepanjang n (indeks = kolom)
+ *   opts.label  label jumlah, mis. 'S₆' (default 'Sₙ')
+ */
+function buildGaussPairTable(id, terms, tapped, opts) {
+  opts = opts || {};
+  var label = opts.label || 'Sₙ';
+  var n = terms.length;
+  var pasangan = pasanganGauss(terms);
+  var semua = gaussPairAllTapped(tapped, n);
+
+  function baris(rowLabel, sel, cls) {
+    var html = '<div class="gauss-row' + (cls ? ' ' + cls : '') + '">';
+    html += '<span class="gauss-row__label">' + esc(rowLabel) + '</span>';
+    sel.forEach(function (s, i) {
+      if (i > 0) html += '<span class="gauss-op" aria-hidden="true">+</span>';
+      html += s;
+    });
+    return html + '</div>';
+  }
+
+  var maju = terms.map(function (t) {
+    return '<span class="gauss-cell">' + esc(fmtAngkaDeret(t)) + '</span>';
+  });
+  var mundur = pasangan.map(function (p) {
+    return '<span class="gauss-cell gauss-cell--rev">' + esc(fmtAngkaDeret(p.kanan)) + '</span>';
+  });
+  var jumlah = pasangan.map(function (p, i) {
+    var sudah = Array.isArray(tapped) && tapped[i] === true;
+    if (sudah) {
+      return '<span class="gauss-cell gauss-cell--sum">' + esc(fmtAngkaDeret(p.jumlah)) + '</span>';
+    }
+    return (
+      '<button type="button" class="gauss-cell gauss-cell--tap" data-gauss-id="' +
+      esc(id) +
+      '" data-gauss-col="' +
+      i +
+      '" aria-label="' +
+      esc(
+        'Jumlahkan pasangan kolom ' +
+          (i + 1) +
+          ': ' +
+          fmtAngkaDeret(p.kiri) +
+          ' + ' +
+          fmtAngkaDeret(p.kanan)
+      ) +
+      '">?</button>'
+    );
+  });
+
+  return (
+    '<div class="gauss-grid" id="' +
+    esc(id) +
+    '" role="group" aria-label="' +
+    esc('Deret ' + label + ' ditulis maju dan mundur, lalu dijumlahkan per kolom') +
+    '">' +
+    baris(label + ' =', maju) +
+    baris(label + ' =', mundur, 'gauss-row--rev') +
+    '<div class="gauss-line" aria-hidden="true"></div>' +
+    baris('2' + label + ' =', jumlah, 'gauss-row--sum') +
+    (semua
+      ? '<div class="gauss-result">2' +
+        esc(label) +
+        ' = <strong>' +
+        n +
+        ' × ' +
+        esc(fmtAngkaDeret(pasangan[0].jumlah)) +
+        '</strong> <span class="gauss-result__note">(' +
+        n +
+        ' pasangan, masing-masing ' +
+        esc(fmtAngkaDeret(pasangan[0].jumlah)) +
+        ')</span></div>'
+      : '') +
+    '</div>'
+  );
+}
+
+/* Memasang tombol kolom buildGaussPairTable; tapped[i] = true saat diketuk. */
+function bindGaussPairTable(root, id, tapped, save, rerender) {
+  root.querySelectorAll('[data-gauss-id="' + id + '"][data-gauss-col]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      tapped[+btn.dataset.gaussCol] = true;
+      save();
+      rerender();
+    });
+  });
+}
+
+/* ---------- Tangga batang (SVG) ---------- */
+
+/*
+ * Deret sebagai "tangga": satu batang setinggi Uₖ untuk setiap suku.
+ * opts.flipped true menumpuk salinan deret yang DIBALIK di atas setiap
+ * batang (warna lain) sehingga semua kolom setinggi a + Uₙ dan
+ * bersama-sama membentuk persegi panjang n × (a + Uₙ) = 2Sₙ.
+ *   terms          suku-suku positif
+ *   opts.flipped   tampilkan salinan terbalik
+ *   opts.caption   teks aksesibel (title SVG)
+ */
+function buildStaircaseSeriesSVG(terms, opts) {
+  opts = opts || {};
+  var n = terms.length;
+  var pasangan = pasanganGauss(terms);
+  var W = 560;
+  var H = 260;
+  var padL = 12;
+  var padR = 12;
+  var padT = 30;
+  var padB = 30;
+  var plotW = W - padL - padR;
+  var plotH = H - padT - padB;
+  /* Skala selalu setinggi pasangan terbesar, sehingga tangga tidak berubah
+     ukuran saat salinan terbaliknya ditumpuk. */
+  var maks = 0;
+  pasangan.forEach(function (p) {
+    if (p.jumlah > maks) maks = p.jumlah;
+  });
+  if (maks <= 0) maks = 1;
+  var gap = n > 12 ? 2 : 6;
+  var lebar = plotW / n;
+  var dasar = padT + plotH;
+
+  function tinggi(v) {
+    return (v / maks) * plotH;
+  }
+
+  var isi = '';
+  pasangan.forEach(function (p, i) {
+    var x = padL + i * lebar + gap / 2;
+    var w = lebar - gap;
+    var h1 = tinggi(p.kiri);
+    isi +=
+      '<rect class="stair-bar" x="' +
+      x.toFixed(1) +
+      '" y="' +
+      (dasar - h1).toFixed(1) +
+      '" width="' +
+      w.toFixed(1) +
+      '" height="' +
+      h1.toFixed(1) +
+      '"/>';
+    if (n <= 12 && h1 >= 18) {
+      isi +=
+        '<text class="stair-val" x="' +
+        (x + w / 2).toFixed(1) +
+        '" y="' +
+        (dasar - h1 / 2 + 5).toFixed(1) +
+        '">' +
+        esc(fmtAngkaDeret(p.kiri)) +
+        '</text>';
+    }
+    if (opts.flipped) {
+      var h2 = tinggi(p.kanan);
+      isi +=
+        '<rect class="stair-bar stair-bar--flip" x="' +
+        x.toFixed(1) +
+        '" y="' +
+        (dasar - h1 - h2).toFixed(1) +
+        '" width="' +
+        w.toFixed(1) +
+        '" height="' +
+        h2.toFixed(1) +
+        '"/>';
+      if (n <= 12 && h2 >= 18) {
+        isi +=
+          '<text class="stair-val stair-val--flip" x="' +
+          (x + w / 2).toFixed(1) +
+          '" y="' +
+          (dasar - h1 - h2 / 2 + 5).toFixed(1) +
+          '">' +
+          esc(fmtAngkaDeret(p.kanan)) +
+          '</text>';
+      }
+    }
+    if (n <= 30) {
+      isi +=
+        '<text class="stair-n" x="' +
+        (x + w / 2).toFixed(1) +
+        '" y="' +
+        (dasar + 18) +
+        '">' +
+        (i + 1) +
+        '</text>';
+    }
+  });
+
+  var rect = '';
+  if (opts.flipped && n > 0) {
+    var hT = tinggi(pasangan[0].jumlah);
+    rect =
+      '<rect class="stair-rect" x="' +
+      padL +
+      '" y="' +
+      (dasar - hT).toFixed(1) +
+      '" width="' +
+      plotW +
+      '" height="' +
+      hT.toFixed(1) +
+      '"/>' +
+      '<text class="stair-rect__label" x="' +
+      (padL + plotW / 2) +
+      '" y="' +
+      (dasar - hT - 8).toFixed(1) +
+      '">' +
+      esc(n + ' × ' + fmtAngkaDeret(pasangan[0].jumlah)) +
+      '</text>';
+  }
+
+  var judul =
+    opts.caption ||
+    (opts.flipped
+      ? 'Tangga deret dan salinannya yang dibalik membentuk persegi panjang'
+      : 'Tangga deret: satu batang untuk setiap suku');
+
+  return (
+    '<figure class="stair-fig">' +
+    '<svg class="stair-svg" viewBox="0 0 ' +
+    W +
+    ' ' +
+    H +
+    '" role="img" aria-label="' +
+    esc(judul) +
+    '"><title>' +
+    esc(judul) +
+    '</title>' +
+    '<line class="stair-axis" x1="' +
+    padL +
+    '" x2="' +
+    (W - padR) +
+    '" y1="' +
+    dasar +
+    '" y2="' +
+    dasar +
+    '"/>' +
+    isi +
+    rect +
+    '</svg>' +
+    (opts.flipped
+      ? '<figcaption class="stair-legend"><span class="stair-key"></span> deret asli <span class="stair-key stair-key--flip"></span> deret dibalik</figcaption>'
+      : '') +
+    '</figure>'
+  );
+}
+
+/* ---------- Lab jumlah berjalan ---------- */
+
+/* State lab: n yang sedang dipilih dan banyak kali slider digeser. */
+function makePartialSumLabState(n) {
+  return { n: typeof n === 'number' ? n : 1, geser: 0 };
+}
+
+/*
+ * Nilai untuk lab jumlah berjalan: n dijepit ke 1..cfg.maks, lalu
+ * Uₙ, Sₙ, dan apakah Sₙ sudah mencapai cfg.target.
+ *   cfg { a, b, target, maks, satuan }
+ */
+function partialSumLabInfo(st, cfg) {
+  var n = Math.round(st.n || 1);
+  if (n < 1) n = 1;
+  if (n > cfg.maks) n = cfg.maks;
+  var sn = jumlahAritmetika(cfg.a, cfg.b, n);
+  return {
+    n: n,
+    un: sukuAritmetika(cfg.a, cfg.b, n),
+    sn: sn,
+    tercapai: sn >= cfg.target - 0.0001,
+  };
+}
+
+function partialSumLabHasilHTML(st, cfg) {
+  var info = partialSumLabInfo(st, cfg);
+  var akhir = cfg.satuan ? ' ' + cfg.satuan : '';
+  var skala = Math.max(cfg.target, jumlahAritmetika(cfg.a, cfg.b, cfg.maks)) * 1.05;
+  var persen = Math.min(100, (info.sn / skala) * 100);
+  var persenTarget = Math.min(100, (cfg.target / skala) * 100);
+  return (
+    '<div class="psum-nilai">' +
+    '<span class="psum-chip">n = <strong>' +
+    info.n +
+    '</strong></span>' +
+    '<span class="psum-chip">U' +
+    subskrip(info.n) +
+    ' = <strong>' +
+    esc(fmtAngkaDeret(info.un)) +
+    '</strong>' +
+    esc(akhir) +
+    '</span>' +
+    '<span class="psum-chip psum-chip--sum">S' +
+    subskrip(info.n) +
+    ' = <strong>' +
+    esc(fmtAngkaDeret(info.sn)) +
+    '</strong>' +
+    esc(akhir) +
+    '</span>' +
+    '</div>' +
+    '<div class="psum-bar" aria-hidden="true">' +
+    '<div class="psum-bar__fill' +
+    (info.tercapai ? ' psum-bar__fill--capai' : '') +
+    '" style="width:' +
+    persen.toFixed(1) +
+    '%"></div>' +
+    '<div class="psum-bar__target" style="left:' +
+    persenTarget.toFixed(1) +
+    '%"><span>Target ' +
+    esc(fmtAngkaDeret(cfg.target)) +
+    '</span></div>' +
+    '</div>' +
+    '<p class="psum-status ' +
+    (info.tercapai ? 'psum-status--capai' : 'psum-status--belum') +
+    '">' +
+    (info.tercapai
+      ? '✓ S' +
+        subskrip(info.n) +
+        ' sudah mencapai target ' +
+        esc(fmtAngkaDeret(cfg.target)) +
+        esc(akhir) +
+        '.'
+      : '… S' +
+        subskrip(info.n) +
+        ' belum mencapai target ' +
+        esc(fmtAngkaDeret(cfg.target)) +
+        esc(akhir) +
+        '.') +
+    '</p>'
+  );
+}
+
+/*
+ * Lab jumlah berjalan: slider n (1..cfg.maks) dengan tombol − / +,
+ * menampilkan Uₙ, Sₙ, batang Sₙ terhadap garis target, dan status.
+ *   st   makePartialSumLabState()
+ *   cfg  { a, b, target, maks, satuan, label }
+ */
+function buildPartialSumLab(id, st, cfg) {
+  var info = partialSumLabInfo(st, cfg);
+  return (
+    '<div class="psum-lab" id="' +
+    esc(id) +
+    '">' +
+    '<div class="psum-kontrol">' +
+    '<label class="psum-kontrol__label" for="' +
+    esc(id) +
+    '-n">' +
+    esc(cfg.label || 'Banyak suku n') +
+    '</label>' +
+    '<div class="psum-kontrol__row">' +
+    '<button type="button" class="btn btn--ghost btn--small" id="' +
+    esc(id) +
+    '-kurang" aria-label="Kurangi n">−</button>' +
+    '<input type="range" class="psum-slider" id="' +
+    esc(id) +
+    '-n" min="1" max="' +
+    cfg.maks +
+    '" step="1" value="' +
+    info.n +
+    '">' +
+    '<button type="button" class="btn btn--ghost btn--small" id="' +
+    esc(id) +
+    '-tambah" aria-label="Tambah n">+</button>' +
+    '</div>' +
+    '</div>' +
+    '<div class="psum-hasil" id="' +
+    esc(id) +
+    '-hasil" aria-live="polite">' +
+    partialSumLabHasilHTML(st, cfg) +
+    '</div>' +
+    '</div>'
+  );
+}
+
+/*
+ * Memasang slider & tombol buildPartialSumLab. Hanya panel hasil yang
+ * diperbarui (fokus slider tidak hilang); onChange(info) dipanggil
+ * setelah setiap perubahan.
+ */
+function bindPartialSumLab(root, id, st, cfg, save, onChange) {
+  var slider = root.querySelector('#' + id + '-n');
+  var hasil = root.querySelector('#' + id + '-hasil');
+  if (!slider || !hasil) return;
+  function atur(n) {
+    st.n = n;
+    st.n = partialSumLabInfo(st, cfg).n;
+    st.geser = (st.geser || 0) + 1;
+    slider.value = String(st.n);
+    hasil.innerHTML = partialSumLabHasilHTML(st, cfg);
+    save();
+    if (onChange) onChange(partialSumLabInfo(st, cfg));
+  }
+  slider.addEventListener('input', function () {
+    atur(parseInt(slider.value, 10));
+  });
+  var kurang = root.querySelector('#' + id + '-kurang');
+  var tambah = root.querySelector('#' + id + '-tambah');
+  if (kurang) {
+    kurang.addEventListener('click', function () {
+      atur(st.n - 1);
+    });
+  }
+  if (tambah) {
+    tambah.addEventListener('click', function () {
+      atur(st.n + 1);
+    });
+  }
 }

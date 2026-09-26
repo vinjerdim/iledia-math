@@ -9196,3 +9196,290 @@ button.pwr-anatomy__part:disabled {
     grid-template-columns: minmax(0, 1fr);
   }
 }
+
+/* =========================================================================
+   Deret aritmetika: jumlah n suku pertama (engine.js seksi 42): tabel
+   pasangan Gauss, tangga batang SVG, lab jumlah berjalan. Grid dan tabel
+   menggulir di dalam kotaknya sendiri agar halaman tidak ikut bergeser
+   pada layar sempit.
+   ========================================================================= */
+
+.gauss-grid {
+  overflow-x: auto;
+  margin: var(--space-4) 0;
+  padding: var(--space-3);
+  border-radius: var(--radius-md);
+  background: var(--color-bg-grid);
+  -webkit-overflow-scrolling: touch;
+}
+
+.gauss-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  min-width: max-content;
+  margin-bottom: var(--space-2);
+}
+
+.gauss-row__label {
+  flex: 0 0 64px;
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--color-ink-muted);
+}
+
+.gauss-cell {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 52px;
+  height: 44px;
+  padding: 0 var(--space-2);
+  border: 2px solid var(--color-blue);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+  font-family: var(--font-mono);
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--color-blue-strong);
+}
+
+.gauss-cell--rev {
+  border-color: var(--color-orange);
+  color: var(--color-orange-strong);
+}
+
+.gauss-cell--tap {
+  cursor: pointer;
+  border-style: dashed;
+  border-color: var(--color-purple);
+  color: var(--color-purple-strong);
+}
+
+.gauss-cell--tap:hover,
+.gauss-cell--tap:focus-visible {
+  background: var(--color-purple-soft);
+}
+
+.gauss-cell--sum {
+  border-color: var(--color-success);
+  background: var(--color-success-soft);
+  color: var(--color-success-strong);
+}
+
+.gauss-op {
+  width: 14px;
+  text-align: center;
+  font-weight: 700;
+  color: var(--color-ink-muted);
+}
+
+.gauss-line {
+  min-width: 100%;
+  margin: 0 0 var(--space-2);
+  border-top: 2px solid var(--color-ink-muted);
+}
+
+.gauss-result {
+  font-family: var(--font-mono);
+  font-weight: 700;
+}
+
+.gauss-result__note {
+  font-family: var(--font-body);
+  font-weight: 400;
+  color: var(--color-ink-muted);
+}
+
+.stair-fig {
+  margin: var(--space-3) 0;
+}
+
+.stair-svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-width: 640px;
+}
+
+.stair-axis {
+  stroke: var(--color-ink-muted);
+  stroke-width: 2;
+}
+
+.stair-bar {
+  fill: var(--color-blue-soft);
+  stroke: var(--color-blue);
+  stroke-width: 1.5;
+}
+
+.stair-bar--flip {
+  fill: var(--color-orange-soft);
+  stroke: var(--color-orange);
+}
+
+.stair-val,
+.stair-n,
+.stair-rect__label {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 700;
+  text-anchor: middle;
+}
+
+.stair-val {
+  fill: var(--color-blue-strong);
+}
+
+.stair-val--flip {
+  fill: var(--color-orange-strong);
+}
+
+.stair-n {
+  fill: var(--color-ink-muted);
+  font-weight: 400;
+}
+
+.stair-rect {
+  fill: none;
+  stroke: var(--color-success);
+  stroke-width: 3;
+  stroke-dasharray: 8 4;
+}
+
+.stair-rect__label {
+  fill: var(--color-success-strong);
+  font-size: 15px;
+}
+
+.stair-legend {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: 0.85rem;
+  color: var(--color-ink-muted);
+}
+
+.stair-key {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border: 1.5px solid var(--color-blue);
+  border-radius: 2px;
+  background: var(--color-blue-soft);
+}
+
+.stair-key--flip {
+  border-color: var(--color-orange);
+  background: var(--color-orange-soft);
+}
+
+.psum-lab {
+  margin: var(--space-3) 0;
+  padding: var(--space-4);
+  border: 2px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+}
+
+.psum-kontrol__label {
+  display: block;
+  margin-bottom: var(--space-2);
+  font-weight: 700;
+}
+
+.psum-kontrol__row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.psum-kontrol__row .btn {
+  flex: 0 0 auto;
+  min-width: 44px;
+  min-height: 44px;
+  font-size: 1.2rem;
+}
+
+.psum-slider {
+  flex: 1 1 auto;
+  min-width: 0;
+  accent-color: var(--color-primary);
+}
+
+.psum-nilai {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin: var(--space-3) 0;
+}
+
+.psum-chip {
+  padding: var(--space-1) var(--space-3);
+  border-radius: 999px;
+  background: var(--color-bg-grid);
+  font-family: var(--font-mono);
+}
+
+.psum-chip--sum {
+  background: var(--color-primary-soft);
+  color: var(--color-primary-strong);
+}
+
+.psum-bar {
+  position: relative;
+  height: 22px;
+  margin: var(--space-5) 0 var(--space-2);
+  border-radius: 999px;
+  background: var(--color-bg-grid);
+}
+
+.psum-bar__fill {
+  height: 100%;
+  border-radius: 999px;
+  background: var(--color-primary);
+  transition: width 0.2s ease;
+}
+
+.psum-bar__fill--capai {
+  background: var(--color-success);
+}
+
+.psum-bar__target {
+  position: absolute;
+  top: -6px;
+  bottom: -6px;
+  border-left: 3px dashed var(--color-error);
+}
+
+.psum-bar__target span {
+  position: absolute;
+  bottom: 100%;
+  left: 0;
+  transform: translateX(-50%);
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--color-error-strong);
+  white-space: nowrap;
+}
+
+.psum-status {
+  margin: 0;
+  font-weight: 700;
+}
+
+.psum-status--capai {
+  color: var(--color-success-strong);
+}
+
+.psum-status--belum {
+  color: var(--color-ink-muted);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .psum-bar__fill {
+    transition: none;
+  }
+}
