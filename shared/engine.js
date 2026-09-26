@@ -100,6 +100,11 @@
        opsi bentuk setara berdiagnosa, diagnosa lambang lintas bentuk,
        kata perbandingan per tema, isian berbentuk, tabel bentuk setara,
        garis bilangan berlangkah 1/n & penempatan)
+   39. Bentuk aljabar berpangkat (monomial)
+   40. Barisan aritmetika: rumus suku ke-n (tabel pola, isian rumus)
+   41. Model linear terbaik: regresi kuadrat terkecil (residu, JKR,
+       banding model, interpolasi/ekstrapolasi, Lab Garis, panel
+       regresi spreadsheet & kode JS, lab regresi data sendiri)
    ============================================================ */
 
 /* ============================================================
@@ -19698,5 +19703,961 @@ function bindRumusSukuInput(root, id, st, a, b, save, rerender) {
     st.done = st.kode === 'benar';
     save();
     rerender();
+  });
+}
+
+/* ============================================================
+   41. MODEL LINEAR TERBAIK — REGRESI KUADRAT TERKECIL
+   Menentukan garis lurus terbaik untuk dua variabel numerik dengan
+   kriteria jumlah kuadrat residu (JKR) terkecil, dibantu teknologi
+   digital (fase-f/mpi-11.2, Problem Based Learning). Dibangun di atas
+   seksi 33 (garisTren, korelasiPearson, sumbuPencar, asoSkala_,
+   asoKerangka_):
+     • prediksiLinear / garisDuaTitik / residuTitik / jumlahResidu /
+       jumlahKuadratResidu / regresiLinear — perhitungan model;
+     • bandingkanModel / modelTerbaik / jenisPrediksi — keputusan model
+       dan interpolasi vs ekstrapolasi;
+     • fmtAngkaReg / fmtPersamaanRegresi — penulisan bergaya Indonesia;
+     • diagnosaResidu / pesanDiagnosaResidu — isian residu (tanda
+       terbalik ŷ − y, atau menulis ŷ);
+     • parsePasanganData — data tempel dari spreadsheet (tab/;/spasi);
+     • Lab Garis — slider kemiringan & titik potong di atas diagram
+       pencar, residu sebagai segmen atau persegi kuadrat, bacaan JKR
+       langsung dan rekor JKR terkecil;
+     • tabel residu, tabel banding model, panel regresi (rumus
+       spreadsheet & kode JS), dan lab regresi data sendiri.
+   Gaya .lf-* ada di shared/base.css.
+   ============================================================ */
+
+/* Menghapus galat pembulatan biner (0,1 × 3 + 0,2 → 0,5 persis). */
+function bulatReg_(v) {
+  return Math.round(v * 1e9) / 1e9;
+}
+
+function prediksiLinear(m, c, x) {
+  return bulatReg_(m * x + c);
+}
+
+/* Garis melalui dua titik { m, c }; null bila kedua x sama (garis tegak). */
+function garisDuaTitik(p, q) {
+  if (!p || !q || p.x === q.x) return null;
+  var m = bulatReg_((q.y - p.y) / (q.x - p.x));
+  return { m: m, c: bulatReg_(p.y - m * p.x) };
+}
+
+/* Residu tiap titik: [{ x, y, yTopi, e, id?, nama? }] dengan e = y − ŷ. */
+function residuTitik(points, m, c) {
+  return points.map(function (p) {
+    var yTopi = prediksiLinear(m, c, p.x);
+    return { x: p.x, y: p.y, yTopi: yTopi, e: bulatReg_(p.y - yTopi), id: p.id, nama: p.nama };
+  });
+}
+
+function jumlahResidu(points, m, c) {
+  return bulatReg_(
+    residuTitik(points, m, c).reduce(function (a, t) {
+      return a + t.e;
+    }, 0)
+  );
+}
+
+/* JKR = Σ(y − ŷ)² — makin kecil, makin dekat garis ke semua titik. */
+function jumlahKuadratResidu(points, m, c) {
+  return bulatReg_(
+    residuTitik(points, m, c).reduce(function (a, t) {
+      return a + t.e * t.e;
+    }, 0)
+  );
+}
+
+/*
+ * Regresi linear kuadrat terkecil: { m, c, r, r2, jkr, n }; null bila
+ * kurang dari dua titik atau semua x sama.
+ */
+function regresiLinear(points) {
+  if (!points || points.length < 2) return null;
+  var xs = points.map(function (p) {
+    return p.x;
+  });
+  var ys = points.map(function (p) {
+    return p.y;
+  });
+  var g = garisTren(xs, ys);
+  if (!g) return null;
+  var m = bulatReg_(g.m);
+  var c = bulatReg_(g.c);
+  var r = korelasiPearson(xs, ys);
+  return {
+    m: m,
+    c: c,
+    r: r,
+    r2: r === null ? null : r * r,
+    jkr: jumlahKuadratResidu(points, m, c),
+    n: points.length,
+  };
+}
+
+/*
+ * Membandingkan beberapa model { id, label, m, c } pada data yang sama.
+ * Mengembalikan salinan berurutan JKR naik, masing-masing ditambah
+ * `jumlah` (Σe) dan `jkr`. Array asal tidak diubah.
+ */
+function bandingkanModel(points, models) {
+  return models
+    .map(function (md, i) {
+      var out = {};
+      Object.keys(md).forEach(function (k) {
+        out[k] = md[k];
+      });
+      out.jumlah = jumlahResidu(points, md.m, md.c);
+      out.jkr = jumlahKuadratResidu(points, md.m, md.c);
+      out.urutan_ = i;
+      return out;
+    })
+    .sort(function (a, b) {
+      return a.jkr - b.jkr || a.urutan_ - b.urutan_;
+    })
+    .map(function (md) {
+      delete md.urutan_;
+      return md;
+    });
+}
+
+/* Id model dengan JKR terkecil. */
+function modelTerbaik(points, models) {
+  var b = bandingkanModel(points, models);
+  return b.length ? b[0].id : null;
+}
+
+/* 'interpolasi' bila x di dalam rentang x data (batas termasuk), selain itu 'ekstrapolasi'. */
+function jenisPrediksi(x, points) {
+  var xs = points.map(function (p) {
+    return p.x;
+  });
+  var lo = Math.min.apply(null, xs);
+  var hi = Math.max.apply(null, xs);
+  return x >= lo && x <= hi ? 'interpolasi' : 'ekstrapolasi';
+}
+
+/* Bilangan berkoma dengan paling banyak `d` desimal (default 2) dan minus "−". */
+function fmtAngkaReg(v, d) {
+  var digits = typeof d === 'number' ? d : 2;
+  var f = Math.pow(10, digits);
+  var bulat = Math.round(v * f) / f;
+  if (bulat === 0) return '0';
+  return (bulat < 0 ? '−' : '') + formatDesimal(Math.abs(bulat), digits);
+}
+
+/*
+ * Persamaan garis gaya Indonesia: "ŷ = 2,5x + 4", "ŷ = 3x − 1",
+ * "ŷ = 27,5" (garis datar). opts.x / opts.y nama variabel (default
+ * 'x' / 'ŷ'), opts.d banyak desimal (default 2).
+ */
+function fmtPersamaanRegresi(m, c, opts) {
+  opts = opts || {};
+  var vx = opts.x || 'x';
+  var vy = opts.y || 'ŷ';
+  var d = typeof opts.d === 'number' ? opts.d : 2;
+  var f = Math.pow(10, d);
+  var mb = Math.round(m * f) / f;
+  var cb = Math.round(c * f) / f;
+  if (mb === 0) return vy + ' = ' + fmtAngkaReg(cb, d);
+  var suku;
+  if (mb === 1) suku = vx;
+  else if (mb === -1) suku = '−' + vx;
+  else suku = fmtAngkaReg(mb, d) + vx;
+  if (cb === 0) return vy + ' = ' + suku;
+  return vy + ' = ' + suku + (cb > 0 ? ' + ' : ' − ') + fmtAngkaReg(Math.abs(cb), d);
+}
+
+/*
+ * Diagnosa isian residu untuk titik (y) terhadap prediksi (ŷ):
+ *   'benar'  isian = y − ŷ
+ *   'tanda'  isian = ŷ − y (urutan pengurangan terbalik)
+ *   'yTopi'  isian = ŷ (menulis prediksi, bukan selisih)
+ *   'salah'  selain itu
+ */
+function diagnosaResidu(nilai, y, yTopi) {
+  if (typeof nilai !== 'number' || isNaN(nilai)) return 'salah';
+  var e = bulatReg_(y - yTopi);
+  var dekat = function (a, b) {
+    return Math.abs(a - b) < 0.005;
+  };
+  if (dekat(nilai, e)) return 'benar';
+  if (e !== 0 && dekat(nilai, -e)) return 'tanda';
+  if (dekat(nilai, yTopi)) return 'yTopi';
+  return 'salah';
+}
+
+function pesanDiagnosaResidu(kode, y, yTopi) {
+  var e = bulatReg_(y - yTopi);
+  var fy = fmtAngkaReg(y);
+  var fh = fmtAngkaReg(yTopi);
+  if (kode === 'benar') {
+    return (
+      'Tepat: e = y − ŷ = ' +
+      fy +
+      ' − ' +
+      fh +
+      ' = ' +
+      fmtAngkaReg(e) +
+      (e > 0
+        ? '. Titik berada di atas garis.'
+        : e < 0
+        ? '. Titik berada di bawah garis.'
+        : '. Titik tepat pada garis.')
+    );
+  }
+  if (kode === 'tanda') {
+    return (
+      'Urutan pengurangannya terbalik. Residu selalu dihitung e = y − ŷ (data sebenarnya dikurangi prediksi), yaitu ' +
+      fy +
+      ' − ' +
+      fh +
+      '.'
+    );
+  }
+  if (kode === 'yTopi') {
+    return (
+      'Itu nilai prediksi ŷ, belum residunya. Residu adalah selisih data sebenarnya dengan prediksi: e = y − ŷ = ' +
+      fy +
+      ' − …'
+    );
+  }
+  return (
+    'Belum tepat. Hitung dulu ŷ dari persamaan garis, lalu kurangkan: e = y − ŷ. Nilai y titik ini ' +
+    fy +
+    '.'
+  );
+}
+
+/*
+ * Membaca data berpasangan yang ditempel dari spreadsheet atau diketik:
+ * satu pasangan per baris, dipisah tab, titik koma, atau spasi. Angka
+ * boleh berkoma desimal (12,5). Baris yang bukan tepat dua bilangan
+ * (mis. judul kolom) diabaikan dan nomornya dicatat.
+ * Mengembalikan { titik: [{x, y}], salah: [nomorBaris] }.
+ */
+function parsePasanganData(teks) {
+  var titik = [];
+  var salah = [];
+  String(teks || '')
+    .split(/\r?\n/)
+    .forEach(function (baris, i) {
+      var t = baris.trim();
+      if (!t) return;
+      var bagian = t.split(/[\t;]+|\s+/).filter(function (s) {
+        return s !== '';
+      });
+      if (bagian.length !== 2) {
+        salah.push(i + 1);
+        return;
+      }
+      var px = parseInputAngka(bagian[0]);
+      var py = parseInputAngka(bagian[1]);
+      if (px.error || py.error) {
+        salah.push(i + 1);
+        return;
+      }
+      titik.push({ x: px.value, y: py.value });
+    });
+  return { titik: titik, salah: salah };
+}
+
+/* ---------- Lab Garis ---------- */
+
+/* st: { m, c, tampil: 'residu'|'kuadrat'|'tidak', rekor: {m,c,jkr}|null, geser } */
+function makeLineFitState(opts) {
+  opts = opts || {};
+  return {
+    m: typeof opts.m === 'number' ? opts.m : 1,
+    c: typeof opts.c === 'number' ? opts.c : 0,
+    tampil: 'residu',
+    rekor: null,
+    geser: 0,
+  };
+}
+
+/* Mengatur st[key] ('m' | 'c') menempel ke kelipatan rng.step di [min, max]. */
+function lfAtur(st, key, v, rng) {
+  var k = Math.round((v - rng.min) / rng.step);
+  var s = bulatReg_(rng.min + k * rng.step);
+  st[key] = Math.max(rng.min, Math.min(rng.max, s));
+  return st[key];
+}
+
+/* Menghitung JKR garis saat ini, menambah hitungan geser, memperbarui rekor. */
+function lfCatatRekor(st, points) {
+  var jkr = jumlahKuadratResidu(points, st.m, st.c);
+  st.geser = (st.geser || 0) + 1;
+  if (!st.rekor || jkr < st.rekor.jkr - 1e-9) st.rekor = { m: st.m, c: st.c, jkr: jkr };
+  return jkr;
+}
+
+/* Ruas garis y = mx + c yang terpotong pada area grafik; '' bila di luar. */
+function lfGarisSVG_(m, c, ax, ay, s, cls, judul) {
+  var lo = ax.min;
+  var hi = ax.max;
+  if (m === 0) {
+    if (c < ay.min || c > ay.max) return '';
+  } else {
+    var xa = (ay.min - c) / m;
+    var xb = (ay.max - c) / m;
+    lo = Math.max(ax.min, Math.min(xa, xb));
+    hi = Math.min(ax.max, Math.max(xa, xb));
+  }
+  if (!(hi > lo)) return '';
+  return (
+    '<line class="' +
+    cls +
+    '" x1="' +
+    s.x(lo) +
+    '" y1="' +
+    s.y(m * lo + c) +
+    '" x2="' +
+    s.x(hi) +
+    '" y2="' +
+    s.y(m * hi + c) +
+    '">' +
+    (judul ? '<title>' + esc(judul) + '</title>' : '') +
+    '</line>'
+  );
+}
+
+/*
+ * Diagram pencar dengan garis model dan residu (SVG + legenda).
+ *   points          [{x, y, id?, nama?}]
+ *   opts.garis      { m, c, label? } garis utama (opsional)
+ *   opts.garisLain  [{ m, c, label }] garis pembanding (warna berbeda)
+ *   opts.tampil     'residu' (segmen tegak) | 'kuadrat' (persegi e²) |
+ *                   'tidak' — residu terhadap garis utama
+ *   opts.x, opts.y, opts.xLabel, opts.yLabel, opts.caption, opts.sorot
+ *   opts.kecil      true → versi ringkas
+ */
+function buildLineFitPlot(points, opts) {
+  opts = opts || {};
+  var ax = asoSumbuDari_(points, opts);
+  var s = asoSkala_(ax.x, ax.y);
+  var g = ASO_PLOT;
+  var sorot = opts.sorot || [];
+  var lain = opts.garisLain || [];
+  var utama = opts.garis;
+  var tampil = opts.tampil || 'tidak';
+
+  var garisHTML = lain
+    .map(function (gl, i) {
+      return lfGarisSVG_(gl.m, gl.c, ax.x, ax.y, s, 'lf-garis lf-garis--' + (i % 4), gl.label);
+    })
+    .join('');
+  if (utama) {
+    garisHTML += lfGarisSVG_(
+      utama.m,
+      utama.c,
+      ax.x,
+      ax.y,
+      s,
+      'lf-garis lf-garis--utama',
+      utama.label || fmtPersamaanRegresi(utama.m, utama.c)
+    );
+  }
+
+  var residuHTML = '';
+  if (utama && tampil !== 'tidak') {
+    residuTitik(points, utama.m, utama.c).forEach(function (t) {
+      if (t.e === 0) return;
+      var px = s.x(t.x);
+      var py = s.y(t.y);
+      var yh = Math.max(ax.y.min, Math.min(ax.y.max, t.yTopi));
+      var ph = s.y(yh);
+      var arah = t.e > 0 ? 'pos' : 'neg';
+      if (tampil === 'kuadrat') {
+        var sisi = Math.abs(py - ph);
+        var kiri = px + sisi > g.W - g.R ? px - sisi : px;
+        residuHTML +=
+          '<rect class="lf-kuadrat lf-kuadrat--' +
+          arah +
+          '" x="' +
+          kiri +
+          '" y="' +
+          Math.min(py, ph) +
+          '" width="' +
+          sisi +
+          '" height="' +
+          sisi +
+          '"/>';
+      } else {
+        residuHTML +=
+          '<line class="lf-residu lf-residu--' +
+          arah +
+          '" x1="' +
+          px +
+          '" y1="' +
+          py +
+          '" x2="' +
+          px +
+          '" y2="' +
+          ph +
+          '"/>';
+      }
+    });
+  }
+
+  var dots = points
+    .map(function (p) {
+      var cls = p.id && sorot.indexOf(p.id) !== -1 ? 'aso-dot aso-dot--sorot' : 'aso-dot';
+      return (
+        '<circle class="' +
+        cls +
+        '" cx="' +
+        s.x(p.x) +
+        '" cy="' +
+        s.y(p.y) +
+        '" r="6"><title>' +
+        esc(
+          (p.nama ? p.nama + ': ' : '') + '(' + fmtAngkaReg(p.x) + ', ' + fmtAngkaReg(p.y) + ')'
+        ) +
+        '</title></circle>'
+      );
+    })
+    .join('');
+
+  var legenda = [];
+  if (utama && utama.label) legenda.push({ cls: 'utama', label: utama.label });
+  lain.forEach(function (gl, i) {
+    legenda.push({ cls: String(i % 4), label: gl.label || fmtPersamaanRegresi(gl.m, gl.c) });
+  });
+
+  return (
+    '<div class="lf-plot-wrap">' +
+    '<svg class="aso-plot lf-plot' +
+    (opts.kecil ? ' aso-plot--kecil' : '') +
+    '" viewBox="0 0 ' +
+    g.W +
+    ' ' +
+    g.H +
+    '" role="img" aria-label="' +
+    esc(opts.caption || 'Diagram pencar dengan garis model') +
+    '">' +
+    asoKerangka_(ax.x, ax.y, s, opts) +
+    residuHTML +
+    garisHTML +
+    dots +
+    '</svg>' +
+    (legenda.length
+      ? '<ul class="lf-legend">' +
+        legenda
+          .map(function (l) {
+            return (
+              '<li><i class="lf-legend__swatch lf-legend__swatch--' +
+              l.cls +
+              '" aria-hidden="true"></i>' +
+              esc(l.label) +
+              '</li>'
+            );
+          })
+          .join('') +
+        '</ul>'
+      : '') +
+    '</div>'
+  );
+}
+
+/* Bacaan Lab Garis: persamaan, Σe, JKR, rekor. opts.satuanY opsional. */
+function lfBacaHTML(points, st, opts) {
+  opts = opts || {};
+  var jumlah = jumlahResidu(points, st.m, st.c);
+  var jkr = jumlahKuadratResidu(points, st.m, st.c);
+  function kartu(label, nilai, cls) {
+    return (
+      '<div class="lf-baca__item' +
+      (cls ? ' ' + cls : '') +
+      '"><span class="lf-baca__label">' +
+      label +
+      '</span><span class="lf-baca__nilai">' +
+      nilai +
+      '</span></div>'
+    );
+  }
+  return (
+    kartu('Jumlah residu Σe', esc(fmtAngkaReg(jumlah))) +
+    kartu('JKR Σe²', esc(fmtAngkaReg(jkr)), 'lf-baca__item--utama') +
+    kartu(
+      'Rekor JKR terkecil',
+      st.rekor
+        ? esc(fmtAngkaReg(st.rekor.jkr)) +
+            '<small>' +
+            esc(fmtPersamaanRegresi(st.rekor.m, st.rekor.c)) +
+            '</small>'
+        : '—'
+    )
+  );
+}
+
+function lfKontrol_(id, key, label, nilai, rng) {
+  var iid = id + '-' + key;
+  return (
+    '<div class="lf-kontrol">' +
+    '<label for="' +
+    iid +
+    '" class="lf-kontrol__label">' +
+    esc(label) +
+    ' <output id="' +
+    iid +
+    '-out" for="' +
+    iid +
+    '" class="lf-kontrol__out">' +
+    esc(fmtAngkaReg(nilai)) +
+    '</output></label>' +
+    '<div class="lf-kontrol__row">' +
+    '<button type="button" class="btn btn--ghost btn--small lf-kontrol__btn" data-lf-step="' +
+    key +
+    '" data-arah="-1" aria-label="Kurangi ' +
+    esc(label) +
+    '">−</button>' +
+    '<input type="range" class="lf-kontrol__range" id="' +
+    iid +
+    '" min="' +
+    rng.min +
+    '" max="' +
+    rng.max +
+    '" step="' +
+    rng.step +
+    '" value="' +
+    nilai +
+    '">' +
+    '<button type="button" class="btn btn--ghost btn--small lf-kontrol__btn" data-lf-step="' +
+    key +
+    '" data-arah="1" aria-label="Tambah ' +
+    esc(label) +
+    '">+</button>' +
+    '</div>' +
+    '</div>'
+  );
+}
+
+/*
+ * Lab Garis: murid menggeser kemiringan m dan titik potong c, melihat
+ * residu setiap titik (segmen atau persegi kuadrat), dan membaca JKR
+ * secara langsung. Rekor JKR terkecil disimpan di st.rekor.
+ *   opts.rentangM, opts.rentangC  { min, max, step }
+ *   opts.garisLain                garis pembanding (lihat buildLineFitPlot)
+ *   opts.x, opts.y, opts.xLabel, opts.yLabel, opts.caption
+ */
+function buildLineFitLab(id, points, st, opts) {
+  opts = opts || {};
+  var plotOpts = lfPlotOpts_(st, opts);
+  var tampilan = [
+    { id: 'residu', label: 'Residu (segmen)' },
+    { id: 'kuadrat', label: 'Kuadrat residu (persegi)' },
+    { id: 'tidak', label: 'Sembunyikan' },
+  ];
+  return (
+    '<div class="lf-lab" id="' +
+    id +
+    '">' +
+    '<div class="lf-lab__plot" id="' +
+    id +
+    '-plot">' +
+    buildLineFitPlot(points, plotOpts) +
+    '</div>' +
+    '<div class="lf-lab__panel">' +
+    '<p class="lf-persamaan" id="' +
+    id +
+    '-persamaan">' +
+    esc(fmtPersamaanRegresi(st.m, st.c)) +
+    '</p>' +
+    lfKontrol_(id, 'm', 'Kemiringan m', st.m, opts.rentangM) +
+    lfKontrol_(id, 'c', 'Titik potong c', st.c, opts.rentangC) +
+    '<fieldset class="lf-tampil"><legend>Tampilkan</legend>' +
+    tampilan
+      .map(function (t) {
+        return (
+          '<label class="lf-tampil__opt"><input type="radio" name="' +
+          id +
+          '-tampil" value="' +
+          t.id +
+          '"' +
+          (st.tampil === t.id ? ' checked' : '') +
+          '> ' +
+          esc(t.label) +
+          '</label>'
+        );
+      })
+      .join('') +
+    '</fieldset>' +
+    '<div class="lf-baca" id="' +
+    id +
+    '-baca" aria-live="polite">' +
+    lfBacaHTML(points, st, opts) +
+    '</div>' +
+    '</div>' +
+    '</div>'
+  );
+}
+
+function lfPlotOpts_(st, opts) {
+  return {
+    garis: { m: st.m, c: st.c, label: 'Garismu: ' + fmtPersamaanRegresi(st.m, st.c) },
+    garisLain: opts.garisLain,
+    tampil: st.tampil,
+    x: opts.x,
+    y: opts.y,
+    xLabel: opts.xLabel,
+    yLabel: opts.yLabel,
+    caption: opts.caption || 'Lab Garis: diagram pencar dengan garis yang bisa digeser',
+  };
+}
+
+/*
+ * Memasang interaksi Lab Garis. Hanya grafik & bacaan yang diperbarui
+ * (slider tidak dirender ulang sehingga fokus & seretan tidak hilang).
+ * onUpdate(st, jkr) opsional dipanggil setelah setiap perubahan garis.
+ */
+function bindLineFitLab(root, id, points, st, opts, save, onUpdate) {
+  var lab = root.querySelector('#' + id);
+  if (!lab) return;
+  var rng = { m: opts.rentangM, c: opts.rentangC };
+  function segarkan(ubahGaris) {
+    var jkr = ubahGaris ? lfCatatRekor(st, points) : null;
+    lab.querySelector('#' + id + '-plot').innerHTML = buildLineFitPlot(
+      points,
+      lfPlotOpts_(st, opts)
+    );
+    lab.querySelector('#' + id + '-persamaan').textContent = fmtPersamaanRegresi(st.m, st.c);
+    ['m', 'c'].forEach(function (k) {
+      lab.querySelector('#' + id + '-' + k).value = st[k];
+      lab.querySelector('#' + id + '-' + k + '-out').textContent = fmtAngkaReg(st[k]);
+    });
+    lab.querySelector('#' + id + '-baca').innerHTML = lfBacaHTML(points, st, opts);
+    save();
+    if (ubahGaris && onUpdate) onUpdate(st, jkr);
+  }
+  ['m', 'c'].forEach(function (k) {
+    var inp = lab.querySelector('#' + id + '-' + k);
+    inp.addEventListener('input', function () {
+      lfAtur(st, k, parseFloat(inp.value), rng[k]);
+      segarkan(true);
+    });
+  });
+  lab.querySelectorAll('[data-lf-step]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var k = btn.dataset.lfStep;
+      lfAtur(st, k, st[k] + Number(btn.dataset.arah) * rng[k].step, rng[k]);
+      segarkan(true);
+    });
+  });
+  lab.querySelectorAll('input[type="radio"]').forEach(function (r) {
+    r.addEventListener('change', function () {
+      st.tampil = r.value;
+      segarkan(false);
+    });
+  });
+}
+
+/* ---------- Tabel & panel ---------- */
+
+/*
+ * Tabel residu: x, y, ŷ, e = y − ŷ, dan e² dengan baris total (Σe, JKR).
+ *   points       [{x, y, nama?}]
+ *   opts.caption, opts.judulLabel (kolom nama, default 'Data')
+ *   opts.xLabel, opts.yLabel     judul kolom x & y (default 'x', 'y')
+ *   opts.kuadrat false → tanpa kolom e²;  opts.total false → tanpa total
+ */
+function buildResidualTable(points, m, c, opts) {
+  opts = opts || {};
+  var kuadrat = opts.kuadrat !== false;
+  var total = opts.total !== false;
+  var adaNama = points.some(function (p) {
+    return p.nama;
+  });
+  var rows = residuTitik(points, m, c);
+  var th = function (t) {
+    return '<th scope="col">' + t + '</th>';
+  };
+  var head =
+    '<tr>' +
+    (adaNama ? th(esc(opts.judulLabel || 'Data')) : '') +
+    th(esc(opts.xLabel || 'x')) +
+    th(esc(opts.yLabel || 'y')) +
+    th('ŷ') +
+    th('e = y − ŷ') +
+    (kuadrat ? th('e²') : '') +
+    '</tr>';
+  var body = rows
+    .map(function (t) {
+      var cls = t.e > 0 ? ' lf-e--pos' : t.e < 0 ? ' lf-e--neg' : '';
+      return (
+        '<tr>' +
+        (adaNama ? '<th scope="row">' + esc(t.nama || '') + '</th>' : '') +
+        '<td class="aso-num">' +
+        esc(fmtAngkaReg(t.x)) +
+        '</td><td class="aso-num">' +
+        esc(fmtAngkaReg(t.y)) +
+        '</td><td class="aso-num">' +
+        esc(fmtAngkaReg(t.yTopi)) +
+        '</td><td class="aso-num' +
+        cls +
+        '">' +
+        esc(fmtAngkaReg(t.e)) +
+        '</td>' +
+        (kuadrat ? '<td class="aso-num">' + esc(fmtAngkaReg(t.e * t.e)) + '</td>' : '') +
+        '</tr>'
+      );
+    })
+    .join('');
+  var foot = total
+    ? '<tr class="aso-tabel__total"><th scope="row" colspan="' +
+      (adaNama ? 4 : 3) +
+      '">Jumlah</th><td class="aso-num">' +
+      esc(fmtAngkaReg(jumlahResidu(points, m, c))) +
+      '</td>' +
+      (kuadrat
+        ? '<td class="aso-num"><strong>' +
+          esc(fmtAngkaReg(jumlahKuadratResidu(points, m, c))) +
+          '</strong></td>'
+        : '') +
+      '</tr>'
+    : '';
+  return (
+    '<div class="aso-tabel-wrap"><table class="aso-tabel lf-tabel">' +
+    (opts.caption
+      ? '<caption class="aso-tabel__caption">' + esc(opts.caption) + '</caption>'
+      : '') +
+    '<thead>' +
+    head +
+    '</thead><tbody>' +
+    body +
+    foot +
+    '</tbody></table></div>'
+  );
+}
+
+/*
+ * Tabel banding model: garis, persamaan, Σe, JKR (urutan sesuai `models`).
+ *   opts.sorotTerbaik  true → baris JKR terkecil ditandai
+ *   opts.caption
+ */
+function buildModelCompareTable(points, models, opts) {
+  opts = opts || {};
+  var hasil = bandingkanModel(points, models);
+  var byId = {};
+  hasil.forEach(function (h) {
+    byId[h.id] = h;
+  });
+  var terbaik = hasil.length ? hasil[0].id : null;
+  return (
+    '<div class="aso-tabel-wrap"><table class="aso-tabel lf-tabel">' +
+    (opts.caption
+      ? '<caption class="aso-tabel__caption">' + esc(opts.caption) + '</caption>'
+      : '') +
+    '<thead><tr><th scope="col">Garis</th><th scope="col">Persamaan</th>' +
+    '<th scope="col">Jumlah residu Σe</th><th scope="col">JKR Σe²</th></tr></thead><tbody>' +
+    models
+      .map(function (md) {
+        var h = byId[md.id];
+        var top = opts.sorotTerbaik && md.id === terbaik;
+        return (
+          '<tr' +
+          (top ? ' class="lf-terbaik"' : '') +
+          '><th scope="row">' +
+          esc(md.label) +
+          (top ? ' <span class="lf-badge">★ JKR terkecil</span>' : '') +
+          '</th><td>' +
+          esc(fmtPersamaanRegresi(md.m, md.c)) +
+          '</td><td class="aso-num">' +
+          esc(fmtAngkaReg(h.jumlah)) +
+          '</td><td class="aso-num">' +
+          esc(fmtAngkaReg(h.jkr)) +
+          '</td></tr>'
+        );
+      })
+      .join('') +
+    '</tbody></table></div>'
+  );
+}
+
+/* Angka untuk rumus sel spreadsheet (koma desimal, minus ASCII '-'). */
+function angkaSheet_(v) {
+  var t = fmtAngkaReg(v, 3);
+  return t.charAt(0) === '−' ? '-' + t.slice(1) : t;
+}
+
+/* Angka untuk kode JS (titik desimal, paling banyak `d` desimal). */
+function angkaJs_(v, d) {
+  var f = Math.pow(10, typeof d === 'number' ? d : 2);
+  return String(Math.round(v * f) / f);
+}
+
+/*
+ * Panel keluaran teknologi: tabel ala spreadsheet (=SLOPE, =INTERCEPT,
+ * =RSQ, JKR) dan padanan kode JavaScript regresiLinear().
+ *   opts.rentangX, opts.rentangY  rentang sel (default 'A2:A11', 'B2:B11')
+ *   opts.namaData                 nama variabel data di kode (default 'data')
+ *   opts.x, opts.y                nama variabel persamaan
+ */
+function buildRegressionPanel(points, opts) {
+  opts = opts || {};
+  var reg = regresiLinear(points);
+  if (!reg) {
+    return buildFeedbackBox(
+      'warning',
+      '⚠️',
+      'Regresi membutuhkan minimal dua titik dengan nilai x yang berbeda.'
+    );
+  }
+  var rx = opts.rentangX || 'A2:A11';
+  var ry = opts.rentangY || 'B2:B11';
+  var nama = opts.namaData || 'data';
+  var baris = [
+    ['Kemiringan m', '=SLOPE(' + ry + ';' + rx + ')', fmtAngkaReg(reg.m, 3)],
+    ['Titik potong c', '=INTERCEPT(' + ry + ';' + rx + ')', fmtAngkaReg(reg.c, 3)],
+    ['Koefisien determinasi r²', '=RSQ(' + ry + ';' + rx + ')', fmtAngkaReg(reg.r2, 3)],
+    [
+      'JKR Σe²',
+      '=SUMPRODUCT((' +
+        ry +
+        '-(' +
+        angkaSheet_(reg.m) +
+        '*' +
+        rx +
+        (reg.c < 0 ? '' : '+') +
+        angkaSheet_(reg.c) +
+        '))^2)',
+      fmtAngkaReg(reg.jkr, 2),
+    ],
+  ];
+  return (
+    '<div class="lf-reg">' +
+    '<div class="aso-tabel-wrap"><table class="aso-tabel lf-sheet">' +
+    '<caption class="aso-tabel__caption">Spreadsheet</caption>' +
+    '<thead><tr><th scope="col">Besaran</th><th scope="col">Rumus sel</th><th scope="col">Hasil</th></tr></thead><tbody>' +
+    baris
+      .map(function (b) {
+        return (
+          '<tr><th scope="row">' +
+          esc(b[0]) +
+          '</th><td><code>' +
+          esc(b[1]) +
+          '</code></td><td class="aso-num"><strong>' +
+          esc(b[2]) +
+          '</strong></td></tr>'
+        );
+      })
+      .join('') +
+    '</tbody></table></div>' +
+    '<pre class="lf-kode" aria-label="Padanan kode JavaScript"><code>' +
+    esc(
+      'const model = regresiLinear(' +
+        nama +
+        ');\n// → { m: ' +
+        angkaJs_(reg.m, 3) +
+        ', c: ' +
+        angkaJs_(reg.c, 3) +
+        ', r2: ' +
+        angkaJs_(reg.r2, 3) +
+        ', jkr: ' +
+        angkaJs_(reg.jkr, 2) +
+        ' }'
+    ) +
+    '</code></pre>' +
+    '<p class="lf-persamaan lf-persamaan--hasil">' +
+    esc(fmtPersamaanRegresi(reg.m, reg.c, { x: opts.x, y: opts.y })) +
+    '</p>' +
+    '</div>'
+  );
+}
+
+/* ---------- Lab regresi data sendiri ---------- */
+
+function makeRegressionLabState(teks) {
+  return { teks: teks || '' };
+}
+
+/* Hasil lab regresi: diagram pencar + garis regresi + panel, atau pesan. */
+function regressionLabHasilHTML(st, opts) {
+  opts = opts || {};
+  var data = parsePasanganData(st.teks);
+  var catatan = data.salah.length
+    ? '<p class="dl-caption">Baris ' +
+      data.salah.join(', ') +
+      ' diabaikan (bukan dua bilangan).</p>'
+    : '';
+  var reg = regresiLinear(data.titik);
+  if (!reg) {
+    return (
+      buildFeedbackBox(
+        'info',
+        '📝',
+        'Masukkan minimal dua pasangan data dengan nilai x yang berbeda, satu pasangan per baris.'
+      ) + catatan
+    );
+  }
+  return (
+    buildLineFitPlot(data.titik, {
+      garis: { m: reg.m, c: reg.c, label: 'Garis regresi: ' + fmtPersamaanRegresi(reg.m, reg.c) },
+      tampil: 'residu',
+      xLabel: opts.xLabel,
+      yLabel: opts.yLabel,
+      caption: 'Diagram pencar data sendiri dengan garis regresi',
+    }) +
+    buildRegressionPanel(data.titik, {
+      rentangX: 'A2:A' + (data.titik.length + 1),
+      rentangY: 'B2:B' + (data.titik.length + 1),
+    }) +
+    catatan
+  );
+}
+
+/*
+ * Lab regresi: murid menempelkan data dari spreadsheet atau mengetik
+ * pasangan (x y per baris), lalu menekan Hitung. Tidak dinilai.
+ *   opts.xLabel, opts.yLabel, opts.placeholder, opts.label
+ */
+function buildRegressionLab(id, st, opts) {
+  opts = opts || {};
+  return (
+    '<div class="lf-reglab" id="' +
+    id +
+    '">' +
+    '<div class="field-group">' +
+    '<label for="' +
+    id +
+    '-teks">' +
+    esc(opts.label || 'Data berpasangan (x dan y, satu pasangan per baris)') +
+    '</label>' +
+    '<textarea id="' +
+    id +
+    '-teks" class="input-textarea lf-reglab__teks" rows="6" spellcheck="false" placeholder="' +
+    esc(opts.placeholder || '2\t12\n4\t11\n5\t14') +
+    '">' +
+    esc(st.teks) +
+    '</textarea>' +
+    '</div>' +
+    '<div class="btn-group">' +
+    '<button type="button" class="btn btn--primary" id="' +
+    id +
+    '-hitung">Hitung Regresi</button>' +
+    '</div>' +
+    '<div class="lf-reglab__hasil" id="' +
+    id +
+    '-hasil" aria-live="polite">' +
+    (st.teks.trim() ? regressionLabHasilHTML(st, opts) : '') +
+    '</div>' +
+    '</div>'
+  );
+}
+
+function bindRegressionLab(root, id, st, opts, save) {
+  var ta = root.querySelector('#' + id + '-teks');
+  var btn = root.querySelector('#' + id + '-hitung');
+  if (!ta || !btn) return;
+  ta.addEventListener('input', function () {
+    st.teks = ta.value;
+    save();
+  });
+  btn.addEventListener('click', function () {
+    st.teks = ta.value;
+    save();
+    root.querySelector('#' + id + '-hasil').innerHTML = regressionLabHasilHTML(st, opts);
   });
 }

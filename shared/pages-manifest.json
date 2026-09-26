@@ -102,5 +102,13 @@
     "h1": "Asosiasi Dua Variabel: Tabel Kontingensi & Diagram Pencar",
     "stageCount": 10,
     "extraBody": "partials/reset-modal.html"
+  },
+  "fase-f/mpi-11.2": {
+    "title": "Menentukan Model Linear Terbaik dengan Bantuan Teknologi Digital — Matematika Fase F",
+    "description": "Media pembelajaran interaktif berbasis Problem Based Learning untuk menentukan model linear terbaik yang menggambarkan hubungan dua variabel numerikal dengan bantuan teknologi digital: estimasi jam kerja proyek teaching factory RPL melalui Lab Garis (slider kemiringan & titik potong dengan residu dan persegi kuadrat residu), perbandingan jumlah kuadrat residu, panel regresi spreadsheet & kode JavaScript, serta Laporan Estimasi untuk klien.",
+    "kicker": "Matematika — Fase F (SMK RPL)",
+    "h1": "Menentukan Model Linear Terbaik dengan Bantuan Teknologi Digital",
+    "stageCount": 10,
+    "extraBody": "partials/reset-modal.html"
   }
 }
