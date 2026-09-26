@@ -5,7 +5,8 @@
    Hanya memuat gaya yang KHAS modul ini. Langkah sifat (.sifat-step*),
    opsi & kartu sifat (.sifat-opt*, .sifat-kartu*), tab stasiun ahli
    (.jigsaw-tab*), form tim (.coop-setup*), ubin faktor (.fx-*), tabel
-   pola eksponen (.pola-tbl*), komponen Cooperative Learning (.coop-*),
+   pola eksponen (.pola-tbl*), bentuk soal rantai (.rantai-soal),
+   komponen Cooperative Learning (.coop-*),
    pilihan ganda, pemilahan, kartu ringkasan, navigasi tahap, dan modal
    berasal dari shared/base.css.
    ========================================================================= */
@@ -117,18 +118,6 @@
   line-height: 1;
 }
 
-.rantai-soal {
-  margin: var(--space-2) 0 var(--space-3);
-  padding: var(--space-3);
-  border-radius: var(--radius-md);
-  background: var(--color-bg-grid);
-  font-family: var(--font-mono);
-  font-size: 1.6rem;
-  font-weight: 700;
-  text-align: center;
-  overflow-wrap: anywhere;
-}
-
 /* -------------------------------------------------------------------------
    Tahap 8 — Kuis
    ------------------------------------------------------------------------- */
@@ -146,10 +135,4 @@
 
 .kuis-tanya {
   font-size: 1.15rem;
-}
-
-@media (max-width: 480px) {
-  .rantai-soal {
-    font-size: 1.25rem;
-  }
 }

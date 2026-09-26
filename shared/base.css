@@ -11190,3 +11190,140 @@ button.akar-tile:disabled {
 .sajian-card__ikon {
   font-size: 1.4rem;
 }
+
+/* =========================================================================
+   Seksi 49 — Masalah kontekstual bilangan berpangkat bulat (shared/engine.js
+   seksi 49): kartu surat/tiket klien (.surat-*, .orientasi-cerita; sebelumnya
+   khas fase-d/mpi-22.3) dan tabel banding paket kapasitas (.mpk-tabel*).
+   ========================================================================= */
+
+.orientasi-cerita {
+  margin: 0 0 var(--space-4);
+  font-size: 1.05rem;
+  line-height: 1.6;
+}
+
+.surat-head {
+  margin: var(--space-5) 0 var(--space-3);
+}
+
+.surat-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: var(--space-3);
+}
+
+.surat-card {
+  padding: var(--space-3) var(--space-4);
+  border: 2px solid var(--color-border);
+  border-left: 6px solid var(--color-orange);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  min-width: 0;
+}
+
+.surat-card__judul {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0 0 var(--space-2);
+  font-size: 1rem;
+}
+
+.surat-card__ikon {
+  font-size: 1.4rem;
+}
+
+.surat-card__list {
+  margin: 0;
+  padding-left: var(--space-5);
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+
+.surat-card__list li + li {
+  margin-top: var(--space-1);
+}
+
+.mpk-tabel-wrap {
+  max-width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.mpk-tabel {
+  width: 100%;
+  min-width: 520px;
+  border-collapse: collapse;
+  font-size: 0.95rem;
+}
+
+.mpk-tabel caption {
+  margin-bottom: var(--space-2);
+  text-align: left;
+  font-size: 0.88rem;
+  color: var(--color-ink-muted);
+}
+
+.mpk-tabel th,
+.mpk-tabel td {
+  padding: var(--space-2) var(--space-3);
+  border-bottom: 1px solid var(--color-border);
+  text-align: left;
+  vertical-align: top;
+}
+
+.mpk-tabel thead th {
+  font-size: 0.85rem;
+  background: var(--color-primary-soft);
+}
+
+.mpk-tabel__sub {
+  display: block;
+  font-size: 0.82rem;
+  color: var(--color-ink-muted);
+}
+
+.mpk-tabel__baris--ok .mpk-tabel__syarat {
+  color: var(--color-success-strong);
+  font-weight: 700;
+}
+
+.mpk-tabel__baris--no .mpk-tabel__syarat {
+  color: var(--color-error);
+  font-weight: 700;
+}
+
+.mpk-tabel__baris.is-pilih {
+  background: var(--color-success-soft);
+}
+
+.mpk-tabel__pilih {
+  display: inline-block;
+  margin-left: var(--space-1);
+  padding: 0 var(--space-2);
+  border-radius: 999px;
+  background: var(--color-success);
+  color: #fff;
+  font-size: 0.75rem;
+}
+
+/* Bentuk soal rantai sifat (engine seksi 44: teksRantai), dipakai
+   fase-d/mpi-12.2 dan fase-e/mpi-1.3. */
+.rantai-soal {
+  margin: var(--space-2) 0 var(--space-3);
+  padding: var(--space-3);
+  border-radius: var(--radius-md);
+  background: var(--color-bg-grid);
+  font-family: var(--font-mono);
+  font-size: 1.6rem;
+  font-weight: 700;
+  text-align: center;
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 480px) {
+  .rantai-soal {
+    font-size: 1.25rem;
+  }
+}

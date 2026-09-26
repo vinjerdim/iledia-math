@@ -151,6 +151,14 @@
     "stageCount": 9,
     "extraBody": "partials/reset-modal.html"
   },
+  "fase-e/mpi-1.3": {
+    "title": "Masalah Kontekstual Bilangan Berpangkat Bulat — Matematika Fase E",
+    "description": "Media pembelajaran interaktif berbasis Problem Based Learning untuk menggunakan sifat-sifat bilangan berpangkat bulat dalam menyelesaikan masalah kontekstual: memilih paket cloud storage aplikasi Galeri Karya Siswa melalui tiket klien, kartu langkah sifat berdiagnosa miskonsepsi (ukuran foto 2¹² × 2¹¹ × 2², kompresi 2⁻³, kapasitas (2¹⁰)⁴, lama muat, waktu unggah 2⁻¹ dan 2⁰ detik), tabel banding paket, Laporan Rekomendasi untuk klien, evaluasi lembar kerja Tim Debug, dan uji terap kontekstual RPL.",
+    "kicker": "Matematika — Fase E (SMK RPL)",
+    "h1": "Masalah Kontekstual Bilangan Berpangkat Bulat",
+    "stageCount": 10,
+    "extraBody": "partials/reset-modal.html"
+  },
   "fase-f/mpi-11.1": {
     "title": "Asosiasi Dua Variabel: Tabel Kontingensi & Diagram Pencar — Matematika Fase F",
     "description": "Media pembelajaran interaktif berbasis Discovery Learning untuk mengidentifikasi asosiasi antara dua variabel kategorikal dan numerikal melalui tabel kontingensi dan diagram pencar pada data nyata: survei siswa RPL, penghitung turus, plotter diagram pencar, persen baris, dan lab data kelas.",
