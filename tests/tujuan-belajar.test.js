@@ -22,6 +22,7 @@ const TAHAP_PERTAMA = {
   'fase-d/mpi-12.4': 'tujuan',
   'fase-d/mpi-22.1': 'stimulasi',
   'fase-d/mpi-22.2': 'stimulasi',
+  'fase-d/mpi-22.3': 'orientasi',
   'fase-e/mpi-1.1': 'stimulasi',
   'fase-e/mpi-1.2': 'stimulasi',
   'fase-f/mpi-1.1': 'orientasi',

@@ -22675,16 +22675,16 @@ function buildSifatStep(id, step, st, opts) {
                         formatPangkat(step.a, -hasil.k) +
                         ', lalu tulis kebalikannya (pecahan).'
                     : hasil.k === 0
-                      ? 'Ingat: a⁰ = 1 untuk a ≠ 0.'
-                      : step.op === 'basisBeda'
-                        ? 'Hitung ' +
-                          formatPangkat(step.a, step.m) +
-                          ' dan ' +
-                          formatPangkat(step.b, step.n) +
-                          ' lebih dulu, lalu kalikan.'
-                        : 'Tuliskan ' +
-                          hasil.teks +
-                          ' sebagai perkalian berulang, lalu hitung. Perhatikan tanda bila basisnya negatif.'
+                    ? 'Ingat: a⁰ = 1 untuk a ≠ 0.'
+                    : step.op === 'basisBeda'
+                    ? 'Hitung ' +
+                      formatPangkat(step.a, step.m) +
+                      ' dan ' +
+                      formatPangkat(step.b, step.n) +
+                      ' lebih dulu, lalu kalikan.'
+                    : 'Tuliskan ' +
+                      hasil.teks +
+                      ' sebagai perkalian berulang, lalu hitung. Perhatikan tanda bila basisnya negatif.'
                 )
             )
           : '');
@@ -25441,11 +25441,19 @@ function lppSkala(jaring, lebarPx) {
  *   opts.sorot   id kepingan yang disorot
  *   opts.lebar   ukuran terpanjang gambar dalam piksel (default 320)
  *   opts.aria    teks aksesibel
+ *   opts.satuan  satuan panjang label ukuran (default 'cm')
+ *   opts.dipilih array id kepingan yang sedang dipilih (.is-dipilih,
+ *                aria-pressed) — dipakai pemilih sisi seksi 48
+ *   opts.namaSisi { <id>: nama } nama sisi kontekstual untuk aria-label
+ *   opts.tanda   { <id>: teks } tanda pendek (mis. nomor) di tengah kepingan
  */
 function buildLpNetSVG(jaring, opts) {
   opts = opts || {};
   var sk = lppSkala(jaring, opts.lebar || 320);
   var t = jaring.spec.h;
+  var satuan = ' ' + (opts.satuan || 'cm');
+  var dipilih = opts.dipilih || [];
+  var namaSisi = opts.namaSisi || {};
   var semua = [];
   jaring.pieces.forEach(function (p) {
     semua = semua.concat(p.pts2);
@@ -25455,19 +25463,19 @@ function buildLpNetSVG(jaring, opts) {
   var keping = jaring.pieces
     .map(function (p) {
       var cls = 'psm-net-piece psm-face--' + p.jenis;
+      var aktif = opts.sorot === p.id || dipilih.indexOf(p.id) !== -1;
       if (opts.sorot === p.id) cls += ' is-sorot';
+      if (dipilih.indexOf(p.id) !== -1) cls += ' is-dipilih';
       var label =
         p.jenis === 'tegak'
-          ? 'Sisi tegak ke-' +
-            (parseInt(p.id.slice(1), 10) + 1) +
+          ? (namaSisi[p.id] || 'Sisi tegak ke-' + (parseInt(p.id.slice(1), 10) + 1)) +
             ': persegi panjang ' +
             lppAngka(p.pts2[1][0] - p.pts2[0][0]) +
-            ' cm × ' +
+            satuan +
+            ' × ' +
             lppAngka(t) +
-            ' cm'
-          : p.jenis === 'alas'
-          ? 'Sisi alas'
-          : 'Sisi tutup (atas)';
+            satuan
+          : namaSisi[p.id] || (p.jenis === 'alas' ? 'Sisi alas' : 'Sisi tutup (atas)');
       return (
         '<polygon class="' +
         cls +
@@ -25479,7 +25487,7 @@ function buildLpNetSVG(jaring, opts) {
           ? ' data-lpp-sisi="' +
             p.id +
             '" tabindex="0" role="button" aria-pressed="' +
-            (opts.sorot === p.id ? 'true' : 'false') +
+            (aktif ? 'true' : 'false') +
             '" aria-label="' +
             esc(label) +
             '"'
@@ -25518,18 +25526,37 @@ function buildLpNetSVG(jaring, opts) {
         '" y="' +
         psmFmt(t * sk + 0) +
         '" dy="-8">' +
-        esc(lppAngka(p.pts2[1][0] - p.pts2[0][0]) + ' cm') +
+        esc(lppAngka(p.pts2[1][0] - p.pts2[0][0]) + satuan) +
         '</text>'
       );
     })
     .join('');
+  if (opts.tanda) {
+    ukur += jaring.pieces
+      .filter(function (p) {
+        return opts.tanda[p.id];
+      })
+      .map(function (p) {
+        var c = pusatPoligon(p.pts2);
+        return (
+          '<text class="lpk-tanda" x="' +
+          psmFmt(c[0] * sk) +
+          '" y="' +
+          psmFmt(c[1] * sk) +
+          '">' +
+          esc(opts.tanda[p.id]) +
+          '</text>'
+        );
+      })
+      .join('');
+  }
   ukur +=
     '<text class="lpp-ukur lpp-ukur--tinggi" x="-10" y="' +
     psmFmt((t * sk) / 2) +
     '" transform="rotate(-90 -10 ' +
     psmFmt((t * sk) / 2) +
     ')">' +
-    esc(lppAngka(t) + ' cm') +
+    esc(lppAngka(t) + satuan) +
     '</text>';
   return (
     '<svg class="psm-net lpp-net" viewBox="' +
@@ -25895,8 +25922,11 @@ function bindLpSabuk(root, id, p, st, onChange) {
 
 /*
  * kartu = { id, judul, visual?, hints?, temuan?, fields: [{ id, label,
- *           jawab, satuan?, diberikan?, pengecoh?: [{ nilai, pesan }],
- *           pesanSalah? }] }
+ *           jawab, satuan?, awalan?, angka?, diberikan?,
+ *           pengecoh?: [{ nilai, pesan }], pesanSalah? }] }
+ *   awalan  teks di depan isian (mis. 'Rp')
+ *   angka   true → isian dibaca parseInputAngka (titik = ribuan, koma =
+ *           desimal, mis. 'Rp24.000' atau '0,66'); bawaan parseInputDecimal
  * state[key] = { <kartuId>: { input: { <fieldId>: str }, hasil: {
  *                <fieldId>: { kode: 'benar'|'pengecoh'|'salah', pesan } } } }
  */
@@ -25925,7 +25955,7 @@ function periksaLpKartu(kartu, st, inputs) {
   fields.forEach(function (f) {
     var raw = inputs[f.id] === undefined || inputs[f.id] === null ? '' : String(inputs[f.id]);
     st.input[f.id] = raw.trim();
-    var ph = parseInputDecimal(raw);
+    var ph = f.angka ? parseInputAngka(raw) : parseInputDecimal(raw);
     if (ph.error && !error) error = ph.error;
     nilai[f.id] = ph.value;
   });
@@ -25977,6 +26007,7 @@ function buildLpIsian(id, kartuList, stMap) {
               var h = st.hasil[f.id];
               var fid = id + '-' + k.id + '-' + f.id;
               var sat = f.satuan ? '<span class="lpp-satuan">' + esc(f.satuan) + '</span>' : '';
+              var awal = f.awalan ? '<span class="lpp-satuan">' + esc(f.awalan) + '</span>' : '';
               var isi;
               var cls = 'lpp-field';
               if (f.diberikan) {
@@ -25985,6 +26016,7 @@ function buildLpIsian(id, kartuList, stMap) {
                   '<span class="lpp-field__nilai" id="' +
                   fid +
                   '">' +
+                  awal +
                   esc(lppAngka(f.jawab)) +
                   ' ' +
                   sat +
@@ -25995,6 +26027,7 @@ function buildLpIsian(id, kartuList, stMap) {
                   '<span class="lpp-field__nilai" id="' +
                   fid +
                   '">✓ ' +
+                  awal +
                   esc(st.input[f.id]) +
                   ' ' +
                   sat +
@@ -26002,7 +26035,9 @@ function buildLpIsian(id, kartuList, stMap) {
               } else {
                 if (h) cls += ' is-salah';
                 isi =
-                  '<span class="lpp-field__in"><input type="text" class="input-text dl-num-input lpp-in' +
+                  '<span class="lpp-field__in">' +
+                  awal +
+                  '<input type="text" class="input-text dl-num-input lpp-in' +
                   (h ? ' has-error' : '') +
                   '" id="' +
                   fid +
@@ -26099,4 +26134,572 @@ function bindLpIsian(root, id, kartuList, stMap, save, rerender) {
       }
     });
   });
+}
+
+/* ============================================================
+   48. MASALAH KONTEKSTUAL LUAS PERMUKAAN PRISMA
+   Dipakai modul masalah kontekstual luas permukaan prisma
+   (fase-d/mpi-22.3, Problem Based Learning). Dibangun di atas seksi 47
+   (rincianSisiPrisma, luasPermukaanPrisma, kandidatLuasPermukaan,
+   jaringPrismaUmum, buildLpNetSVG, lppAngka).
+
+   Benda nyata jarang memakai bahan di SEMUA sisinya (tenda tanpa
+   lantai, etalase terbuka di belakang, meja yang bagian bawahnya tidak
+   dicat), dan bahan dibeli per lembar/kaleng/m². Fungsi murni:
+     luasSisiDipakai(pts, t, pakai)   jumlah luas sisi ber-id `pakai`
+                                      ('alas', 'atas', 't0' … 't<n-1>')
+     periksaSisiDipakai(pilih, kunci) { benar, kurang[], lebih[] }
+     konversiLuas(v, dari, ke)        mm² / cm² / dm² / m²
+     banyakWadah(luas, isi)           bahan yang dibeli → dibulatkan KE ATAS
+     banyakMuat(luas, luasSatu)       benda yang bisa dibuat → KE BAWAH
+     rekapAnggaran(baris, dana)       { total, sisa, cukup }
+   Pengecoh berdiagnosa { kode, nilai, pesan } untuk kartu isian seksi
+   47 (pengecohSisiDipakai, pengecohBanyakWadah, pengecohKonversiLuas),
+   serta diagnosa & opsi soal kontekstual berjenis (kandidatMasalahLp,
+   diagnosaMasalahLp, opsiMasalahLp; lihat komentar kandidatMasalahLp).
+
+   Komponen UI: pemilih sisi yang memakai bahan (ketuk kepingan jaring
+   atau tombol nama sisi, periksa, petunjuk bertahap), tabel anggaran,
+   dan papan proposal kelompok. Gaya .lpk-* ada di shared/base.css.
+   ============================================================ */
+
+function luasSisiDipakai(pts, t, pakai) {
+  return lppBulat(
+    rincianSisiPrisma(pts, t)
+      .filter(function (f) {
+        return pakai.indexOf(f.id) !== -1;
+      })
+      .reduce(function (s, f) {
+        return s + f.luas;
+      }, 0)
+  );
+}
+
+function periksaSisiDipakai(pilih, kunci) {
+  var kurang = kunci.filter(function (id) {
+    return pilih.indexOf(id) === -1;
+  });
+  var lebih = pilih.filter(function (id) {
+    return kunci.indexOf(id) === -1;
+  });
+  return { benar: !kurang.length && !lebih.length, kurang: kurang, lebih: lebih };
+}
+
+/* Luas satu satuan dinyatakan dalam cm². */
+var LPK_SATUAN_LUAS = { 'mm²': 0.01, 'cm²': 1, 'dm²': 100, 'm²': 10000 };
+
+function lpkFaktorLuas(dari, ke) {
+  if (!LPK_SATUAN_LUAS[dari] || !LPK_SATUAN_LUAS[ke]) {
+    throw new Error('Satuan luas tidak dikenal: ' + dari + ' → ' + ke);
+  }
+  return LPK_SATUAN_LUAS[dari] / LPK_SATUAN_LUAS[ke];
+}
+
+function konversiLuas(nilai, dari, ke) {
+  return lppBulat(nilai * lpkFaktorLuas(dari, ke));
+}
+
+/* Galat biner (mis. 0,1 + 0,2) tidak boleh menambah/mengurangi satu wadah. */
+function banyakWadah(luas, isi) {
+  return Math.ceil(lppBulat(luas / isi) - 1e-9);
+}
+
+function banyakMuat(luas, luasSatu) {
+  return Math.floor(lppBulat(luas / luasSatu) + 1e-9);
+}
+
+/* baris = [{ id, nama, rincian?, biaya }] */
+function rekapAnggaran(baris, dana) {
+  var total = lppBulat(
+    baris.reduce(function (s, b) {
+      return s + b.biaya;
+    }, 0)
+  );
+  var sisa = lppBulat(dana - total);
+  return { total: total, sisa: sisa, cukup: sisa >= 0 };
+}
+
+var LPK_PESAN = {
+  benar: 'Tepat! Kamu menghitung bahan sesuai kebutuhan benda nyatanya.',
+  'semua-sisi':
+    'Kamu menghitung SEMUA sisi prisma. Pada benda ini ada sisi yang terbuka atau tidak memakai bahan, jadi sisi itu tidak ikut dihitung.',
+  'sisi-lebih':
+    'Ada sisi yang tidak memakai bahan ikut kamu hitung. Periksa lagi sisi mana saja yang benar-benar ditutup bahan.',
+  'sisi-kurang':
+    'Ada sisi yang memakai bahan belum kamu hitung. Periksa lagi setiap sisi yang ditutup bahan.',
+  'bulat-bawah':
+    'Kamu membulatkan ke bawah, sehingga bahannya KURANG. Bahan yang dibeli selalu dibulatkan ke atas agar cukup.',
+  'belum-bulat':
+    'Bahan dibeli utuh (per lembar, kaleng, atau gulung), jadi hasil bagi harus dibulatkan ke atas menjadi bilangan bulat.',
+  'lupa-banyak':
+    'Itu kebutuhan untuk SATU benda saja. Kalikan dulu dengan banyak benda yang dibuat.',
+  'muat-atas':
+    'Kamu membulatkan ke atas, padahal bahannya tidak cukup untuk benda terakhir. Banyak benda yang bisa dibuat dibulatkan ke bawah.',
+  'faktor-panjang':
+    'Faktor yang kamu pakai adalah faktor satuan PANJANG (1 m = 100 cm). Untuk satuan luas faktornya dikuadratkan: 1 m² = 100 × 100 = 10.000 cm².',
+  'faktor-1000':
+    'Satuan luas naik atau turun 100 kali setiap satu tingkat: 1 m² = 100 dm² = 10.000 cm².',
+  'arah-terbalik':
+    'Arah konversinya terbalik. Dari satuan kecil ke besar dibagi (cm² → m²: dibagi 10.000), dari besar ke kecil dikali (m² → cm²: dikali 10.000).',
+  'lupa-harga': 'Itu baru luas bahannya. Biaya = luas bahan × harga per satuan luas.',
+  'lupa-bagi':
+    'Itu baru luas selimut (LP − 2 × La). Bagi dengan keliling alas untuk mendapatkan tinggi.',
+  'tinggi-satu-alas':
+    'Luas alas dikurangkan satu kali saja. Prisma punya dua sisi alas: t = (LP − 2 × La) : K.',
+  'tinggi-tanpa-alas': 'Luas alas belum dikurangkan. t = (LP − 2 × La) : K.',
+  'salah-hitung':
+    'Belum tepat. Tentukan dulu sisi yang memakai bahan, hitung luasnya, lalu perhatikan satuan dan pembulatannya.',
+};
+
+function lpkPesan(kode) {
+  return LPK_PESAN[kode] || LPP_PESAN[kode] || LPK_PESAN['salah-hitung'];
+}
+
+/* Pengecoh unik, tidak sama dengan `jawab`, dan bernilai positif. */
+function lpkSaring(list, jawab) {
+  var dipakai = [];
+  return list.filter(function (p) {
+    if (!(p.nilai > 0) || hampirSama(p.nilai, jawab)) return false;
+    var ada = dipakai.some(function (v) {
+      return hampirSama(v, p.nilai);
+    });
+    if (ada) return false;
+    dipakai.push(p.nilai);
+    return true;
+  });
+}
+
+function lpkPengecoh(kode, nilai) {
+  return { kode: kode, nilai: lppBulat(nilai), pesan: lpkPesan(kode) };
+}
+
+function pengecohSisiDipakai(pts, t, pakai) {
+  var rinci = rincianSisiPrisma(pts, t);
+  var benar = luasSisiDipakai(pts, t, pakai);
+  var list = [
+    lpkPengecoh(
+      'semua-sisi',
+      rinci.reduce(function (s, f) {
+        return s + f.luas;
+      }, 0)
+    ),
+  ];
+  rinci.forEach(function (f) {
+    if (pakai.indexOf(f.id) === -1) list.push(lpkPengecoh('sisi-lebih', benar + f.luas));
+  });
+  rinci.forEach(function (f) {
+    if (pakai.indexOf(f.id) !== -1) list.push(lpkPengecoh('sisi-kurang', benar - f.luas));
+  });
+  return lpkSaring(list, benar);
+}
+
+function pengecohBanyakWadah(luas, isi) {
+  var benar = banyakWadah(luas, isi);
+  var bagi = lppBulat(luas / isi);
+  if (hampirSama(bagi, Math.round(bagi))) return [];
+  return lpkSaring(
+    [lpkPengecoh('bulat-bawah', Math.floor(bagi)), lpkPengecoh('belum-bulat', bagi)],
+    benar
+  );
+}
+
+function pengecohKonversiLuas(nilai, dari, ke) {
+  var f = lpkFaktorLuas(dari, ke);
+  var benar = konversiLuas(nilai, dari, ke);
+  var list = [lpkPengecoh('faktor-panjang', nilai * Math.sqrt(f))];
+  if (Math.round(Math.abs(Math.log(f) / Math.LN10)) >= 4) {
+    list.push(lpkPengecoh('faktor-1000', nilai * (f < 1 ? f * 10 : f / 10)));
+  }
+  list.push(lpkPengecoh('arah-terbalik', nilai / f));
+  return lpkSaring(list, benar);
+}
+
+/*
+ * Kandidat jawaban soal kontekstual { benar: v, <kodeKekeliruan>: v }.
+ * cek.jenis:
+ *   'lp'       { luasAlas, kelilingAlas, tinggi, tanpaTutup? }
+ *   'dipakai'  { alas: pts, t, pakai: [idSisi] }
+ *   'wadah'    { luasSatu, banyak, isiWadah }  → banyak wadah dibeli
+ *   'muat'     { luasTersedia, luasSatu }      → banyak benda dibuat
+ *   'konversi' { nilai, dari, ke }
+ *   'tinggi'   { luasPermukaan, luasAlas, kelilingAlas }
+ *   'biaya'    { luasAlas, kelilingAlas, tinggi, tanpaTutup?, harga }
+ * Urutan kunci menentukan prioritas diagnosa bila dua nilai kebetulan sama.
+ */
+function kandidatMasalahLp(cek) {
+  var k = {};
+  function tambah(list) {
+    list.forEach(function (p) {
+      if (!Object.prototype.hasOwnProperty.call(k, p.kode)) k[p.kode] = p.nilai;
+    });
+  }
+  var o = {
+    luasAlas: cek.luasAlas,
+    kelilingAlas: cek.kelilingAlas,
+    tinggi: cek.tinggi,
+    tanpaTutup: !!cek.tanpaTutup,
+  };
+  if (cek.jenis === 'lp' || cek.jenis === 'biaya') {
+    var lp = kandidatLuasPermukaan(o);
+    var kali = cek.jenis === 'biaya' ? cek.harga : 1;
+    Object.keys(lp).forEach(function (kode) {
+      k[kode] = lppBulat(lp[kode] * kali);
+    });
+    if (cek.jenis === 'biaya') k['lupa-harga'] = lp.benar;
+  } else if (cek.jenis === 'dipakai') {
+    k.benar = luasSisiDipakai(cek.alas, cek.t, cek.pakai);
+    tambah(pengecohSisiDipakai(cek.alas, cek.t, cek.pakai));
+  } else if (cek.jenis === 'wadah') {
+    var total = cek.luasSatu * cek.banyak;
+    k.benar = banyakWadah(total, cek.isiWadah);
+    tambah(pengecohBanyakWadah(total, cek.isiWadah));
+    k['lupa-banyak'] = banyakWadah(cek.luasSatu, cek.isiWadah);
+  } else if (cek.jenis === 'muat') {
+    k.benar = banyakMuat(cek.luasTersedia, cek.luasSatu);
+    k['muat-atas'] = Math.ceil(lppBulat(cek.luasTersedia / cek.luasSatu) - 1e-9);
+    k['belum-bulat'] = lppBulat(cek.luasTersedia / cek.luasSatu);
+  } else if (cek.jenis === 'konversi') {
+    k.benar = konversiLuas(cek.nilai, cek.dari, cek.ke);
+    tambah(pengecohKonversiLuas(cek.nilai, cek.dari, cek.ke));
+  } else if (cek.jenis === 'tinggi') {
+    k.benar = tinggiDariLuasPermukaan(cek.luasPermukaan, cek.luasAlas, cek.kelilingAlas);
+    k['lupa-bagi'] = lppBulat(cek.luasPermukaan - 2 * cek.luasAlas);
+    k['tinggi-satu-alas'] = lppBulat((cek.luasPermukaan - cek.luasAlas) / cek.kelilingAlas);
+    k['tinggi-tanpa-alas'] = lppBulat(cek.luasPermukaan / cek.kelilingAlas);
+  } else {
+    throw new Error('Jenis soal tidak dikenal: ' + cek.jenis);
+  }
+  Object.keys(k).forEach(function (kode) {
+    if (kode !== 'benar' && hampirSama(k[kode], k.benar)) delete k[kode];
+  });
+  return k;
+}
+
+function diagnosaMasalahLp(cek, jawab) {
+  var k = kandidatMasalahLp(cek);
+  var urut = Object.keys(k);
+  for (var i = 0; i < urut.length; i++) {
+    if (hampirSama(k[urut[i]], jawab)) return { kode: urut[i], pesan: lpkPesan(urut[i]) };
+  }
+  return { kode: 'salah-hitung', pesan: lpkPesan('salah-hitung') };
+}
+
+/*
+ * Opsi pilihan ganda soal kontekstual: jawaban benar di depan, lalu
+ * pengecoh berdiagnosa bernilai unik & positif (minimal 4 opsi, ditambah
+ * cadangan bila kurang). Modul WAJIB mengacaknya (ensureShuffledOrder).
+ *   opts.awalan  teks sebelum bilangan (mis. 'Rp')
+ */
+function opsiMasalahLp(cek, satuan, opts) {
+  opts = opts || {};
+  var k = kandidatMasalahLp(cek);
+  var b = k.benar;
+  var cadangan = { 'tambah-satu': b + 1, 'dua-kali': 2 * b, 'tambah-dua': b + 2 };
+  var out = [];
+  var dipakai = [];
+  function tambah(id, v) {
+    v = lppBulat(v);
+    var ada = dipakai.some(function (x) {
+      return hampirSama(x, v);
+    });
+    if (ada || !(v > 0)) return;
+    dipakai.push(v);
+    out.push({
+      id: id,
+      nilai: v,
+      label: (opts.awalan || '') + lppAngka(v) + (satuan ? ' ' + satuan : ''),
+    });
+  }
+  Object.keys(k).forEach(function (id) {
+    tambah(id, k[id]);
+  });
+  Object.keys(cadangan).forEach(function (id) {
+    if (out.length < 4) tambah(id, cadangan[id]);
+  });
+  return out;
+}
+
+/* ---------- UI: pemilih sisi yang memakai bahan ---------- */
+
+/*
+ * objek = { id, nama, alas: pts, t, satuan?, bentukAlas?, namaSisi:
+ *           { alas, atas, t0 … }, dipakai: [idSisi], alasan?,
+ *           tutupPada?, alasPada? }
+ * state[key] = { <objekId>: { pilih: [idSisi], cek, benar, coba, hasil? } }
+ */
+function ensureLpSisiState(state, key, objekList) {
+  var map = state[key] && typeof state[key] === 'object' ? state[key] : {};
+  objekList.forEach(function (o) {
+    var st = map[o.id] && typeof map[o.id] === 'object' ? map[o.id] : {};
+    if (!Array.isArray(st.pilih)) st.pilih = [];
+    if (typeof st.cek !== 'boolean') st.cek = false;
+    if (typeof st.benar !== 'boolean') st.benar = false;
+    if (typeof st.coba !== 'number') st.coba = 0;
+    map[o.id] = st;
+  });
+  state[key] = map;
+  return map;
+}
+
+function lpSisiToggle(st, sid) {
+  if (st.benar) return;
+  var i = st.pilih.indexOf(sid);
+  if (i === -1) st.pilih.push(sid);
+  else st.pilih.splice(i, 1);
+  st.cek = false;
+}
+
+function lpSisiPeriksa(objek, st) {
+  var r = periksaSisiDipakai(st.pilih, objek.dipakai);
+  st.cek = true;
+  st.coba += 1;
+  st.benar = r.benar;
+  st.hasil = { kurang: r.kurang, lebih: r.lebih };
+  return r;
+}
+
+function lpkNamaSisi(objek, f) {
+  return (objek.namaSisi && objek.namaSisi[f.id]) || lppNamaSisi(f);
+}
+
+function lpkUkuranSisi(objek, f) {
+  var s = ' ' + (objek.satuan || 'cm');
+  if (f.jenis === 'tegak') return lppAngka(f.panjang) + s + ' × ' + lppAngka(f.lebar) + s;
+  return objek.bentukAlas || 'bentuk alas';
+}
+
+function lpkUmpanSisi(objek, st) {
+  if (st.benar) {
+    return buildFeedbackBox(
+      'success',
+      '✓',
+      '<strong>Tepat!</strong> ' + esc(objek.alasan || 'Sisi yang memakai bahan sudah lengkap.')
+    );
+  }
+  if (!st.cek || !st.hasil) return '';
+  var rinci = rincianSisiPrisma(objek.alas, objek.t);
+  function nama(ids) {
+    return rinci
+      .filter(function (f) {
+        return ids.indexOf(f.id) !== -1;
+      })
+      .map(function (f) {
+        return '<strong>' + esc(lpkNamaSisi(objek, f)) + '</strong>';
+      })
+      .join(', ');
+  }
+  var buka = st.coba >= 2;
+  var baris = [];
+  if (st.hasil.kurang.length) {
+    baris.push(
+      'Masih ada ' +
+        st.hasil.kurang.length +
+        ' sisi yang memakai bahan belum dipilih' +
+        (buka ? ': ' + nama(st.hasil.kurang) : '') +
+        '.'
+    );
+  }
+  if (st.hasil.lebih.length) {
+    baris.push(
+      'Ada ' +
+        st.hasil.lebih.length +
+        ' sisi yang tidak memakai bahan ikut dipilih' +
+        (buka ? ': ' + nama(st.hasil.lebih) : '') +
+        '.'
+    );
+  }
+  if (!buka)
+    baris.push('Baca lagi cerita bendanya: bagian mana yang terbuka atau memakai bahan lain?');
+  return buildFeedbackBox('warning', '💭', baris.join(' '));
+}
+
+function buildLpSisiPicker(id, objek, st) {
+  var rinci = rincianSisiPrisma(objek.alas, objek.t);
+  var tanda = {};
+  rinci.forEach(function (f, i) {
+    tanda[f.id] = String(i + 1);
+  });
+  var jaring = jaringPrismaUmum(objek.alas, objek.t, {
+    tutupPada: objek.tutupPada,
+    alasPada: objek.alasPada,
+  });
+  return (
+    '<div class="lpk-pilih' +
+    (st.benar ? ' is-benar' : '') +
+    '" id="' +
+    id +
+    '">' +
+    '<div class="psm-stage psm-stage--net lpp-stage">' +
+    buildLpNetSVG(jaring, {
+      pilih: !st.benar,
+      dipilih: st.pilih,
+      satuan: objek.satuan,
+      namaSisi: objek.namaSisi,
+      tanda: tanda,
+      lebar: 300,
+      aria:
+        'Jaring-jaring ' +
+        objek.nama +
+        (st.benar ? '' : '. Ketuk sisi yang memakai bahan untuk memilihnya.'),
+    }) +
+    '</div>' +
+    '<div class="lpk-chips" role="group" aria-label="Sisi-sisi ' +
+    esc(objek.nama) +
+    '">' +
+    rinci
+      .map(function (f) {
+        var on = st.pilih.indexOf(f.id) !== -1;
+        return (
+          '<button type="button" class="lpk-chip psm-face--' +
+          f.jenis +
+          (on ? ' is-on' : '') +
+          '" data-lpk-sisi="' +
+          f.id +
+          '" aria-pressed="' +
+          (on ? 'true' : 'false') +
+          '"' +
+          (st.benar ? ' disabled' : '') +
+          '><span class="lpk-chip__no" aria-hidden="true">' +
+          tanda[f.id] +
+          '</span><span class="lpk-chip__nama">' +
+          esc(lpkNamaSisi(objek, f)) +
+          '</span><span class="lpk-chip__ukur">' +
+          esc(lpkUkuranSisi(objek, f)) +
+          '</span></button>'
+        );
+      })
+      .join('') +
+    '</div>' +
+    '<div class="lpk-pilih__umpan" aria-live="polite">' +
+    lpkUmpanSisi(objek, st) +
+    '</div>' +
+    (st.benar
+      ? ''
+      : '<div class="btn-group btn-group--end"><button type="button" class="btn btn--primary btn--small" data-lpk-cek>Periksa pilihan sisi</button></div>') +
+    '</div>'
+  );
+}
+
+function bindLpSisiPicker(root, id, objek, st, save, rerender) {
+  var el = root.querySelector('#' + id);
+  if (!el || st.benar) return;
+  function fokus(sel) {
+    var f = root.querySelector('#' + id + ' ' + sel);
+    if (f) f.focus();
+  }
+  function toggle(sid, sel) {
+    lpSisiToggle(st, sid);
+    save();
+    rerender();
+    fokus(sel);
+  }
+  el.querySelectorAll('[data-lpk-sisi]').forEach(function (b) {
+    b.addEventListener('click', function () {
+      var sid = b.getAttribute('data-lpk-sisi');
+      toggle(sid, '[data-lpk-sisi="' + sid + '"]');
+    });
+  });
+  el.querySelectorAll('[data-lpp-sisi]').forEach(function (k) {
+    function pilih() {
+      var sid = k.getAttribute('data-lpp-sisi');
+      toggle(sid, '[data-lpp-sisi="' + sid + '"]');
+    }
+    k.addEventListener('click', pilih);
+    k.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        pilih();
+      }
+    });
+  });
+  var cek = el.querySelector('[data-lpk-cek]');
+  if (cek) {
+    cek.addEventListener('click', function () {
+      if (!st.pilih.length) {
+        showNotice('Pilih dulu sisi yang memakai bahan.');
+        return;
+      }
+      lpSisiPeriksa(objek, st);
+      save();
+      rerender();
+      fokus(st.benar ? '.lpk-pilih__umpan' : '[data-lpk-cek]');
+    });
+  }
+}
+
+/* ---------- UI: tabel anggaran & papan proposal ---------- */
+
+/* baris = [{ id, nama, rincian?, biaya }] */
+function buildLpAnggaran(baris, dana) {
+  var r = rekapAnggaran(baris, dana);
+  return (
+    '<div class="lpk-anggaran-wrap"><table class="lpk-anggaran">' +
+    '<caption class="sr-only">Rincian anggaran</caption>' +
+    '<thead><tr><th scope="col">Kebutuhan</th><th scope="col">Rincian</th><th scope="col">Biaya</th></tr></thead>' +
+    '<tbody>' +
+    baris
+      .map(function (b) {
+        return (
+          '<tr><th scope="row">' +
+          esc(b.nama) +
+          '</th><td>' +
+          esc(b.rincian || '') +
+          '</td><td class="lpk-anggaran__uang">' +
+          esc(formatRupiah(b.biaya)) +
+          '</td></tr>'
+        );
+      })
+      .join('') +
+    '</tbody>' +
+    '<tfoot>' +
+    '<tr><th scope="row" colspan="2">Total biaya</th><td class="lpk-anggaran__uang">' +
+    esc(formatRupiah(r.total)) +
+    '</td></tr>' +
+    '<tr><th scope="row" colspan="2">Dana tersedia</th><td class="lpk-anggaran__uang">' +
+    esc(formatRupiah(dana)) +
+    '</td></tr>' +
+    '<tr class="lpk-anggaran__status ' +
+    (r.cukup ? 'is-cukup' : 'is-kurang') +
+    '"><th scope="row" colspan="2">' +
+    (r.cukup ? '✓ Dana cukup, sisa' : '⚠ Dana kurang') +
+    '</th><td class="lpk-anggaran__uang">' +
+    esc(formatRupiah(Math.abs(r.sisa))) +
+    '</td></tr>' +
+    '</tfoot></table></div>'
+  );
+}
+
+/*
+ * p = { judul, sub?, keputusan: [{ ikon, judul, isi }], anggaran?:
+ *       { baris, dana }, penutup? } — teks polos (di-escape).
+ */
+function buildLpProposal(p) {
+  return (
+    '<article class="lpk-proposal" aria-label="' +
+    esc(p.judul) +
+    '">' +
+    '<header class="lpk-proposal__head"><h3 class="lpk-proposal__judul">' +
+    esc(p.judul) +
+    '</h3>' +
+    (p.sub ? '<p class="lpk-proposal__sub">' + esc(p.sub) + '</p>' : '') +
+    '</header>' +
+    '<div class="lpk-proposal__grid">' +
+    p.keputusan
+      .map(function (k) {
+        return (
+          '<section class="lpk-proposal__item"><h4><span aria-hidden="true">' +
+          esc(k.ikon || '') +
+          '</span> ' +
+          esc(k.judul) +
+          '</h4><p>' +
+          esc(k.isi) +
+          '</p></section>'
+        );
+      })
+      .join('') +
+    '</div>' +
+    (p.anggaran ? buildLpAnggaran(p.anggaran.baris, p.anggaran.dana) : '') +
+    (p.penutup ? '<p class="lpk-proposal__penutup">' + esc(p.penutup) + '</p>' : '') +
+    '</article>'
+  );
 }

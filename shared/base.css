@@ -10850,3 +10850,343 @@ button.akar-tile:disabled {
     transition: none;
   }
 }
+
+/* =========================================================================
+   Seksi 48 — Masalah kontekstual luas permukaan prisma (shared/engine.js
+   seksi 48): nomor sisi pada jaring (.lpk-tanda), sisi terpilih
+   (.is-dipilih), pemilih sisi bahan (.lpk-pilih, .lpk-chip*), tabel
+   anggaran (.lpk-anggaran*), dan papan proposal (.lpk-proposal*).
+   Ditambah gaya bersama modul luas permukaan prisma yang sebelumnya
+   khas mpi-22.2: galeri kemasan (.lpp-galeri*), kartu data bergambar
+   (.lpp-data-visual), dan kartu sajian penutup (.sajian-*).
+   ========================================================================= */
+
+.psm-net-piece.is-dipilih {
+  fill: var(--color-purple-soft);
+  stroke: var(--color-purple);
+  stroke-width: 3;
+}
+
+.lpk-tanda {
+  font-family: var(--font-display);
+  font-size: 15px;
+  font-weight: 800;
+  fill: var(--color-ink);
+  text-anchor: middle;
+  dominant-baseline: middle;
+  pointer-events: none;
+}
+
+.lpk-pilih {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  min-width: 0;
+}
+
+.lpk-chips {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: var(--space-2);
+}
+
+.lpk-chip {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  grid-template-areas:
+    'no nama'
+    'no ukur';
+  column-gap: var(--space-2);
+  align-items: center;
+  min-height: 48px;
+  padding: var(--space-2) var(--space-3);
+  border: 2px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  color: var(--color-ink);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition:
+    border-color 0.15s ease,
+    background 0.15s ease;
+}
+
+.lpk-chip:hover:not(:disabled) {
+  border-color: var(--color-purple);
+}
+
+.lpk-chip:focus-visible {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+.lpk-chip.is-on {
+  border-color: var(--color-purple);
+  background: var(--color-purple-soft);
+}
+
+.lpk-chip:disabled {
+  cursor: default;
+}
+
+.lpk-chip__no {
+  grid-area: no;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--color-bg);
+  font-weight: 800;
+}
+
+.lpk-chip.is-on .lpk-chip__no {
+  background: var(--color-purple);
+  color: #fff;
+}
+
+.lpk-chip__nama {
+  grid-area: nama;
+  font-weight: 700;
+}
+
+.lpk-chip__ukur {
+  grid-area: ukur;
+  font-size: 0.8rem;
+  color: var(--color-ink-muted);
+}
+
+.lpk-pilih.is-benar .lpk-chip.is-on {
+  border-color: var(--color-success);
+  background: var(--color-success-soft);
+}
+
+.lpk-pilih.is-benar .lpk-chip.is-on .lpk-chip__no {
+  background: var(--color-success);
+}
+
+.lpk-pilih.is-benar .psm-net-piece.is-dipilih {
+  fill: var(--color-success-soft);
+  stroke: var(--color-success);
+}
+
+.lpk-anggaran-wrap {
+  overflow-x: auto;
+  max-width: 100%;
+}
+
+.lpk-anggaran {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.95rem;
+}
+
+.lpk-anggaran th,
+.lpk-anggaran td {
+  padding: var(--space-2) var(--space-3);
+  border-bottom: 1px solid var(--color-border);
+  text-align: left;
+  vertical-align: top;
+}
+
+.lpk-anggaran thead th {
+  background: var(--color-bg);
+  font-size: 0.85rem;
+}
+
+.lpk-anggaran tbody th {
+  font-weight: 600;
+}
+
+.lpk-anggaran__uang {
+  font-family: var(--font-mono);
+  font-weight: 700;
+  text-align: right !important;
+  white-space: nowrap;
+}
+
+.lpk-anggaran tfoot th {
+  text-align: right;
+}
+
+.lpk-anggaran__status.is-cukup th,
+.lpk-anggaran__status.is-cukup td {
+  background: var(--color-success-soft);
+  color: var(--color-success-strong);
+}
+
+.lpk-anggaran__status.is-kurang th,
+.lpk-anggaran__status.is-kurang td {
+  background: var(--color-error-soft);
+  color: var(--color-error-strong);
+}
+
+.lpk-proposal {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  padding: var(--space-4);
+  border: 3px dashed var(--color-orange);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+}
+
+.lpk-proposal__judul {
+  margin: 0;
+  font-family: var(--font-display);
+  text-align: center;
+}
+
+.lpk-proposal__sub {
+  margin: var(--space-1) 0 0;
+  color: var(--color-ink-muted);
+  text-align: center;
+}
+
+.lpk-proposal__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: var(--space-3);
+}
+
+.lpk-proposal__item {
+  padding: var(--space-3);
+  border-radius: var(--radius-md);
+  background: var(--color-orange-soft);
+  min-width: 0;
+}
+
+.lpk-proposal__item h4 {
+  margin: 0 0 var(--space-1);
+}
+
+.lpk-proposal__item p {
+  margin: 0;
+}
+
+.lpk-proposal__penutup {
+  margin: 0;
+  font-style: italic;
+  text-align: center;
+}
+
+@media (max-width: 480px) {
+  .lpk-anggaran {
+    font-size: 0.85rem;
+  }
+
+  .lpk-anggaran th,
+  .lpk-anggaran td {
+    padding: var(--space-1) var(--space-2);
+  }
+
+  .lpk-proposal {
+    padding: var(--space-3) var(--space-2);
+  }
+
+  .lpk-proposal__item {
+    padding: var(--space-2);
+  }
+
+  .lpk-anggaran thead th:nth-child(2),
+  .lpk-anggaran tbody td:nth-child(2) {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lpk-chip {
+    transition: none;
+  }
+}
+
+.lpp-galeri {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: var(--space-3);
+}
+
+.lpp-galeri__item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0;
+  min-width: 0;
+}
+
+.lpp-galeri__item .psm-stage {
+  width: 100%;
+}
+
+.lpp-galeri__item .psm-fold-svg {
+  max-height: 150px;
+}
+
+.lpp-galeri__item figcaption {
+  display: flex;
+  flex-direction: column;
+  font-weight: 700;
+  text-align: center;
+}
+
+.lpp-galeri__item figcaption span {
+  font-size: 0.85rem;
+  font-weight: 400;
+  color: var(--color-ink-muted);
+}
+
+.lpp-data-visual {
+  display: grid;
+  grid-template-columns: minmax(0, 240px) minmax(0, 1fr);
+  gap: var(--space-3);
+  align-items: center;
+}
+
+.lpp-data-visual .lpp-net {
+  max-height: 200px;
+}
+
+.lpp-data-visual .dl-caption {
+  margin: 0;
+}
+
+@media (max-width: 560px) {
+  .lpp-data-visual {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.sajian-trio {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--space-3);
+  margin: var(--space-4) 0;
+}
+
+.sajian-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-1);
+  min-width: 140px;
+  max-width: 220px;
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-md);
+  background: var(--color-primary-soft);
+  color: var(--color-primary-strong);
+  font-weight: 700;
+  text-align: center;
+}
+
+.sajian-card--utama {
+  background: var(--color-primary);
+  color: #fff;
+}
+
+.sajian-card__ikon {
+  font-size: 1.4rem;
+}
