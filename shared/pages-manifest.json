@@ -63,6 +63,14 @@
     "stageCount": 10,
     "extraBody": "partials/reset-modal.html"
   },
+  "fase-f/mpi-1.3": {
+    "title": "Deret Aritmetika & Rumus Jumlah n Suku Pertama — Matematika Fase F",
+    "description": "Media pembelajaran interaktif berbasis Problem Based Learning untuk menjelaskan konsep deret aritmetika dan menentukan rumus jumlah n suku pertama Sₙ = n/2 (a + Uₙ) = n/2 (2a + (n − 1)b) melalui masalah lencana XP harian aplikasi NgodingYuk: tabel jumlah berjalan, pemilahan barisan dan deret, tangga XP yang dibalik dan ditumpuk menjadi persegi panjang, tabel pasangan Gauss, uji rumus terhadap usulan teman, fungsi JavaScript jumlahDeret(), lab slider kejar 1.000 XP, serta Laporan Lencana untuk klien.",
+    "kicker": "Matematika — Fase F (SMK RPL)",
+    "h1": "Deret Aritmetika & Rumus Jumlah n Suku Pertama",
+    "stageCount": 10,
+    "extraBody": "partials/reset-modal.html"
+  },
   "fase-d/mpi-12.1": {
     "title": "Membaca & Menulis Bilangan Berpangkat — Matematika Fase D",
     "description": "Media pembelajaran interaktif berbasis Discovery Learning untuk membaca dan menulis bilangan berpangkat bulat positif, negatif, dan nol beserta unsur-unsurnya (basis dan pangkat) melalui percobaan lipat kertas, pola tangga pangkat, dan penulis pangkat.",
