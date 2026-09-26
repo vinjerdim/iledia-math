@@ -1,0 +1,46 @@
+/* =========================================================================
+   fase-e/mpi-1.3/styles.css
+   Masalah Kontekstual Bilangan Berpangkat Bulat — Fase E (SMK RPL Kelas X)
+
+   Hanya memuat gaya yang KHAS modul ini (baris satuan biner, kepala kartu
+   penyelidikan). Kartu tiket klien (.surat-*, .orientasi-cerita), bentuk
+   soal rantai (.rantai-soal), langkah sifat (.sifat-step*), tabel banding
+   paket (.mpk-tabel*), papan laporan (.lpk-proposal*), pilihan ganda,
+   pemilahan, urut-ketuk, dan kartu sajian berasal dari shared/base.css.
+   ========================================================================= */
+
+.satuan-biner {
+  margin: var(--space-4) 0 0;
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-md);
+  background: var(--color-primary-soft);
+  font-family: var(--font-mono);
+  font-size: 0.9rem;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+
+.kartu-selidik__head {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-bottom: var(--space-2);
+}
+
+.kartu-selidik__ikon {
+  font-size: 1.6rem;
+  line-height: 1;
+}
+
+.kartu-selidik__judul {
+  margin: 0;
+}
+
+.kartu-selidik__cerita {
+  margin: 0 0 var(--space-2);
+  line-height: 1.55;
+}
+
+.kartu-selidik--done {
+  border-color: var(--color-success);
+}

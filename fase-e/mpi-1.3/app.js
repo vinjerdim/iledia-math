@@ -2,29 +2,26 @@
 
 /* ============================================================
    app.js — Logika aplikasi media pembelajaran
-   Matematika: Masalah Kontekstual Luas Permukaan Prisma
-   Fase D — SMP Kelas IX · Topik 22 Prisma dan Limas
+   Matematika: Masalah Kontekstual Bilangan Berpangkat Bulat
+   Fase E (Kelas X) — SMK Rekayasa Perangkat Lunak
 
    Utilitas & komponen bersama berada di shared/engine.js:
-   esc, shuffleArray, showNotice, buildFeedbackBox, formatRupiah,
-   createStageMachine, createExerciseStage, createStore,
-   ensureExerciseArray, optionIds, komponen umum (ensureShuffledOrder,
-   buildDiscoveryHead, buildTeacherNote, buildTpPanel, buildChoiceGroup,
-   buildDlPanel, buildDlNextButton, findOptionLabel, ensureSortStates,
-   buildSortItems, bindSortItems, sortItemsAllAnswered,
-   sortItemsCorrectCount, ensureTapOrderState, buildTapOrder,
-   bindTapOrder, buildGuidedQuizList, bindGuidedQuizList,
-   guidedQuizAllCorrect, buildGuidedChoiceFeedback), komponen luas
-   permukaan prisma bagian 47 (ukuranAlasPrisma, luasPermukaanPrisma,
-   kandidatLuasPermukaan, pengecohLuasSisi, jaringPrismaUmum,
-   buildLpNetSVG, buildFoldSVG, ensureLpLabState, buildLpNetLab,
-   bindLpNetLab, ensureLpIsianState, buildLpIsian, bindLpIsian,
-   lpKartuBenar), serta komponen masalah kontekstual bagian 48
-   (luasSisiDipakai, konversiLuas, banyakWadah, rekapAnggaran,
-   pengecohSisiDipakai, pengecohBanyakWadah, pengecohKonversiLuas,
-   diagnosaMasalahLp, ensureLpSisiState, buildLpSisiPicker,
-   bindLpSisiPicker, buildLpAnggaran, buildLpProposal) dan kartu surat
-   bagian 49 (buildSuratCard).
+   esc, shuffleArray, showNotice, buildFeedbackBox, formatNumber,
+   formatRupiah, parseInputInt, createStageMachine, createExerciseStage,
+   createStore, ensureExerciseArray, optionIds, komponen umum
+   (ensureShuffledOrder, buildDiscoveryHead, buildTeacherNote,
+   buildTpPanel, buildChoiceGroup, buildDlPanel, buildDlNextButton,
+   findOptionLabel, ensureSortStates, buildSortItems, bindSortItems,
+   sortItemsAllAnswered, sortItemsCorrectCount, ensureTapOrderState,
+   buildTapOrder, bindTapOrder, buildGuidedQuizList, bindGuidedQuizList,
+   guidedQuizAllCorrect, buildGuidedChoiceFeedback), bilangan berpangkat
+   bagian 27 (formatPangkat, formatPecahan), langkah & rantai sifat
+   bagian 44 (opsiSifatPangkat, makeSifatStepState, buildSifatStep,
+   bindSifatStep, sifatStepSkor, teksRantai, langkahRantai, hasilRantai,
+   langkahRantaiAktif, rantaiSelesai), papan proposal bagian 48
+   (buildLpProposal), serta masalah kontekstual berpangkat bagian 49
+   (formatUkuranBiner, diagnosaNilaiPangkat, bandingPaketPangkat,
+   paketTerhemat, buildBandingPaketPangkat, buildSuratCard).
 
    Alur tahap mengikuti sintaks Problem Based Learning; lihat komentar
    kepala pada data.js untuk pemetaan dan rangkaian aktivitasnya.
@@ -35,35 +32,36 @@
    ketika tahap dirender ulang, tetapi teracak ulang setiap Reset.
 
    Bagian:
-    1. Konstanta, hitungan kunci & kartu isian
+    1. Konstanta & hitungan kunci
     2. State & Storage
     3. Navigasi
     4. Utilitas Render
-    5. Stage: Orientasi Masalah     (PBL sintaks 1)
-    6. Stage: Organisasi            (PBL sintaks 2)
-    7. Stage: Penyelidikan Kemasan  (PBL sintaks 3)
-    8. Stage: Penyelidikan Sisi     (PBL sintaks 3)
-    9. Stage: Penyelidikan Anggaran (PBL sintaks 3)
-   10. Stage: Menyajikan Karya      (PBL sintaks 4)
-   11. Stage: Analisis & Evaluasi   (PBL sintaks 5)
-   12. Stage: Uji Terap
-   13. Stage: Refleksi
-   14. Stage: Selesai
-   15. Router Render
-   16. Helper UI (modal reset)
-   17. Init
+    5. Stage: Orientasi Masalah       (PBL sintaks 1)
+    6. Stage: Organisasi              (PBL sintaks 2)
+    7. Kartu penyelidikan (rantai sifat)
+    8. Stage: Penyelidikan Ukuran     (PBL sintaks 3)
+    9. Stage: Penyelidikan Kapasitas  (PBL sintaks 3)
+   10. Stage: Penyelidikan Waktu      (PBL sintaks 3)
+   11. Stage: Menyajikan Karya        (PBL sintaks 4)
+   12. Stage: Analisis & Evaluasi     (PBL sintaks 5)
+   13. Stage: Uji Terap
+   14. Stage: Refleksi
+   15. Stage: Selesai
+   16. Router Render
+   17. Helper UI (modal reset)
+   18. Init
    ============================================================ */
 
 /* ============================================================
-   1. KONSTANTA, HITUNGAN KUNCI & KARTU ISIAN
+   1. KONSTANTA & HITUNGAN KUNCI
    ============================================================ */
 
 var STAGES = [
   'orientasi',
   'organisasi',
-  'selidikKemasan',
-  'selidikSisi',
-  'selidikBiaya',
+  'selidikUkuran',
+  'selidikKapasitas',
+  'selidikWaktu',
   'karya',
   'evaluasi',
   'terapkan',
@@ -73,391 +71,43 @@ var STAGES = [
 var STAGE_LABELS = [
   'Masalah',
   'Organisasi',
-  'Kemasan',
-  'Sisi Bahan',
-  'Anggaran',
+  'Ukuran',
+  'Kapasitas',
+  'Waktu',
   'Karya',
   'Evaluasi',
   'Uji Terap',
   'Refleksi',
   'Selesai',
 ];
-var STORAGE_KEY = 'mpi-22-3-masalah-prisma-v1';
 
-var KEMASAN_BY_ID = {};
-DATA.kemasan.forEach(function (p) {
-  KEMASAN_BY_ID[p.id] = p;
-});
-var BENDA_BY_ID = {};
-DATA.benda.forEach(function (b) {
-  BENDA_BY_ID[b.id] = b;
-});
+var STORAGE_KEY = 'mpi-e-1-3-masalah-pangkat-v1';
 
-var LAB_OPTS = { prisma: DATA.kemasan };
+var F = DATA.fakta;
 
-/* Ringkasan ukuran satu prisma (semua sisi memakai bahan). */
-function ukuranPrisma(p) {
-  var u = ukuranAlasPrisma(p.alas);
-  var o = { luasAlas: u.luas, kelilingAlas: u.keliling, tinggi: p.t };
-  return { u: u, o: o, lp: luasPermukaanPrisma(o) };
-}
+/* Tiga tahap penyelidikan memakai kartu rantai sifat. */
+var SELIDIK = ['selidikUkuran', 'selidikKapasitas', 'selidikWaktu'];
 
-function jaringKecil(p, lebar, satuan) {
-  return buildLpNetSVG(jaringPrismaUmum(p.alas, p.t), {
-    lebar: lebar || 220,
-    satuan: satuan,
-    aria: 'Jaring-jaring ' + p.nama + ' berukuran',
+/* Semua kartu penyelidikan (id unik lintas tahap) → langkah sifatnya. */
+var KARTU_LANGKAH = {};
+SELIDIK.forEach(function (key) {
+  DATA[key].kartu.forEach(function (c) {
+    KARTU_LANGKAH[c.id] = langkahRantai(c.rantai);
   });
-}
-
-function lipatanKecil(p, lebar, aria) {
-  var j = jaringPrismaUmum(p.alas, p.t);
-  return buildFoldSVG(j, 1, { skala: lppSkala(j, lebar || 150), aria: aria || p.nama });
-}
-
-/* Pengecoh { nilai, pesan } dikali faktor (mis. harga), tetap berdiagnosa. */
-function kaliPengecoh(list, faktor) {
-  return list.map(function (p) {
-    return { nilai: lppBulat(p.nilai * faktor), pesan: p.pesan };
-  });
-}
-
-/* Semua hitungan kunci masalah stand, dari DATA + engine seksi 47–48. */
-var HITUNG = (function () {
-  var c = ukuranPrisma(KEMASAN_BY_ID.C);
-  var h = {
-    lpC: c.lp,
-    totalKarton: c.lp * DATA.banyakKemasan,
-    luasLembar: DATA.karton.panjang * DATA.karton.lebar,
-  };
-  h.lembar = banyakWadah(h.totalKarton, h.luasLembar);
-  h.biayaKarton = h.lembar * DATA.karton.harga;
-
-  var tenda = BENDA_BY_ID.tenda;
-  h.kain = luasSisiDipakai(tenda.alas, tenda.t, tenda.dipakai);
-  h.biayaKain = lppBulat(h.kain * DATA.kain.harga);
-
-  var etalase = BENDA_BY_ID.etalase;
-  h.kacaCm = luasSisiDipakai(etalase.alas, etalase.t, etalase.dipakai);
-  h.kacaM = konversiLuas(h.kacaCm, 'cm²', 'm²');
-  h.biayaKaca = lppBulat(h.kacaM * DATA.kaca.harga);
-
-  var meja = BENDA_BY_ID.meja;
-  h.catCm = luasSisiDipakai(meja.alas, meja.t, meja.dipakai);
-  h.catM = konversiLuas(h.catCm, 'cm²', 'm²');
-  h.kaleng = banyakWadah(h.catM, DATA.cat.luasPerKaleng);
-  h.biayaCat = h.kaleng * DATA.cat.harga;
-
-  var hemat = DATA.karya.hemat;
-  var bh = BENDA_BY_ID[hemat.benda];
-  h.kainHemat = luasSisiDipakai(
-    bh.alas,
-    bh.t,
-    bh.dipakai.filter(function (id) {
-      return id !== hemat.buang;
-    })
-  );
-  h.biayaKainHemat = lppBulat(h.kainHemat * DATA.kain.harga);
-  return h;
-})();
-
-function barisAnggaran(kain, biayaKain) {
-  return [
-    {
-      id: 'karton',
-      nama: '📦 Karton kemasan C',
-      rincian: HITUNG.lembar + ' lembar × ' + formatRupiah(DATA.karton.harga),
-      biaya: HITUNG.biayaKarton,
-    },
-    {
-      id: 'kain',
-      nama: '⛺ Kain tenda',
-      rincian: lppAngka(kain) + ' m² × ' + formatRupiah(DATA.kain.harga),
-      biaya: biayaKain,
-    },
-    {
-      id: 'kaca',
-      nama: '🪟 Kaca etalase',
-      rincian: lppAngka(HITUNG.kacaM) + ' m² × ' + formatRupiah(DATA.kaca.harga),
-      biaya: HITUNG.biayaKaca,
-    },
-    {
-      id: 'cat',
-      nama: '🎨 Cat meja kasir',
-      rincian: HITUNG.kaleng + ' kaleng × ' + formatRupiah(DATA.cat.harga),
-      biaya: HITUNG.biayaCat,
-    },
-  ];
-}
-
-var ANGGARAN_AWAL = barisAnggaran(HITUNG.kain, HITUNG.biayaKain);
-var ANGGARAN_HEMAT = barisAnggaran(HITUNG.kainHemat, HITUNG.biayaKainHemat);
-var REKAP_AWAL = rekapAnggaran(ANGGARAN_AWAL, DATA.dana);
-
-/* Tahap 3 — kartu data satu kemasan. */
-function buatKartuKemasan(p) {
-  var m = ukuranPrisma(p);
-  var diagLp = kandidatLuasPermukaan(m.o);
-  return {
-    id: 'kemasan-' + p.id,
-    judul: p.nama + ' · ' + p.bentuk,
-    visual:
-      '<div class="lpp-data-visual">' +
-      jaringKecil(p, 200) +
-      '<p class="dl-caption">Alas: ' +
-      esc(p.infoAlas) +
-      ' Tinggi prisma ' +
-      esc(lppAngka(p.t)) +
-      ' cm.</p></div>',
-    hints: [
-      'Luas alas = ' + p.caraLuasAlas + '.',
-      'Keliling alas = ' + m.u.sisi.map(lppAngka).join(' + ') + '.',
-      'Semua sisi memakai karton: LP = 2 × La + K × t.',
-    ],
-    fields: [
-      {
-        id: 'la',
-        label: 'Luas alas (La)',
-        jawab: m.u.luas,
-        satuan: 'cm²',
-        pengecoh: pengecohLuasSisi(
-          { jenis: 'alas', luas: m.u.luas },
-          { alasPersegiPanjang: p.alasPersegiPanjang, kelilingAlas: m.u.keliling }
-        ),
-      },
-      {
-        id: 'k',
-        label: 'Keliling alas (K)',
-        jawab: m.u.keliling,
-        satuan: 'cm',
-        pengecoh: lpkSaring(
-          [{ nilai: m.u.luas, pesan: 'Itu luas alas. Keliling = jumlah panjang semua sisi alas.' }],
-          m.u.keliling
-        ),
-      },
-      { id: 't', label: 'Tinggi prisma (t)', jawab: p.t, satuan: 'cm', diberikan: true },
-      {
-        id: 'lp',
-        label: '<strong>Luas karton (LP)</strong>',
-        jawab: m.lp,
-        satuan: 'cm²',
-        pengecoh: lpkSaring(
-          Object.keys(diagLp)
-            .filter(function (k) {
-              return k !== 'benar';
-            })
-            .map(function (k) {
-              return { nilai: diagLp[k], pesan: LPP_PESAN[k] };
-            }),
-          m.lp
-        ),
-      },
-    ],
-  };
-}
-
-/* Tahap 4 — kartu luas bahan satu benda (muncul setelah sisinya tepat). */
-function buatKartuBahan(b) {
-  var luas = luasSisiDipakai(b.alas, b.t, b.dipakai);
-  return {
-    id: 'bahan-' + b.id,
-    judul: 'Luas ' + b.bahan + ' yang dibutuhkan',
-    hints: [b.infoLuas],
-    temuan:
-      '<strong>' +
-      esc(lppAngka(luas) + ' ' + b.satuanLuas) +
-      '</strong> ' +
-      esc(b.bahan) +
-      ' untuk ' +
-      esc(b.nama.replace(/^\S+\s/, '').toLowerCase()) +
-      '.',
-    fields: [
-      {
-        id: 'luas',
-        label: 'Luas ' + esc(b.bahan),
-        jawab: luas,
-        satuan: b.satuanLuas,
-        angka: true,
-        pengecoh: pengecohSisiDipakai(b.alas, b.t, b.dipakai),
-      },
-    ],
-  };
-}
-
-/* Tahap 5 — kartu banyak bahan & biaya. */
-function buatKartuBiaya() {
-  var H = HITUNG;
-  var tenda = BENDA_BY_ID.tenda;
-  var pesanDijumlah =
-    'Luas satu kemasan dan banyak kemasan dijumlahkan. Luas karton semua kemasan = luas satu kemasan × banyak kemasan.';
-  var karton = {
-    id: 'biaya-karton',
-    judul: '📦 Karton untuk ' + DATA.banyakKemasan + ' kemasan C',
-    hints: [
-      'Luas karton semua kemasan = ' + H.lpC + ' × ' + DATA.banyakKemasan + '.',
-      'Banyak lembar = luas karton semua kemasan : luas satu lembar, lalu bulatkan KE ATAS.',
-    ],
-    fields: [
-      { id: 'lp', label: 'Karton satu kemasan', jawab: H.lpC, satuan: 'cm²', diberikan: true },
-      {
-        id: 'n',
-        label: 'Banyak kemasan',
-        jawab: DATA.banyakKemasan,
-        satuan: 'kemasan',
-        diberikan: true,
-      },
-      {
-        id: 'total',
-        label: 'Luas karton semua kemasan',
-        jawab: H.totalKarton,
-        satuan: 'cm²',
-        angka: true,
-        pengecoh: lpkSaring(
-          [
-            { nilai: H.lpC + DATA.banyakKemasan, pesan: pesanDijumlah },
-            { nilai: H.lpC, pesan: LPK_PESAN['lupa-banyak'] },
-          ],
-          H.totalKarton
-        ),
-      },
-      {
-        id: 'lembarLuas',
-        label: 'Luas satu lembar (' + DATA.karton.panjang + ' × ' + DATA.karton.lebar + ')',
-        jawab: H.luasLembar,
-        satuan: 'cm²',
-        diberikan: true,
-      },
-      {
-        id: 'lembar',
-        label: 'Banyak lembar yang dibeli',
-        jawab: H.lembar,
-        satuan: 'lembar',
-        angka: true,
-        pengecoh: pengecohBanyakWadah(H.totalKarton, H.luasLembar),
-      },
-      {
-        id: 'biaya',
-        label: 'Biaya karton',
-        jawab: H.biayaKarton,
-        awalan: 'Rp',
-        angka: true,
-        pengecoh: kaliPengecoh(pengecohBanyakWadah(H.totalKarton, H.luasLembar), DATA.karton.harga),
-      },
-    ],
-  };
-  var kain = {
-    id: 'biaya-kain',
-    judul: '⛺ Kain tenda',
-    hints: ['Biaya = luas kain × harga per m².'],
-    fields: [
-      { id: 'luas', label: 'Luas kain', jawab: H.kain, satuan: 'm²', diberikan: true },
-      {
-        id: 'harga',
-        label: 'Harga kain',
-        jawab: DATA.kain.harga,
-        awalan: 'Rp',
-        satuan: 'per m²',
-        diberikan: true,
-      },
-      {
-        id: 'biaya',
-        label: 'Biaya kain',
-        jawab: H.biayaKain,
-        awalan: 'Rp',
-        angka: true,
-        pengecoh: kaliPengecoh(
-          pengecohSisiDipakai(tenda.alas, tenda.t, tenda.dipakai),
-          DATA.kain.harga
-        ),
-      },
-    ],
-  };
-  var kaca = {
-    id: 'biaya-kaca',
-    judul: '🪟 Kaca etalase',
-    hints: ['1 m² = 10.000 cm², jadi luas dalam m² = luas dalam cm² : 10.000.'],
-    fields: [
-      { id: 'cm', label: 'Luas kaca', jawab: H.kacaCm, satuan: 'cm²', diberikan: true },
-      {
-        id: 'm',
-        label: 'Luas kaca dalam m²',
-        jawab: H.kacaM,
-        satuan: 'm²',
-        angka: true,
-        pengecoh: pengecohKonversiLuas(H.kacaCm, 'cm²', 'm²'),
-      },
-      {
-        id: 'harga',
-        label: 'Harga kaca',
-        jawab: DATA.kaca.harga,
-        awalan: 'Rp',
-        satuan: 'per m²',
-        diberikan: true,
-      },
-      {
-        id: 'biaya',
-        label: 'Biaya kaca',
-        jawab: H.biayaKaca,
-        awalan: 'Rp',
-        angka: true,
-        pengecoh: kaliPengecoh(pengecohKonversiLuas(H.kacaCm, 'cm²', 'm²'), DATA.kaca.harga),
-      },
-    ],
-  };
-  var cat = {
-    id: 'biaya-cat',
-    judul: '🎨 Cat meja kasir',
-    hints: [
-      '34.200 cm² : 10.000 = … m².',
-      'Banyak kaleng = luas dicat : luas per kaleng, lalu bulatkan KE ATAS.',
-    ],
-    fields: [
-      { id: 'cm', label: 'Luas yang dicat', jawab: H.catCm, satuan: 'cm²', diberikan: true },
-      {
-        id: 'm',
-        label: 'Luas yang dicat dalam m²',
-        jawab: H.catM,
-        satuan: 'm²',
-        angka: true,
-        pengecoh: pengecohKonversiLuas(H.catCm, 'cm²', 'm²'),
-      },
-      {
-        id: 'daya',
-        label: 'Satu kaleng cukup untuk',
-        jawab: DATA.cat.luasPerKaleng,
-        satuan: 'm²',
-        diberikan: true,
-      },
-      {
-        id: 'kaleng',
-        label: 'Banyak kaleng yang dibeli',
-        jawab: H.kaleng,
-        satuan: 'kaleng',
-        angka: true,
-        pengecoh: pengecohBanyakWadah(H.catM, DATA.cat.luasPerKaleng),
-      },
-      {
-        id: 'biaya',
-        label: 'Biaya cat',
-        jawab: H.biayaCat,
-        awalan: 'Rp',
-        angka: true,
-        pengecoh: kaliPengecoh(pengecohBanyakWadah(H.catM, DATA.cat.luasPerKaleng), DATA.cat.harga),
-      },
-    ],
-  };
-  return [karton, kain, kaca, cat];
-}
-
-var KARTU_KEMASAN = DATA.kemasan.map(buatKartuKemasan);
-var KARTU_BAHAN = {};
-DATA.benda.forEach(function (b) {
-  KARTU_BAHAN[b.id] = buatKartuBahan(b);
 });
-var KARTU_BAHAN_LIST = DATA.benda.map(function (b) {
-  return KARTU_BAHAN[b.id];
-});
-var KARTU_BIAYA = buatKartuBiaya();
+
+var OPSI_PAKET = {
+  a: 2,
+  kPerPeriode: F.kPerTahun,
+  minimal: F.minimalTahun,
+  satuanPeriode: 'tahun',
+};
+var PAKET_ROWS = bandingPaketPangkat(DATA.paket, OPSI_PAKET);
+var PAKET_PILIH = paketTerhemat(PAKET_ROWS);
+
+function pangkat2(k) {
+  return formatPangkat(2, k);
+}
 
 function itemPilah(list) {
   return list.map(function (it) {
@@ -473,7 +123,7 @@ function itemPilah(list) {
 var PILAH_ITEMS = itemPilah(DATA.organisasi.pilah);
 var LANGKAH_ITEMS = itemPilah(DATA.evaluasi.langkah);
 var RENCANA_ITEMS = DATA.organisasi.rencana.map(function (r) {
-  return { id: r.id, label: esc(r.label) };
+  return { id: r.id, label: r.label };
 });
 var RENCANA_JAWAB = optionIds(DATA.organisasi.rencana);
 
@@ -500,22 +150,14 @@ var State = {
   pilahOrder: null,
   rencanaState: null,
 
-  /* Tahap 3 — kemasan */
-  lab: null,
-  isianKemasan: null,
-  kemasanOrders: {},
-  kemasanPilih: {},
-
-  /* Tahap 4 — sisi bahan */
-  sisi: null,
-  isianBahan: null,
-  sisiOrders: {},
-  sisiPilih: {},
-
-  /* Tahap 5 — anggaran */
-  isianBiaya: null,
-  biayaOrders: {},
-  biayaPilih: {},
+  /* Tahap 3–5 — kartu rantai sifat: { idKartu: [state langkah] } */
+  rantai: {},
+  ukuranOrders: {},
+  ukuranPilih: {},
+  kapasitasOrders: {},
+  kapasitasPilih: {},
+  waktuOrders: {},
+  waktuPilih: {},
 
   /* Tahap 6 — karya */
   karyaOrders: {},
@@ -565,6 +207,33 @@ function ensureGuidedOrders(orderKey, pilihKey, list) {
   });
 }
 
+/* State satu langkah sifat + urutan acak pilihan sifatnya. */
+function ensureStepIn(arr, i) {
+  var st = arr[i];
+  if (!isPlainObject(st)) {
+    st = makeSifatStepState();
+    arr[i] = st;
+  }
+  var dasar = makeSifatStepState();
+  Object.keys(dasar).forEach(function (k) {
+    if (st[k] === undefined) st[k] = dasar[k];
+  });
+  ensureShuffledOrder(st, 'sifatOrder', opsiSifatPangkat());
+}
+
+function ensureRantaiStates() {
+  ensureObject('rantai');
+  Object.keys(KARTU_LANGKAH).forEach(function (id) {
+    var L = KARTU_LANGKAH[id];
+    if (!Array.isArray(State.rantai[id]) || State.rantai[id].length !== L.length) {
+      State.rantai[id] = [];
+    }
+    L.forEach(function (s, i) {
+      ensureStepIn(State.rantai[id], i);
+    });
+  });
+}
+
 /*
  * Menyiapkan seluruh state per-soal DAN seluruh urutan acak pilihan
  * jawaban. Dipanggil sekali saat init (setelah loadState) dan setiap
@@ -580,19 +249,11 @@ function initExerciseArrays() {
   ensureSortStates(State, 'pilahStates', 'pilahOrder', PILAH_ITEMS, DATA.organisasi.opsiPilah);
   ensureTapOrderState(State, 'rencanaState', RENCANA_ITEMS, RENCANA_JAWAB);
 
-  /* Tahap 3 */
-  ensureLpLabState(State, 'lab', LAB_OPTS);
-  ensureLpIsianState(State, 'isianKemasan', KARTU_KEMASAN);
-  ensureGuidedOrders('kemasanOrders', 'kemasanPilih', DATA.selidikKemasan.tanya);
-
-  /* Tahap 4 */
-  ensureLpSisiState(State, 'sisi', DATA.benda);
-  ensureLpIsianState(State, 'isianBahan', KARTU_BAHAN_LIST);
-  ensureGuidedOrders('sisiOrders', 'sisiPilih', DATA.selidikSisi.tanya);
-
-  /* Tahap 5 */
-  ensureLpIsianState(State, 'isianBiaya', KARTU_BIAYA);
-  ensureGuidedOrders('biayaOrders', 'biayaPilih', DATA.selidikBiaya.tanya);
+  /* Tahap 3–5 */
+  ensureRantaiStates();
+  ensureGuidedOrders('ukuranOrders', 'ukuranPilih', DATA.selidikUkuran.tanya);
+  ensureGuidedOrders('kapasitasOrders', 'kapasitasPilih', DATA.selidikKapasitas.tanya);
+  ensureGuidedOrders('waktuOrders', 'waktuPilih', DATA.selidikWaktu.tanya);
 
   /* Tahap 6 */
   ensureGuidedOrders('karyaOrders', 'karyaPilih', DATA.karya.tanya);
@@ -708,18 +369,6 @@ function bindTextarea(id, key) {
   });
 }
 
-function semuaKartuBenar(list, stMap) {
-  return list.every(function (k) {
-    return lpKartuBenar(k, stMap[k.id]);
-  });
-}
-
-function banyakKartuBenar(list, stMap) {
-  return list.filter(function (k) {
-    return lpKartuBenar(k, stMap[k.id]);
-  }).length;
-}
-
 /* Umpan pertanyaan penuntun di-escape sekali (teks polos di DATA). */
 function tanyaAman(list) {
   return list.map(function (q) {
@@ -740,9 +389,9 @@ function tanyaAman(list) {
 }
 
 var TANYA = {
-  kemasan: tanyaAman(DATA.selidikKemasan.tanya),
-  sisi: tanyaAman(DATA.selidikSisi.tanya),
-  biaya: tanyaAman(DATA.selidikBiaya.tanya),
+  selidikUkuran: tanyaAman(DATA.selidikUkuran.tanya),
+  selidikKapasitas: tanyaAman(DATA.selidikKapasitas.tanya),
+  selidikWaktu: tanyaAman(DATA.selidikWaktu.tanya),
   karya: tanyaAman(DATA.karya.tanya),
   evaluasi: tanyaAman(DATA.evaluasi.tanya),
 };
@@ -793,38 +442,28 @@ function renderOrientasi(container) {
     '<section aria-label="Orientasi Masalah">' +
     buildHead(D) +
     buildDlPanel(
-      '<h2 style="margin-top:0;">🛍️ ' +
+      '<h2 style="margin-top:0;">🖼️ ' +
         esc(D.judul) +
         '</h2>' +
         '<p class="orientasi-cerita">' +
         esc(D.pengantar) +
         '</p>' +
-        '<div class="lpp-galeri">' +
-        DATA.kemasan
-          .map(function (p) {
-            return (
-              '<figure class="lpp-galeri__item">' +
-              '<div class="psm-stage psm-stage--fold">' +
-              lipatanKecil(p, 150, p.nama + ': ' + p.bentuk) +
-              '</div>' +
-              '<figcaption>' +
-              esc(p.nama) +
-              '<span>' +
-              esc(p.bentuk) +
-              '</span></figcaption></figure>'
-            );
-          })
-          .join('') +
-        '</div>' +
-        '<h3 class="surat-head">✉️ Surat dari panitia bazar</h3>' +
+        '<h3 class="surat-head">' +
+        esc(D.tiketJudul) +
+        '</h3>' +
         '<div class="surat-grid">' +
         D.surat.map(buildSuratCard).join('') +
-        '</div>',
+        '</div>' +
+        '<p class="satuan-biner"><strong>' +
+        esc(D.satuanJudul) +
+        ':</strong> ' +
+        esc(D.satuan) +
+        '</p>',
       'panel--hero'
     ) +
     buildTpPanel(D) +
     buildDlPanel(
-      '<h3 style="margin-top:0;">🤔 Apa dugaan kelompokmu?</h3>' +
+      '<h3 style="margin-top:0;">🤔 Apa dugaan tim kalian?</h3>' +
         caption(D.catatanDugaan) +
         dugaanHTML +
         '<div style="margin-top:var(--space-5);">' +
@@ -895,7 +534,7 @@ function renderOrientasi(container) {
   if (nextBtn) {
     nextBtn.addEventListener('click', function () {
       if (!State.masalahHipotesis.trim()) {
-        showNotice('Tulis hipotesis kelompokmu lebih dulu, walau hanya satu kalimat.');
+        showNotice('Tulis hipotesis tim kalian lebih dulu, walau hanya satu kalimat.');
         return;
       }
       completeStage('orientasi');
@@ -985,256 +624,325 @@ function renderOrganisasi(container) {
   if (peranOk && pilahOk) {
     bindTapOrder(container, 'rencana', State.rencanaState, RENCANA_JAWAB, saveState, rerender);
   }
-  bindNext('organisasiNextBtn', 'organisasi', 'selidikKemasan');
+  bindNext('organisasiNextBtn', 'organisasi', 'selidikUkuran');
 }
 
 /* ============================================================
-   7. STAGE: PENYELIDIKAN 1 — KEMASAN  (PBL — sintaks 3)
-   Lab Bentang (eksplorasi) → kartu data La, K, LP → keputusan.
+   7. KARTU PENYELIDIKAN (RANTAI SIFAT)
+   Setiap kartu = cerita + rantai sifat (engine seksi 44). Langkah
+   berikutnya terbuka setelah langkah sebelumnya tuntas; kartu
+   berikutnya terbuka setelah kartu sebelumnya tuntas.
    ============================================================ */
 
-function renderSelidikKemasan(container) {
-  var D = DATA.selidikKemasan;
-  var dataOk = semuaKartuBenar(KARTU_KEMASAN, State.isianKemasan);
-  var tanyaOk = guidedQuizAllCorrect(D.tanya, State.kemasanPilih);
+function kartuSelesai(c) {
+  return rantaiSelesai(KARTU_LANGKAH[c.id], State.rantai[c.id]);
+}
+
+function semuaKartuSelesai(list) {
+  return list.every(kartuSelesai);
+}
+
+function stepId(c, i) {
+  return 'rk-' + c.id + '-' + i;
+}
+
+function buildKartuRantai(c) {
+  var L = KARTU_LANGKAH[c.id];
+  var states = State.rantai[c.id];
+  var aktif = langkahRantaiAktif(L, states);
+  var selesai = aktif === L.length;
+  var hasil = hasilRantai(c.rantai);
+
+  var langkahHTML = L.slice(0, Math.min(aktif + 1, L.length))
+    .map(function (s, i) {
+      return buildSifatStep(stepId(c, i), s, states[i], {
+        nomor: L.length > 1 ? i + 1 : null,
+        label: L.length > 1 ? 'Langkah ' + (i + 1) : '',
+      });
+    })
+    .join('');
+
+  return buildDlPanel(
+    '<div class="kartu-selidik__head">' +
+      '<span class="kartu-selidik__ikon" aria-hidden="true">' +
+      c.ikon +
+      '</span>' +
+      '<h3 class="kartu-selidik__judul">' +
+      esc(c.judul) +
+      '</h3>' +
+      '</div>' +
+      '<p class="kartu-selidik__cerita">' +
+      esc(c.cerita) +
+      '</p>' +
+      '<p class="exercise-label">' +
+      esc(c.tanya) +
+      '</p>' +
+      '<p class="rantai-soal">' +
+      esc(teksRantai(c.rantai)) +
+      '</p>' +
+      langkahHTML +
+      (selesai
+        ? buildFeedbackBox(
+            'success',
+            '✓',
+            '<strong>' +
+              esc(c.judul) +
+              ':</strong> ' +
+              esc(teksRantai(c.rantai)) +
+              ' = ' +
+              esc(hasil.teks) +
+              (c.rantai.nilai
+                ? ' = ' +
+                  esc(formatPecahan(hasil.nilai)) +
+                  (c.rantai.satuan ? ' ' + esc(c.rantai.satuan) : '')
+                : ' byte')
+          )
+        : ''),
+    'kartu-selidik' + (selesai ? ' kartu-selidik--done' : '')
+  );
+}
+
+/* Kartu tampil berurutan: kartu ke-i terbuka setelah kartu i−1 tuntas. */
+function kartuTerbuka(list) {
+  var out = [];
+  for (var i = 0; i < list.length; i++) {
+    out.push(list[i]);
+    if (!kartuSelesai(list[i])) break;
+  }
+  return out;
+}
+
+function bindKartuRantai(container, list, rerender) {
+  list.forEach(function (c) {
+    KARTU_LANGKAH[c.id].forEach(function (s, i) {
+      bindSifatStep(container, stepId(c, i), s, State.rantai[c.id][i], saveState, rerender);
+    });
+  });
+}
+
+/*
+ * Tahap penyelidikan generik: instruksi → kartu berurutan → (ekstra
+ * setelah semua kartu tuntas) → pertanyaan penuntun → tombol lanjut.
+ *   cfg = { key, next, pilihKey, orderKey, label, ekstra?() }
+ */
+function renderSelidik(container, cfg) {
+  var D = DATA[cfg.key];
+  var terbuka = kartuTerbuka(D.kartu);
+  var kartuOk = semuaKartuSelesai(D.kartu);
+  var tanyaOk = guidedQuizAllCorrect(D.tanya, State[cfg.pilihKey]);
 
   function rerender() {
-    renderSelidikKemasan(container);
+    renderSelidik(container, cfg);
   }
 
   var html =
-    '<section aria-label="Penyelidikan Kemasan">' +
+    '<section aria-label="' +
+    esc(cfg.label) +
+    '">' +
     buildHead(D) +
     paragrafInfo(D.instruksi) +
-    buildDlPanel(
-      '<h3 style="margin-top:0;">🔬 Lab Bentang kemasan</h3>' +
-        caption(
-          'Pilih kemasan, tekan ▶ Lipat atau ◀ Buka, lalu ketuk sisi pada jaring yang terbuka untuk melihat ukurannya.'
-        ) +
-        buildLpNetLab('labK', State.lab, LAB_OPTS)
-    ) +
-    panelJudul(
-      '🧮 Kartu data kemasan',
-      caption(D.instruksiData) + buildLpIsian('isK', KARTU_KEMASAN, State.isianKemasan)
-    );
+    terbuka.map(buildKartuRantai).join('');
 
-  if (dataOk) {
+  if (kartuOk) {
+    if (cfg.ekstra) html += cfg.ekstra();
     html += panelJudul(
-      '🔎 Ambil keputusan',
-      buildGuidedQuizList(TANYA.kemasan, State.kemasanOrders, State.kemasanPilih) +
+      '🔎 Apa yang kamu temukan?',
+      buildGuidedQuizList(TANYA[cfg.key], State[cfg.orderKey], State[cfg.pilihKey]) +
         (tanyaOk ? daftarTemuan(esc(D.temuan)) : '')
     );
   }
 
   html +=
-    (dataOk && tanyaOk ? buildDlNextButton('kemasanNextBtn', D.nextLabel, true) : '') +
+    (kartuOk && tanyaOk ? buildDlNextButton(cfg.key + 'NextBtn', D.nextLabel, true) : '') +
     '</section>';
 
   container.innerHTML = html;
 
-  bindLpNetLab(container, 'labK', State.lab, LAB_OPTS, saveState);
-  bindLpIsian(container, 'isK', KARTU_KEMASAN, State.isianKemasan, saveState, rerender);
-  bindGuidedQuizList(container, TANYA.kemasan, State.kemasanPilih, saveState, rerender);
-  bindNext('kemasanNextBtn', 'selidikKemasan', 'selidikSisi');
+  bindKartuRantai(container, terbuka, rerender);
+  bindGuidedQuizList(container, TANYA[cfg.key], State[cfg.pilihKey], saveState, rerender);
+  bindNext(cfg.key + 'NextBtn', cfg.key, cfg.next);
 }
 
 /* ============================================================
-   8. STAGE: PENYELIDIKAN 2 — SISI YANG MEMAKAI BAHAN  (PBL — sintaks 3)
-   Tiap benda: cerita → pemilih sisi → kartu luas bahan. Benda
-   berikutnya dibuka setelah kartu benda sebelumnya tepat.
+   8. STAGE: PENYELIDIKAN 1 — UKURAN FOTO  (PBL — sintaks 3)
    ============================================================ */
 
-function bendaSelesai(b) {
-  return (
-    State.sisi[b.id].benar &&
-    lpKartuBenar(KARTU_BAHAN[b.id], State.isianBahan[KARTU_BAHAN[b.id].id])
-  );
-}
-
-function renderSelidikSisi(container) {
-  var D = DATA.selidikSisi;
-  var semua = DATA.benda.every(bendaSelesai);
-  var tanyaOk = guidedQuizAllCorrect(D.tanya, State.sisiPilih);
-
-  function rerender() {
-    renderSelidikSisi(container);
-  }
-
-  var html =
-    '<section aria-label="Penyelidikan Sisi yang Memakai Bahan">' +
-    buildHead(D) +
-    paragrafInfo(D.instruksi);
-  var terbuka = [];
-  for (var i = 0; i < DATA.benda.length; i++) {
-    var b = DATA.benda[i];
-    terbuka.push(b);
-    var st = State.sisi[b.id];
-    html += buildDlPanel(
-      '<div class="benda-head">' +
-        '<div class="benda-head__lipat psm-stage psm-stage--fold" aria-hidden="true">' +
-        lipatanKecil(b, 110) +
-        '</div>' +
-        '<div><h3 style="margin:0;">' +
-        esc(b.nama) +
-        '</h3><p class="benda-head__cerita">' +
-        esc(b.cerita) +
-        '</p></div>' +
-        '</div>' +
-        '<p class="exercise-label">Sisi mana saja yang memakai ' +
-        esc(b.bahan) +
-        '?</p>' +
-        buildLpSisiPicker('ps-' + b.id, b, st) +
-        (st.benar
-          ? '<div style="margin-top:var(--space-4);">' +
-            buildLpIsian('isB-' + b.id, [KARTU_BAHAN[b.id]], State.isianBahan) +
-            '</div>'
-          : '')
-    );
-    if (!bendaSelesai(b)) break;
-  }
-
-  if (semua) {
-    html += panelJudul(
-      '🔎 Apa yang kamu temukan?',
-      buildGuidedQuizList(TANYA.sisi, State.sisiOrders, State.sisiPilih) +
-        (tanyaOk ? daftarTemuan(esc(D.temuan)) : '')
-    );
-  }
-
-  html +=
-    (semua && tanyaOk ? buildDlNextButton('sisiNextBtn', D.nextLabel, true) : '') + '</section>';
-
-  container.innerHTML = html;
-
-  terbuka.forEach(function (b) {
-    bindLpSisiPicker(container, 'ps-' + b.id, b, State.sisi[b.id], saveState, rerender);
-    bindLpIsian(
-      container,
-      'isB-' + b.id,
-      [KARTU_BAHAN[b.id]],
-      State.isianBahan,
-      saveState,
-      rerender
-    );
+function renderSelidikUkuran(container) {
+  renderSelidik(container, {
+    key: 'selidikUkuran',
+    next: 'selidikKapasitas',
+    orderKey: 'ukuranOrders',
+    pilihKey: 'ukuranPilih',
+    label: 'Penyelidikan Ukuran Foto',
   });
-  bindGuidedQuizList(container, TANYA.sisi, State.sisiPilih, saveState, rerender);
-  bindNext('sisiNextBtn', 'selidikSisi', 'selidikBiaya');
 }
 
 /* ============================================================
-   9. STAGE: PENYELIDIKAN 3 — BAHAN & ANGGARAN  (PBL — sintaks 3)
-   Kartu banyak bahan & biaya → tabel anggaran → pertanyaan penuntun.
+   9. STAGE: PENYELIDIKAN 2 — KAPASITAS PAKET  (PBL — sintaks 3)
+   Tabel banding paket muncul setelah semua kartu tuntas.
    ============================================================ */
 
-function renderSelidikBiaya(container) {
-  var D = DATA.selidikBiaya;
-  var kartuOk = semuaKartuBenar(KARTU_BIAYA, State.isianBiaya);
-  var tanyaOk = guidedQuizAllCorrect(D.tanya, State.biayaPilih);
+function buildTabelPaket(pilih) {
+  return buildBandingPaketPangkat(PAKET_ROWS, {
+    a: OPSI_PAKET.a,
+    kPerPeriode: OPSI_PAKET.kPerPeriode,
+    minimal: OPSI_PAKET.minimal,
+    satuanPeriode: OPSI_PAKET.satuanPeriode,
+    pilih: pilih || null,
+  });
+}
 
-  function rerender() {
-    renderSelidikBiaya(container);
-  }
-
-  var html =
-    '<section aria-label="Penyelidikan Bahan dan Anggaran">' +
-    buildHead(D) +
-    paragrafInfo(D.instruksi) +
-    panelJudul('🧾 Kartu bahan & biaya', buildLpIsian('isA', KARTU_BIAYA, State.isianBiaya));
-
-  if (kartuOk) {
-    html += panelJudul(
-      '💰 Anggaran sementara',
-      buildLpAnggaran(ANGGARAN_AWAL, DATA.dana) +
-        '<div style="margin-top:var(--space-3);">' +
-        buildFeedbackBox(
-          REKAP_AWAL.cukup ? 'success' : 'warning',
-          REKAP_AWAL.cukup ? '✓' : '⚠',
-          REKAP_AWAL.cukup
-            ? 'Dana cukup untuk semua bahan.'
-            : '<strong>Dana kurang ' +
-                esc(formatRupiah(-REKAP_AWAL.sisa)) +
-                '.</strong> Kelompokmu harus mengusulkan penghematan pada tahap Karya.'
-        ) +
-        '</div>'
-    );
-    html += panelJudul(
-      '🔎 Periksa pemahamanmu',
-      buildGuidedQuizList(TANYA.biaya, State.biayaOrders, State.biayaPilih) +
-        (tanyaOk ? daftarTemuan(esc(D.temuan)) : '')
-    );
-  }
-
-  html +=
-    (kartuOk && tanyaOk ? buildDlNextButton('biayaNextBtn', D.nextLabel, true) : '') + '</section>';
-
-  container.innerHTML = html;
-
-  bindLpIsian(container, 'isA', KARTU_BIAYA, State.isianBiaya, saveState, rerender);
-  bindGuidedQuizList(container, TANYA.biaya, State.biayaPilih, saveState, rerender);
-  bindNext('biayaNextBtn', 'selidikBiaya', 'karya');
+function renderSelidikKapasitas(container) {
+  renderSelidik(container, {
+    key: 'selidikKapasitas',
+    next: 'selidikWaktu',
+    orderKey: 'kapasitasOrders',
+    pilihKey: 'kapasitasPilih',
+    label: 'Penyelidikan Kapasitas Paket',
+    ekstra: function () {
+      return panelJudul(DATA.selidikKapasitas.tabelJudul, buildTabelPaket());
+    },
+  });
 }
 
 /* ============================================================
-   10. STAGE: MENYAJIKAN KARYA  (PBL — sintaks 4)
-   Keputusan kemasan & penghematan → Papan Proposal → presentasi.
+   10. STAGE: PENYELIDIKAN 3 — WAKTU UNGGAH  (PBL — sintaks 3)
    ============================================================ */
 
-function buildPapanProposal() {
+function renderSelidikWaktu(container) {
+  renderSelidik(container, {
+    key: 'selidikWaktu',
+    next: 'karya',
+    orderKey: 'waktuOrders',
+    pilihKey: 'waktuPilih',
+    label: 'Penyelidikan Waktu Unggah',
+  });
+}
+
+/* ============================================================
+   11. STAGE: MENYAJIKAN KARYA  (PBL — sintaks 4)
+   Keputusan paket → skenario tanpa kompresi → Laporan Rekomendasi.
+   ============================================================ */
+
+function buildLaporan() {
   var D = DATA.karya;
-  var C = KEMASAN_BY_ID.C;
+  var kMentahTahun = F.kFotoMentah + F.kFotoPerTahun;
+  var nimbus = PAKET_ROWS.reduce(function (a, b) {
+    return b.harga > a.harga ? b : a;
+  });
+  var pilihPaket = DATA.paket.filter(function (p) {
+    return p.id === PAKET_PILIH.id;
+  })[0];
+  var detikTahun = Math.pow(2, F.kFotoPerTahun + F.kFoto - F.kUnggah);
   return buildLpProposal({
-    judul: D.proposalJudul,
-    sub: 'Disusun oleh tim perencana kelompokmu',
+    judul: D.laporanJudul,
+    sub: D.laporanSub,
     keputusan: [
       {
-        ikon: '📦',
-        judul: 'Kemasan',
+        ikon: '📷',
+        judul: 'Ukuran foto',
         isi:
-          C.nama +
-          ' (' +
-          C.bentuk +
-          '): ' +
-          lppAngka(HITUNG.lpC) +
-          ' cm² karton per kemasan, paling hemat. ' +
-          DATA.banyakKemasan +
-          ' kemasan butuh ' +
-          lppAngka(HITUNG.totalKarton) +
-          ' cm² → ' +
-          HITUNG.lembar +
-          ' lembar karton.',
+          'Mentah ' +
+          pangkat2(F.kLebar) +
+          ' × ' +
+          pangkat2(F.kTinggi) +
+          ' × ' +
+          pangkat2(F.kBytePiksel) +
+          ' = ' +
+          pangkat2(F.kFotoMentah) +
+          ' byte (' +
+          formatUkuranBiner(F.kFotoMentah) +
+          '). Setelah kompresi ' +
+          pangkat2(F.kFotoMentah) +
+          ' × ' +
+          pangkat2(F.kKompresi) +
+          ' = ' +
+          pangkat2(F.kFoto) +
+          ' byte (' +
+          formatUkuranBiner(F.kFoto) +
+          ').',
       },
       {
-        ikon: '⛺',
-        judul: 'Tenda',
+        ikon: '🗂️',
+        judul: 'Kebutuhan per tahun',
         isi:
-          'Stand menempel tembok sekolah, sehingga kain hanya untuk atap kiri dan kanan: ' +
-          lppAngka(HITUNG.kainHemat) +
-          ' m² (hemat ' +
-          lppAngka(HITUNG.kain - HITUNG.kainHemat) +
-          ' m²).',
+          pangkat2(F.kMurid) +
+          ' × ' +
+          pangkat2(F.kFotoPerMurid) +
+          ' = ' +
+          pangkat2(F.kFotoPerTahun) +
+          ' foto → ' +
+          pangkat2(F.kFoto) +
+          ' × ' +
+          pangkat2(F.kFotoPerTahun) +
+          ' = ' +
+          pangkat2(F.kPerTahun) +
+          ' byte (' +
+          formatUkuranBiner(F.kPerTahun) +
+          ') per tahun.',
       },
       {
-        ikon: '🪟',
-        judul: 'Etalase',
+        ikon: pilihPaket.ikon,
+        judul: 'Rekomendasi: ' + PAKET_PILIH.nama,
         isi:
-          'Kaca untuk sisi atas, depan, kanan, dan kiri: ' +
-          lppAngka(HITUNG.kacaCm) +
-          ' cm² = ' +
-          lppAngka(HITUNG.kacaM) +
-          ' m².',
+          pilihPaket.teks +
+          ' = ' +
+          pangkat2(PAKET_PILIH.k) +
+          ' byte. ' +
+          pangkat2(PAKET_PILIH.k) +
+          ' : ' +
+          pangkat2(F.kPerTahun) +
+          ' = ' +
+          pangkat2(PAKET_PILIH.kLama) +
+          ' = ' +
+          formatNumber(PAKET_PILIH.lama) +
+          ' tahun (≥ ' +
+          F.minimalTahun +
+          ' tahun), ' +
+          formatRupiah(PAKET_PILIH.harga) +
+          ' per bulan — hemat ' +
+          formatRupiah(nimbus.harga - PAKET_PILIH.harga) +
+          ' per bulan dibanding ' +
+          nimbus.nama +
+          '.',
       },
       {
-        ikon: '🎨',
-        judul: 'Meja kasir',
+        ikon: '📶',
+        judul: 'Waktu unggah',
         isi:
-          'Dicat ' +
-          lppAngka(HITUNG.catM) +
-          ' m² (kecuali sisi bawah) → ' +
-          HITUNG.kaleng +
-          ' kaleng cat.',
+          'Satu foto ' +
+          pangkat2(F.kFoto) +
+          ' : ' +
+          pangkat2(F.kUnggah) +
+          ' = ' +
+          pangkat2(F.kFoto - F.kUnggah) +
+          ' = ' +
+          formatPecahan(pangkatBulat(2, F.kFoto - F.kUnggah)) +
+          ' detik. Satu tahun ' +
+          formatNumber(detikTahun) +
+          ' detik (± ' +
+          Math.round(detikTahun / 60) +
+          ' menit), bisa dijadwalkan sepulang sekolah.',
+      },
+      {
+        ikon: '⚠️',
+        judul: 'Syarat',
+        isi:
+          'Kompresi wajib aktif. Tanpa kompresi kebutuhan ' +
+          pangkat2(kMentahTahun) +
+          ' byte per tahun, sehingga ' +
+          PAKET_PILIH.nama +
+          ' hanya cukup ' +
+          pangkat2(PAKET_PILIH.k) +
+          ' : ' +
+          pangkat2(kMentahTahun) +
+          ' = ' +
+          pangkat2(PAKET_PILIH.k - kMentahTahun) +
+          ' = ' +
+          formatNumber(Math.pow(2, PAKET_PILIH.k - kMentahTahun)) +
+          ' tahun.',
       },
     ],
-    anggaran: { baris: ANGGARAN_HEMAT, dana: DATA.dana },
     penutup: D.penutup,
   });
 }
@@ -1242,6 +950,7 @@ function buildPapanProposal() {
 function renderKarya(container) {
   var D = DATA.karya;
   var tanyaOk = guidedQuizAllCorrect(D.tanya, State.karyaPilih);
+  var p1Ok = State.karyaPilih.p1 === 'stratus';
 
   function rerender() {
     renderKarya(container);
@@ -1251,22 +960,22 @@ function renderKarya(container) {
     '<section aria-label="Menyajikan Karya">' +
     buildHead(D) +
     paragrafInfo(D.instruksi) +
-    panelJudul('💰 Anggaran hasil penyelidikan', buildLpAnggaran(ANGGARAN_AWAL, DATA.dana)) +
+    panelJudul(DATA.selidikKapasitas.tabelJudul, buildTabelPaket(p1Ok ? PAKET_PILIH.id : null)) +
     panelJudul(
-      '🧠 Ambil keputusan kelompok',
+      '🧠 Ambil keputusan tim',
       buildGuidedQuizList(TANYA.karya, State.karyaOrders, State.karyaPilih)
     );
 
   if (tanyaOk) {
     html +=
-      panelJudul('🪧 Papan Proposal', buildPapanProposal(), 'panel--hero') +
+      panelJudul('📋 Laporan Rekomendasi', buildLaporan(), 'panel--hero') +
       buildDlPanel(
         buildTextarea(
           'presentasiTeks',
           D.presentasiLabel,
           D.presentasiPlaceholder,
           State.presentasi
-        ) + caption('Presentasikan Papan Proposal ini di depan kelas atau dalam galeri berjalan.')
+        ) + caption('Presentasikan laporan ini kepada klien (guru) atau dalam galeri berjalan.')
       ) +
       buildDlNextButton('karyaNextBtn', D.nextLabel, true);
   }
@@ -1281,7 +990,7 @@ function renderKarya(container) {
   if (nextBtn) {
     nextBtn.addEventListener('click', function () {
       if (!State.presentasi.trim()) {
-        showNotice('Tulis kalimat presentasi kelompokmu lebih dulu.');
+        showNotice('Tulis kalimat presentasi tim kalian lebih dulu.');
         return;
       }
       completeStage('karya');
@@ -1291,9 +1000,9 @@ function renderKarya(container) {
 }
 
 /* ============================================================
-   11. STAGE: ANALISIS & EVALUASI  (PBL — sintaks 5)
-   Nilai lembar kerja Kelompok Elang → pelajaran → bandingkan dugaan
-   awal → evaluasi proses kelompok.
+   12. STAGE: ANALISIS & EVALUASI  (PBL — sintaks 5)
+   Nilai lembar kerja Tim Debug → pelajaran → bandingkan dugaan awal →
+   evaluasi proses tim.
    ============================================================ */
 
 function buildTanggapanDugaan() {
@@ -1372,7 +1081,7 @@ function renderEvaluasi(container) {
   if (nextBtn) {
     nextBtn.addEventListener('click', function () {
       if (!State.evalRefleksi.trim()) {
-        showNotice('Tulis evaluasi proses kelompokmu lebih dulu.');
+        showNotice('Tulis evaluasi proses tim kalian lebih dulu.');
         return;
       }
       completeStage('evaluasi');
@@ -1382,22 +1091,22 @@ function renderEvaluasi(container) {
 }
 
 /* ============================================================
-   12. STAGE: UJI TERAP
+   13. STAGE: UJI TERAP
    createExerciseStage (shared/engine.js) dengan soal campuran
-   'input' (isian bilangan bulat, boleh berpemisah ribuan) dan
-   'choice' (opsi diacak lewat ex.optionOrder di initExerciseArrays()).
+   'input' (nilai bulat, boleh berpemisah ribuan; diagnosa miskonsepsi
+   dari diagnosaNilaiPangkat) dan 'choice' (opsi diacak lewat
+   ex.optionOrder di initExerciseArrays()).
    ============================================================ */
 
-/* Diagnosa isian soal kontekstual (engine seksi 48). */
 function diagnosaTerapkan(s, ex) {
   var parsed = parseInputInt(ex.userInput, true);
   if (parsed.error) return null;
-  var d = diagnosaMasalahLp(s.cek, parsed.value);
+  var d = diagnosaNilaiPangkat(s.cek, parsed.value);
   return d.kode === 'benar' ? null : d.pesan;
 }
 
 function teksJawaban(s) {
-  if (s.satuan === 'rupiah') return formatRupiah(s.jawab);
+  if ((s.type || 'choice') === 'choice') return findOptionLabel(s.options, s.correct);
   return formatNumber(s.jawab) + ' ' + s.satuan;
 }
 
@@ -1437,7 +1146,7 @@ var TerapkanStage = createExerciseStage({
   inputSuffix: function (s) {
     return '<span class="lpp-satuan">' + esc(s.satuan) + '</span>';
   },
-  invalidMessage: 'Masukkan sebuah bilangan bulat (contoh: 104 atau 7.900).',
+  invalidMessage: 'Masukkan sebuah bilangan bulat (contoh: 64 atau 16.384).',
   inputErrorHTML: function (s, ex) {
     var pesan = diagnosaTerapkan(s, ex);
     return buildFeedbackBox(
@@ -1484,16 +1193,31 @@ function renderTerapkan(container) {
 }
 
 /* ============================================================
-   13. STAGE: REFLEKSI
+   14. STAGE: REFLEKSI
    ============================================================ */
+
+/* Skor percobaan pertama semua langkah sifat pada kartu penyelidikan. */
+function skorLangkahSifat() {
+  var benar = 0;
+  var maks = 0;
+  Object.keys(KARTU_LANGKAH).forEach(function (id) {
+    KARTU_LANGKAH[id].forEach(function (s, i) {
+      var sk = sifatStepSkor(s, State.rantai[id][i]);
+      benar += sk.benar;
+      maks += sk.maks;
+    });
+  });
+  return { benar: benar, maks: maks };
+}
 
 function renderRefleksi(container) {
   var D = DATA.refleksi;
-  var kemasanBenar = banyakKartuBenar(KARTU_KEMASAN, State.isianKemasan);
-  var sisiSekali = DATA.benda.filter(function (b) {
-    return State.sisi[b.id].benar && State.sisi[b.id].coba === 1;
-  }).length;
-  var biayaBenar = banyakKartuBenar(KARTU_BIAYA, State.isianBiaya);
+  var semuaKartu = [];
+  SELIDIK.forEach(function (key) {
+    semuaKartu = semuaKartu.concat(DATA[key].kartu);
+  });
+  var kartuTuntas = semuaKartu.filter(kartuSelesai).length;
+  var skor = skorLangkahSifat();
   var langkahBenar = sortItemsCorrectCount(LANGKAH_ITEMS, State.langkahStates);
   var terapBenar = State.terapkanExercises.filter(function (e) {
     return e.correct;
@@ -1514,10 +1238,9 @@ function renderRefleksi(container) {
     buildHead(D) +
     buildDlPanel(
       '<div class="summary-grid">' +
-        kartu(kemasanBenar + '/' + KARTU_KEMASAN.length, 'Kartu kemasan tuntas') +
-        kartu(sisiSekali + '/' + DATA.benda.length, 'Sisi bahan tepat sekali coba') +
-        kartu(biayaBenar + '/' + KARTU_BIAYA.length, 'Kartu anggaran tuntas') +
-        kartu(langkahBenar + '/' + LANGKAH_ITEMS.length, 'Langkah Elang dinilai tepat') +
+        kartu(kartuTuntas + '/' + semuaKartu.length, 'Kartu penyelidikan tuntas') +
+        kartu(skor.benar + '/' + skor.maks, 'Isian sifat tepat sekali coba') +
+        kartu(langkahBenar + '/' + LANGKAH_ITEMS.length, 'Langkah Tim Debug dinilai tepat') +
         kartu(terapBenar + '/' + DATA.terapkan.soal.length, 'Uji terap benar') +
         '</div>'
     ) +
@@ -1592,7 +1315,7 @@ function renderRefleksi(container) {
 }
 
 /* ============================================================
-   14. STAGE: SELESAI
+   15. STAGE: SELESAI
    ============================================================ */
 
 function renderSelesai(container) {
@@ -1601,7 +1324,7 @@ function renderSelesai(container) {
   container.innerHTML =
     '<section aria-label="Selesai">' +
     '<div class="done-card">' +
-    '<span class="done-card__icon">🏆</span>' +
+    '<span class="done-card__icon">🚀</span>' +
     '<h2>' +
     esc(D.judul) +
     '</h2>' +
@@ -1609,9 +1332,10 @@ function renderSelesai(container) {
     esc(D.teks) +
     '</p>' +
     '<div class="sajian-trio">' +
-    '<div class="sajian-card"><span class="sajian-card__ikon" aria-hidden="true">🔍</span>Sisi mana yang memakai bahan?</div>' +
-    '<div class="sajian-card"><span class="sajian-card__ikon" aria-hidden="true">📐</span>Luas sisi itu, satuan yang sama</div>' +
-    '<div class="sajian-card sajian-card--utama"><span class="sajian-card__ikon" aria-hidden="true">⬆️</span>Bahan dibeli: bulatkan ke atas</div>' +
+    '<div class="sajian-card"><span class="sajian-card__ikon" aria-hidden="true">✖️</span>aᵐ × aⁿ = aᵐ⁺ⁿ</div>' +
+    '<div class="sajian-card"><span class="sajian-card__ikon" aria-hidden="true">➗</span>aᵐ : aⁿ = aᵐ⁻ⁿ</div>' +
+    '<div class="sajian-card"><span class="sajian-card__ikon" aria-hidden="true">🔁</span>(aᵐ)ⁿ = aᵐˣⁿ</div>' +
+    '<div class="sajian-card sajian-card--utama"><span class="sajian-card__ikon" aria-hidden="true">🔑</span>a⁻ⁿ = 1/aⁿ · a⁰ = 1</div>' +
     '</div>' +
     '<div class="panel panel--hero done-card__list">' +
     '<h3 style="margin-top:0;">Yang sudah kamu capai</h3>' +
@@ -1628,7 +1352,7 @@ function renderSelesai(container) {
     '<div class="feedback-box__body">' +
     '<strong>Catatan untuk Guru:</strong><br>' +
     'Rekap pada tahap Refleksi adalah indikator latihan digital, bukan nilai akhir. ' +
-    'Papan Proposal, kalimat presentasi, dan evaluasi proses kelompok menjadi bahan asesmen kinerja penyelesaian masalah.' +
+    'Laporan Rekomendasi, kalimat presentasi, dan evaluasi proses tim menjadi bahan asesmen kinerja penyelesaian masalah.' +
     '</div></div>' +
     '<div class="btn-group btn-group--center">' +
     '<a href="../../index.html" class="btn btn--ghost">← Beranda</a>' +
@@ -1645,15 +1369,15 @@ function renderSelesai(container) {
 }
 
 /* ============================================================
-   15. ROUTER RENDER
+   16. ROUTER RENDER
    ============================================================ */
 
 var RENDERERS = {
   orientasi: renderOrientasi,
   organisasi: renderOrganisasi,
-  selidikKemasan: renderSelidikKemasan,
-  selidikSisi: renderSelidikSisi,
-  selidikBiaya: renderSelidikBiaya,
+  selidikUkuran: renderSelidikUkuran,
+  selidikKapasitas: renderSelidikKapasitas,
+  selidikWaktu: renderSelidikWaktu,
   karya: renderKarya,
   evaluasi: renderEvaluasi,
   terapkan: renderTerapkan,
@@ -1669,7 +1393,7 @@ function renderCurrentStage() {
 }
 
 /* ============================================================
-   16. HELPER UI — MODAL RESET
+   17. HELPER UI — MODAL RESET
    ============================================================ */
 
 function showResetModal() {
@@ -1683,7 +1407,7 @@ function hideResetModal() {
 }
 
 /* ============================================================
-   17. INIT
+   18. INIT
    ============================================================ */
 
 function init() {

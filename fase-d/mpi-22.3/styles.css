@@ -2,64 +2,13 @@
    fase-d/mpi-22.3/styles.css
    Masalah Kontekstual Luas Permukaan Prisma — Fase D (SMP Kelas IX)
 
-   Hanya memuat gaya yang KHAS modul ini (surat panitia, kepala benda).
+   Hanya memuat gaya yang KHAS modul ini (kepala benda). Kartu surat
+   panitia (.surat-*, .orientasi-cerita) berasal dari shared/base.css.
    Jaring-jaring berukuran, lab bentang, kartu isian, galeri kemasan
    (.lpp-*), pemilih sisi bahan, tabel anggaran, papan proposal (.lpk-*),
    gambar lipatan (.psm-*), pilihan ganda, pemilahan, urut-ketuk, dan
    kartu sajian berasal dari shared/base.css.
    ========================================================================= */
-
-/* -------------------------------------------------------------------------
-   Orientasi — cerita & surat panitia
-   ------------------------------------------------------------------------- */
-
-.orientasi-cerita {
-  margin: 0 0 var(--space-4);
-  font-size: 1.05rem;
-  line-height: 1.6;
-}
-
-.surat-head {
-  margin: var(--space-5) 0 var(--space-3);
-}
-
-.surat-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: var(--space-3);
-}
-
-.surat-card {
-  padding: var(--space-3) var(--space-4);
-  border: 2px solid var(--color-border);
-  border-left: 6px solid var(--color-orange);
-  border-radius: var(--radius-md);
-  background: var(--color-surface);
-  min-width: 0;
-}
-
-.surat-card__judul {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-  margin: 0 0 var(--space-2);
-  font-size: 1rem;
-}
-
-.surat-card__ikon {
-  font-size: 1.4rem;
-}
-
-.surat-card__list {
-  margin: 0;
-  padding-left: var(--space-5);
-  font-size: 0.95rem;
-  line-height: 1.5;
-}
-
-.surat-card__list li + li {
-  margin-top: var(--space-1);
-}
 
 /* -------------------------------------------------------------------------
    Penyelidikan sisi bahan — kepala benda (lipatan kecil + cerita)

@@ -26703,3 +26703,267 @@ function buildLpProposal(p) {
     '</article>'
   );
 }
+
+/* ============================================================
+   49. MASALAH KONTEKSTUAL BILANGAN BERPANGKAT BULAT
+   Dipakai modul masalah kontekstual bilangan berpangkat bulat
+   (fase-e/mpi-1.3, Problem Based Learning). Dibangun di atas seksi 27
+   (formatPangkat, pangkatBulat, formatPecahan) dan seksi 44
+   (eksponenSifat, diagnosaEksponenSifat, pesanEksponenSifat, langkah &
+   rantai sifat).
+
+   Masalah nyata RPL memakai ukuran data 2ᵏ byte (1 KiB = 2¹⁰ byte,
+   1 MiB = 2²⁰, 1 GiB = 2³⁰, 1 TiB = 2⁴⁰), waktu proses 10⁻ⁿ detik, dan
+   kapasitas penyimpanan. Fungsi murni:
+     ukuranBiner(k)                   2ᵏ byte → { nilai, satuan, kSatuan }
+     formatUkuranBiner(k)             '32 MiB'
+     opsiEksponenSoal(a, op, m, n, s) opsi pilihan { id, label, k }: kunci
+                                      + tiga pengecoh berkode miskonsepsi
+                                      (id = kode diagnosaEksponenSifat)
+     diagnosaNilaiPangkat(cek, v)     { kode, pesan } untuk jawaban NILAI
+                                      soal kontekstual satu langkah sifat
+     bandingPaketPangkat(paket, cfg)  lama muat tiap paket = aᵏ : aᵏᵖ
+     paketTerhemat(rows)              termurah di antara yang memenuhi
+   Komponen UI: kartu surat/tiket klien (buildSuratCard, juga dipakai
+   fase-d/mpi-22.3) dan tabel banding paket (buildBandingPaketPangkat).
+   Gaya .surat-*, .orientasi-cerita, .mpk-* ada di shared/base.css.
+   ============================================================ */
+
+var MPK_SATUAN_BINER = ['byte', 'KiB', 'MiB', 'GiB', 'TiB', 'PiB'];
+
+function ukuranBiner(k) {
+  if (!Number.isInteger(k) || k < 0) {
+    throw new Error('eksponen ukuran data harus bulat tidak negatif: ' + k);
+  }
+  var i = Math.min(Math.floor(k / 10), MPK_SATUAN_BINER.length - 1);
+  return { nilai: Math.pow(2, k - 10 * i), satuan: MPK_SATUAN_BINER[i], kSatuan: 10 * i };
+}
+
+function formatUkuranBiner(k) {
+  var u = ukuranBiner(k);
+  return formatNumber(u.nilai) + ' ' + u.satuan;
+}
+
+/* Urutan kode pengecoh yang paling khas untuk tiap sifat. */
+var MPK_URUT_PENGECOH = {
+  kali: ['kali', 'selisih', 'tanda', 'bagi', 'pangkatBertingkat'],
+  bagi: ['jumlah', 'tanda', 'kali', 'bagi', 'selisih'],
+  pangkat: ['jumlah', 'selisih', 'tanda', 'pangkatBertingkat', 'bagi'],
+};
+
+/* Kandidat eksponen keliru { kode: k } (satu k pertama per kode). */
+function mpkKandidatKeliru_(op, m, n) {
+  var k = eksponenSifat(op, m, n);
+  var calon = [m + n, m - n, n - m, m * n, -k];
+  if (n !== 0 && Number.isInteger(m / n)) calon.push(m / n);
+  if (op === 'pangkat' && n > 0 && Math.abs(Math.pow(m, n)) <= 200) calon.push(Math.pow(m, n));
+  var peta = {};
+  calon.forEach(function (c) {
+    if (c === k || Object.is(c, -0)) return;
+    var kode = diagnosaEksponenSifat(op, m, n, c);
+    if (kode === 'benar' || kode === 'lain' || peta[kode] !== undefined) return;
+    peta[kode] = c;
+  });
+  return peta;
+}
+
+/*
+ * Opsi pilihan ganda hasil satu langkah sifat. Opsi pertama selalu kunci
+ * (id 'benar'); app WAJIB mengacaknya (optionOrder/ensureShuffledOrder).
+ * Bila pengecoh berkode kurang dari tiga, diisi eksponen terdekat
+ * (id 'dekat1', 'dekat2', …).
+ */
+function opsiEksponenSoal(a, op, m, n, satuan) {
+  var k = eksponenSifat(op, m, n);
+  var akhiran = satuan ? ' ' + satuan : '';
+  var opsi = [{ id: 'benar', k: k, label: formatPangkat(a, k) + akhiran }];
+  var dipakai = [k];
+  var peta = mpkKandidatKeliru_(op, m, n);
+  MPK_URUT_PENGECOH[op].forEach(function (kode) {
+    if (opsi.length >= 4 || peta[kode] === undefined || dipakai.indexOf(peta[kode]) !== -1) return;
+    dipakai.push(peta[kode]);
+    opsi.push({ id: kode, k: peta[kode], label: formatPangkat(a, peta[kode]) + akhiran });
+  });
+  var geser = [1, -1, 2, -2, 3, -3];
+  for (var i = 0; opsi.length < 4 && i < geser.length; i++) {
+    var c = k + geser[i];
+    if (dipakai.indexOf(c) !== -1) continue;
+    dipakai.push(c);
+    opsi.push({ id: 'dekat' + (i + 1), k: c, label: formatPangkat(a, c) + akhiran });
+  }
+  return opsi;
+}
+
+function mpkSamaNilai_(x, y) {
+  return Math.abs(x - y) <= 1e-9 * Math.max(1, Math.abs(y));
+}
+
+/*
+ * Diagnosa jawaban NILAI soal kontekstual satu langkah sifat.
+ *   cek = { a, op, m, n }   (a bilangan)
+ * Kode: 'benar' | 'eksponen' (menjawab eksponennya, bukan nilainya) |
+ * 'nol' (a⁰ ditulis 0) | kode miskonsepsi diagnosaEksponenSifat | 'lain'.
+ * Pesan tidak memuat nilai kunci.
+ */
+function diagnosaNilaiPangkat(cek, nilai) {
+  var k = eksponenSifat(cek.op, cek.m, cek.n);
+  if (mpkSamaNilai_(nilai, Math.pow(cek.a, k))) return { kode: 'benar', pesan: '' };
+  if (k === 0 && nilai === 0) {
+    return {
+      kode: 'nol',
+      pesan:
+        'Eksponen hasilnya memang 0, tetapi ingat a⁰ = 1 untuk a ≠ 0, bukan 0. Artinya hasil bagi dua bilangan yang sama besar.',
+    };
+  }
+  if (nilai === k) {
+    return {
+      kode: 'eksponen',
+      pesan:
+        'Eksponen hasilnya sudah benar, yaitu ' +
+        formatPangkat(cek.a, k) +
+        ', tetapi yang ditanyakan adalah NILAINYA. Hitung dulu ' +
+        formatPangkat(cek.a, k) +
+        '.',
+    };
+  }
+  var peta = mpkKandidatKeliru_(cek.op, cek.m, cek.n);
+  var kodes = Object.keys(peta);
+  for (var i = 0; i < kodes.length; i++) {
+    var kj = peta[kodes[i]];
+    if (Math.abs(kj) <= 60 && mpkSamaNilai_(nilai, Math.pow(cek.a, kj))) {
+      return { kode: kodes[i], pesan: pesanEksponenSifat(kodes[i], cek, kj) };
+    }
+  }
+  return {
+    kode: 'lain',
+    pesan:
+      'Tuliskan dulu sebagai satu bilangan berpangkat memakai sifat yang tepat (eksponen: ' +
+      hitunganEksponenSifat_(cek.op, cek.m, cek.n) +
+      '), lalu hitung nilainya.',
+  };
+}
+
+/*
+ * Lama muat setiap paket kapasitas aᵏ bila kebutuhan per periode aᵏᵖ:
+ * aᵏ : aᵏᵖ = aᵏ⁻ᵏᵖ periode.
+ *   paket = [{ id, nama, k, harga }]
+ *   cfg   = { a, kPerPeriode, minimal }
+ * Kembalian [{ id, nama, k, harga, kLama, lama, cukup }].
+ */
+function bandingPaketPangkat(paket, cfg) {
+  return paket.map(function (p) {
+    var kLama = p.k - cfg.kPerPeriode;
+    var lama = Math.pow(cfg.a, kLama);
+    return {
+      id: p.id,
+      nama: p.nama,
+      k: p.k,
+      harga: p.harga,
+      kLama: kLama,
+      lama: lama,
+      cukup: lama >= cfg.minimal,
+    };
+  });
+}
+
+function paketTerhemat(rows) {
+  var terpilih = null;
+  rows.forEach(function (r) {
+    if (r.cukup && (!terpilih || r.harga < terpilih.harga)) terpilih = r;
+  });
+  return terpilih;
+}
+
+/* Kartu surat/tiket: { ikon, judul, butir: [teks] } (teks polos). */
+function buildSuratCard(s) {
+  return (
+    '<article class="surat-card">' +
+    '<h3 class="surat-card__judul"><span class="surat-card__ikon" aria-hidden="true">' +
+    s.ikon +
+    '</span>' +
+    esc(s.judul) +
+    '</h3>' +
+    '<ul class="surat-card__list">' +
+    s.butir
+      .map(function (b) {
+        return '<li>' + esc(b) + '</li>';
+      })
+      .join('') +
+    '</ul>' +
+    '</article>'
+  );
+}
+
+/*
+ * Tabel banding paket (rows dari bandingPaketPangkat).
+ *   opts = { a, kPerPeriode, minimal, satuanPeriode, pilih?, satuanKapasitas? ('byte'),
+ *            hargaLabel? ('Harga/bulan') }
+ * Kolom kapasitas menampilkan satuan biner bila a = 2.
+ */
+function buildBandingPaketPangkat(rows, opts) {
+  var a = opts.a;
+  var satuanKap = opts.satuanKapasitas || 'byte';
+  var periode = opts.satuanPeriode || 'periode';
+  var syarat = '≥ ' + formatNumber(opts.minimal) + ' ' + periode;
+  return (
+    '<div class="mpk-tabel-wrap">' +
+    '<table class="mpk-tabel">' +
+    '<caption>Kebutuhan ' +
+    esc(formatPangkat(a, opts.kPerPeriode) + ' ' + satuanKap) +
+    ' per ' +
+    esc(periode) +
+    ', syarat lama muat ' +
+    esc(syarat) +
+    '</caption>' +
+    '<thead><tr><th scope="col">Paket</th><th scope="col">Kapasitas</th>' +
+    '<th scope="col">Lama muat</th><th scope="col">' +
+    esc(opts.hargaLabel || 'Harga/bulan') +
+    '</th><th scope="col">Syarat ' +
+    esc(syarat) +
+    '</th></tr></thead><tbody>' +
+    rows
+      .map(function (r) {
+        var lamaTeks = formatPecahan(pangkatBulat(a, r.kLama));
+        return (
+          '<tr class="mpk-tabel__baris mpk-tabel__baris--' +
+          (r.cukup ? 'ok' : 'no') +
+          (opts.pilih === r.id ? ' is-pilih' : '') +
+          '" data-paket="' +
+          esc(r.id) +
+          '">' +
+          '<th scope="row">' +
+          esc(r.nama) +
+          (opts.pilih === r.id ? ' <span class="mpk-tabel__pilih">★ dipilih</span>' : '') +
+          '</th>' +
+          '<td>' +
+          esc(formatPangkat(a, r.k) + ' ' + satuanKap) +
+          (a === 2 && satuanKap === 'byte' && r.k >= 0
+            ? '<span class="mpk-tabel__sub">' + esc(formatUkuranBiner(r.k)) + '</span>'
+            : '') +
+          '</td>' +
+          '<td>' +
+          esc(
+            formatPangkat(a, r.k) +
+              ' : ' +
+              formatPangkat(a, opts.kPerPeriode) +
+              ' = ' +
+              formatPangkat(a, r.kLama) +
+              ' = ' +
+              lamaTeks +
+              ' ' +
+              periode
+          ) +
+          '</td>' +
+          '<td>' +
+          esc(formatRupiah(r.harga)) +
+          '</td>' +
+          '<td class="mpk-tabel__syarat">' +
+          (r.cukup ? '✓ Memenuhi' : '✗ Kurang') +
+          '</td>' +
+          '</tr>'
+        );
+      })
+      .join('') +
+    '</tbody></table></div>'
+  );
+}
