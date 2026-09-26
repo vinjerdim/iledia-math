@@ -10416,3 +10416,216 @@ button.akar-tile:disabled {
     font-size: 1rem;
   }
 }
+
+/* =========================================================================
+   Seksi 46 — Operasi hitung bentuk akar: langkah operasi (.opakar-step*),
+   isian hasil (.opakar-in, .opakar-isian), pecahan bertingkat
+   (.opakar-frac*), rumus pada opsi strategi (.opakar-opt__rumus), dan
+   tabel uji nilai (.uji-akar*).
+   ========================================================================= */
+
+.opakar-step {
+  margin: var(--space-4) 0;
+  padding: var(--space-4);
+  border: 2px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+}
+
+.opakar-step--done {
+  border-color: var(--color-success);
+}
+
+.opakar-step__label {
+  margin: 0 0 var(--space-2);
+  font-weight: 600;
+  line-height: 1.5;
+}
+
+.opakar-step__soal {
+  margin: 0 0 var(--space-3);
+  font-size: 1.6rem;
+  font-weight: 700;
+  text-align: center;
+  overflow-wrap: anywhere;
+}
+
+.opakar-step__tanya {
+  margin: 0 0 var(--space-2);
+  font-weight: 600;
+}
+
+.opakar-step .challenge-options {
+  margin-bottom: var(--space-3);
+}
+
+.opakar-step .feedback-box {
+  margin-top: var(--space-3);
+}
+
+.opakar-step__row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-3);
+  align-items: center;
+  margin-top: var(--space-3);
+}
+
+.opakar-step__eq {
+  font-size: 1.25rem;
+  font-weight: 700;
+}
+
+.opakar-step__isian,
+.opakar-isian {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+  align-items: center;
+  font-size: 1.25rem;
+  font-weight: 700;
+}
+
+.opakar-in {
+  width: 4.2rem;
+  min-height: 44px;
+  padding: var(--space-1) var(--space-2);
+  font-size: 1.1rem;
+  font-weight: 700;
+  text-align: center;
+}
+
+.opakar-op {
+  padding: 0 var(--space-1);
+}
+
+.opakar-catatan {
+  flex-basis: 100%;
+  color: var(--color-ink-muted);
+  font-size: 0.85rem;
+  font-weight: 400;
+}
+
+.opakar-step__hasil {
+  margin: var(--space-3) 0 0;
+  font-size: 1.15rem;
+  font-weight: 600;
+  color: var(--color-success-strong);
+  overflow-wrap: anywhere;
+}
+
+.opakar-step__pemimpin {
+  display: inline-block;
+  margin-top: var(--space-1);
+  font-weight: 600;
+}
+
+.opakar-frac {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  vertical-align: middle;
+  margin: 0 0.15em;
+  line-height: 1.25;
+}
+
+.opakar-frac__atas {
+  display: inline-flex;
+  align-items: center;
+  padding: 0 0.2em 0.1em;
+  border-bottom: 0.09em solid currentColor;
+}
+
+.opakar-frac__bawah {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.1em 0.2em 0;
+}
+
+.opakar-opt__rumus {
+  display: block;
+  margin-top: 2px;
+  color: var(--color-ink-muted);
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+/* Tabel uji nilai */
+
+.uji-akar {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 1.05rem;
+}
+
+.uji-akar th,
+.uji-akar td {
+  padding: var(--space-2);
+  border: 1px solid var(--color-border);
+  text-align: center;
+  vertical-align: middle;
+}
+
+.uji-akar th {
+  background: var(--color-blue-soft);
+  font-size: 0.9rem;
+}
+
+.uji-akar__bentuk {
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.uji-akar__input {
+  width: 4.5rem;
+  min-height: 44px;
+  text-align: center;
+  font-weight: 700;
+}
+
+.uji-akar__input.is-correct {
+  border-color: var(--color-success);
+  background: var(--color-success-soft);
+}
+
+.uji-akar__nilai {
+  color: var(--color-success-strong);
+}
+
+.uji-akar__sama {
+  font-weight: 700;
+  white-space: nowrap;
+  color: var(--color-ink-muted);
+}
+
+.uji-akar__sama.is-sama {
+  background: var(--color-success-soft);
+  color: var(--color-success-strong);
+}
+
+.uji-akar__sama.is-beda {
+  background: var(--color-error-soft);
+  color: var(--color-error-strong);
+}
+
+@media (max-width: 480px) {
+  .opakar-step {
+    padding: var(--space-3);
+  }
+
+  .opakar-step__soal {
+    font-size: 1.35rem;
+  }
+
+  .opakar-in {
+    width: 3.4rem;
+  }
+
+  .uji-akar {
+    font-size: 0.95rem;
+  }
+
+  .uji-akar__input {
+    width: 3.6rem;
+  }
+}

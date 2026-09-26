@@ -103,6 +103,14 @@
     "stageCount": 11,
     "extraBody": "partials/reset-modal.html"
   },
+  "fase-d/mpi-12.4": {
+    "title": "Operasi Hitung Bentuk Akar — Matematika Fase D",
+    "description": "Media pembelajaran interaktif berbasis Cooperative Learning tipe Jigsaw untuk melakukan operasi hitung bentuk akar (penjumlahan, pengurangan, perkalian, pembagian, dan merasionalkan penyebut): kartu ahli empat operasi yang dibagikan acak, tabel uji nilai dengan bilangan kuadrat sempurna, misi Bengkel Akar memilih strategi dan menghitung hasil berdiagnosa miskonsepsi, Proyek Kebun kontekstual bertahap, cek pendapat teman, kuis individu, dan penghargaan tim.",
+    "kicker": "Matematika — Fase D (SMP)",
+    "h1": "Operasi Hitung Bentuk Akar",
+    "stageCount": 11,
+    "extraBody": "partials/reset-modal.html"
+  },
   "fase-d/mpi-22.1": {
     "title": "Unsur-unsur & Jaring-jaring Prisma — Matematika Fase D",
     "description": "Media pembelajaran interaktif berbasis Discovery Learning untuk mengidentifikasi unsur-unsur prisma (titik sudut, rusuk, sisi, dan tinggi) serta jaring-jaring prisma melalui kegiatan memutar model 3D, melipat, dan merakit bentangan karton kemasan.",
