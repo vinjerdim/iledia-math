@@ -55,6 +55,14 @@
     "stageCount": 10,
     "extraBody": "partials/reset-modal.html"
   },
+  "fase-f/mpi-1.2": {
+    "title": "Rumus Suku ke-n Barisan Aritmetika — Matematika Fase F",
+    "description": "Media pembelajaran interaktif berbasis Cooperative Learning tipe Numbered Heads Together untuk menentukan rumus suku ke-n barisan aritmetika dan menggunakannya dalam masalah kontekstual sederhana: tabel pola lab komputer, misi tim merakit rumus Uₙ = bn + (a − b) berdiagnosa miskonsepsi, dua suku diketahui, fungsi suku(n) JavaScript, masalah RPL, panggil nomor acak, kuis individu, dan penghargaan tim.",
+    "kicker": "Matematika — Fase F (SMK RPL)",
+    "h1": "Rumus Suku ke-n Barisan Aritmetika",
+    "stageCount": 10,
+    "extraBody": "partials/reset-modal.html"
+  },
   "fase-d/mpi-12.1": {
     "title": "Membaca & Menulis Bilangan Berpangkat — Matematika Fase D",
     "description": "Media pembelajaran interaktif berbasis Discovery Learning untuk membaca dan menulis bilangan berpangkat bulat positif, negatif, dan nol beserta unsur-unsurnya (basis dan pangkat) melalui percobaan lipat kertas, pola tangga pangkat, dan penulis pangkat.",
