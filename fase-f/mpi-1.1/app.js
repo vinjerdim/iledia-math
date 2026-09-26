@@ -330,6 +330,7 @@ function renderOrientasi(container) {
         '</div>',
       'panel--hero'
     ) +
+    buildTpPanel(D) +
     panel(
       '<p class="exercise-label">' +
         esc(D.pertanyaan) +

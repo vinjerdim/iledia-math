@@ -167,6 +167,14 @@ var DATA = {
     kicker: 'Tahap 1 · Orientasi pada Masalah',
     syntax: PBL + ' · Sintaks 1',
     goal: 'Memahami masalah total XP harian yang terus bertambah, lalu menyampaikan dugaan awal tentang cara menghitung totalnya.',
+    tp: 'Menjelaskan konsep deret aritmetika dan menentukan rumus jumlah n suku pertama deret aritmetika.',
+    tpJudul: 'Tujuan belajar hari ini',
+    kriteria: [
+      'Membedakan barisan dan deret aritmetika serta menyusun jumlah berjalan Sₙ.',
+      'Menemukan pola pasangan suku (trik Gauss): 2Sₙ = n(a + Uₙ).',
+      'Menentukan dan menguji rumus Sₙ = n/2 (a + Uₙ) = n/2 (2a + (n − 1)b).',
+      'Menggunakan rumus Sₙ untuk menyelesaikan masalah kontekstual.',
+    ],
     guru: 'Bacakan pesan klien, lalu tanyakan: "Tiga jawaban, tiga angka berbeda — siapa yang benar, dan adakah cara yang cepat sekaligus tepat?" Biarkan kelompok berdebat dan catat argumen di papan (mis. "Dimas benar karena 30 hari × XP"). Jangan memberi jawaban; argumen ini diuji pada tahap Rumus.',
     judul: 'Lencana "Coder Konsisten" di NgodingYuk',
     pesanKlien:

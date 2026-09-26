@@ -69,6 +69,14 @@ var DATA = {
     kicker: 'Tahap 1 · Stimulasi',
     syntax: 'Discovery Learning · Sintaks 1 (Stimulation)',
     goal: 'Mengamati benda-benda kemasan di sekitar dan menduga kesamaan bentuknya.',
+    tp: 'Mengidentifikasi unsur-unsur prisma (titik sudut, rusuk alas/atas, rusuk tegak, sisi alas/atas, sisi tegak, tinggi) serta jaring-jaring prisma.',
+    tpJudul: 'Tujuan belajar hari ini',
+    kriteria: [
+      'Menunjukkan titik sudut, rusuk, sisi, dan tinggi pada sebuah prisma.',
+      'Menemukan hubungan banyak titik sudut, rusuk, dan sisi prisma segi-n dengan n.',
+      'Menamai prisma berdasarkan bentuk sisi alasnya.',
+      'Menentukan apakah sebuah jaring-jaring dapat dilipat menjadi prisma.',
+    ],
     guru: 'Tampilkan atau bawa benda nyata (kotak cokelat batang, kotak kue, tempat pensil). Biarkan murid menduga tanpa dikoreksi; dugaan akan diuji di tahap-tahap berikutnya.',
     judul: 'Etalase Toko Kemasan “Kardus Ceria”',
     cerita:

@@ -87,6 +87,14 @@ var DATA = {
     kicker: 'Tahap 1 · Stimulasi',
     syntax: DL + ' · Sintaks 1',
     goal: 'Mengamati hasil 2 ** 0 dan 2 ** -3 di konsol JavaScript lalu menduga mengapa 2⁰ bernilai 1.',
+    tp: 'Menggeneralisasi sifat pangkat nol dan pangkat negatif bilangan berpangkat bulat, serta menerapkannya untuk menyederhanakan bentuk aljabar berpangkat.',
+    tpJudul: 'Tujuan belajar hari ini',
+    kriteria: [
+      'Menemukan a⁰ = 1 (a ≠ 0) dari pola tangga pangkat dan sifat pembagian.',
+      'Menemukan a⁻ⁿ = 1/aⁿ (a ≠ 0) dan membedakannya dari bilangan negatif.',
+      'Menyangkal dugaan keliru a⁰ = 0 dan a⁻ⁿ = −aⁿ dengan contoh penyangkal.',
+      'Menyederhanakan bentuk aljabar berpangkat dan menuliskannya dengan eksponen positif.',
+    ],
     guru: 'Tayangkan konsol (atau jalankan langsung di DevTools peramban). Tanyakan: "Bukankah 2 dikali 0 kali seharusnya 0? Kenapa JavaScript menjawab 1?" Tampung semua dugaan tanpa dikoreksi — murid akan mengujinya sendiri.',
     judul: 'Konsol JavaScript Raka',
     cerita:

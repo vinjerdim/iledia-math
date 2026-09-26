@@ -68,6 +68,14 @@ var DATA = {
     kicker: 'Tahap 1 · Stimulasi',
     syntax: 'Discovery Learning · Sintaks 1',
     goal: 'Mengamati masalah menulis perkalian berulang yang sangat panjang dan menduga cara menyingkatnya.',
+    tp: 'Membaca dan menulis bilangan berpangkat bulat positif, negatif, dan nol beserta unsur-unsurnya (basis dan pangkat).',
+    tpJudul: 'Tujuan belajar hari ini',
+    kriteria: [
+      'Menuliskan perkalian berulang dalam bentuk pangkat aⁿ.',
+      'Menentukan basis dan pangkat, termasuk basis negatif dan tanda di luar pangkat.',
+      'Membaca bilangan berpangkat positif, nol, dan negatif dengan cara baku.',
+      'Menuliskan bilangan berpangkat dari bacaan yang didiktekan.',
+    ],
     guru: 'Bacakan cerita bersama. Bila memungkinkan, peragakan melipat selembar kertas HVS 3–4 kali. Biarkan murid menduga tanpa dikoreksi; tanyakan "Mengapa kamu memilih itu?" untuk memancing alasan.',
     judul: 'Kertas Lipat Ajaib',
     cerita:

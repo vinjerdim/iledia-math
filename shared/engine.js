@@ -1484,6 +1484,35 @@ function buildDlNextButton(id, label, large) {
   );
 }
 
+/* Panel "Tujuan belajar hari ini" di tahap pertama: TP + kriteria
+   bernomor. D = objek tahap ({tpJudul, tp, kriteria}); fmt opsional
+   untuk memformat kriteria (default esc). */
+function buildTpPanel(D, fmt) {
+  var f = fmt || esc;
+  return buildDlPanel(
+    '<h3 style="margin-top:0;">🎯 ' +
+      esc(D.tpJudul) +
+      '</h3>' +
+      '<p class="tp-teks">' +
+      esc(D.tp) +
+      '</p>' +
+      '<ol class="objectives-list">' +
+      D.kriteria
+        .map(function (c, i) {
+          return (
+            '<li><span class="objectives-list__num">' +
+            (i + 1) +
+            '</span><span>' +
+            f(c) +
+            '</span></li>'
+          );
+        })
+        .join('') +
+      '</ol>',
+    'panel--info'
+  );
+}
+
 /* Label opsi {id, label} berdasarkan id; '' bila tidak ada. */
 function findOptionLabel(options, id) {
   for (var i = 0; i < options.length; i++) {
