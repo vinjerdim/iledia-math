@@ -124,6 +124,10 @@
        HTML tanda akar & pangkat pecahan, diagnosa miskonsepsi, ubin
        faktor kembar, konverter akar–pangkat, lab persegi & kubus,
        langkah isian akar sederhana, tabel bentuk pangkat ⇄ akar)
+   46. Operasi hitung bentuk akar (bentuk (a + b√r)/d, penjumlahan &
+       pengurangan suku sejenis, perkalian, pembagian, merasionalkan
+       penyebut a/√b & sekawan, diagnosa miskonsepsi, kartu ahli
+       Jigsaw, tabel uji nilai, langkah pilih strategi → isi hasil)
    ============================================================ */
 
 /* ============================================================
@@ -24047,4 +24051,987 @@ function buildTabelAkarPangkat(rows, opts) {
       .join('') +
     '</tbody></table></div>'
   );
+}
+
+/* ============================================================
+   46. OPERASI HITUNG BENTUK AKAR
+   Blok bangun untuk penjumlahan, pengurangan, perkalian, pembagian,
+   dan merasionalkan penyebut bentuk akar kuadrat (Cooperative
+   Learning tipe Jigsaw, fase-d/mpi-12.4):
+     • bentuk hasil { a, b, r, d } = (a + b√r)/d — normalBentukAkar,
+       samaBentuk, nilaiBentukAkar, formatBentukAkar ('8√2', '7√2/2',
+       '3 − √5', '(3 + √5)/2');
+     • soal { op: 'jumlah', suku: [{ k, r }] } (k bertanda),
+       { op: 'kali'|'bagi', a: { k, r }, b: { k, r } },
+       { op: 'rasional', p, q: { k, r } } = p/(k√r),
+       { op: 'sekawan', p, a, c, r } = p/(a + c√r) — hasilOperasiAkar,
+       teksSoalAkar, sejenisAkar, strategiAkarSoal, bentukIsianAkar;
+     • diagnosaOperasiAkar / pesanDiagnosaOperasiAkar — miskonsepsi
+       khas (radikan dijumlahkan, koefisien dikalikan pada penjumlahan,
+       radikan dijumlahkan pada perkalian, penyebut belum dikalikan,
+       √b × √b = b², tanda sekawan, penyebut p² + q) tanpa membocorkan
+       jawaban;
+     • OPERASI_AKAR_AHLI — empat kartu ahli Jigsaw (penjumlahan &
+       pengurangan, perkalian, pembagian, merasionalkan penyebut) yang
+       kompatibel dengan buildSifatAhliCard/jigsawKartuAhli (seksi 44),
+       serta opsi strategi (termasuk sekawan & tidak sejenis) untuk
+       diacak;
+     • tabel uji nilai dengan bilangan kuadrat sempurna (mis. √9 + √16
+       vs √(9 + 16)) untuk menemukan sifat di kelompok ahli;
+     • langkah operasi akar: pilih strategi → isi hasil berdiagnosa;
+       pemeriksa murni (teruji tanpa DOM), skor percobaan pertama,
+       builder & binder HTML, langkahAkarAktif untuk soal bertahap.
+   Memakai sederhanakanAkar, tulisAkarHTML, buildRadikalHTML (seksi 45),
+   pecahan, samaPecahan, parseInputPecahan, formatPecahan (seksi 27),
+   gcd, fmtBulat, parseInputInt, ensureShuffledOrder, buildChoiceGroup,
+   buildFeedbackBox, buildHintToggle, buildHintStack, showNotice.
+   Gaya .opakar-* dan .uji-akar* ada di shared/base.css.
+   ============================================================ */
+
+/* ---------- Bentuk (a + b√r)/d ---------- */
+
+/*
+ * Menormalkan bentuk: radikan bebas faktor kuadrat, √1 dilebur ke a,
+ * FPB(a, b, d) dibagi, penyebut positif. Nilai kosong: a = b = 0, r = d = 1.
+ */
+function normalBentukAkar(f) {
+  var a = f.a || 0;
+  var b = f.b || 0;
+  var r = f.r || 1;
+  var d = f.d || 1;
+  if (b !== 0 && r > 1) {
+    var s = sederhanakanAkar(r, 2);
+    b *= s.luar;
+    r = s.dalam;
+  }
+  if (r === 1) {
+    a += b;
+    b = 0;
+  }
+  if (b === 0) r = 1;
+  if (d < 0) {
+    a = -a;
+    b = -b;
+    d = -d;
+  }
+  var g = gcd(gcd(a, b), d) || 1;
+  return { a: a / g || 0, b: b / g || 0, r: r, d: d / g };
+}
+
+function samaBentuk(p, q) {
+  var x = normalBentukAkar(p);
+  var y = normalBentukAkar(q);
+  return x.a === y.a && x.b === y.b && x.r === y.r && x.d === y.d;
+}
+
+function nilaiBentukAkar(f) {
+  return ((f.a || 0) + (f.b || 0) * Math.sqrt(f.r || 1)) / (f.d || 1);
+}
+
+/* Teks satu suku k√r: '3√2', '√5', '−√3'; r = 1 → bilangan bulat. */
+function sukuAkarTeks_(k, r) {
+  if (r === 1) return fmtBulat(k);
+  var m = Math.abs(k);
+  return (k < 0 ? '−' : '') + (m === 1 ? '' : formatNumber(m)) + '√' + formatNumber(r);
+}
+
+/* Pembilang a + b√r; bila a negatif dan b positif, suku akar ditulis dulu (√3 − 1). */
+function pembilangAkarTeks_(a, b, r) {
+  if (b === 0) return fmtBulat(a);
+  if (a === 0) return sukuAkarTeks_(b, r);
+  if (a < 0 && b > 0) return sukuAkarTeks_(b, r) + ' − ' + formatNumber(-a);
+  return fmtBulat(a) + (b < 0 ? ' − ' : ' + ') + sukuAkarTeks_(Math.abs(b), r);
+}
+
+/* Teks bentuk apa adanya (normalkan dulu bila perlu). */
+function formatBentukAkar(f) {
+  var a = f.a || 0;
+  var b = f.b || 0;
+  var r = f.r || 1;
+  var d = f.d || 1;
+  var num = pembilangAkarTeks_(a, b, r);
+  if (d === 1) return num;
+  return (a !== 0 && b !== 0 ? '(' + num + ')' : num) + '/' + formatNumber(d);
+}
+
+/* Pecahan bertingkat; `atasHTML` & `bawahHTML` sudah aman. */
+function buildOpAkarFrac_(atasHTML, bawahHTML) {
+  return (
+    '<span class="opakar-frac">' +
+    '<span class="opakar-frac__atas">' +
+    atasHTML +
+    '</span>' +
+    '<span class="opakar-frac__bawah">' +
+    bawahHTML +
+    '</span>' +
+    '</span>'
+  );
+}
+
+/* HTML bentuk hasil; penyebut > 1 → pecahan bertingkat (minus di depan). */
+function bentukAkarHTML(f) {
+  var a = f.a || 0;
+  var b = f.b || 0;
+  var r = f.r || 1;
+  var d = f.d || 1;
+  if (d === 1) return tulisAkarHTML(formatBentukAkar(f));
+  var minus = '';
+  if (a === 0 && b < 0) {
+    minus = '−';
+    b = -b;
+  } else if (b === 0 && a < 0) {
+    minus = '−';
+    a = -a;
+  }
+  return minus + buildOpAkarFrac_(tulisAkarHTML(pembilangAkarTeks_(a, b, r)), esc(formatNumber(d)));
+}
+
+/* ---------- Soal operasi ---------- */
+
+/* Suku { k, r } yang sudah disederhanakan: √12 → { k: 2, r: 3 }, √9 → { k: 3, r: 1 }. */
+function sederhanaSukuAkar(s) {
+  var x = normalBentukAkar({ b: s.k, r: s.r });
+  return x.b === 0 ? { k: x.a, r: 1 } : { k: x.b, r: x.r };
+}
+
+/* true bila semua suku sejenis (radikan sama) setelah disederhanakan. */
+function sejenisAkar(suku) {
+  var r0 = sederhanaSukuAkar(suku[0]).r;
+  return suku.every(function (s) {
+    return sederhanaSukuAkar(s).r === r0;
+  });
+}
+
+function sukuDeretTeks_(suku) {
+  return suku
+    .map(function (s, i) {
+      if (i === 0) return sukuAkarTeks_(s.k, s.r);
+      return (s.k < 0 ? ' − ' : ' + ') + sukuAkarTeks_(Math.abs(s.k), s.r);
+    })
+    .join('');
+}
+
+/* Suku-suku setelah disederhanakan: √8 + √12 → '2√2 + 2√3'. */
+function teksSukuSederhana(suku) {
+  return sukuDeretTeks_(suku.map(sederhanaSukuAkar));
+}
+
+function teksSoalAkar(soal) {
+  if (soal.op === 'jumlah') return sukuDeretTeks_(soal.suku);
+  if (soal.op === 'kali' || soal.op === 'bagi') {
+    return (
+      sukuAkarTeks_(soal.a.k, soal.a.r) +
+      (soal.op === 'kali' ? ' × ' : ' : ') +
+      sukuAkarTeks_(soal.b.k, soal.b.r)
+    );
+  }
+  if (soal.op === 'rasional') {
+    var q = sukuAkarTeks_(soal.q.k, soal.q.r);
+    return fmtBulat(soal.p) + '/' + (soal.q.k === 1 ? q : '(' + q + ')');
+  }
+  if (soal.op === 'sekawan') {
+    return fmtBulat(soal.p) + '/(' + pembilangAkarTeks_(soal.a, soal.c || 1, soal.r) + ')';
+  }
+  throw new Error('operasi akar tidak dikenal: ' + soal.op);
+}
+
+/* HTML soal: rasional & sekawan sebagai pecahan bertingkat. */
+function soalAkarHTML(soal) {
+  if (soal.op === 'rasional') {
+    return buildOpAkarFrac_(
+      esc(fmtBulat(soal.p)),
+      tulisAkarHTML(sukuAkarTeks_(soal.q.k, soal.q.r))
+    );
+  }
+  if (soal.op === 'sekawan') {
+    return buildOpAkarFrac_(
+      esc(fmtBulat(soal.p)),
+      tulisAkarHTML(pembilangAkarTeks_(soal.a, soal.c || 1, soal.r))
+    );
+  }
+  return tulisAkarHTML(teksSoalAkar(soal));
+}
+
+/* Hasil ternormalkan; null untuk penjumlahan suku yang tidak sejenis. */
+function hasilOperasiAkar(soal) {
+  if (soal.op === 'jumlah') {
+    if (!sejenisAkar(soal.suku)) return null;
+    var r = sederhanaSukuAkar(soal.suku[0]).r;
+    var k = soal.suku.reduce(function (acc, s) {
+      return acc + sederhanaSukuAkar(s).k;
+    }, 0);
+    return normalBentukAkar({ b: k, r: r });
+  }
+  if (soal.op === 'kali') {
+    return normalBentukAkar({ b: soal.a.k * soal.b.k, r: soal.a.r * soal.b.r });
+  }
+  if (soal.op === 'bagi') {
+    return normalBentukAkar({ b: soal.a.k, r: soal.a.r * soal.b.r, d: soal.b.k * soal.b.r });
+  }
+  if (soal.op === 'rasional') {
+    return normalBentukAkar({ b: soal.p, r: soal.q.r, d: soal.q.k * soal.q.r });
+  }
+  if (soal.op === 'sekawan') {
+    var c = soal.c || 1;
+    return normalBentukAkar({
+      a: soal.p * soal.a,
+      b: -soal.p * c,
+      r: soal.r,
+      d: soal.a * soal.a - c * c * soal.r,
+    });
+  }
+  throw new Error('operasi akar tidak dikenal: ' + soal.op);
+}
+
+/* Id strategi yang tepat untuk soal (lihat opsiStrategiAkar). */
+function strategiAkarSoal(soal) {
+  if (soal.op === 'jumlah') return sejenisAkar(soal.suku) ? 'jumlah' : 'tidakSejenis';
+  return soal.op;
+}
+
+/* Kotak isian hasil: 'akar' b√r | 'bulat' a | 'duaSuku' a + b√r | 'pecahanAkar' b√r/d. */
+function bentukIsianAkar(soal) {
+  var h = hasilOperasiAkar(soal);
+  if (!h) return null;
+  if (h.d > 1) return 'pecahanAkar';
+  if (h.b === 0) return 'bulat';
+  if (h.a !== 0) return 'duaSuku';
+  return 'akar';
+}
+
+/* ---------- Diagnosa ---------- */
+
+/*
+ * Kode diagnosa jawaban { a, b, r, d } (boleh belum dinormalkan):
+ *   'benar' | 'belumSederhana' (nilai sama, bentuk belum paling sederhana)
+ *   jumlah:   'radikanDijumlah' (√a + √b = √(a + b)) | 'koefisienDikali'
+ *   kali:     'radikanDitambah' | 'koefisienDitambah' | 'koefisienLupa'
+ *   bagi:     'radikanDikurang' | 'koefisienLupa'
+ *   rasional: 'hanyaPembilang' (penyebut tidak ikut dikalikan) |
+ *             'akarKaliAkar' (√b × √b dianggap b²)
+ *   sekawan:  'sekawanSalahTanda' | 'selisihKuadrat' (penyebut p² + q)
+ *   'lain'
+ */
+function diagnosaOperasiAkar(soal, jawab) {
+  var kunci = hasilOperasiAkar(soal);
+  var raw = { a: jawab.a || 0, b: jawab.b || 0, r: jawab.r || 1, d: jawab.d || 1 };
+  if (samaBentuk(raw, kunci)) {
+    var n = normalBentukAkar(raw);
+    var rapi = raw.a === n.a && raw.b === n.b && raw.d === n.d && (raw.b === 0 || raw.r === n.r);
+    return rapi ? 'benar' : 'belumSederhana';
+  }
+  function cocok(f) {
+    return samaBentuk(raw, f);
+  }
+  if (soal.op === 'jumlah') {
+    var rGab = 0;
+    var kGab = 0;
+    var kKali = 1;
+    soal.suku.forEach(function (s) {
+      rGab += s.k < 0 ? -s.r : s.r;
+      kGab += s.k;
+      kKali *= sederhanaSukuAkar(s).k;
+    });
+    if (rGab > 0 && (cocok({ b: 1, r: rGab }) || cocok({ b: kGab, r: rGab }))) {
+      return 'radikanDijumlah';
+    }
+    if (soal.suku.length > 1 && cocok({ b: kKali, r: kunci.r })) return 'koefisienDikali';
+    return 'lain';
+  }
+  var A = soal.a;
+  var Bq = soal.b;
+  if (soal.op === 'kali') {
+    if (cocok({ b: A.k * Bq.k, r: A.r + Bq.r })) return 'radikanDitambah';
+    if (A.k + Bq.k !== A.k * Bq.k && cocok({ b: A.k + Bq.k, r: A.r * Bq.r })) {
+      return 'koefisienDitambah';
+    }
+    if (A.k * Bq.k !== 1 && cocok({ b: 1, r: A.r * Bq.r })) return 'koefisienLupa';
+    return 'lain';
+  }
+  if (soal.op === 'bagi') {
+    if (A.r > Bq.r && cocok({ b: A.k, r: A.r - Bq.r, d: Bq.k })) return 'radikanDikurang';
+    if (A.k !== Bq.k && cocok({ b: 1, r: A.r * Bq.r, d: Bq.r })) return 'koefisienLupa';
+    return 'lain';
+  }
+  if (soal.op === 'rasional') {
+    var q = soal.q;
+    if (cocok({ b: soal.p, r: q.r, d: q.k })) return 'hanyaPembilang';
+    if (cocok({ b: soal.p, r: q.r, d: q.k * q.r * q.r })) return 'akarKaliAkar';
+    return 'lain';
+  }
+  if (soal.op === 'sekawan') {
+    var c = soal.c || 1;
+    var D = soal.a * soal.a - c * c * soal.r;
+    if (cocok({ a: soal.p * soal.a, b: soal.p * c, r: soal.r, d: D })) return 'sekawanSalahTanda';
+    if (
+      cocok({ a: soal.p * soal.a, b: -soal.p * c, r: soal.r, d: soal.a * soal.a + c * c * soal.r })
+    ) {
+      return 'selisihKuadrat';
+    }
+    return 'lain';
+  }
+  return 'lain';
+}
+
+/* Pesan diagnosa (teks bernotasi akar; render dengan tulisAkarHTML). */
+function pesanDiagnosaOperasiAkar(kode, soal) {
+  var r = soal.op === 'rasional' ? soal.q.r : soal.r;
+  var pesan = {
+    benar: 'Tepat! Hasilmu sudah dalam bentuk paling sederhana.',
+    belumSederhana:
+      'Nilainya sudah benar, tetapi belum paling sederhana. Periksa apakah bilangan di dalam akar masih memuat faktor kuadrat (4, 9, 16, 25, …) atau pecahannya masih bisa disederhanakan.',
+    radikanDijumlah:
+      'Bilangan di dalam akar tidak boleh dijumlahkan atau dikurangkan: √9 + √16 = 3 + 4 = 7, padahal √(9 + 16) = 5. Sederhanakan setiap suku, lalu jumlahkan KOEFISIEN suku yang sejenis (seperti 2x + 5x = 7x).',
+    koefisienDikali:
+      'Pada penjumlahan suku sejenis, koefisien DIJUMLAHKAN (seperti 2x + 5x = 7x), bukan dikalikan.',
+    radikanDitambah:
+      'Pada perkalian, bilangan di dalam akar DIKALIKAN: √a × √b = √(a × b), bukan dijumlahkan.',
+    koefisienDitambah:
+      'Koefisien (bilangan di depan akar) juga DIKALIKAN, bukan dijumlahkan: a√b × c√d = (a × c)√(b × d).',
+    koefisienLupa:
+      'Jangan lupakan koefisien di depan akar. Koefisien dioperasikan dengan koefisien, bilangan di dalam akar dengan bilangan di dalam akar.',
+    radikanDikurang:
+      'Pada pembagian, bilangan di dalam akar DIBAGI: √a : √b = √(a : b), bukan dikurangkan.',
+    hanyaPembilang:
+      'Kamu baru mengalikan pembilangnya. Pembilang DAN penyebut harus dikalikan dengan akar yang sama agar nilai pecahannya tidak berubah (dikali 1).',
+    akarKaliAkar:
+      'Ingat √a × √a = a' +
+      (r ? ', jadi √' + formatNumber(r) + ' × √' + formatNumber(r) + ' = ' + formatNumber(r) : '') +
+      ' — bukan kuadratnya.',
+    sekawanSalahTanda:
+      'Bentuk sekawan dari p + √q adalah p − √q (tanda di depan akar dibalik). Kalikan pembilang dan penyebut dengan bentuk sekawan itu.',
+    selisihKuadrat:
+      'Penyebutnya menjadi (p + √q)(p − √q) = p² − q. Hasilnya SELISIH p² dan q, bukan jumlahnya.',
+    lain: 'Belum tepat. Periksa langkahmu: sederhanakan setiap akar, lalu terapkan sifat operasinya dengan teliti.',
+  };
+  return pesan[kode] || pesan.lain;
+}
+
+/* ---------- Kartu ahli & strategi ---------- */
+
+var OPERASI_AKAR_AHLI = [
+  {
+    id: 'jumlah',
+    ikon: '➕',
+    nama: 'Ahli Penjumlahan & Pengurangan',
+    ringkas: 'Hanya suku sejenis yang dijumlah/dikurangkan → koefisiennya saja',
+    rumus: 'a√c ± b√c = (a ± b)√c',
+    tugas: 'Mengajarkan cara menjumlahkan dan mengurangkan bentuk akar sejenis.',
+    kunci:
+      'Bentuk akar hanya dapat dijumlahkan atau dikurangkan bila SEJENIS (bilangan di dalam akarnya sama setelah disederhanakan). Yang dijumlahkan hanya koefisiennya, bilangan di dalam akar tetap.',
+  },
+  {
+    id: 'kali',
+    ikon: '✖️',
+    nama: 'Ahli Perkalian',
+    ringkas: 'Koefisien × koefisien, akar × akar, lalu sederhanakan',
+    rumus: 'a√b × c√d = (a × c)√(b × d)',
+    tugas: 'Mengajarkan cara mengalikan bentuk akar.',
+    kunci:
+      'Pada perkalian, koefisien dikalikan dengan koefisien dan bilangan di dalam akar dikalikan dengan bilangan di dalam akar. Hasilnya disederhanakan. Ingat √a × √a = a.',
+  },
+  {
+    id: 'bagi',
+    ikon: '➗',
+    nama: 'Ahli Pembagian',
+    ringkas: 'Koefisien : koefisien, akar : akar, lalu sederhanakan',
+    rumus: 'a√b : c√d = (a : c)√(b : d)',
+    tugas: 'Mengajarkan cara membagi bentuk akar.',
+    kunci:
+      'Pada pembagian, koefisien dibagi koefisien dan bilangan di dalam akar dibagi bilangan di dalam akar (c, d ≠ 0). Hasilnya disederhanakan.',
+  },
+  {
+    id: 'rasional',
+    ikon: '🎯',
+    nama: 'Ahli Merasionalkan Penyebut',
+    ringkas: 'Kalikan dengan 1 dalam bentuk √b/√b atau sekawan penyebut',
+    rumus: 'a/√b = (a/√b) × (√b/√b) = a√b/b',
+    tugas: 'Mengajarkan cara menghilangkan bentuk akar dari penyebut pecahan.',
+    kunci:
+      'Penyebut √b dirasionalkan dengan mengalikan pembilang dan penyebut dengan √b (karena √b × √b = b). Penyebut p ± √q dikalikan dengan sekawannya p ∓ √q, karena (p + √q)(p − √q) = p² − q.',
+  },
+];
+
+var OPERASI_AKAR_EKSTRA = [
+  {
+    id: 'sekawan',
+    ikon: '🔄',
+    nama: 'Rasionalkan dengan sekawan',
+    ringkas: 'Penyebut p ± √q → kalikan dengan sekawannya p ∓ √q',
+    rumus: 'a/(p + √q) × (p − √q)/(p − √q)',
+    tugas: 'Merasionalkan penyebut berbentuk dua suku.',
+    kunci: '(p + √q)(p − √q) = p² − q, sehingga penyebut menjadi bilangan bulat.',
+  },
+  {
+    id: 'tidakSejenis',
+    ikon: '🚫',
+    nama: 'Tidak dapat dijumlahkan',
+    ringkas: 'Setelah disederhanakan radikannya berbeda → biarkan apa adanya',
+    rumus: '√2 + √3 tetap √2 + √3',
+    tugas: 'Memeriksa apakah suku-sukunya sejenis sebelum menjumlahkan.',
+    kunci:
+      'Suku yang tidak sejenis (bilangan di dalam akar berbeda setelah disederhanakan) tidak dapat digabung menjadi satu suku.',
+  },
+];
+
+function operasiAkarInfo(id) {
+  var semua = OPERASI_AKAR_AHLI.concat(OPERASI_AKAR_EKSTRA);
+  for (var i = 0; i < semua.length; i++) {
+    if (semua[i].id === id) return semua[i];
+  }
+  return null;
+}
+
+/* Id ahli yang memimpin strategi: sekawan → rasional, tidak sejenis → jumlah. */
+function ahliStrategiAkar(id) {
+  if (id === 'sekawan') return 'rasional';
+  if (id === 'tidakSejenis') return 'jumlah';
+  return id;
+}
+
+var STRATEGI_AKAR_LABEL = {
+  jumlah: 'Jumlah/kurangkan suku sejenis',
+  kali: 'Kalikan akar',
+  bagi: 'Bagi akar',
+  rasional: 'Rasionalkan: kalikan √b/√b',
+  sekawan: 'Rasionalkan: kalikan sekawan',
+  tidakSejenis: 'Tidak sejenis — tidak dapat digabung',
+};
+
+/* Opsi { id, label } pilihan strategi untuk diacak (ensureShuffledOrder). */
+function opsiStrategiAkar() {
+  return OPERASI_AKAR_AHLI.concat(OPERASI_AKAR_EKSTRA).map(function (s) {
+    return {
+      id: s.id,
+      label:
+        '<span aria-hidden="true">' +
+        s.ikon +
+        '</span> <strong>' +
+        tulisAkarHTML(STRATEGI_AKAR_LABEL[s.id]) +
+        '</strong> <span class="opakar-opt__rumus">' +
+        tulisAkarHTML(s.rumus) +
+        '</span>',
+    };
+  });
+}
+
+function pesanStrategiSalah_(soal, chosen) {
+  var benar = strategiAkarSoal(soal);
+  if (benar === 'tidakSejenis') {
+    return 'Sederhanakan dulu setiap akar, lalu bandingkan bilangan di dalam akarnya. Apakah sudah sama?';
+  }
+  if (chosen === 'tidakSejenis') {
+    return 'Coba sederhanakan setiap akar lebih dulu. Setelah disederhanakan, bilangan di dalam akarnya ternyata SAMA, jadi suku-sukunya sejenis.';
+  }
+  if (benar === 'rasional' && chosen === 'sekawan') {
+    return 'Penyebutnya hanya satu suku akar (a√b), jadi cukup dikalikan dengan akar yang sama.';
+  }
+  if (benar === 'sekawan' && chosen === 'rasional') {
+    return 'Penyebutnya terdiri atas DUA suku (p ± √q). Dikalikan √q saja, akarnya tidak hilang dari penyebut.';
+  }
+  return {
+    jumlah: 'Perhatikan operasinya: suku-suku akar sedang DIJUMLAHKAN atau DIKURANGKAN.',
+    kali: 'Perhatikan operasinya: bentuk akar sedang DIKALIKAN.',
+    bagi: 'Perhatikan operasinya: bentuk akar sedang DIBAGI (tanda :).',
+    rasional: 'Perhatikan penyebutnya: ada bentuk akar di penyebut pecahan yang harus dihilangkan.',
+    sekawan:
+      'Perhatikan penyebutnya: berbentuk dua suku p ± √q, jadi dikalikan dengan bentuk sekawannya.',
+  }[benar];
+}
+
+/* ---------- Tabel uji nilai (kelompok ahli) ----------
+   baris per op (radikan kuadrat sempurna agar nilainya eksak):
+     jumlah   { k1, k2, r } (suku sejenis) atau { a, b } (√a + √b vs √(a + b))
+     kali     { k1?, a, k2?, b }     bagi { k1?, a, k2?, b }
+     rasional { p, b }                                              */
+
+function akarUji_(x) {
+  var v = akarBulat(x, 2);
+  if (v === null) throw new Error('uji akar butuh kuadrat sempurna: ' + x);
+  return v;
+}
+
+/* { kiriTeks, kananTeks, kiri, kanan, sama } — nilai berupa pecahan eksak. */
+function ujiAkarBaris(op, b) {
+  var k1 = b.k1 || 1;
+  var k2 = b.k2 || 1;
+  var kiriTeks;
+  var kananTeks;
+  var kiri;
+  var kanan;
+  if (op === 'jumlah') {
+    if (b.r !== undefined) {
+      kiriTeks = formatNumber(b.k1) + '√' + b.r + ' + ' + formatNumber(b.k2) + '√' + b.r;
+      kananTeks = '(' + b.k1 + ' + ' + b.k2 + ')√' + b.r;
+      kiri = pecahan((b.k1 + b.k2) * akarUji_(b.r), 1);
+      kanan = kiri;
+    } else {
+      kiriTeks = '√' + b.a + ' + √' + b.b;
+      kananTeks = '√(' + b.a + ' + ' + b.b + ')';
+      kiri = pecahan(akarUji_(b.a) + akarUji_(b.b), 1);
+      kanan = pecahan(akarUji_(b.a + b.b), 1);
+    }
+  } else if (op === 'kali' || op === 'bagi') {
+    var tanda = op === 'kali' ? ' × ' : ' : ';
+    var depan1 = k1 === 1 ? '' : formatNumber(k1);
+    var depan2 = k2 === 1 ? '' : formatNumber(k2);
+    kiriTeks = depan1 + '√' + b.a + tanda + depan2 + '√' + b.b;
+    kananTeks =
+      (k1 === 1 && k2 === 1 ? '' : '(' + k1 + tanda + k2 + ')') + '√(' + b.a + tanda + b.b + ')';
+    if (op === 'kali') {
+      kiri = pecahan(k1 * akarUji_(b.a) * k2 * akarUji_(b.b), 1);
+      kanan = pecahan(k1 * k2 * akarUji_(b.a * b.b), 1);
+    } else {
+      if (b.a % b.b !== 0) throw new Error('uji bagi butuh a habis dibagi b');
+      kiri = pecahan(k1 * akarUji_(b.a), k2 * akarUji_(b.b));
+      kanan = pecahan(k1 * akarUji_(b.a / b.b), k2);
+    }
+  } else if (op === 'rasional') {
+    kiriTeks = b.p + '/√' + b.b;
+    kananTeks = (b.p === 1 ? '' : b.p) + '√' + b.b + '/' + b.b;
+    kiri = pecahan(b.p, akarUji_(b.b));
+    kanan = pecahan(b.p * akarUji_(b.b), b.b);
+  } else {
+    throw new Error('operasi uji tidak dikenal: ' + op);
+  }
+  return {
+    kiriTeks: kiriTeks,
+    kananTeks: kananTeks,
+    kiri: kiri,
+    kanan: kanan,
+    sama: samaPecahan(kiri, kanan),
+  };
+}
+
+function makeUjiAkarState() {
+  return { kiri: {}, kanan: {}, cek: false };
+}
+
+function ensureUjiAkarState(st) {
+  if (!st || typeof st !== 'object') return makeUjiAkarState();
+  if (!st.kiri || typeof st.kiri !== 'object') st.kiri = {};
+  if (!st.kanan || typeof st.kanan !== 'object') st.kanan = {};
+  st.cek = !!st.cek;
+  return st;
+}
+
+/* Sel baris ke-i sisi 'kiri'/'kanan' benar (hanya setelah diperiksa). */
+function ujiAkarSelBenar(op, b, st, i, sisi) {
+  if (!st.cek) return false;
+  var p = parseInputPecahan(String(st[sisi][i] || ''));
+  return !p.error && samaPecahan(p.value, ujiAkarBaris(op, b)[sisi]);
+}
+
+function ujiAkarSemuaBenar(op, baris, st) {
+  return baris.every(function (b, i) {
+    return ujiAkarSelBenar(op, b, st, i, 'kiri') && ujiAkarSelBenar(op, b, st, i, 'kanan');
+  });
+}
+
+function buildUjiAkarTabel(id, op, baris, st) {
+  var semua = ujiAkarSemuaBenar(op, baris, st);
+  function sel(b, i, sisi, teks) {
+    var benar = ujiAkarSelBenar(op, b, st, i, sisi);
+    var salah = st.cek && !benar;
+    return (
+      '<td class="uji-akar__bentuk">' +
+      tulisAkarHTML(teks) +
+      '</td><td>' +
+      (benar && semua
+        ? '<strong class="uji-akar__nilai">' +
+          esc(formatPecahan(ujiAkarBaris(op, b)[sisi])) +
+          '</strong>'
+        : '<input type="text" class="input-text uji-akar__input' +
+          (salah ? ' has-error' : benar ? ' is-correct' : '') +
+          '" data-uji-id="' +
+          id +
+          '" data-uji-sisi="' +
+          sisi +
+          '" data-uji-i="' +
+          i +
+          '" autocomplete="off" value="' +
+          esc(st[sisi][i] || '') +
+          '" aria-label="' +
+          esc('Nilai ' + teks) +
+          '" placeholder="?">') +
+      '</td>'
+    );
+  }
+  var ada = baris.some(function (b, i) {
+    return (
+      st.cek && (!ujiAkarSelBenar(op, b, st, i, 'kiri') || !ujiAkarSelBenar(op, b, st, i, 'kanan'))
+    );
+  });
+  return (
+    '<div class="table-scroll"><table class="uji-akar" id="' +
+    id +
+    '">' +
+    '<thead><tr><th scope="col">Bentuk A</th><th scope="col">Nilai A</th>' +
+    '<th scope="col">Bentuk B</th><th scope="col">Nilai B</th><th scope="col">A = B?</th></tr></thead><tbody>' +
+    baris
+      .map(function (b, i) {
+        var u = ujiAkarBaris(op, b);
+        var tuntas =
+          ujiAkarSelBenar(op, b, st, i, 'kiri') && ujiAkarSelBenar(op, b, st, i, 'kanan');
+        return (
+          '<tr>' +
+          sel(b, i, 'kiri', u.kiriTeks) +
+          sel(b, i, 'kanan', u.kananTeks) +
+          '<td class="uji-akar__sama' +
+          (tuntas ? (u.sama ? ' is-sama' : ' is-beda') : '') +
+          '">' +
+          (tuntas ? (u.sama ? '= ya' : '≠ tidak') : '…') +
+          '</td></tr>'
+        );
+      })
+      .join('') +
+    '</tbody></table></div>' +
+    (semua
+      ? ''
+      : '<div class="btn-group"><button type="button" class="btn btn--primary" id="' +
+        id +
+        'Cek">Periksa Tabel</button></div>' +
+        (ada
+          ? buildFeedbackBox(
+              'warning',
+              '💭',
+              tulisAkarHTML(
+                'Ada nilai yang belum tepat (kotak merah). Hitung akar kuadrat sempurna lebih dulu, mis. √36 = 6, lalu operasikan. Nilai boleh berupa pecahan, mis. 1/2.'
+              )
+            )
+          : ''))
+  );
+}
+
+function bindUjiAkarTabel(root, id, st, save, rerender) {
+  var btn = root.querySelector('#' + id + 'Cek');
+  root.querySelectorAll('[data-uji-id="' + id + '"]').forEach(function (inp) {
+    inp.addEventListener('input', function () {
+      st[inp.dataset.ujiSisi][inp.dataset.ujiI] = inp.value;
+      save();
+    });
+    inp.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter' && btn) btn.click();
+    });
+  });
+  if (btn) {
+    btn.addEventListener('click', function () {
+      st.cek = true;
+      save();
+      rerender();
+    });
+  }
+}
+
+/* ---------- Langkah operasi akar: strategi → hasil ---------- */
+
+function makeOpAkarStepState() {
+  return {
+    strategi: null,
+    strategiSalah: 0,
+    strategiOrder: null,
+    isian: { a: '', b: '', r: '', d: '' },
+    done: false,
+    attempts: 0,
+    kode: null,
+    hintLevel: 0,
+  };
+}
+
+/* Merapikan state tersimpan & mengacak urutan pilihan strategi (sekali). */
+function ensureOpAkarStepState(st) {
+  var dasar = makeOpAkarStepState();
+  if (!st || typeof st !== 'object' || Array.isArray(st)) st = dasar;
+  Object.keys(dasar).forEach(function (k) {
+    if (st[k] === undefined) st[k] = dasar[k];
+  });
+  if (!st.isian || typeof st.isian !== 'object') st.isian = dasar.isian;
+  ensureShuffledOrder(st, 'strategiOrder', opsiStrategiAkar());
+  return st;
+}
+
+function pakaiStrategi_(opts) {
+  return !(opts && opts.pilihStrategi === false);
+}
+
+/* Memilih strategi; true bila tepat (lalu terkunci). Tidak sejenis langsung selesai. */
+function periksaStrategiAkar(soal, st, id) {
+  var benar = strategiAkarSoal(soal);
+  if (st.strategi === benar) return true;
+  st.strategi = id;
+  if (id === benar) {
+    if (benar === 'tidakSejenis') st.done = true;
+    return true;
+  }
+  st.strategiSalah += 1;
+  return false;
+}
+
+var ISIAN_AKAR_KOLOM = {
+  akar: ['b', 'r'],
+  bulat: ['a'],
+  duaSuku: ['a', 'b', 'r'],
+  pecahanAkar: ['b', 'r', 'd'],
+};
+
+/*
+ * Memeriksa isian { a, b, r, d } (teks) sesuai bentukIsianAkar. Kembalian
+ * { ok, error } dengan error 'strategi' | 'empty' | 'invalid' | null;
+ * isian kosong/tidak valid tidak dihitung sebagai percobaan.
+ */
+function periksaHasilAkar(soal, st, isian, opts) {
+  if (pakaiStrategi_(opts) && st.strategi !== strategiAkarSoal(soal)) {
+    return { ok: false, error: 'strategi' };
+  }
+  var kolom = ISIAN_AKAR_KOLOM[bentukIsianAkar(soal)];
+  var nilai = {};
+  for (var i = 0; i < kolom.length; i++) {
+    var key = kolom[i];
+    var p = parseInputInt(String(isian[key] === undefined ? '' : isian[key]));
+    if (p.error) return { ok: false, error: p.error };
+    if ((key === 'r' || key === 'd') && p.value < 1) return { ok: false, error: 'invalid' };
+    nilai[key] = p.value;
+  }
+  kolom.forEach(function (key) {
+    st.isian[key] = String(isian[key]).trim();
+  });
+  st.attempts += 1;
+  st.kode = diagnosaOperasiAkar(soal, nilai);
+  st.done = st.kode === 'benar';
+  return { ok: st.done, error: null };
+}
+
+function opAkarStepSelesai(soal, st, opts) {
+  return !!(st && (!pakaiStrategi_(opts) || st.strategi === strategiAkarSoal(soal)) && st.done);
+}
+
+/* Skor percobaan pertama { benar, maks }: strategi (bila dipilih) & hasil. */
+function opAkarStepSkor(soal, st, opts) {
+  var benar = 0;
+  var maks = 0;
+  var s = strategiAkarSoal(soal);
+  if (pakaiStrategi_(opts)) {
+    maks += 1;
+    if (st.strategi === s && !st.strategiSalah) benar += 1;
+  }
+  if (s !== 'tidakSejenis') {
+    maks += 1;
+    if (st.done && st.attempts === 1) benar += 1;
+  }
+  return { benar: benar, maks: maks };
+}
+
+/* Indeks langkah pertama yang belum selesai (L.length bila semua selesai). */
+function langkahAkarAktif(L, states, opts) {
+  for (var i = 0; i < L.length; i++) {
+    if (!opAkarStepSelesai(L[i], states[i], opts)) return i;
+  }
+  return L.length;
+}
+
+function isianAkarInput_(id, key, st, salah, label) {
+  return (
+    '<input type="text" autocomplete="off" class="input-text opakar-in' +
+    (salah ? ' has-error' : '') +
+    '" id="' +
+    id +
+    key.toUpperCase() +
+    '" value="' +
+    esc(st.isian[key] || '') +
+    '" aria-label="' +
+    esc(label) +
+    '" placeholder="…">'
+  );
+}
+
+function buildIsianAkar_(id, soal, st, salah) {
+  var bentuk = bentukIsianAkar(soal);
+  function inp(key, label) {
+    return isianAkarInput_(id, key, st, salah, label);
+  }
+  function akarB() {
+    return (
+      inp('b', 'Koefisien di depan akar') +
+      buildRadikalHTML(2, inp('r', 'Bilangan di dalam akar'), null, { besar: true })
+    );
+  }
+  if (bentuk === 'bulat') return inp('a', 'Hasil (bilangan bulat)');
+  if (bentuk === 'akar') return akarB();
+  if (bentuk === 'duaSuku') {
+    return (
+      inp('a', 'Suku bilangan bulat') +
+      '<span class="opakar-op" aria-hidden="true">+</span>' +
+      akarB() +
+      '<span class="opakar-catatan">(koefisien akar boleh negatif)</span>'
+    );
+  }
+  return buildOpAkarFrac_(
+    '<span class="opakar-isian">' + akarB() + '</span>',
+    inp('d', 'Penyebut')
+  );
+}
+
+/*
+ * Builder langkah operasi akar.
+ *   opts.pilihStrategi  false → langsung isian hasil
+ *   opts.pemimpin       function(idAhli) → nama ahli yang memimpin
+ *   opts.nomor, opts.label (HTML tepercaya)
+ */
+function buildOpAkarStep(id, soal, st, opts) {
+  opts = opts || {};
+  var pilih = pakaiStrategi_(opts);
+  var sBenar = strategiAkarSoal(soal);
+  var strategiOk = !pilih || st.strategi === sBenar;
+  var selesai = opAkarStepSelesai(soal, st, opts);
+  var soalHTML = soalAkarHTML(soal);
+  var out =
+    '<div class="opakar-step' +
+    (selesai ? ' opakar-step--done' : '') +
+    '" id="' +
+    id +
+    '">' +
+    (opts.label || opts.nomor
+      ? '<p class="opakar-step__label">' +
+        (opts.nomor ? '<span class="dl-step__num">' + opts.nomor + '</span>' : '') +
+        (opts.label || '') +
+        '</p>'
+      : '') +
+    '<p class="opakar-step__soal">' +
+    soalHTML +
+    '</p>';
+
+  if (pilih) {
+    out +=
+      '<p class="opakar-step__tanya">Strategi apa yang dipakai?</p>' +
+      buildChoiceGroup(opsiStrategiAkar(), st.strategiOrder, {
+        chosen: st.strategi,
+        correctId: strategiOk ? sBenar : null,
+        grade: true,
+        locked: strategiOk,
+        group: id,
+        attr: 'data-opakar-opt',
+      });
+    if (st.strategi && !strategiOk) {
+      out += buildFeedbackBox(
+        'warning',
+        '💭',
+        tulisAkarHTML(pesanStrategiSalah_(soal, st.strategi))
+      );
+    } else if (strategiOk && st.strategi) {
+      var info = operasiAkarInfo(sBenar);
+      var ahli = operasiAkarInfo(ahliStrategiAkar(sBenar));
+      var nama = opts.pemimpin ? opts.pemimpin(ahli.id) : '';
+      out += buildFeedbackBox(
+        'success',
+        info.ikon,
+        '<strong>' +
+          tulisAkarHTML(STRATEGI_AKAR_LABEL[sBenar]) +
+          '.</strong> ' +
+          tulisAkarHTML(info.ringkas) +
+          (nama
+            ? '. <span class="opakar-step__pemimpin">🎓 ' +
+              esc(nama) +
+              ' (' +
+              esc(ahli.nama) +
+              ') memimpin langkah ini.</span>'
+            : '.')
+      );
+    }
+  }
+
+  if (strategiOk && sBenar === 'tidakSejenis' && st.done) {
+    out +=
+      '<p class="opakar-step__hasil">✓ ' +
+      tulisAkarHTML(teksSoalAkar(soal) + ' = ' + teksSukuSederhana(soal.suku)) +
+      ' <span class="dl-caption">(tidak sejenis, tidak dapat digabung menjadi satu suku)</span></p>';
+  } else if (strategiOk && sBenar !== 'tidakSejenis') {
+    if (!st.done) {
+      var salah = !!st.kode && st.kode !== 'benar';
+      out +=
+        '<div class="opakar-step__row">' +
+        '<span class="opakar-step__eq">' +
+        soalHTML +
+        ' =</span>' +
+        '<span class="opakar-step__isian">' +
+        buildIsianAkar_(id, soal, st, salah) +
+        '</span>' +
+        '<button type="button" class="btn btn--primary" id="' +
+        id +
+        'Btn">Periksa</button>' +
+        buildHintToggle(id + 'Hint', soal.hints, st.hintLevel) +
+        '</div>' +
+        (salah
+          ? buildFeedbackBox(
+              st.kode === 'belumSederhana' ? 'warning' : 'error',
+              st.kode === 'belumSederhana' ? '✏️' : '✗',
+              tulisAkarHTML(pesanDiagnosaOperasiAkar(st.kode, soal))
+            )
+          : '') +
+        buildHintStack(
+          (soal.hints || []).map(function (h) {
+            return tulisAkarHTML(h);
+          }),
+          st.hintLevel
+        );
+    } else {
+      out +=
+        '<p class="opakar-step__hasil">✓ ' +
+        soalHTML +
+        ' = <strong>' +
+        bentukAkarHTML(hasilOperasiAkar(soal)) +
+        '</strong>' +
+        (soal.satuan ? ' ' + esc(soal.satuan) : '') +
+        '</p>';
+    }
+  }
+  return out + '</div>';
+}
+
+/* Memasang event buildOpAkarStep; `save` lalu `rerender` setelah perubahan. */
+function bindOpAkarStep(root, id, soal, st, save, rerender, opts) {
+  root.querySelectorAll('[data-opakar-opt][data-group="' + id + '"]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      periksaStrategiAkar(soal, st, btn.getAttribute('data-opakar-opt'));
+      save();
+      rerender();
+    });
+  });
+  var btn = root.querySelector('#' + id + 'Btn');
+  if (btn) {
+    var inputs = root.querySelectorAll('#' + id + ' .opakar-in');
+    inputs.forEach(function (inp) {
+      inp.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter') btn.click();
+      });
+    });
+    btn.addEventListener('click', function () {
+      var isian = {};
+      ['a', 'b', 'r', 'd'].forEach(function (k) {
+        var el = root.querySelector('#' + id + k.toUpperCase());
+        if (el) isian[k] = el.value;
+      });
+      var r = periksaHasilAkar(soal, st, isian, opts);
+      if (r.error) {
+        showNotice(
+          {
+            strategi: 'Pilih strategi yang tepat lebih dulu.',
+            empty: 'Isi semua kotak jawaban dulu.',
+            invalid:
+              'Tulis bilangan bulat pada setiap kotak (bilangan di dalam akar dan penyebut minimal 1).',
+          }[r.error]
+        );
+        return;
+      }
+      save();
+      rerender();
+    });
+  }
+  var hint = root.querySelector('#' + id + 'Hint');
+  if (hint) {
+    hint.addEventListener('click', function () {
+      st.hintLevel = Math.min(st.hintLevel + 1, (soal.hints || []).length);
+      save();
+      rerender();
+    });
+  }
 }

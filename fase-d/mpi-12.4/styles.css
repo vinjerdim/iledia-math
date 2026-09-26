@@ -1,0 +1,120 @@
+/* =========================================================================
+   fase-d/mpi-12.4/styles.css
+   Operasi Hitung Bentuk Akar — Fase D (SMP Kelas VIII)
+
+   Hanya memuat gaya yang KHAS modul ini. Langkah operasi akar
+   (.opakar-*), tabel uji nilai (.uji-akar*), tanda akar (.akar*), kartu
+   ahli (.strategi-card*, .sifat-kartu*), tab stasiun ahli (.jigsaw-tab*),
+   form tim (.coop-setup*), komponen Cooperative Learning (.coop-*),
+   pilihan ganda, pemilahan, kartu ringkasan, navigasi tahap, dan modal
+   berasal dari shared/base.css.
+   ========================================================================= */
+
+/* -------------------------------------------------------------------------
+   Tahap 1–2 — Tujuan & informasi
+   ------------------------------------------------------------------------- */
+
+.tp-teks {
+  margin: 0 0 var(--space-3);
+  font-size: 1.05rem;
+  font-weight: 600;
+}
+
+.aturan-list {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0;
+  padding-left: var(--space-5);
+}
+
+.aturan-list li {
+  line-height: 1.7;
+}
+
+/* -------------------------------------------------------------------------
+   Tahap 4 — Kelompok ahli
+   ------------------------------------------------------------------------- */
+
+.misi-sub {
+  margin: var(--space-5) 0 var(--space-3);
+  font-size: 1.05rem;
+}
+
+.ahli-ajar {
+  margin-top: var(--space-4);
+  padding: var(--space-3);
+  border: 2px dashed var(--color-border-strong);
+  border-radius: var(--radius-md);
+  font-weight: 600;
+}
+
+.sifat-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  gap: var(--space-3);
+  margin-top: var(--space-3);
+}
+
+.sifat-ringkas summary {
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.ahli-rekap {
+  margin: 0;
+  padding-left: var(--space-5);
+}
+
+.ahli-rekap li + li {
+  margin-top: var(--space-2);
+}
+
+/* -------------------------------------------------------------------------
+   Tahap 5–7 — Misi tim
+   ------------------------------------------------------------------------- */
+
+.misi-konteks {
+  display: flex;
+  gap: var(--space-3);
+  align-items: center;
+  margin: var(--space-3) 0;
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-md);
+  background: var(--color-warning-soft);
+}
+
+.misi-konteks p {
+  margin: 0;
+  font-weight: 600;
+}
+
+.misi-konteks__ikon {
+  flex: 0 0 auto;
+  font-size: 2rem;
+  line-height: 1;
+}
+
+/* -------------------------------------------------------------------------
+   Tahap 8 — Kuis
+   ------------------------------------------------------------------------- */
+
+.kuis-tag {
+  display: inline-block;
+  margin-bottom: var(--space-2);
+  padding: 2px var(--space-2);
+  border-radius: var(--radius-sm);
+  background: var(--color-primary-soft);
+  color: var(--color-primary-strong);
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.kuis-tanya {
+  font-size: 1.2rem;
+  line-height: 1.8;
+}
+
+.dl-exercise .choice-btn,
+.sort-item__text {
+  line-height: 1.7;
+}
