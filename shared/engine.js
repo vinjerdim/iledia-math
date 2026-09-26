@@ -128,6 +128,11 @@
        pengurangan suku sejenis, perkalian, pembagian, merasionalkan
        penyebut a/√b & sekawan, diagnosa miskonsepsi, kartu ahli
        Jigsaw, tabel uji nilai, langkah pilih strategi → isi hasil)
+   47. Luas permukaan prisma (ukuran alas poligon, rincian luas sisi,
+       rumus 2 × La + K × t & tanpa tutup, diagnosa miskonsepsi & opsi
+       berpengecoh, jaring-jaring prisma beralas poligon sembarang, lab
+       bentang lipat–ketuk sisi, sabuk sisi tegak, kartu isian
+       berdiagnosa)
    ============================================================ */
 
 /* ============================================================
@@ -25063,4 +25068,1035 @@ function bindOpAkarStep(root, id, soal, st, save, rerender, opts) {
       rerender();
     });
   }
+}
+
+/* ============================================================
+   47. LUAS PERMUKAAN PRISMA
+   Dipakai modul luas permukaan prisma (fase-d/mpi-22.2).
+
+   Prisma tegak beralas poligon konveks sembarang `pts` ([[x, y], …]
+   dalam cm, urutan keliling) dan tinggi `t`:
+     ukuranAlasPrisma(pts)      { n, sisi[], keliling, luas, persegiPanjang }
+     rincianSisiPrisma(pts, t)  sisi alas, atas, lalu sisi tegak t<i>
+                                (persegi panjang sisi ke-i × t)
+     luasPermukaanPrisma(o)     2 × La + K × t (o.tanpaTutup → La + K × t)
+   Diagnosa miskonsepsi luas permukaan: satu alas saja, dua alas pada
+   kotak tanpa tutup, hanya sisi tegak, tertukar volume (La × t), dan
+   menjumlahkan ukuran (2La + K + t). Pengecoh luas satu sisi: keliling
+   persegi panjang, p + l, dan lupa ½ pada segitiga/trapesium.
+
+   Jaring-jaring umum (jaringPrismaUmum) memakai bentuk kepingan yang
+   sama dengan seksi 31 ({ spec: { n, h }, pieces }), sehingga
+   lipatJaring() & buildFoldSVG() dipakai ulang; sudut lipat antarsisi
+   tegak = sudut luar di setiap titik sudut alas.
+
+   Komponen UI: lab bentang (lipat–buka jaring berukuran, ketuk sisi
+   untuk melihat ukurannya), sabuk sisi tegak yang bisa dirapatkan, dan
+   kartu isian berdiagnosa. Gaya .lpp-* ada di shared/base.css.
+   ============================================================ */
+
+function lppBulat(v) {
+  return Math.round(v * 1e6) / 1e6;
+}
+
+/* Bilangan gaya Indonesia: bulat tanpa desimal, selain itu berkoma. */
+function lppAngka(v) {
+  var r = lppBulat(v);
+  return hampirSama(r, Math.round(r)) ? formatNumber(r) : formatDesimal(r, 2);
+}
+
+function ukuranAlasPrisma(pts) {
+  var sisi = sisiPoligon(pts).map(lppBulat);
+  var sudut = sudutPoligon(pts);
+  return {
+    n: pts.length,
+    sisi: sisi,
+    keliling: lppBulat(
+      sisi.reduce(function (s, v) {
+        return s + v;
+      }, 0)
+    ),
+    luas: lppBulat(Math.abs(luasBertanda(pts))),
+    persegiPanjang:
+      pts.length === 4 &&
+      sudut.every(function (a) {
+        return Math.abs(a - 90) < 1e-6;
+      }),
+  };
+}
+
+function rincianSisiPrisma(pts, t) {
+  var u = ukuranAlasPrisma(pts);
+  var out = [
+    { id: 'alas', jenis: 'alas', luas: u.luas },
+    { id: 'atas', jenis: 'atas', luas: u.luas },
+  ];
+  u.sisi.forEach(function (s, i) {
+    out.push({
+      id: 't' + i,
+      jenis: 'tegak',
+      urut: i + 1,
+      panjang: s,
+      lebar: t,
+      luas: lppBulat(s * t),
+    });
+  });
+  return out;
+}
+
+function luasSelimutPrisma(keliling, t) {
+  return lppBulat(keliling * t);
+}
+
+/* o = { luasAlas, kelilingAlas, tinggi, tanpaTutup } */
+function luasPermukaanPrisma(o) {
+  var banyakAlas = o.tanpaTutup ? 1 : 2;
+  return lppBulat(banyakAlas * o.luasAlas + luasSelimutPrisma(o.kelilingAlas, o.tinggi));
+}
+
+/* t dari LP = 2 × La + K × t. */
+function tinggiDariLuasPermukaan(lp, luasAlas, keliling) {
+  return lppBulat((lp - 2 * luasAlas) / keliling);
+}
+
+var LPP_PESAN = {
+  benar: 'Tepat! Luas permukaan = luas semua sisi = 2 × luas alas + keliling alas × tinggi.',
+  'satu-alas':
+    'Kamu baru menghitung satu sisi alas. Prisma punya DUA sisi alas yang kongruen (alas dan tutup), jadi luas alas dikali 2.',
+  'dua-alas':
+    'Kotak ini tanpa tutup, jadi sisi alasnya hanya satu. Jangan kalikan luas alas dengan 2.',
+  'tanpa-alas': 'Itu baru luas selimut (semua sisi tegak). Tambahkan luas sisi alas dan tutupnya.',
+  volume: 'Luas alas × tinggi adalah volume (isi) prisma, bukan luas karton yang membungkusnya.',
+  'jumlah-ukuran':
+    'Keliling alas dan tinggi dijumlahkan. Sisi tegak bergabung menjadi persegi panjang, jadi keliling alas DIKALI tinggi.',
+  'salah-hitung':
+    'Belum tepat. Hitung lagi luas alas, keliling alas, lalu gunakan 2 × luas alas + keliling alas × tinggi.',
+};
+
+function kandidatLuasPermukaan(o) {
+  var la = o.luasAlas;
+  var sel = luasSelimutPrisma(o.kelilingAlas, o.tinggi);
+  var k = { benar: luasPermukaanPrisma(o) };
+  if (o.tanpaTutup) k['dua-alas'] = lppBulat(2 * la + sel);
+  else k['satu-alas'] = lppBulat(la + sel);
+  k['tanpa-alas'] = sel;
+  k.volume = lppBulat(la * o.tinggi);
+  k['jumlah-ukuran'] = lppBulat((o.tanpaTutup ? 1 : 2) * la + o.kelilingAlas + o.tinggi);
+  return k;
+}
+
+function diagnosaLuasPermukaan(o, jawab) {
+  var k = kandidatLuasPermukaan(o);
+  var kode = 'salah-hitung';
+  var urut = Object.keys(k);
+  for (var i = 0; i < urut.length; i++) {
+    if (hampirSama(k[urut[i]], jawab)) {
+      kode = urut[i];
+      break;
+    }
+  }
+  return { kode: kode, pesan: LPP_PESAN[kode] };
+}
+
+/*
+ * Opsi pilihan ganda luas permukaan: jawaban benar di depan, lalu
+ * pengecoh miskonsepsi bernilai unik (minimal 4 opsi). Urutan ini
+ * "wajar"; modul wajib mengacaknya (ensureShuffledOrder).
+ */
+function opsiLuasPermukaan(o, satuan) {
+  var k = kandidatLuasPermukaan(o);
+  var cadangan = {
+    'tambah-keliling': lppBulat(k.benar + o.kelilingAlas),
+    'dua-kali': lppBulat(2 * k.benar),
+    'kurang-keliling': lppBulat(k.benar - o.kelilingAlas),
+  };
+  var out = [];
+  var dipakai = [];
+  function tambah(id, v) {
+    var ada = dipakai.some(function (x) {
+      return hampirSama(x, v);
+    });
+    if (ada || v <= 0) return;
+    dipakai.push(v);
+    out.push({ id: id, nilai: v, label: lppAngka(v) + (satuan ? ' ' + satuan : '') });
+  }
+  Object.keys(k).forEach(function (id) {
+    tambah(id, k[id]);
+  });
+  Object.keys(cadangan).forEach(function (id) {
+    if (out.length < 4) tambah(id, cadangan[id]);
+  });
+  return out;
+}
+
+/*
+ * Pengecoh luas satu sisi (rincianSisiPrisma) untuk kartu isian.
+ *   opts.alasPersegiPanjang  true → alas persegi panjang (tanpa pengecoh ½)
+ *   opts.kelilingAlas        keliling alas (pengecoh "itu keliling alas")
+ */
+function pengecohLuasSisi(sisi, opts) {
+  opts = opts || {};
+  var list = [];
+  if (sisi.jenis === 'tegak') {
+    list.push({
+      nilai: lppBulat(2 * (sisi.panjang + sisi.lebar)),
+      pesan:
+        'Itu keliling persegi panjang (p + l + p + l). Luas persegi panjang = panjang × lebar.',
+    });
+    list.push({
+      nilai: lppBulat(sisi.panjang + sisi.lebar),
+      pesan: 'Panjang dan lebar dijumlahkan. Untuk luas, keduanya dikalikan.',
+    });
+  } else {
+    if (!opts.alasPersegiPanjang) {
+      list.push({
+        nilai: lppBulat(2 * sisi.luas),
+        pesan:
+          'Hasilmu dua kali lipat. Jangan lupa ½: luas segitiga = ½ × alas × tinggi, luas trapesium = ½ × (jumlah sisi sejajar) × tinggi.',
+      });
+    }
+    if (typeof opts.kelilingAlas === 'number') {
+      list.push({
+        nilai: opts.kelilingAlas,
+        pesan: 'Itu keliling sisi alas. Luas menghitung daerah di dalamnya, bukan panjang tepinya.',
+      });
+    }
+  }
+  var seen = [];
+  return list.filter(function (p) {
+    if (hampirSama(p.nilai, sisi.luas)) return false;
+    if (
+      seen.some(function (v) {
+        return hampirSama(v, p.nilai);
+      })
+    )
+      return false;
+    seen.push(p.nilai);
+    return true;
+  });
+}
+
+/* ---------- Jaring-jaring prisma beralas poligon sembarang ---------- */
+
+/* Peta kaku yang membawa ruas A→B ke A2→B2 (cermin → dibalik terhadap ruas). */
+function lppPetakan(pts, A, B, A2, B2, cermin) {
+  var L = jarakTitik(A, B);
+  var u = [(B[0] - A[0]) / L, (B[1] - A[1]) / L];
+  var L2 = jarakTitik(A2, B2);
+  var u2 = [(B2[0] - A2[0]) / L2, (B2[1] - A2[1]) / L2];
+  var v2 = [-u2[1], u2[0]];
+  return pts.map(function (P) {
+    var dx = P[0] - A[0];
+    var dy = P[1] - A[1];
+    var a = dx * u[0] + dy * u[1];
+    var b = u[0] * dy - u[1] * dx;
+    if (cermin) b = -b;
+    return [A2[0] + a * u2[0] + b * v2[0], A2[1] + a * u2[1] + b * v2[1]];
+  });
+}
+
+/*
+ * Dua calon letak tutup pada tepi y0 (atas: y0 = 0, arah −1; alas: y0 = t,
+ * arah +1) persegi panjang ke-k: keduanya berada di sisi luar sabuk dan
+ * saling bercermin terhadap garis tengah persegi panjang.
+ */
+function lppCalonTutup(pts, k, X, y0, arah) {
+  var n = pts.length;
+  var P = pts[k];
+  var Q = pts[(k + 1) % n];
+  var kiri = [X[k], y0];
+  var kanan = [X[k + 1], y0];
+  var calon = [];
+  [
+    [P, Q],
+    [Q, P],
+  ].forEach(function (pq) {
+    [false, true].forEach(function (cermin) {
+      var img = lppPetakan(pts, pq[0], pq[1], kiri, kanan, cermin);
+      var cy =
+        img.reduce(function (s, q) {
+          return s + q[1];
+        }, 0) / n;
+      if ((cy - y0) * arah > 0) calon.push(img);
+    });
+  });
+  return calon;
+}
+
+function lppTutupCocok(lipat, id) {
+  var sabuk = [];
+  var tutup = null;
+  lipat.forEach(function (p) {
+    if (p.jenis === 'tegak') sabuk = sabuk.concat(p.pts3);
+    if (p.id === id) tutup = p;
+  });
+  return (
+    !!tutup &&
+    tutup.pts3.every(function (q) {
+      return sabuk.some(function (s) {
+        return Math.abs(q[0] - s[0]) + Math.abs(q[1] - s[1]) + Math.abs(q[2] - s[2]) < 1e-6;
+      });
+    })
+  );
+}
+
+/*
+ * pts   titik alas (poligon konveks), t tinggi prisma.
+ * opts.tutupPada  indeks persegi panjang tempat tutup (atas) menempel
+ * opts.alasPada   indeks persegi panjang tempat alas menempel
+ *                 (keduanya default persegi panjang tengah)
+ */
+function jaringPrismaUmum(pts, t, opts) {
+  opts = opts || {};
+  var n = pts.length;
+  var sisi = sisiPoligon(pts);
+  var sudut = sudutPoligon(pts);
+  var X = [0];
+  sisi.forEach(function (s, i) {
+    X.push(lppBulat(X[i] + s));
+  });
+  var root = Math.floor((n - 1) / 2);
+  function sudutLuar(v) {
+    return ((180 - sudut[v % n]) * Math.PI) / 180;
+  }
+  var pieces = [];
+  for (var i = 0; i < n; i++) {
+    var pc = {
+      id: 't' + i,
+      jenis: 'tegak',
+      pts2: [
+        [X[i], 0],
+        [X[i + 1], 0],
+        [X[i + 1], t],
+        [X[i], t],
+      ],
+      parent: null,
+      hinge: null,
+      sudut: 0,
+    };
+    if (i < root) {
+      pc.parent = 't' + (i + 1);
+      pc.hinge = [
+        [X[i + 1], 0],
+        [X[i + 1], t],
+      ];
+      pc.sudut = sudutLuar(i + 1);
+    } else if (i > root) {
+      pc.parent = 't' + (i - 1);
+      pc.hinge = [
+        [X[i], 0],
+        [X[i], t],
+      ];
+      pc.sudut = sudutLuar(i);
+    }
+    pieces.push(pc);
+  }
+  var jaring = { spec: { n: n, h: t, sisi: sisi, X: X }, pieces: pieces };
+  [
+    { id: 'atas', k: typeof opts.tutupPada === 'number' ? opts.tutupPada : root, y0: 0, arah: -1 },
+    { id: 'alas', k: typeof opts.alasPada === 'number' ? opts.alasPada : root, y0: t, arah: 1 },
+  ].forEach(function (c) {
+    var k = Math.max(0, Math.min(n - 1, c.k));
+    var calon = lppCalonTutup(pts, k, X, c.y0, c.arah);
+    var keping = {
+      id: c.id,
+      jenis: c.id,
+      pts2: calon[0],
+      parent: 't' + k,
+      hinge: [
+        [X[k], c.y0],
+        [X[k + 1], c.y0],
+      ],
+      sudut: Math.PI / 2,
+    };
+    jaring.pieces.push(keping);
+    for (var j = 0; j < calon.length; j++) {
+      keping.pts2 = calon[j];
+      if (lppTutupCocok(lipatJaring(jaring, 1), c.id)) break;
+    }
+  });
+  return jaring;
+}
+
+/* ---------- UI: jaring berukuran ---------- */
+
+function lppNamaSisi(f) {
+  if (f.jenis === 'alas') return 'Sisi alas';
+  if (f.jenis === 'atas') return 'Sisi tutup (atas)';
+  return 'Sisi tegak ke-' + f.urut;
+}
+
+function lppSkala(jaring, lebarPx) {
+  var semua = [];
+  jaring.pieces.forEach(function (p) {
+    semua = semua.concat(p.pts2);
+  });
+  var b = psmBatas(semua);
+  return lebarPx / Math.max(b.x1 - b.x0, b.y1 - b.y0, 1e-6);
+}
+
+/*
+ * Gambar jaring datar berlabel ukuran (cm).
+ *   opts.pilih   true → setiap kepingan bisa diketuk (data-lpp-sisi)
+ *   opts.sorot   id kepingan yang disorot
+ *   opts.lebar   ukuran terpanjang gambar dalam piksel (default 320)
+ *   opts.aria    teks aksesibel
+ */
+function buildLpNetSVG(jaring, opts) {
+  opts = opts || {};
+  var sk = lppSkala(jaring, opts.lebar || 320);
+  var t = jaring.spec.h;
+  var semua = [];
+  jaring.pieces.forEach(function (p) {
+    semua = semua.concat(p.pts2);
+  });
+  var b = psmBatas(semua);
+  var pad = 30;
+  var keping = jaring.pieces
+    .map(function (p) {
+      var cls = 'psm-net-piece psm-face--' + p.jenis;
+      if (opts.sorot === p.id) cls += ' is-sorot';
+      var label =
+        p.jenis === 'tegak'
+          ? 'Sisi tegak ke-' +
+            (parseInt(p.id.slice(1), 10) + 1) +
+            ': persegi panjang ' +
+            lppAngka(p.pts2[1][0] - p.pts2[0][0]) +
+            ' cm × ' +
+            lppAngka(t) +
+            ' cm'
+          : p.jenis === 'alas'
+          ? 'Sisi alas'
+          : 'Sisi tutup (atas)';
+      return (
+        '<polygon class="' +
+        cls +
+        (opts.pilih ? ' lpp-keping' : '') +
+        '" points="' +
+        psmPoly2(p.pts2, sk) +
+        '"' +
+        (opts.pilih
+          ? ' data-lpp-sisi="' +
+            p.id +
+            '" tabindex="0" role="button" aria-pressed="' +
+            (opts.sorot === p.id ? 'true' : 'false') +
+            '" aria-label="' +
+            esc(label) +
+            '"'
+          : '') +
+        '/>'
+      );
+    })
+    .join('');
+  var lipatan = jaring.pieces
+    .filter(function (p) {
+      return p.hinge;
+    })
+    .map(function (p) {
+      return (
+        '<line class="psm-lipatan" x1="' +
+        psmFmt(p.hinge[0][0] * sk) +
+        '" y1="' +
+        psmFmt(p.hinge[0][1] * sk) +
+        '" x2="' +
+        psmFmt(p.hinge[1][0] * sk) +
+        '" y2="' +
+        psmFmt(p.hinge[1][1] * sk) +
+        '"/>'
+      );
+    })
+    .join('');
+  var ukur = jaring.pieces
+    .filter(function (p) {
+      return p.jenis === 'tegak';
+    })
+    .map(function (p) {
+      var cx = ((p.pts2[0][0] + p.pts2[1][0]) / 2) * sk;
+      return (
+        '<text class="lpp-ukur" x="' +
+        psmFmt(cx) +
+        '" y="' +
+        psmFmt(t * sk + 0) +
+        '" dy="-8">' +
+        esc(lppAngka(p.pts2[1][0] - p.pts2[0][0]) + ' cm') +
+        '</text>'
+      );
+    })
+    .join('');
+  ukur +=
+    '<text class="lpp-ukur lpp-ukur--tinggi" x="-10" y="' +
+    psmFmt((t * sk) / 2) +
+    '" transform="rotate(-90 -10 ' +
+    psmFmt((t * sk) / 2) +
+    ')">' +
+    esc(lppAngka(t) + ' cm') +
+    '</text>';
+  return (
+    '<svg class="psm-net lpp-net" viewBox="' +
+    psmFmt(Math.min(b.x0 * sk, 0) - pad) +
+    ' ' +
+    psmFmt(b.y0 * sk - 10) +
+    ' ' +
+    psmFmt((b.x1 - Math.min(b.x0, 0)) * sk + pad + 10) +
+    ' ' +
+    psmFmt((b.y1 - b.y0) * sk + 20) +
+    '" xmlns="http://www.w3.org/2000/svg" role="' +
+    (opts.pilih ? 'group' : 'img') +
+    '" aria-label="' +
+    esc(opts.aria || 'Jaring-jaring prisma berukuran') +
+    '">' +
+    keping +
+    lipatan +
+    '<g aria-hidden="true">' +
+    ukur +
+    '</g>' +
+    '</svg>'
+  );
+}
+
+/* ---------- UI: lab bentang (lipat–buka & ketuk sisi) ---------- */
+
+/*
+ * opts.prisma = [{ id, nama, alas: pts, t, infoAlas, tutupPada? }]
+ * st = { p, t, sorot, dilihat: { <p>: [idSisi] }, dilipat: { <p>: true } }
+ */
+function ensureLpLabState(state, key, opts) {
+  var ids = opts.prisma.map(function (p) {
+    return p.id;
+  });
+  var st = state[key] && typeof state[key] === 'object' ? state[key] : {};
+  if (ids.indexOf(st.p) === -1) st.p = ids[0];
+  if (typeof st.t !== 'number' || st.t < 0 || st.t > 1) st.t = 0;
+  if (typeof st.sorot !== 'string') st.sorot = null;
+  if (!st.dilihat || typeof st.dilihat !== 'object' || Array.isArray(st.dilihat)) st.dilihat = {};
+  ids.forEach(function (id) {
+    if (!Array.isArray(st.dilihat[id])) st.dilihat[id] = [];
+  });
+  if (!st.dilipat || typeof st.dilipat !== 'object' || Array.isArray(st.dilipat)) st.dilipat = {};
+  state[key] = st;
+  return st;
+}
+
+function lppPrismaAktif(st, opts) {
+  for (var i = 0; i < opts.prisma.length; i++) {
+    if (opts.prisma[i].id === st.p) return opts.prisma[i];
+  }
+  return opts.prisma[0];
+}
+
+function lppJaringPrisma(p) {
+  return jaringPrismaUmum(p.alas, p.t, { tutupPada: p.tutupPada, alasPada: p.alasPada });
+}
+
+/* Semua sisi prisma p sudah diketuk & jaringnya sudah dilipat penuh. */
+function lpLabSelesai(st, p) {
+  return !!st.dilipat[p.id] && (st.dilihat[p.id] || []).length >= p.alas.length + 2;
+}
+
+function lppLabInner(st, p) {
+  var jaring = lppJaringPrisma(p);
+  if (st.t < 0.001) {
+    return buildLpNetSVG(jaring, {
+      pilih: true,
+      sorot: st.sorot,
+      aria: 'Jaring-jaring ' + p.nama + '. Ketuk sebuah sisi untuk melihat ukurannya.',
+    });
+  }
+  return buildFoldSVG(jaring, st.t, {
+    skala: lppSkala(jaring, 300),
+    aria: 'Jaring-jaring ' + p.nama,
+  });
+}
+
+function lppLabInfo(st, p) {
+  var dilihat = (st.dilihat[p.id] || []).length;
+  var total = p.alas.length + 2;
+  var info = '';
+  if (st.sorot && st.t < 0.001) {
+    var f = rincianSisiPrisma(p.alas, p.t).filter(function (x) {
+      return x.id === st.sorot;
+    })[0];
+    if (f) {
+      info =
+        '<strong>' +
+        esc(lppNamaSisi(f)) +
+        ':</strong> ' +
+        (f.jenis === 'tegak'
+          ? 'persegi panjang, panjang ' +
+            esc(lppAngka(f.panjang)) +
+            ' cm dan lebar ' +
+            esc(lppAngka(f.lebar)) +
+            ' cm (= tinggi prisma).'
+          : esc(p.infoAlas));
+    }
+  }
+  return (
+    '<p class="psm-info lpp-lab__info panel--info">' +
+    (info ||
+      (st.t < 0.001
+        ? 'Ketuk setiap sisi pada jaring-jaring untuk melihat bentuk dan ukurannya.'
+        : 'Buka jaring-jaringnya (geser ke 0%) untuk mengetuk sisi-sisinya.')) +
+    '</p>' +
+    '<p class="dl-caption lpp-lab__hitung">Sisi yang sudah kamu periksa: <strong>' +
+    dilihat +
+    ' dari ' +
+    total +
+    '</strong>' +
+    (st.dilipat[p.id] ? ' · ✓ sudah dilipat menjadi prisma' : ' · belum dilipat') +
+    '</p>'
+  );
+}
+
+function buildLpNetLab(id, st, opts) {
+  var p = lppPrismaAktif(st, opts);
+  return (
+    '<div class="lpp-lab" id="' +
+    id +
+    '">' +
+    (opts.prisma.length > 1
+      ? '<div class="psm-toolbar" role="group" aria-label="Pilih kemasan">' +
+        opts.prisma
+          .map(function (q) {
+            var aktif = q.id === p.id;
+            return (
+              '<button type="button" class="psm-tool-btn' +
+              (aktif ? ' is-active' : '') +
+              '" data-lpp-p="' +
+              esc(q.id) +
+              '" aria-pressed="' +
+              (aktif ? 'true' : 'false') +
+              '">' +
+              (lpLabSelesai(st, q) ? '✓ ' : '') +
+              esc(q.nama) +
+              '</button>'
+            );
+          })
+          .join('') +
+        '</div>'
+      : '') +
+    '<p class="lpp-lab__alas"><strong>' +
+    esc(p.nama) +
+    '</strong> · tinggi prisma ' +
+    esc(lppAngka(p.t)) +
+    ' cm</p>' +
+    '<div class="psm-stage psm-stage--fold lpp-stage" data-lpp-stage>' +
+    lppLabInner(st, p) +
+    '</div>' +
+    '<label class="psm-range psm-range--wide"><span>Lipat</span><input type="range" min="0" max="100" step="1" value="' +
+    Math.round(st.t * 100) +
+    '" data-lpp-t aria-label="Seberapa jauh jaring-jaring dilipat (persen)"></label>' +
+    '<div class="btn-group">' +
+    '<button type="button" class="btn btn--primary btn--small" data-lpp-play="1">▶ Lipat</button>' +
+    '<button type="button" class="btn btn--ghost btn--small" data-lpp-play="0">◀ Buka</button>' +
+    '</div>' +
+    '<div data-lpp-info aria-live="polite">' +
+    lppLabInfo(st, p) +
+    '</div>' +
+    '</div>'
+  );
+}
+
+/* onChange('lipat'|'sisi'|'p') dipanggil setelah perubahan yang perlu disimpan. */
+function bindLpNetLab(root, id, st, opts, onChange) {
+  var el = root.querySelector('#' + id);
+  if (!el) return;
+  var p = lppPrismaAktif(st, opts);
+  var stage = el.querySelector('[data-lpp-stage]');
+  var range = el.querySelector('[data-lpp-t]');
+  var infoEl = el.querySelector('[data-lpp-info]');
+
+  function rebuild(fokus) {
+    var wadah = document.createElement('div');
+    wadah.innerHTML = buildLpNetLab(id, st, opts);
+    el.replaceWith(wadah.firstChild);
+    bindLpNetLab(root, id, st, opts, onChange);
+    if (fokus) {
+      var f = root.querySelector('#' + id + ' ' + fokus);
+      if (f) f.focus();
+    }
+  }
+  function draw(t) {
+    stage.innerHTML = lppLabInner(st, p);
+    if (range) range.value = Math.round(t * 100);
+    infoEl.innerHTML = lppLabInfo(st, p);
+    bindKeping();
+  }
+  function catat() {
+    if (st.t >= 0.999) st.dilipat[p.id] = true;
+    if (st.t <= 0.001) st.t = 0;
+    infoEl.innerHTML = lppLabInfo(st, p);
+    if (onChange) onChange('lipat');
+  }
+  function pilih(sid) {
+    st.sorot = sid;
+    if (st.dilihat[p.id].indexOf(sid) === -1) st.dilihat[p.id].push(sid);
+    rebuild('[data-lpp-sisi="' + sid + '"]');
+    if (onChange) onChange('sisi');
+  }
+  function bindKeping() {
+    stage.querySelectorAll('[data-lpp-sisi]').forEach(function (k) {
+      k.addEventListener('click', function () {
+        pilih(k.getAttribute('data-lpp-sisi'));
+      });
+      k.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          pilih(k.getAttribute('data-lpp-sisi'));
+        }
+      });
+    });
+  }
+  bindKeping();
+  if (range) {
+    range.addEventListener('input', function () {
+      psmHentikanAnimasi(id);
+      st.t = parseInt(range.value, 10) / 100;
+      draw(st.t);
+    });
+    range.addEventListener('change', catat);
+  }
+  el.querySelectorAll('[data-lpp-play]').forEach(function (b) {
+    b.addEventListener('click', function () {
+      psmAnimasiLipat(id, st, b.getAttribute('data-lpp-play') === '1' ? 1 : 0, draw, catat);
+    });
+  });
+  el.querySelectorAll('[data-lpp-p]').forEach(function (b) {
+    b.addEventListener('click', function () {
+      var pid = b.getAttribute('data-lpp-p');
+      if (pid === st.p) return;
+      psmHentikanAnimasi(id);
+      st.p = pid;
+      st.t = 0;
+      st.sorot = null;
+      rebuild('[data-lpp-p="' + pid + '"]');
+      if (onChange) onChange('p');
+    });
+  });
+}
+
+/* ---------- UI: sabuk sisi tegak ---------- */
+
+/* p = { id, nama, alas, t }; st = { rapat: bool } */
+function buildLpSabuk(id, p, st) {
+  var u = ukuranAlasPrisma(p.alas);
+  var t = p.t;
+  var celah = 16;
+  var lebarPx = 320;
+  var sk = Math.min(lebarPx / u.keliling, 150 / t);
+  var pad = 28;
+  var x = 0;
+  var keping = u.sisi
+    .map(function (s, i) {
+      var geser = st.rapat ? 0 : i * celah;
+      var g =
+        '<g class="lpp-sabuk__keping" style="transform: translateX(' +
+        geser +
+        'px)"><rect class="psm-net-piece psm-face--tegak" x="' +
+        psmFmt(x * sk) +
+        '" y="0" width="' +
+        psmFmt(s * sk) +
+        '" height="' +
+        psmFmt(t * sk) +
+        '"/><text class="lpp-ukur" x="' +
+        psmFmt((x + s / 2) * sk) +
+        '" y="' +
+        psmFmt((t * sk) / 2) +
+        '">' +
+        esc(lppAngka(s)) +
+        '</text></g>';
+      x += s;
+      return g;
+    })
+    .join('');
+  var lebarTotal = u.keliling * sk + (u.sisi.length - 1) * celah;
+  var kawat = st.rapat
+    ? '<g class="lpp-sabuk__kurung"><line x1="0" y1="' +
+      psmFmt(t * sk + 12) +
+      '" x2="' +
+      psmFmt(u.keliling * sk) +
+      '" y2="' +
+      psmFmt(t * sk + 12) +
+      '"/><text class="lpp-ukur" x="' +
+      psmFmt((u.keliling * sk) / 2) +
+      '" y="' +
+      psmFmt(t * sk + 30) +
+      '">' +
+      esc(lppAngka(u.keliling) + ' cm') +
+      '</text></g>'
+    : '';
+  var jumlah = u.sisi.map(lppAngka).join(' + ') + ' = ' + lppAngka(u.keliling) + ' cm';
+  return (
+    '<div class="lpp-sabuk' +
+    (st.rapat ? ' is-rapat' : '') +
+    '" id="' +
+    id +
+    '">' +
+    '<svg class="lpp-sabuk__svg" viewBox="' +
+    -pad +
+    ' -8 ' +
+    psmFmt(lebarTotal + pad + 8) +
+    ' ' +
+    psmFmt(t * sk + 44) +
+    '" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="' +
+    esc(
+      'Sisi-sisi tegak ' +
+        p.nama +
+        (st.rapat ? ' dirapatkan menjadi satu persegi panjang' : ' dipisahkan satu per satu')
+    ) +
+    '">' +
+    keping +
+    '<text class="lpp-ukur lpp-ukur--tinggi" x="-10" y="' +
+    psmFmt((t * sk) / 2) +
+    '" transform="rotate(-90 -10 ' +
+    psmFmt((t * sk) / 2) +
+    ')">' +
+    esc(lppAngka(t) + ' cm') +
+    '</text>' +
+    kawat +
+    '</svg>' +
+    '<p class="lpp-sabuk__teks" aria-live="polite">' +
+    (st.rapat
+      ? '<strong>Panjang sabuk</strong> = ' +
+        esc(jumlah) +
+        ' · <strong>lebar sabuk</strong> = ' +
+        esc(lppAngka(t) + ' cm')
+      : 'Sisi-sisi tegak masih terpisah. Rapatkan untuk melihat bentuk gabungannya.') +
+    '</p>' +
+    '<div class="btn-group btn-group--center">' +
+    '<button type="button" class="btn btn--outline-primary btn--small" data-lpp-rapat aria-pressed="' +
+    (st.rapat ? 'true' : 'false') +
+    '">' +
+    (st.rapat ? '↔ Pisahkan lagi' : '🧲 Rapatkan sisi tegak') +
+    '</button>' +
+    '</div>' +
+    '</div>'
+  );
+}
+
+function bindLpSabuk(root, id, p, st, onChange) {
+  var el = root.querySelector('#' + id);
+  if (!el) return;
+  var btn = el.querySelector('[data-lpp-rapat]');
+  btn.addEventListener('click', function () {
+    st.rapat = !st.rapat;
+    if (st.rapat) st.pernah = true;
+    var wadah = document.createElement('div');
+    wadah.innerHTML = buildLpSabuk(id, p, st);
+    var baru = wadah.firstChild;
+    el.replaceWith(baru);
+    bindLpSabuk(root, id, p, st, onChange);
+    var b = baru.querySelector('[data-lpp-rapat]');
+    if (b) b.focus();
+    if (onChange) onChange(st.rapat);
+  });
+}
+
+/* ---------- UI: kartu isian berdiagnosa ---------- */
+
+/*
+ * kartu = { id, judul, visual?, hints?, temuan?, fields: [{ id, label,
+ *           jawab, satuan?, diberikan?, pengecoh?: [{ nilai, pesan }],
+ *           pesanSalah? }] }
+ * state[key] = { <kartuId>: { input: { <fieldId>: str }, hasil: {
+ *                <fieldId>: { kode: 'benar'|'pengecoh'|'salah', pesan } } } }
+ */
+function ensureLpIsianState(state, key, kartuList) {
+  var map = state[key] && typeof state[key] === 'object' ? state[key] : {};
+  kartuList.forEach(function (k) {
+    var st = map[k.id] && typeof map[k.id] === 'object' ? map[k.id] : {};
+    if (!st.input || typeof st.input !== 'object') st.input = {};
+    if (!st.hasil || typeof st.hasil !== 'object') st.hasil = {};
+    map[k.id] = st;
+  });
+  state[key] = map;
+  return map;
+}
+
+function lppFieldIsian(kartu) {
+  return kartu.fields.filter(function (f) {
+    return !f.diberikan;
+  });
+}
+
+function periksaLpKartu(kartu, st, inputs) {
+  var fields = lppFieldIsian(kartu);
+  var nilai = {};
+  var error = null;
+  fields.forEach(function (f) {
+    var raw = inputs[f.id] === undefined || inputs[f.id] === null ? '' : String(inputs[f.id]);
+    st.input[f.id] = raw.trim();
+    var ph = parseInputDecimal(raw);
+    if (ph.error && !error) error = ph.error;
+    nilai[f.id] = ph.value;
+  });
+  if (error) return { error: error };
+  fields.forEach(function (f) {
+    var v = nilai[f.id];
+    var hasil = { kode: 'salah', pesan: f.pesanSalah || null };
+    if (hampirSama(v, f.jawab)) hasil = { kode: 'benar', pesan: null };
+    else {
+      (f.pengecoh || []).some(function (p) {
+        if (hampirSama(v, p.nilai)) {
+          hasil = { kode: 'pengecoh', pesan: p.pesan };
+          return true;
+        }
+        return false;
+      });
+    }
+    st.hasil[f.id] = hasil;
+  });
+  return { error: null, benar: lpKartuBenar(kartu, st) };
+}
+
+function lpKartuBenar(kartu, st) {
+  return lppFieldIsian(kartu).every(function (f) {
+    return st.hasil[f.id] && st.hasil[f.id].kode === 'benar';
+  });
+}
+
+function buildLpIsian(id, kartuList, stMap) {
+  return (
+    '<div class="lpp-isian" id="' +
+    id +
+    '">' +
+    kartuList
+      .map(function (k) {
+        var st = stMap[k.id];
+        var beres = lpKartuBenar(k, st);
+        return (
+          '<div class="lpp-kartu' +
+          (beres ? ' is-benar' : '') +
+          '" data-lpp-kartu="' +
+          esc(k.id) +
+          '">' +
+          (k.judul ? '<h4 class="lpp-kartu__judul">' + esc(k.judul) + '</h4>' : '') +
+          (k.visual ? '<div class="lpp-kartu__visual">' + k.visual + '</div>' : '') +
+          '<div class="lpp-kartu__grid">' +
+          k.fields
+            .map(function (f) {
+              var h = st.hasil[f.id];
+              var fid = id + '-' + k.id + '-' + f.id;
+              var sat = f.satuan ? '<span class="lpp-satuan">' + esc(f.satuan) + '</span>' : '';
+              var isi;
+              var cls = 'lpp-field';
+              if (f.diberikan) {
+                cls += ' lpp-field--diberikan';
+                isi =
+                  '<span class="lpp-field__nilai" id="' +
+                  fid +
+                  '">' +
+                  esc(lppAngka(f.jawab)) +
+                  ' ' +
+                  sat +
+                  '</span>';
+              } else if (h && h.kode === 'benar') {
+                cls += ' is-benar';
+                isi =
+                  '<span class="lpp-field__nilai" id="' +
+                  fid +
+                  '">✓ ' +
+                  esc(st.input[f.id]) +
+                  ' ' +
+                  sat +
+                  '</span>';
+              } else {
+                if (h) cls += ' is-salah';
+                isi =
+                  '<span class="lpp-field__in"><input type="text" class="input-text dl-num-input lpp-in' +
+                  (h ? ' has-error' : '') +
+                  '" id="' +
+                  fid +
+                  '" data-lpp-f="' +
+                  esc(f.id) +
+                  '" inputmode="decimal" autocomplete="off" value="' +
+                  esc(st.input[f.id] || '') +
+                  '" placeholder="…">' +
+                  sat +
+                  '</span>';
+              }
+              return (
+                '<div class="' +
+                cls +
+                '">' +
+                (f.diberikan || (h && h.kode === 'benar')
+                  ? '<span class="lpp-field__label">' + f.label + '</span>'
+                  : '<label class="lpp-field__label" for="' + fid + '">' + f.label + '</label>') +
+                isi +
+                (h && h.kode !== 'benar'
+                  ? '<p class="lpp-field__pesan">' +
+                    esc(h.pesan || 'Belum tepat. Periksa lagi perhitunganmu.') +
+                    '</p>'
+                  : '') +
+                '</div>'
+              );
+            })
+            .join('') +
+          '</div>' +
+          (beres
+            ? k.temuan
+              ? buildFeedbackBox('success', '💡', k.temuan)
+              : ''
+            : (k.hints && k.hints.length
+                ? '<details class="lpp-hint"><summary>💡 Petunjuk</summary><ul>' +
+                  k.hints
+                    .map(function (x) {
+                      return '<li>' + esc(x) + '</li>';
+                    })
+                    .join('') +
+                  '</ul></details>'
+                : '') +
+              '<div class="btn-group btn-group--end"><button type="button" class="btn btn--primary btn--small" data-lpp-cek="' +
+              esc(k.id) +
+              '">Periksa</button></div>') +
+          '</div>'
+        );
+      })
+      .join('') +
+    '</div>'
+  );
+}
+
+function bindLpIsian(root, id, kartuList, stMap, save, rerender) {
+  var el = root.querySelector('#' + id);
+  if (!el) return;
+  kartuList.forEach(function (k) {
+    var box = el.querySelector('[data-lpp-kartu="' + k.id + '"]');
+    if (!box) return;
+    var st = stMap[k.id];
+    var btn = box.querySelector('[data-lpp-cek]');
+    box.querySelectorAll('[data-lpp-f]').forEach(function (inp) {
+      inp.addEventListener('input', function () {
+        st.input[inp.getAttribute('data-lpp-f')] = inp.value;
+        save();
+      });
+      inp.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter' && btn) btn.click();
+      });
+    });
+    if (!btn) return;
+    btn.addEventListener('click', function () {
+      var inputs = {};
+      lppFieldIsian(k).forEach(function (f) {
+        var inp = box.querySelector('[data-lpp-f="' + f.id + '"]');
+        inputs[f.id] = inp ? inp.value : st.input[f.id];
+      });
+      var r = periksaLpKartu(k, st, inputs);
+      if (r.error) {
+        showNotice(
+          r.error === 'empty'
+            ? 'Isi semua kotak di kartu ini lebih dulu.'
+            : 'Tulis jawaban berupa bilangan, mis. 24 atau 7,5.'
+        );
+        save();
+        return;
+      }
+      save();
+      rerender();
+      var baru = root.querySelector('#' + id + ' [data-lpp-kartu="' + k.id + '"]');
+      if (baru) {
+        var fokus = baru.querySelector('.lpp-in.has-error') || baru.querySelector('.lpp-in');
+        if (fokus) fokus.focus();
+      }
+    });
+  });
 }

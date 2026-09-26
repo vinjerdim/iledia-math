@@ -1,0 +1,184 @@
+/* =========================================================================
+   fase-d/mpi-22.2/styles.css
+   Luas Permukaan Prisma — Fase D (SMP Kelas IX)
+
+   Hanya memuat gaya yang KHAS modul ini. Jaring-jaring berukuran, lab
+   bentang, sabuk sisi tegak, kartu isian (.lpp-*), gambar lipatan
+   (.psm-*), pilihan ganda, chip konteks, dan komponen Discovery Learning
+   lainnya berasal dari shared/base.css.
+   ========================================================================= */
+
+/* -------------------------------------------------------------------------
+   Stimulasi — cerita & galeri kemasan
+   ------------------------------------------------------------------------- */
+
+.stimulasi-cerita {
+  margin: 0 0 var(--space-4);
+  font-size: 1.05rem;
+  line-height: 1.6;
+}
+
+.lpp-galeri {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: var(--space-3);
+}
+
+.lpp-galeri__item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0;
+  min-width: 0;
+}
+
+.lpp-galeri__item .psm-stage {
+  width: 100%;
+}
+
+.lpp-galeri__item .psm-fold-svg {
+  max-height: 150px;
+}
+
+.lpp-galeri__item figcaption {
+  display: flex;
+  flex-direction: column;
+  font-weight: 700;
+  text-align: center;
+}
+
+.lpp-galeri__item figcaption span {
+  font-size: 0.85rem;
+  font-weight: 400;
+  color: var(--color-ink-muted);
+}
+
+/* -------------------------------------------------------------------------
+   Bongkar, sabuk & olah — keterangan ukuran & kartu data
+   ------------------------------------------------------------------------- */
+
+.lpp-cara {
+  font-family: var(--font-mono);
+  font-weight: 400;
+  color: var(--color-ink-muted);
+}
+
+.lpp-sub {
+  font-size: 0.9rem;
+  font-weight: 400;
+  color: var(--color-ink-muted);
+}
+
+.lpp-data-visual {
+  display: grid;
+  grid-template-columns: minmax(0, 240px) minmax(0, 1fr);
+  gap: var(--space-3);
+  align-items: center;
+}
+
+.lpp-data-visual .lpp-net {
+  max-height: 200px;
+}
+
+.lpp-data-visual .dl-caption {
+  margin: 0;
+}
+
+@media (max-width: 560px) {
+  .lpp-data-visual {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* -------------------------------------------------------------------------
+   Kesimpulan — jaring & rumus berdampingan
+   ------------------------------------------------------------------------- */
+
+.lpp-rangkum {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: var(--space-4);
+  align-items: center;
+  margin-bottom: var(--space-4);
+}
+
+.lpp-rangkum figure {
+  margin: 0;
+  min-width: 0;
+}
+
+.lpp-rangkum figcaption {
+  margin-bottom: var(--space-2);
+  font-family: var(--font-display);
+  font-weight: 700;
+  text-align: center;
+}
+
+.lpp-rumus {
+  text-align: center;
+}
+
+.lpp-rumus__baris {
+  margin: 0 0 var(--space-2);
+  font-family: var(--font-display);
+  font-size: 1.6rem;
+  font-weight: 800;
+}
+
+.lpp-rumus__baris::before {
+  content: 'LP = ';
+}
+
+.lpp-rumus__alas,
+.lpp-rumus__selimut {
+  display: inline-block;
+  padding: 0 var(--space-2);
+  border-radius: var(--radius-md);
+}
+
+.lpp-rumus__alas {
+  background: var(--color-orange-soft);
+  color: var(--color-orange-strong);
+}
+
+.lpp-rumus__selimut {
+  background: var(--color-blue-soft);
+  color: var(--color-blue-strong);
+}
+
+/* -------------------------------------------------------------------------
+   Selesai — tiga bagian rumus
+   ------------------------------------------------------------------------- */
+
+.sajian-trio {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--space-3);
+  margin: var(--space-4) 0;
+}
+
+.sajian-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-1);
+  min-width: 140px;
+  max-width: 220px;
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-md);
+  background: var(--color-primary-soft);
+  color: var(--color-primary-strong);
+  font-weight: 700;
+  text-align: center;
+}
+
+.sajian-card--utama {
+  background: var(--color-primary);
+  color: #fff;
+}
+
+.sajian-card__ikon {
+  font-size: 1.4rem;
+}

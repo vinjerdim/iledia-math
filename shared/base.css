@@ -10636,3 +10636,217 @@ button.akar-tile:disabled {
     width: 3.6rem;
   }
 }
+
+/* =========================================================================
+   Seksi 47 — Luas permukaan prisma (shared/engine.js seksi 47): jaring
+   berukuran (.lpp-net, .lpp-keping, .lpp-ukur), lab bentang (.lpp-lab*),
+   sabuk sisi tegak (.lpp-sabuk*), dan kartu isian berdiagnosa
+   (.lpp-kartu*, .lpp-field*, .lpp-in, .lpp-satuan, .lpp-hint).
+   Warna mengikuti seksi 31: alas & tutup oranye, sisi tegak biru, sisi
+   yang diketuk ungu.
+   ========================================================================= */
+
+.lpp-net {
+  max-width: 420px;
+}
+
+.lpp-keping {
+  cursor: pointer;
+  transition: fill 0.15s ease;
+}
+
+.lpp-keping:hover {
+  fill: var(--color-purple-soft);
+}
+
+.lpp-keping:focus-visible {
+  outline: none;
+  stroke: var(--color-focus);
+  stroke-width: 4;
+}
+
+.lpp-ukur {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 700;
+  fill: var(--color-ink);
+  text-anchor: middle;
+  dominant-baseline: middle;
+  pointer-events: none;
+}
+
+.lpp-ukur--tinggi {
+  fill: var(--color-blue-strong);
+}
+
+.lpp-lab {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  min-width: 0;
+}
+
+.lpp-lab__alas {
+  margin: 0;
+  text-align: center;
+}
+
+.lpp-lab__info {
+  margin: 0;
+  background: var(--color-primary-soft);
+}
+
+.lpp-lab__hitung {
+  margin: var(--space-2) 0 0;
+}
+
+.lpp-stage {
+  display: flex;
+  justify-content: center;
+}
+
+.lpp-sabuk {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  min-width: 0;
+}
+
+.lpp-sabuk__svg {
+  display: block;
+  width: 100%;
+  max-width: 460px;
+  height: auto;
+  margin: 0 auto;
+  overflow: visible;
+}
+
+.lpp-sabuk__keping {
+  transition: transform 0.6s ease;
+}
+
+.lpp-sabuk__kurung line {
+  stroke: var(--color-orange);
+  stroke-width: 3;
+}
+
+.lpp-sabuk__kurung .lpp-ukur {
+  fill: var(--color-orange-strong);
+}
+
+.lpp-sabuk__teks {
+  margin: 0;
+  text-align: center;
+}
+
+.lpp-isian {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.lpp-kartu {
+  padding: var(--space-4);
+  border: 2px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  min-width: 0;
+}
+
+.lpp-kartu.is-benar {
+  border-color: var(--color-success);
+}
+
+.lpp-kartu__judul {
+  margin: 0 0 var(--space-3);
+}
+
+.lpp-kartu__visual {
+  margin-bottom: var(--space-3);
+}
+
+.lpp-kartu__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: var(--space-3);
+  margin-bottom: var(--space-3);
+}
+
+.lpp-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-md);
+  background: var(--color-bg);
+  min-width: 0;
+}
+
+.lpp-field.is-benar {
+  background: var(--color-success-soft);
+}
+
+.lpp-field.is-salah {
+  background: var(--color-error-soft);
+}
+
+.lpp-field--diberikan {
+  background: var(--color-blue-soft);
+}
+
+.lpp-field__label {
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.lpp-field__nilai {
+  font-family: var(--font-mono);
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+
+.lpp-field__in {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.lpp-in {
+  width: 100%;
+  min-height: 44px;
+}
+
+.lpp-satuan {
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.lpp-field__pesan {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--color-error-strong);
+}
+
+.lpp-hint {
+  margin-bottom: var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-md);
+  background: var(--color-warning-soft);
+  color: var(--color-warning-strong);
+}
+
+.lpp-hint summary {
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.lpp-hint ul {
+  margin: var(--space-2) 0 0;
+  padding-left: var(--space-5);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lpp-sabuk__keping,
+  .lpp-keping {
+    transition: none;
+  }
+}
