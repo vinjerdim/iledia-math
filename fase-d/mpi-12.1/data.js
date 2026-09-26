@@ -6,8 +6,16 @@
    Fase D — SMP Kelas VIII · Topik 12 Bilangan Berpangkat dan Bentuk Akar
 
    Tujuan Pembelajaran:
-   Membaca dan menulis bilangan berpangkat bulat positif, negatif,
-   dan nol beserta unsur-unsurnya (basis dan pangkat).
+   Membaca dan menuliskan bilangan berpangkat bulat positif dalam
+   berbagai bentuk notasi (notasi pangkat aⁿ, perkalian berulang,
+   bacaan kata, serta bacaan khusus kuadrat & kubik) beserta
+   unsur-unsurnya (basis dan pangkat).
+
+   Catatan cakupan: pangkat NOL dan NEGATIF sengaja tidak dibahas di
+   sini — keduanya dipelajari di fase-d/mpi-12.2 (Sifat-sifat Operasi
+   Bilangan Berpangkat Bulat) sebagai hasil sifat pembagian aᵐ ÷ aⁿ.
+   Basis tetap boleh bilangan bulat apa pun, termasuk negatif (ditulis
+   dalam kurung) — yang dipersempit adalah PANGKATnya, bukan basisnya.
 
    Model pembelajaran: DISCOVERY LEARNING (Penemuan Terbimbing).
    Pemetaan sintaks ke tahap media:
@@ -31,19 +39,22 @@
                             berulang & banyak lapisan; mengenal notasi
                             2³ (basis & pangkat) lalu menulis perkalian
                             berulang lain dengan "penulis pangkat".
-     4. Pola        (12') — tangga pangkat 10 dan 2 dari pangkat 3 turun
-                            ke −2 (tiap turun ÷ basis) + memotong kertas
-                            jadi setengah: menemukan 10⁰, 10⁻¹, 2⁻¹, …
-                            lalu MENGETIK cara baca pangkat nol & negatif.
+     4. Notasi      (12') — tangga pangkat (luas persegi & volume kubus)
+                            menemukan pola aⁿ, lalu mengenal bacaan khusus
+                            KUADRAT (pangkat 2) & KUBIK (pangkat 3);
+                            latihan mengenali bentuk notasi yang setara
+                            (perkalian berulang ⇄ notasi pangkat ⇄ bacaan
+                            kata) + mengetik cara baca.
      5. Olah data   (12') — pertanyaan penuntun (basis, pangkat, kurung,
-                            cara baca), ketuk basis/pangkat pada 6
+                            kuadrat/kubik), ketuk basis/pangkat pada 5
                             ekspresi, pilah 8 cara baca: tepat/keliru.
-     6. Pembuktian  (12') — membuktikan dugaan awal; menulis 4 kalimat
-                            bacaan dalam notasi, membaca 3 notasi, lalu
-                            menanggapi 4 miskonsepsi.
+     6. Pembuktian  (12') — membuktikan dugaan awal; menulis 2 kalimat
+                            bacaan dalam notasi, membaca 3 notasi (boleh
+                            memakai kuadrat/kubik), lalu menanggapi 4
+                            miskonsepsi.
      7. Simpulan    (5')  — menyusun kesimpulan dari bank kalimat acak.
-     8. Uji terap   (10') — 8 soal kontekstual (astronomi, virus,
-                            memori komputer, bakteri, …).
+     8. Uji terap   (10') — 8 soal kontekstual (astronomi, memori
+                            komputer, bakteri, geometri, …).
      9. Refleksi    (2')  — rekap, refleksi tertulis, penilaian diri.
 
    Catatan: seluruh daftar pilihan jawaban di berkas ini ditulis dalam
@@ -52,12 +63,16 @@
    dari shared/engine.js, satu kali saat state disiapkan.
 
    Konvensi bilangan berpangkat: { a, n, negLuar } — a basis (bulat),
-   n pangkat (bulat), negLuar true untuk −aⁿ (tanda di luar pangkat).
-   Metadata `cek` pada soal pilihan/isian dipakai tes untuk menghitung
-   ulang kunci dengan engine (tests/mpi-12.1-data.test.js):
+   n pangkat (bulat positif), negLuar true untuk −aⁿ (tanda di luar
+   pangkat). Metadata `cek` pada soal pilihan/isian dipakai tes untuk
+   menghitung ulang kunci dengan engine (tests/mpi-12.1-data.test.js):
      { jenis: 'baca',    a, n, negLuar }  label opsi benar = bacaPangkat()
      { jenis: 'tulis',   a, n, negLuar }  label opsi benar = ekspresiPangkat()
      { jenis: 'basis' | 'pangkat', a, n } jawab isian = basis / pangkat
+
+   cekBacaPangkat() (shared/engine.js) menerima "kuadrat"/"kubik" sebagai
+   sinonim yang setara dengan "pangkat dua"/"pangkat tiga" pada bacaan
+   yang diketik murid.
    ============================================================ */
 
 var DATA = {
@@ -68,13 +83,13 @@ var DATA = {
     kicker: 'Tahap 1 · Stimulasi',
     syntax: 'Discovery Learning · Sintaks 1',
     goal: 'Mengamati masalah menulis perkalian berulang yang sangat panjang dan menduga cara menyingkatnya.',
-    tp: 'Membaca dan menulis bilangan berpangkat bulat positif, negatif, dan nol beserta unsur-unsurnya (basis dan pangkat).',
+    tp: 'Membaca dan menuliskan bilangan berpangkat bulat positif dalam berbagai bentuk notasi, beserta unsur-unsurnya (basis dan pangkat).',
     tpJudul: 'Tujuan belajar hari ini',
     kriteria: [
       'Menuliskan perkalian berulang dalam bentuk pangkat aⁿ.',
       'Menentukan basis dan pangkat, termasuk basis negatif dan tanda di luar pangkat.',
-      'Membaca bilangan berpangkat positif, nol, dan negatif dengan cara baku.',
-      'Menuliskan bilangan berpangkat dari bacaan yang didiktekan.',
+      'Membaca bilangan berpangkat dengan cara baku, termasuk bacaan khusus kuadrat dan kubik.',
+      'Menuliskan bilangan berpangkat dari bacaan yang didiktekan, dalam berbagai bentuk notasi.',
     ],
     guru: 'Bacakan cerita bersama. Bila memungkinkan, peragakan melipat selembar kertas HVS 3–4 kali. Biarkan murid menduga tanpa dikoreksi; tanyakan "Mengapa kamu memilih itu?" untuk memancing alasan.',
     judul: 'Kertas Lipat Ajaib',
@@ -113,7 +128,7 @@ var DATA = {
       {
         id: 'inti',
         label:
-          'Bagaimana menulis dan membaca perkalian berulang secara singkat, apa saja unsur-unsurnya, dan bagaimana bila pangkatnya nol atau negatif?',
+          'Bagaimana menulis dan membaca perkalian berulang secara singkat, apa saja unsur-unsurnya, dan bagaimana bentuk-bentuk penulisannya (notasinya)?',
       },
       { id: 'hasil', label: 'Berapakah hasil dari 2 × 10?' },
       { id: 'kertas', label: 'Berapa lembar kertas yang dibutuhkan Bima?' },
@@ -121,7 +136,7 @@ var DATA = {
     ],
     correct: 'inti',
     umpan: {
-      inti: 'Tepat! Pertanyaan ini mencakup cara MENULIS, cara MEMBACA, UNSUR-UNSUR (basis & pangkat), serta pangkat nol dan negatif.',
+      inti: 'Tepat! Pertanyaan ini mencakup cara MENULIS, cara MEMBACA, UNSUR-UNSUR (basis & pangkat), serta BERBAGAI BENTUK notasinya.',
       hasil:
         'Catatan Bima bukan 2 × 10. Coba lihat lagi: angka 2 dikalikan dengan 2 berulang kali, bukan dengan 10.',
       kertas:
@@ -243,78 +258,135 @@ var DATA = {
         },
       },
     ],
-    nextLabel: 'Lanjut ke Pola Pangkat →',
+    nextLabel: 'Lanjut ke Notasi Bilangan Berpangkat →',
   },
 
   /* ----------------------------------------------------------
-     TAHAP 4 — MENGUMPULKAN DATA B: POLA PANGKAT NOL & NEGATIF
+     TAHAP 4 — MENGUMPULKAN DATA B: BERBAGAI BENTUK NOTASI
      ---------------------------------------------------------- */
   pola: {
     kicker: 'Tahap 4 · Mengumpulkan Data (B)',
     syntax: 'Discovery Learning · Sintaks 3',
-    goal: 'Menemukan makna pangkat nol dan pangkat negatif dari pola, lalu menuliskan cara bacanya.',
-    guru: 'Tanyakan: “Setiap turun satu anak tangga, pangkatnya berkurang 1. Nilainya diapakan?” Biarkan murid menemukan pola ÷ basis. Isian pecahan boleh ditulis 1/10 atau 0,1.',
+    goal: 'Menemukan pola bilangan berpangkat dari konteks luas & volume, lalu mengenal berbagai bentuk notasinya: perkalian berulang, notasi pangkat, dan bacaan kata (termasuk kuadrat & kubik).',
+    guru: 'Tekankan bahwa satu bilangan berpangkat bisa ditulis/dibaca dengan beberapa cara yang setara. Perkenalkan istilah "kuadrat" (pangkat 2, berkaitan dengan luas bidang datar) dan "kubik" (pangkat 3, berkaitan dengan volume bangun ruang) — keduanya sinonim yang diterima untuk "pangkat dua"/"pangkat tiga".',
     cerita:
-      'Kebalikan dari melipat, Bima kini MEMOTONG selembar kertas menjadi dua bagian sama besar, lalu memotong satu bagian itu menjadi dua lagi. Selembar utuh = 1 lembar; setelah satu kali dipotong = ½ lembar; setelah dua kali = ¼ lembar. Pola seperti ini juga muncul pada tangga pangkat.',
+      'Sekelompok arsitek sedang mencatat pola bilangan berpangkat pada dua tangga di bawah ini. Baris pangkat 2 nanti akan berkaitan dengan luas taman berbentuk persegi, dan baris pangkat 3 akan berkaitan dengan volume bak air berbentuk kubus.',
     instruksi:
-      'Isi anak tangga yang kosong. Setiap turun satu anak tangga, pangkatnya berkurang 1 dan nilainya DIBAGI basis. Pecahan boleh ditulis seperti 1/10.',
+      'Isi anak tangga yang kosong. Setiap turun satu anak tangga, pangkatnya berkurang 1 dan nilainya DIBAGI basis.',
     tangga: [
       {
-        id: 't10',
-        judul: 'Tangga pangkat 10',
-        a: 10,
-        dari: 3,
-        sampai: -2,
-        diketahui: [3, 2, 1],
+        id: 't6',
+        judul: 'Tangga pangkat 6',
+        a: 6,
+        dari: 4,
+        sampai: 1,
+        diketahui: [4, 3],
       },
       {
-        id: 't2',
-        judul: 'Tangga pangkat 2 (potong kertas)',
-        a: 2,
-        dari: 3,
-        sampai: -2,
-        diketahui: [3, 2, 1],
+        id: 't4',
+        judul: 'Tangga pangkat 4',
+        a: 4,
+        dari: 5,
+        sampai: 1,
+        diketahui: [5, 4],
       },
     ],
     temuanTangga:
-      'Pola membagi terus berlanjut di bawah pangkat 1: pangkat 0 bernilai 1, lalu pangkat negatif menghasilkan pecahan. Jadi 2⁻¹ = ½ lembar dan 2⁻² = ¼ lembar kertas!',
+      'Pola membagi ini berlaku untuk setiap bilangan berpangkat: aⁿ berarti a dikalikan berulang sebanyak n faktor. Khususnya, pangkat 2 (luas bidang datar) sering disebut <strong>kuadrat</strong>, dan pangkat 3 (volume bangun ruang) sering disebut <strong>kubik</strong> — keduanya boleh dibaca dengan istilah khusus ini atau dengan “pangkat dua”/“pangkat tiga” seperti biasa.',
     instruksiBaca:
-      'Bilangan dengan pangkat nol dan negatif juga punya cara baca baku. Ketik cara membacanya dengan kata-kata.',
+      'Bilangan berpangkat punya cara baca baku. Ketik cara membacanya dengan kata-kata (boleh memakai “kuadrat”/“kubik” bila pangkatnya 2 atau 3).',
     baca: [
       {
         id: 'b1',
         jenis: 'baca',
-        a: 10,
-        n: 0,
-        label: 'Ketik cara membaca 10⁰',
+        a: 6,
+        n: 2,
+        label: 'Ketik cara membaca 6² (luas taman sisi 6 m)',
         hints: [
           'Pola bacaannya: “[basis] pangkat [pangkat]”.',
-          'Pangkatnya 0 dibaca “nol”.',
-          'Dibaca “sepuluh pangkat nol”.',
+          'Karena pangkatnya 2, kamu juga boleh memakai istilah khusus untuk luas.',
+          'Dibaca “enam pangkat dua” atau “enam kuadrat”.',
         ],
-        temuan: '10⁰ = 1. Pangkat nol tetap dibaca “pangkat nol”.',
+        temuan: '6² = 36. Pangkat 2 boleh dibaca “pangkat dua” atau “kuadrat”.',
       },
       {
         id: 'b2',
         jenis: 'baca',
-        a: 10,
-        n: -2,
-        label: 'Ketik cara membaca 10⁻²',
+        a: 4,
+        n: 3,
+        label: 'Ketik cara membaca 4³ (volume bak air rusuk 4 m)',
         hints: [
-          'Pangkatnya −2. Tanda − di depan bilangan dibaca “negatif”.',
-          'Jangan memakai kata “minus”; minus adalah nama operasi pengurangan.',
-          'Dibaca “sepuluh pangkat negatif dua”.',
+          'Basisnya 4, pangkatnya 3.',
+          'Karena pangkatnya 3, kamu juga boleh memakai istilah khusus untuk volume.',
+          'Dibaca “empat pangkat tiga” atau “empat kubik”.',
         ],
-        temuan: '10⁻² = 1/100. Pangkat negatif dibaca “pangkat negatif …”.',
+        temuan: '4³ = 64. Pangkat 3 boleh dibaca “pangkat tiga” atau “kubik”.',
       },
       {
         id: 'b3',
         jenis: 'baca',
-        a: 2,
-        n: -1,
-        label: 'Ketik cara membaca 2⁻¹ (½ lembar kertas)',
-        hints: ['Basisnya 2, pangkatnya −1.', 'Dibaca “dua pangkat negatif satu”.'],
-        temuan: '2⁻¹ = ½. Walaupun pangkatnya negatif, nilainya tetap positif.',
+        a: -2,
+        n: 5,
+        label: 'Ketik cara membaca (−2)⁵',
+        hints: ['Basisnya −2 (ada kurung).', 'Dibaca “negatif dua pangkat lima”.'],
+        temuan:
+          '(−2)⁵ = −32. Basis negatif tetap dibaca “negatif …” di depan, pangkatnya tetap bulat positif.',
+      },
+    ],
+    instruksiBentuk:
+      'Setiap bilangan berpangkat punya beberapa bentuk notasi yang setara: perkalian berulang, notasi pangkat, dan bacaan kata. Cocokkan pasangannya.',
+    bentuk: [
+      {
+        id: 'f1',
+        tanya: 'Bentuk lain dari 5 × 5 adalah …',
+        opsi: [
+          { id: 'benar', label: '5² — juga disebut “lima kuadrat”' },
+          { id: 'tukar', label: '2⁵ — juga disebut “dua pangkat lima”' },
+          { id: 'kali', label: '5 × 2' },
+          { id: 'tiga', label: '5³ — juga disebut “lima kubik”' },
+        ],
+        correct: 'benar',
+        umpan: {
+          benar: 'Tepat! Ada 2 faktor 5, jadi ditulis 5² dan boleh disebut “lima kuadrat”.',
+          tukar: 'Basis dan pangkatnya tertukar. Yang dikalikan berulang adalah 5, bukan 2.',
+          kali: '5 × 5 bukan 5 × 2. Hitung ulang banyak faktornya.',
+          tiga: 'Faktornya cuma 2 (bukan 3), jadi bukan bentuk kubik.',
+        },
+      },
+      {
+        id: 'f2',
+        tanya: '“Tujuh kubik” sama artinya dengan …',
+        opsi: [
+          { id: 'benar', label: '7³ = 7 × 7 × 7' },
+          { id: 'kuadrat', label: '7² = 7 × 7' },
+          { id: 'tukar', label: '3⁷' },
+          { id: 'kali', label: '7 × 3' },
+        ],
+        correct: 'benar',
+        umpan: {
+          benar: 'Tepat! “Kubik” adalah sebutan khusus untuk pangkat 3, jadi 7³ = 7 × 7 × 7.',
+          kuadrat: '“Kuadrat” adalah sebutan untuk pangkat 2, bukan pangkat 3.',
+          tukar: 'Basis dan pangkatnya tertukar. Basisnya 7, bukan 3.',
+          kali: 'Pangkat berarti perkalian berulang, bukan 7 × 3.',
+        },
+      },
+      {
+        id: 'f3',
+        tanya: 'Bentuk pangkat dari 9 × 9 × 9 × 9 adalah …',
+        opsi: [
+          { id: 'benar', label: '9⁴, dibaca “sembilan pangkat empat”' },
+          { id: 'kuadrat', label: '9², dibaca “sembilan kuadrat”' },
+          { id: 'kubik', label: '9³, dibaca “sembilan kubik”' },
+          { id: 'tukar', label: '4⁹, dibaca “empat pangkat sembilan”' },
+        ],
+        correct: 'benar',
+        umpan: {
+          benar:
+            'Tepat! Ada 4 faktor 9, sehingga ditulis 9⁴. Pangkat 4 tidak punya sebutan khusus seperti kuadrat/kubik.',
+          kuadrat: 'Faktornya ada 4, bukan 2, sehingga bukan bentuk kuadrat.',
+          kubik: 'Faktornya ada 4, bukan 3, sehingga bukan bentuk kubik.',
+          tukar: 'Basis dan pangkatnya tertukar. Yang dikalikan berulang adalah 9.',
+        },
       },
     ],
     nextLabel: 'Lanjut Mengolah Data →',
@@ -326,7 +398,7 @@ var DATA = {
   olah: {
     kicker: 'Tahap 5 · Mengolah Data',
     syntax: 'Discovery Learning · Sintaks 4',
-    goal: 'Mengolah temuan menjadi aturan membaca dan menulis bilangan berpangkat beserta unsurnya.',
+    goal: 'Mengolah temuan menjadi aturan membaca dan menulis bilangan berpangkat beserta unsurnya, termasuk bentuk bacaan khusus kuadrat & kubik.',
     guru: 'Setelah pertanyaan penuntun, minta satu pasangan menjelaskan perbedaan (−3)⁴ dan −3⁴ di depan kelas sebelum murid lain mengerjakan bagian ketuk basis/pangkat.',
     pengantar:
       'Gunakan data dari percobaan lipat kertas dan tangga pangkat untuk menjawab pertanyaan penuntun berikut.',
@@ -390,38 +462,38 @@ var DATA = {
       },
       {
         id: 'k4',
-        tanya: 'Dari tangga pangkat 10, bagaimana 10⁰ ditulis nilainya dan dibaca?',
+        tanya: 'Bilangan 7² sering disebut juga …',
         opsi: [
-          { id: 'benar', label: '10⁰ = 1, dibaca “sepuluh pangkat nol”' },
-          { id: 'nol', label: '10⁰ = 0, dibaca “sepuluh pangkat nol”' },
-          { id: 'basis', label: '10⁰ = 10, dibaca “sepuluh nol”' },
-          { id: 'kali', label: '10⁰ = 1, dibaca “sepuluh kali nol”' },
+          { id: 'benar', label: '“tujuh kuadrat”' },
+          { id: 'kubik', label: '“tujuh kubik”' },
+          { id: 'tukar', label: '“dua pangkat tujuh”' },
+          { id: 'ganda', label: '“tujuh ganda”' },
         ],
         correct: 'benar',
         umpan: {
           benar:
-            'Tepat! 10¹ = 10, dibagi 10 menjadi 10⁰ = 1. Bacaannya tetap mengikuti pola “… pangkat …”.',
-          nol: 'Cara bacanya benar, tetapi nilainya bukan 0. Dari 10¹ = 10, turun satu anak tangga berarti 10 : 10 = 1.',
-          basis: '10⁰ bukan 10, dan ada kata yang hilang dalam bacaannya: “pangkat”.',
-          kali: 'Nilainya benar, tetapi pangkat tidak dibaca “kali”.',
+            'Tepat! Pangkat 2 punya sebutan khusus “kuadrat”, jadi 7² = “tujuh kuadrat” = “tujuh pangkat dua”.',
+          kubik: '“Kubik” adalah sebutan untuk pangkat 3, sedangkan 7² pangkatnya 2.',
+          tukar: 'Basis dan pangkatnya tertukar. Basisnya 7, bukan 2.',
+          ganda: '“Ganda” bukan istilah baku bilangan berpangkat.',
         },
       },
       {
         id: 'k5',
-        tanya: 'Bagaimana cara membaca 10⁻², dan berapa nilainya?',
+        tanya: 'Bilangan 4³ sering disebut juga …',
         opsi: [
-          { id: 'benar', label: '“sepuluh pangkat negatif dua”, nilainya 1/100' },
-          { id: 'minus', label: '“sepuluh minus dua”, nilainya 8' },
-          { id: 'negnilai', label: '“sepuluh pangkat negatif dua”, nilainya −100' },
-          { id: 'negbasis', label: '“negatif sepuluh pangkat dua”, nilainya 1/100' },
+          { id: 'benar', label: '“empat kubik”' },
+          { id: 'kuadrat', label: '“empat kuadrat”' },
+          { id: 'tukar', label: '“tiga pangkat empat”' },
+          { id: 'kali', label: '“empat kali tiga”' },
         ],
         correct: 'benar',
         umpan: {
-          benar: 'Tepat! Tanda − pada pangkat dibaca “negatif”, dan nilainya 1 : 10 : 10 = 1/100.',
-          minus: '10⁻² bukan pengurangan 10 − 2. Tanda − pada pangkat dibaca “negatif”.',
-          negnilai:
-            'Bacaannya benar, tetapi pangkat negatif tidak membuat nilainya negatif. Lihat tangga: 10⁻² = 1/100.',
-          negbasis: 'Yang negatif adalah pangkatnya, bukan basisnya. Basis 10 dibaca lebih dulu.',
+          benar:
+            'Tepat! Pangkat 3 punya sebutan khusus “kubik”, jadi 4³ = “empat kubik” = “empat pangkat tiga”.',
+          kuadrat: '“Kuadrat” adalah sebutan untuk pangkat 2, sedangkan 4³ pangkatnya 3.',
+          tukar: 'Basis dan pangkatnya tertukar. Basisnya 4, bukan 3.',
+          kali: '4³ = 4 × 4 × 4, bukan 4 × 3.',
         },
       },
     ],
@@ -429,10 +501,9 @@ var DATA = {
       'Ketuk bagian yang diminta pada setiap bilangan berpangkat. Perhatikan tanda − di luar pangkat!',
     anatomi: [
       { id: 'a1', a: 5, n: 3, target: 'basis' },
-      { id: 'a2', a: 7, n: -2, target: 'pangkat' },
+      { id: 'a2', a: 9, n: 6, target: 'pangkat' },
       { id: 'a3', a: -4, n: 2, target: 'basis' },
       { id: 'a4', a: 4, n: 2, negLuar: true, target: 'basis' },
-      { id: 'a5', a: 10, n: 0, target: 'pangkat' },
       { id: 'a6', a: -1, n: 9, target: 'pangkat' },
     ],
     umpanAnatomi: {
@@ -458,15 +529,6 @@ var DATA = {
         explanation: 'Basis 3 dibaca dulu, lalu “pangkat empat”.',
       },
       {
-        id: 'p2',
-        a: 6,
-        n: -3,
-        bacaan: 'enam minus tiga',
-        correct: 'keliru',
-        explanation:
-          'Seharusnya “enam pangkat negatif tiga”. Kata “pangkat” hilang dan “minus” tidak baku.',
-      },
-      {
         id: 'p3',
         a: -5,
         n: 2,
@@ -485,14 +547,6 @@ var DATA = {
           'Tanpa kurung, basisnya 5 dan tanda − berada di luar pangkat. Dibaca “negatif dari lima pangkat dua”.',
       },
       {
-        id: 'p5',
-        a: 8,
-        n: 0,
-        bacaan: 'delapan pangkat nol',
-        correct: 'tepat',
-        explanation: 'Pangkat nol dibaca “pangkat nol”.',
-      },
-      {
         id: 'p6',
         a: 2,
         n: 7,
@@ -501,20 +555,38 @@ var DATA = {
         explanation: 'Basis dan pangkat tertukar. Seharusnya “dua pangkat tujuh”.',
       },
       {
-        id: 'p7',
-        a: 10,
-        n: -4,
-        bacaan: 'sepuluh pangkat negatif empat',
-        correct: 'tepat',
-        explanation: 'Pangkat −4 dibaca “pangkat negatif empat”.',
-      },
-      {
         id: 'p8',
         a: 4,
         n: 3,
         bacaan: 'empat kali tiga',
         correct: 'keliru',
-        explanation: '4³ = 4 × 4 × 4, bukan 4 × 3. Dibaca “empat pangkat tiga”.',
+        explanation: '4³ = 4 × 4 × 4, bukan 4 × 3. Dibaca “empat pangkat tiga” atau “empat kubik”.',
+      },
+      {
+        id: 'p9',
+        a: 8,
+        n: 2,
+        bacaan: 'delapan kuadrat',
+        correct: 'tepat',
+        explanation: 'Pangkat 2 disebut juga “kuadrat”, jadi 8² boleh dibaca “delapan kuadrat”.',
+      },
+      {
+        id: 'p10',
+        a: 3,
+        n: 3,
+        bacaan: 'tiga kali tiga kubik',
+        correct: 'keliru',
+        explanation:
+          'Cukup disebut “tiga kubik” atau “tiga pangkat tiga”; kata “kali” tidak perlu ditambahkan.',
+      },
+      {
+        id: 'p11',
+        a: 5,
+        n: 4,
+        bacaan: 'lima kuadrat',
+        correct: 'keliru',
+        explanation:
+          '5⁴ pangkatnya 4 (bukan 2), sehingga tidak disebut kuadrat. Dibaca “lima pangkat empat”.',
       },
     ],
     nextLabel: 'Lanjut ke Pembuktian →',
@@ -542,28 +614,12 @@ var DATA = {
     instruksiTulis: 'Uji 1 — Tulis setiap bacaan berikut dalam bentuk pangkat.',
     tulis: [
       {
-        id: 'v1',
-        jenis: 'tulis',
-        a: 5,
-        n: -2,
-        label: '“lima pangkat negatif dua”',
-        hints: ['Basisnya 5.', 'Pangkatnya negatif dua: tulis −2 di kotak pangkat.'],
-      },
-      {
         id: 'v2',
         jenis: 'tulis',
         a: -2,
         n: 3,
         label: '“negatif dua pangkat tiga”',
         hints: ['Kata “negatif” dibaca sebelum basis, jadi basisnya −2.', 'Basis −2, pangkat 3.'],
-      },
-      {
-        id: 'v3',
-        jenis: 'tulis',
-        a: 11,
-        n: 0,
-        label: '“sebelas pangkat nol”',
-        hints: ['Basis 11.', 'Pangkat 0.'],
       },
       {
         id: 'v4',
@@ -574,26 +630,22 @@ var DATA = {
         hints: ['Basis 10.', 'Pangkat 16.'],
       },
     ],
-    instruksiBaca: 'Uji 2 — Ketik cara membaca setiap bilangan berpangkat berikut.',
+    instruksiBaca:
+      'Uji 2 — Ketik cara membaca setiap bilangan berpangkat berikut (boleh memakai “kuadrat”/“kubik” bila pangkatnya 2 atau 3).',
     baca: [
       {
-        id: 'r1',
+        id: 'r3',
         jenis: 'baca',
         a: -6,
         n: 2,
         label: 'Ketik cara membaca (−6)²',
-        hints: ['Basisnya −6 (ada kurung).', 'Dibaca “negatif enam pangkat dua”.'],
+        hints: [
+          'Basisnya −6 (ada kurung).',
+          'Dibaca “negatif enam pangkat dua” atau “negatif enam kuadrat”.',
+        ],
       },
       {
-        id: 'r2',
-        jenis: 'baca',
-        a: 3,
-        n: -4,
-        label: 'Ketik cara membaca 3⁻⁴',
-        hints: ['Basis 3, pangkat −4.', 'Dibaca “tiga pangkat negatif empat”.'],
-      },
-      {
-        id: 'r3',
+        id: 'r4',
         jenis: 'baca',
         a: 3,
         n: 4,
@@ -603,6 +655,14 @@ var DATA = {
           'Tanpa kurung, basisnya 3 dan tanda − berada di luar pangkat.',
           'Dibaca “negatif dari tiga pangkat empat”.',
         ],
+      },
+      {
+        id: 'r5',
+        jenis: 'baca',
+        a: 9,
+        n: 3,
+        label: 'Ketik cara membaca 9³',
+        hints: ['Basis 9, pangkat 3.', 'Dibaca “sembilan pangkat tiga” atau “sembilan kubik”.'],
       },
     ],
     instruksiSoal:
@@ -624,19 +684,6 @@ var DATA = {
         explanation: 'Pangkat 3 berarti ada 3 faktor 2 yang dikalikan: 2³ = 2 × 2 × 2 = 8.',
       },
       {
-        id: 'm2',
-        pernyataan: 'Doni membaca 5⁻² sebagai “lima minus dua”.',
-        options: [
-          { id: 'benar', label: 'Doni keliru: dibaca “lima pangkat negatif dua”.' },
-          { id: 'setuju', label: 'Doni benar, minus dan negatif sama saja.' },
-          { id: 'negbasis', label: 'Doni keliru: dibaca “negatif lima pangkat dua”.' },
-          { id: 'kali', label: 'Doni keliru: dibaca “lima kali negatif dua”.' },
-        ],
-        correct: 'benar',
-        explanation:
-          'Kata “pangkat” tidak boleh hilang, dan tanda − pada bilangan dibaca “negatif”, bukan “minus”.',
-      },
-      {
         id: 'm3',
         pernyataan: 'Sinta: “Basis dari −3⁴ adalah −3.”',
         options: [
@@ -652,17 +699,34 @@ var DATA = {
         explanation: 'Basis −3 harus ditulis dengan kurung: (−3)⁴. Pada −3⁴, basisnya 3.',
       },
       {
-        id: 'm4',
-        pernyataan: 'Bayu: “Karena pangkatnya 0, bilangan 9⁰ tidak punya basis.”',
+        id: 'm5',
+        pernyataan: 'Dodi: “6 kuadrat artinya 6 × 2 = 12.”',
         options: [
-          { id: 'benar', label: 'Bayu keliru: basis 9⁰ tetap 9 dan pangkatnya 0.' },
-          { id: 'setuju', label: 'Bayu benar, basisnya hilang.' },
-          { id: 'nol', label: 'Bayu keliru: basisnya 0.' },
-          { id: 'satu', label: 'Bayu keliru: basisnya 1.' },
+          { id: 'benar', label: 'Dodi keliru: 6 kuadrat artinya 6², yaitu 6 × 6 = 36.' },
+          { id: 'setuju', label: 'Dodi benar.' },
+          { id: 'kubik', label: 'Dodi keliru: 6 kuadrat artinya 6³ = 216.' },
+          { id: 'tambah', label: 'Dodi keliru: 6 kuadrat artinya 6 + 6 = 12.' },
         ],
         correct: 'benar',
         explanation:
-          '9⁰ tetap memiliki basis 9 dan pangkat 0; dibaca “sembilan pangkat nol” dan nilainya 1.',
+          '“Kuadrat” adalah sebutan lain untuk pangkat 2, bukan dikalikan 2. Jadi 6 kuadrat = 6² = 6 × 6 = 36.',
+      },
+      {
+        id: 'm6',
+        pernyataan: 'Wati: “5³ dan 5 kubik adalah dua bilangan yang berbeda.”',
+        options: [
+          {
+            id: 'benar',
+            label:
+              'Wati keliru: 5³ dan “5 kubik” adalah bentuk notasi berbeda untuk bilangan yang sama.',
+          },
+          { id: 'setuju', label: 'Wati benar, keduanya berbeda.' },
+          { id: 'kuadrat', label: 'Wati keliru: “5 kubik” sebenarnya berarti 5².' },
+          { id: 'kali', label: 'Wati keliru: “5 kubik” sebenarnya berarti 5 × 3.' },
+        ],
+        correct: 'benar',
+        explanation:
+          '5³ (notasi pangkat) dan “5 kubik” (bacaan kata) adalah dua bentuk notasi yang setara untuk bilangan yang sama, yaitu 5 × 5 × 5 = 125.',
       },
     ],
     nextLabel: 'Lanjut Menarik Kesimpulan →',
@@ -674,7 +738,7 @@ var DATA = {
   generalisasi: {
     kicker: 'Tahap 7 · Menarik Kesimpulan',
     syntax: 'Discovery Learning · Sintaks 6',
-    goal: 'Menyusun kesimpulan tentang cara membaca dan menulis bilangan berpangkat beserta unsurnya.',
+    goal: 'Menyusun kesimpulan tentang cara membaca dan menulis bilangan berpangkat beserta unsur dan berbagai bentuk notasinya.',
     guru: 'Setelah kesimpulan tepat, minta murid menyalinnya ke buku catatan dengan contoh buatan sendiri.',
     instruksi:
       'Lengkapi setiap kalimat dengan potongan yang tepat dari daftar pilihan. Setiap potongan hanya dipakai satu kali; beberapa potongan adalah pengecoh.',
@@ -689,7 +753,11 @@ var DATA = {
       { id: 'g3', awal: 'Sedangkan n disebut', correct: 'c3' },
       { id: 'g4', awal: 'Bentuk aⁿ dibaca', correct: 'c4' },
       { id: 'g5', awal: 'Bila basisnya bilangan negatif, basis ditulis', correct: 'c5' },
-      { id: 'g6', awal: 'Pangkat nol dan pangkat negatif dibaca', correct: 'c6' },
+      {
+        id: 'g6',
+        awal: 'Bentuk berpangkat 2 dan berpangkat 3 masing-masing punya bacaan khusus, yaitu',
+        correct: 'c6',
+      },
     ],
     bank: [
       { id: 'c1', teks: 'aⁿ' },
@@ -697,21 +765,18 @@ var DATA = {
       { id: 'c3', teks: 'pangkat (eksponen), yaitu banyak faktor yang dikalikan' },
       { id: 'c4', teks: '“a pangkat n”' },
       { id: 'c5', teks: 'di dalam kurung, misalnya (−3)⁴' },
-      {
-        id: 'c6',
-        teks: '“pangkat nol” dan “pangkat negatif …”, misalnya 5⁻² dibaca “lima pangkat negatif dua”',
-      },
+      { id: 'c6', teks: '“kuadrat” (pangkat 2) dan “kubik” (pangkat 3)' },
       { id: 'd1', teks: 'a × n' },
       { id: 'd2', teks: '“a kali n”' },
       { id: 'd3', teks: 'tanpa kurung, misalnya −3⁴' },
-      { id: 'd4', teks: 'dengan kata “minus”, misalnya “lima minus dua”' },
+      { id: 'd4', teks: '“ganda” (pangkat 2) dan “tripel” (pangkat 3)' },
     ],
     rangkuman: [
       'a × a × … × a (n faktor) = aⁿ; a = <strong>basis</strong>, n = <strong>pangkat</strong>.',
       'aⁿ dibaca “a pangkat n”, mis. 2⁵ dibaca “dua pangkat lima”.',
       'Basis negatif ditulis dalam kurung: (−3)⁴ dibaca “negatif tiga pangkat empat”. −3⁴ dibaca “negatif dari tiga pangkat empat”.',
-      'Pangkat nol: 7⁰ dibaca “tujuh pangkat nol” (nilainya 1).',
-      'Pangkat negatif: 5⁻² dibaca “lima pangkat negatif dua” (nilainya 1/25, tetap positif).',
+      'Bentuk pangkat 2 dan pangkat 3 punya bacaan khusus: 6² = “enam kuadrat”, 4³ = “empat kubik” — setara dengan “pangkat dua”/“pangkat tiga”.',
+      'Satu bilangan berpangkat punya beberapa bentuk notasi yang setara: perkalian berulang (5 × 5), notasi pangkat (5²), dan bacaan kata (“lima kuadrat”).',
     ],
     nextLabel: 'Lanjut ke Uji Terap →',
   },
@@ -722,7 +787,7 @@ var DATA = {
   terapkan: {
     kicker: 'Tahap 8 · Uji Terap',
     syntax: 'Penerapan',
-    goal: 'Menerapkan cara membaca dan menulis bilangan berpangkat pada berbagai konteks.',
+    goal: 'Menerapkan cara membaca dan menulis bilangan berpangkat pada berbagai konteks dan bentuk notasi.',
     guru: 'Murid mengerjakan mandiri. Amati soal yang sering dijawab keliru untuk dibahas bersama.',
     instruksi: 'Kerjakan soal satu per satu. Untuk soal isian, kamu boleh mencoba lagi.',
     nextLabel: 'Lanjut ke Refleksi →',
@@ -743,17 +808,6 @@ var DATA = {
         cek: { jenis: 'baca', a: 10, n: 16 },
         explanation: '10¹⁶: basis 10, pangkat 16, dibaca “sepuluh pangkat enam belas”.',
         hints: ['Baca basisnya dulu, lalu kata “pangkat”, lalu pangkatnya.'],
-      },
-      {
-        id: 's2',
-        type: 'input',
-        konteks: 'Biologi',
-        cerita: 'Ukuran sebuah virus sekitar 10⁻⁷ meter.',
-        pertanyaan: 'Berapakah PANGKAT pada bilangan 10⁻⁷?',
-        jawab: -7,
-        cek: { jenis: 'pangkat', a: 10, n: -7 },
-        explanation: 'Angka kecil di kanan atas adalah −7, dibaca “sepuluh pangkat negatif tujuh”.',
-        hints: ['Pangkat adalah angka kecil di kanan atas.', 'Jangan lupa tandanya.'],
       },
       {
         id: 's3',
@@ -793,7 +847,7 @@ var DATA = {
         options: [
           { id: 'benar', label: '(−2)⁴' },
           { id: 'luar', label: '−2⁴' },
-          { id: 'negpangkat', label: '2⁻⁴' },
+          { id: 'kuadrat', label: '2⁴, dibaca “dua kuadrat”' },
           { id: 'tukar', label: '4⁻²' },
         ],
         correct: 'benar',
@@ -810,7 +864,7 @@ var DATA = {
         options: [
           { id: 'benar', label: '−3²' },
           { id: 'kurung', label: '(−3)²' },
-          { id: 'negpangkat', label: '3⁻²' },
+          { id: 'kubik', label: '−3³' },
           { id: 'tukar', label: '−2³' },
         ],
         correct: 'benar',
@@ -839,13 +893,32 @@ var DATA = {
       {
         id: 's8',
         type: 'input',
-        konteks: 'Pangkat nol',
-        cerita: 'Pada tangga pangkat 3: 3² = 9, lalu 3¹ = 3, lalu 3⁰.',
-        pertanyaan: 'Berapakah PANGKAT dari 3⁰?',
-        jawab: 0,
-        cek: { jenis: 'pangkat', a: 3, n: 0 },
-        explanation: '3⁰ memiliki basis 3 dan pangkat 0; dibaca “tiga pangkat nol” (nilainya 1).',
+        konteks: 'Geometri — luas persegi',
+        cerita: 'Sebuah taman persegi bersisi 9 m. Luasnya ditulis 9² m².',
+        pertanyaan: 'Berapakah PANGKAT dari 9² pada bentuk luas persegi tersebut?',
+        jawab: 2,
+        cek: { jenis: 'pangkat', a: 9, n: 2 },
+        explanation:
+          '9² memiliki basis 9 dan pangkat 2; bentuk pangkat 2 disebut juga “kuadrat”, sesuai untuk menghitung luas (2 dimensi).',
         hints: ['Pangkat adalah angka kecil di kanan atas.'],
+      },
+      {
+        id: 's9',
+        type: 'choice',
+        konteks: 'Geometri — volume kubus',
+        cerita: 'Sebuah bak air kubus berusuk 7 m. Volumenya ditulis 7 × 7 × 7 m³.',
+        pertanyaan: 'Bentuk pangkat dan bacaan khususnya adalah …',
+        options: [
+          { id: 'benar', label: '7³, disebut juga “tujuh kubik”' },
+          { id: 'kuadrat', label: '7², disebut juga “tujuh kuadrat”' },
+          { id: 'tukar', label: '3⁷, disebut juga “tiga pangkat tujuh”' },
+          { id: 'kali', label: '7 × 3' },
+        ],
+        correct: 'benar',
+        cek: { jenis: 'tulis', a: 7, n: 3 },
+        explanation:
+          'Ada 3 faktor 7 (rusuk × rusuk × rusuk): ditulis 7³, sesuai untuk volume (3 dimensi), disebut juga “tujuh kubik”.',
+        hints: ['Hitung banyak faktor 7 pada perkalian tersebut.'],
       },
     ],
   },
@@ -866,7 +939,7 @@ var DATA = {
       },
       {
         id: 'q2',
-        teks: 'Bagian mana yang paling membingungkan (mis. kurung, pangkat nol, pangkat negatif)? Bagaimana kamu mengatasinya?',
+        teks: 'Bagian mana yang paling membingungkan (mis. kurung, kuadrat, kubik)? Bagaimana kamu mengatasinya?',
         placeholder: 'Yang paling membingungkan …',
       },
       {
@@ -894,8 +967,8 @@ var DATA = {
     capaian: [
       'Menuliskan perkalian berulang dalam bentuk pangkat aⁿ.',
       'Menentukan basis dan pangkat, termasuk basis negatif dan tanda di luar pangkat.',
-      'Membaca bilangan berpangkat positif, nol, dan negatif dengan cara baku.',
-      'Menulis bilangan berpangkat dari bacaan yang didiktekan.',
+      'Membaca bilangan berpangkat dengan cara baku, termasuk bacaan khusus kuadrat dan kubik.',
+      'Menuliskan bilangan berpangkat dari bacaan yang didiktekan, dalam berbagai bentuk notasi.',
     ],
   },
 };

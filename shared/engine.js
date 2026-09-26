@@ -11607,7 +11607,8 @@ function bindCekStep(id, st, step, save, rerender) {
      • tulisPerkalianBerulang — 2³ → "2 × 2 × 2", 2⁻³ → "1 : (2 × 2 × 2)";
      • angkaDariKata / parseBacaPangkat / cekBacaPangkat — memeriksa
        cara baca yang diketik murid + diagnosa miskonsepsi ("minus",
-       "kali", basis–pangkat tertukar, tanda, kurung);
+       "kali", basis–pangkat tertukar, tanda, kurung); "kuadrat" dan
+       "kubik" diterima sebagai sinonim "pangkat dua"/"pangkat tiga";
      • cekTulisPangkat / pratinjauTulisPangkat — memeriksa isian
        "penulis pangkat" (kotak basis + kotak pangkat);
      • buildPowerWriter, buildPowerAnatomy, buildFoldSimulator (+ bind*)
@@ -11696,11 +11697,14 @@ function angkaDariKata(teks) {
 
 /*
  * Mengurai bacaan "[negatif dari] [negatif] BASIS pangkat [negatif] PANGKAT"
- * (juga "BASIS kuadrat" dan basis "X per Y").
+ * (juga "BASIS kuadrat" untuk pangkat 2, "BASIS kubik" untuk pangkat 3,
+ * dan basis "X per Y").
  * Kembalian { negLuar, basisNeg, basis: {num, den} (tanpa tanda), pangkat } atau null.
  */
 function parseBacaPangkat(teks) {
-  var t = normalisasiBacaan(teks).replace(/ kuadrat$/, ' pangkat dua');
+  var t = normalisasiBacaan(teks)
+    .replace(/ kuadrat$/, ' pangkat dua')
+    .replace(/ kubik$/, ' pangkat tiga');
   var bagian = t.split(' pangkat ');
   if (bagian.length !== 2 || !bagian[0] || !bagian[1]) return null;
   var kiri = bagian[0];
@@ -11789,7 +11793,7 @@ function cekBacaPangkat(teks, a, n, opts) {
   var t = normalisasiBacaan(mentah);
   var pakaiMinus = /\bmin(us)?\b/.test(t);
   t = t.replace(/\bmin(us)?\b/g, 'negatif');
-  if (!/\b(pangkat|kuadrat)\b/.test(t)) {
+  if (!/\b(pangkat|kuadrat|kubik)\b/.test(t)) {
     return hasil(/\b(kali|dikali|dikalikan)\b/.test(t) ? 'kali' : 'tanpaPangkat');
   }
   var p = parseBacaPangkat(t);

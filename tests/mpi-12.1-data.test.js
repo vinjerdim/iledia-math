@@ -109,21 +109,32 @@ test('lipat: langkah tulis cocok dengan perkalian berulang di labelnya', () => {
   D.lipat.tanya.forEach((q) => assertGuided(q, 'lipat.' + q.id));
 });
 
-test('pola: tangga menjangkau pangkat nol & negatif, langkah baca valid', () => {
+test('pola: tangga hanya pangkat bulat positif, langkah baca valid', () => {
   D.pola.tangga.forEach((t) => {
-    assert.ok(t.dari > 0 && t.sampai < 0, t.id + ': melewati pangkat 0');
-    assert.ok(E.powerLadderEditable(t).length >= 3, t.id + ': ada isian');
-    assert.ok(E.powerLadderEditable(t).includes(0), t.id + ': pangkat 0 diisi murid');
+    assert.ok(t.dari > 0 && t.sampai > 0 && t.dari > t.sampai, t.id + ': tangga bulat positif');
+    assert.ok(E.powerLadderEditable(t).length >= 1, t.id + ': ada isian');
+    assert.ok(
+      E.powerLadderEditable(t).every((n) => n > 0),
+      t.id + ': isian murid tetap pangkat positif'
+    );
   });
   assertLangkah(D.pola.baca, 'baca', 'pola.baca');
   assert.ok(
-    D.pola.baca.some((s) => s.n === 0),
-    'ada pangkat nol'
+    D.pola.baca.every((s) => s.n > 0),
+    'seluruh pangkat pada pola.baca bulat positif'
   );
   assert.ok(
-    D.pola.baca.some((s) => s.n < 0),
-    'ada pangkat negatif'
+    D.pola.tangga.some((t) => t.dari >= 3 || t.sampai <= 3) &&
+      D.pola.tangga.concat(D.pola.baca).some((x) => (x.n || x.dari) >= 2),
+    'ada rujukan ke pangkat 2/3 (kuadrat/kubik)'
   );
+});
+
+test('pola: bentuk notasi (kuadrat/kubik) — soal penuntun konsisten', () => {
+  D.pola.bentuk.forEach((q) => assertGuided(q, 'pola.bentuk.' + q.id));
+  const teksGabungan = D.pola.bentuk.map((q) => q.tanya).join(' ') + D.pola.temuanTangga;
+  assert.match(teksGabungan, /kuadrat/i, 'menyinggung istilah kuadrat');
+  assert.match(teksGabungan, /kubik/i, 'menyinggung istilah kubik');
 });
 
 test('olah: pertanyaan penuntun, anatomi, dan pilah konsisten', () => {
@@ -211,12 +222,16 @@ test('terapkan: kunci dihitung ulang dari metadata cek', () => {
     'ada soal isian'
   );
   assert.ok(
-    S.some((s) => s.cek.n < 0),
-    'ada pangkat negatif'
+    S.every((s) => s.cek.n > 0),
+    'seluruh pangkat pada terapkan bulat positif'
   );
   assert.ok(
-    S.some((s) => s.cek.n === 0),
-    'ada pangkat nol'
+    S.some((s) => s.cek.jenis === 'tulis' && s.cek.n === 2),
+    'ada soal kaitan pangkat 2 (kuadrat)'
+  );
+  assert.ok(
+    S.some((s) => s.cek.jenis === 'tulis' && s.cek.n === 3),
+    'ada soal kaitan pangkat 3 (kubik)'
   );
 });
 

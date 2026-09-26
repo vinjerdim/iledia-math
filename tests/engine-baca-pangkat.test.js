@@ -101,6 +101,7 @@ test('parseBacaPangkat: struktur bacaan', () => {
   assert.equal(E.parseBacaPangkat('negatif dari tiga pangkat empat').negLuar, true);
   assert.equal(E.parseBacaPangkat('lima pangkat negatif dua').pangkat, -2);
   assert.equal(E.parseBacaPangkat('lima kuadrat').pangkat, 2);
+  assert.equal(E.parseBacaPangkat('empat kubik').pangkat, 3);
   const f = E.parseBacaPangkat('dua per tiga pangkat tiga');
   assert.equal(f.basis.num, 2);
   assert.equal(f.basis.den, 3);
@@ -112,6 +113,7 @@ test('cekBacaPangkat: jawaban baku diterima (huruf besar, tanda baca, kuadrat)',
   assert.equal(E.cekBacaPangkat('dua pangkat tiga', 2, 3).kode, 'benar');
   assert.equal(E.cekBacaPangkat('  Dua  Pangkat Tiga. ', 2, 3).kode, 'benar');
   assert.equal(E.cekBacaPangkat('lima kuadrat', 5, 2).kode, 'benar');
+  assert.equal(E.cekBacaPangkat('empat kubik', 4, 3).kode, 'benar');
   assert.equal(E.cekBacaPangkat('lima pangkat negatif dua', 5, -2).kode, 'benar');
   assert.equal(E.cekBacaPangkat('tujuh pangkat nol', 7, 0).kode, 'benar');
   assert.equal(E.cekBacaPangkat('negatif tiga pangkat empat', -3, 4).kode, 'benar');

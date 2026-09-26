@@ -69,7 +69,7 @@ var STAGE_LABELS = [
   'Stimulasi',
   'Masalah',
   'Lipat',
-  'Pola',
+  'Notasi',
   'Olah',
   'Bukti',
   'Simpulan',
@@ -77,7 +77,7 @@ var STAGE_LABELS = [
   'Refleksi',
   'Selesai',
 ];
-var STORAGE_KEY = 'mpi-12-1-pangkat-v1';
+var STORAGE_KEY = 'mpi-12-1-pangkat-v2';
 
 /* Butir pemilahan cara baca: notasi + bacaan yang diajukan. */
 var PILAH_ITEMS = DATA.olah.pilah.map(function (it) {
@@ -119,10 +119,12 @@ var State = {
   lipatOrders: {},
   lipatPilih: {},
 
-  /* Tahap 4 — pola pangkat */
+  /* Tahap 4 — berbagai bentuk notasi */
   polaInputs: {},
   polaChecked: {},
   polaBaca: {},
+  polaBentukOrders: {},
+  polaBentukPilih: {},
 
   /* Tahap 5 — mengolah data */
   konsepOrders: {},
@@ -212,6 +214,7 @@ function initExerciseArrays() {
     if (!isPlainObject(State.polaInputs[t.id])) State.polaInputs[t.id] = {};
   });
   ensureStepStates('polaBaca', DATA.pola.baca);
+  ensureGuidedOrders('polaBentukOrders', 'polaBentukPilih', DATA.pola.bentuk);
 
   /* Tahap 5 */
   ensureGuidedOrders('konsepOrders', 'konsepPilih', DATA.olah.konsep);
@@ -591,9 +594,10 @@ function renderLipat(container) {
 }
 
 /* ============================================================
-   8. STAGE: POLA PANGKAT  (Discovery Learning — sintaks 3)
-   A. Tangga pangkat 10 & 2 sampai pangkat negatif.
-   B. Mengetik cara baca pangkat nol & negatif.
+   8. STAGE: BERBAGAI BENTUK NOTASI  (Discovery Learning — sintaks 3)
+   A. Tangga pangkat (luas persegi & volume kubus).
+   B. Mengetik cara baca (boleh memakai kuadrat/kubik).
+   C. Mengenali bentuk notasi yang setara (pilihan ganda).
    ============================================================ */
 
 /* Tangga dianggap selesai bila sudah DIPERIKSA murid dan semua isiannya benar. */
@@ -609,6 +613,7 @@ function renderPola(container) {
   var D = DATA.pola;
   var tanggaBenar = polaTanggaBenar();
   var bacaSelesai = langkahSelesai(D.baca, State.polaBaca);
+  var bentukBenar = guidedQuizAllCorrect(D.bentuk, State.polaBentukPilih);
 
   function rerender() {
     renderPola(container);
@@ -660,7 +665,17 @@ function renderPola(container) {
             buildLangkahBertahap('pb-', D.baca, State.polaBaca)
         )
       : '') +
-    (tanggaBenar && bacaSelesai ? buildDlNextButton('polaNextBtn', D.nextLabel, true) : '') +
+    (tanggaBenar && bacaSelesai
+      ? buildDlPanel(
+          '<p class="exercise-label">' +
+            esc(D.instruksiBentuk) +
+            '</p>' +
+            buildGuidedQuizList(D.bentuk, State.polaBentukOrders, State.polaBentukPilih)
+        )
+      : '') +
+    (tanggaBenar && bacaSelesai && bentukBenar
+      ? buildDlNextButton('polaNextBtn', D.nextLabel, true)
+      : '') +
     '</section>';
 
   D.tangga.forEach(function (t) {
@@ -691,6 +706,9 @@ function renderPola(container) {
   });
 
   if (tanggaBenar) bindLangkahBertahap('pb-', D.baca, State.polaBaca, rerender);
+  if (tanggaBenar && bacaSelesai) {
+    bindGuidedQuizList(container, D.bentuk, State.polaBentukPilih, saveState, rerender);
+  }
   bindNext('polaNextBtn', 'pola', 'olah');
 }
 
@@ -1010,8 +1028,8 @@ function renderGeneralisasi(container) {
             [
               { a: 2, n: 5 },
               { a: -3, n: 4 },
-              { a: 7, n: 0 },
-              { a: 5, n: -2 },
+              { a: 6, n: 2 },
+              { a: 4, n: 3 },
             ]
               .map(function (c) {
                 return (
@@ -1287,8 +1305,8 @@ function renderSelesai(container) {
     '</p>' +
     '<div class="sajian-trio">' +
     '<div class="sajian-card"><span class="sajian-card__ikon" aria-hidden="true">aⁿ</span>Basis &amp; pangkat</div>' +
-    '<div class="sajian-card"><span class="sajian-card__ikon" aria-hidden="true">7⁰</span>Pangkat nol</div>' +
-    '<div class="sajian-card"><span class="sajian-card__ikon" aria-hidden="true">5⁻²</span>Pangkat negatif</div>' +
+    '<div class="sajian-card"><span class="sajian-card__ikon" aria-hidden="true">a²</span>Kuadrat</div>' +
+    '<div class="sajian-card"><span class="sajian-card__ikon" aria-hidden="true">a³</span>Kubik</div>' +
     '</div>' +
     '<div class="panel panel--hero done-card__list">' +
     '<h3 style="margin-top:0;">Yang sudah kamu capai</h3>' +
