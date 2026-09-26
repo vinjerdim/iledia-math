@@ -114,6 +114,11 @@
        kunci brief proyek, opsi berpengecoh Uₙ & n minimal, implementasi
        jumlahDeret & penjalan kasus uji, papan kanban milestone, lab
        perencana a–b–n)
+   44. Sifat operasi bilangan berpangkat bulat — penerapan (kartu ahli
+       perkalian/pembagian/pangkat dari pangkat, eksponen hasil,
+       diagnosa miskonsepsi eksponen, langkah sifat pilih sifat →
+       eksponen → nilai, rantai sifat, pembagian kartu ahli Jigsaw,
+       form tim kooperatif, tab stasiun ahli)
    ============================================================ */
 
 /* ============================================================
@@ -22141,4 +22146,863 @@ function bindPlannerLab(root, id, st, cfg, save, onChange) {
       atur(key, info[key] + Number(btn.dataset.dir) * cfg[key].step);
     });
   });
+}
+
+/* ============================================================
+   44. SIFAT OPERASI BILANGAN BERPANGKAT BULAT — PENERAPAN
+   Blok bangun untuk menerapkan tiga sifat operasi bilangan
+   berpangkat bulat dalam penyelesaian soal (Cooperative Learning
+   tipe Jigsaw, fase-d/mpi-12.2):
+     • SIFAT_PANGKAT_AHLI — tiga kartu ahli (perkalian, pembagian,
+       pangkat dari pangkat) berbentuk peran { id, ikon, nama, tugas }
+       ditambah ringkas, rumus, dan kalimat kunci; opsi pilih sifat
+       (termasuk "basis berbeda") untuk diacak;
+     • eksponenSifat, teksSoalSifat, hasilSoalSifat — eksponen & nilai
+       hasil (basis boleh huruf, mis. 'p'; eksponen bulat, boleh nol
+       atau negatif);
+     • diagnosaEksponenSifat / pesanEksponenSifat — miskonsepsi khas
+       (eksponen dikalikan/dijumlahkan/dikurangkan/dibagi/dipangkatkan
+       dan tanda terbalik) tanpa membocorkan jawaban;
+     • langkah sifat: pilih sifat → isi eksponen → (opsional) isi
+       nilai; state per langkah, pemeriksa murni (teruji tanpa DOM),
+       skor percobaan pertama, builder & binder HTML;
+     • rantai sifat: soal gabungan, mis. (2³)² × 2⁴ : 2⁵, dipecah
+       menjadi langkah-langkah sifat berurutan;
+     • Jigsaw: pembagian kartu ahli ke anggota (sisa anggota menjadi
+       pendamping ahli), kartu tim, tab stasiun ahli, dan form tim
+       (nama, anggota, kesepakatan, tombol bagikan kartu).
+   Memakai formatPangkat, formatBasis, superskrip, pangkatBulat,
+   pecahan, samaPecahan, formatPecahan, parseInputPecahan,
+   tulisSuku, fmtBulat, diagnosaPolaEksponen (seksi 30) dan
+   buildChoiceGroup, assignCoopRoles. Gaya .sifat-step*, .jigsaw-*,
+   .coop-setup* ada di shared/base.css; kartu ahli memakai
+   .strategi-card*.
+   ============================================================ */
+
+var SIFAT_PANGKAT_AHLI = [
+  {
+    id: 'kali',
+    ikon: '✖️',
+    nama: 'Ahli Perkalian',
+    ringkas: 'Basis sama dikalikan → eksponen dijumlahkan',
+    rumus: 'aᵐ × aⁿ = aᵐ⁺ⁿ',
+    tugas: 'Mengajarkan cara menyederhanakan perkalian bilangan berpangkat berbasis sama.',
+    kunci:
+      'Pada perkalian bilangan berpangkat dengan basis sama, faktor-faktornya digabung sehingga eksponennya DIJUMLAHKAN.',
+  },
+  {
+    id: 'bagi',
+    ikon: '➗',
+    nama: 'Ahli Pembagian',
+    ringkas: 'Basis sama dibagi → eksponen dikurangkan',
+    rumus: 'aᵐ : aⁿ = aᵐ⁻ⁿ',
+    tugas: 'Mengajarkan cara menyederhanakan pembagian bilangan berpangkat berbasis sama.',
+    kunci:
+      'Pada pembagian bilangan berpangkat dengan basis sama (a ≠ 0), faktor yang sama dicoret sehingga eksponennya DIKURANGKAN: eksponen yang dibagi dikurangi eksponen pembagi.',
+  },
+  {
+    id: 'pangkat',
+    ikon: '🔁',
+    nama: 'Ahli Pangkat dari Pangkat',
+    ringkas: 'Dipangkatkan lagi → eksponen dikalikan',
+    rumus: '(aᵐ)ⁿ = aᵐˣⁿ',
+    tugas: 'Mengajarkan cara menyederhanakan bilangan berpangkat yang dipangkatkan lagi.',
+    kunci:
+      'Bilangan berpangkat yang dipangkatkan lagi berarti aᵐ dikalikan sebanyak n kali, sehingga eksponennya DIKALIKAN.',
+  },
+];
+
+var SIFAT_PANGKAT_BASIS_BEDA = {
+  id: 'basisBeda',
+  ikon: '🚫',
+  nama: 'Tidak ada sifat yang berlaku',
+  ringkas: 'Basis berbeda → hitung nilai tiap bilangan berpangkat',
+  rumus: 'aᵐ × bⁿ (a ≠ b)',
+  tugas: 'Memeriksa apakah basisnya sama sebelum memakai sifat.',
+  kunci:
+    'Sifat perkalian, pembagian, dan pangkat dari pangkat hanya berlaku untuk basis yang SAMA. Bila basisnya berbeda, hitung nilai masing-masing lalu operasikan.',
+};
+
+function sifatPangkatInfo(id) {
+  if (id === 'basisBeda') return SIFAT_PANGKAT_BASIS_BEDA;
+  for (var i = 0; i < SIFAT_PANGKAT_AHLI.length; i++) {
+    if (SIFAT_PANGKAT_AHLI[i].id === id) return SIFAT_PANGKAT_AHLI[i];
+  }
+  return null;
+}
+
+/* Opsi { id, label } pilih sifat untuk diacak (ensureShuffledOrder). */
+function opsiSifatPangkat() {
+  return SIFAT_PANGKAT_AHLI.concat([SIFAT_PANGKAT_BASIS_BEDA]).map(function (s) {
+    return {
+      id: s.id,
+      label:
+        '<span aria-hidden="true">' +
+        s.ikon +
+        '</span> <strong>' +
+        esc(s.id === 'basisBeda' ? s.nama : s.nama.replace(/^Ahli /, 'Sifat ')) +
+        '</strong> <span class="sifat-opt__rumus">' +
+        esc(s.rumus) +
+        '</span>',
+    };
+  });
+}
+
+/* Eksponen hasil sifat: kali → m + n, bagi → m − n, pangkat → m × n. */
+function eksponenSifat(op, m, n) {
+  if (op === 'kali') return m + n;
+  if (op === 'bagi') return m - n;
+  if (op === 'pangkat') return m * n;
+  throw new Error('sifat tidak dikenal: ' + op);
+}
+
+/* Teks soal satu langkah: '(−2)³ × (−2)⁴', '4² : 4⁵', '(p⁴)⁻²', '2³ × 3²'. */
+function teksSoalSifat(step) {
+  if (step.op === 'basisBeda') {
+    return formatPangkat(step.a, step.m) + ' × ' + formatPangkat(step.b, step.n);
+  }
+  return teksPolaEksponen(step.op, step.a, step.m, step.n);
+}
+
+/* Nilai eksak aᵏ; basis huruf hanya bernilai bila k = 0 (a⁰ = 1). */
+function nilaiPangkatSifat_(a, k) {
+  if (typeof a === 'string') return k === 0 ? pecahan(1, 1) : null;
+  return pangkatBulat(a, k);
+}
+
+/*
+ * Hasil satu langkah: { k, teks, nilai }. k = eksponen hasil (null untuk
+ * basis berbeda), teks = bentuk pangkat hasil (atau nilai untuk basis
+ * berbeda), nilai = pecahan eksak atau null bila basis huruf.
+ */
+function hasilSoalSifat(step) {
+  if (step.op === 'basisBeda') {
+    var v = kaliPecahan(pangkatBulat(step.a, step.m), pangkatBulat(step.b, step.n));
+    return { k: null, teks: formatPecahan(v), nilai: v };
+  }
+  var k = eksponenSifat(step.op, step.m, step.n);
+  return { k: k, teks: formatPangkat(step.a, k), nilai: nilaiPangkatSifat_(step.a, k) };
+}
+
+/*
+ * Kode diagnosa eksponen isian murid:
+ *   'benar' | 'tanda' (besarnya benar, tandanya terbalik) | 'jumlah' |
+ *   'selisih' | 'kali' | 'bagi' | 'pangkatBertingkat' | 'lain'
+ */
+function diagnosaEksponenSifat(op, m, n, k) {
+  var benar = eksponenSifat(op, m, n);
+  if (k === benar) return 'benar';
+  if (benar !== 0 && k === -benar) return 'tanda';
+  return diagnosaPolaEksponen(op, m, n, k);
+}
+
+/* Perhitungan eksponen tanpa hasil, mis. '3 + (−2) = …'. */
+function hitunganEksponenSifat_(op, m, n) {
+  var tanda = { kali: ' + ', bagi: ' − ', pangkat: ' × ' }[op];
+  return tulisSuku(m) + tanda + tulisSuku(n) + ' = …';
+}
+
+/* Pesan diagnosa eksponen (teks biasa): sifat yang benar + hitungannya, tanpa jawaban. */
+function pesanEksponenSifat(kode, step, k) {
+  var op = step.op;
+  var hitung = hitunganEksponenSifat_(op, step.m, step.n);
+  var aturan = {
+    kali: 'Pada perkalian basis sama, faktor-faktornya digabung, jadi eksponennya dijumlahkan: ',
+    bagi: 'Pada pembagian basis sama, faktor yang sama dicoret, jadi eksponennya dikurangkan: ',
+    pangkat:
+      'Dipangkatkan lagi berarti bilangan berpangkat itu dikalikan berulang, jadi eksponennya dikalikan: ',
+  }[op];
+  var sebab = {
+    tanda:
+      op === 'bagi'
+        ? 'Tandanya terbalik. Eksponen yang DIBAGI dikurangi eksponen PEMBAGI (hasilnya boleh negatif). '
+        : 'Besarnya sudah benar, tetapi tandanya belum. Perhatikan tanda negatif pada eksponen. ',
+    jumlah: 'Kamu menjumlahkan eksponen. ',
+    selisih: 'Kamu mengurangkan eksponen. ',
+    kali: 'Kamu mengalikan eksponen. ',
+    bagi: 'Kamu membagi eksponen. ',
+    pangkatBertingkat: 'Kamu memangkatkan eksponen dengan eksponen. ',
+    lain: 'Eksponen ' + fmtBulat(k) + ' belum tepat. ',
+  };
+  return (sebab[kode] || sebab.lain) + aturan + hitung;
+}
+
+/* Pesan bila sifat yang dipilih belum tepat. */
+function pesanSifatSalah_(step, chosen) {
+  if (step.op === 'basisBeda') {
+    return (
+      'Sifat itu hanya berlaku untuk basis yang SAMA. Perhatikan: basisnya ' +
+      formatBasis(step.a) +
+      ' dan ' +
+      formatBasis(step.b) +
+      '.'
+    );
+  }
+  if (chosen === 'basisBeda') {
+    return (
+      'Basis kedua bilangan berpangkat sama-sama ' +
+      formatBasis(step.a) +
+      ', jadi sifat bisa dipakai.'
+    );
+  }
+  return {
+    kali: 'Perhatikan operasinya: dua bilangan berpangkat berbasis sama sedang DIKALIKAN.',
+    bagi: 'Perhatikan operasinya: dua bilangan berpangkat berbasis sama sedang DIBAGI.',
+    pangkat: 'Perhatikan kurungnya: satu bilangan berpangkat di dalam kurung DIPANGKATKAN lagi.',
+  }[step.op];
+}
+
+/* State satu langkah sifat. `sifatOrder` diisi ensureShuffledOrder(st, 'sifatOrder', opsiSifatPangkat()). */
+function makeSifatStepState() {
+  return {
+    sifat: null,
+    sifatSalah: 0,
+    sifatOrder: null,
+    kInput: '',
+    kDone: false,
+    kAttempts: 0,
+    kKode: null,
+    nInput: '',
+    nDone: false,
+    nAttempts: 0,
+    nSalah: false,
+  };
+}
+
+function pakaiPilihSifat_(opts) {
+  return !(opts && opts.pilihSifat === false);
+}
+
+/* Memilih sifat; true bila tepat (lalu terkunci). Basis berbeda tidak punya isian eksponen. */
+function periksaSifatPilihan(step, st, id) {
+  if (st.sifat === step.op) return true;
+  st.sifat = id;
+  if (id === step.op) {
+    if (step.op === 'basisBeda') st.kDone = true;
+    return true;
+  }
+  st.sifatSalah += 1;
+  return false;
+}
+
+/*
+ * Memeriksa isian eksponen. Kembalian { ok, error } dengan error
+ * 'empty' | 'invalid' | 'sifat' (sifat belum dipilih tepat) | null.
+ * Isian kosong/tidak valid tidak dihitung sebagai percobaan.
+ */
+function periksaSifatEksponen(step, st, input, opts) {
+  if (pakaiPilihSifat_(opts) && st.sifat !== step.op) return { ok: false, error: 'sifat' };
+  var p = parseInputInt(String(input || ''));
+  if (p.error) return { ok: false, error: p.error };
+  st.kInput = String(input).trim();
+  st.kAttempts += 1;
+  st.kKode = diagnosaEksponenSifat(step.op, step.m, step.n, p.value);
+  st.kDone = st.kKode === 'benar';
+  return { ok: st.kDone, error: null };
+}
+
+/* Memeriksa isian nilai (bulat, pecahan 1/64, atau desimal berkoma). */
+function periksaSifatNilai(step, st, input) {
+  if (!st.kDone) return { ok: false, error: 'eksponen' };
+  var p = parseInputPecahan(String(input || ''));
+  if (p.error) return { ok: false, error: p.error };
+  st.nInput = String(input).trim();
+  st.nAttempts += 1;
+  st.nDone = samaPecahan(p.value, hasilSoalSifat(step).nilai);
+  st.nSalah = !st.nDone;
+  return { ok: st.nDone, error: null };
+}
+
+function sifatStepSelesai(step, st, opts) {
+  return !!(
+    st &&
+    (!pakaiPilihSifat_(opts) || st.sifat === step.op) &&
+    st.kDone &&
+    (!step.nilai || st.nDone)
+  );
+}
+
+/* Skor percobaan pertama: { benar, maks } untuk sifat, eksponen, dan nilai. */
+function sifatStepSkor(step, st, opts) {
+  var benar = 0;
+  var maks = 0;
+  if (pakaiPilihSifat_(opts)) {
+    maks += 1;
+    if (st.sifat === step.op && !st.sifatSalah) benar += 1;
+  }
+  if (step.op !== 'basisBeda') {
+    maks += 1;
+    if (st.kDone && st.kAttempts === 1) benar += 1;
+  }
+  if (step.nilai) {
+    maks += 1;
+    if (st.nDone && st.nAttempts === 1) benar += 1;
+  }
+  return { benar: benar, maks: maks };
+}
+
+/* ---------- Rantai sifat (soal gabungan) ----------
+   rantai = { a, awal, langkah: [{ op, n }], nilai?, satuan? }
+   Dimulai dari a^awal, setiap langkah menerapkan satu sifat pada
+   seluruh bentuk sebelumnya (basis selalu sama). */
+
+function teksRantai(r) {
+  var expr = formatPangkat(r.a, r.awal);
+  r.langkah.forEach(function (l) {
+    if (l.op === 'kali') expr += ' × ' + formatPangkat(r.a, l.n);
+    else if (l.op === 'bagi') expr += ' : ' + formatPangkat(r.a, l.n);
+    else if (l.op === 'pangkat') expr = '(' + expr + ')' + superskrip(l.n);
+    else throw new Error('sifat tidak dikenal: ' + l.op);
+  });
+  return expr;
+}
+
+/* Langkah-langkah sifat { op, a, m, n, nilai, satuan }; nilai hanya di langkah terakhir. */
+function langkahRantai(r) {
+  var m = r.awal;
+  return r.langkah.map(function (l, i) {
+    var akhir = i === r.langkah.length - 1;
+    var s = { op: l.op, a: r.a, m: m, n: l.n, nilai: akhir && !!r.nilai };
+    if (akhir && r.satuan) s.satuan = r.satuan;
+    m = eksponenSifat(l.op, m, l.n);
+    return s;
+  });
+}
+
+function hasilRantai(r) {
+  var L = langkahRantai(r);
+  return hasilSoalSifat(L[L.length - 1]);
+}
+
+/* Indeks langkah pertama yang belum selesai (L.length bila semua selesai). */
+function langkahRantaiAktif(L, states, opts) {
+  for (var i = 0; i < L.length; i++) {
+    if (!sifatStepSelesai(L[i], states[i], opts)) return i;
+  }
+  return L.length;
+}
+
+function rantaiSelesai(L, states, opts) {
+  return langkahRantaiAktif(L, states, opts) === L.length;
+}
+
+/* ---------- Builder langkah sifat ----------
+   opts.pilihSifat  false → langsung isian eksponen (sifat sudah diketahui)
+   opts.pemimpin    function(op) → nama ahli yang memimpin langkah
+   opts.nomor       nomor bulat kecil di depan label
+   opts.label       HTML tepercaya di atas soal (konteks/pertanyaan)
+   opts.judulSoal   teks pengganti bentuk soal (mis. bentuk rantai) */
+
+function buildSifatStep(id, step, st, opts) {
+  opts = opts || {};
+  var pilih = pakaiPilihSifat_(opts);
+  var sifatBenar = !pilih || st.sifat === step.op;
+  var hasil = hasilSoalSifat(step);
+  var soal = teksSoalSifat(step);
+  var selesai = sifatStepSelesai(step, st, opts);
+  var out =
+    '<div class="sifat-step' +
+    (selesai ? ' sifat-step--done' : '') +
+    '" id="' +
+    id +
+    '">' +
+    (opts.label || opts.nomor
+      ? '<p class="sifat-step__label">' +
+        (opts.nomor ? '<span class="dl-step__num">' + opts.nomor + '</span>' : '') +
+        (opts.label || '') +
+        '</p>'
+      : '') +
+    '<p class="sifat-step__soal">' +
+    esc(opts.judulSoal || soal) +
+    '</p>';
+
+  if (pilih) {
+    out +=
+      '<p class="sifat-step__tanya">Sifat apa yang dipakai?</p>' +
+      buildChoiceGroup(opsiSifatPangkat(), st.sifatOrder, {
+        chosen: st.sifat,
+        correctId: sifatBenar ? step.op : null,
+        grade: true,
+        locked: sifatBenar,
+        group: id,
+        attr: 'data-sifat-opt',
+      });
+    if (st.sifat && !sifatBenar) {
+      out += buildFeedbackBox('warning', '💭', esc(pesanSifatSalah_(step, st.sifat)));
+    } else if (sifatBenar && st.sifat) {
+      var info = sifatPangkatInfo(step.op);
+      var nama = opts.pemimpin ? opts.pemimpin(step.op) : '';
+      out += buildFeedbackBox(
+        'success',
+        info.ikon,
+        '<strong>' +
+          esc(step.op === 'basisBeda' ? info.nama : info.nama.replace(/^Ahli /, 'Sifat ')) +
+          '.</strong> ' +
+          esc(info.ringkas) +
+          (nama && step.op !== 'basisBeda'
+            ? '. <span class="sifat-step__pemimpin">🎓 ' +
+              esc(nama) +
+              ' (' +
+              esc(info.nama) +
+              ') memimpin langkah ini.</span>'
+            : '.')
+      );
+    }
+  }
+
+  if (sifatBenar && step.op !== 'basisBeda') {
+    if (!st.kDone) {
+      var salahK = st.kKode && st.kKode !== 'benar';
+      out +=
+        '<div class="sifat-step__row">' +
+        '<span class="sifat-step__eq">' +
+        esc(soal) +
+        ' =</span>' +
+        '<span class="sifat-step__pow"><span>' +
+        esc(formatBasis(step.a)) +
+        '</span>' +
+        '<input type="text" class="input-text sifat-step__exp' +
+        (salahK ? ' has-error' : '') +
+        '" id="' +
+        id +
+        'K" autocomplete="off" value="' +
+        esc(st.kInput) +
+        '" aria-label="Eksponen hasil ' +
+        esc(soal) +
+        '" placeholder="?"></span>' +
+        '<button type="button" class="btn btn--primary" id="' +
+        id +
+        'KBtn">Periksa</button>' +
+        '</div>' +
+        (salahK
+          ? buildFeedbackBox(
+              'error',
+              '✗',
+              esc(pesanEksponenSifat(st.kKode, step, parseInputInt(st.kInput).value))
+            )
+          : '');
+    } else {
+      out +=
+        '<p class="sifat-step__hasil">✓ ' +
+        esc(soal) +
+        ' = <strong>' +
+        esc(hasil.teks) +
+        '</strong>' +
+        (hasil.k === 0 && typeof step.a === 'string' && !step.nilai
+          ? ' = 1 <span class="dl-caption">(' + esc(step.a) + ' ≠ 0)</span>'
+          : '') +
+        ' <span class="dl-caption">(' +
+        esc(hitunganEksponenSifat_(step.op, step.m, step.n).replace('…', fmtBulat(hasil.k))) +
+        ')</span></p>';
+    }
+  }
+
+  if (step.nilai && st.kDone) {
+    var yangDihitung = step.op === 'basisBeda' ? soal : hasil.teks;
+    if (!st.nDone) {
+      out +=
+        '<div class="sifat-step__row">' +
+        '<label class="sifat-step__eq" for="' +
+        id +
+        'N">' +
+        esc(yangDihitung) +
+        ' =</label>' +
+        '<input type="text" class="input-text sifat-step__nilai' +
+        (st.nSalah ? ' has-error' : '') +
+        '" id="' +
+        id +
+        'N" autocomplete="off" value="' +
+        esc(st.nInput) +
+        '" placeholder="nilai">' +
+        (step.satuan ? '<span class="sifat-step__satuan">' + esc(step.satuan) + '</span>' : '') +
+        '<button type="button" class="btn btn--primary" id="' +
+        id +
+        'NBtn">Periksa</button>' +
+        '</div>' +
+        (st.nSalah
+          ? buildFeedbackBox(
+              'error',
+              '✗',
+              'Nilai <strong>' +
+                esc(st.nInput) +
+                '</strong> belum tepat. ' +
+                esc(
+                  hasil.k !== null && hasil.k < 0
+                    ? 'Ingat a⁻ⁿ = 1/aⁿ: hitung dulu ' +
+                        formatPangkat(step.a, -hasil.k) +
+                        ', lalu tulis kebalikannya (pecahan).'
+                    : hasil.k === 0
+                      ? 'Ingat: a⁰ = 1 untuk a ≠ 0.'
+                      : step.op === 'basisBeda'
+                        ? 'Hitung ' +
+                          formatPangkat(step.a, step.m) +
+                          ' dan ' +
+                          formatPangkat(step.b, step.n) +
+                          ' lebih dulu, lalu kalikan.'
+                        : 'Tuliskan ' +
+                          hasil.teks +
+                          ' sebagai perkalian berulang, lalu hitung. Perhatikan tanda bila basisnya negatif.'
+                )
+            )
+          : '');
+    } else {
+      out +=
+        '<p class="sifat-step__hasil">✓ ' +
+        esc(yangDihitung) +
+        ' = <strong>' +
+        esc(formatPecahan(hasil.nilai)) +
+        '</strong>' +
+        (step.satuan ? ' ' + esc(step.satuan) : '') +
+        '</p>';
+    }
+  }
+
+  return out + '</div>';
+}
+
+/* Memasang event buildSifatStep; `save` lalu `rerender` dipanggil setelah perubahan. */
+function bindSifatStep(root, id, step, st, save, rerender, opts) {
+  root.querySelectorAll('[data-sifat-opt][data-group="' + id + '"]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      periksaSifatPilihan(step, st, btn.getAttribute('data-sifat-opt'));
+      save();
+      rerender();
+    });
+  });
+  function pasang(suffix, periksa, pesan) {
+    var inp = root.querySelector('#' + id + suffix);
+    var btn = root.querySelector('#' + id + suffix + 'Btn');
+    if (!inp || !btn) return;
+    inp.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter') btn.click();
+    });
+    btn.addEventListener('click', function () {
+      var r = periksa(step, st, inp.value, opts);
+      if (r.error) {
+        showNotice(pesan[r.error] || pesan.invalid);
+        return;
+      }
+      save();
+      rerender();
+    });
+  }
+  pasang('K', periksaSifatEksponen, {
+    empty: 'Isi eksponen hasilnya dulu.',
+    invalid: 'Tulis eksponen berupa bilangan bulat, mis. 7 atau −3.',
+    sifat: 'Pilih sifat yang tepat lebih dulu.',
+  });
+  pasang('N', periksaSifatNilai, {
+    empty: 'Isi nilainya dulu.',
+    invalid: 'Tulis nilai berupa bilangan bulat atau pecahan, mis. 128, −32, atau 1/64.',
+  });
+}
+
+/* Kartu ahli: ikon, nama (+ pemegang), rumus, kalimat kunci (gaya .strategi-card). */
+function buildSifatAhliCard(info, opts) {
+  opts = opts || {};
+  return (
+    '<div class="strategi-card sifat-kartu">' +
+    '<span class="strategi-card__ikon" aria-hidden="true">' +
+    info.ikon +
+    '</span>' +
+    '<div><p class="strategi-card__nama">' +
+    esc(info.nama) +
+    (opts.pemegang ? ' <span class="sifat-kartu__ahli">· ' + esc(opts.pemegang) + '</span>' : '') +
+    '</p>' +
+    (opts.tanpaRumus ? '' : '<p class="sifat-kartu__rumus">' + esc(info.rumus) + '</p>') +
+    '<p class="strategi-card__kunci">' +
+    (opts.kunciLabel ? '<strong>' + esc(opts.kunciLabel) + '</strong> ' : '') +
+    esc(opts.tanpaRumus ? info.tugas : info.kunci) +
+    '</p></div>' +
+    '</div>'
+  );
+}
+
+/* ---------- Jigsaw: kartu ahli, tab stasiun, form tim ---------- */
+
+/*
+ * Membagikan kartu ahli ke anggota (anggota sudah diacak, mis. lewat
+ * assignCoopRoles): anggota ke-i memegang kartu ke-(i mod banyak kartu).
+ * Bila anggota lebih banyak daripada kartu, sisa anggota menjadi
+ * pendamping ahli (berangkat ke kelompok ahli yang sama); bila lebih
+ * sedikit, seorang anggota memegang lebih dari satu kartu.
+ * Kembalian [{ kartu, nama: [..] }] dalam urutan kartu.
+ */
+function jigsawKartuAhli(anggota, kartu) {
+  var n = (anggota || []).length;
+  var K = kartu.length;
+  return kartu.map(function (kr, j) {
+    var nama = [];
+    if (n >= K) {
+      anggota.forEach(function (a, i) {
+        if (i % K === j) nama.push(a);
+      });
+    } else if (n > 0) {
+      nama.push(anggota[j % n]);
+    }
+    return { kartu: kr, nama: nama };
+  });
+}
+
+/* Nama pemegang kartu `id` digabung ' & ' ('' bila belum dibagikan). */
+function namaPemegangKartu(anggota, kartu, id) {
+  var p = jigsawKartuAhli(anggota, kartu).filter(function (x) {
+    return x.kartu.id === id;
+  })[0];
+  return p ? p.nama.join(' & ') : '';
+}
+
+/* Kartu tim Jigsaw: setiap kartu ahli beserta pemegang dan tugasnya. */
+function buildJigsawTeamCard(namaTim, anggota, kartu) {
+  return (
+    '<div class="coop-team-card">' +
+    '<p class="coop-team-card__nama">👥 ' +
+    esc(namaTim || 'Tim tanpa nama') +
+    '</p>' +
+    '<ul class="coop-team-card__list">' +
+    jigsawKartuAhli(anggota, kartu)
+      .map(function (p) {
+        return (
+          '<li><span class="coop-team-card__ikon" aria-hidden="true">' +
+          p.kartu.ikon +
+          '</span><div><strong>' +
+          esc(p.nama.join(' & ') || '—') +
+          '</strong> — ' +
+          esc(p.kartu.nama) +
+          '<span class="dl-caption">' +
+          esc(p.kartu.tugas) +
+          '</span></div></li>'
+        );
+      })
+      .join('') +
+    '</ul>' +
+    '</div>'
+  );
+}
+
+/*
+ * Tab stasiun ahli. `stasiun` = [{ id, ikon, nama }].
+ *   opts.selesai(id)   true → tanda ✓ & kelas is-done
+ *   opts.pemegang(id)  nama pemegang kartu (baris kecil)
+ *   opts.label         label grup (default 'Stasiun ahli')
+ */
+function buildJigsawTabs(id, stasiun, aktifId, opts) {
+  opts = opts || {};
+  return (
+    '<div class="jigsaw-tabs" id="' +
+    id +
+    '" role="group" aria-label="' +
+    esc(opts.label || 'Stasiun ahli') +
+    '">' +
+    stasiun
+      .map(function (s) {
+        var aktif = s.id === aktifId;
+        var done = opts.selesai ? opts.selesai(s.id) : false;
+        var nama = opts.pemegang ? opts.pemegang(s.id) : '';
+        return (
+          '<button type="button" class="jigsaw-tab' +
+          (aktif ? ' is-active' : '') +
+          (done ? ' is-done' : '') +
+          '" data-jigsaw-tab="' +
+          esc(s.id) +
+          '" aria-pressed="' +
+          (aktif ? 'true' : 'false') +
+          '">' +
+          '<span class="jigsaw-tab__ikon" aria-hidden="true">' +
+          s.ikon +
+          '</span>' +
+          '<span class="jigsaw-tab__nama">' +
+          esc(s.nama) +
+          (nama ? '<span class="jigsaw-tab__ahli">' + esc(nama) + '</span>' : '') +
+          '</span>' +
+          (done ? '<span class="jigsaw-tab__cek" aria-label="selesai">✓</span>' : '') +
+          '</button>'
+        );
+      })
+      .join('') +
+    '</div>'
+  );
+}
+
+function bindJigsawTabs(root, id, onPick) {
+  root.querySelectorAll('#' + id + ' [data-jigsaw-tab]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      onPick(btn.getAttribute('data-jigsaw-tab'));
+    });
+  });
+}
+
+/*
+ * Form tim kooperatif: nama tim, nama anggota, kesepakatan, dan tombol
+ * membagikan kartu/peran (anggota diacak dengan assignCoopRoles).
+ *   st  = { nama, input: [..maksAnggota], anggota: [..], sepakat: { id: bool } }
+ *   cfg = { minAnggota, maksAnggota, kesepakatan: [{ id, teks }],
+ *           namaTimLabel, namaTimPlaceholder, anggotaLabel,
+ *           kesepakatanJudul, acakLabel, acakUlangLabel }
+ */
+function makeCoopTeamSetupState(cfg) {
+  var input = [];
+  for (var i = 0; i < cfg.maksAnggota; i++) input.push('');
+  return { nama: '', input: input, anggota: [], sepakat: {} };
+}
+
+/* Merapikan state tersimpan (mis. setelah DATA berubah); mengembalikan st. */
+function ensureCoopTeamSetupState(st, cfg) {
+  if (!st || typeof st !== 'object') return makeCoopTeamSetupState(cfg);
+  if (typeof st.nama !== 'string') st.nama = '';
+  if (!Array.isArray(st.input) || st.input.length !== cfg.maksAnggota) {
+    st.input = makeCoopTeamSetupState(cfg).input;
+  }
+  if (!Array.isArray(st.anggota)) st.anggota = [];
+  if (!st.sepakat || typeof st.sepakat !== 'object') st.sepakat = {};
+  return st;
+}
+
+function coopTeamSetupTerisi(st) {
+  return st.input
+    .map(function (v) {
+      return String(v || '').trim();
+    })
+    .filter(function (v) {
+      return v;
+    });
+}
+
+function coopTeamSetupSiap(st, cfg) {
+  return (
+    st.anggota.length > 0 &&
+    cfg.kesepakatan.every(function (k) {
+      return !!st.sepakat[k.id];
+    })
+  );
+}
+
+function buildCoopTeamSetup(id, st, cfg) {
+  var sudah = st.anggota.length > 0;
+  return (
+    '<div class="coop-setup" id="' +
+    id +
+    '">' +
+    '<div class="field-group">' +
+    '<label for="' +
+    id +
+    'Nama">' +
+    esc(cfg.namaTimLabel || 'Nama tim') +
+    '</label>' +
+    '<input type="text" class="input-text" id="' +
+    id +
+    'Nama" maxlength="30" autocomplete="off" value="' +
+    esc(st.nama) +
+    '" placeholder="' +
+    esc(cfg.namaTimPlaceholder || 'mis. Tim Roket') +
+    '">' +
+    '</div>' +
+    '<fieldset class="coop-setup__set">' +
+    '<legend>' +
+    esc(cfg.anggotaLabel || 'Nama anggota') +
+    ' (' +
+    cfg.minAnggota +
+    '–' +
+    cfg.maksAnggota +
+    ' orang)</legend>' +
+    '<div class="coop-setup__grid">' +
+    st.input
+      .map(function (v, i) {
+        return (
+          '<input type="text" class="input-text" data-' +
+          id +
+          '-anggota="' +
+          i +
+          '" maxlength="24" autocomplete="off" value="' +
+          esc(v) +
+          '" placeholder="Anggota ' +
+          (i + 1) +
+          (i < cfg.minAnggota ? '' : ' (opsional)') +
+          '" aria-label="Nama anggota ' +
+          (i + 1) +
+          '">'
+        );
+      })
+      .join('') +
+    '</div>' +
+    '</fieldset>' +
+    '<fieldset class="coop-setup__set">' +
+    '<legend>' +
+    esc(cfg.kesepakatanJudul || 'Kesepakatan tim') +
+    '</legend>' +
+    cfg.kesepakatan
+      .map(function (k) {
+        return (
+          '<label class="coop-setup__cek"><input type="checkbox" data-' +
+          id +
+          '-sepakat="' +
+          esc(k.id) +
+          '"' +
+          (st.sepakat[k.id] ? ' checked' : '') +
+          '><span>' +
+          esc(k.teks) +
+          '</span></label>'
+        );
+      })
+      .join('') +
+    '</fieldset>' +
+    '<div class="btn-group">' +
+    '<button type="button" class="btn btn--outline-primary" id="' +
+    id +
+    'Acak">' +
+    esc(sudah ? cfg.acakUlangLabel || '🔀 Bagikan ulang' : cfg.acakLabel || '🔀 Bagikan kartu') +
+    '</button>' +
+    '</div>' +
+    '</div>'
+  );
+}
+
+function bindCoopTeamSetup(root, id, st, cfg, save, rerender) {
+  var nama = root.querySelector('#' + id + 'Nama');
+  if (nama) {
+    nama.addEventListener('input', function () {
+      st.nama = nama.value;
+      save();
+    });
+  }
+  root.querySelectorAll('[data-' + id + '-anggota]').forEach(function (inp) {
+    var i = +inp.getAttribute('data-' + id + '-anggota');
+    inp.addEventListener('input', function () {
+      st.input[i] = inp.value;
+      save();
+    });
+    /* Anggota berubah setelah kartu dibagikan → kartu harus dibagikan ulang. */
+    inp.addEventListener('change', function () {
+      var a = coopTeamSetupTerisi(st).slice().sort().join('|');
+      var b = st.anggota.slice().sort().join('|');
+      if (st.anggota.length && a !== b) {
+        st.anggota = [];
+        save();
+        showNotice('Daftar anggota berubah. Bagikan kartu lagi.');
+        rerender();
+      }
+    });
+  });
+  root.querySelectorAll('[data-' + id + '-sepakat]').forEach(function (cb) {
+    cb.addEventListener('change', function () {
+      st.sepakat[cb.getAttribute('data-' + id + '-sepakat')] = cb.checked;
+      save();
+    });
+  });
+  var acak = root.querySelector('#' + id + 'Acak');
+  if (acak) {
+    acak.addEventListener('click', function () {
+      if (!String(st.nama || '').trim()) {
+        showNotice('Tulis nama tim kalian dulu.');
+        return;
+      }
+      if (coopTeamSetupTerisi(st).length < cfg.minAnggota) {
+        showNotice('Tulis minimal ' + cfg.minAnggota + ' nama anggota.');
+        return;
+      }
+      st.anggota = assignCoopRoles(st.input);
+      save();
+      rerender();
+    });
+  }
 }
