@@ -109,6 +109,11 @@
        pertama & terakhir, penulisan deret, pasangan Gauss, n minimal
        Sₙ ≥ target, diagnosa miskonsepsi & opsi berpengecoh, tabel
        pasangan Gauss, tangga batang SVG, lab jumlah berjalan)
+   43. Proyek mini barisan & deret aritmetika (n minimal Uₙ ≥ target,
+       beda/suku pertama minimal & beda maksimal untuk batas jumlah,
+       kunci brief proyek, opsi berpengecoh Uₙ & n minimal, implementasi
+       jumlahDeret & penjalan kasus uji, papan kanban milestone, lab
+       perencana a–b–n)
    ============================================================ */
 
 /* ============================================================
@@ -21427,4 +21432,713 @@ function bindPartialSumLab(root, id, st, cfg, save, onChange) {
       atur(st.n + 1);
     });
   }
+}
+
+/* ============================================================
+   43. PROYEK MINI BARISAN & DERET ARITMETIKA
+   Blok bangun untuk proyek terapan (Project Based Learning) yang
+   memakai Uₙ dan Sₙ untuk menjawab brief klien:
+     • n minimal agar Uₙ ≥ target; beda minimal / suku pertama
+       minimal agar Sₙ ≥ target dan beda maksimal agar Sₙ ≤ batas
+       (dibulatkan ke kelipatan `langkah`, mis. Rp1.000);
+     • kunci brief proyek (hitungBriefDeret) & fitur lanjutan;
+     • opsi pilihan ganda berpengecoh untuk Uₙ dan n minimal;
+     • implementasi fungsi jumlahDeret(a, b, n) "buatan teman" (benar
+       & berbug) beserta penjalan kasus uji — dihitung secara
+       matematis, TANPA eval;
+     • papan kanban milestone, lab perencana (slider a, b, n → Uₙ,
+       Sₙ, batang terhadap target/batas), dan penjalan tes.
+   Memakai sukuAritmetika, jumlahAritmetika, subskrip (seksi 21),
+   nMinimalJumlahMencapai, fmtAngkaDeret, POLA_SALAH_JUMLAH_DERET
+   (seksi 42). Gaya .kanban-*, .plan-lab-*, .test-runner-* ada di
+   shared/base.css.
+   ============================================================ */
+
+/* Membuang galat biner kecil, mis. 7816.000000001 → 7816. */
+function bulatProyek_(v) {
+  return Math.round(v * 1e6) / 1e6;
+}
+
+/*
+ * n terkecil (1 ≤ n ≤ batas, default 1000) dengan Uₙ ≥ target; null bila
+ * tidak tercapai (mis. barisan turun).
+ */
+function nMinimalSukuMencapai(a, b, target, batas) {
+  var maks = typeof batas === 'number' ? batas : 1000;
+  for (var n = 1; n <= maks; n++) {
+    if (sukuAritmetika(a, b, n) >= target - 0.0001) return n;
+  }
+  return null;
+}
+
+/*
+ * Beda terkecil (kelipatan `langkah`, default 1, minimal 0) agar
+ * Sₙ = n/2 (2a + (n − 1)b) ≥ target. null bila n < 2 (Sₙ tidak
+ * bergantung pada b).
+ */
+function bedaMinimalJumlah(a, n, target, langkah) {
+  var l = typeof langkah === 'number' && langkah > 0 ? langkah : 1;
+  if (n < 2) return null;
+  var mentah = bulatProyek_((2 * target) / n - 2 * a) / (n - 1);
+  if (mentah <= 0) return 0;
+  var b = Math.ceil(bulatProyek_(mentah / l)) * l;
+  while (b - l >= 0 && jumlahAritmetika(a, b - l, n) >= target - 0.0001) b -= l;
+  while (jumlahAritmetika(a, b, n) < target - 0.0001) b += l;
+  return bulatProyek_(b);
+}
+
+/*
+ * Beda terbesar (kelipatan `langkah`, default 1, minimal 0) agar
+ * Sₙ ≤ batas. null bila n < 2 atau batas terlampaui walau b = 0.
+ */
+function bedaMaksimalJumlah(a, n, batas, langkah) {
+  var l = typeof langkah === 'number' && langkah > 0 ? langkah : 1;
+  if (n < 2 || jumlahAritmetika(a, 0, n) > batas + 0.0001) return null;
+  var mentah = bulatProyek_((2 * batas) / n - 2 * a) / (n - 1);
+  var b = Math.max(0, Math.floor(bulatProyek_(mentah / l)) * l);
+  while (jumlahAritmetika(a, b + l, n) <= batas + 0.0001) b += l;
+  while (b > 0 && jumlahAritmetika(a, b, n) > batas + 0.0001) b -= l;
+  return bulatProyek_(b);
+}
+
+/* Suku pertama terkecil (kelipatan `langkah`, default 1) agar Sₙ ≥ target. */
+function sukuPertamaMinimalJumlah(b, n, target, langkah) {
+  var l = typeof langkah === 'number' && langkah > 0 ? langkah : 1;
+  var mentah = bulatProyek_(((2 * target) / n - (n - 1) * b) / 2);
+  var a = Math.ceil(bulatProyek_(mentah / l)) * l;
+  while (jumlahAritmetika(a - l, b, n) >= target - 0.0001) a -= l;
+  while (jumlahAritmetika(a, b, n) < target - 0.0001) a += l;
+  return bulatProyek_(a);
+}
+
+/*
+ * Kunci fitur lanjutan brief:
+ *   { jenis: 'bedaMin',  n, target, langkah } → beda minimal (Sₙ ≥ target)
+ *   { jenis: 'bedaMaks', n, target, langkah } → beda maksimal (Sₙ ≤ target)
+ *   { jenis: 'sukuMin',  n, target, langkah } → suku pertama minimal
+ * `br` memberi a dan b awal. null bila jenis tidak dikenal.
+ */
+function nilaiLanjutanBrief(br, lj) {
+  if (!lj) return null;
+  if (lj.jenis === 'bedaMin') return bedaMinimalJumlah(br.a, lj.n, lj.target, lj.langkah);
+  if (lj.jenis === 'bedaMaks') return bedaMaksimalJumlah(br.a, lj.n, lj.target, lj.langkah);
+  if (lj.jenis === 'sukuMin') return sukuPertamaMinimalJumlah(br.b, lj.n, lj.target, lj.langkah);
+  return null;
+}
+
+/*
+ * Kunci satu brief proyek { a, b, nSuku, nJumlah, target, lanjutan }:
+ *   { un: U(nSuku), sn: S(nJumlah), nTarget: n minimal Sₙ ≥ target,
+ *     lanjutan: nilai fitur lanjutan }
+ */
+function hitungBriefDeret(br) {
+  return {
+    un: sukuAritmetika(br.a, br.b, br.nSuku),
+    sn: jumlahAritmetika(br.a, br.b, br.nJumlah),
+    nTarget: nMinimalJumlahMencapai(br.a, br.b, br.target),
+    lanjutan: nilaiLanjutanBrief(br, br.lanjutan),
+  };
+}
+
+/* Label nilai: opts.format(v) bila ada, selain itu '1.234' + ' satuan'. */
+function labelNilaiProyek_(v, opts) {
+  if (opts && typeof opts.format === 'function') return opts.format(v);
+  return fmtAngkaDeret(v) + (opts && opts.satuan ? ' ' + opts.satuan : '');
+}
+
+/* Menyusun opsi { id, nilai, label } tanpa nilai kembar, kunci di depan. */
+function susunOpsiProyek_(benar, pengecoh, opts, valid) {
+  opts = opts || {};
+  var out = [{ id: 'benar', nilai: benar, label: labelNilaiProyek_(benar, opts) }];
+  pengecoh.forEach(function (p) {
+    if (opts.maks && out.length >= opts.maks) return;
+    if (p.nilai === null || p.nilai === undefined || isNaN(p.nilai)) return;
+    if (valid && !valid(p.nilai)) return;
+    var kembar = out.some(function (o) {
+      return hampirSama(o.nilai, p.nilai);
+    });
+    if (kembar) return;
+    out.push({ id: p.id, nilai: p.nilai, label: labelNilaiProyek_(p.nilai, opts) });
+  });
+  return out;
+}
+
+/*
+ * Opsi pilihan ganda Uₙ: kunci + pengecoh miskonsepsi
+ *   'pakaiN'      a + nb (bukan (n − 1)b)
+ *   'jumlah'      Sₙ (tertukar suku dengan jumlah)
+ *   'tanpaA'      n × b (lupa suku pertama)
+ *   'kurangSatu'  Uₙ₋₁
+ * opts { satuan, format, maks }. Urutan "wajar" — app.js wajib mengacak.
+ */
+function opsiSukuDeret(a, b, n, opts) {
+  var benar = sukuAritmetika(a, b, n);
+  return susunOpsiProyek_(
+    benar,
+    [
+      { id: 'pakaiN', nilai: a + n * b },
+      { id: 'jumlah', nilai: jumlahAritmetika(a, b, n) },
+      { id: 'tanpaA', nilai: n * b },
+      { id: 'kurangSatu', nilai: n > 1 ? sukuAritmetika(a, b, n - 1) : null },
+    ],
+    opts,
+    function (v) {
+      return !(benar > 0 && v <= 0);
+    }
+  );
+}
+
+/*
+ * Opsi pilihan ganda n minimal agar Sₙ ≥ target: kunci + pengecoh
+ *   'belum'      n − 1 (jumlahnya belum mencapai target)
+ *   'pakaiSuku'  n terkecil dengan Uₙ ≥ target (tertukar suku/jumlah)
+ *   'lewat'      n + 1
+ *   'bagiA'      target ÷ a dibulatkan ke atas (menganggap suku tetap a)
+ * [] bila target tidak pernah tercapai.
+ */
+function opsiNMinimal(a, b, target, opts) {
+  var benar = nMinimalJumlahMencapai(a, b, target);
+  if (benar === null) return [];
+  return susunOpsiProyek_(
+    benar,
+    [
+      { id: 'belum', nilai: benar - 1 },
+      { id: 'pakaiSuku', nilai: nMinimalSukuMencapai(a, b, target) },
+      { id: 'lewat', nilai: benar + 1 },
+      { id: 'bagiA', nilai: a > 0 ? Math.ceil(target / a) : null },
+    ],
+    opts,
+    function (v) {
+      return Number.isInteger(v) && v >= 1;
+    }
+  );
+}
+
+/* ---------- Implementasi jumlahDeret & kasus uji ---------- */
+
+/*
+ * Isi fungsi jumlahDeret(a, b, n) "buatan teman". `kode` hanya untuk
+ * ditampilkan; `hitung` adalah padanan matematisnya (tidak ada eval).
+ */
+var IMPLEMENTASI_JUMLAH_DERET = [
+  {
+    id: 'rumus',
+    kode: 'return (n / 2) * (2 * a + (n - 1) * b);',
+    hitung: function (a, b, n) {
+      return jumlahAritmetika(a, b, n);
+    },
+  },
+  {
+    id: 'loop',
+    kode: 'let total = 0;\nfor (let i = 1; i <= n; i++) {\n  total += a + (i - 1) * b;\n}\nreturn total;',
+    hitung: function (a, b, n) {
+      return jumlahAritmetika(a, b, n);
+    },
+  },
+  {
+    id: 'loopKurang',
+    kode: 'let total = 0;\nfor (let i = 1; i < n; i++) {\n  total += a + (i - 1) * b;\n}\nreturn total;',
+    hitung: function (a, b, n) {
+      return n > 1 ? jumlahAritmetika(a, b, n - 1) : 0;
+    },
+  },
+  {
+    id: 'lupaBagi',
+    kode: 'return n * (2 * a + (n - 1) * b);',
+    hitung: function (a, b, n) {
+      return nilaiPolaJumlahDeret('lupa-bagi-dua', a, b, n);
+    },
+  },
+  {
+    id: 'pakaiN',
+    kode: 'return (n / 2) * (2 * a + n * b);',
+    hitung: function (a, b, n) {
+      return nilaiPolaJumlahDeret('n-bukan-n-kurang-1', a, b, n);
+    },
+  },
+  {
+    id: 'kaliAkhir',
+    kode: 'const un = a + (n - 1) * b;\nreturn n * un;',
+    hitung: function (a, b, n) {
+      return nilaiPolaJumlahDeret('n-kali-un', a, b, n);
+    },
+  },
+];
+
+function cariImplementasi_(id) {
+  for (var i = 0; i < IMPLEMENTASI_JUMLAH_DERET.length; i++) {
+    if (IMPLEMENTASI_JUMLAH_DERET[i].id === id) return IMPLEMENTASI_JUMLAH_DERET[i];
+  }
+  return null;
+}
+
+/* Keluaran yang diharapkan satu kasus uji { a, b, n }: Sₙ yang benar. */
+function harapanKasus(k) {
+  return jumlahAritmetika(k.a, k.b, k.n);
+}
+
+/*
+ * Menjalankan implementasi `implId` pada setiap kasus uji:
+ *   [{ id, a, b, n, harapan, hasil, lulus }]; null bila id tidak dikenal.
+ */
+function jalankanKasusUji(implId, kasus) {
+  var impl = cariImplementasi_(implId);
+  if (!impl) return null;
+  return kasus.map(function (k) {
+    var harapan = harapanKasus(k);
+    var hasil = impl.hitung(k.a, k.b, k.n);
+    return {
+      id: k.id,
+      a: k.a,
+      b: k.b,
+      n: k.n,
+      harapan: harapan,
+      hasil: hasil,
+      lulus: hampirSama(hasil, harapan),
+    };
+  });
+}
+
+function ringkasHasilUji(hasil) {
+  return {
+    lulus: hasil.filter(function (h) {
+      return h.lulus;
+    }).length,
+    total: hasil.length,
+  };
+}
+
+/* Kode lengkap fungsi jumlahDeret dengan isi implementasi terindentasi. */
+function kodeJumlahDeret(implId) {
+  var impl = cariImplementasi_(implId);
+  if (!impl) return '';
+  return (
+    'function jumlahDeret(a, b, n) {\n' +
+    impl.kode
+      .split('\n')
+      .map(function (baris) {
+        return '  ' + baris;
+      })
+      .join('\n') +
+    '\n}'
+  );
+}
+
+/*
+ * Penjalan tes: kartu kode tiap implementasi dengan tombol "Jalankan tes"
+ * dan tabel kasus uji (harapan vs hasil). Hanya implementasi yang sudah
+ * dijalankan (st.dijalankan[id]) yang diisi hasilnya.
+ *   kasus  [{ id, a, b, n }]
+ *   impls  [{ id, nama }] — id dari IMPLEMENTASI_JUMLAH_DERET
+ *   st     { dijalankan: { <implId>: true } }
+ */
+function buildTestRunner(id, kasus, impls, st) {
+  var jalan = (st && st.dijalankan) || {};
+  var hasilPer = {};
+  impls.forEach(function (im) {
+    if (jalan[im.id]) hasilPer[im.id] = jalankanKasusUji(im.id, kasus);
+  });
+
+  var kartu = impls
+    .map(function (im) {
+      var h = hasilPer[im.id];
+      var r = h ? ringkasHasilUji(h) : null;
+      var semua = r && r.lulus === r.total;
+      return (
+        '<div class="test-runner__impl">' +
+        '<div class="test-runner__impl-head">' +
+        '<strong>' +
+        esc(im.nama) +
+        '</strong>' +
+        (r
+          ? '<span class="test-runner__badge ' +
+            (semua ? 'test-runner__badge--lulus' : 'test-runner__badge--gagal') +
+            '">' +
+            (semua ? '✓ ' : '✗ ') +
+            r.lulus +
+            '/' +
+            r.total +
+            ' lulus</span>'
+          : '') +
+        '<button type="button" class="btn btn--small ' +
+        (h ? 'btn--ghost' : 'btn--primary') +
+        '" data-run="' +
+        esc(im.id) +
+        '" data-tr="' +
+        esc(id) +
+        '">' +
+        (h ? '↻ Jalankan lagi' : '▶ Jalankan tes') +
+        '</button>' +
+        '</div>' +
+        '<pre class="lf-kode test-runner__kode"><code>' +
+        esc(kodeJumlahDeret(im.id)) +
+        '</code></pre>' +
+        '</div>'
+      );
+    })
+    .join('');
+
+  var kepala =
+    '<tr><th scope="col">Kasus</th><th scope="col">a</th><th scope="col">b</th>' +
+    '<th scope="col">n</th><th scope="col">Harapan</th>' +
+    impls
+      .map(function (im) {
+        return '<th scope="col">' + esc(im.nama) + '</th>';
+      })
+      .join('') +
+    '</tr>';
+
+  var baris = kasus
+    .map(function (k, i) {
+      return (
+        '<tr><th scope="row">' +
+        (i + 1) +
+        '</th><td>' +
+        esc(fmtAngkaDeret(k.a)) +
+        '</td><td>' +
+        esc(fmtAngkaDeret(k.b)) +
+        '</td><td>' +
+        k.n +
+        '</td><td><strong>' +
+        esc(fmtAngkaDeret(harapanKasus(k))) +
+        '</strong></td>' +
+        impls
+          .map(function (im) {
+            var h = hasilPer[im.id];
+            if (!h) return '<td class="test-runner__cell">—</td>';
+            var hk = h[i];
+            return (
+              '<td class="test-runner__cell ' +
+              (hk.lulus ? 'test-runner__cell--lulus' : 'test-runner__cell--gagal') +
+              '">' +
+              (hk.lulus ? '✓ ' : '✗ ') +
+              esc(fmtAngkaDeret(hk.hasil)) +
+              '</td>'
+            );
+          })
+          .join('') +
+        '</tr>'
+      );
+    })
+    .join('');
+
+  return (
+    '<div class="test-runner" id="' +
+    esc(id) +
+    '">' +
+    '<div class="test-runner__impls">' +
+    kartu +
+    '</div>' +
+    '<div class="test-runner__wrap">' +
+    '<table class="test-runner__table">' +
+    '<caption class="test-runner__caption">Hasil kasus uji jumlahDeret(a, b, n)</caption>' +
+    '<thead>' +
+    kepala +
+    '</thead><tbody>' +
+    baris +
+    '</tbody></table>' +
+    '</div>' +
+    '</div>'
+  );
+}
+
+/* Memasang tombol "Jalankan tes"; onRun(implId) setelah state disimpan. */
+function bindTestRunner(root, id, st, save, rerender, onRun) {
+  root.querySelectorAll('[data-run][data-tr="' + id + '"]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      if (!st.dijalankan || typeof st.dijalankan !== 'object') st.dijalankan = {};
+      st.dijalankan[btn.dataset.run] = true;
+      st.kali = (st.kali || 0) + 1;
+      save();
+      rerender();
+      if (onRun) onRun(btn.dataset.run);
+    });
+  });
+}
+
+/* ---------- Papan kanban milestone ---------- */
+
+/*
+ * Status tiap milestone { id }: 'selesai' bila selesai[id], 'dikerjakan'
+ * bila id === aktif, selain itu 'belum'.
+ */
+function kolomKanban(milestones, selesai, aktif) {
+  var out = {};
+  milestones.forEach(function (m) {
+    if (selesai && selesai[m.id]) out[m.id] = 'selesai';
+    else if (m.id === aktif) out[m.id] = 'dikerjakan';
+    else out[m.id] = 'belum';
+  });
+  return out;
+}
+
+/*
+ * Papan kanban tiga kolom (Belum · Dikerjakan · Selesai).
+ *   milestones  [{ id, label (teks), ikon? }]
+ *   status      hasil kolomKanban
+ */
+function buildProjectBoard(milestones, status) {
+  var kolom = [
+    { id: 'belum', judul: 'Belum', ikon: '📋' },
+    { id: 'dikerjakan', judul: 'Dikerjakan', ikon: '🛠️' },
+    { id: 'selesai', judul: 'Selesai', ikon: '✅' },
+  ];
+  return (
+    '<div class="kanban" role="group" aria-label="Papan proyek">' +
+    kolom
+      .map(function (k) {
+        var isi = milestones.filter(function (m) {
+          return status[m.id] === k.id;
+        });
+        return (
+          '<div class="kanban__col kanban__col--' +
+          k.id +
+          '">' +
+          '<h4 class="kanban__title"><span aria-hidden="true">' +
+          k.ikon +
+          '</span> ' +
+          k.judul +
+          ' <span class="kanban__count">' +
+          isi.length +
+          '</span></h4>' +
+          '<ul class="kanban__list">' +
+          (isi.length
+            ? isi
+                .map(function (m) {
+                  return (
+                    '<li class="kanban__card' +
+                    (k.id === 'dikerjakan' ? ' kanban__card--aktif' : '') +
+                    (k.id === 'selesai' ? ' kanban__card--selesai' : '') +
+                    '">' +
+                    (m.ikon ? '<span aria-hidden="true">' + m.ikon + '</span> ' : '') +
+                    esc(m.label) +
+                    '</li>'
+                  );
+                })
+                .join('')
+            : '<li class="kanban__empty">—</li>') +
+          '</ul>' +
+          '</div>'
+        );
+      })
+      .join('') +
+    '</div>'
+  );
+}
+
+/* ---------- Lab perencana (prototipe mini app) ---------- */
+
+function makePlannerLabState(awal) {
+  awal = awal || {};
+  return { a: awal.a, b: awal.b, n: awal.n, geser: 0 };
+}
+
+function jepitRentang_(v, r) {
+  var x = typeof v === 'number' && !isNaN(v) ? v : r.min;
+  if (x < r.min) x = r.min;
+  if (x > r.max) x = r.max;
+  return bulatProyek_(x);
+}
+
+/*
+ * Nilai lab: a, b, n dijepit ke rentang cfg.a / cfg.b / cfg.n, lalu Uₙ,
+ * Sₙ, `tercapai` (Sₙ ≥ target) dan `aman` (Sₙ ≤ target, untuk batas atas).
+ *   cfg { a, b, n: { min, max, step }, target, batasAtas, satuan, format }
+ */
+function plannerLabInfo(st, cfg) {
+  var a = jepitRentang_(st.a, cfg.a);
+  var b = jepitRentang_(st.b, cfg.b);
+  var n = Math.round(jepitRentang_(st.n, cfg.n));
+  var sn = jumlahAritmetika(a, b, n);
+  return {
+    a: a,
+    b: b,
+    n: n,
+    un: sukuAritmetika(a, b, n),
+    sn: sn,
+    tercapai: sn >= cfg.target - 0.0001,
+    aman: sn <= cfg.target + 0.0001,
+  };
+}
+
+function plannerLabHasilHTML(st, cfg) {
+  var info = plannerLabInfo(st, cfg);
+  var f = function (v) {
+    return esc(labelNilaiProyek_(v, cfg));
+  };
+  var tampil = Math.min(info.n, 4);
+  var suku = [];
+  for (var i = 1; i <= tampil; i++) suku.push(f(sukuAritmetika(info.a, info.b, i)));
+  if (info.n > tampil) suku.push('…', f(info.un));
+  var skala = Math.max(cfg.target, info.sn) * 1.08;
+  var persen = Math.min(100, (info.sn / skala) * 100);
+  var persenTarget = Math.min(100, (cfg.target / skala) * 100);
+  var baik = cfg.batasAtas ? info.aman : info.tercapai;
+  var status;
+  if (cfg.batasAtas) {
+    status = info.aman
+      ? '✓ S' + subskrip(info.n) + ' masih di bawah batas ' + f(cfg.target) + '.'
+      : '✗ S' + subskrip(info.n) + ' melewati batas ' + f(cfg.target) + '.';
+  } else {
+    status = info.tercapai
+      ? '✓ S' + subskrip(info.n) + ' sudah mencapai target ' + f(cfg.target) + '.'
+      : '… S' + subskrip(info.n) + ' belum mencapai target ' + f(cfg.target) + '.';
+  }
+  return (
+    '<p class="plan-lab__deret">' +
+    suku.join(', ') +
+    '</p>' +
+    '<div class="psum-nilai">' +
+    '<span class="psum-chip">U' +
+    subskrip(info.n) +
+    ' = <strong>' +
+    f(info.un) +
+    '</strong></span>' +
+    '<span class="psum-chip psum-chip--sum">S' +
+    subskrip(info.n) +
+    ' = <strong>' +
+    f(info.sn) +
+    '</strong></span>' +
+    '</div>' +
+    '<div class="psum-bar" aria-hidden="true">' +
+    '<div class="psum-bar__fill' +
+    (baik ? ' psum-bar__fill--capai' : '') +
+    (cfg.batasAtas && !baik ? ' plan-lab__fill--lewat' : '') +
+    '" style="width:' +
+    persen.toFixed(1) +
+    '%"></div>' +
+    '<div class="psum-bar__target" style="left:' +
+    persenTarget.toFixed(1) +
+    '%"><span>' +
+    (cfg.batasAtas ? 'Batas ' : 'Target ') +
+    f(cfg.target) +
+    '</span></div>' +
+    '</div>' +
+    '<p class="psum-status ' +
+    (baik ? 'psum-status--capai' : 'psum-status--belum') +
+    '">' +
+    status +
+    '</p>'
+  );
+}
+
+function plannerKontrol_(id, key, label, nilai, rng, cfg) {
+  var tampil = key === 'n' ? String(nilai) : esc(labelNilaiProyek_(nilai, cfg));
+  return (
+    '<div class="plan-lab__kontrol">' +
+    '<label class="psum-kontrol__label" for="' +
+    esc(id) +
+    '-' +
+    key +
+    '">' +
+    esc(label) +
+    ': <strong id="' +
+    esc(id) +
+    '-' +
+    key +
+    '-nilai">' +
+    tampil +
+    '</strong></label>' +
+    '<div class="psum-kontrol__row">' +
+    '<button type="button" class="btn btn--ghost btn--small" data-plan-step="' +
+    key +
+    '" data-dir="-1" aria-label="Kurangi ' +
+    esc(label) +
+    '">−</button>' +
+    '<input type="range" class="psum-slider" id="' +
+    esc(id) +
+    '-' +
+    key +
+    '" data-plan-key="' +
+    key +
+    '" min="' +
+    rng.min +
+    '" max="' +
+    rng.max +
+    '" step="' +
+    rng.step +
+    '" value="' +
+    nilai +
+    '">' +
+    '<button type="button" class="btn btn--ghost btn--small" data-plan-step="' +
+    key +
+    '" data-dir="1" aria-label="Tambah ' +
+    esc(label) +
+    '">+</button>' +
+    '</div>' +
+    '</div>'
+  );
+}
+
+/*
+ * Lab perencana: slider a (suku pertama), b (beda), n (banyak periode)
+ * → barisan singkat, Uₙ, Sₙ, batang Sₙ terhadap target/batas, status.
+ *   cfg.label { a, b, n } — label slider (opsional)
+ *   cfg.kunci [key…]      — slider yang dikunci (tidak ditampilkan)
+ */
+function buildPlannerLab(id, st, cfg) {
+  var info = plannerLabInfo(st, cfg);
+  var lbl = cfg.label || {};
+  var kunci = cfg.kunci || [];
+  var kontrol = ['a', 'b', 'n']
+    .filter(function (k) {
+      return kunci.indexOf(k) === -1;
+    })
+    .map(function (k) {
+      var def = { a: 'Suku pertama a', b: 'Beda b', n: 'Banyak periode n' }[k];
+      return plannerKontrol_(id, k, lbl[k] || def, info[k], cfg[k], cfg);
+    })
+    .join('');
+  return (
+    '<div class="psum-lab plan-lab" id="' +
+    esc(id) +
+    '">' +
+    '<div class="plan-lab__kontrol-grid">' +
+    kontrol +
+    '</div>' +
+    '<div class="psum-hasil" id="' +
+    esc(id) +
+    '-hasil" aria-live="polite">' +
+    plannerLabHasilHTML(st, cfg) +
+    '</div>' +
+    '</div>'
+  );
+}
+
+/*
+ * Memasang slider & tombol lab perencana. Hanya panel hasil & label nilai
+ * yang diperbarui (fokus slider tetap); onChange(info) setelah perubahan.
+ */
+function bindPlannerLab(root, id, st, cfg, save, onChange) {
+  var hasil = root.querySelector('#' + id + '-hasil');
+  if (!hasil) return;
+  function atur(key, v) {
+    st[key] = v;
+    var info = plannerLabInfo(st, cfg);
+    st.a = info.a;
+    st.b = info.b;
+    st.n = info.n;
+    st.geser = (st.geser || 0) + 1;
+    ['a', 'b', 'n'].forEach(function (k) {
+      var s = root.querySelector('#' + id + '-' + k);
+      if (s) s.value = String(info[k]);
+      var lbl = root.querySelector('#' + id + '-' + k + '-nilai');
+      if (lbl) lbl.textContent = k === 'n' ? String(info.n) : labelNilaiProyek_(info[k], cfg);
+    });
+    hasil.innerHTML = plannerLabHasilHTML(st, cfg);
+    save();
+    if (onChange) onChange(info);
+  }
+  root.querySelectorAll('#' + id + ' [data-plan-key]').forEach(function (slider) {
+    slider.addEventListener('input', function () {
+      atur(slider.dataset.planKey, parseFloat(slider.value));
+    });
+  });
+  root.querySelectorAll('#' + id + ' [data-plan-step]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var key = btn.dataset.planStep;
+      var info = plannerLabInfo(st, cfg);
+      atur(key, info[key] + Number(btn.dataset.dir) * cfg[key].step);
+    });
+  });
 }
