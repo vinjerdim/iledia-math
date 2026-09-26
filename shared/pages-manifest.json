@@ -174,5 +174,13 @@
     "h1": "Menentukan Model Linear Terbaik dengan Bantuan Teknologi Digital",
     "stageCount": 10,
     "extraBody": "partials/reset-modal.html"
+  },
+  "fase-f/mpi-11.3": {
+    "title": "Koefisien Korelasi & Kesesuaian Model Linear — Matematika Fase F",
+    "description": "Media pembelajaran interaktif berbasis Problem Based Learning untuk menganalisis kekuatan dan arah hubungan dua variabel menggunakan koefisien korelasi serta mengevaluasi kesesuaian model linear terhadap data: rekomendasi fitur prediksi Dasbor Analitik NgodingYuk melalui Penjelajah r (slider −1 … 1), tantangan tebak r, tabel langkah Sxy–Sxx–Syy berdiagnosa, spreadsheet =CORREL & kode JavaScript, Lab Pencilan ketuk-titik, r² dan plot residu (acak vs lengkung), serta Kartu Rekomendasi Dasbor untuk klien.",
+    "kicker": "Matematika — Fase F (SMK RPL)",
+    "h1": "Koefisien Korelasi & Kesesuaian Model Linear",
+    "stageCount": 10,
+    "extraBody": "partials/reset-modal.html"
   }
 }

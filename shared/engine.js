@@ -133,6 +133,14 @@
        berpengecoh, jaring-jaring prisma beralas poligon sembarang, lab
        bentang lipat–ketuk sisi, sabuk sisi tegak, kartu isian
        berdiagnosa)
+   48. Masalah kontekstual luas permukaan prisma
+   49. Masalah kontekstual bilangan berpangkat bulat
+   50. Koefisien korelasi & kesesuaian model linear (tafsir arah &
+       kekuatan r, rincian langkah Sxy/Sxx/Syy, diagnosa isian r, pola
+       residu acak vs lengkung, keputusan kelayakan model linear,
+       pengaruh pencilan, data sintetis ber-r tertentu, meteran r,
+       tabel langkah r, plot residu, penjelajah r, lab pencilan, panel
+       =CORREL & kode JS)
    ============================================================ */
 
 /* ============================================================
@@ -26965,5 +26973,885 @@ function buildBandingPaketPangkat(rows, opts) {
       })
       .join('') +
     '</tbody></table></div>'
+  );
+}
+
+/* ============================================================
+   50. KOEFISIEN KORELASI & KESESUAIAN MODEL LINEAR
+   Dipakai modul koefisien korelasi (fase-f/mpi-11.3, Problem Based
+   Learning). Dibangun di atas seksi 33 (korelasiPearson, sumbuPencar,
+   asoSkala_, asoKerangka_, buildScatterPlot) dan seksi 41 (bulatReg_,
+   regresiLinear, residuTitik, fmtAngkaReg, fmtPersamaanRegresi,
+   buildLineFitPlot, angkaSheet_, angkaJs_). Fungsi murni:
+     tafsirKorelasi(r)              { r, arah, kekuatan, label }
+                                    arah: 'positif' | 'negatif' | 'tidak'
+                                    kekuatan: 'sempurna' (|r| = 1), 'kuat'
+                                    (≥ 0,7), 'sedang' (≥ 0,4), 'lemah'
+                                    (≥ 0,2), 'sangatLemah' (< 0,2)
+     rincianKorelasi(points)        langkah hitung r: x̄, ȳ, baris
+                                    (x − x̄)(y − ȳ), (x − x̄)², (y − ȳ)²,
+                                    Sxy, Sxx, Syy, r = Sxy / √(Sxx·Syy)
+     diagnosaKorelasi(v, rinci)     isian r murid → 'benar' | 'tanda' |
+                                    'r2' | 'kemiringan' | 'akar' |
+                                    'luarRentang' | 'salah'
+     polaResidu(points, m, c)       { tanda[], runs, pola: 'acak' | 'lengkung' }
+     keputusanModelLinear(points)   'layak' | 'bukanLinear' | 'lemah' |
+                                    'tidakAda' + r, r², m, c, arah, kekuatan, pola
+     korelasiTanpa(points, ids)     r setelah titik ber-id tertentu dikeluarkan
+     dataDenganKorelasi(r, n)       data sintetis deterministik dengan r persis
+   Komponen UI: meteran r (buildRMeter), tabel langkah r
+   (buildCorrelationStepTable), plot residu (buildResidualPlot),
+   penjelajah r dengan slider (buildCorrelationExplorer), lab pencilan
+   ketuk-titik (buildOutlierLab), dan panel spreadsheet =CORREL & kode
+   JS (buildCorrelationPanel). Gaya .kor-* ada di shared/base.css.
+   ============================================================ */
+
+var LABEL_KEKUATAN_KORELASI = {
+  sempurna: 'Sempurna',
+  kuat: 'Kuat',
+  sedang: 'Sedang',
+  lemah: 'Lemah',
+  sangatLemah: 'Sangat lemah / hampir tidak ada',
+};
+
+var LABEL_ARAH_KORELASI = {
+  positif: 'Positif',
+  negatif: 'Negatif',
+  tidak: 'Tidak ada arah yang jelas',
+};
+
+var LABEL_KEPUTUSAN_LINEAR = {
+  layak: 'Model linear sesuai — layak dipakai untuk prediksi',
+  bukanLinear: 'Hubungan kuat tetapi tidak linear — model garis lurus kurang sesuai',
+  lemah: 'Hubungan linear lemah/sedang — prediksi garis lurus kurang andal',
+  tidakAda: 'Hampir tidak ada hubungan linear — jangan dibuat model linear',
+};
+
+/* Batas |r| tiap tingkat kekuatan (dipakai juga oleh meteran r). */
+var KOR_BATAS = { kuat: 0.7, sedang: 0.4, lemah: 0.2 };
+
+/* Arah & kekuatan hubungan linear dari r. */
+function tafsirKorelasi(r) {
+  var a = typeof r === 'number' && !isNaN(r) ? Math.abs(r) : 0;
+  var kekuatan;
+  if (a >= 1 - 1e-9) kekuatan = 'sempurna';
+  else if (a >= KOR_BATAS.kuat - 1e-9) kekuatan = 'kuat';
+  else if (a >= KOR_BATAS.sedang - 1e-9) kekuatan = 'sedang';
+  else if (a >= KOR_BATAS.lemah - 1e-9) kekuatan = 'lemah';
+  else kekuatan = 'sangatLemah';
+  var arah = kekuatan === 'sangatLemah' ? 'tidak' : r > 0 ? 'positif' : 'negatif';
+  var label =
+    kekuatan === 'sangatLemah'
+      ? 'hampir tidak ada hubungan linear'
+      : arah + ' ' + LABEL_KEKUATAN_KORELASI[kekuatan].toLowerCase();
+  return { r: typeof r === 'number' ? r : null, arah: arah, kekuatan: kekuatan, label: label };
+}
+
+/*
+ * Rincian langkah hitung r untuk tabel & isian murid. null bila < 2 titik
+ * atau variansi x/y nol. Semua nilai dibulatkan bulatReg_ agar bebas galat
+ * biner (0,1 + 0,2 …).
+ */
+function rincianKorelasi(points) {
+  if (!points || points.length < 2) return null;
+  var n = points.length;
+  var sx = 0;
+  var sy = 0;
+  points.forEach(function (p) {
+    sx += p.x;
+    sy += p.y;
+  });
+  var xBar = bulatReg_(sx / n);
+  var yBar = bulatReg_(sy / n);
+  var sxy = 0;
+  var sxx = 0;
+  var syy = 0;
+  var baris = points.map(function (p) {
+    var dx = bulatReg_(p.x - xBar);
+    var dy = bulatReg_(p.y - yBar);
+    var b = {
+      id: p.id,
+      nama: p.nama,
+      x: p.x,
+      y: p.y,
+      dx: dx,
+      dy: dy,
+      dxdy: bulatReg_(dx * dy),
+      dx2: bulatReg_(dx * dx),
+      dy2: bulatReg_(dy * dy),
+    };
+    sxy += b.dxdy;
+    sxx += b.dx2;
+    syy += b.dy2;
+    return b;
+  });
+  sxy = bulatReg_(sxy);
+  sxx = bulatReg_(sxx);
+  syy = bulatReg_(syy);
+  if (sxx === 0 || syy === 0) return null;
+  return {
+    n: n,
+    xBar: xBar,
+    yBar: yBar,
+    baris: baris,
+    sxy: sxy,
+    sxx: sxx,
+    syy: syy,
+    r: bulatReg_(sxy / Math.sqrt(sxx * syy)),
+  };
+}
+
+/*
+ * Diagnosa isian r (toleransi pembulatan 2 desimal):
+ *   'benar'       ≈ r
+ *   'tanda'       ≈ −r
+ *   'r2'          ≈ r² (menulis koefisien determinasi)
+ *   'kemiringan'  ≈ Sxy / Sxx (menulis kemiringan garis regresi)
+ *   'akar'        ≈ Sxy / (Sxx · Syy) (lupa menarik akar)
+ *   'luarRentang' |isian| > 1 (r selalu di antara −1 dan 1)
+ *   'salah'       selain itu
+ */
+function diagnosaKorelasi(nilai, rinci) {
+  if (typeof nilai !== 'number' || isNaN(nilai) || !rinci) return 'salah';
+  var dekat = function (a, b) {
+    return Math.abs(a - b) < 0.006;
+  };
+  var r = rinci.r;
+  if (dekat(nilai, r)) return 'benar';
+  if (r !== 0 && dekat(nilai, -r)) return 'tanda';
+  if (dekat(nilai, r * r)) return 'r2';
+  if (dekat(nilai, rinci.sxy / rinci.sxx)) return 'kemiringan';
+  if (dekat(nilai, rinci.sxy / (rinci.sxx * rinci.syy))) return 'akar';
+  if (Math.abs(nilai) > 1) return 'luarRentang';
+  return 'salah';
+}
+
+function pesanDiagnosaKorelasi(kode, rinci) {
+  var r = fmtAngkaReg(rinci.r, 3);
+  var sxy = fmtAngkaReg(rinci.sxy);
+  var sxx = fmtAngkaReg(rinci.sxx);
+  var syy = fmtAngkaReg(rinci.syy);
+  var pesan = {
+    benar:
+      'Tepat! r = ' +
+      sxy +
+      ' : √(' +
+      sxx +
+      ' × ' +
+      syy +
+      ') = ' +
+      r +
+      ' — hubungan ' +
+      tafsirKorelasi(rinci.r).label +
+      '.',
+    tanda:
+      'Tandanya terbalik. Tanda r mengikuti tanda Sxy = ' +
+      sxy +
+      '; periksa lagi tanda hasil kali (x − x̄)(y − ȳ).',
+    r2: 'Itu nilai r² (koefisien determinasi), bukan r. Koefisien korelasi r = Sxy : √(Sxx × Syy) — tidak dikuadratkan.',
+    kemiringan:
+      'Itu Sxy : Sxx, yaitu kemiringan garis regresi. Untuk r, bagi Sxy dengan √(Sxx × Syy) yang memuat Syy juga.',
+    akar: 'Hampir! Kamu lupa menarik akar kuadrat. Penyebut r adalah √(Sxx × Syy), bukan Sxx × Syy.',
+    luarRentang:
+      'Nilai r selalu berada di antara −1 dan 1. Periksa lagi pembagiannya: r = Sxy : √(Sxx × Syy).',
+    salah:
+      'Belum tepat. Hitung √(Sxx × Syy) = √(' +
+      sxx +
+      ' × ' +
+      syy +
+      ') dulu, lalu bagi Sxy = ' +
+      sxy +
+      ' dengan hasilnya.',
+  };
+  return pesan[kode] || pesan.salah;
+}
+
+/*
+ * Pola residu terhadap garis y = mx + c. Tanda residu diurutkan menurut x,
+ * lalu dihitung banyak "runs" (kelompok tanda sama berurutan; residu 0
+ * diabaikan). Residu yang berpola lengkung (+ … − … +, atau − … + … −)
+ * hanya punya 3 runs dengan tanda ujung sama; residu acak berganti tanda
+ * lebih sering. Minimal 6 titik agar pola dapat disimpulkan.
+ */
+function polaResidu(points, m, c) {
+  var urut = residuTitik(points, m, c)
+    .map(function (t, i) {
+      return { x: t.x, e: t.e, i: i };
+    })
+    .sort(function (a, b) {
+      return a.x - b.x || a.i - b.i;
+    });
+  var tanda = urut.map(function (t) {
+    return Math.abs(t.e) < 1e-6 ? 0 : t.e > 0 ? 1 : -1;
+  });
+  var bukanNol = tanda.filter(function (s) {
+    return s !== 0;
+  });
+  var runs = 0;
+  var prev = 0;
+  bukanNol.forEach(function (s) {
+    if (s !== prev) {
+      runs += 1;
+      prev = s;
+    }
+  });
+  var lengkung =
+    bukanNol.length >= 6 && runs === 3 && bukanNol[0] === bukanNol[bukanNol.length - 1];
+  return { tanda: tanda, runs: runs, pola: lengkung ? 'lengkung' : 'acak' };
+}
+
+/* Keputusan kelayakan model linear dari r dan pola residu garis regresi. */
+function keputusanModelLinear(points) {
+  var reg = regresiLinear(points);
+  if (!reg || reg.r === null) return null;
+  var t = tafsirKorelasi(reg.r);
+  var pola = polaResidu(points, reg.m, reg.c).pola;
+  var keputusan;
+  if (t.kekuatan === 'sangatLemah') keputusan = 'tidakAda';
+  else if (t.kekuatan === 'lemah' || t.kekuatan === 'sedang') keputusan = 'lemah';
+  else keputusan = pola === 'lengkung' ? 'bukanLinear' : 'layak';
+  return {
+    r: reg.r,
+    r2: reg.r2,
+    m: reg.m,
+    c: reg.c,
+    arah: t.arah,
+    kekuatan: t.kekuatan,
+    label: t.label,
+    pola: pola,
+    keputusan: keputusan,
+  };
+}
+
+/* r setelah titik dengan id di `ids` dikeluarkan; null bila tidak terdefinisi. */
+function korelasiTanpa(points, ids) {
+  var sisa = points.filter(function (p) {
+    return (ids || []).indexOf(p.id) === -1;
+  });
+  return korelasiPearson(
+    sisa.map(function (p) {
+      return p.x;
+    }),
+    sisa.map(function (p) {
+      return p.y;
+    })
+  );
+}
+
+/* Vektor berpusat nol dengan simpangan baku 1 (populasi). */
+function korStandar_(v) {
+  var n = v.length;
+  var rata =
+    v.reduce(function (a, b) {
+      return a + b;
+    }, 0) / n;
+  var c = v.map(function (a) {
+    return a - rata;
+  });
+  var sd = Math.sqrt(
+    c.reduce(function (a, b) {
+      return a + b * b;
+    }, 0) / n
+  );
+  return c.map(function (a) {
+    return sd === 0 ? 0 : a / sd;
+  });
+}
+
+/*
+ * Data sintetis [{id, x, y}] dengan koefisien korelasi TEPAT r (dijepit ke
+ * [−1, 1]) pada sumbu 0–100. Deterministik (tanpa Math.random) sehingga
+ * dapat diuji dan tidak "melompat" saat dirender ulang:
+ *   u = pola dasar x (standar), v = pola kedua yang dibuat tegak lurus u
+ *   (Gram–Schmidt), y = r·u + √(1 − r²)·v.
+ */
+function dataDenganKorelasi(r, n) {
+  n = n || 24;
+  var rr = Math.max(-1, Math.min(1, typeof r === 'number' ? r : 0));
+  var dasarU = [];
+  var dasarV = [];
+  for (var i = 0; i < n; i++) {
+    dasarU.push(i + 0.35 * Math.sin(i * 2.3));
+    dasarV.push(Math.sin(i * 1.7 + 0.4) + 0.6 * Math.cos(i * 3.1));
+  }
+  var u = korStandar_(dasarU);
+  var v = korStandar_(dasarV);
+  var uv =
+    u.reduce(function (a, b, k) {
+      return a + b * v[k];
+    }, 0) / n;
+  v = korStandar_(
+    v.map(function (b, k) {
+      return b - uv * u[k];
+    })
+  );
+  var s = Math.sqrt(Math.max(0, 1 - rr * rr));
+  var maks = 0;
+  var zy = u.map(function (a, k) {
+    var y = rr * a + s * v[k];
+    maks = Math.max(maks, Math.abs(y), Math.abs(a));
+    return y;
+  });
+  var skala = 45 / (maks || 1);
+  return u.map(function (a, k) {
+    return {
+      id: 'g' + (k + 1),
+      x: Math.round((50 + skala * a) * 1e6) / 1e6,
+      y: Math.round((50 + skala * zy[k]) * 1e6) / 1e6,
+    };
+  });
+}
+
+/* ---------- Meteran r ---------- */
+
+/*
+ * Meteran r: skala −1 … 1 dengan zona kekuatan dan penanda posisi r.
+ *   opts.label             judul (mis. nama data)
+ *   opts.sembunyikanNilai  true → penanda tanpa angka r (untuk menebak)
+ */
+function buildRMeter(r, opts) {
+  opts = opts || {};
+  var t = tafsirKorelasi(r);
+  var pos = Math.round(((Math.max(-1, Math.min(1, r)) + 1) / 2) * 1000) / 10;
+  var B = KOR_BATAS;
+  var zona = [
+    { dari: -1, ke: -B.kuat, cls: 'kuat', label: 'kuat −' },
+    { dari: -B.kuat, ke: -B.sedang, cls: 'sedang', label: 'sedang −' },
+    { dari: -B.sedang, ke: -B.lemah, cls: 'lemah', label: 'lemah −' },
+    { dari: -B.lemah, ke: B.lemah, cls: 'nol', label: '≈ 0' },
+    { dari: B.lemah, ke: B.sedang, cls: 'lemah', label: 'lemah +' },
+    { dari: B.sedang, ke: B.kuat, cls: 'sedang', label: 'sedang +' },
+    { dari: B.kuat, ke: 1, cls: 'kuat', label: 'kuat +' },
+  ];
+  var nilai = opts.sembunyikanNilai ? '' : 'r = ' + fmtAngkaReg(r, 3) + ' · ';
+  return (
+    '<div class="kor-meter" role="img" aria-label="' +
+    esc(
+      (opts.label ? opts.label + ': ' : '') +
+        (opts.sembunyikanNilai ? 'posisi r pada skala −1 sampai 1' : nilai + t.label)
+    ) +
+    '">' +
+    (opts.label ? '<p class="kor-meter__judul">' + esc(opts.label) + '</p>' : '') +
+    '<div class="kor-meter__bar">' +
+    zona
+      .map(function (z) {
+        return (
+          '<span class="kor-meter__zona kor-meter__zona--' +
+          z.cls +
+          '" style="width:' +
+          Math.round(((z.ke - z.dari) / 2) * 1000) / 10 +
+          '%">' +
+          '<span class="kor-meter__zlabel">' +
+          esc(z.label) +
+          '</span></span>'
+        );
+      })
+      .join('') +
+    '<span class="kor-meter__penanda" style="left:' +
+    pos +
+    '%" aria-hidden="true"></span>' +
+    '</div>' +
+    '<div class="kor-meter__skala" aria-hidden="true"><span>−1</span><span>0</span><span>1</span></div>' +
+    '<p class="kor-meter__baca">' +
+    esc(nilai + t.label) +
+    '</p>' +
+    '</div>'
+  );
+}
+
+/* ---------- Tabel langkah r ---------- */
+
+/*
+ * Tabel langkah hitung r: x, y, x − x̄, y − ȳ, (x − x̄)(y − ȳ), (x − x̄)²,
+ * (y − ȳ)². opts.total true → baris jumlah (Sxy, Sxx, Syy); opts.caption;
+ * opts.xLabel / opts.yLabel judul kolom x & y.
+ */
+function buildCorrelationStepTable(points, opts) {
+  opts = opts || {};
+  var R = rincianKorelasi(points);
+  if (!R) return '';
+  var f = function (v) {
+    return esc(fmtAngkaReg(v));
+  };
+  var th = function (t) {
+    return '<th scope="col">' + t + '</th>';
+  };
+  var td = function (v) {
+    return '<td class="aso-num">' + f(v) + '</td>';
+  };
+  return (
+    '<div class="aso-tabel-wrap"><table class="aso-tabel kor-tabel">' +
+    (opts.caption
+      ? '<caption class="aso-tabel__caption">' + esc(opts.caption) + '</caption>'
+      : '') +
+    '<thead><tr>' +
+    th(esc(opts.xLabel || 'x')) +
+    th(esc(opts.yLabel || 'y')) +
+    th('x − x̄') +
+    th('y − ȳ') +
+    th('(x − x̄)(y − ȳ)') +
+    th('(x − x̄)²') +
+    th('(y − ȳ)²') +
+    '</tr></thead><tbody>' +
+    R.baris
+      .map(function (b) {
+        return (
+          '<tr>' +
+          td(b.x) +
+          td(b.y) +
+          td(b.dx) +
+          td(b.dy) +
+          '<td class="aso-num' +
+          (b.dxdy > 0 ? ' lf-e--pos' : b.dxdy < 0 ? ' lf-e--neg' : '') +
+          '">' +
+          f(b.dxdy) +
+          '</td>' +
+          td(b.dx2) +
+          td(b.dy2) +
+          '</tr>'
+        );
+      })
+      .join('') +
+    (opts.total
+      ? '<tr class="aso-tabel__total"><th scope="row" colspan="4">Jumlah</th>' +
+        '<td class="aso-num"><strong>' +
+        f(R.sxy) +
+        '</strong></td><td class="aso-num"><strong>' +
+        f(R.sxx) +
+        '</strong></td><td class="aso-num"><strong>' +
+        f(R.syy) +
+        '</strong></td></tr>'
+      : '') +
+    '</tbody></table></div>'
+  );
+}
+
+/* ---------- Plot residu ---------- */
+
+/*
+ * Plot residu (SVG): sumbu x data, sumbu tegak residu e = y − ŷ terhadap
+ * garis y = mx + c, garis nol, titik hijau (e > 0) / merah (e < 0).
+ *   opts.hubung   true → titik dihubungkan berurutan x (memperlihatkan pola)
+ *   opts.x        sumbu x { min, max, step } (default dari data)
+ *   opts.xLabel, opts.caption, opts.kecil
+ */
+function buildResidualPlot(points, m, c, opts) {
+  opts = opts || {};
+  var res = residuTitik(points, m, c);
+  var batas = res.reduce(function (a, t) {
+    return Math.max(a, Math.abs(t.e));
+  }, 0);
+  var ay = sumbuPencar([-batas, batas], {});
+  var lim = Math.max(Math.abs(ay.min), Math.abs(ay.max));
+  ay = { min: -lim, max: lim, step: ay.step };
+  var ax = sumbuPencar(
+    points.map(function (p) {
+      return p.x;
+    }),
+    opts.x || {}
+  );
+  var s = asoSkala_(ax, ay);
+  var g = ASO_PLOT;
+  var urut = res.slice().sort(function (a, b) {
+    return a.x - b.x;
+  });
+  var hubung = opts.hubung
+    ? '<polyline class="kor-hubung" points="' +
+      urut
+        .map(function (t) {
+          return s.x(t.x) + ',' + s.y(t.e);
+        })
+        .join(' ') +
+      '"/>'
+    : '';
+  var dots = res
+    .map(function (t) {
+      var cls = t.e > 0 ? 'pos' : t.e < 0 ? 'neg' : 'nol';
+      return (
+        '<circle class="kor-rdot kor-rdot--' +
+        cls +
+        '" cx="' +
+        s.x(t.x) +
+        '" cy="' +
+        s.y(t.e) +
+        '" r="6"><title>' +
+        esc('x = ' + fmtAngkaReg(t.x) + ', e = ' + fmtAngkaReg(t.e)) +
+        '</title></circle>'
+      );
+    })
+    .join('');
+  return (
+    '<svg class="aso-plot kor-rplot' +
+    (opts.kecil ? ' aso-plot--kecil' : '') +
+    '" viewBox="0 0 ' +
+    g.W +
+    ' ' +
+    g.H +
+    '" role="img" aria-label="' +
+    esc(opts.caption || 'Plot residu') +
+    '">' +
+    asoKerangka_(ax, ay, s, { xLabel: opts.xLabel, yLabel: 'Residu e = y − ŷ' }) +
+    '<line class="kor-nol" x1="' +
+    g.L +
+    '" y1="' +
+    s.y(0) +
+    '" x2="' +
+    (g.W - g.R) +
+    '" y2="' +
+    s.y(0) +
+    '"/>' +
+    hubung +
+    dots +
+    '</svg>'
+  );
+}
+
+/* ---------- Penjelajah r ---------- */
+
+var KOR_RENTANG_R = { min: -1, max: 1, step: 0.05 };
+
+function makeCorrelationExplorerState(r) {
+  return { r: typeof r === 'number' ? r : 0.5, geser: 0 };
+}
+
+/* Mengatur st.r menempel kelipatan 0,05 di [−1, 1] dan menambah hitungan geser. */
+function korAturR(st, v) {
+  var rng = KOR_RENTANG_R;
+  var k = Math.round((v - rng.min) / rng.step);
+  st.r = Math.max(rng.min, Math.min(rng.max, bulatReg_(rng.min + k * rng.step)));
+  st.geser = (st.geser || 0) + 1;
+  return st.r;
+}
+
+function korExplorerPlot_(st, opts) {
+  return buildScatterPlot(dataDenganKorelasi(st.r, opts.n || 24), {
+    x: { min: 0, max: 100, step: 20 },
+    y: { min: 0, max: 100, step: 20 },
+    xLabel: opts.xLabel || 'Variabel x',
+    yLabel: opts.yLabel || 'Variabel y',
+    trend: opts.trend !== false && Math.abs(st.r) >= KOR_BATAS.lemah,
+    caption: 'Diagram pencar dengan r = ' + fmtAngkaReg(st.r),
+  });
+}
+
+/*
+ * Penjelajah r: slider r (−1 … 1) yang langsung menggambar diagram pencar
+ * dengan korelasi tersebut beserta meteran r.
+ *   opts.n (banyak titik, default 24), opts.xLabel, opts.yLabel, opts.trend
+ */
+function buildCorrelationExplorer(id, st, opts) {
+  opts = opts || {};
+  var rng = KOR_RENTANG_R;
+  var iid = id + '-r';
+  return (
+    '<div class="kor-jelajah" id="' +
+    id +
+    '">' +
+    '<div class="kor-jelajah__plot" id="' +
+    id +
+    '-plot">' +
+    korExplorerPlot_(st, opts) +
+    '</div>' +
+    '<div class="kor-jelajah__panel">' +
+    '<div class="lf-kontrol">' +
+    '<label for="' +
+    iid +
+    '" class="lf-kontrol__label">Koefisien korelasi r <output id="' +
+    iid +
+    '-out" for="' +
+    iid +
+    '" class="lf-kontrol__out">' +
+    esc(fmtAngkaReg(st.r)) +
+    '</output></label>' +
+    '<div class="lf-kontrol__row">' +
+    '<button type="button" class="btn btn--ghost btn--small lf-kontrol__btn" data-kor-step="-1" aria-label="Kurangi r">−</button>' +
+    '<input type="range" class="lf-kontrol__range" id="' +
+    iid +
+    '" min="' +
+    rng.min +
+    '" max="' +
+    rng.max +
+    '" step="' +
+    rng.step +
+    '" value="' +
+    st.r +
+    '">' +
+    '<button type="button" class="btn btn--ghost btn--small lf-kontrol__btn" data-kor-step="1" aria-label="Tambah r">+</button>' +
+    '</div>' +
+    '</div>' +
+    '<div id="' +
+    id +
+    '-meter" aria-live="polite">' +
+    buildRMeter(st.r, {}) +
+    '</div>' +
+    '</div>' +
+    '</div>'
+  );
+}
+
+/* Hanya grafik & meteran yang diperbarui agar slider tetap fokus. */
+function bindCorrelationExplorer(root, id, st, opts, save, onUpdate) {
+  opts = opts || {};
+  var box = root.querySelector('#' + id);
+  if (!box) return;
+  var inp = box.querySelector('#' + id + '-r');
+  function segarkan() {
+    box.querySelector('#' + id + '-plot').innerHTML = korExplorerPlot_(st, opts);
+    box.querySelector('#' + id + '-meter').innerHTML = buildRMeter(st.r, {});
+    box.querySelector('#' + id + '-r-out').textContent = fmtAngkaReg(st.r);
+    inp.value = st.r;
+    save();
+    if (onUpdate) onUpdate(st);
+  }
+  inp.addEventListener('input', function () {
+    korAturR(st, parseFloat(inp.value));
+    segarkan();
+  });
+  box.querySelectorAll('[data-kor-step]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      korAturR(st, st.r + Number(btn.dataset.korStep) * KOR_RENTANG_R.step);
+      segarkan();
+    });
+  });
+}
+
+/* ---------- Lab pencilan ---------- */
+
+function makeOutlierLabState() {
+  return { mati: [], ubah: 0 };
+}
+
+/* Menyalakan/mematikan titik ber-id `pid` dari perhitungan. */
+function korToggleTitik(st, pid) {
+  var i = st.mati.indexOf(pid);
+  if (i === -1) st.mati.push(pid);
+  else st.mati.splice(i, 1);
+  st.ubah = (st.ubah || 0) + 1;
+  return st.mati;
+}
+
+/* Bacaan lab pencilan: r semua data vs r data yang dipakai. */
+function outlierLabBacaHTML(points, st) {
+  var rSemua = korelasiTanpa(points, []);
+  var rPakai = korelasiTanpa(points, st.mati);
+  var kartu = function (judul, r, utama) {
+    return (
+      '<div class="lf-baca__item' +
+      (utama ? ' lf-baca__item--utama' : '') +
+      '"><span class="lf-baca__label">' +
+      esc(judul) +
+      '</span><span class="lf-baca__nilai">' +
+      (r === null ? '—' : esc(fmtAngkaReg(r))) +
+      '<small>' +
+      esc(r === null ? 'tidak terdefinisi' : tafsirKorelasi(r).label) +
+      '</small></span></div>'
+    );
+  };
+  return (
+    kartu('Semua data (' + points.length + ' titik)', rSemua, false) +
+    kartu(
+      'Data dipakai (' + (points.length - st.mati.length) + ' titik)',
+      rPakai,
+      st.mati.length > 0
+    )
+  );
+}
+
+function korOutlierPlot_(points, st, opts) {
+  var ax = asoSumbuDari_(points, opts);
+  var s = asoSkala_(ax.x, ax.y);
+  var pakai = points.filter(function (p) {
+    return st.mati.indexOf(p.id) === -1;
+  });
+  var reg = regresiLinear(pakai);
+  var garis = reg
+    ? lfGarisSVG_(
+        reg.m,
+        reg.c,
+        ax.x,
+        ax.y,
+        s,
+        'lf-garis lf-garis--utama',
+        'Garis regresi: ' + fmtPersamaanRegresi(reg.m, reg.c)
+      )
+    : '';
+  var dots = points
+    .map(function (p) {
+      var mati = st.mati.indexOf(p.id) !== -1;
+      return (
+        '<circle class="aso-dot kor-dot' +
+        (mati ? ' kor-dot--mati' : '') +
+        (p.pencilan ? ' kor-dot--pencilan' : '') +
+        '" cx="' +
+        s.x(p.x) +
+        '" cy="' +
+        s.y(p.y) +
+        '" r="7" data-kor-titik="' +
+        esc(p.id) +
+        '"><title>' +
+        esc(
+          (p.nama ? p.nama + ': ' : '') + '(' + fmtAngkaReg(p.x) + ', ' + fmtAngkaReg(p.y) + ')'
+        ) +
+        '</title></circle>'
+      );
+    })
+    .join('');
+  return (
+    '<svg class="aso-plot kor-lab__svg" viewBox="0 0 ' +
+    ASO_PLOT.W +
+    ' ' +
+    ASO_PLOT.H +
+    '" role="img" aria-label="' +
+    esc(opts.caption || 'Diagram pencar lab pencilan') +
+    '">' +
+    asoKerangka_(ax.x, ax.y, s, opts) +
+    garis +
+    dots +
+    '</svg>'
+  );
+}
+
+function korOutlierChips_(points, st) {
+  return points
+    .map(function (p) {
+      var aktif = st.mati.indexOf(p.id) === -1;
+      return (
+        '<button type="button" class="kor-chip' +
+        (aktif ? '' : ' is-mati') +
+        (p.pencilan ? ' kor-chip--pencilan' : '') +
+        '" data-kor-titik="' +
+        esc(p.id) +
+        '" aria-pressed="' +
+        (aktif ? 'true' : 'false') +
+        '">' +
+        esc(p.nama || p.id) +
+        ' <span class="kor-chip__xy">(' +
+        esc(fmtAngkaReg(p.x) + '; ' + fmtAngkaReg(p.y)) +
+        ')</span></button>'
+      );
+    })
+    .join('');
+}
+
+/*
+ * Lab pencilan: ketuk titik pada grafik atau tombol nama data untuk
+ * mengeluarkan/memasukkan titik; garis regresi dan r langsung berubah.
+ *   points  [{id, x, y, nama?, pencilan?}]
+ *   opts.x, opts.y, opts.xLabel, opts.yLabel, opts.caption
+ */
+function buildOutlierLab(id, points, st, opts) {
+  opts = opts || {};
+  return (
+    '<div class="kor-lab" id="' +
+    id +
+    '">' +
+    '<div class="kor-lab__plot" id="' +
+    id +
+    '-plot">' +
+    korOutlierPlot_(points, st, opts) +
+    '</div>' +
+    '<div class="kor-lab__panel">' +
+    '<p class="dl-caption">Ketuk titik atau tombol di bawah untuk mengeluarkan/memasukkan data.</p>' +
+    '<div class="kor-chips" id="' +
+    id +
+    '-chips">' +
+    korOutlierChips_(points, st) +
+    '</div>' +
+    '<div class="lf-baca kor-lab__baca" id="' +
+    id +
+    '-baca" aria-live="polite">' +
+    outlierLabBacaHTML(points, st) +
+    '</div>' +
+    '</div>' +
+    '</div>'
+  );
+}
+
+function bindOutlierLab(root, id, points, st, opts, save, onUpdate) {
+  opts = opts || {};
+  var lab = root.querySelector('#' + id);
+  if (!lab) return;
+  function pasang() {
+    lab.querySelectorAll('[data-kor-titik]').forEach(function (el) {
+      el.addEventListener('click', function () {
+        var pid = el.getAttribute('data-kor-titik');
+        korToggleTitik(st, pid);
+        lab.querySelector('#' + id + '-plot').innerHTML = korOutlierPlot_(points, st, opts);
+        lab.querySelector('#' + id + '-chips').innerHTML = korOutlierChips_(points, st);
+        lab.querySelector('#' + id + '-baca').innerHTML = outlierLabBacaHTML(points, st);
+        pasang();
+        var chip = lab.querySelector('.kor-chip[data-kor-titik="' + pid + '"]');
+        if (chip && el.tagName.toLowerCase() === 'button') chip.focus();
+        save();
+        if (onUpdate) onUpdate(st);
+      });
+    });
+  }
+  pasang();
+}
+
+/* ---------- Panel spreadsheet & kode ---------- */
+
+/*
+ * Panel keluaran teknologi untuk korelasi: tabel ala spreadsheet (=CORREL,
+ * =RSQ, =SLOPE, =INTERCEPT) dan padanan kode JavaScript korelasi().
+ *   opts.rentangX, opts.rentangY  rentang sel (default 'A2:A11', 'B2:B11')
+ *   opts.namaData                 nama variabel data di kode (default 'data')
+ */
+function buildCorrelationPanel(points, opts) {
+  opts = opts || {};
+  var reg = regresiLinear(points || []);
+  if (!reg || reg.r === null) {
+    return buildFeedbackBox(
+      'warning',
+      '⚠️',
+      'Korelasi membutuhkan minimal dua titik dengan nilai x dan y yang bervariasi.'
+    );
+  }
+  var rx = opts.rentangX || 'A2:A11';
+  var ry = opts.rentangY || 'B2:B11';
+  var nama = opts.namaData || 'data';
+  var baris = [
+    ['Koefisien korelasi r', '=CORREL(' + rx + ';' + ry + ')', fmtAngkaReg(reg.r, 3)],
+    ['Koefisien determinasi r²', '=RSQ(' + ry + ';' + rx + ')', fmtAngkaReg(reg.r2, 3)],
+    ['Kemiringan m', '=SLOPE(' + ry + ';' + rx + ')', fmtAngkaReg(reg.m, 3)],
+    ['Titik potong c', '=INTERCEPT(' + ry + ';' + rx + ')', fmtAngkaReg(reg.c, 3)],
+  ];
+  return (
+    '<div class="lf-reg">' +
+    '<div class="aso-tabel-wrap"><table class="aso-tabel lf-sheet">' +
+    '<caption class="aso-tabel__caption">Spreadsheet</caption>' +
+    '<thead><tr><th scope="col">Besaran</th><th scope="col">Rumus sel</th><th scope="col">Hasil</th></tr></thead><tbody>' +
+    baris
+      .map(function (b) {
+        return (
+          '<tr><th scope="row">' +
+          esc(b[0]) +
+          '</th><td><code>' +
+          esc(b[1]) +
+          '</code></td><td class="aso-num"><strong>' +
+          esc(b[2]) +
+          '</strong></td></tr>'
+        );
+      })
+      .join('') +
+    '</tbody></table></div>' +
+    '<pre class="lf-kode" aria-label="Padanan kode JavaScript"><code>' +
+    esc(
+      'const hasil = korelasi(' +
+        nama +
+        ');\n// → { r: ' +
+        angkaJs_(reg.r, 3) +
+        ', r2: ' +
+        angkaJs_(reg.r2, 3) +
+        ' }'
+    ) +
+    '</code></pre>' +
+    '<p class="lf-persamaan lf-persamaan--hasil">r ≈ ' +
+    esc(fmtAngkaReg(reg.r, 3)) +
+    ' → ' +
+    esc(tafsirKorelasi(reg.r).label) +
+    '</p>' +
+    '</div>'
   );
 }

@@ -32,6 +32,7 @@ const TAHAP_PERTAMA = {
   'fase-f/mpi-1.4': 'pertanyaan',
   'fase-f/mpi-11.1': 'stimulasi',
   'fase-f/mpi-11.2': 'orientasi',
+  'fase-f/mpi-11.3': 'orientasi',
 };
 
 for (const [modul, key] of Object.entries(TAHAP_PERTAMA)) {

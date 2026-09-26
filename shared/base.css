@@ -11327,3 +11327,221 @@ button.akar-tile:disabled {
     font-size: 1.25rem;
   }
 }
+
+/* =========================================================================
+   Koefisien korelasi & kesesuaian model linear (engine.js seksi 50):
+   meteran r (.kor-meter), tabel langkah r (.kor-tabel), plot residu
+   (.kor-rplot), penjelajah r (.kor-jelajah), lab pencilan (.kor-lab,
+   .kor-chip). Tabel menggulir di dalam kotaknya sendiri (.aso-tabel-wrap)
+   sehingga halaman tidak bergeser pada layar sempit.
+   ========================================================================= */
+
+.kor-meter {
+  margin: var(--space-3) 0;
+  min-width: 0;
+}
+
+.kor-meter__judul {
+  margin: 0 0 var(--space-1);
+  font-weight: 700;
+}
+
+.kor-meter__bar {
+  position: relative;
+  display: flex;
+  height: 34px;
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+}
+
+.kor-meter__zona {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.kor-meter__zona + .kor-meter__zona {
+  border-left: 1px solid var(--color-surface);
+}
+
+.kor-meter__zona--kuat {
+  background: #bcd3fb;
+}
+
+.kor-meter__zona--sedang {
+  background: #d6e4fd;
+}
+
+.kor-meter__zona--lemah {
+  background: #eef4ff;
+}
+
+.kor-meter__zona--nol {
+  background: var(--color-bg-grid);
+}
+
+.kor-meter__zlabel {
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: var(--color-ink);
+  white-space: nowrap;
+}
+
+.kor-meter__penanda {
+  position: absolute;
+  top: -4px;
+  bottom: -4px;
+  width: 6px;
+  margin-left: -3px;
+  border-radius: 3px;
+  background: var(--color-orange-strong);
+  box-shadow: 0 0 0 2px var(--color-surface);
+  transition: left 0.2s ease;
+}
+
+.kor-meter__skala {
+  display: flex;
+  justify-content: space-between;
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  color: var(--color-ink-muted);
+}
+
+.kor-meter__baca {
+  margin: var(--space-1) 0 0;
+  font-family: var(--font-mono);
+  font-weight: 700;
+  text-align: center;
+  color: var(--color-primary-strong);
+}
+
+@media (max-width: 480px) {
+  .kor-meter__zlabel {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .kor-meter__penanda {
+    transition: none;
+  }
+}
+
+/* Plot residu */
+.kor-rplot {
+  margin: var(--space-3) auto;
+}
+
+.kor-nol {
+  stroke: var(--color-ink);
+  stroke-width: 2;
+  stroke-dasharray: 6 4;
+}
+
+.kor-hubung {
+  fill: none;
+  stroke: var(--color-ink-muted);
+  stroke-width: 1.5;
+}
+
+.kor-rdot {
+  stroke: var(--color-surface);
+  stroke-width: 1.5;
+}
+
+.kor-rdot--pos {
+  fill: var(--color-success);
+}
+
+.kor-rdot--neg {
+  fill: var(--color-error);
+}
+
+.kor-rdot--nol {
+  fill: var(--color-ink-muted);
+}
+
+/* Penjelajah r & lab pencilan */
+.kor-jelajah,
+.kor-lab {
+  display: grid;
+  gap: var(--space-4);
+  grid-template-columns: minmax(0, 1fr);
+}
+
+@media (min-width: 860px) {
+  .kor-jelajah,
+  .kor-lab {
+    grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+    align-items: start;
+  }
+}
+
+.kor-jelajah__panel,
+.kor-lab__panel {
+  display: grid;
+  gap: var(--space-3);
+  min-width: 0;
+}
+
+.kor-lab__baca {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.kor-dot {
+  cursor: pointer;
+}
+
+.kor-dot--pencilan {
+  fill: var(--color-orange);
+}
+
+.kor-dot--mati {
+  fill: var(--color-surface);
+  stroke: var(--color-ink-muted);
+  stroke-width: 2;
+  stroke-dasharray: 3 2;
+}
+
+.kor-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.kor-chip {
+  min-height: 44px;
+  padding: var(--space-1) var(--space-3);
+  font: inherit;
+  font-size: 0.85rem;
+  color: var(--color-ink);
+  background: var(--color-primary-soft);
+  border: 2px solid var(--color-primary);
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+.kor-chip--pencilan {
+  border-color: var(--color-orange);
+  background: var(--color-orange-soft);
+}
+
+.kor-chip.is-mati {
+  color: var(--color-ink-muted);
+  background: var(--color-surface);
+  border-style: dashed;
+  text-decoration: line-through;
+}
+
+.kor-chip:focus-visible {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+.kor-chip__xy {
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+}
