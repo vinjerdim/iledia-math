@@ -1,0 +1,237 @@
+/* =========================================================================
+   fase-d/mpi-12.3/styles.css
+   Bentuk Akar & Pangkat Pecahan — Fase D (SMP Kelas VIII)
+
+   Hanya memuat gaya yang KHAS modul ini. Tanda akar, pangkat pecahan,
+   ubin faktor kembar, konverter akar–pangkat, lab persegi & kubus,
+   langkah isian akar (.akar*), pilihan ganda, chip konteks, dan
+   komponen Discovery Learning lainnya berasal dari shared/base.css.
+   ========================================================================= */
+
+/* -------------------------------------------------------------------------
+   Stimulasi — kalkulator Dina vs papan rencana Pak Gani
+   ------------------------------------------------------------------------- */
+
+.stimulasi-cerita {
+  margin: 0 0 var(--space-4);
+  font-size: 1.05rem;
+  line-height: 1.6;
+}
+
+.kebun-banding {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: var(--space-3);
+}
+
+.kebun-banding figure {
+  margin: 0;
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-md);
+}
+
+.kebun-banding figcaption {
+  font-weight: 700;
+}
+
+.kebun-kalkulator {
+  background: #2f3a33;
+  color: #d9f5dd;
+}
+
+.kebun-kalkulator__layar {
+  margin: var(--space-2) 0 0;
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-sm);
+  background: #c7dcc3;
+  color: #1c2a1f;
+  font-family: var(--font-mono);
+  font-size: 1.6rem;
+  font-weight: 700;
+  text-align: right;
+  overflow-wrap: anywhere;
+}
+
+.kebun-papan {
+  border: 3px solid #8a6a3d;
+  background: #2e4a3b;
+  color: #fff;
+}
+
+.kebun-papan__isi {
+  margin: var(--space-2) 0 0;
+  font-size: 1.35rem;
+  font-weight: 700;
+  line-height: 1.8;
+}
+
+/* -------------------------------------------------------------------------
+   Lab — jejak nilai yang sudah dicoba
+   ------------------------------------------------------------------------- */
+
+.akar-jejak-wrap {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--space-2);
+  margin: var(--space-4) 0 0;
+}
+
+.akar-jejak {
+  padding: var(--space-1) var(--space-3);
+  border-radius: 999px;
+  background: var(--color-bg-grid);
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.akar-jejak.is-ok {
+  background: var(--color-success-soft);
+  color: var(--color-success-strong);
+}
+
+/* -------------------------------------------------------------------------
+   Ubin faktor kembar — satu soal per kartu
+   ------------------------------------------------------------------------- */
+
+.akar-ubin-item + .akar-ubin-item {
+  margin-top: var(--space-5);
+  padding-top: var(--space-5);
+  border-top: 2px dashed var(--color-border);
+}
+
+.akar-ubin-item__judul {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0;
+  font-size: 1.1rem;
+}
+
+.akar-ubin-item__faktor {
+  margin: var(--space-2) 0 0;
+  font-family: var(--font-mono);
+  font-weight: 700;
+  color: var(--color-blue-strong);
+  overflow-wrap: anywhere;
+}
+
+/* -------------------------------------------------------------------------
+   Olah data — misi konverter & notasi butir pilah
+   ------------------------------------------------------------------------- */
+
+.akar-misi {
+  margin: var(--space-4) 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.akar-misi__item {
+  display: flex;
+  gap: var(--space-3);
+  align-items: flex-start;
+  margin-bottom: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  border: 2px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  color: var(--color-ink-muted);
+}
+
+.akar-misi__item.is-aktif {
+  border-color: var(--color-primary);
+  color: var(--color-ink);
+  font-weight: 600;
+}
+
+.akar-misi__item.is-done {
+  border-color: var(--color-success);
+  background: var(--color-success-soft);
+  color: var(--color-success-strong);
+}
+
+.akar-misi__status {
+  flex: 0 0 auto;
+  font-weight: 700;
+}
+
+.akar-pilah {
+  display: inline-block;
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: var(--color-blue-strong);
+}
+
+/* -------------------------------------------------------------------------
+   Kesimpulan — pratinjau notasi & rumus utama
+   ------------------------------------------------------------------------- */
+
+.akar-pratinjau {
+  min-height: 1.6em;
+  margin: var(--space-2) 0 0;
+  font-size: 1.05rem;
+  color: var(--color-blue-strong);
+}
+
+.akar-rumus {
+  margin: 0 0 var(--space-4);
+  padding: var(--space-3);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  font-size: 2rem;
+  font-weight: 700;
+  text-align: center;
+}
+
+/* -------------------------------------------------------------------------
+   Uji terap — petunjuk soal pilihan
+   ------------------------------------------------------------------------- */
+
+.soal-hint {
+  margin-top: var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-md);
+  background: var(--color-warning-soft);
+  color: var(--color-warning-strong);
+}
+
+.soal-hint summary {
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.soal-hint ul {
+  margin: var(--space-2) 0 0;
+  padding-left: var(--space-5);
+}
+
+/* -------------------------------------------------------------------------
+   Selesai — tiga bentuk yang sama nilainya
+   ------------------------------------------------------------------------- */
+
+.sajian-trio {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--space-3);
+  margin: var(--space-4) 0;
+}
+
+.sajian-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-1);
+  min-width: 140px;
+  max-width: 200px;
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-md);
+  background: var(--color-primary-soft);
+  color: var(--color-primary-strong);
+  font-weight: 700;
+  text-align: center;
+}
+
+.sajian-card__ikon {
+  font-size: 1.6rem;
+}

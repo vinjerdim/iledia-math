@@ -95,6 +95,14 @@
     "stageCount": 11,
     "extraBody": "partials/reset-modal.html"
   },
+  "fase-d/mpi-12.3": {
+    "title": "Bentuk Akar & Pangkat Pecahan — Matematika Fase D",
+    "description": "Media pembelajaran interaktif berbasis Discovery Learning untuk mengonversi bentuk akar menjadi bentuk pangkat pecahan dan sebaliknya, serta menyederhanakan bentuk akar: petak kebun persegi 72 m², lab persegi & kubus, detektif eksponen, tangga pangkat pecahan 64, ubin faktor kembar, konverter akar ⇄ pangkat, dan pemilahan miskonsepsi.",
+    "kicker": "Matematika — Fase D (SMP)",
+    "h1": "Bentuk Akar & Pangkat Pecahan",
+    "stageCount": 11,
+    "extraBody": "partials/reset-modal.html"
+  },
   "fase-d/mpi-22.1": {
     "title": "Unsur-unsur & Jaring-jaring Prisma — Matematika Fase D",
     "description": "Media pembelajaran interaktif berbasis Discovery Learning untuk mengidentifikasi unsur-unsur prisma (titik sudut, rusuk, sisi, dan tinggi) serta jaring-jaring prisma melalui kegiatan memutar model 3D, melipat, dan merakit bentangan karton kemasan.",

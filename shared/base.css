@@ -9930,3 +9930,489 @@ button.pwr-anatomy__part:disabled {
     font-size: 1.25rem;
   }
 }
+
+/* =========================================================================
+   Seksi 45 — Bentuk akar & pangkat pecahan: tanda akar ber-vinculum
+   (.akar*), pangkat pecahan (.akar-pp*), ubin faktor kembar
+   (.akar-tiles, .akar-tile*), konverter akar–pangkat (.akar-kv*),
+   lab persegi & kubus (.akar-lab*), langkah isian akar (.akar-step*),
+   dan tabel bentuk pangkat ⇄ akar (.akar-tabel).
+   ========================================================================= */
+
+.akar {
+  display: inline-flex;
+  align-items: stretch;
+  white-space: nowrap;
+  vertical-align: middle;
+  line-height: 1.2;
+}
+
+.akar__indeks {
+  align-self: flex-start;
+  margin-right: -0.3em;
+  font-size: 0.62em;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.akar__tanda {
+  display: inline-flex;
+  align-items: flex-end;
+  font-size: 1.15em;
+  line-height: 1;
+}
+
+.akar__isi {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.15em;
+  padding: 0.12em 0.15em 0 0.1em;
+  border-top: 0.09em solid currentColor;
+}
+
+/* Varian besar: lambang √ SVG setinggi isi, menyambung dengan vinculum. */
+.akar--besar {
+  align-items: stretch;
+}
+
+.akar--besar .akar__indeks {
+  margin-right: -0.55em;
+  padding-top: 0.2em;
+}
+
+.akar__tanda--svg {
+  flex: 0 0 auto;
+  width: 0.55em;
+  height: auto;
+  min-height: 1.2em;
+  overflow: visible;
+}
+
+.akar--besar .akar__isi {
+  margin-left: -1px;
+  padding: 0.2em 0.2em 0.05em;
+  border-top-width: 3px;
+}
+
+.akar-pp {
+  white-space: nowrap;
+}
+
+.akar-pp__eks {
+  font-size: 0.68em;
+  font-weight: 700;
+}
+
+/* Ubin faktor kembar */
+
+.akar-tiles {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  margin: var(--space-3) 0;
+  padding: var(--space-4) var(--space-3);
+  border-radius: var(--radius-md);
+  background: var(--color-primary-soft);
+  font-size: 1.6rem;
+}
+
+.akar-tiles__luar {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.akar-tiles__kosong {
+  color: var(--color-ink-muted);
+}
+
+.akar-tiles__op {
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+
+.akar-tiles .akar__isi {
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  padding: var(--space-2);
+}
+
+.akar-tiles__dalam {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.akar-tile {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 48px;
+  min-height: 48px;
+  padding: 0 var(--space-2);
+  border: 2px solid var(--color-blue);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  color: var(--color-blue-strong);
+  font-family: var(--font-display);
+  font-size: 1.3rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition:
+    transform 0.12s ease,
+    background-color 0.12s ease;
+}
+
+button.akar-tile:hover:not(:disabled) {
+  transform: translateY(-2px);
+}
+
+button.akar-tile:disabled {
+  cursor: default;
+}
+
+.akar-tile.is-pilih {
+  border-color: var(--color-orange);
+  background: var(--color-orange-soft);
+  color: var(--color-orange-strong);
+  transform: translateY(-3px);
+}
+
+.akar-tile--luar {
+  border-color: var(--color-success);
+  background: var(--color-success-soft);
+  color: var(--color-success-strong);
+  cursor: default;
+}
+
+.akar-tile--satu {
+  border-style: dashed;
+  color: var(--color-ink-muted);
+  cursor: default;
+}
+
+/* Konverter akar ⇄ pangkat */
+
+.akar-kv {
+  margin: var(--space-3) 0;
+}
+
+.akar-kv__kontrols {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: var(--space-3);
+}
+
+.akar-kv__kontrol {
+  padding: var(--space-2) var(--space-3);
+  border: 2px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+}
+
+.akar-kv__kontrol--m {
+  border-color: var(--color-orange);
+}
+
+.akar-kv__kontrol--n {
+  border-color: var(--color-purple);
+}
+
+.akar-kv__label {
+  display: block;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.akar-kv__stepper {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  margin-top: var(--space-1);
+}
+
+.akar-kv__stepper .btn {
+  min-width: 44px;
+  min-height: 44px;
+  font-size: 1.2rem;
+}
+
+.akar-kv__nilai {
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+.akar-kv__layar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-3) var(--space-4);
+  margin-top: var(--space-4);
+  padding: var(--space-4);
+  border-radius: var(--radius-md);
+  background: var(--color-ink);
+  color: #fff;
+  font-size: 2rem;
+  font-weight: 700;
+}
+
+.akar-kv__panah {
+  font-size: 1.5rem;
+  color: #c9d3dd;
+}
+
+.akar-kv__hasil {
+  flex-basis: 100%;
+  text-align: center;
+  font-size: 1.2rem;
+  color: #c9d3dd;
+}
+
+.akar-kv__m {
+  color: var(--color-orange);
+}
+
+.akar-kv__n {
+  color: var(--color-purple);
+}
+
+.akar-kv__layar .akar-kv__m {
+  color: #ffb877;
+}
+
+.akar-kv__layar .akar-kv__n {
+  color: #d6b4ff;
+}
+
+.akar-kv__aturan {
+  margin: var(--space-3) 0 0;
+  text-align: center;
+}
+
+/* Lab persegi & kubus */
+
+.akar-lab__modes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  justify-content: center;
+  margin-bottom: var(--space-3);
+}
+
+.akar-lab__mode {
+  min-height: 44px;
+  padding: var(--space-2) var(--space-4);
+  border: 2px solid var(--color-border-strong);
+  border-radius: 999px;
+  background: var(--color-surface);
+  color: var(--color-ink);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.akar-lab__mode.is-aktif {
+  border-color: var(--color-primary);
+  background: var(--color-primary);
+  color: #fff;
+}
+
+.akar-lab__slider {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  max-width: 520px;
+  margin: 0 auto;
+}
+
+.akar-lab__slider input[type='range'] {
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 44px;
+  accent-color: var(--color-primary);
+}
+
+.akar-lab__slider .btn {
+  min-width: 44px;
+  min-height: 44px;
+  font-size: 1.2rem;
+}
+
+.akar-lab__label {
+  font-weight: 700;
+}
+
+.akar-lab__tampil {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-3) var(--space-5);
+  margin-top: var(--space-3);
+}
+
+.akar-lab__svg {
+  width: 100%;
+  max-width: 220px;
+  height: auto;
+}
+
+.akar-lab__bangun,
+.akar-lab__atas,
+.akar-lab__samping {
+  fill: var(--color-orange-soft);
+  stroke: var(--color-orange);
+  stroke-width: 2;
+}
+
+.akar-lab__atas {
+  fill: #f9ebdd;
+}
+
+.akar-lab__samping {
+  fill: #e9c7a7;
+}
+
+.akar-lab__bangun.is-bulat,
+.akar-lab__atas.is-bulat,
+.akar-lab__samping.is-bulat {
+  fill: var(--color-success-soft);
+  stroke: var(--color-success);
+}
+
+.akar-lab__atas.is-bulat {
+  fill: #eaf5ed;
+}
+
+.akar-lab__samping.is-bulat {
+  fill: #bfdcc8;
+}
+
+.akar-lab__grid {
+  stroke: var(--color-success);
+  stroke-width: 1;
+  opacity: 0.55;
+}
+
+.akar-lab__teks {
+  fill: var(--color-ink);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.akar-lab__hasil {
+  flex: 1 1 220px;
+  max-width: 360px;
+  margin: 0;
+  padding: var(--space-3);
+  border-radius: var(--radius-md);
+  background: var(--color-warning-soft);
+  font-size: 1.1rem;
+}
+
+.akar-lab__hasil.is-bulat {
+  background: var(--color-success-soft);
+}
+
+/* Langkah isian akar sederhana */
+
+.akar-step {
+  margin: var(--space-3) 0;
+  padding: var(--space-4);
+  border: 2px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+}
+
+.akar-step--done {
+  border-color: var(--color-success);
+}
+
+.akar-step__label {
+  margin: 0 0 var(--space-2);
+  font-weight: 600;
+}
+
+.akar-step__baris {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.akar-step__soal,
+.akar-step__jawab {
+  font-size: 1.4rem;
+  font-weight: 700;
+}
+
+.akar-step__jawab {
+  margin: 0 0 var(--space-2);
+  color: var(--color-success-strong);
+}
+
+.akar-step__isian {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  font-size: 1.4rem;
+}
+
+.akar-step__input.input-text {
+  width: 4.2em;
+  min-height: 44px;
+  text-align: center;
+  font-size: 1.1rem;
+}
+
+/* Tabel bentuk pangkat ⇄ akar */
+
+.akar-tabel {
+  width: 100%;
+  margin: var(--space-2) 0 var(--space-4);
+  border-collapse: collapse;
+  font-size: 1.1rem;
+}
+
+.akar-tabel th,
+.akar-tabel td {
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--color-border);
+  text-align: center;
+}
+
+.akar-tabel th {
+  background: var(--color-blue-soft);
+  font-size: 0.95rem;
+}
+
+.akar-tabel td:last-child {
+  font-weight: 700;
+  color: var(--color-success-strong);
+}
+
+@media (max-width: 480px) {
+  .akar-tiles {
+    font-size: 1.3rem;
+  }
+
+  .akar-tile {
+    min-width: 44px;
+    min-height: 44px;
+    font-size: 1.15rem;
+  }
+
+  .akar-kv__layar {
+    font-size: 1.6rem;
+  }
+
+  .akar-tabel {
+    font-size: 1rem;
+  }
+}
