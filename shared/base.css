@@ -8887,3 +8887,312 @@ button.pwr-anatomy__part:disabled {
     width: 72px;
   }
 }
+
+/* ============================================================
+   Model linear terbaik — regresi kuadrat terkecil (engine seksi 41)
+   Plot garis & residu (.lf-plot), Lab Garis (.lf-lab), tabel residu
+   & banding model (.lf-tabel), panel regresi (.lf-reg), lab regresi
+   data sendiri (.lf-reglab).
+   ============================================================ */
+.lf-plot-wrap {
+  margin: var(--space-3) auto;
+  max-width: 560px;
+}
+
+.lf-plot-wrap .aso-plot {
+  margin: 0 auto;
+}
+
+.lf-garis {
+  stroke-width: 3;
+  stroke-linecap: round;
+}
+
+.lf-garis--utama {
+  stroke: var(--color-primary-strong);
+  stroke-width: 3.5;
+}
+
+.lf-garis--0 {
+  stroke: var(--color-orange);
+  stroke-dasharray: 10 6;
+}
+
+.lf-garis--1 {
+  stroke: var(--color-purple);
+  stroke-dasharray: 3 5;
+}
+
+.lf-garis--2 {
+  stroke: var(--color-ink-muted);
+  stroke-dasharray: 14 5 3 5;
+}
+
+.lf-garis--3 {
+  stroke: var(--color-success);
+}
+
+.lf-residu {
+  stroke-width: 2.5;
+  stroke-dasharray: 4 3;
+}
+
+.lf-residu--pos,
+.lf-kuadrat--pos {
+  stroke: var(--color-success);
+}
+
+.lf-residu--neg,
+.lf-kuadrat--neg {
+  stroke: var(--color-error);
+}
+
+.lf-kuadrat {
+  stroke-width: 1.5;
+  fill-opacity: 0.18;
+}
+
+.lf-kuadrat--pos {
+  fill: var(--color-success);
+}
+
+.lf-kuadrat--neg {
+  fill: var(--color-error);
+}
+
+.lf-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-4);
+  justify-content: center;
+  margin: var(--space-2) 0 0;
+  padding: 0;
+  list-style: none;
+  font-size: 0.85rem;
+  color: var(--color-ink);
+}
+
+.lf-legend__swatch {
+  display: inline-block;
+  width: 22px;
+  height: 0;
+  margin-right: var(--space-1);
+  border-top: 3px solid var(--color-primary-strong);
+  vertical-align: middle;
+}
+
+.lf-legend__swatch--0 {
+  border-top: 3px dashed var(--color-orange);
+}
+
+.lf-legend__swatch--1 {
+  border-top: 3px dotted var(--color-purple);
+}
+
+.lf-legend__swatch--2 {
+  border-top: 3px dashed var(--color-ink-muted);
+}
+
+.lf-legend__swatch--3 {
+  border-top-color: var(--color-success);
+}
+
+/* Lab Garis */
+.lf-lab {
+  display: grid;
+  gap: var(--space-4);
+  grid-template-columns: minmax(0, 1fr);
+}
+
+@media (min-width: 860px) {
+  .lf-lab {
+    grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+    align-items: start;
+  }
+}
+
+.lf-lab__panel {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.lf-persamaan {
+  margin: 0;
+  padding: var(--space-2) var(--space-3);
+  font-family: var(--font-mono);
+  font-size: 1.15rem;
+  font-weight: 700;
+  text-align: center;
+  color: var(--color-primary-strong);
+  background: var(--color-primary-soft);
+  border-radius: var(--radius-md);
+}
+
+.lf-kontrol__label {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-2);
+  font-weight: 700;
+}
+
+.lf-kontrol__out {
+  font-family: var(--font-mono);
+  color: var(--color-primary-strong);
+}
+
+.lf-kontrol__row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.lf-kontrol__range {
+  flex: 1;
+  min-width: 0;
+  min-height: 44px;
+  accent-color: var(--color-primary);
+}
+
+.lf-kontrol__btn {
+  min-width: 44px;
+  min-height: 44px;
+  font-size: 1.2rem;
+  font-weight: 700;
+}
+
+.lf-tampil {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-3);
+  margin: 0;
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+}
+
+.lf-tampil legend {
+  padding: 0 var(--space-1);
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+.lf-tampil__opt {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  min-height: 32px;
+  font-size: 0.9rem;
+}
+
+.lf-baca {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-2);
+}
+
+.lf-baca__item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: var(--space-2);
+  text-align: center;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+}
+
+.lf-baca__item--utama {
+  border-color: var(--color-primary);
+  background: var(--color-primary-soft);
+}
+
+.lf-baca__label {
+  font-size: 0.75rem;
+  color: var(--color-ink-muted);
+}
+
+.lf-baca__nilai {
+  font-family: var(--font-mono);
+  font-size: 1.1rem;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+.lf-baca__nilai small {
+  display: block;
+  font-size: 0.7rem;
+  font-weight: 400;
+  color: var(--color-ink-muted);
+}
+
+/* Tabel residu & banding */
+.lf-e--pos {
+  color: var(--color-success-strong);
+  font-weight: 700;
+}
+
+.lf-e--neg {
+  color: var(--color-error-strong);
+  font-weight: 700;
+}
+
+.lf-tabel tr.lf-terbaik th,
+.lf-tabel tr.lf-terbaik td {
+  background: var(--color-success-soft);
+}
+
+.lf-badge {
+  display: inline-block;
+  margin-left: var(--space-1);
+  padding: 0 var(--space-2);
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--color-success-strong);
+  background: var(--color-surface);
+  border: 1px solid var(--color-success);
+  border-radius: 999px;
+}
+
+/* Panel regresi */
+.lf-reg {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.lf-sheet code {
+  font-size: 0.82rem;
+  overflow-wrap: anywhere;
+}
+
+.lf-kode {
+  margin: 0;
+  padding: var(--space-3);
+  overflow-x: auto;
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+  line-height: 1.5;
+  color: #e8eef6;
+  background: #1f2933;
+  border-radius: var(--radius-md);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.lf-persamaan--hasil {
+  color: var(--color-success-strong);
+  background: var(--color-success-soft);
+}
+
+.lf-reglab__teks {
+  font-family: var(--font-mono);
+}
+
+.lf-reglab__hasil:empty {
+  display: none;
+}
+
+@media (max-width: 480px) {
+  .lf-baca {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
