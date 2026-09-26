@@ -3149,6 +3149,140 @@ function coopAwardLevel(persen) {
   };
 }
 
+/* ---------- Numbered Heads Together (NHT) ----------
+   Setiap anggota mendapat nomor kepala acak. Tim "menyatukan kepala"
+   sampai semua anggota paham; lalu media memanggil satu nomor secara
+   acak dan anggota bernomor itu yang menjelaskan jawaban tim
+   (tanggung jawab individu). Gaya .nht-* ada di shared/base.css.
+   anggota = [{ nomor, nama }], call = { nomor, dijelaskan }. */
+
+/* Anggota yang terisi, diacak, lalu diberi nomor 1..n. */
+function assignNhtNumbers(members) {
+  return assignCoopRoles(members).map(function (nama, i) {
+    return { nomor: i + 1, nama: nama };
+  });
+}
+
+/*
+ * Nomor acak 1..jumlah yang tidak sama dengan `terakhir` (bila jumlah
+ * > 1), agar giliran menjelaskan berpindah. `rnd` opsional (default
+ * Math.random) untuk pengujian. null bila jumlah < 1.
+ */
+function panggilNomorNht(jumlah, terakhir, rnd) {
+  if (!(jumlah >= 1)) return null;
+  var pilihan = [];
+  for (var i = 1; i <= jumlah; i++) {
+    if (jumlah === 1 || i !== terakhir) pilihan.push(i);
+  }
+  var r = (rnd || Math.random)();
+  return pilihan[Math.min(pilihan.length - 1, Math.floor(r * pilihan.length))];
+}
+
+function nhtAnggotaBernomor(anggota, nomor) {
+  return (
+    (anggota || []).filter(function (x) {
+      return x.nomor === nomor;
+    })[0] || null
+  );
+}
+
+function makeNhtCall() {
+  return { nomor: null, dijelaskan: false };
+}
+
+function nhtCallSelesai(call) {
+  return !!(call && call.nomor && call.dijelaskan);
+}
+
+/* Kartu nomor kepala seluruh anggota tim. */
+function buildNhtCards(anggota, opts) {
+  opts = opts || {};
+  return (
+    '<ul class="nht-cards" aria-label="Nomor kepala anggota tim">' +
+    (anggota || [])
+      .map(function (x) {
+        return (
+          '<li class="nht-card' +
+          (opts.sorot === x.nomor ? ' nht-card--dipanggil' : '') +
+          '"><span class="nht-card__nomor" aria-hidden="true">' +
+          x.nomor +
+          '</span><span class="nht-card__nama">' +
+          esc(x.nama) +
+          '</span><span class="sr-only">nomor ' +
+          x.nomor +
+          '</span></li>'
+        );
+      })
+      .join('') +
+    '</ul>'
+  );
+}
+
+/*
+ * Panel pemanggilan nomor: tombol "Panggil Nomor", nomor & nama yang
+ * terpanggil, tugas penjelasan, dan centang konfirmasi guru/tim.
+ *   opts.tugas   teks (HTML tepercaya) yang harus dijelaskan
+ *   opts.judul   judul panel (default 'Panggil Nomor!')
+ */
+function buildNhtCall(id, anggota, call, opts) {
+  opts = opts || {};
+  var dipanggil = call && call.nomor ? nhtAnggotaBernomor(anggota, call.nomor) : null;
+  return (
+    '<div class="nht-call" id="' +
+    id +
+    '">' +
+    '<p class="nht-call__judul">🎲 ' +
+    esc(opts.judul || 'Panggil Nomor!') +
+    '</p>' +
+    (opts.tugas ? '<p class="nht-call__tugas">' + opts.tugas + '</p>' : '') +
+    buildNhtCards(anggota, { sorot: call && call.nomor }) +
+    (dipanggil
+      ? '<p class="nht-call__hasil" role="status">Nomor <strong class="nht-call__nomor">' +
+        dipanggil.nomor +
+        '</strong> — <strong>' +
+        esc(dipanggil.nama) +
+        '</strong>, jelaskan jawaban tim kalian!</p>' +
+        '<label class="nht-call__cek"><input type="checkbox" id="' +
+        id +
+        'Cek"' +
+        (call.dijelaskan ? ' checked' : '') +
+        '><span>' +
+        esc(dipanggil.nama) +
+        ' sudah menjelaskan dan tim menyetujui penjelasannya.</span></label>'
+      : '') +
+    '<div class="btn-group">' +
+    '<button type="button" class="btn btn--outline-primary" id="' +
+    id +
+    'Btn"' +
+    (!anggota || !anggota.length ? ' disabled' : '') +
+    '>' +
+    (dipanggil ? '🎲 Panggil nomor lain' : '🎲 Panggil Nomor') +
+    '</button>' +
+    '</div>' +
+    '</div>'
+  );
+}
+
+function bindNhtCall(root, id, anggota, call, save, rerender) {
+  var btn = root.querySelector('#' + id + 'Btn');
+  var cek = root.querySelector('#' + id + 'Cek');
+  if (btn) {
+    btn.addEventListener('click', function () {
+      call.nomor = panggilNomorNht(anggota.length, call.nomor);
+      call.dijelaskan = false;
+      save();
+      rerender();
+    });
+  }
+  if (cek) {
+    cek.addEventListener('change', function () {
+      call.dijelaskan = cek.checked;
+      save();
+      rerender();
+    });
+  }
+}
+
 /* ============================================================
    13. PERTANYAAN PENUNTUN BERTINGKAT
    Daftar pertanyaan pilihan yang boleh dicoba lagi sampai benar,
@@ -19098,5 +19232,471 @@ function bindMonomialInput(root, id, inputs, save, onEnter) {
     inp.addEventListener('keydown', function (e) {
       if (e.key === 'Enter' && onEnter) onEnter();
     });
+  });
+}
+
+/* ============================================================
+   40. BARISAN ARITMETIKA: RUMUS SUKU KE-n
+   Menentukan rumus suku ke-n Uₙ = a + (n − 1)b beserta bentuk
+   sederhananya Uₙ = bn + (a − b), lalu memakainya pada masalah
+   kontekstual (fase-f/mpi-1.2, Cooperative Learning). Dibangun di
+   atas seksi 21 (sukuAritmetika, subskrip) dan seksi 32 (fmtSuku,
+   bulatkanSuku, bedaDariDuaSuku, parseSelisih):
+     • rumusSuku / nilaiRumus / fmtBentukLinear / fmtRumusSuku /
+       fmtRumusUmum — perhitungan & penulisan rumus;
+     • suku1DanBeda / nomorSukuDari — a & b dari dua suku, dan
+       "suku keberapa yang bernilai x?";
+     • periksaRumusSuku / pesanRumusSuku — diagnosa isian rumus
+       (lupa mengurangi b, a–b tertukar, (n + 1), tanda beda);
+     • opsiRumusSuku / opsiKodeSuku / opsiSukuPertama — opsi pilihan
+       dengan pengecoh bermakna (diacak oleh app.js);
+     • tabel pola suku — U₁ = a + 0 × b, U₂ = a + 1 × b, …, Uₙ;
+     • isian rumus "Uₙ = [ ]n + [ ]".
+   Gaya .rumus-* ada di shared/base.css.
+   ============================================================ */
+
+/* Uₙ = a + (n − 1)b = bn + (a − b) → { koef: b, konst: a − b }. */
+function rumusSuku(a, b) {
+  return { koef: bulatkanSuku(b), konst: bulatkanSuku(a - b) };
+}
+
+function nilaiRumus(koef, konst, n) {
+  return bulatkanSuku(koef * n + konst);
+}
+
+/* "4n + 4", "−7n + 67", "n + 7", "−n", "5n", "9", "0,75n + 1,75". */
+function fmtBentukLinear(koef, konst, variabel) {
+  var v = variabel || 'n';
+  var k = bulatkanSuku(koef);
+  var c = bulatkanSuku(konst);
+  if (k === 0) return fmtSuku(c);
+  var suku;
+  if (k === 1) suku = v;
+  else if (k === -1) suku = '−' + v;
+  else suku = fmtSuku(k) + v;
+  if (c === 0) return suku;
+  return suku + (c > 0 ? ' + ' : ' − ') + fmtSuku(Math.abs(c));
+}
+
+function fmtRumusSuku(a, b) {
+  var r = rumusSuku(a, b);
+  return 'Uₙ = ' + fmtBentukLinear(r.koef, r.konst);
+}
+
+/* "Uₙ = 8 + (n − 1) × 4"; beda negatif ditulis dalam kurung. */
+function fmtRumusUmum(a, b) {
+  var bb = bulatkanSuku(b);
+  return 'Uₙ = ' + fmtSuku(a) + ' + (n − 1) × ' + (bb < 0 ? '(' + fmtSuku(bb) + ')' : fmtSuku(bb));
+}
+
+/* a dan b dari dua suku Uₘ dan Uₙ (m ≠ n); null bila m = n. */
+function suku1DanBeda(m, um, n, un) {
+  if (m === n) return null;
+  var b = bedaDariDuaSuku(m, um, n, un);
+  return { a: bulatkanSuku(um - (m - 1) * b), b: b };
+}
+
+/* n = (x − a)/b + 1; null bila b = 0 atau n bukan bilangan asli. */
+function nomorSukuDari(a, b, x) {
+  if (hampirSama(b, 0)) return null;
+  var n = bulatkanSuku((x - a) / b + 1);
+  if (!Number.isInteger(n) || n < 1) return null;
+  return n;
+}
+
+/*
+ * Diagnosa isian bentuk sederhana Uₙ = koef·n + konst untuk barisan
+ * (a, b):
+ *   'benar'         koef = b dan konst = a − b
+ *   'lupaKurangiB'  Uₙ = a + nb        (konst = a)
+ *   'tukarAB'       Uₙ = b + (n − 1)a  (koef = a, konst = b − a)
+ *   'tambahB'       Uₙ = a + (n + 1)b  (konst = a + b)
+ *   'tandaBeda'     koef = −b (tanda beda terbalik)
+ *   'bedaSalah'     koef ≠ b lainnya
+ *   'konstSalah'    koef benar, konstanta salah lainnya
+ */
+function periksaRumusSuku(a, b, koef, konst) {
+  var r = rumusSuku(a, b);
+  var kOk = hampirSama(koef, r.koef);
+  if (kOk && hampirSama(konst, r.konst)) return 'benar';
+  if (kOk && hampirSama(konst, a) && !hampirSama(b, 0)) return 'lupaKurangiB';
+  if (!kOk && hampirSama(koef, a) && hampirSama(konst, b - a)) return 'tukarAB';
+  if (kOk && hampirSama(konst, a + b)) return 'tambahB';
+  if (!kOk && !hampirSama(b, 0) && hampirSama(koef, -b)) return 'tandaBeda';
+  if (!kOk) return 'bedaSalah';
+  return 'konstSalah';
+}
+
+/* Umpan balik (HTML) untuk kode periksaRumusSuku. */
+function pesanRumusSuku(kode, a, b) {
+  var r = rumusSuku(a, b);
+  var benar = fmtBentukLinear(r.koef, r.konst);
+  var umum = fmtRumusUmum(a, b);
+  var fa = fmtSuku(a);
+  var fb = fmtSuku(b);
+  switch (kode) {
+    case 'benar':
+      return (
+        'Tepat! ' +
+        esc(umum) +
+        ' disederhanakan menjadi <strong>Uₙ = ' +
+        esc(benar) +
+        '</strong>. Cek: n = 1 memberi ' +
+        esc(fmtSuku(nilaiRumus(r.koef, r.konst, 1))) +
+        ' = U₁.'
+      );
+    case 'lupaKurangiB':
+      return (
+        'Rumusmu sama dengan Uₙ = a + nb, sehingga U₁ = ' +
+        esc(fmtSuku(a + b)) +
+        ', bukan ' +
+        esc(fa) +
+        '. Ingat: menuju suku ke-n, beda ditambahkan sebanyak <strong>(n − 1)</strong> kali. Konstanta = a − b = ' +
+        esc(fa) +
+        ' − ' +
+        esc(b < 0 ? '(' + fb + ')' : fb) +
+        '.'
+      );
+    case 'tukarAB':
+      return (
+        'Suku pertama dan beda tertukar. Koefisien n selalu sama dengan <strong>beda b = ' +
+        esc(fb) +
+        '</strong>, bukan suku pertama.'
+      );
+    case 'tambahB':
+      return 'Konstanta a + b berarti beda ditambahkan (n + 1) kali. Yang benar: beda ditambahkan <strong>(n − 1)</strong> kali, jadi konstantanya a − b.';
+    case 'tandaBeda':
+      return (
+        'Tanda koefisien terbalik. Beda = suku sesudah − suku sebelum = <strong>' +
+        esc(fb) +
+        '</strong>. Barisan ' +
+        (b < 0 ? 'turun berarti koefisien n negatif.' : 'naik berarti koefisien n positif.')
+      );
+    case 'bedaSalah':
+      return 'Koefisien n belum tepat. Koefisien n pada bentuk sederhana selalu sama dengan <strong>beda</strong>. Hitung lagi selisih dua suku berurutan.';
+    default:
+      return (
+        'Koefisien n sudah benar, tetapi konstantanya belum. Jabarkan ' +
+        esc(umum) +
+        ', lalu gabungkan bilangan tanpa n: a − b.'
+      );
+  }
+}
+
+/* Bilangan untuk kode JavaScript: minus ASCII, titik desimal. */
+function angkaKode(x) {
+  return String(bulatkanSuku(x));
+}
+
+/* 'return 4 * n + 4;' — isi fungsi suku(n) dalam JavaScript. */
+function kodeSukuJs(koef, konst) {
+  var k = bulatkanSuku(koef);
+  var c = bulatkanSuku(konst);
+  var suku;
+  if (k === 0) suku = '';
+  else if (k === 1) suku = 'n';
+  else if (k === -1) suku = '-n';
+  else suku = angkaKode(k) + ' * n';
+  var ekspr;
+  if (!suku) ekspr = angkaKode(c);
+  else if (c === 0) ekspr = suku;
+  else ekspr = suku + (c > 0 ? ' + ' : ' - ') + angkaKode(Math.abs(c));
+  return 'return ' + ekspr + ';';
+}
+
+/* Pasangan (koef, konst) untuk opsi benar & pengecoh rumus barisan (a, b). */
+function varianRumusSuku(a, b) {
+  return [
+    { id: 'benar', koef: b, konst: a - b },
+    { id: 'lupaKurangiB', koef: b, konst: a },
+    { id: 'tukarAB', koef: a, konst: b - a },
+    { id: 'tambahB', koef: b, konst: a + b },
+  ];
+}
+
+/* Empat opsi rumus "Uₙ = …": benar + tiga pengecoh miskonsepsi. */
+function opsiRumusSuku(a, b) {
+  return varianRumusSuku(a, b).map(function (v) {
+    return { id: v.id, label: 'Uₙ = ' + fmtBentukLinear(v.koef, v.konst) };
+  });
+}
+
+/* Empat opsi isi fungsi JavaScript suku(n): benar + tiga pengecoh. */
+function opsiKodeSuku(a, b) {
+  return varianRumusSuku(a, b).map(function (v) {
+    return { id: v.id, label: kodeSukuJs(v.koef, v.konst) };
+  });
+}
+
+/* Opsi "suku pertama a": U₁ (benar), U₂, beda, dan a − b. */
+function opsiSukuPertama(terms) {
+  var b = bulatkanSuku(terms[1] - terms[0]);
+  return [
+    { id: 'u1', label: fmtSuku(terms[0]) },
+    { id: 'u2', label: fmtSuku(terms[1]) },
+    { id: 'beda', label: fmtSuku(b) },
+    { id: 'konst', label: fmtSuku(terms[0] - b) },
+  ];
+}
+
+/* Isian "(n − 1)": menerima n-1, n − 1, (n-1), -1+n (tanpa beda huruf besar). */
+function cocokNMinus1(str) {
+  var s = String(str || '')
+    .toLowerCase()
+    .replace(/\s/g, '')
+    .replace(/[−–]/g, '-')
+    .replace(/^\((.*)\)$/, '$1');
+  return s === 'n-1' || s === '-1+n';
+}
+
+/* ---------- Tabel pola suku ----------
+   Baris ke-k: Uₖ = a + [ k − 1 ] × b. Baris terakhir: Uₙ = a + [ n − 1 ] × b.
+   state = { inputs: [...], status: [true|false|null], attempts }. */
+
+function makeTabelPolaState(baris) {
+  var inputs = [];
+  var status = [];
+  for (var i = 0; i <= baris; i++) {
+    inputs.push('');
+    status.push(null);
+  }
+  return { inputs: inputs, status: status, attempts: 0 };
+}
+
+/* Menyiapkan state[key] untuk `baris` baris; state lama yang cocok dipertahankan. */
+function ensureTabelPolaState(state, key, baris) {
+  var st = state[key];
+  if (
+    !st ||
+    typeof st !== 'object' ||
+    !Array.isArray(st.inputs) ||
+    st.inputs.length !== baris + 1 ||
+    !Array.isArray(st.status) ||
+    st.status.length !== baris + 1
+  ) {
+    state[key] = makeTabelPolaState(baris);
+  }
+  return state[key];
+}
+
+function periksaTabelPola(st) {
+  var baris = st.inputs.length - 1;
+  st.attempts = (st.attempts || 0) + 1;
+  st.inputs.forEach(function (v, i) {
+    if (i === baris) {
+      st.status[i] = cocokNMinus1(v);
+      return;
+    }
+    var p = parseSelisih(v);
+    st.status[i] = !p.error && p.value === i;
+  });
+  return tabelPolaSelesai(st);
+}
+
+function tabelPolaSelesai(st) {
+  return (
+    !!st &&
+    Array.isArray(st.status) &&
+    st.status.every(function (s) {
+      return s === true;
+    })
+  );
+}
+
+function buildTabelPolaSuku(id, a, b, st) {
+  var baris = st.inputs.length - 1;
+  var fb = bulatkanSuku(b) < 0 ? '(' + fmtSuku(b) + ')' : fmtSuku(b);
+  var rows = '';
+  for (var i = 0; i <= baris; i++) {
+    var akhir = i === baris;
+    var label = akhir ? 'Uₙ' : 'U' + subskrip(i + 1);
+    var ok = st.status[i] === true;
+    var salah = st.status[i] === false;
+    rows +=
+      '<tr class="' +
+      (akhir ? 'rumus-pola__umum' : '') +
+      (ok ? ' is-correct' : '') +
+      '">' +
+      '<th scope="row">' +
+      label +
+      '</th>' +
+      '<td class="rumus-pola__bentuk"><span>= ' +
+      esc(fmtSuku(a)) +
+      ' + </span>' +
+      (ok
+        ? '<span class="rumus-pola__isi">' +
+          esc(akhir ? '(n − 1)' : st.inputs[i].trim()) +
+          '</span>'
+        : '<input type="text" class="input-text rumus-pola__input' +
+          (salah ? ' has-error' : '') +
+          '" data-pola="' +
+          id +
+          '" data-idx="' +
+          i +
+          '" inputmode="' +
+          (akhir ? 'text' : 'numeric') +
+          '" autocomplete="off" value="' +
+          esc(st.inputs[i]) +
+          '" aria-label="Banyak beda pada ' +
+          label +
+          '" placeholder="?">') +
+      '<span> × ' +
+      esc(fb) +
+      '</span></td>' +
+      '<td class="rumus-pola__nilai">' +
+      (akhir ? '' : ok ? '= ' + esc(fmtSuku(sukuAritmetika(a, b, i + 1))) : '') +
+      '</td>' +
+      '</tr>';
+  }
+  var selesai = tabelPolaSelesai(st);
+  return (
+    '<div class="rumus-pola">' +
+    '<div class="table-scroll"><table class="rumus-pola__tabel">' +
+    '<caption class="sr-only">Tabel pola suku: banyak beda yang ditambahkan ke suku pertama</caption>' +
+    '<thead><tr><th scope="col">Suku</th><th scope="col">a + (banyak beda) × b</th><th scope="col">Nilai</th></tr></thead>' +
+    '<tbody>' +
+    rows +
+    '</tbody></table></div>' +
+    (selesai
+      ? ''
+      : '<div class="btn-group"><button type="button" class="btn btn--primary" id="' +
+        id +
+        'Check">Periksa Tabel</button></div>') +
+    '</div>'
+  );
+}
+
+function bindTabelPolaSuku(root, id, st, save, rerender) {
+  root.querySelectorAll('[data-pola="' + id + '"]').forEach(function (inp) {
+    inp.addEventListener('input', function () {
+      st.inputs[+inp.dataset.idx] = inp.value;
+      save();
+    });
+    inp.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter') {
+        var btn = root.querySelector('#' + id + 'Check');
+        if (btn) btn.click();
+      }
+    });
+  });
+  var btn = root.querySelector('#' + id + 'Check');
+  if (btn) {
+    btn.addEventListener('click', function () {
+      var kosong = st.inputs.some(function (v) {
+        return !String(v || '').trim();
+      });
+      if (kosong) {
+        showNotice('Isi semua kotak pada tabel terlebih dahulu.');
+        return;
+      }
+      periksaTabelPola(st);
+      save();
+      rerender();
+    });
+  }
+}
+
+/* ---------- Isian rumus "Uₙ = [ ]n + [ ]" ---------- */
+
+function makeRumusState() {
+  return { koef: '', konst: '', done: false, kode: null, attempts: 0 };
+}
+
+function ensureRumusSukuState(obj, key) {
+  var st = obj[key];
+  if (!st || typeof st !== 'object' || typeof st.koef !== 'string') obj[key] = makeRumusState();
+  return obj[key];
+}
+
+/*
+ * Isian bentuk sederhana. Setelah benar (st.done) ditampilkan sebagai
+ * rumus jadi. opts.a & opts.b (barisan) dipakai untuk umpan balik.
+ */
+function buildRumusSukuInput(id, st, opts) {
+  opts = opts || {};
+  if (st.done) {
+    var pk = parseSelisih(st.koef);
+    var pc = parseSelisih(st.konst);
+    var teks =
+      typeof opts.a === 'number'
+        ? fmtRumusSuku(opts.a, opts.b)
+        : 'Uₙ = ' + fmtBentukLinear(pk.value || 0, pc.value || 0);
+    return (
+      '<div class="rumus-input rumus-input--done">' +
+      '<p class="rumus-input__jadi">✓ ' +
+      esc(teks) +
+      '</p>' +
+      (typeof opts.a === 'number'
+        ? buildFeedbackBox('success', '✓', pesanRumusSuku('benar', opts.a, opts.b))
+        : '') +
+      '</div>'
+    );
+  }
+  var salah = st.kode && st.kode !== 'benar';
+  return (
+    '<div class="rumus-input">' +
+    '<div class="rumus-input__baris" role="group" aria-label="Rumus suku ke-n">' +
+    '<span class="rumus-input__u">Uₙ =</span>' +
+    '<input type="text" class="input-text rumus-input__kotak' +
+    (salah ? ' has-error' : '') +
+    '" id="' +
+    id +
+    'Koef" inputmode="text" autocomplete="off" value="' +
+    esc(st.koef) +
+    '" aria-label="Koefisien n" placeholder="?">' +
+    '<span class="rumus-input__n">n +</span>' +
+    '<input type="text" class="input-text rumus-input__kotak' +
+    (salah ? ' has-error' : '') +
+    '" id="' +
+    id +
+    'Konst" inputmode="text" autocomplete="off" value="' +
+    esc(st.konst) +
+    '" aria-label="Konstanta" placeholder="?">' +
+    '<button type="button" class="btn btn--primary" id="' +
+    id +
+    'Check">Periksa</button>' +
+    '</div>' +
+    '<p class="dl-caption">Tulis bilangan negatif dengan tanda minus, mis. −13 (Uₙ = 4n + (−13) = 4n − 13). Desimal boleh memakai koma.</p>' +
+    (salah && typeof opts.a === 'number'
+      ? buildFeedbackBox('warning', '💭', pesanRumusSuku(st.kode, opts.a, opts.b))
+      : '') +
+    '</div>'
+  );
+}
+
+/* onBenar(st) opsional dipanggil sekali saat isian pertama kali benar. */
+function bindRumusSukuInput(root, id, st, a, b, save, rerender) {
+  var koef = root.querySelector('#' + id + 'Koef');
+  var konst = root.querySelector('#' + id + 'Konst');
+  var btn = root.querySelector('#' + id + 'Check');
+  if (!koef || !konst || !btn) return;
+  [koef, konst].forEach(function (inp) {
+    inp.addEventListener('input', function () {
+      st.koef = koef.value;
+      st.konst = konst.value;
+      save();
+    });
+    inp.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter') btn.click();
+    });
+  });
+  btn.addEventListener('click', function () {
+    var pk = parseSelisih(koef.value);
+    var pc = parseSelisih(konst.value);
+    if (pk.error || pc.error) {
+      showNotice(
+        pk.error === 'empty' || pc.error === 'empty'
+          ? 'Isi kedua kotak rumus terlebih dahulu.'
+          : 'Tulis bilangan bulat atau desimal, mis. 4, −7, atau 0,75.'
+      );
+      return;
+    }
+    st.koef = koef.value.trim();
+    st.konst = konst.value.trim();
+    st.attempts += 1;
+    st.kode = periksaRumusSuku(a, b, pk.value, pc.value);
+    st.done = st.kode === 'benar';
+    save();
+    rerender();
   });
 }
