@@ -119,6 +119,14 @@
     "stageCount": 10,
     "extraBody": "partials/reset-modal.html"
   },
+  "fase-d/mpi-22.2": {
+    "title": "Luas Permukaan Prisma — Matematika Fase D",
+    "description": "Media pembelajaran interaktif berbasis Discovery Learning untuk menentukan rumus luas permukaan prisma: Lab Bentang melipat–membuka jaring-jaring kemasan berukuran dan mengetuk setiap sisinya, kartu luas tiap sisi berdiagnosa, sabuk sisi tegak yang dirapatkan menjadi persegi panjang keliling alas × tinggi, kartu data tiga prisma, pembuktian dua cara, tanggapan miskonsepsi, dan uji terap kontekstual.",
+    "kicker": "Matematika — Fase D (SMP)",
+    "h1": "Luas Permukaan Prisma",
+    "stageCount": 10,
+    "extraBody": "partials/reset-modal.html"
+  },
   "fase-e/mpi-1.1": {
     "title": "Sifat Operasi Bilangan Berpangkat — Matematika Fase E",
     "description": "Media pembelajaran interaktif berbasis Discovery Learning untuk menggeneralisasi sifat perkalian dan pembagian bilangan berpangkat bulat positif serta sifat pangkat dari pangkat melalui eksplorasi pola numerik: tabel pangkat, tabel pola, lab uji sifat, dan ubin faktor.",
