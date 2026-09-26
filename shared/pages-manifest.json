@@ -71,6 +71,14 @@
     "stageCount": 10,
     "extraBody": "partials/reset-modal.html"
   },
+  "fase-f/mpi-1.4": {
+    "title": "Proyek Mini Barisan & Deret Aritmetika — Matematika Fase F",
+    "description": "Media pembelajaran interaktif berbasis Project Based Learning untuk menyelesaikan masalah kontekstual barisan dan deret aritmetika melalui proyek mini \"Pameran Mini App Perencana\": memilih brief klien (tabungan laptop, log server, kursi pentas seni), merumuskan pertanyaan mendasar, merencanakan fitur & jadwal milestone, papan kanban, model Uₙ dan Sₙ berdiagnosa, lab perencana slider a–b–n untuk target & tenggat, uji kasus fungsi JavaScript jumlahDeret() gaya test-driven, Kartu Proyek, penilaian sejawat, dan refleksi pengalaman proyek.",
+    "kicker": "Matematika — Fase F (SMK RPL)",
+    "h1": "Proyek Mini Barisan & Deret Aritmetika",
+    "stageCount": 10,
+    "extraBody": "partials/reset-modal.html"
+  },
   "fase-d/mpi-12.1": {
     "title": "Membaca & Menulis Bilangan Berpangkat — Matematika Fase D",
     "description": "Media pembelajaran interaktif berbasis Discovery Learning untuk membaca dan menulis bilangan berpangkat bulat positif, negatif, dan nol beserta unsur-unsurnya (basis dan pangkat) melalui percobaan lipat kertas, pola tangga pangkat, dan penulis pangkat.",

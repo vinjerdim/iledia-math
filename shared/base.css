@@ -9483,3 +9483,206 @@ button.pwr-anatomy__part:disabled {
     transition: none;
   }
 }
+
+/* =========================================================================
+   43. Proyek mini barisan & deret aritmetika — papan kanban milestone,
+   lab perencana (slider a, b, n), dan penjalan tes jumlahDeret()
+   ========================================================================= */
+
+.kanban {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-3);
+}
+
+.kanban__col {
+  min-width: 0;
+  padding: var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-bg-grid);
+}
+
+.kanban__col--dikerjakan {
+  background: var(--color-primary-soft);
+  border-color: var(--color-primary);
+}
+
+.kanban__col--selesai {
+  background: var(--color-success-soft);
+}
+
+.kanban__title {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  margin: 0 0 var(--space-2);
+  font-size: 0.9rem;
+}
+
+.kanban__count {
+  margin-left: auto;
+  min-width: 24px;
+  padding: 0 var(--space-2);
+  border-radius: 999px;
+  background: var(--color-surface);
+  font-size: 0.78rem;
+  text-align: center;
+}
+
+.kanban__list {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.kanban__card {
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+  font-size: 0.85rem;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+
+.kanban__card--aktif {
+  border-color: var(--color-primary);
+  box-shadow: inset 4px 0 0 var(--color-primary);
+  font-weight: 700;
+}
+
+.kanban__card--selesai {
+  color: var(--color-success-strong);
+}
+
+.kanban__empty {
+  color: var(--color-ink-muted);
+  font-size: 0.85rem;
+  text-align: center;
+}
+
+.plan-lab__kontrol-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: var(--space-3);
+  margin-bottom: var(--space-3);
+}
+
+.plan-lab__kontrol {
+  min-width: 0;
+}
+
+.plan-lab__deret {
+  margin: 0 0 var(--space-2);
+  font-family: var(--font-mono);
+  font-size: 0.9rem;
+  overflow-wrap: anywhere;
+}
+
+.psum-bar__fill.plan-lab__fill--lewat {
+  background: var(--color-error);
+}
+
+.test-runner__impls {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
+}
+
+.test-runner__impl {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  min-width: 0;
+  padding: var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+}
+
+.test-runner__impl-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.test-runner__impl-head .btn {
+  margin-left: auto;
+}
+
+.test-runner__badge {
+  padding: 2px var(--space-2);
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.test-runner__badge--lulus {
+  background: var(--color-success-soft);
+  color: var(--color-success-strong);
+}
+
+.test-runner__badge--gagal {
+  background: var(--color-error-soft);
+  color: var(--color-error-strong);
+}
+
+.test-runner__kode {
+  flex: 1;
+  font-size: 0.8rem;
+}
+
+.test-runner__wrap {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.test-runner__table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+.test-runner__caption {
+  margin-bottom: var(--space-2);
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-align: left;
+  color: var(--color-ink-muted);
+}
+
+.test-runner__table th,
+.test-runner__table td {
+  padding: var(--space-2);
+  border: 1px solid var(--color-border);
+  text-align: center;
+  white-space: nowrap;
+}
+
+.test-runner__table thead th {
+  background: var(--color-bg-grid);
+  font-size: 0.8rem;
+}
+
+.test-runner__cell--lulus {
+  background: var(--color-success-soft);
+  color: var(--color-success-strong);
+  font-weight: 700;
+}
+
+.test-runner__cell--gagal {
+  background: var(--color-error-soft);
+  color: var(--color-error-strong);
+  font-weight: 700;
+}
+
+@media (max-width: 640px) {
+  .kanban {
+    grid-template-columns: 1fr;
+  }
+}
