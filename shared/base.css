@@ -9943,7 +9943,8 @@ button.pwr-anatomy__part:disabled {
    (.akar*), pangkat pecahan (.akar-pp*), ubin faktor kembar
    (.akar-tiles, .akar-tile*), konverter akar–pangkat (.akar-kv*),
    lab persegi & kubus (.akar-lab*), langkah isian akar (.akar-step*),
-   dan tabel bentuk pangkat ⇄ akar (.akar-tabel).
+   tabel bentuk pangkat ⇄ akar (.akar-tabel), dan anatomi bentuk akar
+   (.akar-anatomi*).
    ========================================================================= */
 
 .akar {
@@ -9999,6 +10000,13 @@ button.pwr-anatomy__part:disabled {
   margin-left: -1px;
   padding: 0.2em 0.2em 0.05em;
   border-top-width: 3px;
+}
+
+/* Pangkat radikan tetap di kanan atas walau .akar__isi berupa flex. */
+.akar--besar .akar__isi > sup {
+  align-self: flex-start;
+  font-size: 0.6em;
+  line-height: 1;
 }
 
 .akar-pp {
@@ -10404,6 +10412,143 @@ button.akar-tile:disabled {
   color: var(--color-success-strong);
 }
 
+/* Anatomi bentuk akar: bagian model akar dapat diketuk */
+
+.akar-anatomi__tugas {
+  margin: 0 0 var(--space-3);
+  font-weight: 600;
+  text-align: center;
+}
+
+.akar-anatomi__model {
+  display: flex;
+  justify-content: center;
+  padding: var(--space-5) var(--space-3);
+  border-radius: var(--radius-md);
+  background: var(--color-primary-soft);
+  font-family: var(--font-display);
+  font-size: 3.2rem;
+  font-weight: 700;
+  color: var(--color-ink);
+}
+
+.akar-anatomi__btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 44px;
+  min-height: 44px;
+  margin: 0;
+  padding: 0 0.08em;
+  border: 3px dashed transparent;
+  border-radius: var(--radius-sm, 6px);
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.akar-anatomi__btn:hover:not(:disabled),
+.akar-anatomi__btn:focus-visible {
+  border-color: var(--color-primary);
+  background: var(--color-surface);
+}
+
+.akar-anatomi__btn:disabled {
+  cursor: default;
+}
+
+.akar-anatomi__btn.akar__indeks {
+  align-self: flex-start;
+  min-width: 32px;
+  min-height: 32px;
+  margin-right: -0.25em;
+  font-size: 0.5em;
+}
+
+.akar-anatomi__akar sup {
+  align-self: flex-start;
+  font-size: 0.5em;
+}
+
+.akar-anatomi__akar sup .akar-anatomi__btn {
+  min-width: 32px;
+  min-height: 32px;
+}
+
+.akar-anatomi__btn.akar-anatomi__tanda {
+  align-items: stretch;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+}
+
+.akar-anatomi__btn.akar-anatomi__tanda:hover:not(:disabled),
+.akar-anatomi__btn.akar-anatomi__tanda:focus-visible {
+  outline: 3px dashed var(--color-primary);
+  outline-offset: 2px;
+  background: transparent;
+}
+
+.akar-anatomi__tanda .akar__tanda--svg {
+  width: 0.55em;
+  height: 100%;
+}
+
+.akar-anatomi__btn--tanda.is-found {
+  color: var(--color-primary-strong);
+}
+
+.akar-anatomi__btn--indeks.is-found {
+  border-style: solid;
+  border-color: var(--color-purple);
+  background: var(--color-purple-soft);
+  color: var(--color-purple-strong);
+}
+
+.akar-anatomi__btn--radikan.is-found {
+  border-style: solid;
+  border-color: var(--color-blue);
+  background: var(--color-blue-soft);
+  color: var(--color-blue-strong);
+}
+
+.akar-anatomi__btn--pangkat.is-found {
+  border-style: solid;
+  border-color: var(--color-orange);
+  background: var(--color-orange-soft);
+  color: var(--color-orange-strong);
+}
+
+.akar-anatomi__legend {
+  display: grid;
+  gap: var(--space-2);
+  margin: var(--space-3) 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.akar-anatomi__legend-item {
+  padding: var(--space-2) var(--space-3);
+  border-left: 5px solid var(--color-primary);
+  border-radius: var(--radius-sm, 6px);
+  background: var(--color-surface);
+}
+
+.akar-anatomi__legend-item--indeks {
+  border-left-color: var(--color-purple);
+}
+
+.akar-anatomi__legend-item--radikan {
+  border-left-color: var(--color-blue);
+}
+
+.akar-anatomi__legend-item--pangkat {
+  border-left-color: var(--color-orange);
+}
+
 @media (max-width: 480px) {
   .akar-tiles {
     font-size: 1.3rem;
@@ -10417,6 +10562,10 @@ button.akar-tile:disabled {
 
   .akar-kv__layar {
     font-size: 1.6rem;
+  }
+
+  .akar-anatomi__model {
+    font-size: 2.6rem;
   }
 
   .akar-tabel {

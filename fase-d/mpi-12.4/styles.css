@@ -1,120 +1,240 @@
 /* =========================================================================
    fase-d/mpi-12.4/styles.css
-   Operasi Hitung Bentuk Akar — Fase D (SMP Kelas VIII)
+   Membaca & Menulis Bentuk Akar dan Pangkat Pecahan — Fase D (SMP Kelas VIII)
 
-   Hanya memuat gaya yang KHAS modul ini. Langkah operasi akar
-   (.opakar-*), tabel uji nilai (.uji-akar*), tanda akar (.akar*), kartu
-   ahli (.strategi-card*, .sifat-kartu*), tab stasiun ahli (.jigsaw-tab*),
-   form tim (.coop-setup*), komponen Cooperative Learning (.coop-*),
-   pilihan ganda, pemilahan, kartu ringkasan, navigasi tahap, dan modal
-   berasal dari shared/base.css.
+   Hanya memuat gaya yang KHAS modul ini. Tanda akar, pangkat pecahan,
+   anatomi bentuk akar, konverter akar–pangkat, lab persegi & kubus
+   (.akar*), pilihan ganda, chip konteks, dan komponen Discovery Learning
+   lainnya berasal dari shared/base.css.
    ========================================================================= */
 
 /* -------------------------------------------------------------------------
-   Tahap 1–2 — Tujuan & informasi
+   Stimulasi — ubin & kotak kado vs papan tulis Bu Sari
    ------------------------------------------------------------------------- */
 
-.tp-teks {
-  margin: 0 0 var(--space-3);
+.stimulasi-cerita {
+  margin: 0 0 var(--space-4);
   font-size: 1.05rem;
-  font-weight: 600;
+  line-height: 1.6;
 }
 
-.aturan-list {
+.hiasan-banding {
   display: grid;
-  gap: var(--space-2);
-  margin: 0;
-  padding-left: var(--space-5);
-}
-
-.aturan-list li {
-  line-height: 1.7;
-}
-
-/* -------------------------------------------------------------------------
-   Tahap 4 — Kelompok ahli
-   ------------------------------------------------------------------------- */
-
-.misi-sub {
-  margin: var(--space-5) 0 var(--space-3);
-  font-size: 1.05rem;
-}
-
-.ahli-ajar {
-  margin-top: var(--space-4);
-  padding: var(--space-3);
-  border: 2px dashed var(--color-border-strong);
-  border-radius: var(--radius-md);
-  font-weight: 600;
-}
-
-.sifat-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
   gap: var(--space-3);
-  margin-top: var(--space-3);
+  align-items: stretch;
 }
 
-.sifat-ringkas summary {
+.hiasan-benda {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-5);
+  padding: var(--space-3);
+}
+
+.hiasan-ubin,
+.hiasan-kotak {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 96px;
+  height: 96px;
   font-weight: 700;
-  cursor: pointer;
+  text-align: center;
 }
 
-.ahli-rekap {
+.hiasan-ubin {
+  border: 3px solid var(--color-blue);
+  border-radius: var(--radius-sm);
+  background: repeating-linear-gradient(0deg, transparent 0 23px, var(--color-blue-soft) 23px 24px),
+    repeating-linear-gradient(90deg, #fff 0 23px, var(--color-blue-soft) 23px 24px);
+  color: var(--color-blue-strong);
+}
+
+.hiasan-kotak {
+  border: 3px solid var(--color-orange);
+  border-radius: var(--radius-sm);
+  background: var(--color-orange-soft);
+  box-shadow:
+    10px -10px 0 -3px var(--color-orange-soft),
+    10px -10px 0 0 var(--color-orange);
+  color: var(--color-orange-strong);
+}
+
+.hiasan-papan {
   margin: 0;
-  padding-left: var(--space-5);
+  padding: var(--space-3) var(--space-4);
+  border: 3px solid #8a6a3d;
+  border-radius: var(--radius-md);
+  background: #2e4a3b;
+  color: #fff;
 }
 
-.ahli-rekap li + li {
-  margin-top: var(--space-2);
+.hiasan-papan figcaption {
+  font-weight: 700;
+}
+
+.hiasan-papan__isi {
+  margin: var(--space-2) 0 0;
+  font-size: 1.35rem;
+  font-weight: 700;
+  line-height: 1.8;
+  overflow-wrap: anywhere;
 }
 
 /* -------------------------------------------------------------------------
-   Tahap 5–7 — Misi tim
+   Baca & tulis — kalimat yang didiktekan
    ------------------------------------------------------------------------- */
 
-.misi-konteks {
+.baca-kalimat {
+  font-style: italic;
+  font-weight: 700;
+  color: var(--color-purple-strong);
+}
+
+/* -------------------------------------------------------------------------
+   Lab — jejak nilai yang sudah dicoba
+   ------------------------------------------------------------------------- */
+
+.akar-jejak-wrap {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--space-2);
+  margin: var(--space-4) 0 0;
+}
+
+.akar-jejak {
+  padding: var(--space-1) var(--space-3);
+  border-radius: 999px;
+  background: var(--color-bg-grid);
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.akar-jejak.is-ok {
+  background: var(--color-success-soft);
+  color: var(--color-success-strong);
+}
+
+/* -------------------------------------------------------------------------
+   Olah data — misi konverter & notasi butir pilah
+   ------------------------------------------------------------------------- */
+
+.akar-misi {
+  margin: var(--space-4) 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.akar-misi__item {
   display: flex;
   gap: var(--space-3);
-  align-items: center;
-  margin: var(--space-3) 0;
-  padding: var(--space-3) var(--space-4);
+  align-items: flex-start;
+  margin-bottom: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  border: 2px solid var(--color-border);
   border-radius: var(--radius-md);
-  background: var(--color-warning-soft);
+  background: var(--color-surface);
+  color: var(--color-ink-muted);
 }
 
-.misi-konteks p {
-  margin: 0;
+.akar-misi__item.is-aktif {
+  border-color: var(--color-primary);
+  color: var(--color-ink);
   font-weight: 600;
 }
 
-.misi-konteks__ikon {
-  flex: 0 0 auto;
-  font-size: 2rem;
-  line-height: 1;
+.akar-misi__item.is-done {
+  border-color: var(--color-success);
+  background: var(--color-success-soft);
+  color: var(--color-success-strong);
 }
 
-/* -------------------------------------------------------------------------
-   Tahap 8 — Kuis
-   ------------------------------------------------------------------------- */
-
-.kuis-tag {
-  display: inline-block;
-  margin-bottom: var(--space-2);
-  padding: 2px var(--space-2);
-  border-radius: var(--radius-sm);
-  background: var(--color-primary-soft);
-  color: var(--color-primary-strong);
-  font-size: 0.78rem;
+.akar-misi__status {
+  flex: 0 0 auto;
   font-weight: 700;
 }
 
-.kuis-tanya {
-  font-size: 1.2rem;
-  line-height: 1.8;
+.akar-pilah {
+  display: inline-block;
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: var(--color-blue-strong);
 }
 
-.dl-exercise .choice-btn,
-.sort-item__text {
-  line-height: 1.7;
+/* -------------------------------------------------------------------------
+   Kesimpulan — pratinjau notasi & rumus utama
+   ------------------------------------------------------------------------- */
+
+.akar-pratinjau {
+  min-height: 1.6em;
+  margin: var(--space-2) 0 0;
+  font-size: 1.05rem;
+  color: var(--color-blue-strong);
+}
+
+.akar-rumus {
+  margin: 0 0 var(--space-4);
+  padding: var(--space-3);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  font-size: 2rem;
+  font-weight: 700;
+  text-align: center;
+}
+
+/* -------------------------------------------------------------------------
+   Uji terap — petunjuk soal pilihan
+   ------------------------------------------------------------------------- */
+
+.soal-hint {
+  margin-top: var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-md);
+  background: var(--color-warning-soft);
+  color: var(--color-warning-strong);
+}
+
+.soal-hint summary {
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.soal-hint ul {
+  margin: var(--space-2) 0 0;
+  padding-left: var(--space-5);
+}
+
+/* -------------------------------------------------------------------------
+   Selesai — tiga bentuk yang sama nilainya
+   ------------------------------------------------------------------------- */
+
+.sajian-trio {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--space-3);
+  margin: var(--space-4) 0;
+}
+
+.sajian-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-1);
+  min-width: 140px;
+  max-width: 200px;
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-md);
+  background: var(--color-primary-soft);
+  color: var(--color-primary-strong);
+  font-weight: 700;
+  text-align: center;
+}
+
+.sajian-card__ikon {
+  font-size: 1.6rem;
 }

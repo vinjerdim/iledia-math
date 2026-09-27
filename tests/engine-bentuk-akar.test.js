@@ -98,7 +98,30 @@ test('bacaAkar: kata-kata untuk label aria', () => {
   assert.equal(E.bacaAkar(1, 2, 2), 'akar kuadrat dari 2');
   assert.equal(E.bacaAkar(6, 2, 2), '6 akar kuadrat dari 2');
   assert.equal(E.bacaAkar(1, 3, 8), 'akar pangkat tiga dari 8');
-  assert.equal(E.bacaAkar(1, 5, 2, 3), 'akar pangkat 5 dari 2 pangkat 3');
+  assert.equal(E.bacaAkar(1, 5, 2, 3), 'akar pangkat lima dari 2 pangkat 3');
+  assert.equal(E.bacaAkar(1, 4, 7), 'akar pangkat empat dari 7');
+});
+
+test('bacaPangkatPecahan: pembilang & penyebut dibaca sebagai pecahan', () => {
+  assert.equal(E.bacaPangkatPecahan(5, 2, 3), '5 pangkat dua per tiga');
+  assert.equal(E.bacaPangkatPecahan(64, 1, 2), '64 pangkat satu per dua');
+  assert.equal(E.bacaPangkatPecahan(7, 3, 1), '7 pangkat 3');
+});
+
+test('diagnosaTulisAkar: benar, tertukar, radikan, indeks, pangkat', () => {
+  const t = { a: 5, m: 2, n: 3 };
+  assert.equal(E.diagnosaTulisAkar(t, { a: 5, m: 2, n: 3 }), 'benar');
+  assert.equal(E.diagnosaTulisAkar(t, { a: 5, m: 3, n: 2 }), 'tertukar');
+  assert.equal(E.diagnosaTulisAkar(t, { a: 3, m: 2, n: 3 }), 'radikan');
+  assert.equal(E.diagnosaTulisAkar(t, { a: 5, m: 2, n: 4 }), 'indeks');
+  assert.equal(E.diagnosaTulisAkar(t, { a: 5, m: 1, n: 3 }), 'pangkat');
+  /* indeks = pangkat → tidak ada "tertukar" */
+  assert.equal(E.diagnosaTulisAkar({ a: 2, m: 3, n: 3 }, { a: 2, m: 3, n: 3 }), 'benar');
+  ['benar', 'tertukar', 'radikan', 'indeks', 'pangkat'].forEach((k) => {
+    const pesan = E.pesanDiagnosaTulisAkar(k);
+    assert.ok(typeof pesan === 'string' && pesan.length > 10, k);
+  });
+  assert.equal(E.pesanDiagnosaTulisAkar('xyz'), E.pesanDiagnosaTulisAkar('pangkat'));
 });
 
 test('tulisAkarHTML: pangkat pecahan & tanda akar dirender', () => {
@@ -214,6 +237,75 @@ test('konverter akar–pangkat: batas stepper & kecocokan target', () => {
   assert.match(html, /akar-kv/);
   assert.match(html, /akar-kv__m">2</);
   assert.match(html, /akar-kv__n">3</);
+});
+
+test('konverter mode hanyaAkar: bentuk pangkat & nilai disembunyikan', () => {
+  const st = E.makeRootConverterState({ a: 5, m: 2, n: 3 });
+  const html = E.buildRootConverter('kt', st, { hanyaAkar: true });
+  assert.match(html, /data-kv-id="kt"/);
+  assert.doesNotMatch(html, /akar-pp/);
+  assert.doesNotMatch(html, /akar-kv__hasil/);
+  assert.doesNotMatch(html, /akar-kv__aturan/);
+  assert.match(html, /aria-label="akar pangkat tiga dari 5 pangkat 2"/);
+  assert.match(E.buildRootConverter('kv', st), /akar-pp/);
+  /* istilah radikan & indeks 2 tidak ditulis */
+  assert.match(html, /Radikan a/);
+  assert.match(html, /Pangkat radikan m/);
+  assert.match(E.buildRootConverter('kv', st), /Basis a/);
+  const kuadrat = E.makeRootConverterState({ a: 7, m: 1, n: 2 });
+  assert.doesNotMatch(E.buildRootConverter('kt', kuadrat, { hanyaAkar: true }), /akar__indeks/);
+  assert.match(E.buildRootConverter('kv', kuadrat), /akar__indeks/);
+});
+
+test('anatomi akar: urutan bagian acak, ketuk benar maju, ketuk salah dihitung', () => {
+  const bagian = ['tanda', 'indeks', 'radikan', 'pangkat'];
+  const st = E.makeAnatomiAkarState(bagian);
+  assert.deepEqual([...st.urutan].sort(), [...bagian].sort());
+  assert.equal(st.idx, 0);
+  const target = E.anatomiAkarTarget(st);
+  assert.equal(target, st.urutan[0]);
+  const lain = bagian.find((b) => b !== target);
+  assert.equal(E.ketukAnatomiAkar(st, lain), 'salah');
+  assert.equal(st.salah, 1);
+  assert.equal(st.idx, 0);
+  assert.equal(E.ketukAnatomiAkar(st, target), 'benar');
+  assert.equal(st.idx, 1);
+  st.urutan.slice(1).forEach((b) => E.ketukAnatomiAkar(st, b));
+  assert.equal(E.anatomiAkarSelesai(st), true);
+  assert.equal(E.anatomiAkarTarget(st), null);
+  assert.equal(E.ketukAnatomiAkar(st, 'tanda'), 'selesai');
+  assert.ok(E.ANATOMI_AKAR.indeks.label && E.ANATOMI_AKAR.indeks.ket);
+});
+
+test('ensureAnatomiAkarState: state rusak diganti, state sah dipertahankan', () => {
+  const bagian = ['tanda', 'indeks', 'radikan'];
+  const sah = { urutan: ['radikan', 'tanda', 'indeks'], idx: 1, salah: 2 };
+  assert.equal(E.ensureAnatomiAkarState(sah, bagian), sah);
+  assert.equal(E.ensureAnatomiAkarState(null, bagian).urutan.length, 3);
+  assert.equal(E.ensureAnatomiAkarState({ urutan: ['tanda'], idx: 0 }, bagian).urutan.length, 3);
+  assert.equal(
+    E.ensureAnatomiAkarState({ urutan: ['radikan', 'tanda', 'indeks'], idx: 9 }, bagian).idx,
+    0
+  );
+});
+
+test('buildAnatomiAkar: bagian dapat diketuk, yang ditemukan diberi label', () => {
+  const bagian = ['tanda', 'indeks', 'radikan', 'pangkat'];
+  const st = { urutan: ['indeks', 'radikan', 'tanda', 'pangkat'], idx: 1, salah: 0 };
+  const html = E.buildAnatomiAkar('an', { n: 3, r: 5, m: 2 }, bagian, st);
+  bagian.forEach((b) => assert.match(html, new RegExp('data-an-bagian="' + b + '"')));
+  assert.match(html, /data-an-id="an"/);
+  assert.match(html, /Radikan/);
+  assert.match(html, /is-found[^>]*data-an-bagian="indeks"|data-an-bagian="indeks"[^>]*is-found/);
+  /* tanpa pangkat radikan (m = 1): bagian pangkat tidak dirender */
+  const html2 = E.buildAnatomiAkar(
+    'an2',
+    { n: 2, r: 7, m: 1 },
+    ['tanda', 'radikan'],
+    E.makeAnatomiAkarState(['tanda', 'radikan'])
+  );
+  assert.doesNotMatch(html2, /data-an-bagian="pangkat"/);
+  assert.doesNotMatch(html2, /data-an-bagian="indeks"/);
 });
 
 test('lab persegi & kubus: sisi/rusuk dan jejak nilai', () => {
