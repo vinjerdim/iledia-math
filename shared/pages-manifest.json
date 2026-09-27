@@ -119,6 +119,14 @@
     "stageCount": 11,
     "extraBody": "partials/reset-modal.html"
   },
+  "fase-d/mpi-12.6": {
+    "title": "Membaca, Menuliskan & Membandingkan Notasi Ilmiah — Matematika Fase D",
+    "description": "Media pembelajaran interaktif berbasis Problem Based Learning untuk membaca, menuliskan, dan membandingkan bilangan dalam notasi ilmiah: menyusun Papan Info Semesta Mini dari data sains yang bentuknya campur aduk (atom, DNA, virus, sel darah, planet) melalui Lab Geser Koma, pemilahan bentuk baku, menulis & membakukan notasi ilmiah berdiagnosa miskonsepsi, membandingkan pasangan data dengan lambang <, >, =, Pita Orde 10ⁿ, mengurutkan data, evaluasi pendapat teman, dan uji terap acak.",
+    "kicker": "Matematika — Fase D (SMP)",
+    "h1": "Membaca, Menuliskan & Membandingkan Notasi Ilmiah",
+    "stageCount": 10,
+    "extraBody": "partials/reset-modal.html"
+  },
   "fase-d/mpi-22.1": {
     "title": "Unsur-unsur & Jaring-jaring Prisma — Matematika Fase D",
     "description": "Media pembelajaran interaktif berbasis Discovery Learning untuk mengidentifikasi unsur-unsur prisma (titik sudut, rusuk, sisi, dan tinggi) serta jaring-jaring prisma melalui kegiatan memutar model 3D, melipat, dan merakit bentangan karton kemasan.",
