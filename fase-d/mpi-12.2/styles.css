@@ -1,138 +1,220 @@
 /* =========================================================================
    fase-d/mpi-12.2/styles.css
-   Sifat-sifat Operasi Bilangan Berpangkat Bulat — Fase D (SMP Kelas VIII)
+   Bilangan Berpangkat Bulat Negatif & Nol — Fase D (SMP Kelas VIII)
 
-   Hanya memuat gaya yang KHAS modul ini. Langkah sifat (.sifat-step*),
-   opsi & kartu sifat (.sifat-opt*, .sifat-kartu*), tab stasiun ahli
-   (.jigsaw-tab*), form tim (.coop-setup*), ubin faktor (.fx-*), tabel
-   pola eksponen (.pola-tbl*), bentuk soal rantai (.rantai-soal),
-   komponen Cooperative Learning (.coop-*),
-   pilihan ganda, pemilahan, kartu ringkasan, navigasi tahap, dan modal
-   berasal dari shared/base.css.
+   Hanya memuat gaya yang KHAS modul ini. Penulis pangkat, anatomi
+   basis–pangkat (.pwr-writer*, .pwr-anatomy*), tangga pangkat
+   (.pw-ladder*), pilihan ganda, kartu ringkasan, navigasi tahap, dan
+   komponen Discovery Learning lainnya berasal dari shared/base.css.
    ========================================================================= */
 
 /* -------------------------------------------------------------------------
-   Tahap 1–2 — Tujuan & informasi
+   Stimulasi — cerita & catatan Kak Sari
    ------------------------------------------------------------------------- */
 
-.tp-teks {
-  margin: 0 0 var(--space-3);
+.stimulasi-cerita {
+  margin: 0 0 var(--space-4);
   font-size: 1.05rem;
-  font-weight: 600;
+  line-height: 1.6;
 }
 
-.aturan-list {
-  display: grid;
-  gap: var(--space-2);
+.tangga-catatan {
   margin: 0;
-  padding-left: var(--space-5);
-}
-
-.aturan-list li {
-  line-height: 1.55;
-}
-
-.info-contoh {
-  display: grid;
-  gap: var(--space-2);
-  margin: var(--space-4) 0 0;
-  padding: 0;
-  list-style: none;
-}
-
-.info-contoh li {
-  padding: var(--space-3);
-  border-left: 5px solid var(--color-primary);
+  padding: var(--space-3) var(--space-4);
+  border-left: 6px solid var(--color-orange);
   border-radius: var(--radius-md);
-  background: var(--color-primary-soft);
+  background: #fffbe8;
 }
 
-.info-contoh__pow {
-  display: block;
+.tangga-catatan figcaption {
+  font-weight: 700;
+  color: var(--color-orange-strong);
+}
+
+.tangga-catatan__isi {
+  margin: var(--space-2) 0;
   font-family: var(--font-mono);
   font-size: 1.05rem;
   font-weight: 700;
   overflow-wrap: anywhere;
 }
 
-/* -------------------------------------------------------------------------
-   Tahap 4 — Kelompok ahli
-   ------------------------------------------------------------------------- */
-
-.misi-sub {
-  margin: var(--space-5) 0 var(--space-3);
-  font-size: 1.05rem;
+.tangga-catatan__keluh {
+  margin: 0;
+  font-style: italic;
+  color: var(--color-ink-muted);
 }
 
-.ahli-ajar {
-  margin-top: var(--space-4);
-  padding: var(--space-3);
-  border: 2px dashed var(--color-border-strong);
+/* -------------------------------------------------------------------------
+   Tangga — tiga tangga pangkat berdampingan
+   ------------------------------------------------------------------------- */
+
+.pwr-tangga-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: var(--space-4);
+  margin-bottom: var(--space-3);
+}
+
+.pwr-tangga__judul {
+  margin: 0 0 var(--space-2);
+  font-size: 1rem;
+  text-align: center;
+}
+
+/* -------------------------------------------------------------------------
+   Makna — tabel konteks pengenceran & mundur waktu
+   ------------------------------------------------------------------------- */
+
+.pwr-konteks-tabel {
+  display: grid;
+  gap: var(--space-2);
+  margin: var(--space-3) 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.pwr-konteks-tabel li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-3);
   border-radius: var(--radius-md);
+  background: var(--color-surface);
+}
+
+.pwr-konteks-tabel__label {
   font-weight: 600;
 }
 
-.sifat-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
-  gap: var(--space-3);
-  margin-top: var(--space-3);
-}
-
-.sifat-ringkas summary {
+.pwr-konteks-tabel__notasi {
+  flex: 0 0 auto;
+  font-family: var(--font-mono);
+  font-size: 1.1rem;
   font-weight: 700;
-  cursor: pointer;
+  color: var(--color-blue-strong);
 }
 
-.ahli-rekap {
+.pwr-answer {
+  font-family: var(--font-mono);
+  font-size: 1.15rem;
+}
+
+/* -------------------------------------------------------------------------
+   Makna & Olah data — ketuk basis/pangkat & notasi pada butir pilah
+   ------------------------------------------------------------------------- */
+
+.pwr-anatomi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: var(--space-3);
+}
+
+.pwr-anatomi-item {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+}
+
+.pwr-anatomi-item__tanya {
   margin: 0;
+  text-align: center;
+}
+
+.pwr-anatomi-item .feedback-box {
+  margin: 0;
+  font-size: 0.9rem;
+}
+
+.pwr-pilah__notasi {
+  display: inline-block;
+  min-width: 3.5ch;
+  font-family: var(--font-mono);
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--color-blue-strong);
+}
+
+/* -------------------------------------------------------------------------
+   Kesimpulan — contoh anatomi
+   ------------------------------------------------------------------------- */
+
+.pwr-rangkum {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
+}
+
+.pwr-rangkum__item {
+  margin: 0;
+  padding: var(--space-3);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  text-align: center;
+}
+
+.pwr-rangkum__item figcaption {
+  margin-top: var(--space-2);
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+/* -------------------------------------------------------------------------
+   Uji terap — petunjuk soal pilihan
+   ------------------------------------------------------------------------- */
+
+.soal-hint {
+  margin-top: var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-md);
+  background: var(--color-warning-soft);
+  color: var(--color-warning-strong);
+}
+
+.soal-hint summary {
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.soal-hint ul {
+  margin: var(--space-2) 0 0;
   padding-left: var(--space-5);
 }
 
-.ahli-rekap li + li {
-  margin-top: var(--space-2);
-}
-
 /* -------------------------------------------------------------------------
-   Tahap 5–7 — Misi tim
+   Selesai — tiga bentuk pangkat
    ------------------------------------------------------------------------- */
 
-.misi-konteks {
+.sajian-trio {
   display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
   gap: var(--space-3);
+  margin: var(--space-4) 0;
+}
+
+.sajian-card {
+  display: flex;
+  flex-direction: column;
   align-items: center;
-  margin: var(--space-3) 0;
+  gap: var(--space-1);
+  min-width: 140px;
+  max-width: 200px;
   padding: var(--space-3) var(--space-4);
   border-radius: var(--radius-md);
-  background: var(--color-warning-soft);
-}
-
-.misi-konteks p {
-  margin: 0;
-  font-weight: 600;
-}
-
-.misi-konteks__ikon {
-  flex: 0 0 auto;
-  font-size: 2rem;
-  line-height: 1;
-}
-
-/* -------------------------------------------------------------------------
-   Tahap 8 — Kuis
-   ------------------------------------------------------------------------- */
-
-.kuis-tag {
-  display: inline-block;
-  margin-bottom: var(--space-2);
-  padding: 2px var(--space-2);
-  border-radius: var(--radius-sm);
   background: var(--color-primary-soft);
   color: var(--color-primary-strong);
-  font-size: 0.78rem;
   font-weight: 700;
+  text-align: center;
 }
 
-.kuis-tanya {
-  font-size: 1.15rem;
+.sajian-card__ikon {
+  font-family: var(--font-mono);
+  font-size: 1.4rem;
 }

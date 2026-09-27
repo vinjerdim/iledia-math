@@ -88,11 +88,11 @@
     "extraBody": "partials/reset-modal.html"
   },
   "fase-d/mpi-12.2": {
-    "title": "Sifat-sifat Operasi Bilangan Berpangkat Bulat — Matematika Fase D",
-    "description": "Media pembelajaran interaktif berbasis Cooperative Learning tipe Jigsaw untuk menerapkan sifat-sifat operasi bilangan berpangkat bulat (perkalian, pembagian, dan pangkat dari pangkat) dalam penyelesaian soal: kartu ahli yang dibagikan acak, kelompok ahli dengan ubin faktor dan tabel pola, misi tim memilih sifat dan menghitung eksponen berdiagnosa miskonsepsi, rantai sifat kontekstual, kuis individu, dan penghargaan tim.",
+    "title": "Bilangan Berpangkat Bulat Negatif & Nol — Matematika Fase D",
+    "description": "Media pembelajaran interaktif berbasis Discovery Learning untuk membaca dan menuliskan bilangan berpangkat bulat negatif dan nol beserta maknanya, melalui tangga pangkat yang diteruskan sampai pangkat negatif, konteks pengenceran larutan dan populasi bakteri mundur waktu, serta penulis pangkat dan anatomi basis-pangkat.",
     "kicker": "Matematika — Fase D (SMP)",
-    "h1": "Sifat-sifat Operasi Bilangan Berpangkat Bulat",
-    "stageCount": 11,
+    "h1": "Bilangan Berpangkat Bulat Negatif & Nol",
+    "stageCount": 10,
     "extraBody": "partials/reset-modal.html"
   },
   "fase-d/mpi-12.3": {
