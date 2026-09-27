@@ -28702,3 +28702,847 @@ function bindPilihSimbolPangkat(root, getPair, getState, save, rerender) {
     });
   });
 }
+
+/* ============================================================
+   52. BENTUK AKAR — MEMBANDINGKAN & MENGURUTKAN
+   Dipakai fase-d/mpi-12.5 (Cooperative Learning tipe Jigsaw).
+   Bentuk akar ditulis { k, n, r } = k · ⁿ√r (k, r bulat positif,
+   indeks n ≥ 2); bilangan bulat ditulis { k, n: 1, r: 1 }.
+   Perbandingan EKSAK: kedua bilangan dipangkatkan L = KPK indeks,
+   (k · ⁿ√r)ᴸ = kᴸ · r^(L/n) — bilangan bulat, tanpa galat desimal.
+   Empat strategi (kartu ahli Jigsaw):
+     indeksSama        — indeks & koefisien sama → bandingkan radikan
+     masukkanKoefisien — k·ⁿ√r = ⁿ√(kⁿ·r), lalu bandingkan radikan
+     samakanIndeks     — ⁿ√r = ᴸ√(r^(L/n)) dengan L = KPK indeks
+     patokan           — bilangan bulat di antara keduanya (√50 di
+                         antara 7 dan 8 karena 49 < 50 < 64)
+   Diagnosa miskonsepsi: hanya radikan, hanya koefisien, "indeks
+   lebih besar → lebih besar", k·√r dianggap √(k·r), √a dianggap a/2.
+   Memakai formatAkar, bacaAkar, tulisAkarHTML, superskrip (seksi 27,
+   45), kpk, formatNumber, formatDesimal, compareSymbolId,
+   compareSymbolText, COMPARE_SYMBOLS, KATA_SIMBOL,
+   KATA_BANDING_PECAHAN, buildChoiceGroup, buildFeedbackBox, esc.
+   Gaya .akr-* ada di styles.css modul yang memakainya; .akar* di
+   shared/base.css.
+   ============================================================ */
+
+/* Bentuk akar ternormal: radikan 1 → bilangan bulat { k, n: 1, r: 1 }. */
+function bentukAkar(k, n, r) {
+  if (r === undefined || r === 1 || n === undefined || n === 1) {
+    return { k: k, n: 1, r: 1 };
+  }
+  return { k: k, n: n, r: r };
+}
+
+function isBulatAkar_(p) {
+  return p.r === 1 || p.n === 1;
+}
+
+/* Bentuk akar dari { p } (item kartu) atau langsung { k, n, r }. */
+function akarDari_(x) {
+  return x && x.p ? x.p : x;
+}
+
+/* '3√2', '∛5', '⁶√8', '7'. */
+function teksBentukAkar(p) {
+  if (isBulatAkar_(p)) return formatNumber(p.k);
+  return formatAkar(p.k, p.n, p.r);
+}
+
+/* '3 akar kuadrat dari 2', 'akar pangkat tiga dari 5', '7'. */
+function bacaBentukAkar(p) {
+  if (isBulatAkar_(p)) return formatNumber(p.k);
+  return bacaAkar(p.k, p.n, p.r);
+}
+
+function nilaiAkar(p) {
+  if (isBulatAkar_(p)) return p.k;
+  return p.k * Math.pow(p.r, 1 / p.n);
+}
+
+/* Pangkat bulat aman; melempar galat bila melampaui bilangan bulat aman. */
+function pangkatAman_(a, e) {
+  var h = 1;
+  for (var i = 0; i < e; i++) {
+    h *= a;
+    if (!Number.isSafeInteger(h)) {
+      throw new Error('Nilai terlalu besar untuk dibandingkan secara eksak.');
+    }
+  }
+  return h;
+}
+
+/* (k · ⁿ√r)ᴸ = kᴸ · r^(L/n) sebagai bilangan bulat (L kelipatan n). */
+function pangkatAkarKe_(p, L) {
+  var n = isBulatAkar_(p) ? 1 : p.n;
+  var h = pangkatAman_(p.k, L) * pangkatAman_(isBulatAkar_(p) ? 1 : p.r, L / n);
+  if (!Number.isSafeInteger(h)) {
+    throw new Error('Nilai terlalu besar untuk dibandingkan secara eksak.');
+  }
+  return h;
+}
+
+function indeksDari_(p) {
+  return isBulatAkar_(p) ? 1 : p.n;
+}
+
+function kpkIndeks_(p, q) {
+  return kpk(indeksDari_(p), indeksDari_(q));
+}
+
+/* −1 / 0 / 1, eksak. */
+function bandingAkar(p, q) {
+  p = akarDari_(p);
+  q = akarDari_(q);
+  var L = kpkIndeks_(p, q);
+  var a = pangkatAkarKe_(p, L);
+  var b = pangkatAkarKe_(q, L);
+  return a < b ? -1 : a > b ? 1 : 0;
+}
+
+function simbolBandingAkar(p, q) {
+  var c = bandingAkar(p, q);
+  return c < 0 ? 'lt' : c > 0 ? 'gt' : 'eq';
+}
+
+/* '3√2 > 2√3'. */
+function kalimatBandingAkar(p, q) {
+  return (
+    teksBentukAkar(p) + ' ' + compareSymbolText(simbolBandingAkar(p, q)) + ' ' + teksBentukAkar(q)
+  );
+}
+
+/* '≈ 4,24' atau '= 7'. */
+function teksNilaiAkar(p) {
+  var a = apitAkar(p);
+  if (a.bulat) return '= ' + formatNumber(a.bawah);
+  return '≈ ' + formatDesimal(nilaiAkar(p), 2);
+}
+
+/* Salinan terurut; item boleh { id, p } atau { k, n, r }. */
+function urutkanAkar(list, arah) {
+  var tanda = arah === 'turun' ? -1 : 1;
+  return list.slice().sort(function (x, y) {
+    return tanda * bandingAkar(x, y);
+  });
+}
+
+function urutanIdAkar(items, arah) {
+  return urutkanAkar(items, arah).map(function (it) {
+    return it.id;
+  });
+}
+
+/* id item terbesar/terkecil; null bila nilai ekstrem dimiliki > 1 item. */
+function ekstremAkar(items, jenis) {
+  var urut = urutkanAkar(items, jenis === 'terbesar' ? 'turun' : 'naik');
+  if (urut.length > 1 && bandingAkar(urut[0], urut[1]) === 0) return null;
+  return urut.length ? urut[0].id : null;
+}
+
+/* ---------- Langkah strategi ---------- */
+
+/*
+ * k · ⁿ√r = ⁿ√(kⁿ · r). Bilangan bulat k dimasukkan ke akar berindeks
+ * `indeks` (default 2): 7 → √49.
+ */
+function masukkanKoefisien(p, indeks) {
+  if (isBulatAkar_(p)) {
+    var m = indeks || 2;
+    return { k: 1, n: m, r: pangkatAman_(p.k, m) };
+  }
+  return { k: 1, n: p.n, r: pangkatAman_(p.k, p.n) * p.r };
+}
+
+/* Indeks disamakan ke L = KPK indeks (koefisien dimasukkan dulu). */
+function samakanIndeksAkar(p, q) {
+  var L = kpkIndeks_(p, q);
+  function ubah(x) {
+    return { k: 1, n: L, r: pangkatAkarKe_(x, L) };
+  }
+  return { L: L, p: ubah(p), q: ubah(q) };
+}
+
+/* Bilangan bulat terbesar ≤ nilai (eksak). */
+function akarBawah_(p) {
+  var n = indeksDari_(p);
+  var N = pangkatAkarKe_(p, n);
+  var b = Math.floor(nilaiAkar(p));
+  while (b > 0 && pangkatAman_(b, n) > N) b -= 1;
+  while (pangkatAman_(b + 1, n) <= N) b += 1;
+  return b;
+}
+
+/* { bawah, atas, bulat }: bawah ≤ nilai ≤ atas, atas = bawah + 1 bila tidak bulat. */
+function apitAkar(p) {
+  var b = akarBawah_(p);
+  var bulat = pangkatAman_(b, indeksDari_(p)) === pangkatAkarKe_(p, indeksDari_(p));
+  return { bawah: b, atas: bulat ? b : b + 1, bulat: bulat };
+}
+
+/*
+ * Bilangan bulat m yang memisahkan p dan q (yang kecil ≤ m ≤ yang
+ * besar, nilai berbeda), atau null. Dipilih m terkecil.
+ */
+function patokanAkar(p, q) {
+  var c = bandingAkar(p, q);
+  if (c === 0) return null;
+  var lo = c < 0 ? p : q;
+  var hi = c < 0 ? q : p;
+  var aLo = apitAkar(lo);
+  var m = aLo.atas;
+  return m <= apitAkar(hi).bawah ? m : null;
+}
+
+/* ---------- Strategi ahli ---------- */
+
+var STRATEGI_BANDING_AKAR = [
+  {
+    id: 'indeksSama',
+    ikon: '🟰',
+    nama: 'Ahli Indeks Sama',
+    ringkas: 'Indeks & koefisien sama → bandingkan radikannya',
+    tugas: 'Mengajarkan cara membandingkan bentuk akar yang indeks dan koefisiennya sama.',
+    kunci:
+      'Jika indeks dan koefisiennya sama, bandingkan radikannya: radikan lebih besar → nilai lebih besar. Contoh: √7 < √11 karena 7 < 11.',
+  },
+  {
+    id: 'masukkanKoefisien',
+    ikon: '📥',
+    nama: 'Ahli Masukkan Koefisien',
+    ringkas: 'Masukkan koefisien ke dalam akar: k√r = √(k²·r)',
+    tugas:
+      'Mengajarkan cara memasukkan koefisien (atau bilangan bulat) ke dalam akar sebelum membandingkan.',
+    kunci:
+      'Koefisien dimasukkan ke dalam akar dengan dipangkatkan sebesar indeksnya: 3√2 = √(3²·2) = √18. Setelah semuanya berbentuk akar murni, bandingkan radikannya.',
+  },
+  {
+    id: 'samakanIndeks',
+    ikon: '🔁',
+    nama: 'Ahli Samakan Indeks',
+    ringkas: 'Indeks berbeda → samakan dengan KPK indeks',
+    tugas: 'Mengajarkan cara menyamakan indeks akar dengan KPK sebelum membandingkan.',
+    kunci:
+      'Ubah kedua akar ke indeks KPK: √2 = ⁶√(2³) = ⁶√8 dan ∛3 = ⁶√(3²) = ⁶√9, lalu bandingkan radikannya. Cara ini selalu berhasil.',
+  },
+  {
+    id: 'patokan',
+    ikon: '🎯',
+    nama: 'Ahli Patokan',
+    ringkas: 'Cari bilangan bulat pengapit dari kuadrat/kubus terdekat',
+    tugas: 'Mengajarkan cara menaksir bentuk akar dengan bilangan kuadrat atau kubus terdekat.',
+    kunci:
+      'Apit bentuk akar dengan bilangan kuadrat/kubus terdekat: √50 di antara 7 dan 8 karena 49 < 50 < 64. Bila ada bilangan bulat di antara kedua bilangan, perbandingannya langsung terlihat.',
+  },
+];
+
+function strategiAkarInfo(id) {
+  for (var i = 0; i < STRATEGI_BANDING_AKAR.length; i++) {
+    if (STRATEGI_BANDING_AKAR[i].id === id) return STRATEGI_BANDING_AKAR[i];
+  }
+  return null;
+}
+
+/* Opsi { id, label } strategi ahli untuk diacak (ensureShuffledOrder). */
+function opsiStrategiBandingAkar() {
+  return STRATEGI_BANDING_AKAR.map(function (s) {
+    return {
+      id: s.id,
+      label:
+        '<span aria-hidden="true">' +
+        s.ikon +
+        '</span> <strong>' +
+        esc(s.nama) +
+        '</strong> — ' +
+        tulisAkarHTML(s.ringkas),
+    };
+  });
+}
+
+/*
+ * Strategi yang dapat dipakai untuk p dan q, terurut dari yang paling
+ * cepat. Indeks sama → indeksSama (koefisien sama) atau
+ * masukkanKoefisien; indeks berbeda → samakanIndeks (selalu berhasil);
+ * patokan bila ada bilangan bulat pemisah (untuk indeks berbeda atau
+ * bilangan bulat, patokan didahulukan karena lebih cepat).
+ */
+function strategiBerlakuAkar(p, q) {
+  p = akarDari_(p);
+  q = akarDari_(q);
+  var pat = patokanAkar(p, q) !== null;
+  var bp = isBulatAkar_(p);
+  var bq = isBulatAkar_(q);
+  if (bp && bq) return ['patokan'];
+  if (bp || bq) return pat ? ['patokan', 'masukkanKoefisien'] : ['masukkanKoefisien'];
+  if (p.n === q.n) {
+    var out = [p.k === q.k ? 'indeksSama' : 'masukkanKoefisien'];
+    if (pat) out.push('patokan');
+    return out;
+  }
+  return pat ? ['patokan', 'samakanIndeks'] : ['samakanIndeks'];
+}
+
+function strategiBandingAkar(p, q) {
+  return strategiBerlakuAkar(p, q)[0];
+}
+
+function namaIndeks_(n) {
+  return n === 2 ? 'akar kuadrat' : 'akar pangkat ' + terbilang(n);
+}
+
+/* '3√2 = √(3²·2) = √18'; akar murni → '√18'; bilangan bulat 7 → '7 = √(7²) = √49'. */
+function langkahMasukkan_(p, indeks) {
+  var m = masukkanKoefisien(p, indeks);
+  if (!isBulatAkar_(p) && p.k === 1) return teksBentukAkar(p);
+  var isi = isBulatAkar_(p)
+    ? formatNumber(p.k) + superskrip(m.n)
+    : formatNumber(p.k) + superskrip(p.n) + '·' + formatNumber(p.r);
+  return teksBentukAkar(p) + ' = ' + lambangAkar(m.n) + '(' + isi + ') = ' + teksBentukAkar(m);
+}
+
+/* '√2 = ⁶√(2³) = ⁶√8' (koefisien dimasukkan lebih dulu bila ada). */
+function langkahSamakan_(p, L) {
+  var murni = p.k === 1 ? p : masukkanKoefisien(p);
+  var hasil = { k: 1, n: L, r: pangkatAkarKe_(p, L) };
+  var awal = p.k === 1 ? teksBentukAkar(p) : teksBentukAkar(p) + ' = ' + teksBentukAkar(murni);
+  if (murni.n === L) return awal;
+  return (
+    awal +
+    ' = ' +
+    lambangAkar(L) +
+    '(' +
+    formatNumber(murni.r) +
+    superskrip(L / murni.n) +
+    ') = ' +
+    teksBentukAkar(hasil)
+  );
+}
+
+/* '√50 di antara 7 dan 8 karena 7² = 49 < 50 < 64 = 8²'. */
+function langkahApit_(p) {
+  if (isBulatAkar_(p)) return formatNumber(p.k) + ' adalah bilangan bulat';
+  var murni = p.k === 1 ? p : masukkanKoefisien(p);
+  var a = apitAkar(p);
+  var n = p.n;
+  var awal = p.k === 1 ? teksBentukAkar(p) : teksBentukAkar(p) + ' = ' + teksBentukAkar(murni);
+  if (a.bulat) {
+    return (
+      awal +
+      ' = ' +
+      formatNumber(a.bawah) +
+      ' karena ' +
+      formatNumber(a.bawah) +
+      superskrip(n) +
+      ' = ' +
+      formatNumber(murni.r)
+    );
+  }
+  return (
+    awal +
+    ' di antara ' +
+    formatNumber(a.bawah) +
+    ' dan ' +
+    formatNumber(a.atas) +
+    ' karena ' +
+    formatNumber(a.bawah) +
+    superskrip(n) +
+    ' = ' +
+    formatNumber(pangkatAman_(a.bawah, n)) +
+    ' < ' +
+    formatNumber(murni.r) +
+    ' < ' +
+    formatNumber(pangkatAman_(a.atas, n)) +
+    ' = ' +
+    formatNumber(a.atas) +
+    superskrip(n)
+  );
+}
+
+/* Penjelasan teks (bernotasi akar, untuk tulisAkarHTML) strategi `id` untuk p dan q. */
+function penjelasanStrategiAkar(id, p, q) {
+  p = akarDari_(p);
+  q = akarDari_(q);
+  var sym = compareSymbolText(simbolBandingAkar(p, q));
+  var kalimat = kalimatBandingAkar(p, q);
+  if (id === 'indeksSama') {
+    return (
+      'Indeksnya sama (' +
+      namaIndeks_(p.n) +
+      ')' +
+      (p.k === 1 ? '' : ' dan koefisiennya sama') +
+      ', jadi cukup bandingkan radikannya: ' +
+      formatNumber(p.r) +
+      ' ' +
+      sym +
+      ' ' +
+      formatNumber(q.r) +
+      '. Maka ' +
+      kalimat +
+      '.'
+    );
+  }
+  if (id === 'masukkanKoefisien') {
+    var n = isBulatAkar_(p) ? q.n : p.n;
+    var mp = masukkanKoefisien(p, n);
+    var mq = masukkanKoefisien(q, n);
+    return (
+      'Masukkan koefisien ke dalam akar: ' +
+      langkahMasukkan_(p, n) +
+      ' dan ' +
+      langkahMasukkan_(q, n) +
+      '. Radikannya ' +
+      formatNumber(mp.r) +
+      ' ' +
+      sym +
+      ' ' +
+      formatNumber(mq.r) +
+      ', maka ' +
+      kalimat +
+      '.'
+    );
+  }
+  if (id === 'samakanIndeks') {
+    var s = samakanIndeksAkar(p, q);
+    return (
+      'KPK indeks ' +
+      indeksDari_(p) +
+      ' dan ' +
+      indeksDari_(q) +
+      ' adalah ' +
+      s.L +
+      ': ' +
+      langkahSamakan_(p, s.L) +
+      ' dan ' +
+      langkahSamakan_(q, s.L) +
+      '. Radikannya ' +
+      formatNumber(s.p.r) +
+      ' ' +
+      sym +
+      ' ' +
+      formatNumber(s.q.r) +
+      ', maka ' +
+      kalimat +
+      '.'
+    );
+  }
+  if (id === 'patokan') {
+    var m = patokanAkar(p, q);
+    return (
+      langkahApit_(p) +
+      '; ' +
+      langkahApit_(q) +
+      '. ' +
+      (m === null
+        ? 'Tidak ada bilangan bulat yang memisahkan keduanya, jadi pakai strategi lain untuk memastikan.'
+        : 'Bilangan bulat ' + formatNumber(m) + ' menjadi patokan, maka ' + kalimat + '.')
+    );
+  }
+  return kalimat + '.';
+}
+
+/* ---------- Diagnosa miskonsepsi ---------- */
+
+/*
+ * Kode diagnosa pilihan lambang `symbolId` untuk p ☐ q:
+ *   'benar'
+ *   'kaliKoefisien' k√r dianggap √(k·r) (3√2 dan 2√3 dianggap √6)
+ *   'indeksBesar'   indeks lebih besar dianggap nilai lebih besar
+ *   'radikanSaja'   hanya membandingkan radikan (abaikan koefisien/indeks)
+ *   'koefisienSaja' hanya membandingkan koefisien
+ *   'setengah'      √a dianggap a/2 (√16 dianggap 8)
+ *   'terbalik'      kesalahan arah lainnya
+ */
+function diagnosaBandingAkar(p, q, symbolId) {
+  p = akarDari_(p);
+  q = akarDari_(q);
+  if (symbolId === simbolBandingAkar(p, q)) return 'benar';
+  var bp = isBulatAkar_(p);
+  var bq = isBulatAkar_(q);
+  if (!bp && !bq) {
+    if (p.n === q.n && (p.k > 1 || q.k > 1) && symbolId === compareSymbolId(p.k * p.r, q.k * q.r)) {
+      return 'kaliKoefisien';
+    }
+    if (p.n !== q.n && symbolId === compareSymbolId(p.n, q.n)) return 'indeksBesar';
+    if ((p.k !== q.k || p.n !== q.n) && symbolId === compareSymbolId(p.r, q.r)) {
+      return 'radikanSaja';
+    }
+  }
+  if (p.k !== q.k && symbolId === compareSymbolId(p.k, q.k)) return 'koefisienSaja';
+  if (bp !== bq) {
+    var akar = bp ? q : p;
+    if (akar.n === 2 && akar.k === 1) {
+      var setengah = akar.r / 2;
+      var sym = bp ? compareSymbolId(p.k, setengah) : compareSymbolId(setengah, q.k);
+      if (symbolId === sym) return 'setengah';
+    }
+  }
+  return 'terbalik';
+}
+
+/* Umpan balik teks (tanpa membocorkan lambang benar kecuali 'benar'). */
+function pesanBandingAkar(kode, p, q) {
+  p = akarDari_(p);
+  q = akarDari_(q);
+  if (kode === 'benar') {
+    return (
+      'Tepat! ' +
+      kalimatBandingAkar(p, q) +
+      '. ' +
+      penjelasanStrategiAkar(strategiBandingAkar(p, q), p, q)
+    );
+  }
+  if (kode === 'kaliKoefisien') {
+    return 'Hati-hati: koefisien TIDAK dikalikan langsung dengan radikan. Untuk memasukkan koefisien ke dalam akar, koefisien harus dipangkatkan sesuai indeksnya dulu, misalnya 3√2 = √(3²·2) = √18, bukan √6. Coba lagi.';
+  }
+  if (kode === 'indeksBesar') {
+    return 'Indeks yang lebih besar TIDAK berarti nilainya lebih besar. Justru untuk radikan yang sama (lebih dari 1), akar berindeks lebih besar bernilai lebih kecil: ∛8 = 2, sedangkan √8 ≈ 2,83. Samakan indeksnya dengan KPK, lalu coba lagi.';
+  }
+  if (kode === 'radikanSaja') {
+    return 'Sepertinya kamu hanya membandingkan radikannya. Radikan boleh dibandingkan langsung hanya jika indeks DAN koefisiennya sudah sama. Masukkan koefisien ke dalam akar atau samakan indeksnya dulu, lalu coba lagi.';
+  }
+  if (kode === 'koefisienSaja') {
+    return 'Sepertinya kamu hanya membandingkan koefisiennya. Radikan juga ikut menentukan nilai: masukkan koefisien ke dalam akar (k√r = √(k²·r)) agar keduanya bisa dibandingkan dengan adil. Coba lagi.';
+  }
+  if (kode === 'setengah') {
+    return 'Akar kuadrat BUKAN "dibagi dua". √16 = 4 (karena 4² = 16), bukan 8. Cari bilangan yang jika dikuadratkan sama dengan radikannya, lalu coba lagi.';
+  }
+  return (
+    'Belum tepat. Pilih strategi ahli yang cocok — menyamakan indeks atau memasukkan koefisien selalu berhasil — lalu periksa lagi ' +
+    teksBentukAkar(p) +
+    ' dan ' +
+    teksBentukAkar(q) +
+    '.'
+  );
+}
+
+/* ---------- Makna konteks ---------- */
+
+/* 'kecil' bila p < q, 'besar' bila p > q, 'sama' bila p = q. */
+function idMaknaBandingAkar(p, q) {
+  var c = bandingAkar(p, q);
+  return c < 0 ? 'kecil' : c > 0 ? 'besar' : 'sama';
+}
+
+function kataBandingAkar_(tema) {
+  return KATA_BANDING_PECAHAN[tema] || KATA_BANDING_PECAHAN.banyak;
+}
+
+/* Opsi { id, label } kecil/besar/sama untuk diacak (ensureShuffledOrder). */
+function opsiMaknaBandingAkar(tema) {
+  var K = kataBandingAkar_(tema);
+  return [
+    { id: 'kecil', label: K.kecil },
+    { id: 'besar', label: K.besar },
+    { id: 'sama', label: K.sama },
+  ];
+}
+
+/* Frasa makna p terhadap q, mis. 'lebih panjang'. */
+function maknaBandingAkar(p, q, tema) {
+  return kataBandingAkar_(tema)[idMaknaBandingAkar(p, q)];
+}
+
+/* ---------- Komponen render ---------- */
+
+/* Bentuk akar sebagai HTML ber-vinculum dengan label bacaan. */
+function akarHTML(p, cls) {
+  p = akarDari_(p);
+  return (
+    '<span class="akr' +
+    (cls ? ' ' + cls : '') +
+    '" role="img" aria-label="' +
+    esc(bacaBentukAkar(p)) +
+    '">' +
+    tulisAkarHTML(teksBentukAkar(p)) +
+    '</span>'
+  );
+}
+
+/* Kalimat besar: [p] ☐ [q]. `symbolId` null → kotak '?'. */
+function buildKalimatBandingAkar(p, q, symbolId) {
+  var aria =
+    bacaBentukAkar(p) +
+    ' ' +
+    (symbolId ? KATA_SIMBOL[symbolId] : 'kotak kosong') +
+    ' ' +
+    bacaBentukAkar(q);
+  return (
+    '<div class="cmp-sentence akr-kalimat" aria-label="' +
+    esc(aria) +
+    '">' +
+    akarHTML(p, 'akr--big') +
+    '<span class="cmp-sentence__sym' +
+    (symbolId ? ' is-filled' : '') +
+    '">' +
+    esc(symbolId ? compareSymbolText(symbolId) : '?') +
+    '</span>' +
+    akarHTML(q, 'akr--big') +
+    '</div>'
+  );
+}
+
+/*
+ * Tombol lambang <, >, = untuk p ☐ q (urutan dari state teracak), boleh
+ * dicoba lagi sampai benar lalu terkunci; pilihan salah diberi pesan
+ * diagnosa miskonsepsi.
+ *   st  { chosen, wrong, diag }
+ *   opts.group     pembeda antarsoal (data-group)
+ *   opts.strategi  id strategi untuk penjelasan saat benar (default tercepat)
+ */
+function buildPilihSimbolAkar(p, q, order, st, opts) {
+  opts = opts || {};
+  var benarId = simbolBandingAkar(p, q);
+  var benar = st.chosen === benarId;
+  var umpan = '';
+  if (st.chosen && !benar) {
+    umpan = buildFeedbackBox(
+      'warning',
+      '💭',
+      tulisAkarHTML(pesanBandingAkar(st.diag || 'terbalik', p, q))
+    );
+  } else if (benar) {
+    var strat = opts.strategi || strategiBandingAkar(p, q);
+    umpan = buildFeedbackBox(
+      'success',
+      '✓',
+      '<strong>' +
+        tulisAkarHTML(kalimatBandingAkar(p, q)) +
+        '</strong>. ' +
+        tulisAkarHTML(penjelasanStrategiAkar(strat, p, q))
+    );
+  }
+  return (
+    '<div class="cmp-symbols">' +
+    buildChoiceGroup(COMPARE_SYMBOLS, order, {
+      chosen: st.chosen,
+      correctId: benar ? benarId : null,
+      grade: true,
+      locked: benar,
+      group: opts.group || 'akr',
+      attr: 'data-akr-sym',
+    }) +
+    '</div>' +
+    (umpan ? '<div style="margin-top:var(--space-3);">' + umpan + '</div>' : '')
+  );
+}
+
+/* Mencatat pilihan lambang (tidak berubah lagi setelah benar). */
+function catatPilihSimbolAkar(st, p, q, symbolId) {
+  var benarId = simbolBandingAkar(p, q);
+  if (st.chosen === benarId) return st;
+  st.chosen = symbolId;
+  if (symbolId === benarId) {
+    st.diag = null;
+  } else {
+    st.wrong = (st.wrong || 0) + 1;
+    st.diag = diagnosaBandingAkar(p, q, symbolId);
+  }
+  return st;
+}
+
+/* Memasang event buildPilihSimbolAkar; pasangan & state dicari lewat group. */
+function bindPilihSimbolAkar(root, getPair, getState, save, rerender) {
+  root.querySelectorAll('[data-akr-sym]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var group = btn.dataset.group;
+      var pair = getPair(group);
+      var st = getState(group);
+      if (!pair || !st) return;
+      catatPilihSimbolAkar(st, pair[0], pair[1], btn.dataset.akrSym);
+      save();
+      rerender();
+    });
+  });
+}
+
+/*
+ * Batang nilai: panjang batang sebanding nilai (terpanjang = 100%).
+ *   list  [{ p, nama }]
+ */
+function buildBatangAkar(list, opts) {
+  opts = opts || {};
+  var maks = 0;
+  list.forEach(function (it) {
+    maks = Math.max(maks, nilaiAkar(akarDari_(it)));
+  });
+  return (
+    '<div class="akr-batang"' +
+    (opts.label ? ' aria-label="' + esc(opts.label) + '"' : '') +
+    '>' +
+    list
+      .map(function (it) {
+        var p = akarDari_(it);
+        var w = maks > 0 ? Math.round((nilaiAkar(p) / maks) * 1000) / 10 : 0;
+        return (
+          '<div class="akr-batang__baris">' +
+          '<span class="akr-batang__label">' +
+          (it.nama ? '<span class="akr-batang__nama">' + esc(it.nama) + '</span>' : '') +
+          akarHTML(p) +
+          '</span>' +
+          '<span class="akr-batang__jalur"><span class="akr-batang__bar" style="width:' +
+          w +
+          '%"></span></span>' +
+          '<span class="akr-batang__nilai">' +
+          esc(teksNilaiAkar(p)) +
+          '</span>' +
+          '</div>'
+        );
+      })
+      .join('') +
+    '</div>'
+  );
+}
+
+/* ---------- Lab Timbangan Akar ---------- */
+
+var LAB_TIMBANGAN_AKAR_BATAS = { kMin: 1, kMaks: 5, nMin: 2, nMaks: 3, rMin: 2, rMaks: 30 };
+
+function makeLabTimbanganAkarState() {
+  return { p: { k: 1, n: 2, r: 7 }, q: { k: 1, n: 2, r: 11 }, strategi: [] };
+}
+
+/* Mengubah k/n/r satu sisi sebesar `langkah` dalam batas lab. */
+function ubahLabTimbanganAkar(st, sisi, kunci, langkah) {
+  var B = LAB_TIMBANGAN_AKAR_BATAS;
+  var x = st[sisi];
+  var v = x[kunci] + langkah;
+  if (v < B[kunci + 'Min'] || v > B[kunci + 'Maks']) return st;
+  x[kunci] = v;
+  return st;
+}
+
+/* Mencatat strategi tercepat pasangan yang sedang ditimbang (tanpa duplikat). */
+function catatLabTimbanganAkar(st) {
+  if (!Array.isArray(st.strategi)) st.strategi = [];
+  var s = strategiBandingAkar(st.p, st.q);
+  if (st.strategi.indexOf(s) === -1) st.strategi.push(s);
+  return st;
+}
+
+function labKartuAkar_(id, sisi, x, judul) {
+  function tombol(kunci, langkah, teks, aria) {
+    return (
+      '<button type="button" class="akr-lab__btn" data-lab-id="' +
+      esc(id) +
+      '" data-lab-sisi="' +
+      sisi +
+      '" data-lab-kunci="' +
+      kunci +
+      '" data-lab-langkah="' +
+      langkah +
+      '" aria-label="' +
+      esc(aria) +
+      '">' +
+      teks +
+      '</button>'
+    );
+  }
+  function baris(kunci, label) {
+    return (
+      '<div class="akr-lab__atur"><span class="akr-lab__atur-label">' +
+      label +
+      '</span>' +
+      tombol(kunci, -1, '−', label + ' ' + judul + ' dikurangi') +
+      '<span class="akr-lab__atur-val">' +
+      x[kunci] +
+      '</span>' +
+      tombol(kunci, 1, '+', label + ' ' + judul + ' ditambah') +
+      '</div>'
+    );
+  }
+  return (
+    '<div class="akr-lab__kartu">' +
+    '<p class="akr-lab__judul">' +
+    esc(judul) +
+    '</p>' +
+    '<p class="akr-lab__akar">' +
+    akarHTML(x) +
+    '</p>' +
+    '<p class="akr-lab__nilai">' +
+    esc(teksNilaiAkar(x)) +
+    '</p>' +
+    baris('k', 'Koefisien') +
+    baris('n', 'Indeks') +
+    baris('r', 'Radikan') +
+    '</div>'
+  );
+}
+
+/*
+ * Lab timbangan: dua kartu k·ⁿ√r dengan tombol ± koefisien, indeks,
+ * radikan; lambang di tengah; batang nilai; strategi tercepat dan
+ * langkahnya; chip strategi yang sudah ditemukan.
+ *   opts.target  banyak strategi berbeda yang harus ditemukan (default 3)
+ */
+function buildLabTimbanganAkar(id, st, opts) {
+  opts = opts || {};
+  var target = opts.target || 3;
+  var sim = simbolBandingAkar(st.p, st.q);
+  var strat = strategiBandingAkar(st.p, st.q);
+  var info = strategiAkarInfo(strat);
+  var dicoba = Array.isArray(st.strategi) ? st.strategi : [];
+  return (
+    '<div class="akr-lab" id="' +
+    esc(id) +
+    '">' +
+    '<div class="akr-lab__timbang">' +
+    labKartuAkar_(id, 'p', st.p, 'Bilangan A') +
+    '<span class="akr-lab__sym" aria-live="polite">' +
+    esc(compareSymbolText(sim)) +
+    '</span>' +
+    labKartuAkar_(id, 'q', st.q, 'Bilangan B') +
+    '</div>' +
+    buildBatangAkar(
+      [
+        { p: st.p, nama: 'A' },
+        { p: st.q, nama: 'B' },
+      ],
+      { label: 'Batang nilai bilangan A dan B' }
+    ) +
+    '<p class="akr-lab__strategi">Strategi tercepat: <strong>' +
+    info.ikon +
+    ' ' +
+    esc(info.nama) +
+    '</strong></p>' +
+    '<p class="akr-lab__alasan">' +
+    tulisAkarHTML(penjelasanStrategiAkar(strat, st.p, st.q)) +
+    '</p>' +
+    '<div class="akr-lab__temuan" aria-label="Strategi yang sudah kalian temukan">' +
+    STRATEGI_BANDING_AKAR.map(function (s) {
+      var ada = dicoba.indexOf(s.id) !== -1;
+      return (
+        '<span class="akr-lab__chip' +
+        (ada ? ' is-found' : '') +
+        '">' +
+        (ada ? '✓ ' : '○ ') +
+        esc(s.nama) +
+        '</span>'
+      );
+    }).join('') +
+    '</div>' +
+    '<p class="dl-caption">Strategi berbeda yang sudah ditemukan: ' +
+    Math.min(dicoba.length, STRATEGI_BANDING_AKAR.length) +
+    ' dari ' +
+    STRATEGI_BANDING_AKAR.length +
+    ' (minimal ' +
+    target +
+    ').</p>' +
+    '</div>'
+  );
+}
+
+function bindLabTimbanganAkar(root, id, st, save, rerender) {
+  root.querySelectorAll('[data-lab-id="' + id + '"]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      ubahLabTimbanganAkar(
+        st,
+        btn.dataset.labSisi,
+        btn.dataset.labKunci,
+        parseInt(btn.dataset.labLangkah, 10)
+      );
+      catatLabTimbanganAkar(st);
+      save();
+      rerender();
+    });
+  });
+}
