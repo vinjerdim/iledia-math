@@ -111,6 +111,14 @@
     "stageCount": 11,
     "extraBody": "partials/reset-modal.html"
   },
+  "fase-d/mpi-12.5": {
+    "title": "Membandingkan & Mengurutkan Bentuk Akar — Matematika Fase D",
+    "description": "Media pembelajaran interaktif berbasis Cooperative Learning tipe Jigsaw untuk membandingkan dan mengurutkan bentuk akar: Lab Timbangan Akar untuk menemukan bahwa yang dibandingkan adalah nilainya, kartu ahli empat strategi (indeks sama, masukkan koefisien ke dalam akar, samakan indeks dengan KPK, patokan bilangan kuadrat/kubus terdekat), misi tim membandingkan konteks berdiagnosa miskonsepsi, mengurutkan kartu dengan batang nilai, cek pendapat teman, kuis individu, dan penghargaan tim.",
+    "kicker": "Matematika — Fase D (SMP)",
+    "h1": "Membandingkan & Mengurutkan Bentuk Akar",
+    "stageCount": 11,
+    "extraBody": "partials/reset-modal.html"
+  },
   "fase-d/mpi-22.1": {
     "title": "Unsur-unsur & Jaring-jaring Prisma — Matematika Fase D",
     "description": "Media pembelajaran interaktif berbasis Discovery Learning untuk mengidentifikasi unsur-unsur prisma (titik sudut, rusuk, sisi, dan tinggi) serta jaring-jaring prisma melalui kegiatan memutar model 3D, melipat, dan merakit bentangan karton kemasan.",
