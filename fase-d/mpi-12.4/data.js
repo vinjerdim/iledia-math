@@ -2,1154 +2,1072 @@
 
 /* ============================================================
    data.js — Konten media pembelajaran
-   Matematika: Operasi Hitung Bentuk Akar
+   Matematika: Membaca & Menuliskan Bentuk Akar serta Pangkat Pecahan
    Fase D — SMP Kelas VIII · Topik 12 Bilangan Berpangkat dan Bentuk Akar
 
    Tujuan Pembelajaran:
-   Melakukan operasi hitung (penjumlahan, pengurangan, perkalian,
-   pembagian, dan merasionalkan penyebut) pada bentuk akar.
+   Membaca dan menuliskan bentuk akar serta mengaitkannya dengan
+   bilangan berpangkat pecahan.
 
-   Prasyarat: fase-d/mpi-12.3 (bentuk akar ⇄ pangkat pecahan,
-   menyederhanakan bentuk akar, mis. √72 = 6√2).
+   Prasyarat: fase-d/mpi-12.1 & 12.2 (membaca bilangan berpangkat,
+   sifat pangkat dari pangkat (aᵐ)ⁿ = aᵐˣⁿ).
 
-   Gagasan kunci yang dibangun di seluruh modul:
-     • bentuk akar diperlakukan seperti variabel aljabar: √3 berperan
-       seperti x, sehingga 2√3 + 5√3 = 7√3 (hanya suku SEJENIS);
-     • suku yang tampak berbeda bisa sejenis setelah disederhanakan
-       (√12 + √27 = 2√3 + 3√3 = 5√3), dan sebaliknya (√8 + √12 tidak);
-     • a√b × c√d = (a × c)√(b × d) dan a√b : c√d = (a : c)√(b : d),
-       lalu hasilnya disederhanakan; √a × √a = a;
-     • merasionalkan: a/√b × √b/√b = a√b/b (dikali 1, nilai tetap);
-       a/(p ± √q) dikali sekawan p ∓ √q karena (p + √q)(p − √q) = p² − q;
-     • miskonsepsi yang dilawan: √a + √b = √(a + b), koefisien dikalikan
-       pada penjumlahan, radikan dijumlahkan pada perkalian, radikan
-       dikurangkan pada pembagian, penyebut tidak ikut dikalikan,
-       √b × √b = b², dan tanda sekawan tidak dibalik.
+   Model pembelajaran: DISCOVERY LEARNING (Penemuan Terbimbing).
+   Pemetaan sintaks ke tahap media:
 
-   Model pembelajaran: COOPERATIVE LEARNING tipe JIGSAW (sintaks Arends,
-   dengan skor tim ala STAD). Pemetaan sintaks ke tahap media:
+     Sintaks 1 — Stimulation ................ tahap 'stimulasi'
+     Sintaks 2 — Problem statement .......... tahap 'masalah'
+     Sintaks 3 — Data collection ............ tahap 'unsur', 'baca' & 'pola'
+     Sintaks 4 — Data processing ............ tahap 'olah'
+     Sintaks 5 — Verification ............... tahap 'verifikasi'
+     Sintaks 6 — Generalization ............. tahap 'generalisasi'
+     Penerapan & penutup .................... 'terapkan', 'refleksi', 'selesai'
 
-     Fase 1 — Menyampaikan tujuan & memotivasi ........ 'tujuan'
-     Fase 2 — Menyajikan informasi ..................... 'informasi'
-     Fase 3 — Mengorganisasikan murid ke tim asal ...... 'tim'
-     Fase 4 — Membimbing kelompok bekerja & belajar:
-              a. kelompok ahli + mengajar tim asal ..... 'ahli'
-              b. misi tim asal ......................... 'misiOperasi',
-                                                         'misiKonteks'
-              c. diskusi tim ........................... 'misiDiskusi'
-     Fase 5 — Evaluasi (individu) ...................... 'kuis'
-     Fase 6 — Memberikan penghargaan ................... 'penghargaan'
-     Penutup ........................................... 'refleksi', 'selesai'
+   Rangkaian aktivitas (± 2 × 40 menit, murid berpasangan):
+     1. Stimulasi   (5')  — "Hiasan Kelas": ubin persegi 49 cm² dan kotak
+                            kado kubus 125 cm³; papan Bu Sari menulis
+                            √49 dan ∛125 = 125^(1/3). Murid MENDUGA cara
+                            membaca ∛125 dan arti 125^(1/3) + alasan
+                            (tidak dinilai).
+     2. Masalah     (4')  — memilih rumusan masalah & menulis hipotesis.
+     3. Unsur       (12') — Lab Persegi & Kubus (luas → sisi √, volume →
+                            rusuk ∛), isian akar bulat, lalu Anatomi
+                            Bentuk Akar: mengetuk tanda akar, indeks,
+                            radikan, dan pangkat radikan pada ∛(5²)
+                            (urutan bagian diacak) + pertanyaan penuntun.
+     4. Baca-tulis  (12') — memilih bacaan baku dari notasi, lalu
+                            MENULISKAN notasi dari bacaan dengan papan
+                            tulis akar (stepper indeks, radikan, pangkat)
+                            berdiagnosa miskonsepsi.
+     5. Pola        (12') — Detektif Eksponen: (a^(1/n))ⁿ = a sehingga
+                            a^(1/2) = √a, a^(1/3) = ∛a; tangga nilai
+                            64^(1/2) … 64^(3/2), ∛(8²) → tabel ringkas →
+                            menemukan ⁿ√(aᵐ) = a^(m/n) & cara membacanya.
+     6. Olah data   (10') — pertanyaan penuntun, misi Konverter Akar ⇄
+                            Pangkat, pilah 8 pernyataan tepat/keliru.
+     7. Pembuktian  (8')  — membuktikan dugaan awal; 6 soal membaca,
+                            menulis, konversi dua arah, dan nilai.
+     8. Simpulan    (5')  — melengkapi kalimat dari bank kalimat acak.
+     9. Uji terap   (10') — 8 soal kontekstual (ubin, akuarium, kuis
+                            radio, kotak kado, layar jam).
+    10. Refleksi    (4')  — rekap, refleksi tertulis, penilaian diri.
 
-   Rangkaian aktivitas (± 2 × 40 menit, tim asal heterogen 4 murid,
-   satu perangkat per tim; kuis dikerjakan per murid):
-     1. Tujuan      (6')  — "Kebun Sekolah": pagar dua petak persegi
-                            (√50 + √18), luas bedeng (√8 × √2), lebar
-                            petak (6/√3). Tim MENDUGA hasilnya (tidak
-                            dinilai; dicek setelah tahap ahli).
-     2. Informasi   (7')  — √a × √a = a, menyederhanakan akar, analogi
-                            suku sejenis 2x + 5x, bilangan irasional;
-                            pertanyaan penuntun berdiagnosa.
-     3. Tim asal    (4')  — nama tim, anggota, kesepakatan; EMPAT kartu
-                            AHLI (penjumlahan & pengurangan, perkalian,
-                            pembagian, merasionalkan penyebut) dibagikan
-                            acak. Anggota ke-5 menjadi pendamping ahli.
-     4. Ahli        (20') — Jigsaw: tiap ahli berkumpul dengan ahli
-                            sejenis dari tim lain, menguji nilai dengan
-                            bilangan kuadrat sempurna (mis. √9 + √16 vs
-                            √(9 + 16)), menemukan aturannya, lalu kembali
-                            MENGAJARI tim asal dan memandu dua soal
-                            stasiun berdiagnosa.
-     5. Misi 1      (12') — "Bengkel Akar": delapan soal campuran. Pilih
-                            strategi (termasuk jebakan tidak sejenis dan
-                            sekawan) → ahli strategi itu memimpin → isi
-                            hasil paling sederhana (diagnosa).
-     6. Misi 2      (10') — "Proyek Kebun": lima soal kontekstual
-                            (pagar, bedeng, tali, papan nama, lahan)
-                            diselesaikan langkah demi langkah.
-     7. Misi 3      (6')  — "Cek Pendapat Teman": delapan pernyataan
-                            Benar/Salah berisi miskonsepsi + catatan Juru
-                            Bicara.
-     8. Kuis        (10') — kuis individu: tujuh soal diambil acak dari
-                            bank empat belas soal.
-     9. Penghargaan (2')  — poin tim (50% misi + 50% kuis) → predikat.
-    10. Refleksi    (3')  — refleksi konsep & kerja sama, penilaian diri.
+   Catatan: seluruh daftar pilihan jawaban di berkas ini ditulis dalam
+   urutan "wajar" (jawaban benar sering di depan). Pengacakan dilakukan
+   app.js memakai ensureShuffledOrder()/ensureSortStates()/shuffleArray()
+   dari shared/engine.js, satu kali saat state disiapkan. Urutan bagian
+   pada Anatomi Bentuk Akar juga diacak (makeAnatomiAkarState).
 
-   Catatan pengacakan: seluruh daftar pilihan di berkas ini ditulis
-   dalam urutan "wajar" (jawaban benar sering di depan). app.js
-   mengacaknya SEKALI saat state disiapkan (ensureShuffledOrder /
-   ensureSortStates / shuffleArray / ensureOpAkarStepState dari
-   shared/engine.js) sehingga tiap tim dan tiap Reset mendapat urutan
-   berbeda — termasuk dugaan, penuntun, kesimpulan stasiun ahli,
-   pilihan strategi di setiap langkah, pernyataan diskusi, soal kuis yang
-   terpilih beserta opsinya, dan penilaian diri.
-
-   Notasi teks: √ untuk akar kuadrat, mis. '3√2', '√(9 + 16)', '6/√3'.
-   Teks dirender menjadi HTML oleh tulisAkarHTML().
-
-   Konvensi soal operasi (engine seksi 46):
-     { op: 'jumlah', suku: [{ k, r }] }           k bertanda (−1 = −√r)
-     { op: 'kali' | 'bagi', a: { k, r }, b: { k, r } }
-     { op: 'rasional', p, q: { k, r } }           p/(k√r)
-     { op: 'sekawan', p, a, c, r }                p/(a + c√r), c = ±1
-   Metadata `cek` pada dugaan, pernyataan, dan kuis dipakai
-   tests/mpi-12.4-data.test.js untuk menghitung ulang kunci jawaban
-   dengan hasilOperasiAkar & formatBentukAkar.
+   Notasi teks: a^(p/q) untuk pangkat pecahan, √ ∛ ∜ ⁿ√ untuk akar,
+   mis. '∛(5²)'. Teks dirender menjadi HTML oleh tulisAkarHTML().
+   Metadata `cek` dipakai tes untuk menghitung ulang kunci dengan
+   engine seksi 45 (tests/mpi-12.4-data.test.js):
+     { jenis: 'pangkat',     n, r, m }  label benar = formatPangkatPecahan(r, m, n)
+     { jenis: 'akar',        a, p, q }  label benar = formatAkar(1, q, a, p)
+     { jenis: 'tulis',       n, r, m }  label benar = formatAkar(1, n, r, m)
+     { jenis: 'baca',        n, r, m }  label benar = bacaAkar(1, n, r, m)
+     { jenis: 'bacaPangkat', a, p, q }  label benar = bacaPangkatPecahan(a, p, q)
+     { jenis: 'nilai',       a, p, q }  label/jawab = nilai a^(p/q) (eksak)
    ============================================================ */
 
-var CL = 'Cooperative Learning (Jigsaw)';
-
-var OPSI_BENAR_SALAH = [
-  { id: 'benar', label: '✓ Benar' },
-  { id: 'salah', label: '✗ Salah' },
-];
-
 var DATA = {
-  meta: {
-    judul: 'Operasi Hitung Bentuk Akar',
-  },
-
-  tahap: [
-    { id: 'tujuan', label: 'Tujuan' },
-    { id: 'informasi', label: 'Informasi' },
-    { id: 'tim', label: 'Tim Asal' },
-    { id: 'ahli', label: 'Ahli' },
-    { id: 'misiOperasi', label: 'Misi 1' },
-    { id: 'misiKonteks', label: 'Misi 2' },
-    { id: 'misiDiskusi', label: 'Misi 3' },
-    { id: 'kuis', label: 'Kuis' },
-    { id: 'penghargaan', label: 'Penghargaan' },
-    { id: 'refleksi', label: 'Refleksi' },
-    { id: 'selesai', label: 'Selesai' },
-  ],
-
-  /* Peran bergilir pada setiap misi tim (buildCoopRoleBar). */
-  peranMisi: [
-    {
-      id: 'pembaca',
-      ikon: '📖',
-      nama: 'Pembaca Soal',
-      tugas: 'Membacakan soal dan menunjuk koefisien serta bilangan di dalam akar.',
-    },
-    {
-      id: 'penulis',
-      ikon: '✍️',
-      nama: 'Penulis',
-      tugas: 'Mengetuk pilihan dan mengetik jawaban setelah tim sepakat.',
-    },
-    {
-      id: 'pemeriksa',
-      ikon: '🔍',
-      nama: 'Pemeriksa',
-      tugas: 'Bertanya "Sudah paling sederhana? Semua setuju?" sebelum Periksa ditekan.',
-    },
-    {
-      id: 'jubir',
-      ikon: '🎤',
-      nama: 'Juru Bicara',
-      tugas: 'Menjelaskan alasan tim dengan kalimat sendiri.',
-    },
-  ],
-
-  /* ---------- Fase 1: tujuan & motivasi ---------- */
-  tujuan: {
-    kicker: 'Tahap 1 · Tujuan & Motivasi',
-    goal: 'Mengenali tujuan belajar dan menduga hasil operasi bentuk akar dalam masalah kebun sekolah.',
-    syntax: CL + ' · Fase 1',
-    guru: 'Ceritakan masalah Kebun Sekolah. Minta setiap murid menduga sendiri (1 menit), lalu bandingkan dengan teman satu tim. Banyak murid akan memilih √68 karena "50 + 18 = 68" — jangan dikoreksi dulu; dugaan dicek setelah para ahli selesai mengajar.',
-    judul: 'Proyek Kebun Sekolah',
-    pengantar:
-      'Kelas VIII menata kebun sekolah. Luas setiap petak sudah diketahui, tetapi panjang sisinya berupa bentuk akar. Bagaimana cara menjumlahkan, mengalikan, dan membagi bentuk akar dengan tepat?',
-    tp: 'Melakukan operasi hitung (penjumlahan, pengurangan, perkalian, pembagian, dan merasionalkan penyebut) pada bentuk akar.',
+  /* ----------------------------------------------------------
+     TAHAP 1 — STIMULASI
+     ---------------------------------------------------------- */
+  stimulasi: {
+    kicker: 'Tahap 1 · Stimulasi',
+    syntax: 'Discovery Learning · Sintaks 1',
+    goal: 'Mengamati cara Bu Sari menuliskan sisi ubin dan rusuk kotak, lalu menduga cara membaca dan artinya.',
+    tp: 'Membaca dan menuliskan bentuk akar serta mengaitkannya dengan bilangan berpangkat pecahan.',
     tpJudul: 'Tujuan belajar hari ini',
     kriteria: [
-      'Menjumlahkan dan mengurangkan bentuk akar sejenis, termasuk yang harus disederhanakan lebih dulu.',
-      'Mengalikan bentuk akar dan menyederhanakan hasilnya.',
-      'Membagi bentuk akar dan menyederhanakan hasilnya.',
-      'Merasionalkan penyebut berbentuk a/√b dan a/(p ± √q), lalu menerapkannya pada masalah kontekstual.',
+      'Menyebutkan unsur bentuk akar: tanda akar, indeks, radikan, dan pangkat radikan.',
+      'Membaca bentuk akar ⁿ√(aᵐ) dengan bacaan baku, mis. ∛(5²) dibaca “akar pangkat tiga dari 5 pangkat 2”.',
+      'Menuliskan bentuk akar dari bacaannya dengan indeks dan pangkat di tempat yang benar.',
+      'Mengubah bentuk akar ⁿ√(aᵐ) menjadi pangkat pecahan a^(m/n) dan sebaliknya, serta membacanya.',
     ],
-    dugaan: [
-      {
-        id: 'dJumlah',
-        ikon: '🌱',
-        tanya:
-          'Dua petak persegi seluas 50 m² dan 18 m² berjajar. Panjang sisi gabungannya = √50 + √18 = … m',
-        opsi: [
-          { id: 'a', label: '8√2' },
-          { id: 'b', label: '√68' },
-          { id: 'c', label: '15√2' },
-          { id: 'd', label: '68' },
-        ],
-        kunci: 'a',
-        cek: {
-          op: 'jumlah',
-          suku: [
-            { k: 1, r: 50 },
-            { k: 1, r: 18 },
-          ],
-        },
-        penjelasan:
-          '√50 + √18 = 5√2 + 3√2 = 8√2 m (≈ 11,3 m). Periksa dengan kalkulator: √68 ≈ 8,2 m, terlalu pendek!',
-      },
-      {
-        id: 'dKali',
-        ikon: '🧺',
-        tanya: 'Sebuah bedeng berukuran √8 m × √2 m. Luasnya = √8 × √2 = … m²',
-        opsi: [
-          { id: 'a', label: '4' },
-          { id: 'b', label: '√10' },
-          { id: 'c', label: '16' },
-          { id: 'd', label: '2√2' },
-        ],
-        kunci: 'a',
-        cek: { op: 'kali', a: { k: 1, r: 8 }, b: { k: 1, r: 2 } },
-        penjelasan: '√8 × √2 = √(8 × 2) = √16 = 4 m².',
-      },
-      {
-        id: 'dRasional',
-        ikon: '📐',
-        tanya:
-          'Petak persegi panjang seluas 6 m² memiliki panjang √3 m. Lebarnya = 6/√3 = … m (tanpa akar di penyebut)',
-        opsi: [
-          { id: 'a', label: '2√3' },
-          { id: 'b', label: '6√3' },
-          { id: 'c', label: '√2' },
-          { id: 'd', label: '2' },
-        ],
-        kunci: 'a',
-        cek: { op: 'rasional', p: 6, q: { k: 1, r: 3 } },
-        penjelasan: '6/√3 = (6 × √3)/(√3 × √3) = 6√3/3 = 2√3 m (≈ 3,46 m).',
-      },
+    guru: 'Bacakan cerita bersama. Tanyakan: “Pernahkah kalian melihat tanda seperti ini? Bagaimana membacanya? Mengapa 125 dipangkatkan pecahan?” Biarkan murid menduga tanpa dikoreksi.',
+    judul: 'Hiasan Kelas',
+    cerita:
+      'Rara menyiapkan hiasan kelas. Ia punya ubin persegi seluas 49 cm² dan kotak kado berbentuk kubus bervolume 125 cm³. Di papan tulis, Bu Sari menuliskan panjang sisi ubin dan panjang rusuk kotak dengan tanda yang belum pernah Rara lihat.',
+    papanLabel: 'Papan tulis Bu Sari',
+    papan: ['sisi ubin = √49 cm', 'rusuk kotak = ∛125 = 125^(1/3) cm'],
+    pertanyaanBaca: 'Menurut dugaanmu, bagaimana cara membaca ∛125?',
+    opsiBaca: [
+      { id: 'baku', label: 'akar pangkat tiga dari 125' },
+      { id: 'pangkat', label: 'akar 125 pangkat tiga' },
+      { id: 'koef', label: 'tiga akar 125' },
+      { id: 'bagi', label: '125 dibagi tiga' },
     ],
-    alasanLabel: 'Tulis alasan dugaan tim kalian (singkat).',
-    alasanPlaceholder: 'Menurut kami … karena …',
+    dugaanBacaTepat: 'baku',
+    pertanyaan: 'Menurut dugaanmu, apa arti tulisan 125^(1/3) (125 pangkat satu per tiga)?',
+    opsi: [
+      {
+        id: 'akar',
+        label: 'Sama dengan ∛125, yaitu bilangan yang jika dipangkatkan tiga hasilnya 125',
+      },
+      { id: 'bagi', label: '125 dibagi 3' },
+      { id: 'kali', label: '125 dikalikan ⅓ lalu dipangkatkan tiga' },
+      { id: 'kecil', label: 'Bilangan yang sangat kecil, karena pangkatnya pecahan' },
+    ],
+    dugaanTepat: 'akar',
+    alasanLabel: 'Mengapa kamu menduga begitu? (tulis singkat)',
+    alasanPlaceholder: 'Menurutku … karena …',
     catatan:
-      'Belum ada jawaban benar atau salah. Dugaan kalian akan dicek setelah para ahli selesai mengajar.',
-    nextLabel: 'Lanjut ke Informasi →',
+      'Belum ada jawaban benar atau salah. Dugaanmu akan kamu buktikan sendiri di tahap-tahap berikutnya.',
+    nextLabel: 'Lanjut ke Rumusan Masalah →',
   },
 
-  /* ---------- Fase 2: menyajikan informasi ---------- */
-  informasi: {
-    kicker: 'Tahap 2 · Menyajikan Informasi',
-    goal: 'Mengingat kembali arti dan penyederhanaan bentuk akar serta konsep suku sejenis.',
-    syntax: CL + ' · Fase 2',
-    guru: 'Tayangkan tahap ini di depan kelas dan bahas pertanyaan penuntun bersama (±7 menit). JANGAN mengajarkan aturan operasi di sini — aturan akan ditemukan sendiri oleh kelompok ahli.',
+  /* ----------------------------------------------------------
+     TAHAP 2 — IDENTIFIKASI MASALAH
+     ---------------------------------------------------------- */
+  masalah: {
+    kicker: 'Tahap 2 · Identifikasi Masalah',
+    syntax: 'Discovery Learning · Sintaks 2',
+    goal: 'Merumuskan pertanyaan inti yang akan diselidiki dan menuliskan hipotesis.',
+    guru: 'Arahkan murid memilih pertanyaan yang mencakup cara MEMBACA, cara MENULIS, dan HUBUNGAN bentuk akar dengan pangkat pecahan. Hipotesis boleh keliru; yang penting dapat diuji.',
     pengantar:
-      'Sebelum berbagi tugas sebagai ahli, ingat kembali bentuk akar yang sudah kamu pelajari di MPI 12.3.',
-    ingatJudul: 'Ingat kembali',
-    ingat: [
-      '√a adalah bilangan tak negatif yang kuadratnya a, sehingga √a × √a = a. Contoh: √7 × √7 = 7.',
-      'Menyederhanakan bentuk akar: keluarkan faktor kuadrat terbesar. Contoh: √72 = √(36 × 2) = 6√2.',
-      'Pada 6√2, bilangan 6 disebut koefisien dan 2 disebut bilangan di dalam akar (radikan).',
-      'Dalam aljabar, 2x + 5x = 7x karena sukunya sejenis. Bentuk akar juga punya aturan "sejenis".',
-    ],
-    penuntun: [
+      'Papan Bu Sari memunculkan beberapa pertanyaan. Pilih pertanyaan yang paling tepat untuk kita selidiki bersama.',
+    pertanyaan: 'Pertanyaan manakah yang paling tepat untuk diselidiki?',
+    opsi: [
       {
-        id: 'p1',
-        tanya: '√7 × √7 = …',
-        opsi: [
-          { id: 'a', label: '7' },
-          { id: 'b', label: '49' },
-          { id: 'c', label: '√14' },
-          { id: 'd', label: '14' },
-        ],
-        correct: 'a',
-        umpan: {
-          a: 'Tepat! √7 adalah bilangan yang bila dikuadratkan menghasilkan 7, jadi √7 × √7 = 7.',
-          b: '49 adalah 7 × 7. Yang dikalikan di sini adalah √7 dengan dirinya sendiri, hasilnya 7.',
-          c: 'Bilangan di dalam akar tidak dijumlahkan. √7 × √7 berarti kuadrat dari √7.',
-          d: '14 = 7 + 7. Perkalian √7 × √7 bukan penjumlahan.',
-        },
+        id: 'inti',
+        label:
+          'Bagaimana cara membaca dan menuliskan bentuk akar seperti ∛125, dan apa hubungannya dengan bilangan berpangkat pecahan seperti 125^(1/3)?',
       },
+      { id: 'luas', label: 'Berapa luas ubin jika sisinya 49 cm?' },
+      { id: 'harga', label: 'Berapa harga kotak kado bervolume 125 cm³?' },
       {
-        id: 'p2',
-        tanya: '√50 dalam bentuk paling sederhana adalah …',
-        opsi: [
-          { id: 'a', label: '5√2' },
-          { id: 'b', label: '25√2' },
-          { id: 'c', label: '2√5' },
-          { id: 'd', label: '10√5' },
-        ],
-        correct: 'a',
-        umpan: {
-          a: 'Benar! √50 = √(25 × 2) = √25 × √2 = 5√2.',
-          b: 'Faktor 25 harus diakarkan dulu sebelum keluar: √25 = 5, jadi hasilnya 5√2.',
-          c: 'Bilangan di luar dan di dalam akar tertukar. √50 = √(25 × 2): yang keluar adalah √25 = 5.',
-          d: '(10√5)² = 500, bukan 50. Cari faktor kuadrat terbesar dari 50, yaitu 25.',
-        },
-      },
-      {
-        id: 'p3',
-        tanya: '2x + 5x = 7x, tetapi 2x + 5y tidak dapat ditulis sebagai satu suku karena …',
-        opsi: [
-          { id: 'a', label: 'sukunya tidak sejenis (variabelnya berbeda)' },
-          { id: 'b', label: 'koefisiennya berbeda' },
-          { id: 'c', label: 'sebenarnya bisa, hasilnya 7xy' },
-          { id: 'd', label: 'x dan y harus dikalikan lebih dulu' },
-        ],
-        correct: 'a',
-        umpan: {
-          a: 'Tepat! Hanya suku sejenis yang dapat digabung. Ingat aturan ini saat menjumlahkan bentuk akar.',
-          b: 'Koefisien berbeda tidak masalah (2x + 5x = 7x). Yang penting variabelnya sama.',
-          c: 'Coba x = 1, y = 2: 2x + 5y = 12, sedangkan 7xy = 14. Jadi tidak sama.',
-          d: 'Penjumlahan tidak berubah menjadi perkalian. 2x + 5y tetap 2x + 5y.',
-        },
-      },
-      {
-        id: 'p4',
-        tanya:
-          'Manakah yang merupakan bilangan irasional (tidak dapat ditulis sebagai pecahan biasa)?',
-        opsi: [
-          { id: 'a', label: '√5' },
-          { id: 'b', label: '√9' },
-          { id: 'c', label: '3/4' },
-          { id: 'd', label: '0,5' },
-        ],
-        correct: 'a',
-        umpan: {
-          a: 'Benar! √5 ≈ 2,2360679… desimalnya tidak berhenti dan tidak berulang. Pecahan berpenyebut √5 sulit dihitung, sehingga penyebutnya perlu dirasionalkan.',
-          b: '√9 = 3, bilangan bulat, jadi rasional.',
-          c: '3/4 sudah berbentuk pecahan biasa, jadi rasional.',
-          d: '0,5 = 1/2, jadi rasional.',
-        },
+        id: 'kalkulator',
+        label: 'Tombol kalkulator mana yang harus ditekan untuk menghitung 125?',
       },
     ],
-    syaratJudul: 'Petunjuk untuk para ahli',
-    syarat:
-      'Perlakukan √2, √3, √5, … seperti variabel dalam aljabar. Sebelum menghitung, SEDERHANAKAN setiap bentuk akar lebih dulu!',
-    nextLabel: 'Bentuk Tim Asal →',
+    correct: 'inti',
+    umpan: {
+      inti: 'Tepat! Pertanyaan ini mencakup cara MEMBACA, cara MENULIS, dan HUBUNGAN bentuk akar dengan pangkat pecahan.',
+      luas: 'Luas ubin sudah diketahui, 49 cm². Yang membingungkan adalah cara menulis dan membaca √49.',
+      harga:
+        'Pertanyaan itu menarik untuk berbelanja, tetapi masalah kita adalah arti tulisan ∛125 dan 125^(1/3).',
+      kalkulator:
+        'Kalkulator memang membantu, tetapi kita perlu tahu dulu arti tanda ∛ dan pangkat 1/3.',
+    },
+    hipotesisLabel:
+      'Tulis hipotesismu: bagaimana membaca ∛125, dan apa hubungan ∛125 dengan 125^(1/3)?',
+    hipotesisPlaceholder: 'Menurutku, ∛125 dibaca … dan sama dengan 125^(1/3) karena …',
+    nextLabel: 'Mulai Lab Persegi & Kubus →',
   },
 
-  /* ---------- Fase 3: mengorganisasikan kelompok ---------- */
-  tim: {
-    kicker: 'Tahap 3 · Bentuk Tim Asal',
-    goal: 'Membentuk tim asal, menyepakati aturan kerja sama, dan menerima kartu ahli.',
-    syntax: CL + ' · Fase 3',
-    guru: 'Bentuk tim asal heterogen berisi 4 murid (boleh 5: anggota kelima menjadi pendamping ahli dan ikut ke kelompok ahli yang sama; bila hanya 2–3 murid, seorang murid memegang lebih dari satu kartu). Tegaskan prinsip Jigsaw: setiap ahli adalah SATU-SATUNYA sumber aturan operasinya di tim. Skor tim juga bergantung pada kuis SETIAP anggota.',
-    namaTimLabel: 'Nama tim asal',
-    namaTimPlaceholder: 'Contoh: Tim Akar Kuat',
-    anggotaLabel: 'Nama anggota tim',
-    minAnggota: 2,
-    maksAnggota: 5,
-    kesepakatanJudul: 'Kesepakatan tim (centang semua)',
-    kesepakatan: [
+  /* ----------------------------------------------------------
+     TAHAP 3 — MENGUMPULKAN DATA A: UNSUR BENTUK AKAR
+     ---------------------------------------------------------- */
+  unsur: {
+    kicker: 'Tahap 3 · Mengumpulkan Data (A)',
+    syntax: 'Discovery Learning · Sintaks 3',
+    goal: 'Mengumpulkan data sisi persegi dan rusuk kubus, lalu mengenali unsur-unsur bentuk akar.',
+    guru: 'Minta pasangan bergantian menggeser. Tanyakan: “Luas berapa saja yang sisinya bilangan bulat?” Saat anatomi, minta murid menyebut nama bagian dengan suara keras sebelum mengetuk.',
+    instruksi:
+      'Geser luas persegi dan volume kubus. Coba minimal 4 luas pada persegi dan 3 volume pada kubus. Perhatikan tanda akar yang dipakai untuk sisi dan untuk rusuk.',
+    jejakMin: { persegi: 4, kubus: 3 },
+    instruksiLangkah:
+      'Catat hasil pengamatanmu. Tanda √ (akar kuadrat) mencari SISI persegi dari luasnya; tanda ∛ (akar pangkat tiga) mencari RUSUK kubus dari volumenya.',
+    langkah: [
       {
-        id: 'ahli',
-        teks: 'Setiap ahli bertanggung jawab mempelajari operasinya sampai bisa mengajarkannya.',
-      },
-      {
-        id: 'dengar',
-        teks: 'Saat seorang ahli mengajar, anggota lain mendengarkan dan boleh bertanya.',
-      },
-      { id: 'setuju', teks: 'Tombol jawaban baru ditekan setelah semua anggota setuju.' },
-      { id: 'bantu', teks: 'Anggota yang sudah paham menjelaskan, bukan menjawabkan.' },
-    ],
-    acakLabel: '🎲 Bagikan Kartu Ahli',
-    acakUlangLabel: '🎲 Bagikan Ulang Kartu Ahli',
-    ahliJudul: 'Kartu ahli tim kalian',
-    ahliCatatan:
-      'Pada tahap berikutnya, setiap ahli berkumpul dengan ahli yang sama dari tim lain (kelompok ahli), lalu kembali untuk mengajari tim asal.',
-    nextLabel: 'Menuju Kelompok Ahli →',
-  },
-
-  /* ---------- Fase 4a: kelompok ahli (Jigsaw) ---------- */
-  ahli: {
-    kicker: 'Tahap 4 · Kelompok Ahli',
-    goal: 'Menemukan aturan satu operasi bentuk akar di kelompok ahli, lalu mengajarkannya kepada tim asal.',
-    syntax: CL + ' · Fase 4',
-    guru: 'Kelompok ahli (±12 menit): ahli sejenis dari beberapa tim duduk bersama mengerjakan bagian ① dan ②. Kembali ke tim asal (±8 menit): ahli mengajarkan aturannya memakai contoh tabel, lalu memandu tim mengerjakan bagian ③. Luruskan bila ahli hanya menghafal rumus tanpa alasan.',
-    pengantar:
-      'Setiap stasiun adalah tugas satu ahli. Di kelompok ahli: uji nilai pada tabel (semua bilangan di dalam akar adalah bilangan kuadrat sempurna, jadi nilainya bulat atau pecahan), lalu temukan aturannya. Kembali ke tim asal: ajarkan aturanmu, lalu pandu tim mengerjakan soal stasiun.',
-    ajarLabel:
-      'Ahli sudah kembali ke tim asal dan menjelaskan aturan ini dengan contoh tabel. Semua anggota paham.',
-    stasiun: [
-      {
-        id: 'jumlah',
-        ujiTeks:
-          'Hitung nilai Bentuk A dan Bentuk B pada setiap baris, lalu lihat apakah keduanya sama. Contoh: √9 = 3, jadi 2√9 = 6.',
-        uji: [
-          { k1: 2, k2: 3, r: 9 },
-          { k1: 5, k2: 2, r: 4 },
-          { a: 9, b: 16 },
-          { a: 36, b: 64 },
-        ],
-        tanya: {
-          id: 'hJumlah',
-          tanya: 'Dari tabel, kesimpulan yang tepat adalah …',
-          opsi: [
-            { id: 'sejenis', label: 'a√c + b√c = (a + b)√c, tetapi √a + √b ≠ √(a + b)' },
-            { id: 'radikan', label: '√a + √b = √(a + b) untuk semua bilangan' },
-            { id: 'kali', label: 'a√c + b√c = (a × b)√c' },
-            { id: 'tidak', label: 'bentuk akar tidak pernah dapat dijumlahkan' },
-          ],
-          correct: 'sejenis',
-          umpan: {
-            sejenis:
-              'Tepat! 2√9 + 3√9 = 15 = (2 + 3)√9, seperti 2x + 3x = 5x. Namun √9 + √16 = 7, sedangkan √(9 + 16) = 5. Bilangan di dalam akar TIDAK dijumlahkan.',
-            radikan:
-              'Cek baris ketiga: √9 + √16 = 3 + 4 = 7, sedangkan √(9 + 16) = √25 = 5. Tidak sama!',
-            kali: 'Cek baris pertama: 2√9 + 3√9 = 15, sedangkan (2 × 3)√9 = 18. Koefisien dijumlahkan, bukan dikalikan.',
-            tidak:
-              'Baris pertama dan kedua menunjukkan suku sejenis DAPAT dijumlahkan: 2√9 + 3√9 = (2 + 3)√9.',
-          },
-        },
-        analogi:
-          'Seperti 2x + 3x = 5x dan 5x − 2x = 3x: bila bilangan di dalam akarnya sama, yang dijumlah atau dikurangkan hanya koefisiennya. Suku yang tampak berbeda disederhanakan dulu, mis. √12 = 2√3.',
-        soal: [
-          {
-            id: 'sj1',
-            op: 'jumlah',
-            suku: [
-              { k: 3, r: 5 },
-              { k: 4, r: 5 },
-              { k: -2, r: 5 },
-            ],
-          },
-          {
-            id: 'sj2',
-            op: 'jumlah',
-            suku: [
-              { k: 1, r: 12 },
-              { k: 1, r: 27 },
-            ],
-            hints: ['Sederhanakan dulu: √12 = √(4 × 3) dan √27 = √(9 × 3).'],
-          },
-        ],
-      },
-      {
-        id: 'kali',
-        ujiTeks:
-          'Hitung nilai Bentuk A (kalikan nilainya) dan Bentuk B (hitung di dalam kurung dulu), lalu bandingkan.',
-        uji: [
-          { a: 4, b: 9 },
-          { a: 9, b: 25 },
-          { k1: 2, a: 4, k2: 3, b: 9 },
-          { k1: 3, a: 16, k2: 2, b: 4 },
-        ],
-        tanya: {
-          id: 'hKali',
-          tanya: 'Dari tabel, a√b × c√d sama dengan …',
-          opsi: [
-            { id: 'kalikan', label: '(a × c)√(b × d)' },
-            { id: 'jumlah', label: '(a + c)√(b + d)' },
-            { id: 'campur', label: '(a × c)√(b + d)' },
-            { id: 'koef', label: '(a + c)√(b × d)' },
-          ],
-          correct: 'kalikan',
-          umpan: {
-            kalikan:
-              'Tepat! 2√4 × 3√9 = 4 × 9 = 36 dan (2 × 3)√(4 × 9) = 6 × 6 = 36. Koefisien dikali koefisien, akar dikali akar.',
-            jumlah: 'Cek baris pertama: √4 × √9 = 6, sedangkan √(4 + 9) = √13 bukan 6.',
-            campur: 'Bilangan di dalam akar dikalikan: √4 × √9 = 6 = √36, bukan √13.',
-            koef: 'Cek baris ketiga: 2√4 × 3√9 = 36, sedangkan (2 + 3)√36 = 30. Koefisien juga dikalikan.',
-          },
-        },
-        analogi:
-          'Koefisien dikalikan dengan koefisien, bilangan di dalam akar dikalikan dengan bilangan di dalam akar, lalu hasilnya disederhanakan. Ingat √a × √a = a.',
-        soal: [
-          {
-            id: 'sk1',
-            op: 'kali',
-            a: { k: 2, r: 3 },
-            b: { k: 5, r: 6 },
-            hints: ['2 × 5 = 10 dan √3 × √6 = √18. Lalu sederhanakan √18 = √(9 × 2).'],
-          },
-          { id: 'sk2', op: 'kali', a: { k: 1, r: 6 }, b: { k: 1, r: 15 } },
-        ],
-      },
-      {
-        id: 'bagi',
-        ujiTeks:
-          'Hitung nilai Bentuk A (bagi nilainya) dan Bentuk B (hitung di dalam kurung dulu), lalu bandingkan.',
-        uji: [
-          { a: 36, b: 4 },
-          { a: 100, b: 25 },
-          { k1: 6, a: 16, k2: 2, b: 4 },
-          { k1: 10, a: 81, k2: 5, b: 9 },
-        ],
-        tanya: {
-          id: 'hBagi',
-          tanya: 'Dari tabel, a√b : c√d sama dengan …',
-          opsi: [
-            { id: 'bagikan', label: '(a : c)√(b : d)' },
-            { id: 'kurang', label: '(a − c)√(b − d)' },
-            { id: 'campur', label: '(a : c)√(b − d)' },
-            { id: 'kali', label: '(a × c)√(b : d)' },
-          ],
-          correct: 'bagikan',
-          umpan: {
-            bagikan:
-              'Tepat! √36 : √4 = 6 : 2 = 3 dan √(36 : 4) = √9 = 3. Koefisien dibagi koefisien, akar dibagi akar.',
-            kurang: 'Cek baris pertama: √36 : √4 = 3, sedangkan √(36 − 4) = √32 bukan 3.',
-            campur: 'Bilangan di dalam akar dibagi, bukan dikurangkan: √36 : √4 = 3 = √9.',
-            kali: 'Cek baris ketiga: 6√16 : 2√4 = 24 : 4 = 6, sedangkan (6 × 2)√4 = 24. Koefisien juga dibagi.',
-          },
-        },
-        analogi:
-          'Koefisien dibagi koefisien, bilangan di dalam akar dibagi bilangan di dalam akar, lalu hasilnya disederhanakan.',
-        soal: [
-          { id: 'sb1', op: 'bagi', a: { k: 1, r: 72 }, b: { k: 1, r: 2 } },
-          {
-            id: 'sb2',
-            op: 'bagi',
-            a: { k: 10, r: 15 },
-            b: { k: 2, r: 3 },
-            hints: ['10 : 2 = 5 dan √15 : √3 = √(15 : 3).'],
-          },
-        ],
-      },
-      {
-        id: 'rasional',
-        ujiTeks:
-          'Bentuk B diperoleh dengan mengalikan pembilang DAN penyebut Bentuk A dengan akar penyebutnya. Hitung nilai keduanya (boleh berupa pecahan, mis. 1/2).',
-        uji: [
-          { p: 1, b: 4 },
-          { p: 3, b: 9 },
-          { p: 6, b: 4 },
-          { p: 10, b: 25 },
-        ],
-        tanya: {
-          id: 'hRasional',
-          tanya: 'Mengapa a/√b boleh diubah menjadi a√b/b?',
-          opsi: [
-            { id: 'kali1', label: 'karena dikalikan √b/√b = 1, nilainya tetap dan √b × √b = b' },
-            { id: 'pembilang', label: 'karena cukup pembilangnya saja yang dikalikan √b' },
-            { id: 'kuadrat', label: 'karena √b × √b = b², jadi penyebutnya b²' },
-            { id: 'beda', label: 'nilainya berubah, tetapi bentuknya lebih rapi' },
-          ],
-          correct: 'kali1',
-          umpan: {
-            kali1:
-              'Tepat! Mengalikan dengan √b/√b sama dengan mengalikan 1, sehingga nilainya tidak berubah, dan penyebutnya menjadi √b × √b = b (rasional).',
-            pembilang:
-              'Bila hanya pembilang yang dikalikan, nilainya berubah: 1/√4 = 1/2, tetapi √4/√4 = 1. Pembilang DAN penyebut harus dikalikan.',
-            kuadrat: '√4 × √4 = 2 × 2 = 4, bukan 16. Jadi √b × √b = b.',
-            beda: 'Tabel menunjukkan nilai Bentuk A dan Bentuk B selalu SAMA, mis. 1/√4 = 1/2 = √4/4.',
-          },
-        },
-        analogi:
-          'Tantangan sekawan: bila penyebutnya p + √q, kalikan dengan p − √q (tanda dibalik), karena (p + √q)(p − √q) = p² − q. Contoh: (3 + √5)(3 − √5) = 9 − 5 = 4.',
-        soal: [
-          { id: 'sr1', op: 'rasional', p: 10, q: { k: 1, r: 5 } },
-          {
-            id: 'sr2',
-            op: 'rasional',
-            p: 3,
-            q: { k: 2, r: 2 },
-            hints: [
-              'Kalikan pembilang dan penyebut dengan √2: penyebutnya menjadi 2 × √2 × √2 = 4.',
-            ],
-          },
-        ],
-      },
-    ],
-    dugaanJudul: 'Cek dugaan tim di Tahap 1',
-    nextLabel: 'Mulai Misi 1 →',
-  },
-
-  /* ---------- Fase 4b: misi 1 — bengkel akar ---------- */
-  misiOperasi: {
-    kicker: 'Tahap 5 · Misi 1: Bengkel Akar',
-    goal: 'Memilih strategi yang tepat lalu menghitung operasi bentuk akar sampai paling sederhana.',
-    syntax: CL + ' · Fase 4',
-    guru: 'Pastikan ahli strategi yang dipilih benar-benar memimpin (menjelaskan), bukan sekadar mengetik. Soal √8 + √12 adalah jebakan tidak sejenis dan soal sekawan dipimpin Ahli Merasionalkan. Catat tim yang masih menjumlahkan bilangan di dalam akar.',
-    ronde: 1,
-    pengantar:
-      'Untuk setiap soal: (1) Pembaca menunjuk koefisien dan bilangan di dalam akar, (2) tim memilih strategi, (3) ahli strategi itu memimpin perhitungan, (4) Pemeriksa bertanya "Sudah paling sederhana?" sebelum Periksa ditekan.',
-    soal: [
-      {
-        id: 'm1',
-        op: 'jumlah',
-        suku: [
-          { k: 2, r: 3 },
-          { k: 7, r: 3 },
-          { k: -4, r: 3 },
-        ],
-      },
-      {
-        id: 'm2',
-        op: 'jumlah',
-        suku: [
-          { k: 1, r: 50 },
-          { k: -1, r: 8 },
-        ],
-        hints: ['√50 = 5√2 dan √8 = 2√2.'],
-      },
-      {
-        id: 'm3',
-        op: 'jumlah',
-        suku: [
-          { k: 1, r: 8 },
-          { k: 1, r: 12 },
-        ],
-      },
-      {
-        id: 'm4',
-        op: 'kali',
-        a: { k: 3, r: 2 },
-        b: { k: 4, r: 10 },
-        hints: ['3 × 4 = 12 dan √2 × √10 = √20 = √(4 × 5).'],
-      },
-      {
-        id: 'm5',
-        op: 'bagi',
-        a: { k: 1, r: 96 },
-        b: { k: 1, r: 2 },
-        hints: ['√96 : √2 = √48, lalu sederhanakan √48 = √(16 × 3).'],
-      },
-      { id: 'm6', op: 'rasional', p: 15, q: { k: 1, r: 3 } },
-      {
-        id: 'm7',
-        op: 'rasional',
-        p: 7,
-        q: { k: 1, r: 2 },
+        id: 'a1',
+        r: 49,
+        n: 2,
+        jawab: 7,
+        label: 'Ubin persegi seluas 49 cm². Panjang sisinya √49 = …',
         hints: [
-          '7/√2 × √2/√2 = 7√2/2. Karena 7 dan 2 tidak punya faktor sekutu, pecahan itu sudah paling sederhana.',
+          'Bilangan berapa yang dikalikan dengan dirinya sendiri hasilnya 49?',
+          '7 × 7 = 49.',
         ],
+        temuan: '√49 = 7 karena 7² = 49.',
       },
       {
-        id: 'm8',
-        op: 'sekawan',
-        p: 6,
-        a: 3,
-        c: -1,
-        r: 3,
+        id: 'a2',
+        r: 144,
+        n: 2,
+        jawab: 12,
+        label: 'Persegi dengan luas 144 satuan². Panjang sisinya √144 = …',
+        hints: ['Coba 10 × 10 = 100 (terlalu kecil). Naikkan sedikit.', '12 × 12 = 144.'],
+        temuan: '√144 = 12 karena 12² = 144.',
+      },
+      {
+        id: 'a3',
+        r: 64,
+        n: 3,
+        jawab: 4,
+        label: 'Kubus dengan volume 64 satuan³. Panjang rusuknya ∛64 = …',
         hints: [
-          'Sekawan dari 3 − √3 adalah 3 + √3.',
-          'Penyebut: (3 − √3)(3 + √3) = 9 − 3 = 6. Pembilang: 6(3 + √3).',
+          'Cari bilangan yang dikalikan TIGA kali dengan dirinya sendiri hasilnya 64.',
+          '4 × 4 × 4 = 64.',
         ],
+        temuan: '∛64 = 4 karena 4³ = 64.',
+      },
+      {
+        id: 'a4',
+        r: 125,
+        n: 3,
+        jawab: 5,
+        label: 'Kotak kado kubus bervolume 125 cm³. Panjang rusuknya ∛125 = …',
+        hints: ['Coba 5 × 5 × 5.'],
+        temuan: '∛125 = 5 karena 5³ = 125.',
       },
     ],
-    nextLabel: 'Lanjut ke Misi 2 →',
-  },
-
-  /* ---------- Fase 4b: misi 2 — proyek kebun ---------- */
-  misiKonteks: {
-    kicker: 'Tahap 6 · Misi 2: Proyek Kebun',
-    goal: 'Menerapkan operasi bentuk akar secara berurutan untuk menyelesaikan masalah kontekstual.',
-    syntax: CL + ' · Fase 4',
-    guru: 'Soal bertahap memerlukan beberapa ahli bergantian memimpin. Minta Juru Bicara menjelaskan mengapa operasinya penjumlahan/perkalian/pembagian dan mengapa hasil akhirnya masuk akal (bandingkan dengan hampiran desimal).',
-    ronde: 2,
-    pengantar:
-      'Selesaikan setiap masalah langkah demi langkah. Setiap langkah memakai SATU strategi; ahli strategi itu yang memimpin. Langkah berikutnya muncul setelah langkah sebelumnya tuntas.',
-    soal: [
+    instruksiAnatomi:
+      'Anatomi Bentuk Akar: bentuk akar juga bisa memuat pangkat di dalamnya, seperti ∛(5²). Ketuk bagian yang diminta satu per satu. Nama bagian akan muncul di bawah model.',
+    anatomiContoh: { n: 3, r: 5, m: 2 },
+    anatomiBagian: ['tanda', 'indeks', 'radikan', 'pangkat'],
+    umpanAnatomi: {
+      benar: 'Tepat! Bagian itu sudah kamu temukan.',
+      salah: 'Belum tepat. Baca lagi nama bagian yang diminta, lalu coba bagian lain.',
+    },
+    tanya: [
       {
-        id: 'c1',
-        ikon: '🌱',
-        cerita:
-          'Dua petak persegi seluas 50 m² dan 18 m² berjajar. Pak Gani memasang kawat sepanjang sisi gabungan kedua petak sebanyak 3 lapis.',
-        langkah: [
-          {
-            label: 'Panjang sisi gabungan (m):',
-            soal: {
-              op: 'jumlah',
-              suku: [
-                { k: 1, r: 50 },
-                { k: 1, r: 18 },
-              ],
-              satuan: 'm',
-            },
-          },
-          {
-            label: 'Panjang kawat untuk 3 lapis (m):',
-            soal: { op: 'kali', a: { k: 3, r: 1 }, b: { k: 8, r: 2 }, satuan: 'm' },
-            lanjut: true,
-          },
+        id: 'u1',
+        tanya: 'Pada √7 tidak tampak angka kecil di kiri atas tanda akar. Indeks akarnya adalah …',
+        opsi: [
+          { id: 'dua', label: '2, karena indeks 2 (akar kuadrat) tidak ditulis' },
+          { id: 'tujuh', label: '7' },
+          { id: 'satu', label: '1' },
+          { id: 'nol', label: 'tidak ada indeksnya (0)' },
         ],
+        correct: 'dua',
+        umpan: {
+          dua: 'Tepat! √7 = ²√7, yaitu akar kuadrat dari 7. Indeks 2 disepakati tidak ditulis.',
+          tujuh: '7 adalah radikan, yaitu bilangan di bawah tanda akar.',
+          satu: 'Akar pangkat 1 tidak mengubah apa pun, jadi tidak dipakai. √ sama dengan akar kuadrat.',
+          nol: 'Setiap bentuk akar punya indeks. Ingat sisi persegi: √49 = 7 karena 7² = 49, jadi indeksnya 2.',
+        },
       },
       {
-        id: 'c2',
-        ikon: '🧺',
-        cerita:
-          'Bedeng sayur berbentuk persegi panjang berukuran √12 m × √6 m. Satu karung pupuk cukup untuk lahan seluas √2 m².',
-        langkah: [
-          {
-            label: 'Luas bedeng (m²):',
-            soal: { op: 'kali', a: { k: 1, r: 12 }, b: { k: 1, r: 6 }, satuan: 'm²' },
-          },
-          {
-            label: 'Banyak karung pupuk yang diperlukan:',
-            soal: { op: 'bagi', a: { k: 6, r: 2 }, b: { k: 1, r: 2 }, satuan: 'karung' },
-            lanjut: true,
-          },
+        id: 'u2',
+        tanya: 'Pada bentuk akar ⁵√(3⁴), manakah pasangan yang tepat?',
+        opsi: [
+          { id: 'benar', label: 'indeks 5, radikan 3, pangkat radikan 4' },
+          { id: 'tukar', label: 'indeks 4, radikan 3, pangkat radikan 5' },
+          { id: 'radikan', label: 'indeks 5, radikan 4, pangkat radikan 3' },
+          { id: 'acak', label: 'indeks 3, radikan 5, pangkat radikan 4' },
         ],
-      },
-      {
-        id: 'c3',
-        ikon: '🧵',
-        cerita:
-          'Tali rafia sepanjang √108 m dipotong sama panjang, masing-masing √3 m, untuk mengikat tanaman tomat.',
-        langkah: [
-          {
-            label: 'Banyak potongan tali:',
-            soal: { op: 'bagi', a: { k: 1, r: 108 }, b: { k: 1, r: 3 }, satuan: 'potong' },
-          },
-        ],
-      },
-      {
-        id: 'c4',
-        ikon: '🔺',
-        cerita:
-          'Papan nama kebun berbentuk segitiga sama sisi dengan panjang sisi 12/√3 dm. Tepi papan akan diberi pita.',
-        langkah: [
-          {
-            label: 'Panjang sisi dengan penyebut rasional (dm):',
-            soal: { op: 'rasional', p: 12, q: { k: 1, r: 3 }, satuan: 'dm' },
-          },
-          {
-            label: 'Panjang pita untuk keliling papan (dm):',
-            soal: { op: 'kali', a: { k: 3, r: 1 }, b: { k: 4, r: 3 }, satuan: 'dm' },
-            lanjut: true,
-          },
-        ],
-      },
-      {
-        id: 'c5',
-        ikon: '🏡',
-        cerita:
-          'Lahan pembibitan berbentuk persegi panjang seluas 4 m² dengan panjang (3 + √5) m. Lebarnya = 4/(3 + √5) m.',
-        langkah: [
-          {
-            label: 'Lebar lahan dengan penyebut rasional (m):',
-            soal: {
-              op: 'sekawan',
-              p: 4,
-              a: 3,
-              c: 1,
-              r: 5,
-              satuan: 'm',
-              hints: ['Kalikan pembilang dan penyebut dengan sekawan 3 − √5.'],
-            },
-          },
-        ],
+        correct: 'benar',
+        umpan: {
+          benar:
+            'Tepat! Indeks di kiri atas tanda akar, radikan di bawah tanda akar, dan pangkat radikan di kanan atas radikan.',
+          tukar:
+            'Indeks dan pangkat radikan tertukar. Indeks ada di KIRI ATAS tanda akar; pangkat radikan ada di KANAN ATAS radikan.',
+          radikan:
+            'Radikan adalah bilangan besar di bawah tanda akar (3), sedangkan 4 adalah pangkatnya.',
+          acak: 'Perhatikan posisinya: angka kecil di kiri atas tanda akar adalah indeks.',
+        },
       },
     ],
-    nextLabel: 'Lanjut ke Misi 3 →',
+    temuan:
+      'Temuan: bentuk akar ⁿ√(aᵐ) terdiri atas tanda akar √, indeks n (kiri atas), radikan a (di bawah tanda akar), dan pangkat radikan m. Indeks 2 dan pangkat 1 tidak ditulis.',
+    nextLabel: 'Lanjut ke Baca & Tulis →',
   },
 
-  /* ---------- Fase 4c: misi 3 — diskusi ---------- */
-  misiDiskusi: {
-    kicker: 'Tahap 7 · Misi 3: Cek Pendapat Teman',
-    goal: 'Menilai kebenaran pernyataan tentang operasi bentuk akar dan menjelaskan kekeliruannya.',
-    syntax: CL + ' · Fase 4',
-    guru: 'Setiap pernyataan hanya bisa dijawab sekali, jadi tim harus berdiskusi dulu. Minta Juru Bicara beberapa tim membacakan catatannya di depan kelas.',
-    ronde: 3,
-    pengantar:
-      'Beberapa teman menulis pernyataan berikut. Diskusikan dalam tim, lalu tentukan Benar atau Salah. Setiap pernyataan hanya bisa dijawab sekali!',
-    opsi: OPSI_BENAR_SALAH,
-    pernyataan: [
+  /* ----------------------------------------------------------
+     TAHAP 4 — MENGUMPULKAN DATA B: MEMBACA & MENULISKAN
+     ---------------------------------------------------------- */
+  baca: {
+    kicker: 'Tahap 4 · Mengumpulkan Data (B)',
+    syntax: 'Discovery Learning · Sintaks 3',
+    goal: 'Menemukan pola bacaan baku bentuk akar, lalu menuliskan bentuk akar dari bacaannya.',
+    guru: 'Minta satu murid membacakan, pasangannya menulis di papan tulis akar. Tekankan urutan bacaan: indeks → radikan → pangkat radikan.',
+    instruksiBaca:
+      'Pilih cara membaca yang tepat untuk setiap bentuk akar. Perhatikan urutan bagian yang disebutkan.',
+    bacaan: [
+      {
+        id: 'b1',
+        tanya: 'Cara membaca √10 adalah …',
+        cek: { jenis: 'baca', n: 2, r: 10, m: 1 },
+        opsi: [
+          { id: 'benar', label: 'akar kuadrat dari 10' },
+          { id: 'tukar', label: 'akar pangkat sepuluh dari 2' },
+          { id: 'koef', label: '10 akar kuadrat' },
+          { id: 'kuadrat', label: '10 kuadrat' },
+        ],
+        correct: 'benar',
+        umpan: {
+          benar: 'Tepat! Tanda √ tanpa indeks dibaca “akar kuadrat”, lalu disebut radikannya.',
+          tukar: 'Radikan 10 ada di bawah tanda akar; indeksnya 2 (tidak ditulis).',
+          koef: 'Bila ada bilangan di depan akar, barulah dibaca lebih dulu (mis. 3√10 “tiga akar kuadrat dari 10”). √10 tidak punya bilangan di depannya.',
+          kuadrat: '“10 kuadrat” adalah 10² = 100, bukan √10.',
+        },
+      },
+      {
+        id: 'b2',
+        tanya: 'Cara membaca ∛(5²) adalah …',
+        cek: { jenis: 'baca', n: 3, r: 5, m: 2 },
+        opsi: [
+          { id: 'benar', label: 'akar pangkat tiga dari 5 pangkat 2' },
+          { id: 'tukar', label: 'akar kuadrat dari 5 pangkat 3' },
+          { id: 'koef', label: '3 akar 5 pangkat 2' },
+          { id: 'kali', label: 'akar pangkat tiga dari 10' },
+        ],
+        correct: 'benar',
+        umpan: {
+          benar:
+            'Tepat! Sebut indeksnya dulu (“akar pangkat tiga”), lalu radikan (“dari 5”), lalu pangkat radikan (“pangkat 2”).',
+          tukar: 'Indeks dan pangkat radikan tertukar. Indeks 3 ada di kiri atas tanda akar.',
+          koef: 'Angka 3 bukan pengali di depan akar, melainkan indeks yang dibaca “akar pangkat tiga”.',
+          kali: '5² = 5 × 5 = 25, bukan 5 × 2. Lagi pula, bacaan baku menyebut pangkatnya, bukan hasilnya.',
+        },
+      },
+      {
+        id: 'b3',
+        tanya: 'Cara membaca ∜(2³) adalah …',
+        cek: { jenis: 'baca', n: 4, r: 2, m: 3 },
+        opsi: [
+          { id: 'benar', label: 'akar pangkat empat dari 2 pangkat 3' },
+          { id: 'tukar', label: 'akar pangkat tiga dari 2 pangkat 4' },
+          { id: 'radikan', label: 'akar pangkat empat dari 3 pangkat 2' },
+          { id: 'koef', label: '4 akar 2 pangkat 3' },
+        ],
+        correct: 'benar',
+        umpan: {
+          benar: 'Tepat! ∜ berindeks 4, radikannya 2, dan pangkat radikannya 3.',
+          tukar: 'Indeks dan pangkat radikan tertukar. Indeks 4 ada di kiri atas tanda akar.',
+          radikan:
+            'Radikan dan pangkatnya tertukar. Radikan adalah bilangan besar di bawah tanda akar, yaitu 2.',
+          koef: 'Angka 4 adalah indeks, dibaca “akar pangkat empat”, bukan pengali.',
+        },
+      },
+      {
+        id: 'b4',
+        tanya: 'Cara membaca ⁵√7 adalah …',
+        cek: { jenis: 'baca', n: 5, r: 7, m: 1 },
+        opsi: [
+          { id: 'benar', label: 'akar pangkat lima dari 7' },
+          { id: 'tukar', label: 'akar pangkat tujuh dari 5' },
+          { id: 'koef', label: '5 akar kuadrat dari 7' },
+          { id: 'pangkat', label: '7 pangkat 5' },
+        ],
+        correct: 'benar',
+        umpan: {
+          benar: 'Tepat! Indeks 5 dibaca “akar pangkat lima”, radikannya 7.',
+          tukar: 'Radikan adalah bilangan di bawah tanda akar (7); indeksnya 5.',
+          koef: 'Angka 5 ditulis kecil di kiri atas: itu indeks, bukan pengali di depan akar.',
+          pangkat: '7⁵ adalah 7 pangkat 5 — bentuk berpangkat, bukan bentuk akar.',
+        },
+      },
+    ],
+    instruksiTulis:
+      'Papan Tulis Akar: dengarkan (baca) kalimatnya, atur indeks n, radikan a, dan pangkat radikan m dengan tombol − dan +, lalu tekan Periksa.',
+    tulisAwal: { a: 2, m: 1, n: 2 },
+    tulis: [
+      {
+        id: 't1',
+        teks: 'akar pangkat tiga dari 7',
+        target: { a: 7, m: 1, n: 3 },
+        temuan: '“akar pangkat tiga dari 7” ditulis ∛7.',
+      },
+      {
+        id: 't2',
+        teks: 'akar pangkat empat dari 3 pangkat 2',
+        target: { a: 3, m: 2, n: 4 },
+        temuan: '“akar pangkat empat dari 3 pangkat 2” ditulis ∜(3²).',
+      },
+      {
+        id: 't3',
+        teks: 'akar kuadrat dari 6 pangkat 5',
+        target: { a: 6, m: 5, n: 2 },
+        temuan: '“akar kuadrat dari 6 pangkat 5” ditulis √(6⁵). Indeks 2 tidak ditulis.',
+      },
+    ],
+    temuan:
+      'Temuan: ⁿ√(aᵐ) dibaca “akar pangkat n dari a pangkat m”. Urutan bacaannya: indeks → radikan → pangkat radikan. Untuk indeks 2 cukup dibaca “akar kuadrat”.',
+    nextLabel: 'Lanjut ke Detektif Eksponen →',
+  },
+
+  /* ----------------------------------------------------------
+     TAHAP 5 — MENGUMPULKAN DATA C: POLA PANGKAT PECAHAN
+     ---------------------------------------------------------- */
+  pola: {
+    kicker: 'Tahap 5 · Mengumpulkan Data (C)',
+    syntax: 'Discovery Learning · Sintaks 3',
+    goal: 'Menemukan arti pangkat ½ dan ⅓, lalu hubungan a^(m/n) dengan bentuk akar ⁿ√(aᵐ).',
+    guru: 'Ingatkan sifat pangkat dari pangkat dari MPI 12.1–12.2. Pada tangga 64, pancing dengan: “Pangkat 2/3 = 1/3 × 2. Mana yang dikerjakan dulu?” Tekankan bahwa ∛(8²) dan (∛8)² hasilnya sama.',
+    instruksiDetektif:
+      'Detektif Eksponen: bagaimana kalau pangkatnya pecahan? Gunakan sifat pangkat dari pangkat yang sudah kamu pelajari: (aᵐ)ⁿ = aᵐˣⁿ.',
+    detektif: [
       {
         id: 'd1',
-        teks: '√2 + √3 = √5',
-        cek: {
-          soal: {
-            op: 'jumlah',
-            suku: [
-              { k: 1, r: 2 },
-              { k: 1, r: 3 },
-            ],
-          },
-          klaim: { b: 1, r: 5 },
+        tanya:
+          'Kita cari x agar (9ˣ)² = 9¹. Menurut sifat pangkat dari pangkat, x × 2 = 1. Jadi x = …',
+        opsi: [
+          { id: 'setengah', label: 'x = 1/2' },
+          { id: 'dua', label: 'x = 2' },
+          { id: 'negdua', label: 'x = −2' },
+          { id: 'nol', label: 'x = 0' },
+        ],
+        correct: 'setengah',
+        umpan: {
+          setengah: 'Tepat! (9^(1/2))² = 9^(1/2 × 2) = 9¹ = 9.',
+          dua: 'Periksa: (9²)² = 9⁴, bukan 9¹. Kita butuh x × 2 = 1.',
+          negdua: 'Periksa: (9⁻²)² = 9⁻⁴, bukan 9¹. Kita butuh x × 2 = 1.',
+          nol: 'Periksa: (9⁰)² = 9⁰ = 1, bukan 9. Kita butuh x × 2 = 1.',
         },
-        correct: 'salah',
-        explanation:
-          '√2 dan √3 tidak sejenis, jadi tidak dapat digabung. Cek hampirannya: √2 + √3 ≈ 1,41 + 1,73 = 3,14, sedangkan √5 ≈ 2,24.',
       },
       {
         id: 'd2',
-        teks: '√12 + √3 = 3√3',
-        cek: {
-          soal: {
-            op: 'jumlah',
-            suku: [
-              { k: 1, r: 12 },
-              { k: 1, r: 3 },
-            ],
-          },
-          klaim: { b: 3, r: 3 },
+        tanya: 'Kita tahu (9^(1/2))² = 9 dan juga (√9)² = 3 × 3 = 9. Jadi 9^(1/2) sama dengan …',
+        opsi: [
+          { id: 'akar', label: '√9 = 3' },
+          { id: 'bagi', label: '9 : 2 = 4,5' },
+          { id: 'kali', label: '9 × ½ = 4,5' },
+          { id: 'kuadrat', label: '9² = 81' },
+        ],
+        correct: 'akar',
+        umpan: {
+          akar: 'Tepat! Pangkat ½ sama artinya dengan akar kuadrat: 9^(1/2) = √9 = 3.',
+          bagi: 'Periksa: 4,5 × 4,5 = 20,25, bukan 9. Pangkat ½ bukan membagi dua.',
+          kali: 'Periksa: 4,5 × 4,5 = 20,25, bukan 9. Pangkat ½ bukan mengalikan dengan ½.',
+          kuadrat: '9² = 81 adalah pangkat 2, bukan pangkat ½.',
         },
-        correct: 'benar',
-        explanation: '√12 = 2√3, sehingga √12 + √3 = 2√3 + √3 = 3√3.',
       },
       {
         id: 'd3',
-        teks: '√3 × √12 = 6',
-        cek: { soal: { op: 'kali', a: { k: 1, r: 3 }, b: { k: 1, r: 12 } }, klaim: { a: 6 } },
-        correct: 'benar',
-        explanation: '√3 × √12 = √36 = 6.',
-      },
-      {
-        id: 'd4',
-        teks: '2√3 × 3√3 = 6√3',
-        cek: { soal: { op: 'kali', a: { k: 2, r: 3 }, b: { k: 3, r: 3 } }, klaim: { b: 6, r: 3 } },
-        correct: 'salah',
-        explanation: '2√3 × 3√3 = (2 × 3)(√3 × √3) = 6 × 3 = 18. Ingat √3 × √3 = 3.',
-      },
-      {
-        id: 'd5',
-        teks: '√20 : √5 = 2',
-        cek: { soal: { op: 'bagi', a: { k: 1, r: 20 }, b: { k: 1, r: 5 } }, klaim: { a: 2 } },
-        correct: 'benar',
-        explanation: '√20 : √5 = √(20 : 5) = √4 = 2.',
-      },
-      {
-        id: 'd6',
-        teks: '6/√2 = 3√2',
-        cek: { soal: { op: 'rasional', p: 6, q: { k: 1, r: 2 } }, klaim: { b: 3, r: 2 } },
-        correct: 'benar',
-        explanation: '6/√2 × √2/√2 = 6√2/2 = 3√2.',
-      },
-      {
-        id: 'd7',
-        teks: '1/√3 = √3',
-        cek: { soal: { op: 'rasional', p: 1, q: { k: 1, r: 3 } }, klaim: { b: 1, r: 3 } },
-        correct: 'salah',
-        explanation:
-          'Penyebutnya juga harus dikalikan √3: 1/√3 × √3/√3 = √3/3. Cek hampiran: 1/√3 ≈ 0,58, sedangkan √3 ≈ 1,73.',
-      },
-      {
-        id: 'd8',
-        teks: '1/(√2 + 1) = √2 − 1',
-        cek: { soal: { op: 'sekawan', p: 1, a: 1, c: 1, r: 2 }, klaim: { a: -1, b: 1, r: 2 } },
-        correct: 'benar',
-        explanation:
-          'Kalikan dengan sekawan √2 − 1: penyebutnya (√2 + 1)(√2 − 1) = 2 − 1 = 1, sehingga hasilnya √2 − 1.',
+        tanya: 'Dengan cara yang sama, (125ˣ)³ = 125¹. Nilai x dan artinya adalah …',
+        opsi: [
+          { id: 'sepertiga', label: 'x = 1/3, jadi 125^(1/3) = ∛125 = 5' },
+          { id: 'tiga', label: 'x = 3, jadi 125³' },
+          { id: 'bagi', label: 'x = 1/3, jadi 125^(1/3) = 125 : 3' },
+          { id: 'akar2', label: 'x = 1/3, jadi 125^(1/3) = √125' },
+        ],
+        correct: 'sepertiga',
+        umpan: {
+          sepertiga:
+            'Tepat! (125^(1/3))³ = 125¹ dan (∛125)³ = 5 × 5 × 5 = 125. Jadi rusuk kotak Rara: 125^(1/3) = ∛125 = 5 cm.',
+          tiga: '(125³)³ = 125⁹, bukan 125¹. Kita butuh x × 3 = 1.',
+          bagi: 'x = 1/3 sudah benar, tetapi pangkat ⅓ bukan membagi tiga. Cari bilangan yang dipangkatkan 3 hasilnya 125.',
+          akar2:
+            'x = 1/3 sudah benar, tetapi pangkat ⅓ berpasangan dengan akar pangkat TIGA (∛), bukan akar kuadrat.',
+        },
       },
     ],
-    jubirLabel:
-      'Juru Bicara: tuliskan satu kekeliruan yang paling sering terjadi dan cara tim kalian menghindarinya.',
-    jubirPlaceholder: 'Kekeliruan yang sering terjadi adalah … Cara menghindarinya …',
-    nextLabel: 'Lanjut ke Kuis Individu →',
-  },
-
-  /* ---------- Fase 5: evaluasi individu ---------- */
-  kuis: {
-    kicker: 'Tahap 8 · Kuis Individu',
-    goal: 'Menunjukkan kemampuan melakukan operasi hitung bentuk akar secara mandiri.',
-    syntax: CL + ' · Fase 5',
-    guru: 'Kuis dikerjakan SENDIRI-SENDIRI tanpa bantuan tim. Soal diambil acak dari bank sehingga tiap murid/tim mendapat soal berbeda. Jawaban hanya bisa dipilih sekali.',
-    instruksi: 'Kerjakan sendiri. Jawaban pilihan ganda hanya dapat dipilih sekali.',
-    banyak: 7,
-    komposisi: { jumlah: 2, kali: 1, bagi: 1, rasional: 1, sekawan: 1, konteks: 1 },
-    soal: [
+    temuanDetektif:
+      'Temuan: a^(1/2) = √a dan a^(1/3) = ∛a. Penyebut pecahan pangkat menunjukkan indeks akarnya!',
+    cerita:
+      'Bu Sari membawa 64 kubus satuan. 64 bisa disusun menjadi persegi 8 × 8, kubus 4 × 4 × 4, bahkan 2 × 2 × 2 × 2 × 2 × 2. Mari hitung nilai pangkat pecahan dari 64!',
+    instruksi:
+      'Hitung setiap nilai. Ingat temuanmu: penyebut pangkat menunjukkan indeks akar, dan pembilang menunjukkan pangkat biasa.',
+    langkah: [
+      {
+        id: 'p1',
+        cek: { a: 64, p: 1, q: 2 },
+        jawab: 8,
+        label: '64^(1/2) = √64 = …',
+        hints: ['Persegi 8 × 8 berisi 64 kubus satuan.'],
+        temuan: '64^(1/2) = √64 = 8.',
+      },
+      {
+        id: 'p2',
+        cek: { a: 64, p: 1, q: 3 },
+        jawab: 4,
+        label: '64^(1/3) = ∛64 = …',
+        hints: ['Kubus 4 × 4 × 4 berisi 64 kubus satuan.'],
+        temuan: '64^(1/3) = ∛64 = 4.',
+      },
+      {
+        id: 'p3',
+        cek: { a: 64, p: 1, q: 6 },
+        jawab: 2,
+        label: '64^(1/6) = ⁶√64 = …',
+        hints: [
+          'Penyebut 6 → cari bilangan yang dikalikan ENAM kali dengan dirinya sendiri hasilnya 64.',
+          '2 × 2 × 2 × 2 × 2 × 2 = 64.',
+        ],
+        temuan: '64^(1/6) = ⁶√64 = 2 karena 2⁶ = 64.',
+      },
+      {
+        id: 'p4',
+        cek: { a: 64, p: 2, q: 3 },
+        jawab: 16,
+        label: '64^(2/3) = (64^(1/3))² = (∛64)² = …',
+        hints: ['Kerjakan akarnya dulu: ∛64 = 4.', 'Lalu kuadratkan: 4² = 4 × 4.'],
+        temuan: '64^(2/3) = (∛64)² = 4² = 16.',
+      },
+      {
+        id: 'p5',
+        cek: { a: 64, p: 3, q: 2 },
+        jawab: 512,
+        label: '64^(3/2) = (√64)³ = …',
+        hints: ['√64 = 8.', 'Lalu 8³ = 8 × 8 × 8.'],
+        temuan: '64^(3/2) = (√64)³ = 8³ = 512.',
+      },
+      {
+        id: 'p6',
+        cek: { a: 8, p: 2, q: 3 },
+        jawab: 4,
+        label: 'Bandingkan: ∛(8²) = ∛64 = …  (dan (∛8)² = 2² = 4)',
+        hints: ['8² = 64.', 'Kamu sudah tahu ∛64 dari langkah sebelumnya.'],
+        temuan:
+          '∛(8²) = (∛8)² = 4 = 8^(2/3). Memangkatkan dulu atau mengakarkan dulu, hasilnya SAMA.',
+      },
+    ],
+    tabelJudul: 'Tabel temuanmu',
+    tabel: [
+      { a: 64, p: 1, q: 2 },
+      { a: 64, p: 1, q: 3 },
+      { a: 64, p: 1, q: 6 },
+      { a: 64, p: 2, q: 3 },
+      { a: 64, p: 3, q: 2 },
+      { a: 8, p: 2, q: 3 },
+    ],
+    tanya: [
       {
         id: 'k1',
-        jenis: 'jumlah',
-        type: 'choice',
-        cek: {
-          op: 'jumlah',
-          suku: [
-            { k: 4, r: 7 },
-            { k: 2, r: 7 },
-            { k: -1, r: 7 },
-          ],
-        },
-        cerita: 'Sederhanakan bentuk berikut.',
-        pertanyaan: '4√7 + 2√7 − √7 = …',
-        options: [
-          { id: 'a', label: '5√7' },
-          { id: 'b', label: '6√7' },
-          { id: 'c', label: '5√21' },
-          { id: 'd', label: '8√7' },
+        tanya: 'Dari tabel, a^(m/n) dapat ditulis dalam bentuk akar sebagai …',
+        opsi: [
+          {
+            id: 'benar',
+            label: 'ⁿ√(aᵐ) — pembilang m menjadi pangkat radikan, penyebut n menjadi indeks akar',
+          },
+          { id: 'tukar', label: 'ᵐ√(aⁿ) — pembilang m menjadi indeks akar' },
+          { id: 'bagi', label: 'aᵐ : n' },
+          { id: 'kali', label: 'n × √(aᵐ)' },
         ],
-        correct: 'a',
-        explanation: 'Suku sejenis: koefisiennya dijumlah/dikurangkan, 4 + 2 − 1 = 5, jadi 5√7.',
+        correct: 'benar',
+        umpan: {
+          benar: 'Tepat! Misalnya 64^(2/3) = ∛(64²) = (∛64)² = 16.',
+          tukar:
+            'Terbalik. Coba 64^(3/2): tabel menunjukkan (√64)³ = 512. Penyebut 2 menjadi indeks akar √.',
+          bagi: 'Periksa: 64² : 3 bukan 16. Penyebut bukan pembagi, melainkan indeks akar.',
+          kali: 'Penyebut n bukan pengali di depan akar, melainkan indeks akar.',
+        },
       },
       {
         id: 'k2',
-        jenis: 'jumlah',
-        type: 'choice',
-        cek: {
-          op: 'jumlah',
-          suku: [
-            { k: 1, r: 75 },
-            { k: 1, r: 12 },
-          ],
-        },
-        cerita: 'Sederhanakan bentuk berikut.',
-        pertanyaan: '√75 + √12 = …',
-        options: [
-          { id: 'a', label: '7√3' },
-          { id: 'b', label: '√87' },
-          { id: 'c', label: '7√6' },
-          { id: 'd', label: '10√3' },
+        tanya: 'Pangkat pecahan dibaca seperti pecahan biasa. Cara membaca 64^(2/3) adalah …',
+        cek: { jenis: 'bacaPangkat', a: 64, p: 2, q: 3 },
+        opsi: [
+          { id: 'benar', label: '64 pangkat dua per tiga' },
+          { id: 'tukar', label: '64 pangkat tiga per dua' },
+          { id: 'kali', label: '64 pangkat dua kali tiga' },
+          { id: 'akar', label: 'akar pangkat dua dari 64 pangkat 3' },
         ],
-        correct: 'a',
-        explanation: '√75 = 5√3 dan √12 = 2√3, sehingga jumlahnya 7√3.',
+        correct: 'benar',
+        umpan: {
+          benar:
+            'Tepat! 2/3 dibaca “dua per tiga”, jadi 64^(2/3) dibaca “64 pangkat dua per tiga” — sama nilainya dengan “akar pangkat tiga dari 64 pangkat 2”.',
+          tukar: 'Pembilang (2) dibaca lebih dulu, baru penyebut (3): “dua per tiga”.',
+          kali: 'Garis pecahan dibaca “per”, bukan “kali”.',
+          akar: 'Indeks dan pangkat tertukar. 64^(2/3) = ∛(64²), yaitu “akar pangkat tiga dari 64 pangkat 2”.',
+        },
+      },
+    ],
+    nextLabel: 'Lanjut Mengolah Data →',
+  },
+
+  /* ----------------------------------------------------------
+     TAHAP 6 — MENGOLAH DATA
+     ---------------------------------------------------------- */
+  olah: {
+    kicker: 'Tahap 6 · Mengolah Data',
+    syntax: 'Discovery Learning · Sintaks 4',
+    goal: 'Mengolah temuan menjadi aturan membaca, menulis, dan mengubah bentuk akar ⇄ pangkat pecahan.',
+    guru: 'Saat misi konverter, minta murid membacakan dulu bentuk yang diminta, lalu menyebutkan nilai a, m, dan n sebelum menekan tombol. Diskusikan pernyataan pilah yang paling banyak dijawab keliru.',
+    pengantar:
+      'Gunakan data dari Anatomi, Baca & Tulis, dan Tangga Pangkat 64 untuk menjawab pertanyaan penuntun berikut.',
+    konsep: [
+      {
+        id: 'k1',
+        tanya: 'Bentuk pangkat pecahan dari ⁵√(3²) adalah …',
+        cek: { jenis: 'pangkat', n: 5, r: 3, m: 2 },
+        opsi: [
+          { id: 'benar', label: '3^(2/5)' },
+          { id: 'tukar', label: '3^(5/2)' },
+          { id: 'basis', label: '2^(3/5)' },
+          { id: 'kurang', label: '3^(2−5)' },
+        ],
+        correct: 'benar',
+        umpan: {
+          benar: 'Tepat! Pangkat radikan (2) menjadi pembilang, indeks akar (5) menjadi penyebut.',
+          tukar: 'Terbalik. Indeks akar 5 menjadi PENYEBUT, pangkat radikan 2 menjadi pembilang.',
+          basis: 'Basisnya tetap radikan, yaitu 3.',
+          kurang: 'Tidak ada pengurangan. Indeks akar menjadi penyebut pecahan pangkat.',
+        },
+      },
+      {
+        id: 'k2',
+        tanya: 'Bentuk akar dari 7^(3/4) adalah …',
+        cek: { jenis: 'akar', a: 7, p: 3, q: 4 },
+        opsi: [
+          { id: 'benar', label: '∜(7³)' },
+          { id: 'tukar', label: '∛(7⁴)' },
+          { id: 'koef', label: '4√(7³)' },
+          { id: 'bagi', label: '7³ : 4' },
+        ],
+        correct: 'benar',
+        umpan: {
+          benar: 'Tepat! Penyebut 4 menjadi indeks akar, pembilang 3 menjadi pangkat radikan.',
+          tukar:
+            'Terbalik. Penyebut (4) menjadi indeks akar, pembilang (3) menjadi pangkat di dalam akar.',
+          koef: 'Angka 4 ditulis kecil di KIRI ATAS tanda akar (indeks), bukan besar di depan akar sebagai pengali.',
+          bagi: 'Penyebut pecahan pangkat bukan pembagi, melainkan indeks akar.',
+        },
       },
       {
         id: 'k3',
-        jenis: 'jumlah',
-        type: 'choice',
-        cek: {
-          op: 'jumlah',
-          suku: [
-            { k: 1, r: 45 },
-            { k: -1, r: 20 },
-          ],
+        tanya:
+          'Bentuk akar yang dibaca “akar pangkat tiga dari 2 pangkat 5” sama dengan pangkat pecahan …',
+        cek: { jenis: 'pangkat', n: 3, r: 2, m: 5 },
+        opsi: [
+          { id: 'benar', label: '2^(5/3)' },
+          { id: 'tukar', label: '2^(3/5)' },
+          { id: 'basis', label: '5^(2/3)' },
+          { id: 'kali', label: '2¹⁵' },
+        ],
+        correct: 'benar',
+        umpan: {
+          benar: 'Tepat! Bacaan itu ditulis ∛(2⁵) = 2^(5/3).',
+          tukar: 'Indeksnya 3 (“akar pangkat tiga”), jadi 3 menjadi PENYEBUT.',
+          basis: 'Radikannya 2 (“dari 2”), jadi basisnya 2.',
+          kali: 'Indeks dan pangkat tidak dikalikan. Indeks menjadi penyebut: 5/3.',
         },
-        cerita: 'Sederhanakan bentuk berikut.',
-        pertanyaan: '√45 − √20 = …',
-        options: [
-          { id: 'a', label: '√5' },
-          { id: 'b', label: '5' },
-          { id: 'c', label: '1' },
-          { id: 'd', label: '5√5' },
-        ],
-        correct: 'a',
-        explanation: '√45 = 3√5 dan √20 = 2√5, sehingga 3√5 − 2√5 = √5 (bukan √(45 − 20) = 5).',
-      },
-      {
-        id: 'k4',
-        jenis: 'kali',
-        type: 'choice',
-        cek: { op: 'kali', a: { k: 2, r: 6 }, b: { k: 3, r: 2 } },
-        cerita: 'Tentukan hasil perkalian dalam bentuk paling sederhana.',
-        pertanyaan: '2√6 × 3√2 = …',
-        options: [
-          { id: 'a', label: '12√3' },
-          { id: 'b', label: '6√8' },
-          { id: 'c', label: '5√12' },
-          { id: 'd', label: '6√3' },
-        ],
-        correct: 'a',
-        explanation: '2 × 3 = 6 dan √6 × √2 = √12 = 2√3, sehingga hasilnya 6 × 2√3 = 12√3.',
-      },
-      {
-        id: 'k5',
-        jenis: 'kali',
-        type: 'choice',
-        cek: { op: 'kali', a: { k: 1, r: 3 }, b: { k: 1, r: 27 } },
-        cerita: 'Tentukan hasil perkalian berikut.',
-        pertanyaan: '√3 × √27 = …',
-        options: [
-          { id: 'a', label: '9' },
-          { id: 'b', label: '√30' },
-          { id: 'c', label: '81' },
-          { id: 'd', label: '3√3' },
-        ],
-        correct: 'a',
-        explanation: '√3 × √27 = √81 = 9.',
-      },
-      {
-        id: 'k6',
-        jenis: 'bagi',
-        type: 'choice',
-        cek: { op: 'bagi', a: { k: 1, r: 150 }, b: { k: 1, r: 6 } },
-        cerita: 'Tentukan hasil pembagian berikut.',
-        pertanyaan: '√150 : √6 = …',
-        options: [
-          { id: 'a', label: '5' },
-          { id: 'b', label: '12' },
-          { id: 'c', label: '25' },
-          { id: 'd', label: '5√6' },
-        ],
-        correct: 'a',
-        explanation: '√150 : √6 = √(150 : 6) = √25 = 5 (bukan √(150 − 6) = 12).',
-      },
-      {
-        id: 'k7',
-        jenis: 'bagi',
-        type: 'choice',
-        cek: { op: 'bagi', a: { k: 18, r: 10 }, b: { k: 3, r: 2 } },
-        cerita: 'Tentukan hasil pembagian dalam bentuk paling sederhana.',
-        pertanyaan: '18√10 : 3√2 = …',
-        options: [
-          { id: 'a', label: '6√5' },
-          { id: 'b', label: '6√8' },
-          { id: 'c', label: '15√5' },
-          { id: 'd', label: '21√5' },
-        ],
-        correct: 'a',
-        explanation: '18 : 3 = 6 dan √10 : √2 = √5, sehingga hasilnya 6√5.',
-      },
-      {
-        id: 'k8',
-        jenis: 'rasional',
-        type: 'choice',
-        cek: { op: 'rasional', p: 12, q: { k: 1, r: 6 } },
-        cerita: 'Rasionalkan penyebut pecahan berikut.',
-        pertanyaan: '12/√6 = …',
-        options: [
-          { id: 'a', label: '2√6' },
-          { id: 'b', label: '12√6' },
-          { id: 'c', label: '6√2' },
-          { id: 'd', label: '√6/2' },
-        ],
-        correct: 'a',
-        explanation: '12/√6 × √6/√6 = 12√6/6 = 2√6.',
-      },
-      {
-        id: 'k9',
-        jenis: 'rasional',
-        type: 'choice',
-        cek: { op: 'rasional', p: 5, q: { k: 1, r: 10 } },
-        cerita: 'Rasionalkan penyebut pecahan berikut.',
-        pertanyaan: '5/√10 = …',
-        options: [
-          { id: 'a', label: '√10/2' },
-          { id: 'b', label: '5√10' },
-          { id: 'c', label: '√10/5' },
-          { id: 'd', label: '2√10' },
-        ],
-        correct: 'a',
-        explanation: '5/√10 × √10/√10 = 5√10/10 = √10/2.',
-      },
-      {
-        id: 'k10',
-        jenis: 'rasional',
-        type: 'choice',
-        cek: { op: 'rasional', p: 9, q: { k: 2, r: 3 } },
-        cerita: 'Rasionalkan penyebut pecahan berikut.',
-        pertanyaan: '9/(2√3) = …',
-        options: [
-          { id: 'a', label: '3√3/2' },
-          { id: 'b', label: '9√3/2' },
-          { id: 'c', label: '3√3' },
-          { id: 'd', label: '3√3/4' },
-        ],
-        correct: 'a',
-        explanation: '9/(2√3) × √3/√3 = 9√3/(2 × 3) = 9√3/6 = 3√3/2.',
-      },
-      {
-        id: 'k11',
-        jenis: 'sekawan',
-        type: 'choice',
-        cek: { op: 'sekawan', p: 2, a: 1, c: 1, r: 3 },
-        cerita: 'Rasionalkan penyebut pecahan berikut dengan bentuk sekawan.',
-        pertanyaan: '2/(√3 + 1) = …',
-        options: [
-          { id: 'a', label: '√3 − 1' },
-          { id: 'b', label: '√3 + 1' },
-          { id: 'c', label: '2√3 − 2' },
-          { id: 'd', label: '1 − √3' },
-        ],
-        correct: 'a',
-        explanation:
-          'Kalikan dengan sekawan √3 − 1: penyebut (√3 + 1)(√3 − 1) = 3 − 1 = 2, pembilang 2(√3 − 1). Hasilnya √3 − 1.',
-      },
-      {
-        id: 'k12',
-        jenis: 'sekawan',
-        type: 'choice',
-        cek: { op: 'sekawan', p: 4, a: 3, c: -1, r: 5 },
-        cerita: 'Rasionalkan penyebut pecahan berikut dengan bentuk sekawan.',
-        pertanyaan: '4/(3 − √5) = …',
-        options: [
-          { id: 'a', label: '3 + √5' },
-          { id: 'b', label: '3 − √5' },
-          { id: 'c', label: '12 + 4√5' },
-          { id: 'd', label: '(3 + √5)/2' },
-        ],
-        correct: 'a',
-        explanation:
-          'Kalikan dengan sekawan 3 + √5: penyebut 9 − 5 = 4, pembilang 4(3 + √5). Hasilnya 3 + √5.',
-      },
-      {
-        id: 'k13',
-        jenis: 'konteks',
-        type: 'choice',
-        cek: {
-          op: 'jumlah',
-          suku: [
-            { k: 1, r: 32 },
-            { k: 1, r: 18 },
-          ],
-          satuan: 'm',
-        },
-        cerita: 'Dua tiang bambu setinggi √32 m dan √18 m disambung lurus untuk tiang bendera.',
-        pertanyaan: 'Tinggi tiang setelah disambung adalah …',
-        options: [
-          { id: 'a', label: '7√2 m' },
-          { id: 'b', label: '√50 m' },
-          { id: 'c', label: '12√2 m' },
-          { id: 'd', label: '7√4 m' },
-        ],
-        correct: 'a',
-        explanation: '√32 + √18 = 4√2 + 3√2 = 7√2 m.',
-      },
-      {
-        id: 'k14',
-        jenis: 'konteks',
-        type: 'choice',
-        cek: { op: 'rasional', p: 10, q: { k: 1, r: 5 }, satuan: 'cm' },
-        cerita: 'Sebuah kartu persegi panjang memiliki luas 10 cm² dan panjang √5 cm.',
-        pertanyaan: 'Lebar kartu itu (penyebut dirasionalkan) adalah …',
-        options: [
-          { id: 'a', label: '2√5 cm' },
-          { id: 'b', label: '10√5 cm' },
-          { id: 'c', label: '√5/2 cm' },
-          { id: 'd', label: '5√2 cm' },
-        ],
-        correct: 'a',
-        explanation: 'Lebar = 10/√5 = 10√5/5 = 2√5 cm.',
       },
     ],
-    nextLabel: 'Lihat Penghargaan Tim →',
+    instruksiMisi:
+      'Misi Konverter: atur a, m, dan n dengan tombol − dan + sampai konverter menampilkan bentuk yang diminta. Perhatikan warna: m (pembilang) dan n (penyebut).',
+    konverterAwal: { a: 8, m: 1, n: 3 },
+    misi: [
+      {
+        id: 'm1',
+        teks: 'Tampilkan ∛(5²). Apa bentuk pangkat pecahannya?',
+        target: { a: 5, m: 2, n: 3 },
+        temuan: '∛(5²) = 5^(2/3), dibaca “5 pangkat dua per tiga”.',
+      },
+      {
+        id: 'm2',
+        teks: 'Tampilkan 2^(3/4). Apa bentuk akarnya?',
+        target: { a: 2, m: 3, n: 4 },
+        temuan: '2^(3/4) = ∜(2³), dibaca “akar pangkat empat dari 2 pangkat 3”.',
+      },
+      {
+        id: 'm3',
+        teks: 'Tampilkan 10^(1/2). Apa bentuk akarnya?',
+        target: { a: 10, m: 1, n: 2 },
+        temuan: '10^(1/2) = √10, dibaca “akar kuadrat dari 10”. Indeks 2 tidak ditulis.',
+      },
+    ],
+    instruksiPilah:
+      'Pilah setiap pernyataan berikut: TEPAT atau KELIRU? Setiap butir hanya bisa dijawab sekali.',
+    opsiPilah: [
+      { id: 'tepat', label: 'Tepat' },
+      { id: 'keliru', label: 'Keliru' },
+    ],
+    pilah: [
+      {
+        id: 'q1',
+        teks: '∛(4²) = 4^(2/3)',
+        cek: { jenis: 'konversi', n: 3, r: 4, m: 2, pangkat: { a: 4, p: 2, q: 3 } },
+        correct: 'tepat',
+        explanation: 'Pangkat radikan 2 menjadi pembilang, indeks 3 menjadi penyebut.',
+      },
+      {
+        id: 'q2',
+        teks: '√5 = 5^(1/2)',
+        cek: { jenis: 'konversi', n: 2, r: 5, m: 1, pangkat: { a: 5, p: 1, q: 2 } },
+        correct: 'tepat',
+        explanation: 'Akar kuadrat sama dengan pangkat ½.',
+      },
+      {
+        id: 'q3',
+        teks: '√(6³) = 6^(2/3)',
+        cek: { jenis: 'konversi', n: 2, r: 6, m: 3, pangkat: { a: 6, p: 2, q: 3 } },
+        correct: 'keliru',
+        explanation: 'Pembilang dan penyebut tertukar. √(6³) = 6^(3/2).',
+      },
+      {
+        id: 'q4',
+        teks: '∜(3⁸) = 3^(4/8)',
+        cek: { jenis: 'konversi', n: 4, r: 3, m: 8, pangkat: { a: 3, p: 4, q: 8 } },
+        correct: 'keliru',
+        explanation: 'Terbalik: ∜(3⁸) = 3^(8/4) = 3² = 9.',
+      },
+      {
+        id: 'q5',
+        teks: '⁵√(2³) dibaca “akar pangkat lima dari 2 pangkat 3”',
+        cek: { jenis: 'baca', n: 5, r: 2, m: 3, bacaan: 'akar pangkat lima dari 2 pangkat 3' },
+        correct: 'tepat',
+        explanation: 'Indeks 5 → “akar pangkat lima”, radikan 2, pangkat radikan 3.',
+      },
+      {
+        id: 'q6',
+        teks: '√11 dibaca “akar pangkat sebelas dari 2”',
+        cek: { jenis: 'baca', n: 2, r: 11, m: 1, bacaan: 'akar pangkat sebelas dari 2' },
+        correct: 'keliru',
+        explanation: '11 adalah radikan dan indeksnya 2: √11 dibaca “akar kuadrat dari 11”.',
+      },
+      {
+        id: 'q7',
+        teks: '9^(3/2) dibaca “9 pangkat tiga per dua”',
+        cek: { jenis: 'bacaPangkat', a: 9, p: 3, q: 2, bacaan: '9 pangkat tiga per dua' },
+        correct: 'tepat',
+        explanation: '3/2 dibaca “tiga per dua”. Bentuk akarnya √(9³) = 27.',
+      },
+      {
+        id: 'q8',
+        teks: '“akar kuadrat dari 10” ditulis 2√10',
+        cek: { jenis: 'tulis', n: 2, r: 10, m: 1, tulisan: '2√10' },
+        correct: 'keliru',
+        explanation:
+          'Indeks 2 tidak ditulis, apalagi di depan akar. “akar kuadrat dari 10” ditulis √10; 2√10 berarti 2 × √10.',
+      },
+    ],
+    nextLabel: 'Lanjut ke Pembuktian →',
   },
 
-  /* ---------- Fase 6: penghargaan ---------- */
-  penghargaan: {
-    kicker: 'Tahap 9 · Penghargaan Tim',
-    goal: 'Merayakan hasil kerja sama tim berdasarkan skor misi dan kuis individu.',
-    syntax: CL + ' · Fase 6',
-    guru: 'Umumkan predikat setiap tim. Beri penghargaan khusus "Ahli Terbaik" kepada ahli yang penjelasannya paling membantu (tanyakan kepada anggota tim). Tekankan bahwa kuis individu ikut menentukan poin tim.',
-    bobot:
-      'Poin tim = 50% skor stasiun ahli & misi (benar pada percobaan pertama) + 50% skor kuis individu.',
-    pujianLabel: 'Tulis satu pujian untuk ahli di tim kalian (siapa dan apa yang ia ajarkan).',
-    pujianPlaceholder:
-      'Contoh: Terima kasih Dimas, penjelasanmu dengan tabel uji membuatku paham mengapa √9 + √16 bukan √25.',
+  /* ----------------------------------------------------------
+     TAHAP 7 — PEMBUKTIAN
+     ---------------------------------------------------------- */
+  verifikasi: {
+    kicker: 'Tahap 7 · Pembuktian',
+    syntax: 'Discovery Learning · Sintaks 5',
+    goal: 'Membuktikan dugaan awal dan menguji temuan pada soal membaca, menulis, dan mengubah bentuk.',
+    guru: 'Minta murid memeriksa ∛125 = 5 dengan 5 × 5 × 5. Bahas pengecoh yang paling banyak dipilih, terutama indeks–pangkat yang tertukar.',
+    prediksiLabel: 'Dugaan awalmu',
+    prediksiBacaLabel: 'Dugaan cara membaca ∛125',
+    hipotesisLabel: 'Hipotesismu',
+    kesimpulanBaca: {
+      benar: 'Dugaan bacaanmu tepat: ∛125 dibaca “akar pangkat tiga dari 125”.',
+      salah:
+        'Bacaan bakunya adalah “akar pangkat tiga dari 125”: indeks disebut dulu, lalu radikan.',
+    },
+    kesimpulanDugaan: {
+      akar: 'Dugaanmu terbukti! 125^(1/3) = ∛125, bilangan yang jika dipangkatkan tiga hasilnya 125, yaitu 5. Rusuk kotak kado Rara 5 cm.',
+      bagi: 'Dugaanmu belum tepat: 125 : 3 ≈ 41,7, padahal 41,7³ jauh lebih dari 125. 125^(1/3) = ∛125 = 5.',
+      kali: 'Dugaanmu belum tepat: pangkat ⅓ bukan mengalikan dengan ⅓. 125^(1/3) = ∛125 = 5.',
+      kecil:
+        'Dugaanmu belum tepat: 125^(1/3) = ∛125 = 5, tidak kecil. Pangkat pecahan berarti bentuk akar.',
+    },
+    instruksiSoal:
+      'Uji temuanmu. Setiap soal hanya bisa dijawab sekali, jadi periksa dengan teliti sebelum memilih.',
+    soal: [
+      {
+        id: 'v1',
+        pernyataan: 'Cara membaca ∛(6²) yang tepat adalah …',
+        options: [
+          { id: 'benar', label: 'akar pangkat tiga dari 6 pangkat 2' },
+          { id: 'tukar', label: 'akar kuadrat dari 6 pangkat 3' },
+          { id: 'koef', label: '3 akar 6 pangkat 2' },
+          { id: 'kali', label: 'akar pangkat tiga dari 12' },
+        ],
+        correct: 'benar',
+        cek: { jenis: 'baca', n: 3, r: 6, m: 2 },
+        explanation: 'Indeks 3 → “akar pangkat tiga”, radikan 6, pangkat radikan 2.',
+      },
+      {
+        id: 'v2',
+        pernyataan: 'Bentuk akar dari bacaan “akar pangkat empat dari 5 pangkat 3” adalah …',
+        options: [
+          { id: 'benar', label: '∜(5³)' },
+          { id: 'tukar', label: '∛(5⁴)' },
+          { id: 'koef', label: '4√(5³)' },
+          { id: 'radikan', label: '∜(3⁵)' },
+        ],
+        correct: 'benar',
+        cek: { jenis: 'tulis', n: 4, r: 5, m: 3 },
+        explanation: 'Indeks 4 di kiri atas tanda akar, radikan 5, dan pangkat radikan 3: ∜(5³).',
+      },
+      {
+        id: 'v3',
+        pernyataan: 'Bentuk pangkat pecahan dari ∛125 adalah …',
+        options: [
+          { id: 'benar', label: '125^(1/3)' },
+          { id: 'kubik', label: '125³' },
+          { id: 'tukar', label: '3^(1/125)' },
+          { id: 'bagi', label: '125 : 3' },
+        ],
+        correct: 'benar',
+        cek: { jenis: 'pangkat', n: 3, r: 125, m: 1 },
+        explanation: '∛125 berindeks 3 dan pangkat radikannya 1: 125^(1/3).',
+      },
+      {
+        id: 'v4',
+        pernyataan: 'Bentuk akar dari 10^(2/3) adalah …',
+        options: [
+          { id: 'benar', label: '∛(10²)' },
+          { id: 'tukar', label: '√(10³)' },
+          { id: 'koef', label: '3√(10²)' },
+          { id: 'bagi', label: '10² : 3' },
+        ],
+        correct: 'benar',
+        cek: { jenis: 'akar', a: 10, p: 2, q: 3 },
+        explanation: 'Penyebut 3 menjadi indeks akar, pembilang 2 menjadi pangkat radikan: ∛(10²).',
+      },
+      {
+        id: 'v5',
+        pernyataan: 'Nilai dari 27^(2/3) adalah …',
+        options: [
+          { id: 'benar', label: '9' },
+          { id: 'kali', label: '18' },
+          { id: 'akar', label: '3' },
+          { id: 'tukar', label: '729' },
+        ],
+        correct: 'benar',
+        cek: { jenis: 'nilai', a: 27, p: 2, q: 3 },
+        explanation: '27^(2/3) = (∛27)² = 3² = 9.',
+      },
+      {
+        id: 'v6',
+        pernyataan: 'Cara membaca 7^(3/4) adalah …',
+        options: [
+          { id: 'benar', label: '7 pangkat tiga per empat' },
+          { id: 'tukar', label: '7 pangkat empat per tiga' },
+          { id: 'kali', label: '7 pangkat tiga kali empat' },
+          { id: 'akar', label: 'akar pangkat tiga dari 7 pangkat 4' },
+        ],
+        correct: 'benar',
+        cek: { jenis: 'bacaPangkat', a: 7, p: 3, q: 4 },
+        explanation:
+          '3/4 dibaca “tiga per empat”. Bentuk akarnya ∜(7³), dibaca “akar pangkat empat dari 7 pangkat 3”.',
+      },
+    ],
+    nextLabel: 'Lanjut Menarik Kesimpulan →',
+  },
+
+  /* ----------------------------------------------------------
+     TAHAP 8 — MENARIK KESIMPULAN
+     ---------------------------------------------------------- */
+  generalisasi: {
+    kicker: 'Tahap 8 · Menarik Kesimpulan',
+    syntax: 'Discovery Learning · Sintaks 6',
+    goal: 'Menyusun kesimpulan tentang unsur, cara membaca, cara menulis, dan hubungan bentuk akar dengan pangkat pecahan.',
+    guru: 'Setelah kesimpulan tepat, minta murid menyalinnya ke buku catatan dengan satu contoh buatan sendiri untuk setiap kalimat, lalu membacakannya ke pasangan.',
+    instruksi:
+      'Lengkapi setiap kalimat dengan potongan yang tepat dari daftar pilihan. Setiap potongan hanya dipakai satu kali; beberapa potongan adalah pengecoh. Pratinjau di bawah pilihan menampilkan notasinya.',
+    selectPlaceholder: '— pilih potongan kalimat —',
+    kalimat: [
+      { id: 'g1', awal: 'Bentuk akar ⁿ√(aᵐ) memuat tanda akar, indeks n,', correct: 'c1' },
+      { id: 'g2', awal: 'Bentuk ⁵√(3⁴) dibaca', correct: 'c2' },
+      { id: 'g3', awal: 'Pada akar kuadrat, indeks 2', correct: 'c3' },
+      { id: 'g4', awal: 'Akar pangkat n dari a, yaitu ⁿ√a, sama dengan', correct: 'c4' },
+      { id: 'g5', awal: 'Secara umum, ⁿ√(aᵐ) sama dengan', correct: 'c5' },
+      {
+        id: 'g6',
+        awal: 'Sebaliknya, a^(m/n) dibaca “a pangkat m per n” dan ditulis',
+        correct: 'c6',
+      },
+    ],
+    bank: [
+      { id: 'c1', teks: 'radikan a (di bawah tanda akar), dan pangkat radikan m' },
+      { id: 'c2', teks: '“akar pangkat lima dari 3 pangkat 4”' },
+      { id: 'c3', teks: 'tidak ditulis, mis. √10 dibaca “akar kuadrat dari 10”' },
+      { id: 'c4', teks: 'a^(1/n), mis. ∛125 = 125^(1/3) = 5' },
+      {
+        id: 'c5',
+        teks: 'a^(m/n): pangkat radikan menjadi pembilang, indeks akar menjadi penyebut',
+      },
+      { id: 'c6', teks: 'ⁿ√(aᵐ) atau (ⁿ√a)ᵐ' },
+      { id: 'd1', teks: 'a^(n/m): indeks akar menjadi pembilang' },
+      { id: 'd2', teks: '“akar pangkat empat dari 3 pangkat 5”' },
+      { id: 'd3', teks: 'ditulis besar di depan tanda akar, mis. 2√10' },
+      { id: 'd4', teks: 'a : n' },
+    ],
+    rangkuman: [
+      'Unsur bentuk akar ⁿ√(aᵐ): tanda akar √, indeks n, radikan a, pangkat radikan m. Indeks 2 dan pangkat 1 tidak ditulis.',
+      'Membaca: ⁿ√(aᵐ) dibaca “akar pangkat n dari a pangkat m”, mis. ∛(5²) “akar pangkat tiga dari 5 pangkat 2”; √10 “akar kuadrat dari 10”.',
+      'ⁿ√a = a^(1/n), misalnya √9 = 9^(1/2) = 3 dan ∛125 = 125^(1/3) = 5.',
+      'ⁿ√(aᵐ) = (ⁿ√a)ᵐ = a^(m/n): pangkat radikan → pembilang, indeks akar → penyebut.',
+      'a^(m/n) dibaca “a pangkat m per n”, mis. 7^(3/4) “7 pangkat tiga per empat” = ∜(7³).',
+    ],
+    nextLabel: 'Lanjut ke Uji Terap →',
+  },
+
+  /* ----------------------------------------------------------
+     TAHAP 9 — UJI TERAP
+     ---------------------------------------------------------- */
+  terapkan: {
+    kicker: 'Tahap 9 · Uji Terap',
+    syntax: 'Penerapan',
+    goal: 'Menerapkan cara membaca, menulis, dan mengubah bentuk akar ⇄ pangkat pecahan pada berbagai konteks.',
+    guru: 'Murid mengerjakan mandiri. Amati soal yang sering dijawab keliru untuk dibahas bersama.',
+    instruksi:
+      'Kerjakan soal satu per satu. Untuk soal isian, kamu boleh mencoba lagi. Desimal ditulis dengan koma, mis. 4,47.',
     nextLabel: 'Lanjut ke Refleksi →',
+    soal: [
+      {
+        id: 's1',
+        type: 'input',
+        konteks: 'Ubin lantai',
+        cerita:
+          'Sebuah ubin lantai berbentuk persegi memiliki luas 144 dm², sehingga panjang sisinya 144^(1/2) dm.',
+        pertanyaan: 'Berapa dm panjang sisi ubin tersebut?',
+        jawab: 12,
+        cek: { jenis: 'nilai', a: 144, p: 1, q: 2 },
+        explanation: '144^(1/2) = √144 = 12, karena 12 × 12 = 144.',
+        hints: [
+          'Pangkat ½ sama dengan akar kuadrat.',
+          'Bilangan berapa dikuadratkan hasilnya 144?',
+        ],
+      },
+      {
+        id: 's2',
+        type: 'choice',
+        konteks: 'Akuarium kubus',
+        cerita:
+          'Sebuah akuarium berbentuk kubus bervolume 27.000 cm³. Panjang rusuknya ∛27.000 cm.',
+        pertanyaan: 'Bentuk pangkat pecahan dari ∛27.000 adalah …',
+        options: [
+          { id: 'benar', label: '27.000^(1/3)' },
+          { id: 'kubik', label: '27.000³' },
+          { id: 'tukar', label: '3^(1/27000)' },
+          { id: 'bagi', label: '27.000 : 3' },
+        ],
+        correct: 'benar',
+        cek: { jenis: 'pangkat', n: 3, r: 27000, m: 1 },
+        explanation: '∛ berindeks 3, jadi ∛27.000 = 27.000^(1/3).',
+        hints: ['Indeks akar menjadi penyebut pecahan pangkat.'],
+      },
+      {
+        id: 's3',
+        type: 'input',
+        konteks: 'Akuarium kubus',
+        cerita: 'Masih akuarium tadi: rusuknya 27.000^(1/3) cm.',
+        pertanyaan: 'Berapa cm panjang rusuk akuarium tersebut?',
+        jawab: 30,
+        cek: { jenis: 'nilai', a: 27000, p: 1, q: 3 },
+        explanation: '30 × 30 × 30 = 27.000, jadi ∛27.000 = 30 cm.',
+        hints: ['Coba bilangan kelipatan 10.', '30 × 30 × 30 = ?'],
+      },
+      {
+        id: 's4',
+        type: 'choice',
+        konteks: 'Kuis radio',
+        cerita:
+          'Pembawa acara kuis radio membacakan soal: “Tuliskan akar pangkat tiga dari 2 pangkat 5.”',
+        pertanyaan: 'Notasi yang harus ditulis peserta adalah …',
+        options: [
+          { id: 'benar', label: '∛(2⁵)' },
+          { id: 'tukar', label: '⁵√(2³)' },
+          { id: 'koef', label: '3√(2⁵)' },
+          { id: 'radikan', label: '∛(5²)' },
+        ],
+        correct: 'benar',
+        cek: { jenis: 'tulis', n: 3, r: 2, m: 5 },
+        explanation: '“akar pangkat tiga” → indeks 3; “dari 2” → radikan 2; “pangkat 5” → ∛(2⁵).',
+        hints: ['Urutan bacaan: indeks → radikan → pangkat radikan.'],
+      },
+      {
+        id: 's5',
+        type: 'input',
+        konteks: 'Pangkat pecahan',
+        cerita: 'Rara menemukan soal tantangan: 16^(3/4).',
+        pertanyaan: 'Berapakah nilai 16^(3/4)?',
+        jawab: 8,
+        cek: { jenis: 'nilai', a: 16, p: 3, q: 4 },
+        explanation: '16^(3/4) = (∜16)³ = 2³ = 8.',
+        hints: ['Kerjakan akarnya dulu: ∜16 = 2 karena 2 × 2 × 2 × 2 = 16.', 'Lalu pangkatkan 3.'],
+      },
+      {
+        id: 's6',
+        type: 'choice',
+        konteks: 'Kotak kado',
+        cerita: 'Sebuah kotak kado berbentuk kubus bervolume 20 dm³. Panjang rusuknya ∛20 dm.',
+        pertanyaan: 'Cara membaca ∛20 yang tepat adalah …',
+        options: [
+          { id: 'benar', label: 'akar pangkat tiga dari 20' },
+          { id: 'indeks', label: 'akar kuadrat dari 20' },
+          { id: 'koef', label: 'tiga akar 20' },
+          { id: 'pangkat', label: '20 pangkat tiga' },
+        ],
+        correct: 'benar',
+        cek: { jenis: 'baca', n: 3, r: 20, m: 1 },
+        explanation: '∛ berindeks 3, jadi ∛20 dibaca “akar pangkat tiga dari 20”.',
+        hints: ['Angka kecil 3 pada ∛ adalah indeks.'],
+      },
+      {
+        id: 's7',
+        type: 'choice',
+        konteks: 'Menulis ulang',
+        cerita: 'Bu Sari menulis ⁵√(2³) di papan tulis.',
+        pertanyaan: 'Bentuk pangkat pecahannya adalah …',
+        options: [
+          { id: 'benar', label: '2^(3/5)' },
+          { id: 'tukar', label: '2^(5/3)' },
+          { id: 'basis', label: '3^(2/5)' },
+          { id: 'kali', label: '2¹⁵' },
+        ],
+        correct: 'benar',
+        cek: { jenis: 'pangkat', n: 5, r: 2, m: 3 },
+        explanation: 'Pangkat radikan (3) menjadi pembilang, indeks (5) menjadi penyebut: 2^(3/5).',
+        hints: ['Pembilang = pangkat radikan; penyebut = indeks akar.'],
+      },
+      {
+        id: 's8',
+        type: 'input',
+        konteks: 'Layar jam pintar',
+        cerita:
+          'Layar jam pintar berbentuk persegi seluas 20 cm², jadi sisinya 20^(1/2) = √20 cm. Hasilnya bukan bilangan bulat, sehingga bentuk akar menuliskannya dengan tepat.',
+        pertanyaan:
+          'Kira-kira berapa cm panjang sisi layar? Tulis sampai dua angka di belakang koma.',
+        jawab: 4.47,
+        toleransi: 0.006,
+        cek: { jenis: 'hampiran', a: 20, p: 1, q: 2 },
+        explanation:
+          '√20 ≈ 4,47 karena 4,47 × 4,47 ≈ 19,98. Bentuk √20 atau 20^(1/2) menuliskannya secara tepat, sedangkan 4,47 hanya hampiran.',
+        hints: [
+          '4 × 4 = 16 dan 5 × 5 = 25, jadi √20 di antara 4 dan 5.',
+          'Coba 4,5 × 4,5 = 20,25 (sedikit terlalu besar).',
+        ],
+      },
+    ],
   },
 
-  /* ---------- Penutup ---------- */
+  /* ----------------------------------------------------------
+     TAHAP 10 — REFLEKSI
+     ---------------------------------------------------------- */
   refleksi: {
     kicker: 'Tahap 10 · Refleksi',
-    goal: 'Merefleksikan pemahaman konsep dan cara bekerja sama dalam tim.',
-    syntax: CL + ' · Penutup',
-    guru: 'Minta 2–3 murid membacakan jawaban refleksi. Catat murid yang memilih "belum yakin" untuk pendampingan pada pertemuan berikutnya.',
+    syntax: 'Penutup',
+    goal: 'Merefleksikan proses menemukan dan tingkat pemahaman.',
+    guru: 'Baca beberapa refleksi secara acak (tanpa menyebut nama) untuk menutup pelajaran.',
     pertanyaan: [
       {
-        id: 'r1',
-        teks: 'Mengapa √50 + √18 = 8√2 dan bukan √68? Jelaskan dengan kata-katamu.',
-        placeholder: 'Tulis jawabanmu…',
+        id: 'q1',
+        teks: 'Tuliskan cara membaca ∜(3⁵) dan jelaskan bagian mana yang disebut lebih dulu.',
+        placeholder: '∜(3⁵) dibaca … karena …',
       },
       {
-        id: 'r2',
-        teks: 'Mengapa mengalikan pembilang dan penyebut dengan √b tidak mengubah nilai pecahan?',
-        placeholder: 'Karena …',
+        id: 'q2',
+        teks: 'Jelaskan dengan kata-katamu sendiri mengapa ∛125 sama dengan 125^(1/3).',
+        placeholder: 'Karena (125^(1/3))³ = …',
       },
       {
-        id: 'r3',
-        teks: 'Berikan satu contoh dari kehidupan sehari-hari yang memerlukan operasi bentuk akar.',
-        placeholder: 'Contoh: panjang pagar kebun, …',
-      },
-      {
-        id: 'r4',
-        teks: 'Apa yang kamu pelajari dari teman ahli di timmu? Apa yang kamu sumbangkan sebagai ahli?',
-        placeholder: 'Tulis jawabanmu…',
+        id: 'q3',
+        teks: 'Bagian mana yang paling membingungkan? Bagaimana kamu mengatasinya?',
+        placeholder: 'Yang paling membingungkan …',
       },
     ],
-    diriLabel: 'Seberapa yakin kamu melakukan operasi hitung bentuk akar sekarang?',
+    diriLabel:
+      'Seberapa yakin kamu dapat membaca, menulis, dan mengubah bentuk akar ⇄ pangkat pecahan sekarang?',
     diriOpsi: [
-      { id: 'sangat', label: '😄 Sangat yakin — aku bisa menjelaskannya kepada teman' },
-      { id: 'yakin', label: '🙂 Yakin — aku bisa mengerjakan sendiri' },
-      { id: 'cukup', label: '😐 Cukup — kadang masih tertukar aturannya' },
-      { id: 'belum', label: '😟 Belum yakin — aku masih perlu dibantu' },
+      { id: 'sangat', label: '😄 Sangat yakin, bisa menjelaskan ke teman' },
+      { id: 'yakin', label: '🙂 Yakin' },
+      { id: 'ragu', label: '😐 Masih ragu pada beberapa bagian' },
+      { id: 'belum', label: '😟 Belum yakin, perlu bantuan' },
     ],
     nextLabel: 'Simpan & Selesai →',
   },
 
+  /* ----------------------------------------------------------
+     TAHAP 11 — SELESAI
+     ---------------------------------------------------------- */
   selesai: {
-    judul: 'Misi Jigsaw Tuntas!',
-    teks: 'Kalian sudah menemukan, mengajarkan, dan menerapkan aturan operasi hitung bentuk akar untuk menyelesaikan masalah kebun sekolah.',
+    judul: 'Hebat! Kamu bisa membaca dan menulis bentuk akar',
+    teks: 'Rusuk kotak kado Rara kini bisa kamu tulis, baca, dan hitung: ∛125 = 125^(1/3) = 5 cm.',
+    trio: [
+      { notasi: '∛125', label: 'Bentuk akar' },
+      { notasi: '125^(1/3)', label: 'Pangkat pecahan' },
+      { notasi: '5', label: 'Nilainya' },
+    ],
     capaian: [
-      'Menjumlahkan dan mengurangkan bentuk akar sejenis: a√c ± b√c = (a ± b)√c.',
-      'Menyederhanakan dulu sebelum menjumlahkan, dan mengenali suku yang tidak sejenis.',
-      'Mengalikan bentuk akar: a√b × c√d = (a × c)√(b × d).',
-      'Membagi bentuk akar: a√b : c√d = (a : c)√(b : d).',
-      'Merasionalkan penyebut a/√b dan a/(p ± √q) dengan bentuk sekawan.',
-      'Menjadi ahli yang mengajarkan satu operasi kepada tim.',
+      'Menyebutkan unsur bentuk akar: tanda akar, indeks, radikan, dan pangkat radikan.',
+      'Membaca bentuk akar ⁿ√(aᵐ) dan pangkat pecahan a^(m/n) dengan bacaan baku.',
+      'Menuliskan bentuk akar dari bacaannya.',
+      'Mengubah bentuk akar ⁿ√(aᵐ) menjadi pangkat pecahan a^(m/n) dan sebaliknya.',
     ],
   },
 };

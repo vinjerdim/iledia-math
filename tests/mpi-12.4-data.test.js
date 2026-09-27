@@ -1,14 +1,13 @@
 'use strict';
 
 /*
- * Tes konsistensi konten fase-d/mpi-12.4/data.js (operasi hitung bentuk
- * akar, Cooperative Learning tipe Jigsaw): kunci dugaan, pernyataan,
- * dan kuis dihitung ulang dengan engine seksi 46 (hasilOperasiAkar,
- * formatBentukAkar), setiap daftar pilihan punya id & label unik dan
- * cukup opsi untuk diacak, setiap opsi penuntun punya umpan balik,
- * stasiun ahli sesuai kartu ahli dengan tabel uji bernilai eksak, soal
- * misi punya strategi & bentuk isian yang jelas, dan langkah soal
- * kontekstual saling bersambung.
+ * Tes konsistensi konten fase-d/mpi-12.4/data.js (membaca & menuliskan
+ * bentuk akar serta mengaitkannya dengan pangkat pecahan, Discovery
+ * Learning): kunci jawaban dihitung ulang dengan engine seksi 45
+ * (formatAkar, formatPangkatPecahan, bacaAkar, bacaPangkatPecahan,
+ * nilaiPangkatPecahan, diagnosaKonversi), setiap daftar pilihan punya
+ * id & label unik dan cukup opsi untuk diacak, setiap opsi pertanyaan
+ * penuntun punya umpan balik, dan tahap sesuai stageCount manifest.
  */
 const test = require('node:test');
 const assert = require('node:assert/strict');
@@ -17,8 +16,22 @@ const { loadEngine } = require('./load-engine');
 const E = loadEngine(['fase-d/mpi-12.4/data.js']);
 const D = E.DATA;
 
+const TAHAP = [
+  'stimulasi',
+  'masalah',
+  'unsur',
+  'baca',
+  'pola',
+  'olah',
+  'verifikasi',
+  'generalisasi',
+  'terapkan',
+  'refleksi',
+  'selesai',
+];
+
 function ids(list) {
-  return Array.from(list, (o) => o.id);
+  return list.map((o) => o.id);
 }
 
 function assertOptions(list, name, min) {
@@ -32,179 +45,253 @@ function assertOptions(list, name, min) {
   );
 }
 
+/* Teks kunci yang diharapkan dari metadata `cek`. */
+function teksKunci(cek) {
+  if (cek.jenis === 'pangkat') return E.formatPangkatPecahan(cek.r, cek.m || 1, cek.n);
+  if (cek.jenis === 'akar') return E.formatAkar(1, cek.q, cek.a, cek.p);
+  if (cek.jenis === 'tulis') return E.formatAkar(1, cek.n, cek.r, cek.m || 1);
+  if (cek.jenis === 'baca') return E.bacaAkar(1, cek.n, cek.r, cek.m || 1);
+  if (cek.jenis === 'bacaPangkat') return E.bacaPangkatPecahan(cek.a, cek.p, cek.q);
+  if (cek.jenis === 'nilai') {
+    const v = E.nilaiPangkatPecahan(cek.a, cek.p, cek.q);
+    assert.ok(v.eksak, 'nilai ' + cek.a + '^(' + cek.p + '/' + cek.q + ') harus eksak');
+    return E.formatNumber(v.nilai);
+  }
+  throw new Error('jenis cek tidak dikenal: ' + cek.jenis);
+}
+
 function assertGuided(q, name) {
   assertOptions(q.opsi, name + '.opsi', 4);
   assert.ok(ids(q.opsi).includes(q.correct), name + ': correct ada di opsi');
   q.opsi.forEach((o) => assert.ok(q.umpan[o.id], name + ': umpan untuk ' + o.id));
-}
-
-function teksHasil(soal) {
-  return E.formatBentukAkar(E.hasilOperasiAkar(soal)) + (soal.satuan ? ' ' + soal.satuan : '');
-}
-
-/* Soal operasi valid: hasil terdefinisi (kecuali jebakan tidak sejenis) & bentuk isian jelas. */
-function assertSoalOperasi(s, name) {
-  assert.ok(['jumlah', 'kali', 'bagi', 'rasional', 'sekawan'].includes(s.op), name + '.op');
-  const strategi = E.strategiAkarSoal(s);
-  if (strategi === 'tidakSejenis') return;
-  const h = E.hasilOperasiAkar(s);
-  assert.ok(h, name + ': punya hasil');
-  assert.ok(E.bentukIsianAkar(s), name + ': bentuk isian');
-  assert.ok(!(h.a !== 0 && h.b !== 0 && h.d > 1), name + ': hasil dua suku tanpa penyebut');
-  if (s.op === 'sekawan') {
-    assert.ok(s.a * s.a - s.r !== 0, name + ': penyebut sekawan ≠ 0');
-    assert.ok(nilai(s) > 0, name + ': penyebut positif agar masuk akal');
-  }
-  if (s.op === 'jumlah' || s.op === 'kali' || s.op === 'bagi') {
-    assert.ok(Math.abs(E.nilaiBentukAkar(h) - nilai(s)) < 1e-9, name + ': nilai hampiran cocok');
+  if (q.cek) {
+    const benar = q.opsi.find((o) => o.id === q.correct).label;
+    assert.ok(benar.startsWith(teksKunci(q.cek)), name + ': opsi benar = kunci engine');
   }
 }
 
-/* Nilai soal dihitung langsung dengan Math.sqrt (bukan dengan aturan operasi). */
-function nilai(s) {
-  const v = (x) => x.k * Math.sqrt(x.r);
-  if (s.op === 'jumlah') return s.suku.reduce((acc, x) => acc + v(x), 0);
-  if (s.op === 'kali') return v(s.a) * v(s.b);
-  if (s.op === 'bagi') return v(s.a) / v(s.b);
-  if (s.op === 'rasional') return s.p / v(s.q);
-  return s.p / (s.a + (s.c || 1) * Math.sqrt(s.r));
+function assertSoalPilihan(q, name) {
+  assertOptions(q.options, name + '.options', 4);
+  assert.ok(ids(q.options).includes(q.correct), name + ': correct ada di opsi');
+  assert.ok(q.cek, name + ': punya cek');
+  const benar = q.options.find((o) => o.id === q.correct).label;
+  assert.equal(benar, teksKunci(q.cek), name + ': label opsi benar = kunci engine');
+  q.options
+    .filter((o) => o.id !== q.correct)
+    .forEach((o) => assert.notEqual(o.label, benar, name + ': pengecoh ' + o.id + ' ≠ kunci'));
 }
 
-test('tahap: 11 tahap unik, sesuai stageCount manifest', () => {
+/* Target papan tulis/konverter berada dalam rentang stepper engine. */
+function assertTargetKonverter(t, name) {
+  const R = E.ROOT_CONVERTER_RENTANG;
+  ['a', 'm', 'n'].forEach((k) =>
+    assert.ok(t[k] >= R[k].min && t[k] <= R[k].max, name + ': ' + k + ' dalam rentang')
+  );
+}
+
+test('tahap: 11 tahap, sesuai stageCount manifest & tujuan belajar', () => {
   const man = require('../shared/pages-manifest.json')['fase-d/mpi-12.4'];
-  assert.equal(D.tahap.length, 11);
-  assert.equal(man.stageCount, D.tahap.length);
-  assert.equal(new Set(ids(D.tahap)).size, D.tahap.length);
-  ['tujuan', 'informasi', 'tim', 'ahli', 'kuis', 'penghargaan', 'refleksi', 'selesai'].forEach(
-    (id) => assert.ok(ids(D.tahap).includes(id), id)
-  );
+  assert.equal(man.stageCount, TAHAP.length);
+  TAHAP.forEach((k) => assert.ok(D[k], 'DATA.' + k));
+  assert.match(D.stimulasi.tp, /Membaca dan menuliskan bentuk akar/);
+  assert.match(D.stimulasi.tp, /pangkat pecahan/);
 });
 
-test('peran misi: empat peran berbentuk { id, ikon, nama, tugas }', () => {
-  assert.equal(D.peranMisi.length, 4);
-  D.peranMisi.forEach((p) => ['id', 'ikon', 'nama', 'tugas'].forEach((k) => assert.ok(p[k])));
-});
-
-test('tujuan: dugaan punya 4 opsi unik dan kunci = hasil operasi', () => {
-  assert.equal(D.tujuan.kriteria.length, 4);
-  D.tujuan.dugaan.forEach((q) => {
-    assertOptions(q.opsi, 'dugaan.' + q.id, 4);
-    const benar = teksHasil(q.cek);
-    assert.equal(q.opsi.find((o) => o.id === q.kunci).label, benar, q.id);
-    assert.ok(q.penjelasan.includes(benar), q.id + ': penjelasan memuat ' + benar);
-    const lain = q.opsi.filter((o) => o.id !== q.kunci).map((o) => o.label);
-    assert.ok(!lain.includes(benar), q.id + ': pengecoh ≠ kunci');
+test('setiap tahap punya kepala Discovery Learning', () => {
+  TAHAP.filter((k) => k !== 'selesai').forEach((k) => {
+    assert.ok(D[k].kicker, k + '.kicker');
+    assert.ok(D[k].goal, k + '.goal');
+    assert.ok(D[k].syntax, k + '.syntax');
+    assert.ok(D[k].guru, k + '.guru');
   });
-});
-
-test('informasi: pertanyaan penuntun lengkap dengan umpan per opsi', () => {
-  D.informasi.penuntun.forEach((q) => assertGuided(q, 'penuntun.' + q.id));
-  assert.equal(E.formatAkar(5, 2, 2), '5√2');
-});
-
-test('tim: 2–5 anggota, kesepakatan unik', () => {
-  assert.ok(D.tim.minAnggota >= 2 && D.tim.maksAnggota >= 4);
-  assert.equal(new Set(ids(D.tim.kesepakatan)).size, D.tim.kesepakatan.length);
-});
-
-test('ahli: empat stasiun sesuai kartu ahli, tabel uji eksak, soal stasiun sesuai operasi', () => {
-  assert.deepEqual(ids(D.ahli.stasiun), ids(E.OPERASI_AKAR_AHLI));
-  D.ahli.stasiun.forEach((st) => {
-    const nm = 'stasiun.' + st.id;
-    assert.ok(st.uji.length >= 3, nm + ': minimal 3 baris uji');
-    const hasil = st.uji.map((b, i) => {
-      const u = E.ujiAkarBaris(st.id, b);
-      assert.ok(u.kiri && u.kanan, nm + ' baris ' + i + ' bernilai');
-      return u.sama;
-    });
-    if (st.id === 'jumlah') {
-      assert.ok(hasil.includes(true) && hasil.includes(false), nm + ': ada baris sama & beda');
-    } else {
-      assert.ok(hasil.every(Boolean), nm + ': semua baris menunjukkan sifat');
+  ['stimulasi', 'masalah', 'unsur', 'baca', 'pola', 'olah', 'verifikasi', 'generalisasi'].forEach(
+    (k, i) => {
+      const sintaks = [1, 2, 3, 3, 3, 4, 5, 6][i];
+      assert.match(D[k].syntax, new RegExp('Sintaks ' + sintaks), k + ': sintaks ' + sintaks);
     }
-    assertGuided(st.tanya, nm + '.tanya');
-    assert.ok(st.analogi, nm + '.analogi');
-    assert.equal(st.soal.length, 2, nm + ': dua soal stasiun');
-    st.soal.forEach((s) => {
-      assert.equal(E.strategiAkarSoal(s), st.id, nm + '.' + s.id + ': strategi = stasiun');
-      assertSoalOperasi(s, nm + '.' + s.id);
-    });
+  );
+});
+
+test('stimulasi & masalah: opsi dapat diacak, dugaan punya kesimpulan', () => {
+  assertOptions(D.stimulasi.opsi, 'stimulasi.opsi', 4);
+  assertOptions(D.stimulasi.opsiBaca, 'stimulasi.opsiBaca', 4);
+  D.stimulasi.opsi.forEach((o) =>
+    assert.ok(D.verifikasi.kesimpulanDugaan[o.id], 'kesimpulanDugaan untuk ' + o.id)
+  );
+  assert.ok(ids(D.stimulasi.opsi).includes(D.stimulasi.dugaanTepat));
+  const baku = D.stimulasi.opsiBaca.find((o) => o.id === D.stimulasi.dugaanBacaTepat);
+  assert.equal(baku.label, E.bacaAkar(1, 3, 125));
+  assert.ok(D.stimulasi.papan.some((b) => b.includes(E.formatPangkatPecahan(125, 1, 3))));
+  assert.ok(D.stimulasi.papan.some((b) => b.includes('∛125')));
+  assert.ok(D.stimulasi.kriteria.length >= 3);
+  assertGuided(
+    { opsi: D.masalah.opsi, correct: D.masalah.correct, umpan: D.masalah.umpan },
+    'masalah'
+  );
+});
+
+test('unsur: langkah isian = akar bulat, anatomi lengkap, pertanyaan penuntun', () => {
+  const U = D.unsur;
+  assert.ok(U.jejakMin.persegi >= 1 && U.jejakMin.kubus >= 1);
+  assert.equal(new Set(ids(U.langkah)).size, U.langkah.length);
+  U.langkah.forEach((s) => {
+    assert.equal(s.jawab, E.akarBulat(s.r, s.n), s.id + ': jawab = akar bulat');
+    assert.ok(s.label.includes(E.formatAkar(1, s.n, s.r)), s.id + ': label memuat akar');
+    assert.ok(s.hints && s.hints.length, s.id + '.hints');
+  });
+  assert.ok(U.langkah.some((s) => s.n === 2));
+  assert.ok(U.langkah.some((s) => s.n === 3));
+  /* model anatomi memuat semua bagian yang ditanyakan */
+  const c = U.anatomiContoh;
+  assert.ok(c.n !== 2 && c.m > 1, 'contoh menampilkan indeks & pangkat radikan');
+  assert.deepEqual([...U.anatomiBagian].sort(), ['indeks', 'pangkat', 'radikan', 'tanda']);
+  U.anatomiBagian.forEach((b) => assert.ok(E.ANATOMI_AKAR[b], 'ANATOMI_AKAR.' + b));
+  assert.ok(U.instruksiAnatomi.includes(E.formatAkar(1, c.n, c.r, c.m)));
+  U.tanya.forEach((q) => assertGuided(q, 'unsur.' + q.id));
+});
+
+test('baca: pilihan bacaan dari engine, target tulis sesuai bacaan', () => {
+  const B = D.baca;
+  B.bacaan.forEach((q) => {
+    assertGuided(q, 'baca.' + q.id);
+    assert.ok(q.cek, q.id + '.cek');
+    assert.ok(q.tanya.includes(E.formatAkar(1, q.cek.n, q.cek.r, q.cek.m)), q.id + ': notasi');
+  });
+  assert.ok(B.bacaan.some((q) => q.cek.n === 2));
+  assert.ok(B.bacaan.some((q) => q.cek.m > 1));
+  assertTargetKonverter(B.tulisAwal, 'baca.tulisAwal');
+  assert.equal(new Set(ids(B.tulis)).size, B.tulis.length);
+  B.tulis.forEach((t) => {
+    assertTargetKonverter(t.target, t.id);
+    assert.equal(t.teks, E.bacaAkar(1, t.target.n, t.target.a, t.target.m), t.id + ': bacaan');
+    assert.ok(t.temuan.includes(E.formatAkar(1, t.target.n, t.target.a, t.target.m)), t.id);
+    assert.equal(E.konverterCocok(B.tulisAwal, t.target), false, t.id + ': tidak langsung cocok');
   });
 });
 
-test('misi 1: delapan soal dengan semua strategi, termasuk jebakan tidak sejenis & sekawan', () => {
-  const soal = D.misiOperasi.soal;
-  assert.ok(soal.length >= 8);
-  assert.equal(new Set(ids(soal)).size, soal.length);
-  const strategi = new Set(soal.map((s) => E.strategiAkarSoal(s)));
-  ['jumlah', 'kali', 'bagi', 'rasional', 'sekawan', 'tidakSejenis'].forEach((s) =>
-    assert.ok(strategi.has(s), 'strategi ' + s)
-  );
-  soal.forEach((s) => assertSoalOperasi(s, 'misiOperasi.' + s.id));
-  /* Jebakan: sebelum disederhanakan radikan berbeda, tetapi ada juga yang ternyata sejenis. */
+test('pola: detektif, nilai pangkat pecahan eksak & tabel ringkas', () => {
+  const P = D.pola;
+  P.detektif.forEach((q) => assertGuided(q, 'pola.' + q.id));
+  assert.equal(new Set(ids(P.langkah)).size, P.langkah.length);
+  P.langkah.forEach((s) => {
+    const v = E.nilaiPangkatPecahan(s.cek.a, s.cek.p, s.cek.q);
+    assert.ok(v.eksak, s.id + ': eksak');
+    assert.equal(s.jawab, v.nilai, s.id + ': jawab = nilai');
+    assert.ok(s.hints && s.hints.length, s.id + '.hints');
+  });
   assert.ok(
-    soal.some(
-      (s) => s.op === 'jumlah' && new Set(s.suku.map((x) => x.r)).size > 1 && E.sejenisAkar(s.suku)
-    )
+    P.langkah.some((s) => s.cek.p > 1),
+    'ada pembilang > 1'
   );
+  assert.ok(P.tabel.length >= 4);
+  P.tanya.forEach((q) => assertGuided(q, 'pola.' + q.id));
+  assert.ok(P.tanya.some((q) => q.cek && q.cek.jenis === 'bacaPangkat'));
 });
 
-test('misi 2: langkah kontekstual bersambung dan bersatuan', () => {
-  D.misiKonteks.soal.forEach((c) => {
-    assert.ok(c.cerita && c.ikon, c.id + ': cerita & ikon');
-    c.langkah.forEach((l, i) => {
-      const nm = c.id + ' langkah ' + (i + 1);
-      assert.ok(l.label, nm + '.label');
-      assert.ok(l.soal.satuan, nm + ': satuan');
-      assert.notEqual(E.strategiAkarSoal(l.soal), 'tidakSejenis', nm);
-      assertSoalOperasi(l.soal, nm);
-      if (l.lanjut) {
-        assert.ok(i > 0, nm + ': lanjut butuh langkah sebelumnya');
-        const prev = E.hasilOperasiAkar(c.langkah[i - 1].soal);
-        const operan = [l.soal.a, l.soal.b].map((x) => ({ b: x.k, r: x.r }));
-        assert.ok(
-          operan.some((o) => E.samaBentuk(o, prev)),
-          nm + ': memakai hasil langkah sebelumnya'
-        );
+test('olah: konsep, misi konverter, dan pilah benar menurut engine', () => {
+  const O = D.olah;
+  O.konsep.forEach((q) => assertGuided(q, 'olah.' + q.id));
+  assertTargetKonverter(O.konverterAwal, 'olah.konverterAwal');
+  assert.equal(new Set(ids(O.misi)).size, O.misi.length);
+  O.misi.forEach((m) => {
+    const t = m.target;
+    assertTargetKonverter(t, m.id);
+    assert.ok(
+      m.teks.includes(E.formatAkar(1, t.n, t.a, t.m)) ||
+        m.teks.includes(E.formatPangkatPecahan(t.a, t.m, t.n)),
+      m.id + ': teks memuat target'
+    );
+  });
+  assertOptions(O.opsiPilah, 'olah.opsiPilah', 2);
+  assert.equal(new Set(ids(O.pilah)).size, O.pilah.length);
+  O.pilah.forEach((it) => {
+    const c = it.cek;
+    let tepat;
+    let teks;
+    if (c.jenis === 'konversi') {
+      tepat = E.diagnosaKonversi(E.akarKePangkat(c.n, c.r, c.m), c.pangkat) === 'benar';
+      teks =
+        E.formatAkar(1, c.n, c.r, c.m) +
+        ' = ' +
+        E.formatPangkatPecahan(c.pangkat.a, c.pangkat.p, c.pangkat.q);
+    } else if (c.jenis === 'baca') {
+      tepat = c.bacaan === E.bacaAkar(1, c.n, c.r, c.m);
+      teks = E.formatAkar(1, c.n, c.r, c.m) + ' dibaca “' + c.bacaan + '”';
+    } else if (c.jenis === 'bacaPangkat') {
+      tepat = c.bacaan === E.bacaPangkatPecahan(c.a, c.p, c.q);
+      teks = E.formatPangkatPecahan(c.a, c.p, c.q) + ' dibaca “' + c.bacaan + '”';
+    } else if (c.jenis === 'tulis') {
+      tepat = c.tulisan === E.formatAkar(1, c.n, c.r, c.m);
+      teks = '“' + E.bacaAkar(1, c.n, c.r, c.m) + '” ditulis ' + c.tulisan;
+    } else {
+      throw new Error(it.id + ': jenis cek tidak dikenal');
+    }
+    assert.equal(it.correct, tepat ? 'tepat' : 'keliru', it.id + ': kunci pilah');
+    assert.equal(it.teks, teks, it.id + ': teks sesuai cek');
+    assert.ok(it.explanation, it.id + '.explanation');
+  });
+  assert.equal(new Set(O.pilah.map((it) => it.correct)).size, 2, 'pilah memuat tepat & keliru');
+});
+
+test('verifikasi: soal pilihan dengan kunci engine & pengecoh unik', () => {
+  const V = D.verifikasi;
+  assert.equal(new Set(ids(V.soal)).size, V.soal.length);
+  V.soal.forEach((q) => {
+    assertSoalPilihan(q, 'verifikasi.' + q.id);
+    assert.ok(q.explanation, q.id + '.explanation');
+  });
+  const jenis = new Set(V.soal.map((q) => q.cek.jenis));
+  ['baca', 'tulis', 'pangkat', 'akar', 'bacaPangkat'].forEach((j) =>
+    assert.ok(jenis.has(j), 'ada soal ' + j)
+  );
+  assert.ok(V.kesimpulanBaca.benar && V.kesimpulanBaca.salah);
+});
+
+test('generalisasi: kalimat menunjuk bank, setiap potongan benar dipakai sekali', () => {
+  const G = D.generalisasi;
+  const bank = ids(G.bank);
+  assert.equal(new Set(bank).size, bank.length);
+  assert.equal(new Set(G.bank.map((b) => b.teks)).size, bank.length);
+  const dipakai = G.kalimat.map((g) => g.correct);
+  assert.equal(new Set(dipakai).size, dipakai.length);
+  dipakai.forEach((c) => assert.ok(bank.includes(c), 'bank memuat ' + c));
+  assert.ok(bank.length > dipakai.length, 'ada pengecoh');
+  /* contoh bacaan pada kalimat 2 sesuai engine */
+  const c2 = G.bank.find((b) => b.id === 'c2').teks;
+  assert.equal(c2, '“' + E.bacaAkar(1, 5, 3, 4) + '”');
+});
+
+test('terapkan: 8 soal, kunci isian & pilihan dihitung ulang', () => {
+  const S = D.terapkan.soal;
+  assert.equal(S.length, 8);
+  assert.equal(new Set(ids(S)).size, 8);
+  S.forEach((q) => {
+    assert.ok(q.konteks && q.cerita && q.pertanyaan && q.explanation, q.id + ': teks lengkap');
+    assert.ok(q.hints && q.hints.length, q.id + '.hints');
+    if (q.type === 'input') {
+      assert.ok(q.cek, q.id + '.cek');
+      const v = E.nilaiPangkatPecahan(q.cek.a, q.cek.p, q.cek.q);
+      if (q.cek.jenis === 'nilai') {
+        assert.ok(v.eksak);
+        assert.equal(q.jawab, v.nilai, q.id + ': jawab');
+      } else if (q.cek.jenis === 'hampiran') {
+        assert.ok(!v.eksak, q.id + ': memang tidak eksak');
+        assert.ok(Math.abs(q.jawab - v.nilai) <= q.toleransi, q.id + ': hampiran');
+        assert.ok(q.toleransi < 0.01, q.id + ': toleransi dua desimal');
+      } else {
+        throw new Error(q.id + ': jenis cek isian tidak dikenal');
       }
-    });
+    } else {
+      assertSoalPilihan(q, 'terapkan.' + q.id);
+    }
   });
+  assert.ok(S.some((q) => q.type === 'input'));
+  assert.ok(S.some((q) => q.type !== 'input'));
 });
 
-test('misi 3: pernyataan Benar/Salah sesuai hasil operasi', () => {
-  const P = D.misiDiskusi.pernyataan;
-  assert.equal(P.length, 8);
-  assert.equal(new Set(ids(P)).size, P.length);
-  P.forEach((p) => {
-    const h = E.hasilOperasiAkar(p.cek.soal);
-    const benar = !!h && E.samaBentuk(h, p.cek.klaim);
-    assert.equal(p.correct, benar ? 'benar' : 'salah', p.id);
-    assert.ok(p.explanation, p.id + '.explanation');
-  });
-  const jml = P.filter((p) => p.correct === 'benar').length;
-  assert.ok(jml >= 3 && jml <= 5, 'benar/salah seimbang');
-});
-
-test('kuis: bank cukup untuk komposisi, kunci = hasil operasi, opsi unik', () => {
-  const K = D.kuis;
-  const total = Object.values(K.komposisi).reduce((a, b) => a + b, 0);
-  assert.equal(total, K.banyak);
-  Object.keys(K.komposisi).forEach((jenis) => {
-    const n = K.soal.filter((s) => s.jenis === jenis).length;
-    assert.ok(n > K.komposisi[jenis], jenis + ': bank lebih banyak dari yang diambil (acak)');
-  });
-  assert.equal(new Set(ids(K.soal)).size, K.soal.length);
-  K.soal.forEach((s) => {
-    assertOptions(s.options, 'kuis.' + s.id, 4);
-    assert.ok(ids(s.options).includes(s.correct), s.id + ': correct ada di opsi');
-    const benar = teksHasil(s.cek);
-    assert.equal(s.options.find((o) => o.id === s.correct).label, benar, s.id);
-    assert.ok(s.pertanyaan && s.cerita && s.explanation, s.id + ': teks lengkap');
-  });
-});
-
-test('refleksi & selesai', () => {
-  assert.ok(D.refleksi.pertanyaan.length >= 3);
+test('refleksi & selesai: opsi penilaian diri, pertanyaan, capaian', () => {
   assertOptions(D.refleksi.diriOpsi, 'refleksi.diriOpsi', 4);
-  assert.ok(D.selesai.capaian.length >= 4);
+  assert.ok(D.refleksi.pertanyaan.length >= 3);
+  assert.ok(D.selesai.capaian.length >= 3);
+  assert.equal(D.selesai.trio.length, 3);
 });

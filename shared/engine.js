@@ -123,7 +123,8 @@
        menyederhanakan bentuk akar, konversi ⁿ√(aᵐ) ⇄ a^(m/n), teks →
        HTML tanda akar & pangkat pecahan, diagnosa miskonsepsi, ubin
        faktor kembar, konverter akar–pangkat, lab persegi & kubus,
-       langkah isian akar sederhana, tabel bentuk pangkat ⇄ akar)
+       langkah isian akar sederhana, tabel bentuk pangkat ⇄ akar,
+       bacaan baku, diagnosa menulis dari bacaan, anatomi bentuk akar)
    46. Operasi hitung bentuk akar (bentuk (a + b√r)/d, penjumlahan &
        pengurangan suku sejenis, perkalian, pembagian, merasionalkan
        penyebut a/√b & sekawan, diagnosa miskonsepsi, kartu ahli
@@ -23073,7 +23074,8 @@ function bindCoopTeamSetup(root, id, st, cfg, save, rerender) {
 /* ============================================================
    45. BENTUK AKAR & PANGKAT PECAHAN
    Blok bangun untuk mengonversi bentuk akar ⇄ pangkat pecahan dan
-   menyederhanakan bentuk akar (Discovery Learning, fase-d/mpi-12.3):
+   menyederhanakan bentuk akar (Discovery Learning, awalnya untuk
+   fase-d/mpi-12.3; kini dipakai fase-d/mpi-12.4):
      • faktorPrima, akarBulat, sederhanakanAkar, faktorPangkatTerbesar,
        akarSederhana — aritmetika bilangan bulat positif;
      • akarKePangkat / pangkatKeAkar / eksponenSetara /
@@ -23094,8 +23096,13 @@ function bindCoopTeamSetup(root, id, st, cfg, save, rerender) {
        m → pembilang, n → penyebut;
      • lab persegi & kubus — luas/volume → sisi/rusuk (√ dan ∛);
      • langkah isian akar sederhana (koefisien & radikan) berdiagnosa;
-     • tabel ringkas bentuk pangkat ⇄ bentuk akar ⇄ nilai.
-   Memakai superskrip, formatNumber, formatDesimal, esc, shuffleArray,
+     • tabel ringkas bentuk pangkat ⇄ bentuk akar ⇄ nilai;
+     • membaca & menuliskan (fase-d/mpi-12.4): bacaPangkatPecahan,
+       diagnosaTulisAkar (+ pesan) untuk menulis notasi dari bacaan
+       memakai konverter mode hanyaAkar, dan anatomi bentuk akar
+       (ketuk tanda akar, indeks, radikan, pangkat radikan dalam
+       urutan acak).
+   Memakai terbilang, bacaPecahan, superskrip, formatNumber, formatDesimal, esc, shuffleArray,
    buildFeedbackBox, buildHintToggle, buildHintStack, showNotice.
    Gaya .akar* ada di shared/base.css.
    ============================================================ */
@@ -23209,9 +23216,12 @@ function formatPangkatPecahan(a, p, q) {
   return formatNumber(a) + '^(' + p + '/' + q + ')';
 }
 
-/* Bacaan bentuk akar untuk label aria: '6 akar kuadrat dari 2'. */
+/*
+ * Bacaan baku bentuk akar: '6 akar kuadrat dari 2',
+ * 'akar pangkat tiga dari 5 pangkat 2'. Indeks dibaca dengan kata.
+ */
 function bacaAkar(k, n, r, m) {
-  var nama = n === 2 ? 'akar kuadrat' : n === 3 ? 'akar pangkat tiga' : 'akar pangkat ' + n;
+  var nama = n === 2 ? 'akar kuadrat' : 'akar pangkat ' + terbilang(n);
   return (
     (k === 1 ? '' : formatNumber(k) + ' ') +
     nama +
@@ -23219,6 +23229,12 @@ function bacaAkar(k, n, r, m) {
     formatNumber(r) +
     (m && m > 1 ? ' pangkat ' + m : '')
   );
+}
+
+/* Bacaan baku pangkat pecahan: '5 pangkat dua per tiga'; q = 1 → '7 pangkat 3'. */
+function bacaPangkatPecahan(a, p, q) {
+  if (q === 1) return formatNumber(a) + ' pangkat ' + p;
+  return formatNumber(a) + ' pangkat ' + bacaPecahan(p, q);
 }
 
 var AKAR_SUP_BIASA = {
@@ -23335,6 +23351,36 @@ function pesanDiagnosaKonversi(kode) {
     lain: 'Belum tepat. Tentukan dulu indeks akar dan pangkat bilangan di dalam akar, lalu susun pecahan pangkatnya.',
   };
   return pesan[kode] || pesan.lain;
+}
+
+/*
+ * Diagnosa menuliskan bentuk akar dari bacaannya (mis. "akar pangkat
+ * tiga dari 5 pangkat 2" → ∛(5²)).
+ *   target, jawab: { a (radikan), m (pangkat radikan), n (indeks) }
+ * 'benar' | 'tertukar' (indeks & pangkat radikan tertukar) |
+ * 'radikan' | 'indeks' | 'pangkat'.
+ */
+function diagnosaTulisAkar(target, jawab) {
+  if (jawab.a === target.a && jawab.m === target.m && jawab.n === target.n) return 'benar';
+  if (jawab.a !== target.a) return 'radikan';
+  if (jawab.n === target.m && jawab.m === target.n) return 'tertukar';
+  if (jawab.n !== target.n) return 'indeks';
+  return 'pangkat';
+}
+
+function pesanDiagnosaTulisAkar(kode) {
+  var pesan = {
+    benar: 'Tepat! Indeks, radikan, dan pangkat radikannya sudah sesuai bacaan.',
+    tertukar:
+      'Indeks akar dan pangkat radikan tertukar. Kata setelah "akar pangkat …" adalah INDEKS (angka kecil di kiri atas tanda akar); kata "pangkat …" di akhir adalah pangkat bilangan DI DALAM akar.',
+    radikan:
+      'Bilangan di dalam akar (radikan) belum sesuai. Radikan adalah bilangan yang disebut setelah kata "dari".',
+    indeks:
+      'Indeks akarnya belum sesuai. "Akar kuadrat" berindeks 2, "akar pangkat tiga" berindeks 3, dan seterusnya.',
+    pangkat:
+      'Pangkat bilangan di dalam akar belum sesuai. Bila bacaannya tidak menyebut "pangkat …" di akhir, pangkat radikannya 1.',
+  };
+  return pesan[kode] || pesan.pangkat;
 }
 
 /*
@@ -23547,6 +23593,9 @@ var ROOT_CONVERTER_RENTANG = {
   n: { min: 2, max: 6, label: 'Indeks akar n' },
 };
 
+/* Label stepper pada mode hanyaAkar: istilah unsur bentuk akar. */
+var ROOT_CONVERTER_LABEL_AKAR = { a: 'Radikan a', m: 'Pangkat radikan m' };
+
 function makeRootConverterState(awal) {
   awal = awal || {};
   return { a: awal.a || 8, m: awal.m || 1, n: awal.n || 3 };
@@ -23568,15 +23617,24 @@ function teksNilaiAkar_(a, m, n) {
   return v.eksak ? '= ' + formatNumber(v.nilai) : '≈ ' + formatDesimal(v.nilai, 3);
 }
 
-function buildRootConverter(id, st) {
+/*
+ * opts.hanyaAkar → layar hanya menampilkan bentuk akar (tanpa bentuk
+ * pangkat pecahan, nilai, dan aturan), untuk latihan menuliskan bentuk
+ * akar dari bacaannya sebelum hubungan dengan pangkat pecahan ditemukan.
+ */
+function buildRootConverter(id, st, opts) {
+  opts = opts || {};
   var mHTML = '<span class="akar-kv__m">' + st.m + '</span>';
   var nHTML = '<span class="akar-kv__n">' + st.n + '</span>';
   var isi = st.a + (st.m > 1 ? '<sup>' + mHTML + '</sup>' : '');
-  var akarHTML = buildRadikalHTML(st.n, isi, nHTML, { besar: true });
+  /* mode hanyaAkar mengikuti konvensi penulisan: indeks 2 tidak ditulis */
+  var indeksHTML = opts.hanyaAkar && st.n === 2 ? '' : nHTML;
+  var akarHTML = buildRadikalHTML(st.n, isi, indeksHTML, { besar: true });
   var ppHTML = buildPangkatPecahanHTML(String(st.a), mHTML, nHTML);
   var kontrol = ['a', 'm', 'n']
     .map(function (key) {
       var r = ROOT_CONVERTER_RENTANG[key];
+      var label = (opts.hanyaAkar && ROOT_CONVERTER_LABEL_AKAR[key]) || r.label;
       return (
         '<div class="akar-kv__kontrol akar-kv__kontrol--' +
         key +
@@ -23586,7 +23644,7 @@ function buildRootConverter(id, st) {
         '-' +
         key +
         '-lbl">' +
-        esc(r.label) +
+        esc(label) +
         '</span>' +
         '<div class="akar-kv__stepper" role="group" aria-labelledby="' +
         id +
@@ -23598,7 +23656,7 @@ function buildRootConverter(id, st) {
         '" data-kv-key="' +
         key +
         '" data-kv-step="-1" aria-label="Kurangi ' +
-        esc(r.label) +
+        esc(label) +
         '"' +
         (st[key] <= r.min ? ' disabled' : '') +
         '>−</button>' +
@@ -23610,7 +23668,7 @@ function buildRootConverter(id, st) {
         '" data-kv-key="' +
         key +
         '" data-kv-step="1" aria-label="Tambah ' +
-        esc(r.label) +
+        esc(label) +
         '"' +
         (st[key] >= r.max ? ' disabled' : '') +
         '>+</button>' +
@@ -23628,21 +23686,24 @@ function buildRootConverter(id, st) {
     '</div>' +
     '<div class="akar-kv__layar" aria-live="polite" aria-label="' +
     esc(
-      bacaAkar(1, st.n, st.a, st.m) + ' sama dengan ' + st.a + ' pangkat ' + st.m + ' per ' + st.n
+      bacaAkar(1, st.n, st.a, st.m) +
+        (opts.hanyaAkar ? '' : ' sama dengan ' + bacaPangkatPecahan(st.a, st.m, st.n))
     ) +
     '">' +
     '<span class="akar-kv__bentuk">' +
     akarHTML +
     '</span>' +
-    '<span class="akar-kv__panah" aria-hidden="true">⇄</span>' +
-    '<span class="akar-kv__bentuk">' +
-    ppHTML +
-    '</span>' +
-    '<span class="akar-kv__hasil">' +
-    esc(teksNilaiAkar_(st.a, st.m, st.n)) +
-    '</span>' +
-    '</div>' +
-    '<p class="akar-kv__aturan">Pangkat di dalam akar <strong class="akar-kv__m">m</strong> → pembilang; indeks akar <strong class="akar-kv__n">n</strong> → penyebut.</p>' +
+    (opts.hanyaAkar
+      ? '</div>'
+      : '<span class="akar-kv__panah" aria-hidden="true">⇄</span>' +
+        '<span class="akar-kv__bentuk">' +
+        ppHTML +
+        '</span>' +
+        '<span class="akar-kv__hasil">' +
+        esc(teksNilaiAkar_(st.a, st.m, st.n)) +
+        '</span>' +
+        '</div>' +
+        '<p class="akar-kv__aturan">Pangkat di dalam akar <strong class="akar-kv__m">m</strong> → pembilang; indeks akar <strong class="akar-kv__n">n</strong> → penyebut.</p>') +
     '</div>'
   );
 }
@@ -23652,6 +23713,164 @@ function bindRootConverter(root, id, st, onChange) {
     btn.addEventListener('click', function () {
       ubahRootConverter(st, btn.dataset.kvKey, Number(btn.dataset.kvStep));
       onChange(btn.dataset.kvKey, Number(btn.dataset.kvStep));
+    });
+  });
+}
+
+/* ------------------------------------------------------------
+   Anatomi bentuk akar: murid mengetuk bagian yang diminta (tanda
+   akar, indeks, radikan, pangkat radikan) pada model ⁿ√(rᵐ) besar.
+   State: { urutan: [bagian teracak], idx, salah } — urutan diacak
+   sekali, idx menunjuk bagian yang sedang diminta.
+   ------------------------------------------------------------ */
+
+var ANATOMI_AKAR = {
+  tanda: {
+    label: 'Tanda akar',
+    ket: 'lambang √ dengan garis di atas bilangan; menandakan kita mencari akar.',
+  },
+  indeks: {
+    label: 'Indeks akar',
+    ket: 'angka kecil di kiri atas tanda akar. Indeks 2 (akar kuadrat) tidak ditulis.',
+  },
+  radikan: {
+    label: 'Radikan',
+    ket: 'bilangan di bawah tanda akar, yaitu bilangan yang diakarkan.',
+  },
+  pangkat: {
+    label: 'Pangkat radikan',
+    ket: 'pangkat dari bilangan di dalam akar. Pangkat 1 tidak ditulis.',
+  },
+};
+
+function makeAnatomiAkarState(bagian) {
+  return { urutan: shuffleArray(bagian.slice()), idx: 0, salah: 0 };
+}
+
+function ensureAnatomiAkarState(st, bagian) {
+  var sah =
+    st &&
+    Array.isArray(st.urutan) &&
+    st.urutan.length === bagian.length &&
+    bagian.every(function (b) {
+      return st.urutan.indexOf(b) !== -1;
+    });
+  if (!sah) return makeAnatomiAkarState(bagian);
+  if (typeof st.idx !== 'number' || st.idx < 0 || st.idx > bagian.length) st.idx = 0;
+  if (typeof st.salah !== 'number') st.salah = 0;
+  return st;
+}
+
+function anatomiAkarTarget(st) {
+  return st.idx < st.urutan.length ? st.urutan[st.idx] : null;
+}
+
+function anatomiAkarSelesai(st) {
+  return st.idx >= st.urutan.length;
+}
+
+/* 'benar' (maju ke bagian berikutnya) | 'salah' | 'selesai'. */
+function ketukAnatomiAkar(st, bagian) {
+  var target = anatomiAkarTarget(st);
+  if (!target) return 'selesai';
+  if (bagian === target) {
+    st.idx++;
+    return 'benar';
+  }
+  st.salah++;
+  return 'salah';
+}
+
+function anatomiBtn_(id, bagian, st, isiHTML, aria, kelas) {
+  var found = st.urutan.indexOf(bagian) !== -1 && st.urutan.indexOf(bagian) < st.idx;
+  return (
+    '<button type="button" class="akar-anatomi__btn akar-anatomi__btn--' +
+    bagian +
+    (kelas ? ' ' + kelas : '') +
+    (found ? ' is-found' : '') +
+    '" data-an-id="' +
+    id +
+    '" data-an-bagian="' +
+    bagian +
+    '" aria-label="' +
+    esc(aria) +
+    '"' +
+    (anatomiAkarSelesai(st) ? ' disabled' : '') +
+    '>' +
+    isiHTML +
+    '</button>'
+  );
+}
+
+/* contoh { n, r, m }; bagian: daftar bagian yang ditanyakan. */
+function buildAnatomiAkar(id, contoh, bagian, st) {
+  var m = contoh.m || 1;
+  var target = anatomiAkarTarget(st);
+  var svg =
+    '<svg class="akar__tanda akar__tanda--svg" viewBox="0 0 24 60" preserveAspectRatio="none" aria-hidden="true" focusable="false">' +
+    '<path d="M1 36 L7 32 L13 58 L23 1.5 L24 1.5" fill="none" stroke="currentColor" stroke-width="3" vector-effect="non-scaling-stroke" stroke-linejoin="round"/></svg>';
+  var model =
+    '<span class="akar akar--besar akar-anatomi__akar">' +
+    (contoh.n !== 2
+      ? anatomiBtn_(
+          id,
+          'indeks',
+          st,
+          String(contoh.n),
+          'angka kecil ' + contoh.n + ' di kiri atas',
+          'akar__indeks'
+        )
+      : '') +
+    anatomiBtn_(id, 'tanda', st, svg, 'lambang akar dan garis atasnya', 'akar-anatomi__tanda') +
+    '<span class="akar__isi">' +
+    anatomiBtn_(id, 'radikan', st, esc(formatNumber(contoh.r)), 'bilangan ' + contoh.r) +
+    (m > 1
+      ? '<sup>' +
+        anatomiBtn_(id, 'pangkat', st, String(m), 'angka kecil ' + m + ' di kanan atas') +
+        '</sup>'
+      : '') +
+    '</span>' +
+    '</span>';
+  var legend = bagian
+    .filter(function (b) {
+      return st.urutan.indexOf(b) < st.idx;
+    })
+    .map(function (b) {
+      return (
+        '<li class="akar-anatomi__legend-item akar-anatomi__legend-item--' +
+        b +
+        '"><strong>' +
+        esc(ANATOMI_AKAR[b].label) +
+        '</strong>: ' +
+        esc(ANATOMI_AKAR[b].ket) +
+        '</li>'
+      );
+    })
+    .join('');
+  return (
+    '<div class="akar-anatomi" data-an-wrap="' +
+    id +
+    '">' +
+    '<p class="akar-anatomi__tugas" aria-live="polite">' +
+    (target
+      ? 'Ketuk bagian: <strong>' + esc(ANATOMI_AKAR[target].label) + '</strong>'
+      : '✓ Semua bagian sudah kamu temukan.') +
+    '</p>' +
+    '<div class="akar-anatomi__model" aria-label="' +
+    esc(bacaAkar(1, contoh.n, contoh.r, m)) +
+    '">' +
+    model +
+    '</div>' +
+    (legend ? '<ul class="akar-anatomi__legend">' + legend + '</ul>' : '') +
+    '</div>'
+  );
+}
+
+function bindAnatomiAkar(root, id, st, onTap) {
+  root.querySelectorAll('button[data-an-id="' + id + '"]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var bagian = btn.dataset.anBagian;
+      onTap(ketukAnatomiAkar(st, bagian), bagian);
     });
   });
 }
