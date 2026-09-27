@@ -1,0 +1,500 @@
+/* =========================================================================
+   fase-d/mpi-12.6/styles.css
+   Membaca, Menuliskan & Membandingkan Notasi Ilmiah — Fase D
+   (Problem Based Learning)
+
+   Hanya memuat gaya yang KHAS modul ini: chip notasi ilmiah (.ilm), Lab
+   Geser Koma (.ilm-geser), Pita Orde 10ⁿ (.ilm-pita), kartu catatan data,
+   dan kartu perbandingan. Seluruh dasar design system (panel, tombol,
+   kotak umpan balik, pilihan ganda, pemilahan, pertanyaan penuntun,
+   perbandingan dugaan .dugaan-row, kartu ringkasan, urut-ketuk, papan
+   info .info-poster, kalimat banding .cmp-sentence, navigasi tahap,
+   modal) berasal dari shared/base.css.
+   ========================================================================= */
+
+/* -------------------------------------------------------------------------
+   Chip notasi ilmiah
+   ------------------------------------------------------------------------- */
+
+.ilm {
+  display: inline-flex;
+  align-items: center;
+  padding: 1px var(--space-2);
+  border-radius: var(--radius-md);
+  background: var(--color-blue-soft);
+  color: var(--color-blue-strong);
+  font-family: var(--font-mono);
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.ilm--panjang {
+  background: var(--color-orange-soft);
+  color: var(--color-orange-strong);
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+.ilm--big {
+  padding: var(--space-1) var(--space-3);
+  font-size: 1.35rem;
+}
+
+.ilm-kalimat {
+  flex-wrap: wrap;
+}
+
+.poster-sep {
+  font-weight: 700;
+  color: var(--color-ink-muted);
+}
+
+/* -------------------------------------------------------------------------
+   Tahap 1 — Orientasi: catatan data
+   ------------------------------------------------------------------------- */
+
+.catatan-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: var(--space-3);
+  margin-top: var(--space-4);
+}
+
+.catatan-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  min-width: 0;
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--color-border);
+  border-top: 5px solid var(--color-blue);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+}
+
+.catatan-card--mikro {
+  border-top-color: var(--color-purple);
+}
+
+.catatan-card--massa {
+  border-top-color: var(--color-orange);
+}
+
+.catatan-card__head {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.catatan-card__ikon {
+  font-size: 1.4rem;
+}
+
+.catatan-card__judul {
+  margin: 0;
+  font-size: 0.98rem;
+}
+
+.catatan-card__teks {
+  margin: 0;
+  font-size: 0.92rem;
+  color: var(--color-ink-muted);
+}
+
+.data-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.data-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1) var(--space-2);
+  min-height: 36px;
+}
+
+.data-row__nama {
+  flex: 1 1 8rem;
+  font-weight: 600;
+}
+
+.data-row__nilai {
+  min-width: 0;
+}
+
+.data-row__satuan {
+  font-size: 0.9rem;
+  color: var(--color-ink-muted);
+}
+
+/* -------------------------------------------------------------------------
+   Tahap 3 — Lab Geser Koma
+   ------------------------------------------------------------------------- */
+
+.ilm-geser {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.ilm-geser__pilih {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.ilm-geser__kartu {
+  min-height: 44px;
+  padding: var(--space-2) var(--space-3);
+  border: 2px solid var(--color-border);
+  border-radius: 999px;
+  background: var(--color-surface);
+  color: var(--color-ink);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.ilm-geser__kartu:hover {
+  border-color: var(--color-primary);
+}
+
+.ilm-geser__kartu.is-active {
+  border-color: var(--color-primary);
+  background: var(--color-primary-soft);
+  color: var(--color-primary-strong);
+}
+
+.ilm-geser__kartu.is-done {
+  border-color: var(--color-success);
+}
+
+.ilm-geser__asal {
+  margin: 0;
+}
+
+.ilm-geser__layar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: center;
+  padding: var(--space-4) var(--space-3);
+  border: 3px dashed var(--color-border-strong);
+  border-radius: var(--radius-md);
+  background: var(--color-bg);
+  font-family: var(--font-mono);
+  font-size: clamp(1.4rem, 5vw, 2.2rem);
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+.ilm-geser__layar.is-baku {
+  border-style: solid;
+  border-color: var(--color-success);
+  background: var(--color-success-soft);
+}
+
+.ilm-geser__mantisa {
+  display: inline-flex;
+  flex-wrap: wrap;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+}
+
+.ilm-geser__koma {
+  display: inline-block;
+  min-width: 0.6em;
+  border-radius: var(--radius-sm);
+  background: var(--color-warning-soft);
+  color: var(--color-error);
+  text-align: center;
+  transform: scale(1.35);
+}
+
+.ilm-geser__titik {
+  color: var(--color-ink-muted);
+  font-weight: 400;
+}
+
+.ilm-geser__kali {
+  white-space: pre;
+}
+
+.ilm-geser__pangkat {
+  font-size: 0.6em;
+  color: var(--color-primary-strong);
+}
+
+.ilm-geser__info,
+.ilm-geser__status {
+  margin: 0;
+  text-align: center;
+}
+
+.ilm-geser__status {
+  font-weight: 700;
+  color: var(--color-warning-strong);
+}
+
+.ilm-geser__status.is-baku {
+  color: var(--color-success-strong);
+}
+
+.ilm-geser__tombol {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--space-2);
+}
+
+.ilm-geser__tombol .btn {
+  flex: 1 1 12rem;
+  min-height: 48px;
+}
+
+/* -------------------------------------------------------------------------
+   Tahap 5 — Pita Orde 10ⁿ
+   ------------------------------------------------------------------------- */
+
+.ilm-pita {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.ilm-pita__pool {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.ilm-pita__kartu {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1);
+  min-height: 44px;
+  padding: var(--space-2) var(--space-3);
+  border: 2px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  color: var(--color-ink);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.ilm-pita__kartu.is-selected {
+  border-color: var(--color-primary);
+  background: var(--color-primary-soft);
+  box-shadow: 0 0 0 3px var(--color-primary-soft);
+}
+
+.ilm-pita__nilai {
+  font-family: var(--font-mono);
+}
+
+.ilm-pita__tangga {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(96px, 1fr));
+  gap: var(--space-2);
+}
+
+.ilm-pita__ujung {
+  display: none;
+}
+
+.ilm-pita__rung {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--space-1);
+  min-height: 96px;
+  padding: var(--space-2);
+  border: 2px solid var(--color-blue);
+  border-radius: var(--radius-md);
+  background: var(--color-blue-soft);
+  color: var(--color-ink);
+  font: inherit;
+  cursor: pointer;
+}
+
+.ilm-pita__rung:hover {
+  border-color: var(--color-primary-strong);
+}
+
+.ilm-pita__label {
+  font-family: var(--font-mono);
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--color-blue-strong);
+}
+
+.ilm-pita__isi {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.ilm-pita__chip {
+  padding: 2px var(--space-1);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+  font-size: 0.8rem;
+  line-height: 1.3;
+  overflow-wrap: anywhere;
+}
+
+/* -------------------------------------------------------------------------
+   Tahap 5 — kartu perbandingan
+   ------------------------------------------------------------------------- */
+
+.banding-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.banding-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  min-width: 0;
+  padding: var(--space-4);
+  border: 2px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+}
+
+.banding-card.is-done {
+  border-color: var(--color-success);
+}
+
+.banding-card .dl-caption,
+.banding-card .quiz-item,
+.banding-card .cmp-sentence {
+  margin: 0;
+}
+
+.blank-slot {
+  display: inline-block;
+  min-width: 4.5em;
+  border-bottom: 2px dashed var(--color-purple);
+  text-align: center;
+  color: var(--color-purple-strong);
+}
+
+/* -------------------------------------------------------------------------
+   Temuan, hipotesis & papan info
+   ------------------------------------------------------------------------- */
+
+.temuan-list {
+  margin: 0;
+  padding-left: var(--space-5);
+  line-height: 1.7;
+}
+
+.hipotesis-box {
+  margin-top: var(--space-4);
+  padding: var(--space-3) var(--space-4);
+  border-left: 4px solid var(--color-purple);
+  border-radius: var(--radius-md);
+  background: var(--color-purple-soft);
+}
+
+.hipotesis-box__label {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--color-purple-strong);
+}
+
+.hipotesis-box p {
+  margin: var(--space-1) 0 var(--space-2);
+  font-style: italic;
+}
+
+#posterWrap {
+  margin: var(--space-4) 0;
+}
+
+#posterWrap .ilm {
+  white-space: normal;
+}
+
+.tap-order__card .ilm {
+  font-size: 0.95em;
+}
+
+.sort-item__text .ilm--big {
+  font-size: 1.2rem;
+}
+
+/* -------------------------------------------------------------------------
+   Tahap Uji Terap & Selesai
+   ------------------------------------------------------------------------- */
+
+.dl-exercise .dl-input-row .input-text {
+  flex: 1 1 8rem;
+  max-width: 12rem;
+}
+
+.contoh-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: var(--space-3);
+  margin: var(--space-4) 0;
+}
+
+.contoh-grid .formula-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  min-width: 0;
+}
+
+.contoh-grid .cmp-sentence {
+  margin: var(--space-2) 0 0;
+}
+
+.contoh-grid .ilm--big {
+  font-size: 1rem;
+}
+
+/* -------------------------------------------------------------------------
+   Responsif
+   ------------------------------------------------------------------------- */
+
+@media (min-width: 720px) {
+  .ilm-pita__tangga {
+    grid-template-columns: auto repeat(7, minmax(0, 1fr)) auto;
+    align-items: stretch;
+  }
+
+  .ilm-pita__ujung {
+    display: flex;
+    align-items: center;
+    font-size: 0.78rem;
+    color: var(--color-ink-muted);
+    writing-mode: vertical-rl;
+    transform: rotate(180deg);
+  }
+}
+
+@media (max-width: 600px) {
+  .banding-card {
+    padding: var(--space-3);
+  }
+
+  .ilm--big {
+    font-size: 1.1rem;
+  }
+
+  .cmp-sentence {
+    flex-wrap: wrap;
+  }
+}

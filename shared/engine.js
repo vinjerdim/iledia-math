@@ -147,6 +147,11 @@
        ekstrem, basis bersama, strategi basis sama/pangkat sama/samakan
        basis/hitung nilai, alasan, diagnosa miskonsepsi, lab timbang
        pangkat, pilihan lambang berdiagnosa)
+   53. Notasi ilmiah: membaca, menuliskan & membandingkan (mantisa
+       string eksak, bentuk baku, konversi bentuk panjang ⇄ notasi
+       ilmiah, cara baca, perbandingan & urutan, selisih orde, strategi
+       bakukan/pangkat beda/pangkat sama, diagnosa miskonsepsi, opsi
+       berdiagnosa, lab geser koma, pita orde 10ⁿ, pilihan lambang)
    ============================================================ */
 
 /* ============================================================
@@ -29541,6 +29546,1028 @@ function bindLabTimbanganAkar(root, id, st, save, rerender) {
         parseInt(btn.dataset.labLangkah, 10)
       );
       catatLabTimbanganAkar(st);
+      save();
+      rerender();
+    });
+  });
+}
+
+/* ============================================================
+   53. NOTASI ILMIAH — MEMBACA, MENULISKAN & MEMBANDINGKAN
+   Dipakai fase-d/mpi-12.6 (Problem Based Learning).
+   Bilangan ditulis { m, e } = m × 10ᵉ dengan mantisa m berupa STRING
+   berkoma ('4,5', '12,7', '3') agar semua konversi & perbandingan
+   EKSAK — tanpa galat float, juga untuk 10²⁴ atau 10⁻³¹. Bentuk baku:
+   1 ≤ m < 10. Item kartu boleh ditulis { id, x: { m, e } }.
+   Kanonik internal: angka penting `sig` (tanpa nol depan/belakang) dan
+   pangkat baku E, sehingga nilai = sig₁,sig₂sig₃… × 10ᴱ.
+   Tiga strategi membandingkan:
+     bakukan     — ubah dulu ke bentuk baku (12,7 × 10⁶ = 1,27 × 10⁷)
+     pangkatBeda — pangkat 10 berbeda → pangkat lebih besar, nilai
+                   lebih besar (−27 > −31, jadi 10⁻²⁷ > 10⁻³¹)
+     pangkatSama — pangkat sama → bandingkan mantisanya
+   Diagnosa miskonsepsi: hanya membandingkan mantisa, pangkat negatif
+   dibaca seperti positif (10⁻⁹ > 10⁻⁷ "karena 9 > 7"), lupa
+   membakukan, menghitung banyak nol alih-alih banyak geseran koma,
+   arah geser koma terbalik.
+   Memakai superskrip (seksi 27), bacaDesimalKoma (seksi 19),
+   terbilang & bacaBilanganBulat (seksi 9), formatNumber,
+   compareSymbolId, compareSymbolText, COMPARE_SYMBOLS, KATA_SIMBOL,
+   KATA_BANDING_PECAHAN, buildChoiceGroup, buildFeedbackBox, esc.
+   Gaya .ilm-* ada di styles.css modul yang memakainya.
+   ============================================================ */
+
+/* Bilangan { m, e }: mantisa angka/string → string berkoma. */
+function ilmiah(m, e) {
+  return { m: String(m).replace('.', ','), e: e };
+}
+
+/* { m, e } dari { x } (item kartu) atau langsung { m, e }. */
+function ilmiahDari_(v) {
+  return v && v.x ? v.x : v;
+}
+
+/* Kanonik: { sig, E } dengan nilai = sig[0],sig[1..] × 10ᴱ; sig '' = nol. */
+function kanonIlmiah_(v) {
+  var x = ilmiahDari_(v);
+  var s = String(x.m).replace('.', ',');
+  var bagian = s.split(',');
+  var bulat = bagian[0];
+  var digits = bulat + (bagian[1] || '');
+  var i = 0;
+  while (i < digits.length && digits.charAt(i) === '0') i++;
+  if (i === digits.length) return { sig: '', E: 0 };
+  return {
+    sig: digits.slice(i).replace(/0+$/, ''),
+    E: x.e + bulat.length - 1 - i,
+  };
+}
+
+/* Mantisa baku dari angka penting: '127' → '1,27', '3' → '3'. */
+function mantisaDariSig_(sig) {
+  return sig.charAt(0) + (sig.length > 1 ? ',' + sig.slice(1) : '');
+}
+
+/* Pemisah ribuan untuk string angka bulat sepanjang apa pun. */
+function kelompokRibuan_(str) {
+  str = str.replace(/^0+(?=\d)/, '');
+  var parts = [];
+  while (str.length > 3) {
+    parts.unshift(str.slice(str.length - 3));
+    str = str.slice(0, str.length - 3);
+  }
+  if (str) parts.unshift(str);
+  return parts.join('.');
+}
+
+/* Pangkat pada bentuk baku, mis. 12,7 × 10⁶ → 7. */
+function pangkatBakuIlmiah(v) {
+  return kanonIlmiah_(v).E;
+}
+
+/* Bentuk baku: 1 ≤ mantisa < 10. */
+function isBakuIlmiah(v) {
+  var x = ilmiahDari_(v);
+  var bulat = String(x.m).replace('.', ',').split(',')[0];
+  return /^[1-9]$/.test(bulat);
+}
+
+/* Bentuk baku { m, e } yang senilai. */
+function bakukanIlmiah(v) {
+  var k = kanonIlmiah_(v);
+  if (!k.sig) return { m: '0', e: 0 };
+  return { m: mantisaDariSig_(k.sig), e: k.E };
+}
+
+/* Bentuk panjang '300.000.000' / '0,000008' → notasi ilmiah baku. */
+function desimalKeIlmiah(str) {
+  var s = String(str).replace(/\s/g, '').replace(/\./g, '');
+  return bakukanIlmiah({ m: s, e: 0 });
+}
+
+/* Notasi ilmiah → bentuk panjang berpemisah ribuan & berkoma. */
+function ilmiahKeDesimal(v) {
+  var k = kanonIlmiah_(v);
+  if (!k.sig) return '0';
+  var bulat;
+  var pecahan = '';
+  if (k.E >= 0) {
+    if (k.sig.length <= k.E + 1) {
+      bulat = k.sig + new Array(k.E + 2 - k.sig.length).join('0');
+    } else {
+      bulat = k.sig.slice(0, k.E + 1);
+      pecahan = k.sig.slice(k.E + 1);
+    }
+  } else {
+    bulat = '0';
+    pecahan = new Array(-k.E).join('0') + k.sig;
+  }
+  return kelompokRibuan_(bulat) + (pecahan ? ',' + pecahan : '');
+}
+
+/* '4,5 × 10⁻⁵' (mantisa ditulis apa adanya). */
+function teksIlmiah(v) {
+  var x = ilmiahDari_(v);
+  return x.m + ' × 10' + superskrip(x.e);
+}
+
+/* 'empat koma lima kali sepuluh pangkat negatif lima'. */
+function bacaIlmiah(v) {
+  var x = ilmiahDari_(v);
+  return bacaDesimalKoma(x.m) + ' kali sepuluh pangkat ' + bacaBilanganBulat(x.e);
+}
+
+/* −1 / 0 / 1, eksak. */
+function bandingIlmiah(p, q) {
+  var a = kanonIlmiah_(p);
+  var b = kanonIlmiah_(q);
+  if (!a.sig || !b.sig) {
+    if (!a.sig && !b.sig) return 0;
+    return a.sig ? 1 : -1;
+  }
+  if (a.E !== b.E) return a.E < b.E ? -1 : 1;
+  var n = Math.max(a.sig.length, b.sig.length);
+  var sa = a.sig + new Array(n - a.sig.length + 1).join('0');
+  var sb = b.sig + new Array(n - b.sig.length + 1).join('0');
+  return sa < sb ? -1 : sa > sb ? 1 : 0;
+}
+
+function simbolBandingIlmiah(p, q) {
+  var c = bandingIlmiah(p, q);
+  return c < 0 ? 'lt' : c > 0 ? 'gt' : 'eq';
+}
+
+/* '9,11 × 10⁻³¹ < 1,67 × 10⁻²⁷'. */
+function kalimatBandingIlmiah(p, q) {
+  return teksIlmiah(p) + ' ' + compareSymbolText(simbolBandingIlmiah(p, q)) + ' ' + teksIlmiah(q);
+}
+
+/* Id item terurut naik (default) atau 'turun'. */
+function urutanIdIlmiah(items, arah) {
+  var tanda = arah === 'turun' ? -1 : 1;
+  return items
+    .map(function (it, i) {
+      return { id: it.id, x: ilmiahDari_(it), i: i };
+    })
+    .sort(function (a, b) {
+      return tanda * bandingIlmiah(a.x, b.x) || a.i - b.i;
+    })
+    .map(function (it) {
+      return it.id;
+    });
+}
+
+/* Id item 'terkecil' / 'terbesar'. */
+function ekstremIlmiah(items, cari) {
+  var urut = urutanIdIlmiah(items);
+  return cari === 'terbesar' ? urut[urut.length - 1] : urut[0];
+}
+
+/* Selisih pangkat baku p terhadap q (≈ berapa kali lipat dalam 10ⁿ). */
+function selisihOrdeIlmiah(p, q) {
+  return pangkatBakuIlmiah(p) - pangkatBakuIlmiah(q);
+}
+
+/* ---------- Strategi & penjelasan ---------- */
+
+var STRATEGI_BANDING_ILMIAH = [
+  { id: 'bakukan', nama: 'Bakukan dulu', ikon: '🔧' },
+  { id: 'pangkatBeda', nama: 'Bandingkan pangkat 10', ikon: '🔟' },
+  { id: 'pangkatSama', nama: 'Pangkat sama → bandingkan mantisa', ikon: '⚖️' },
+];
+
+function strategiBandingIlmiah(p, q) {
+  if (!isBakuIlmiah(p) || !isBakuIlmiah(q)) return 'bakukan';
+  return ilmiahDari_(p).e !== ilmiahDari_(q).e ? 'pangkatBeda' : 'pangkatSama';
+}
+
+function fmtPangkat_(e) {
+  return formatNumber(e, '−');
+}
+
+/* Penjelasan untuk dua bilangan yang SUDAH baku. */
+function penjelasanBaku_(bp, bq) {
+  if (bp.e !== bq.e) {
+    return (
+      'Pangkat 10-nya berbeda: ' +
+      fmtPangkat_(bp.e) +
+      ' ' +
+      compareSymbolText(compareSymbolId(bp.e, bq.e)) +
+      ' ' +
+      fmtPangkat_(bq.e) +
+      ', jadi ' +
+      kalimatBandingIlmiah(bp, bq) +
+      '. Mantisanya tidak perlu dibandingkan.'
+    );
+  }
+  var sm = simbolBandingIlmiah({ m: bp.m, e: 0 }, { m: bq.m, e: 0 });
+  return (
+    'Pangkat 10-nya sama (10' +
+    superskrip(bp.e) +
+    '), jadi bandingkan mantisanya: ' +
+    bp.m +
+    ' ' +
+    compareSymbolText(sm) +
+    ' ' +
+    bq.m +
+    '.'
+  );
+}
+
+function penjelasanBandingIlmiah(p, q) {
+  var xp = ilmiahDari_(p);
+  var xq = ilmiahDari_(q);
+  var bp = bakukanIlmiah(xp);
+  var bq = bakukanIlmiah(xq);
+  if (strategiBandingIlmiah(xp, xq) !== 'bakukan') return penjelasanBaku_(bp, bq);
+  var langkah = [];
+  if (!isBakuIlmiah(xp)) langkah.push(teksIlmiah(xp) + ' = ' + teksIlmiah(bp));
+  if (!isBakuIlmiah(xq)) langkah.push(teksIlmiah(xq) + ' = ' + teksIlmiah(bq));
+  return 'Bakukan dulu: ' + langkah.join('; ') + '. ' + penjelasanBaku_(bp, bq);
+}
+
+/* ---------- Diagnosa miskonsepsi ---------- */
+
+function angkaMantisa_(m) {
+  return parseFloat(String(m).replace(/\./g, '').replace(',', '.'));
+}
+
+/*
+ * Kode miskonsepsi untuk lambang salah `sym` pada p ☐ q (null bila benar):
+ *   samaBentuk     memilih '=' padahal nilainya berbeda
+ *   belumBaku      membandingkan pangkat/mantisa bentuk yang belum baku
+ *   mantisaSaja    hanya membandingkan mantisa
+ *   pangkatNegatif 10⁻⁹ dianggap > 10⁻⁷ karena 9 > 7
+ *   terbalik       selain itu
+ */
+function diagnosaSimbolIlmiah(p, q, sym) {
+  var xp = ilmiahDari_(p);
+  var xq = ilmiahDari_(q);
+  var benar = simbolBandingIlmiah(xp, xq);
+  if (sym === benar) return null;
+  if (sym === 'eq') return 'samaBentuk';
+  if (!isBakuIlmiah(xp) || !isBakuIlmiah(xq)) {
+    var mentah =
+      xp.e !== xq.e
+        ? compareSymbolId(xp.e, xq.e)
+        : compareSymbolId(angkaMantisa_(xp.m), angkaMantisa_(xq.m));
+    if (sym === mentah) return 'belumBaku';
+  }
+  var bp = bakukanIlmiah(xp);
+  var bq = bakukanIlmiah(xq);
+  if (sym === compareSymbolId(angkaMantisa_(bp.m), angkaMantisa_(bq.m))) return 'mantisaSaja';
+  if (bp.e < 0 && bq.e < 0 && bp.e !== bq.e && sym === compareSymbolId(-bp.e, -bq.e)) {
+    return 'pangkatNegatif';
+  }
+  return 'terbalik';
+}
+
+/* Umpan balik teks (tidak membocorkan lambang benar kecuali 'benar'). */
+function pesanBandingIlmiah(kode, p, q) {
+  if (kode === 'benar') {
+    return 'Tepat! ' + kalimatBandingIlmiah(p, q) + '. ' + penjelasanBandingIlmiah(p, q);
+  }
+  if (kode === 'samaBentuk') {
+    return 'Kedua bilangan itu nilainya berbeda. Bakukan keduanya, lalu bandingkan pangkat 10-nya lebih dulu. Coba lagi.';
+  }
+  if (kode === 'belumBaku') {
+    return 'Hati-hati: ada bilangan yang belum baku (mantisanya tidak di antara 1 dan 10), sehingga pangkatnya belum bisa langsung dibandingkan. Bakukan dulu, misalnya 228 × 10⁹ = 2,28 × 10¹¹, lalu coba lagi.';
+  }
+  if (kode === 'mantisaSaja') {
+    return 'Sepertinya kamu hanya membandingkan mantisanya. Pada bentuk baku, pangkat 10 yang menentukan lebih dulu: selisih satu pangkat berarti 10 kali lipat! Bandingkan pangkatnya dulu, lalu coba lagi.';
+  }
+  if (kode === 'pangkatNegatif') {
+    return 'Ingat garis bilangan: −9 < −7. Jadi 10⁻⁹ = 0,000000001 justru lebih KECIL daripada 10⁻⁷ = 0,0000001. Pangkat negatif yang "angkanya lebih besar" menghasilkan bilangan yang lebih kecil. Coba lagi.';
+  }
+  return (
+    'Belum tepat. Bakukan kedua bilangan, bandingkan pangkat 10-nya, lalu (bila pangkatnya sama) bandingkan mantisanya: ' +
+    teksIlmiah(p) +
+    ' dan ' +
+    teksIlmiah(q) +
+    '.'
+  );
+}
+
+/* ---------- Opsi pilihan berdiagnosa (urutan wajar; diacak di app) ---------- */
+
+/* Menambahkan opsi bila labelnya belum ada (label harus unik). */
+function tambahOpsiUnik_(list, id, label, umpan) {
+  var ada = list.some(function (o) {
+    return o.label === label;
+  });
+  if (!ada) list.push({ id: id, label: label, umpan: umpan });
+}
+
+/* Bentuk panjang → notasi ilmiah. Opsi 'baku' selalu pertama. */
+function opsiTulisIlmiah(str) {
+  var b = desimalKeIlmiah(str);
+  var k = kanonIlmiah_(b);
+  var list = [
+    {
+      id: 'baku',
+      label: teksIlmiah(b),
+      umpan:
+        'Tepat! Koma digeser ' +
+        Math.abs(b.e) +
+        ' kali ke ' +
+        (b.e >= 0 ? 'kiri' : 'kanan') +
+        ' sampai mantisanya di antara 1 dan 10, jadi pangkatnya ' +
+        fmtPangkat_(b.e) +
+        '.',
+    },
+  ];
+  if (b.e !== 0) {
+    tambahOpsiUnik_(
+      list,
+      'arah',
+      teksIlmiah({ m: b.m, e: -b.e }),
+      b.e > 0
+        ? 'Tanda pangkatnya terbalik. Bilangan yang lebih dari 10 ditulis dengan pangkat POSITIF — koma digeser ke kiri.'
+        : 'Tanda pangkatnya terbalik. Bilangan antara 0 dan 1 ditulis dengan pangkat NEGATIF — koma digeser ke kanan.'
+    );
+  }
+  var s = String(str).replace(/\s/g, '').replace(/\./g, '');
+  var nol =
+    b.e > 0
+      ? (s.split(',')[0].match(/0+$/) || [''])[0].length
+      : -((s.split(',')[1] || '').match(/^0*/) || [''])[0].length;
+  if (nol === b.e) nol = b.e - 1;
+  tambahOpsiUnik_(
+    list,
+    'nol',
+    teksIlmiah({ m: b.m, e: nol }),
+    'Kamu menghitung banyak angka nol, padahal yang dihitung adalah banyak GESERAN koma sampai mantisanya di antara 1 dan 10.'
+  );
+  var mTakBaku = k.sig.length > 1 ? k.sig : k.sig + '0';
+  tambahOpsiUnik_(
+    list,
+    'takBaku',
+    teksIlmiah({ m: mTakBaku, e: k.E - (mTakBaku.length - 1) }),
+    'Nilainya memang sama, tetapi mantisa ' +
+      mTakBaku +
+      ' lebih dari 10, jadi belum bentuk baku. Geser komanya lagi.'
+  );
+  return list;
+}
+
+/* Bentuk tidak baku → baku. Opsi 'baku' selalu pertama. */
+function opsiBakukanIlmiah(v) {
+  var x = ilmiahDari_(v);
+  var b = bakukanIlmiah(x);
+  var d = b.e - x.e;
+  var list = [
+    {
+      id: 'baku',
+      label: teksIlmiah(b),
+      umpan:
+        'Tepat! Mantisa ' +
+        x.m +
+        ' menjadi ' +
+        b.m +
+        ' (koma digeser ' +
+        Math.abs(d) +
+        ' kali ke ' +
+        (d > 0 ? 'kiri' : 'kanan') +
+        '), jadi pangkatnya ' +
+        (d > 0 ? 'bertambah ' : 'berkurang ') +
+        Math.abs(d) +
+        ': ' +
+        fmtPangkat_(x.e) +
+        (d > 0 ? ' + ' : ' − ') +
+        Math.abs(d) +
+        ' = ' +
+        fmtPangkat_(b.e) +
+        '.',
+    },
+  ];
+  tambahOpsiUnik_(
+    list,
+    'arahSalah',
+    teksIlmiah({ m: b.m, e: x.e - d }),
+    'Arah perubahan pangkatnya terbalik. Jika mantisa dibuat lebih KECIL, pangkat 10 harus BERTAMBAH agar nilainya tetap; jika mantisa dibuat lebih besar, pangkatnya berkurang.'
+  );
+  tambahOpsiUnik_(
+    list,
+    'pangkatTetap',
+    teksIlmiah({ m: b.m, e: x.e }),
+    'Mantisanya sudah tepat, tetapi pangkatnya lupa disesuaikan. Menggeser koma mengubah nilai, jadi pangkat 10 harus ikut berubah.'
+  );
+  tambahOpsiUnik_(
+    list,
+    'tetap',
+    teksIlmiah(x),
+    'Ini bentuk semula. Mantisa ' + x.m + ' tidak di antara 1 dan 10, jadi belum baku.'
+  );
+  return list;
+}
+
+/* Notasi ilmiah → bentuk panjang. Opsi 'baku' selalu pertama. */
+function opsiPanjangIlmiah(v) {
+  var b = bakukanIlmiah(v);
+  var k = kanonIlmiah_(b);
+  var list = [
+    {
+      id: 'baku',
+      label: ilmiahKeDesimal(b),
+      umpan:
+        'Tepat! Pangkat ' +
+        fmtPangkat_(b.e) +
+        ' berarti koma digeser ' +
+        Math.abs(b.e) +
+        ' kali ke ' +
+        (b.e >= 0 ? 'kanan' : 'kiri') +
+        '.',
+    },
+  ];
+  if (b.e !== 0) {
+    tambahOpsiUnik_(
+      list,
+      'arah',
+      ilmiahKeDesimal({ m: b.m, e: -b.e }),
+      b.e > 0
+        ? 'Arah geser koma terbalik. Pangkat positif membuat bilangan BESAR — koma digeser ke kanan.'
+        : 'Arah geser koma terbalik. Pangkat negatif membuat bilangan KECIL (di antara 0 dan 1) — koma digeser ke kiri.'
+    );
+  }
+  var nolDitambah =
+    b.e > 0
+      ? kelompokRibuan_(k.sig + new Array(b.e + 1).join('0'))
+      : '0,' + new Array(-b.e + 1).join('0') + k.sig;
+  tambahOpsiUnik_(
+    list,
+    'nolDitambah',
+    nolDitambah,
+    'Pangkat bukan banyaknya nol yang ditulis setelah mantisa. Pangkat adalah banyak GESERAN koma, dan angka-angka mantisa ikut dihitung.'
+  );
+  tambahOpsiUnik_(
+    list,
+    'kurangSatu',
+    ilmiahKeDesimal({ m: b.m, e: b.e > 0 ? b.e - 1 : b.e + 1 }),
+    'Banyak geseran kurang satu. Hitung ulang: pangkat ' +
+      fmtPangkat_(b.e) +
+      ' berarti tepat ' +
+      Math.abs(b.e) +
+      ' geseran.'
+  );
+  return list;
+}
+
+/* Cara baca berdiagnosa. Opsi 'baku' selalu pertama. */
+function opsiBacaIlmiah(v) {
+  var x = ilmiahDari_(v);
+  var mantisa = bacaDesimalKoma(x.m);
+  var list = [
+    {
+      id: 'baku',
+      label: bacaIlmiah(x),
+      umpan: 'Tepat! Mantisa dibaca dulu, lalu "kali sepuluh pangkat …" beserta tanda pangkatnya.',
+    },
+  ];
+  if (x.e !== 0) {
+    tambahOpsiUnik_(
+      list,
+      'tanda',
+      mantisa +
+        ' kali sepuluh pangkat ' +
+        (x.e < 0 ? terbilang(-x.e) : 'negatif ' + terbilang(x.e)),
+      x.e < 0
+        ? 'Tanda negatif pada pangkat ikut dibaca: "pangkat negatif …". Tanpa kata negatif, nilainya menjadi sangat besar.'
+        : 'Pangkatnya positif, jadi tidak ada kata "negatif".'
+    );
+  }
+  tambahOpsiUnik_(
+    list,
+    'tanpaSepuluh',
+    mantisa + ' pangkat ' + bacaBilanganBulat(x.e),
+    'Yang dipangkatkan adalah 10, bukan mantisanya. Bacaan harus memuat "kali sepuluh pangkat …".'
+  );
+  if (String(x.m).indexOf(',') !== -1) {
+    tambahOpsiUnik_(
+      list,
+      'koma',
+      terbilang(parseInt(String(x.m).replace(',', ''), 10)) +
+        ' kali sepuluh pangkat ' +
+        bacaBilanganBulat(x.e),
+      'Koma pada mantisa ikut dibaca: "… koma …". Tanpa koma, mantisanya menjadi bilangan lain.'
+    );
+  }
+  return list;
+}
+
+/* ---------- Makna konteks ---------- */
+
+function idMaknaBandingIlmiah(p, q) {
+  var c = bandingIlmiah(p, q);
+  return c < 0 ? 'kecil' : c > 0 ? 'besar' : 'sama';
+}
+
+function kataBandingIlmiah_(tema) {
+  return KATA_BANDING_PECAHAN[tema] || KATA_BANDING_PECAHAN.banyak;
+}
+
+/* Opsi { id, label } kecil/besar/sama untuk diacak (ensureShuffledOrder). */
+function opsiMaknaBandingIlmiah(tema) {
+  var K = kataBandingIlmiah_(tema);
+  return [
+    { id: 'kecil', label: K.kecil },
+    { id: 'besar', label: K.besar },
+    { id: 'sama', label: K.sama },
+  ];
+}
+
+function maknaBandingIlmiah(p, q, tema) {
+  return kataBandingIlmiah_(tema)[idMaknaBandingIlmiah(p, q)];
+}
+
+/* ---------- Lab Geser Koma ---------- */
+
+/*
+ * Bentuk m × 10ᵏ yang senilai dengan x setelah koma digeser k kali ke
+ * kiri (k negatif = ke kanan). Mantisa berpemisah ribuan — hanya untuk
+ * TAMPILAN, jangan dibandingkan lagi.
+ */
+function bentukGeserKoma(v, k) {
+  var b = bakukanIlmiah(v);
+  return { m: ilmiahKeDesimal({ m: b.m, e: b.e - k }), e: k };
+}
+
+/* Rentang geseran yang boleh: 2 langkah melewati bentuk baku & bentuk panjang. */
+function batasGeserKoma(v) {
+  var E = pangkatBakuIlmiah(v);
+  return { min: Math.min(0, E) - 2, max: Math.max(0, E) + 2 };
+}
+
+function makeLabGeserKomaState(items) {
+  var geser = {};
+  items.forEach(function (it) {
+    geser[it.id] = 0;
+  });
+  return { aktif: items.length ? items[0].id : null, geser: geser, baku: [] };
+}
+
+/* Memastikan state[key] lab masih cocok dengan `items`. */
+function ensureLabGeserKomaState(state, key, items) {
+  var st = state[key];
+  var cocok =
+    st &&
+    typeof st === 'object' &&
+    st.geser &&
+    Array.isArray(st.baku) &&
+    items.every(function (it) {
+      return typeof st.geser[it.id] === 'number';
+    }) &&
+    items.some(function (it) {
+      return it.id === st.aktif;
+    });
+  if (!cocok) state[key] = makeLabGeserKomaState(items);
+  return state[key];
+}
+
+function itemById_(items, id) {
+  for (var i = 0; i < items.length; i++) {
+    if (items[i].id === id) return items[i];
+  }
+  return null;
+}
+
+/* Geser koma item aktif: langkah +1 = ke kiri, −1 = ke kanan. */
+function geserLabGeserKoma(st, items, langkah) {
+  var it = itemById_(items, st.aktif);
+  if (!it) return st;
+  var B = batasGeserKoma(it.x);
+  var k = st.geser[it.id] + langkah;
+  if (k < B.min || k > B.max) return st;
+  st.geser[it.id] = k;
+  if (k === pangkatBakuIlmiah(it.x) && st.baku.indexOf(it.id) === -1) st.baku.push(it.id);
+  return st;
+}
+
+function labGeserKomaSelesai(st, items) {
+  return items.every(function (it) {
+    return st.baku.indexOf(it.id) !== -1;
+  });
+}
+
+/* Mantisa per karakter; koma disorot. */
+function mantisaGeserHTML_(m) {
+  return String(m)
+    .split('')
+    .map(function (ch) {
+      if (ch === ',') return '<span class="ilm-geser__koma">,</span>';
+      if (ch === '.') return '<span class="ilm-geser__titik">.</span>';
+      return '<span class="ilm-geser__digit">' + esc(ch) + '</span>';
+    })
+    .join('');
+}
+
+/*
+ * Lab: pilih bilangan (kartu), geser koma ke kiri/kanan, amati mantisa,
+ * pangkat 10, dan status baku.
+ *   items  [{ id, nama, satuan, ikon, x }]
+ */
+function buildLabGeserKoma(id, items, st) {
+  var it = itemById_(items, st.aktif) || items[0];
+  var k = st.geser[it.id] || 0;
+  var bentuk = bentukGeserKoma(it.x, k);
+  var E = pangkatBakuIlmiah(it.x);
+  var baku = k === E;
+  var B = batasGeserKoma(it.x);
+  var angka = angkaMantisa_(bentuk.m);
+  var status = baku
+    ? '✓ Bentuk baku! Mantisa ' + bentuk.m + ' ada di antara 1 dan 10.'
+    : 'Belum baku: mantisa ' +
+      bentuk.m +
+      (angka >= 10 ? ' masih 10 atau lebih.' : ' masih kurang dari 1.');
+  var geserTeks =
+    k === 0
+      ? 'Koma belum digeser.'
+      : 'Koma sudah digeser ' + Math.abs(k) + ' kali ke ' + (k > 0 ? 'kiri' : 'kanan') + '.';
+  return (
+    '<div class="ilm-geser" id="' +
+    esc(id) +
+    '">' +
+    '<div class="ilm-geser__pilih" role="group" aria-label="Pilih bilangan">' +
+    items
+      .map(function (x) {
+        var sel = x.id === it.id;
+        var ok = st.baku.indexOf(x.id) !== -1;
+        return (
+          '<button type="button" class="ilm-geser__kartu' +
+          (sel ? ' is-active' : '') +
+          (ok ? ' is-done' : '') +
+          '" data-gk-pilih="' +
+          esc(x.id) +
+          '" data-gk-id="' +
+          esc(id) +
+          '" aria-pressed="' +
+          (sel ? 'true' : 'false') +
+          '">' +
+          (x.ikon ? '<span aria-hidden="true">' + x.ikon + '</span> ' : '') +
+          esc(x.nama) +
+          (ok ? ' ✓' : '') +
+          '</button>'
+        );
+      })
+      .join('') +
+    '</div>' +
+    '<p class="ilm-geser__asal">' +
+    esc(it.nama) +
+    ': <strong>' +
+    esc(ilmiahKeDesimal(it.x)) +
+    '</strong>' +
+    (it.satuan ? ' ' + esc(it.satuan) : '') +
+    '</p>' +
+    '<div class="ilm-geser__layar' +
+    (baku ? ' is-baku' : '') +
+    '" aria-live="polite" aria-label="' +
+    esc(teksIlmiah(bentuk)) +
+    '">' +
+    '<span class="ilm-geser__mantisa">' +
+    mantisaGeserHTML_(bentuk.m) +
+    '</span>' +
+    '<span class="ilm-geser__kali"> × 10</span><sup class="ilm-geser__pangkat">' +
+    esc(fmtPangkat_(k)) +
+    '</sup>' +
+    '<span class="sr-only">' +
+    esc(teksIlmiah(bentuk)) +
+    '</span>' +
+    '</div>' +
+    '<p class="ilm-geser__info">' +
+    esc(geserTeks) +
+    '</p>' +
+    '<p class="ilm-geser__status' +
+    (baku ? ' is-baku' : '') +
+    '">' +
+    esc(status) +
+    '</p>' +
+    '<div class="ilm-geser__tombol">' +
+    '<button type="button" class="btn btn--outline-primary" data-gk-id="' +
+    esc(id) +
+    '" data-gk-langkah="1"' +
+    (k >= B.max ? ' disabled' : '') +
+    '>⬅ Geser koma ke kiri</button>' +
+    '<button type="button" class="btn btn--outline-primary" data-gk-id="' +
+    esc(id) +
+    '" data-gk-langkah="-1"' +
+    (k <= B.min ? ' disabled' : '') +
+    '>Geser koma ke kanan ➡</button>' +
+    '</div>' +
+    '<p class="dl-caption">Bentuk baku yang sudah ditemukan: ' +
+    st.baku.length +
+    ' dari ' +
+    items.length +
+    '.</p>' +
+    '</div>'
+  );
+}
+
+function bindLabGeserKoma(root, id, items, st, save, rerender) {
+  root.querySelectorAll('[data-gk-id="' + id + '"][data-gk-pilih]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      st.aktif = btn.dataset.gkPilih;
+      save();
+      rerender();
+    });
+  });
+  root.querySelectorAll('[data-gk-id="' + id + '"][data-gk-langkah]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      geserLabGeserKoma(st, items, parseInt(btn.dataset.gkLangkah, 10));
+      save();
+      rerender();
+    });
+  });
+}
+
+/* ---------- Pita Orde 10ⁿ ---------- */
+
+/* Memastikan state[key] = { pilih, taruh, salah, pesan } (butir usang dibuang). */
+function ensurePitaOrdeState(state, key, items) {
+  var st = state[key];
+  if (!st || typeof st !== 'object' || !st.taruh || !st.salah) {
+    st = { pilih: null, taruh: {}, salah: {}, pesan: null };
+  }
+  var ids = items.map(function (it) {
+    return it.id;
+  });
+  Object.keys(st.taruh).forEach(function (k) {
+    if (ids.indexOf(k) === -1) delete st.taruh[k];
+  });
+  if (st.pilih && ids.indexOf(st.pilih) === -1) st.pilih = null;
+  state[key] = st;
+  return st;
+}
+
+/* Menaruh item di anak tangga 10^rung; benar bila rung = pangkat baku. */
+function taruhPitaOrde(st, items, itemId, rung) {
+  var it = itemById_(items, itemId);
+  if (!it) return false;
+  var E = pangkatBakuIlmiah(it.x);
+  if (rung === E) {
+    st.taruh[itemId] = rung;
+    st.pilih = null;
+    st.pesan = { id: itemId, benar: true };
+    return true;
+  }
+  st.salah[itemId] = (st.salah[itemId] || 0) + 1;
+  st.pesan = { id: itemId, benar: false, rung: rung };
+  return false;
+}
+
+function pitaOrdeSelesai(st, items) {
+  return items.every(function (it) {
+    return typeof st.taruh[it.id] === 'number';
+  });
+}
+
+/* Banyak item yang tepat pada percobaan pertama. */
+function pitaOrdeSekaliTepat(st, items) {
+  return items.filter(function (it) {
+    return typeof st.taruh[it.id] === 'number' && !st.salah[it.id];
+  }).length;
+}
+
+function pesanPitaOrde_(st, items) {
+  var p = st.pesan;
+  if (!p) return '';
+  var it = itemById_(items, p.id);
+  if (!it) return '';
+  if (p.benar) {
+    return buildFeedbackBox(
+      'success',
+      '✓',
+      '<strong>' +
+        esc(it.nama) +
+        '</strong>: ' +
+        esc(teksIlmiah(it.x)) +
+        (isBakuIlmiah(it.x) ? '' : ' = ' + esc(teksIlmiah(bakukanIlmiah(it.x)))) +
+        ', jadi tempatnya di anak tangga 10' +
+        superskrip(pangkatBakuIlmiah(it.x)) +
+        '.'
+    );
+  }
+  var teks;
+  if (!isBakuIlmiah(it.x)) {
+    teks =
+      esc(teksIlmiah(it.x)) +
+      ' belum baku. Bakukan dulu (mantisa di antara 1 dan 10), lalu lihat pangkat 10-nya.';
+  } else if (p.rung === -pangkatBakuIlmiah(it.x)) {
+    teks = 'Perhatikan tanda pangkatnya: benda sekecil ini pangkatnya negatif.';
+  } else {
+    teks =
+      'Belum tepat. Anak tangga yang tepat adalah pangkat 10 pada bentuk baku ' +
+      esc(teksIlmiah(it.x)) +
+      '.';
+  }
+  return buildFeedbackBox('warning', '💭', '<strong>' + esc(it.nama) + '</strong>: ' + teks);
+}
+
+/*
+ * Pita orde: kartu (item) diketuk lalu anak tangga 10ⁿ diketuk.
+ *   items  [{ id, nama, ikon, x }] (urutan tampil kartu)
+ *   rungs  array pangkat, naik (mis. [−10, −9, …, −3])
+ */
+function buildPitaOrde(id, items, rungs, st) {
+  var belum = items.filter(function (it) {
+    return typeof st.taruh[it.id] !== 'number';
+  });
+  var tangga = rungs
+    .map(function (r) {
+      var isi = items
+        .filter(function (it) {
+          return st.taruh[it.id] === r;
+        })
+        .map(function (it) {
+          return (
+            '<span class="ilm-pita__chip">' +
+            (it.ikon ? '<span aria-hidden="true">' + it.ikon + '</span> ' : '') +
+            esc(it.nama) +
+            '</span>'
+          );
+        })
+        .join('');
+      return (
+        '<button type="button" class="ilm-pita__rung" data-po-id="' +
+        esc(id) +
+        '" data-po-rung="' +
+        r +
+        '" aria-label="Anak tangga 10 pangkat ' +
+        esc(fmtPangkat_(r)) +
+        '">' +
+        '<span class="ilm-pita__label">10' +
+        superskrip(r) +
+        '</span>' +
+        '<span class="ilm-pita__isi">' +
+        isi +
+        '</span>' +
+        '</button>'
+      );
+    })
+    .join('');
+  var pool = belum
+    .map(function (it) {
+      var sel = st.pilih === it.id;
+      return (
+        '<button type="button" class="ilm-pita__kartu' +
+        (sel ? ' is-selected' : '') +
+        '" data-po-id="' +
+        esc(id) +
+        '" data-po-item="' +
+        esc(it.id) +
+        '" aria-pressed="' +
+        (sel ? 'true' : 'false') +
+        '">' +
+        (it.ikon ? '<span aria-hidden="true">' + it.ikon + '</span> ' : '') +
+        '<span>' +
+        esc(it.nama) +
+        '</span> <strong class="ilm-pita__nilai">' +
+        esc(it.tulis || teksIlmiah(it.x)) +
+        '</strong>' +
+        '</button>'
+      );
+    })
+    .join('');
+  return (
+    '<div class="ilm-pita" id="' +
+    esc(id) +
+    '">' +
+    (belum.length
+      ? '<p class="dl-caption">' +
+        (st.pilih
+          ? 'Sekarang ketuk anak tangga 10ⁿ yang tepat untuk kartu yang dipilih.'
+          : 'Ketuk satu kartu, lalu ketuk anak tangga 10ⁿ tempatnya.') +
+        '</p>' +
+        '<div class="ilm-pita__pool" role="group" aria-label="Kartu yang belum ditempatkan">' +
+        pool +
+        '</div>'
+      : '') +
+    '<div class="ilm-pita__tangga" role="group" aria-label="Anak tangga pangkat 10, dari kecil ke besar">' +
+    '<span class="ilm-pita__ujung" aria-hidden="true">lebih kecil</span>' +
+    tangga +
+    '<span class="ilm-pita__ujung" aria-hidden="true">lebih besar</span>' +
+    '</div>' +
+    pesanPitaOrde_(st, items) +
+    '</div>'
+  );
+}
+
+function bindPitaOrde(root, id, items, st, save, rerender) {
+  root.querySelectorAll('[data-po-id="' + id + '"][data-po-item]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      st.pilih = st.pilih === btn.dataset.poItem ? null : btn.dataset.poItem;
+      save();
+      rerender();
+    });
+  });
+  root.querySelectorAll('[data-po-id="' + id + '"][data-po-rung]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      if (!st.pilih) {
+        showNotice('Ketuk salah satu kartu lebih dulu.');
+        return;
+      }
+      taruhPitaOrde(st, items, st.pilih, parseInt(btn.dataset.poRung, 10));
+      save();
+      rerender();
+    });
+  });
+}
+
+/* ---------- Komponen render ---------- */
+
+/* Notasi ilmiah sebagai HTML dengan label bacaan. */
+function ilmiahHTML(v, cls) {
+  var x = ilmiahDari_(v);
+  return (
+    '<span class="ilm' +
+    (cls ? ' ' + cls : '') +
+    '" role="img" aria-label="' +
+    esc(bacaIlmiah(x)) +
+    '">' +
+    esc(teksIlmiah(x)) +
+    '</span>'
+  );
+}
+
+/* Kalimat besar: [p] ☐ [q]. `symbolId` null → kotak '?'. */
+function buildKalimatBandingIlmiah(p, q, symbolId) {
+  var aria =
+    bacaIlmiah(p) + ' ' + (symbolId ? KATA_SIMBOL[symbolId] : 'kotak kosong') + ' ' + bacaIlmiah(q);
+  return (
+    '<div class="cmp-sentence ilm-kalimat" aria-label="' +
+    esc(aria) +
+    '">' +
+    ilmiahHTML(p, 'ilm--big') +
+    '<span class="cmp-sentence__sym' +
+    (symbolId ? ' is-filled' : '') +
+    '">' +
+    esc(symbolId ? compareSymbolText(symbolId) : '?') +
+    '</span>' +
+    ilmiahHTML(q, 'ilm--big') +
+    '</div>'
+  );
+}
+
+/*
+ * Tombol lambang <, >, = untuk p ☐ q (urutan dari state teracak), boleh
+ * dicoba lagi sampai benar lalu terkunci; pilihan salah diberi pesan
+ * diagnosa miskonsepsi.
+ *   st  { chosen, wrong, diag }
+ *   opts.group  pembeda antarsoal (data-group)
+ */
+function buildPilihSimbolIlmiah(p, q, order, st, opts) {
+  opts = opts || {};
+  var benarId = simbolBandingIlmiah(p, q);
+  var benar = st.chosen === benarId;
+  var umpan = '';
+  if (st.chosen && !benar) {
+    umpan = buildFeedbackBox('warning', '💭', esc(pesanBandingIlmiah(st.diag || 'terbalik', p, q)));
+  } else if (benar) {
+    umpan = buildFeedbackBox(
+      'success',
+      '✓',
+      '<strong>' +
+        esc(kalimatBandingIlmiah(p, q)) +
+        '</strong>. ' +
+        esc(penjelasanBandingIlmiah(p, q))
+    );
+  }
+  return (
+    '<div class="cmp-symbols">' +
+    buildChoiceGroup(COMPARE_SYMBOLS, order, {
+      chosen: st.chosen,
+      correctId: benar ? benarId : null,
+      grade: true,
+      locked: benar,
+      group: opts.group || 'ilm',
+      attr: 'data-ilm-sym',
+    }) +
+    '</div>' +
+    (umpan ? '<div style="margin-top:var(--space-3);">' + umpan + '</div>' : '')
+  );
+}
+
+/* Mencatat pilihan lambang (tidak berubah lagi setelah benar). */
+function catatPilihSimbolIlmiah(st, p, q, symbolId) {
+  var benarId = simbolBandingIlmiah(p, q);
+  if (st.chosen === benarId) return st;
+  st.chosen = symbolId;
+  if (symbolId === benarId) {
+    st.diag = null;
+  } else {
+    st.wrong = (st.wrong || 0) + 1;
+    st.diag = diagnosaSimbolIlmiah(p, q, symbolId);
+  }
+  return st;
+}
+
+/* Memasang event buildPilihSimbolIlmiah; pasangan & state dicari lewat group. */
+function bindPilihSimbolIlmiah(root, getPair, getState, save, rerender) {
+  root.querySelectorAll('[data-ilm-sym]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var group = btn.dataset.group;
+      var pair = getPair(group);
+      var st = getState(group);
+      if (!pair || !st) return;
+      catatPilihSimbolIlmiah(st, pair[0], pair[1], btn.dataset.ilmSym);
       save();
       rerender();
     });
