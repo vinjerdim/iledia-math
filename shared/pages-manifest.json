@@ -96,11 +96,11 @@
     "extraBody": "partials/reset-modal.html"
   },
   "fase-d/mpi-12.3": {
-    "title": "Bentuk Akar & Pangkat Pecahan — Matematika Fase D",
-    "description": "Media pembelajaran interaktif berbasis Discovery Learning untuk mengonversi bentuk akar menjadi bentuk pangkat pecahan dan sebaliknya, serta menyederhanakan bentuk akar: petak kebun persegi 72 m², lab persegi & kubus, detektif eksponen, tangga pangkat pecahan 64, ubin faktor kembar, konverter akar ⇄ pangkat, dan pemilahan miskonsepsi.",
+    "title": "Membandingkan & Mengurutkan Bilangan Berpangkat Bulat — Matematika Fase D",
+    "description": "Media pembelajaran interaktif berbasis Cooperative Learning tipe Numbered Heads Together untuk membandingkan dan mengurutkan bilangan berpangkat bulat (pangkat positif, nol, dan negatif): Lab Timbang Pangkat untuk menemukan strategi basis sama, pangkat sama, samakan basis, dan patokan 1, misi tim membandingkan konteks berdiagnosa miskonsepsi, mengurutkan kartu ukuran benda renik dan skor, cek pendapat teman, panggil nomor acak, kuis individu, dan penghargaan tim.",
     "kicker": "Matematika — Fase D (SMP)",
-    "h1": "Bentuk Akar & Pangkat Pecahan",
-    "stageCount": 11,
+    "h1": "Membandingkan & Mengurutkan Bilangan Berpangkat Bulat",
+    "stageCount": 10,
     "extraBody": "partials/reset-modal.html"
   },
   "fase-d/mpi-12.4": {
