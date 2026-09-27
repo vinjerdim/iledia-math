@@ -2,968 +2,960 @@
 
 /* ============================================================
    data.js — Konten media pembelajaran
-   Matematika: Bentuk Akar & Pangkat Pecahan
+   Matematika: Membandingkan & Mengurutkan Bilangan Berpangkat Bulat
    Fase D — SMP Kelas VIII · Topik 12 Bilangan Berpangkat dan Bentuk Akar
 
    Tujuan Pembelajaran:
-   Mengonversi bentuk akar menjadi bentuk pangkat pecahan dan
-   sebaliknya, serta menyederhanakan bentuk akar.
+   Membandingkan dan mengurutkan bilangan berpangkat bulat.
 
-   Model pembelajaran: DISCOVERY LEARNING (Penemuan Terbimbing).
+   Prasyarat: fase-d/mpi-12.1 (membaca & menulis bilangan berpangkat
+   bulat positif) dan fase-d/mpi-12.2 (pangkat nol & negatif:
+   a⁰ = 1, a⁻ⁿ = 1/aⁿ).
+
+   Gagasan kunci yang dibangun di seluruh modul:
+     • membandingkan bilangan berpangkat = membandingkan NILAINYA,
+       bukan basis saja atau pangkat saja (2¹⁰ > 10³ walau 2 < 10);
+     • basis sama (> 1): pangkat lebih besar → nilai lebih besar,
+       termasuk pangkat negatif (2⁻³ > 2⁻⁵ karena −3 > −5);
+     • pangkat sama & positif: basis lebih besar → nilai lebih besar;
+       pangkat sama & negatif: basis lebih besar → nilai lebih KECIL;
+     • basis berbeda bisa disamakan: 9⁴ = 3⁸ dan 27³ = 3⁹;
+     • patokan 1 & tanda: a⁰ = 1, a⁻ⁿ (a > 1) di antara 0 dan 1, basis
+       negatif berpangkat ganjil bernilai negatif;
+     • miskonsepsi yang dilawan: a⁻ⁿ dianggap negatif, a⁰ dianggap 0,
+       tanda minus pangkat diabaikan, tanda basis negatif diabaikan,
+       hanya membandingkan basis/pangkat, dan aⁿ = a × n.
+
+   Model pembelajaran: COOPERATIVE LEARNING tipe NUMBERED HEADS
+   TOGETHER (NHT) dalam sintaks Arends, dengan skor tim ala STAD.
    Pemetaan sintaks ke tahap media:
 
-     Sintaks 1 — Stimulation ................ tahap 'stimulasi'
-     Sintaks 2 — Problem statement .......... tahap 'masalah'
-     Sintaks 3 — Data collection ............ tahap 'akar', 'pola' & 'sederhana'
-     Sintaks 4 — Data processing ............ tahap 'olah'
-     Sintaks 5 — Verification ............... tahap 'verifikasi'
-     Sintaks 6 — Generalization ............. tahap 'generalisasi'
-     Penerapan & penutup .................... 'terapkan', 'refleksi', 'selesai'
+     Fase 1 — Menyampaikan tujuan & memotivasi ....... 'tujuan'
+     Fase 2 — Menyajikan informasi .................... 'informasi'
+     Fase 3 — Mengorganisasikan murid ke kelompok
+              (penomoran kepala NHT) .................. 'tim'
+     Fase 4 — Membimbing kelompok bekerja & belajar
+              (berpikir bersama → panggil nomor) ...... 'misiBanding',
+                                                        'misiUrut',
+                                                        'misiDiskusi'
+     Fase 5 — Evaluasi (individu) ..................... 'kuis'
+     Fase 6 — Memberikan penghargaan .................. 'penghargaan'
+     Penutup .......................................... 'refleksi', 'selesai'
 
-   Rangkaian aktivitas (± 2 × 40 menit, murid berpasangan):
-     1. Stimulasi   (5')  — "Petak Kebun Persegi": kebun kelas seluas
-                            72 m²; kalkulator menampilkan sisi 8,4852…,
-                            sedangkan papan rencana Pak Gani menulis
-                            √72 = 72^(1/2) = 6√2 m. Murid MENDUGA arti
-                            72^(1/2) + alasan (tidak dinilai).
-     2. Masalah     (4')  — memilih rumusan masalah & menulis hipotesis.
-     3. Akar        (12') — Lab Persegi & Kubus (luas → sisi √, volume →
-                            rusuk ∛), isian akar bulat, lalu "Detektif
-                            Eksponen": memakai sifat (aᵐ)ⁿ = aᵐˣⁿ dari
-                            MPI 12.2 untuk menemukan a^(1/2) = √a dan
-                            a^(1/3) = ∛a.
-     4. Pola        (10') — tangga nilai 64^(1/2), 64^(1/3), 64^(1/6),
-                            64^(2/3), 64^(3/2), ∛(8²) & (∛8)² → tabel
-                            ringkas → menemukan ⁿ√(aᵐ) = a^(m/n).
-     5. Sederhana   (12') — Ubin Faktor Kembar: faktor prima di dalam
-                            akar, ketuk n faktor sama untuk keluar dari
-                            akar; menulis √72 = 6√2, √48 = 4√3,
-                            ∛54 = 3∛2 dengan diagnosa miskonsepsi.
-     6. Olah data   (10') — pertanyaan penuntun, misi Konverter Akar ⇄
-                            Pangkat, pilah 8 pernyataan tepat/keliru.
-     7. Pembuktian  (8')  — membuktikan dugaan awal; 6 soal konversi dua
-                            arah & menyederhanakan berpengecoh.
-     8. Simpulan    (5')  — melengkapi kalimat dari bank kalimat acak.
-     9. Uji terap   (10') — 8 soal kontekstual (ubin, akuarium, layar,
-                            kotak kado, kebun).
-    10. Refleksi    (4')  — rekap, refleksi tertulis, penilaian diri.
+   Rangkaian aktivitas (± 2 × 40 menit, tim heterogen 3–4 murid
+   bernomor kepala, satu perangkat per tim; kuis dikerjakan per murid):
+     1. Tujuan      (6')  — "Adu Pangkat": Rani mengklaim 2¹⁰ ribu
+                            rupiah lebih besar daripada 10³ ribu milik
+                            Bima; bakteri 10⁻⁶ m vs virus 10⁻⁷ m. Murid
+                            MENDUGA (tidak dinilai), dicek di tahap 2.
+     2. Informasi   (14') — Lab Timbang Pangkat: ubah basis & pangkat
+                            dua bilangan, amati lambang & strategi yang
+                            cocok, temukan minimal 3 strategi; enam
+                            pertanyaan penuntun berdiagnosa; kartu
+                            empat strategi; cek dugaan.
+     3. Tim         (4')  — nama tim, anggota, kesepakatan; nomor kepala
+                            dibagikan acak.
+     4. Misi 1      (15') — "Bandingkan!": tujuh pasangan kontekstual.
+                            Pilih strategi → pilih lambang <, >, =
+                            (diagnosa miskonsepsi) → pilih makna konteks
+                            → panggil nomor acak untuk menjelaskan.
+     5. Misi 2      (10') — "Urutkan!": tiga set lima bilangan berpangkat
+                            (ukuran benda renik, kombinasi sandi, kartu
+                            skor campuran) disusun naik/turun dengan
+                            kartu ketuk → panggil nomor.
+     6. Misi 3      (8')  — "Cek Pendapat Teman": delapan pernyataan
+                            Benar/Salah berisi miskonsepsi + catatan tim
+                            → panggil nomor.
+     7. Kuis        (12') — kuis individu: tujuh soal diambil acak dari
+                            bank lima belas soal.
+     8. Penghargaan (3')  — poin tim (50% misi + 50% kuis) → predikat.
+     9. Refleksi    (4')  — refleksi konsep & kerja sama, penilaian diri.
 
-   Catatan: seluruh daftar pilihan jawaban di berkas ini ditulis dalam
-   urutan "wajar" (jawaban benar sering di depan). Pengacakan dilakukan
-   app.js memakai ensureShuffledOrder()/ensureSortStates()/shuffleArray()
-   dari shared/engine.js, satu kali saat state disiapkan. Ubin faktor
-   juga ditampilkan dalam urutan acak (makeTwinTileState).
+   Catatan pengacakan: seluruh daftar pilihan di berkas ini ditulis
+   dalam urutan "wajar" (jawaban benar sering di depan). app.js
+   mengacaknya SEKALI saat state disiapkan (ensureShuffledOrder /
+   ensureSortStates / ensureTapOrderState / shuffleArray dari
+   shared/engine.js) sehingga tiap tim dan tiap Reset mendapat urutan
+   berbeda — termasuk dugaan, penuntun, pilihan strategi, lambang
+   <, >, =, makna konteks, kartu yang diurutkan, pernyataan diskusi,
+   soal kuis yang terpilih beserta opsinya, dan penilaian diri.
 
-   Notasi teks: a^(p/q) untuk pangkat pecahan, √ ∛ ∜ ⁿ√ untuk akar,
-   mis. '∛(5²)'. Teks dirender menjadi HTML oleh tulisAkarHTML().
-   Metadata `cek` dipakai tes untuk menghitung ulang kunci dengan
-   engine seksi 45 (tests/mpi-12.3-data.test.js):
-     { jenis: 'pangkat',   n, r, m }  label benar = formatPangkatPecahan(r, m, n)
-     { jenis: 'akar',      a, p, q }  label benar = formatAkar(1, q, a, p)
-     { jenis: 'sederhana', r, n }     label benar = bentuk akar paling sederhana
-     { jenis: 'nilai',     a, p, q }  label/jawab = nilai a^(p/q) (eksak)
+   Bilangan berpangkat ditulis { a, n } (basis bulat, pangkat bulat).
+   Konsistensi kunci jawaban diuji tests/mpi-12.3-data.test.js terhadap
+   engine seksi 51 (simbolBandingPangkat, urutanIdPangkat,
+   ekstremPangkat, strategiBandingPangkat, teksPangkat).
    ============================================================ */
 
+var CL = 'Cooperative Learning (NHT)';
+
+/* Opsi Benar/Salah untuk misi Cek Pendapat Teman. */
+var OPSI_BENAR_SALAH = [
+  { id: 'benar', label: '✓ Benar' },
+  { id: 'salah', label: '✗ Salah' },
+];
+
 var DATA = {
+  meta: {
+    title: 'Membandingkan & Mengurutkan Bilangan Berpangkat Bulat',
+    goal: 'Membandingkan dan mengurutkan bilangan berpangkat bulat.',
+  },
+
+  /* Urutan & label tahap (dipakai app.js dan dicek terhadap manifest). */
+  tahap: [
+    { id: 'tujuan', label: 'Tujuan' },
+    { id: 'informasi', label: 'Informasi' },
+    { id: 'tim', label: 'Tim & Nomor' },
+    { id: 'misiBanding', label: 'Misi 1' },
+    { id: 'misiUrut', label: 'Misi 2' },
+    { id: 'misiDiskusi', label: 'Misi 3' },
+    { id: 'kuis', label: 'Kuis' },
+    { id: 'penghargaan', label: 'Penghargaan' },
+    { id: 'refleksi', label: 'Refleksi' },
+    { id: 'selesai', label: 'Selesai' },
+  ],
+
   /* ----------------------------------------------------------
-     TAHAP 1 — STIMULASI
+     TAHAP 1 — TUJUAN & MOTIVASI
+     Dugaan TIDAK dinilai; dicek kembali di tahap Informasi.
      ---------------------------------------------------------- */
-  stimulasi: {
-    kicker: 'Tahap 1 · Stimulasi',
-    syntax: 'Discovery Learning · Sintaks 1',
-    goal: 'Mengamati tiga cara menuliskan panjang sisi kebun persegi dan menduga artinya.',
-    tp: 'Mengonversi bentuk akar menjadi bentuk pangkat pecahan dan sebaliknya, serta menyederhanakan bentuk akar.',
+  tujuan: {
+    kicker: 'Tahap 1 · Tujuan & Motivasi',
+    syntax: CL + ' · Fase 1',
+    goal: 'Menyadari bahwa membandingkan bilangan berpangkat tidak cukup dengan melihat basis atau pangkatnya saja.',
+    guru: 'Tayangkan kartu "Adu Pangkat". Tanyakan: "Siapa yang benar, Rani atau Bima?" Biarkan murid berdebat singkat tanpa kalkulator dan jangan membenarkan dugaan — jawabannya ditemukan bersama di Lab Timbang Pangkat.',
+    judul: 'Adu Pangkat!',
+    cerita:
+      'Rani dan Bima membandingkan hadiah tabungan. Rani: "Hadiahku 2¹⁰ ribu rupiah." Bima: "Punyaku 10³ ribu rupiah — pasti lebih besar, karena 10 jauh lebih besar daripada 2!" Di kelas IPA, mereka juga membaca bahwa bakteri berukuran sekitar 10⁻⁶ m, sedangkan virus sekitar 10⁻⁷ m.',
+    kartu: [
+      { ikon: '💰', label: 'Hadiah Rani', p: { a: 2, n: 10 }, satuan: 'ribu rupiah' },
+      { ikon: '💰', label: 'Hadiah Bima', p: { a: 10, n: 3 }, satuan: 'ribu rupiah' },
+      { ikon: '🦠', label: 'Bakteri', p: { a: 10, n: -6 }, satuan: 'meter' },
+      { ikon: '🧬', label: 'Virus', p: { a: 10, n: -7 }, satuan: 'meter' },
+    ],
+    dugaan: [
+      {
+        id: 'hadiah',
+        tanya: 'Dugaanmu: hadiah siapa yang lebih besar?',
+        opsi: [
+          { id: 'rani', label: 'Hadiah Rani (2¹⁰ ribu)' },
+          { id: 'bima', label: 'Hadiah Bima (10³ ribu)' },
+          { id: 'sama', label: 'Sama besar' },
+        ],
+        p: { a: 2, n: 10 },
+        q: { a: 10, n: 3 },
+      },
+      {
+        id: 'renik',
+        tanya: 'Dugaanmu: mana yang berukuran lebih besar?',
+        opsi: [
+          { id: 'bakteri', label: 'Bakteri (10⁻⁶ m)' },
+          { id: 'virus', label: 'Virus (10⁻⁷ m)' },
+          { id: 'sama', label: 'Sama besar' },
+        ],
+        p: { a: 10, n: -6 },
+        q: { a: 10, n: -7 },
+      },
+      {
+        id: 'cara',
+        tanya: 'Menurutmu, cara yang tepat untuk membandingkan dua bilangan berpangkat adalah …',
+        opsi: [
+          { id: 'nilai', label: 'Membandingkan nilainya (dengan strategi yang cocok)' },
+          { id: 'basis', label: 'Cukup melihat basis mana yang lebih besar' },
+          { id: 'pangkat', label: 'Cukup melihat pangkat mana yang lebih besar' },
+          { id: 'kali', label: 'Mengalikan basis dengan pangkatnya' },
+        ],
+      },
+    ],
+    /* Kunci dugaan 'hadiah' & 'renik' diuji terhadap simbolBandingPangkat(p, q). */
+    kunciDugaan: { hadiah: 'rani', renik: 'bakteri', cara: 'nilai' },
+    alasanLabel: 'Tulis alasan dugaanmu:',
+    alasanPlaceholder: 'Contoh: menurutku … karena …',
+    catatan: 'Dugaanmu tidak dinilai. Kalian akan mengeceknya sendiri di tahap berikutnya.',
     tpJudul: 'Tujuan belajar hari ini',
+    tp: 'Membandingkan dan mengurutkan bilangan berpangkat bulat (pangkat positif, nol, dan negatif).',
     kriteria: [
-      'Mengubah bentuk akar ⁿ√(aᵐ) menjadi pangkat pecahan a^(m/n).',
-      'Mengubah pangkat pecahan a^(m/n) menjadi bentuk akar dan menghitung nilainya.',
-      'Menyederhanakan bentuk akar dengan faktor kuadrat atau kubik terbesar.',
-      'Menghindari kekeliruan umum: pembilang dan penyebut pangkat tertukar, atau faktor yang lupa diakarkan.',
+      'Memilih strategi yang cocok: basis sama, pangkat sama, samakan basis, atau hitung nilai/patokan 1.',
+      'Menuliskan lambang <, >, atau = dengan benar beserta alasannya.',
+      'Mengurutkan beberapa bilangan berpangkat bulat dari terkecil ke terbesar dan sebaliknya.',
+      'Menjelaskan jawaban tim dengan kata-kata sendiri saat nomornya dipanggil.',
     ],
-    guru: 'Bacakan cerita bersama. Tanyakan: “Mengapa kalkulator dan papan Pak Gani menulis jawabannya berbeda? Apakah keduanya benar?” Biarkan murid menduga tanpa dikoreksi.',
-    judul: 'Petak Kebun Persegi',
-    luas: 72,
-    cerita:
-      'Kelas VIII-B mendapat petak kebun sekolah berbentuk persegi seluas 72 m². Dina ingin memasang pagar bambu, jadi ia perlu tahu panjang sisi kebun. Ia mencari bilangan yang jika dikuadratkan hasilnya 72.',
-    kalkulator: '8,4852813…',
-    kalkulatorLabel: 'Layar kalkulator Dina',
-    papanLabel: 'Papan rencana Pak Gani',
-    papan: 'sisi = √72 = 72^(1/2) = 6√2 m',
-    pertanyaan:
-      'Menurut dugaanmu, apa arti tulisan 72^(1/2) (72 pangkat setengah) di papan Pak Gani?',
-    opsi: [
-      { id: 'akar', label: 'Sama dengan √72, yaitu bilangan yang jika dikuadratkan hasilnya 72' },
-      { id: 'bagi', label: '72 dibagi 2, yaitu 36' },
-      { id: 'kali', label: '72 dikalikan ½ lalu dikuadratkan' },
-      { id: 'kecil', label: 'Bilangan yang sangat kecil, karena pangkatnya pecahan' },
-    ],
-    dugaanTepat: 'akar',
-    alasanLabel: 'Mengapa kamu menduga begitu? (tulis singkat)',
-    alasanPlaceholder: 'Menurutku … karena …',
-    catatan:
-      'Belum ada jawaban benar atau salah. Dugaanmu akan kamu buktikan sendiri, termasuk mengapa √72 boleh ditulis 6√2.',
-    nextLabel: 'Lanjut ke Rumusan Masalah →',
+    nextLabel: 'Lanjut: Lab Timbang Pangkat →',
   },
 
   /* ----------------------------------------------------------
-     TAHAP 2 — IDENTIFIKASI MASALAH
+     TAHAP 2 — MENYAJIKAN INFORMASI
+     Lab timbang (temukan ≥ 3 strategi) → penuntun → kartu strategi.
      ---------------------------------------------------------- */
-  masalah: {
-    kicker: 'Tahap 2 · Identifikasi Masalah',
-    syntax: 'Discovery Learning · Sintaks 2',
-    goal: 'Merumuskan pertanyaan inti yang akan diselidiki dan menuliskan hipotesis.',
-    guru: 'Arahkan murid memilih pertanyaan yang mencakup HUBUNGAN akar–pangkat dan cara MENYEDERHANAKAN. Hipotesis boleh keliru; yang penting dapat diuji.',
-    pengantar:
-      'Papan Pak Gani memunculkan beberapa pertanyaan. Pilih pertanyaan yang paling tepat untuk kita selidiki bersama.',
-    pertanyaan: 'Pertanyaan manakah yang paling tepat untuk diselidiki?',
-    opsi: [
-      {
-        id: 'inti',
-        label:
-          'Apa hubungan bentuk akar dengan pangkat pecahan, bagaimana mengubah satu bentuk ke bentuk lainnya, dan bagaimana menyederhanakan bentuk akar seperti √72?',
-      },
-      { id: 'desimal', label: 'Berapa semua angka di belakang koma dari √72?' },
-      { id: 'luas', label: 'Berapa luas kebun jika panjang sisinya 72 m?' },
-      { id: 'bibit', label: 'Berapa banyak bibit cabai yang dapat ditanam di kebun?' },
+  informasi: {
+    kicker: 'Tahap 2 · Menyajikan Informasi',
+    syntax: CL + ' · Fase 2',
+    goal: 'Menemukan empat strategi membandingkan bilangan berpangkat bulat melalui Lab Timbang Pangkat.',
+    guru: 'Peragakan lab di layar secara klasikal: minta murid menebak lambang sebelum tombol ditekan. Arahkan agar kelas menemukan minimal tiga strategi (mis. 2⁴ vs 2⁶, 3⁴ vs 5⁴, 4⁵ vs 8³, 3⁰ vs 2⁻¹). Tekankan: yang dibandingkan adalah NILAI.',
+    labJudul: 'Lab Timbang Pangkat',
+    labPengantar:
+      'Ubah basis dan pangkat Bilangan A dan B dengan tombol − dan +. Tebak dulu lambangnya, lalu amati lambang, strategi, dan alasan yang muncul. Temukan minimal 3 strategi yang berbeda!',
+    labTarget: 3,
+    labSaran: [
+      'Coba basis yang sama, mis. 2⁴ dan 2⁶, lalu ubah pangkatnya menjadi negatif.',
+      'Coba pangkat yang sama, mis. 3⁴ dan 5⁴, lalu jadikan pangkatnya −2.',
+      'Coba 4⁵ dan 8³ — basisnya bisa disamakan menjadi 2.',
+      'Coba pangkat 0 atau basis negatif, mis. 3⁰ dan 2⁻¹, atau (−2)³ dan (−2)².',
     ],
-    correct: 'inti',
-    umpan: {
-      inti: 'Tepat! Pertanyaan ini mencakup HUBUNGAN akar dan pangkat pecahan, cara MENGUBAH bentuknya, dan cara MENYEDERHANAKAN bentuk akar.',
-      desimal:
-        'Angka di belakang koma √72 tidak pernah berhenti. Yang menarik justru cara menuliskannya dengan tepat tanpa desimal.',
-      luas: 'Luasnya sudah diketahui, 72 m². Yang dicari adalah cara menulis panjang sisinya.',
-      bibit:
-        'Pertanyaan itu menarik untuk berkebun, tetapi masalah kita adalah cara menulis √72 dan 72^(1/2).',
-    },
-    hipotesisLabel: 'Tulis hipotesismu: apa hubungan √72, 72^(1/2), dan 6√2?',
-    hipotesisPlaceholder: 'Menurutku, √72 sama dengan 72^(1/2) karena … dan menjadi 6√2 karena …',
-    nextLabel: 'Mulai Lab Persegi & Kubus →',
-  },
-
-  /* ----------------------------------------------------------
-     TAHAP 3 — MENGUMPULKAN DATA A: AKAR & PANGKAT SATU PER N
-     ---------------------------------------------------------- */
-  akar: {
-    kicker: 'Tahap 3 · Mengumpulkan Data (A)',
-    syntax: 'Discovery Learning · Sintaks 3',
-    goal: 'Mengumpulkan data sisi persegi dan rusuk kubus, lalu menemukan arti pangkat ½ dan ⅓.',
-    guru: 'Minta pasangan bergantian menggeser. Tanyakan: “Luas berapa saja yang sisinya bilangan bulat?” Pada Detektif Eksponen, ingatkan sifat pangkat dari pangkat dari MPI 12.2.',
-    instruksi:
-      'Geser luas persegi dan volume kubus. Coba minimal 4 luas pada persegi dan 3 volume pada kubus. Perhatikan kapan sisi atau rusuknya berupa bilangan bulat.',
-    jejakMin: { persegi: 4, kubus: 3 },
-    belumCukup: 'Coba lebih banyak nilai pada persegi dan kubus dulu untuk mengumpulkan data.',
-    instruksiLangkah:
-      'Catat hasil pengamatanmu. Tanda √ (akar kuadrat) mencari SISI persegi dari luasnya; tanda ∛ (akar pangkat tiga) mencari RUSUK kubus dari volumenya.',
-    langkah: [
-      {
-        id: 'a1',
-        r: 49,
-        n: 2,
-        jawab: 7,
-        label: 'Persegi dengan luas 49 satuan². Panjang sisinya √49 = …',
-        hints: [
-          'Bilangan berapa yang dikalikan dengan dirinya sendiri hasilnya 49?',
-          '7 × 7 = 49.',
-        ],
-        temuan: '√49 = 7 karena 7² = 49.',
-      },
-      {
-        id: 'a2',
-        r: 144,
-        n: 2,
-        jawab: 12,
-        label: 'Persegi dengan luas 144 satuan². Panjang sisinya √144 = …',
-        hints: ['Coba 10 × 10 = 100 (terlalu kecil). Naikkan sedikit.', '12 × 12 = 144.'],
-        temuan: '√144 = 12 karena 12² = 144.',
-      },
-      {
-        id: 'a3',
-        r: 64,
-        n: 3,
-        jawab: 4,
-        label: 'Kubus dengan volume 64 satuan³. Panjang rusuknya ∛64 = …',
-        hints: [
-          'Cari bilangan yang dikalikan TIGA kali dengan dirinya sendiri hasilnya 64.',
-          '4 × 4 × 4 = 64.',
-        ],
-        temuan: '∛64 = 4 karena 4³ = 64.',
-      },
-      {
-        id: 'a4',
-        r: 125,
-        n: 3,
-        jawab: 5,
-        label: 'Kubus dengan volume 125 satuan³. Panjang rusuknya ∛125 = …',
-        hints: ['Coba 5 × 5 × 5.'],
-        temuan: '∛125 = 5 karena 5³ = 125.',
-      },
-    ],
-    instruksiDetektif:
-      'Detektif Eksponen: bagaimana kalau pangkatnya pecahan? Gunakan sifat pangkat dari pangkat yang sudah kamu pelajari: (aᵐ)ⁿ = aᵐˣⁿ.',
-    detektif: [
-      {
-        id: 'd1',
-        tanya:
-          'Kita cari x agar (9ˣ)² = 9¹. Menurut sifat pangkat dari pangkat, x × 2 = 1. Jadi x = …',
-        opsi: [
-          { id: 'setengah', label: 'x = 1/2' },
-          { id: 'dua', label: 'x = 2' },
-          { id: 'negdua', label: 'x = −2' },
-          { id: 'nol', label: 'x = 0' },
-        ],
-        correct: 'setengah',
-        umpan: {
-          setengah: 'Tepat! (9^(1/2))² = 9^(1/2 × 2) = 9¹ = 9.',
-          dua: 'Periksa: (9²)² = 9⁴, bukan 9¹. Kita butuh x × 2 = 1.',
-          negdua: 'Periksa: (9⁻²)² = 9⁻⁴, bukan 9¹. Kita butuh x × 2 = 1.',
-          nol: 'Periksa: (9⁰)² = 9⁰ = 1, bukan 9. Kita butuh x × 2 = 1.',
-        },
-      },
-      {
-        id: 'd2',
-        tanya: 'Kita tahu (9^(1/2))² = 9 dan juga (√9)² = 3 × 3 = 9. Jadi 9^(1/2) sama dengan …',
-        opsi: [
-          { id: 'akar', label: '√9 = 3' },
-          { id: 'bagi', label: '9 : 2 = 4,5' },
-          { id: 'kali', label: '9 × ½ = 4,5' },
-          { id: 'kuadrat', label: '9² = 81' },
-        ],
-        correct: 'akar',
-        umpan: {
-          akar: 'Tepat! Pangkat ½ sama artinya dengan akar kuadrat: 9^(1/2) = √9 = 3.',
-          bagi: 'Periksa: 4,5 × 4,5 = 20,25, bukan 9. Pangkat ½ bukan membagi dua.',
-          kali: 'Periksa: 4,5 × 4,5 = 20,25, bukan 9. Pangkat ½ bukan mengalikan dengan ½.',
-          kuadrat: '9² = 81 adalah pangkat 2, bukan pangkat ½.',
-        },
-      },
-      {
-        id: 'd3',
-        tanya: 'Dengan cara yang sama, (8ˣ)³ = 8¹. Nilai x dan artinya adalah …',
-        opsi: [
-          { id: 'sepertiga', label: 'x = 1/3, jadi 8^(1/3) = ∛8 = 2' },
-          { id: 'tiga', label: 'x = 3, jadi 8³ = 512' },
-          { id: 'bagi', label: 'x = 1/3, jadi 8^(1/3) = 8 : 3' },
-          { id: 'akar2', label: 'x = 1/3, jadi 8^(1/3) = √8' },
-        ],
-        correct: 'sepertiga',
-        umpan: {
-          sepertiga: 'Tepat! (8^(1/3))³ = 8¹ dan (∛8)³ = 2 × 2 × 2 = 8. Jadi 8^(1/3) = ∛8 = 2.',
-          tiga: '(8³)³ = 8⁹, bukan 8¹. Kita butuh x × 3 = 1.',
-          bagi: 'x = 1/3 sudah benar, tetapi pangkat ⅓ bukan membagi tiga. Cari bilangan yang dipangkatkan 3 hasilnya 8.',
-          akar2:
-            'x = 1/3 sudah benar, tetapi pangkat ⅓ berpasangan dengan akar pangkat TIGA (∛), bukan akar kuadrat.',
-        },
-      },
-    ],
-    temuan:
-      'Temuan: a^(1/2) = √a dan a^(1/3) = ∛a. Penyebut pecahan pangkat menunjukkan jenis akarnya!',
-    nextLabel: 'Lanjut ke Tangga Pangkat Pecahan →',
-  },
-
-  /* ----------------------------------------------------------
-     TAHAP 4 — MENGUMPULKAN DATA B: POLA PANGKAT m/n
-     ---------------------------------------------------------- */
-  pola: {
-    kicker: 'Tahap 4 · Mengumpulkan Data (B)',
-    syntax: 'Discovery Learning · Sintaks 3',
-    goal: 'Menghitung nilai pangkat pecahan dari 64 dan menemukan hubungan a^(m/n) dengan bentuk akar.',
-    guru: 'Beri waktu murid mencoba 64^(2/3) sendiri. Pancing dengan: “Pangkat 2/3 = 1/3 × 2. Mana yang dikerjakan dulu?” Tekankan bahwa ∛(8²) dan (∛8)² hasilnya sama.',
-    cerita:
-      'Pak Gani membawa 64 ubin kecil. 64 bisa disusun menjadi persegi 8 × 8, kubus 4 × 4 × 4, bahkan 2 × 2 × 2 × 2 × 2 × 2. Mari hitung nilai pangkat pecahan dari 64!',
-    instruksi:
-      'Hitung setiap nilai. Ingat temuanmu: penyebut pangkat menunjukkan jenis akar, dan pembilang menunjukkan pangkat biasa.',
-    langkah: [
+    penuntun: [
       {
         id: 'p1',
-        cek: { a: 64, p: 1, q: 2 },
-        jawab: 8,
-        label: '64^(1/2) = √64 = …',
-        hints: ['Persegi 8 × 8 berisi 64 ubin.'],
-        temuan: '64^(1/2) = √64 = 8.',
+        tanya: 'Manakah yang lebih besar: 3⁴ atau 3⁶?',
+        opsi: [
+          { id: 'b', label: '3⁶' },
+          { id: 'a', label: '3⁴' },
+          { id: 'sama', label: 'Sama besar' },
+          { id: 'tidak', label: 'Tidak bisa dibandingkan' },
+        ],
+        correct: 'b',
+        umpan: {
+          b: 'Tepat! Basis sama (3 > 1), jadi pangkat lebih besar → nilai lebih besar: 3⁶ = 729 > 3⁴ = 81.',
+          a: 'Coba hitung: 3⁴ = 81 dan 3⁶ = 729. Dengan basis sama yang lebih dari 1, makin besar pangkat makin besar nilainya.',
+          sama: 'Basisnya memang sama, tetapi pangkatnya berbeda, jadi nilainya berbeda: 81 dan 729.',
+          tidak: 'Bisa! Basisnya sama, tinggal bandingkan pangkatnya.',
+        },
       },
       {
         id: 'p2',
-        cek: { a: 64, p: 1, q: 3 },
-        jawab: 4,
-        label: '64^(1/3) = ∛64 = …',
-        hints: ['Kubus 4 × 4 × 4 berisi 64 ubin.'],
-        temuan: '64^(1/3) = ∛64 = 4.',
+        tanya: 'Manakah yang lebih besar: 2⁻³ atau 2⁻⁵?',
+        opsi: [
+          { id: 'a', label: '2⁻³' },
+          { id: 'b', label: '2⁻⁵' },
+          { id: 'sama', label: 'Sama besar' },
+          { id: 'neg', label: 'Keduanya negatif, jadi tidak ada yang lebih besar' },
+        ],
+        correct: 'a',
+        umpan: {
+          a: 'Benar! 2⁻³ = 1/8 dan 2⁻⁵ = 1/32. Aturan basis sama tetap berlaku: −3 > −5, jadi 2⁻³ > 2⁻⁵.',
+          b: 'Hati-hati: angka 5 memang lebih besar dari 3, tetapi pangkatnya −5 dan −3. Karena −3 > −5, maka 2⁻³ (= 1/8) > 2⁻⁵ (= 1/32).',
+          sama: 'Pangkatnya berbeda, jadi nilainya berbeda: 1/8 dan 1/32.',
+          neg: 'Pangkat negatif tidak membuat nilainya negatif! 2⁻³ = 1/8 dan 2⁻⁵ = 1/32, keduanya positif.',
+        },
       },
       {
         id: 'p3',
-        cek: { a: 64, p: 1, q: 6 },
-        jawab: 2,
-        label: '64^(1/6) = ⁶√64 = …',
-        hints: [
-          'Penyebut 6 → cari bilangan yang dikalikan ENAM kali dengan dirinya sendiri hasilnya 64.',
-          '2 × 2 × 2 × 2 × 2 × 2 = 64.',
+        tanya: 'Manakah yang lebih besar: 3⁵ atau 4⁵?',
+        opsi: [
+          { id: 'b', label: '4⁵' },
+          { id: 'a', label: '3⁵' },
+          { id: 'sama', label: 'Sama besar, karena pangkatnya sama' },
+          { id: 'tidak', label: 'Harus dihitung dulu, tidak ada cara lain' },
         ],
-        temuan: '64^(1/6) = ⁶√64 = 2 karena 2⁶ = 64.',
+        correct: 'b',
+        umpan: {
+          b: 'Tepat! Pangkat sama dan positif, jadi basis lebih besar → nilai lebih besar: 4⁵ = 1.024 > 3⁵ = 243.',
+          a: 'Kalikan: 3 × 3 × 3 × 3 × 3 = 243, sedangkan 4 × 4 × 4 × 4 × 4 = 1.024.',
+          sama: 'Pangkat sama belum tentu nilai sama. Basisnya berbeda (3 dan 4).',
+          tidak:
+            'Menghitung memang boleh, tetapi ada cara cepat: pangkat sama & positif → bandingkan basisnya.',
+        },
       },
       {
         id: 'p4',
-        cek: { a: 64, p: 2, q: 3 },
-        jawab: 16,
-        label: '64^(2/3) = (64^(1/3))² = (∛64)² = …',
-        hints: ['Kerjakan akarnya dulu: ∛64 = 4.', 'Lalu kuadratkan: 4² = 4 × 4.'],
-        temuan: '64^(2/3) = (∛64)² = 4² = 16.',
+        tanya: '4⁵ = (2²)⁵ = 2¹⁰ dan 8³ = (2³)³ = 2⁹. Jadi …',
+        opsi: [
+          { id: 'gt', label: '4⁵ > 8³' },
+          { id: 'lt', label: '4⁵ < 8³' },
+          { id: 'eq', label: '4⁵ = 8³' },
+          { id: 'tidak', label: 'Tidak bisa dibandingkan karena basisnya berbeda' },
+        ],
+        correct: 'gt',
+        umpan: {
+          gt: 'Benar! Setelah basis disamakan menjadi 2, bandingkan pangkatnya: 10 > 9, jadi 4⁵ > 8³ (1.024 > 512).',
+          lt: 'Basis 8 memang lebih besar, tetapi setelah disamakan: 2¹⁰ dan 2⁹. Pangkat 10 > 9.',
+          eq: 'Keduanya memang berbasis 2, tetapi pangkatnya berbeda (10 dan 9).',
+          tidak: 'Bisa! Basis 4 dan 8 sama-sama pangkat dari 2, jadi basisnya dapat disamakan.',
+        },
       },
       {
         id: 'p5',
-        cek: { a: 64, p: 3, q: 2 },
-        jawab: 512,
-        label: '64^(3/2) = (√64)³ = …',
-        hints: ['√64 = 8.', 'Lalu 8³ = 8 × 8 × 8.'],
-        temuan: '64^(3/2) = (√64)³ = 8³ = 512.',
+        tanya: 'Manakah yang lebih besar: 5⁰ atau 2⁻¹?',
+        opsi: [
+          { id: 'a', label: '5⁰' },
+          { id: 'b', label: '2⁻¹' },
+          { id: 'sama', label: 'Sama besar' },
+          { id: 'nol', label: 'Keduanya bernilai 0 atau kurang' },
+        ],
+        correct: 'a',
+        umpan: {
+          a: 'Tepat! Pakai patokan 1: 5⁰ = 1, sedangkan 2⁻¹ = 1/2 < 1.',
+          b: 'Ingat: bilangan (bukan nol) berpangkat 0 bernilai 1, bukan 0. Jadi 5⁰ = 1 > 1/2 = 2⁻¹.',
+          sama: '5⁰ = 1 dan 2⁻¹ = 1/2 — tidak sama.',
+          nol: '5⁰ = 1 (bukan 0) dan 2⁻¹ = 1/2 (positif, bukan negatif).',
+        },
       },
       {
         id: 'p6',
-        cek: { a: 8, p: 2, q: 3 },
-        jawab: 4,
-        label: 'Bandingkan: ∛(8²) = ∛64 = …  (dan (∛8)² = 2² = 4)',
-        hints: ['8² = 64.', 'Kamu sudah tahu ∛64 dari langkah sebelumnya.'],
-        temuan:
-          '∛(8²) = (∛8)² = 4 = 8^(2/3). Memangkatkan dulu atau mengakarkan dulu, hasilnya SAMA.',
-      },
-    ],
-    tabelJudul: 'Tabel temuanmu',
-    tabel: [
-      { a: 64, p: 1, q: 2 },
-      { a: 64, p: 1, q: 3 },
-      { a: 64, p: 1, q: 6 },
-      { a: 64, p: 2, q: 3 },
-      { a: 64, p: 3, q: 2 },
-      { a: 8, p: 2, q: 3 },
-    ],
-    tanya: [
-      {
-        id: 't1',
-        tanya: 'Dari tabel, a^(m/n) dapat ditulis dalam bentuk akar sebagai …',
+        tanya: 'Manakah yang lebih besar: (−2)³ atau (−2)²?',
         opsi: [
-          {
-            id: 'benar',
-            label: 'ⁿ√(aᵐ) — pembilang m menjadi pangkat, penyebut n menjadi indeks akar',
-          },
-          { id: 'tukar', label: 'ᵐ√(aⁿ) — pembilang m menjadi indeks akar' },
-          { id: 'bagi', label: 'aᵐ : n' },
-          { id: 'kali', label: 'n × √(aᵐ)' },
+          { id: 'b', label: '(−2)²' },
+          { id: 'a', label: '(−2)³' },
+          { id: 'sama', label: 'Sama besar' },
+          { id: 'tidak', label: 'Tidak bisa dibandingkan karena basisnya negatif' },
         ],
-        correct: 'benar',
+        correct: 'b',
         umpan: {
-          benar: 'Tepat! Misalnya 64^(2/3) = ∛(64²) = (∛64)² = 16.',
-          tukar:
-            'Terbalik. Coba 64^(3/2): tabel menunjukkan (√64)³ = 512. Penyebut 2 menjadi indeks akar √.',
-          bagi: 'Periksa: 64² : 3 bukan 16. Penyebut bukan pembagi, melainkan indeks akar.',
-          kali: 'Penyebut n bukan pengali di depan akar, melainkan indeks akar.',
+          b: 'Benar! Tentukan tandanya dulu: (−2)³ = −8 (pangkat ganjil → negatif) dan (−2)² = 4 (pangkat genap → positif).',
+          a: 'Untuk basis negatif, aturan "pangkat lebih besar → lebih besar" tidak berlaku. (−2)³ = −8, sedangkan (−2)² = 4.',
+          sama: '(−2)³ = −8 dan (−2)² = 4 — tandanya pun berbeda.',
+          tidak: 'Bisa! Hitung nilainya: −8 dan 4, lalu bandingkan seperti bilangan bulat.',
         },
       },
     ],
-    nextLabel: 'Lanjut ke Ubin Faktor Kembar →',
+    strategiJudul: 'Empat strategi membandingkan bilangan berpangkat',
+    strategiContoh: {
+      basisSama: '2⁻³ > 2⁻⁵ karena −3 > −5',
+      pangkatSama: '6⁴ > 5⁴ karena 6 > 5 · 2⁻³ > 5⁻³ karena pangkatnya negatif',
+      samakanBasis: '4⁵ = 2¹⁰ > 2⁹ = 8³',
+      hitungNilai: '5⁰ = 1 > 1/2 = 2⁻¹ · (−2)³ = −8 < 4 = (−2)²',
+    },
+    urutJudul: 'Mengurutkan',
+    urutTeks:
+      'Untuk mengurutkan, bandingkan bilangan berpasangan dengan strategi di atas, atau kelompokkan dulu: negatif (< 0), antara 0 dan 1 (pangkat negatif), tepat 1 (pangkat nol), lalu lebih dari 1. Naik = terkecil ke terbesar; turun = terbesar ke terkecil.',
+    dugaanJudul: 'Cek dugaanmu di awal',
+    nextLabel: 'Lanjut: Bentuk Tim →',
   },
 
   /* ----------------------------------------------------------
-     TAHAP 5 — MENGUMPULKAN DATA C: MENYEDERHANAKAN BENTUK AKAR
+     TAHAP 3 — MENGORGANISASIKAN KELOMPOK (NHT)
      ---------------------------------------------------------- */
-  sederhana: {
-    kicker: 'Tahap 5 · Mengumpulkan Data (C)',
-    syntax: 'Discovery Learning · Sintaks 3',
-    goal: 'Menemukan cara menyederhanakan bentuk akar dengan mengelompokkan faktor prima yang kembar.',
-    guru: 'Tunjukkan dulu bahwa √(2 × 2) = √4 = 2: sepasang faktor kembar “keluar” dari akar sebagai satu faktor. Untuk ∛, butuh TIGA faktor kembar. Minta murid menjelaskan ke pasangannya sebelum mengisi.',
-    cerita:
-      'Kembali ke kebun: √72 m. Pak Gani menulis 72 sebagai perkalian faktor prima: 72 = 2 × 2 × 2 × 3 × 3. Ubin-ubin faktor itu ada di dalam tanda akar.',
-    aturan:
-      'Aturan main: di dalam √, ketuk DUA ubin yang sama → keduanya keluar sebagai satu ubin, karena √(2 × 2) = 2. Di dalam ∛, butuh TIGA ubin yang sama, karena ∛(3 × 3 × 3) = 3.',
-    umpanUbin: {
-      beda: 'Ubin yang dikelompokkan harus bernilai SAMA (kembar).',
-      kelompok: 'Satu kelompok kembar keluar dari akar!',
-    },
-    ubin: [
+  tim: {
+    kicker: 'Tahap 3 · Bentuk Tim & Nomor Kepala',
+    syntax: CL + ' · Fase 3',
+    goal: 'Membentuk tim heterogen, menyepakati aturan kerja, dan menerima nomor kepala.',
+    guru: 'Bentuk tim 3–4 murid dengan kemampuan beragam. Jelaskan aturan NHT: setiap misi dikerjakan bersama sampai SEMUA anggota paham, karena media akan memanggil satu nomor secara acak untuk menjelaskan. Guru dapat mengonfirmasi penjelasan di centang "sudah menjelaskan".',
+    namaTimLabel: 'Nama tim',
+    namaTimPlaceholder: 'Contoh: Tim Pangkat Tiga',
+    anggotaLabel: 'Nama anggota',
+    minAnggota: 3,
+    maksAnggota: 4,
+    kesepakatanJudul: 'Kesepakatan tim',
+    kesepakatan: [
+      { id: 'paham', teks: 'Kami memastikan SETIAP anggota paham sebelum menekan pilihan.' },
+      { id: 'jelas', teks: 'Siapa pun yang nomornya dipanggil siap menjelaskan jawaban tim.' },
+      { id: 'hormat', teks: 'Kami saling mendengarkan dan membantu, bukan saling menyalahkan.' },
+    ],
+    acakLabel: '🎲 Bagikan Nomor Kepala',
+    acakUlangLabel: '🎲 Acak Ulang Nomor',
+    nomorJudul: 'Nomor kepala tim kalian',
+    nomorCatatan:
+      'Ingat nomormu! Di akhir setiap misi, satu nomor dipanggil acak untuk menjelaskan.',
+    nextLabel: 'Mulai Misi 1 →',
+  },
+
+  /* ----------------------------------------------------------
+     TAHAP 4 — MISI 1: BANDINGKAN!
+     Kunci strategi, lambang, & makna dihitung engine dari p dan q.
+     makna: id 'p' (p lebih besar), 'q' (q lebih besar), 'sama'.
+     ---------------------------------------------------------- */
+  misiBanding: {
+    kicker: 'Tahap 4 · Misi 1: Bandingkan!',
+    syntax: CL + ' · Fase 4',
+    goal: 'Membandingkan dua bilangan berpangkat bulat dengan strategi yang cocok dan memaknainya dalam konteks.',
+    guru: 'Berkeliling dan dengarkan diskusi "kepala bersatu". Bila tim salah memilih lambang, tanyakan "Strategi apa yang kalian pakai? Coba cek nilainya." alih-alih memberi jawaban. Setelah semua soal selesai, konfirmasi penjelasan anggota yang nomornya dipanggil.',
+    langkah: [
+      'Baca konteksnya bersama. Pastikan semua anggota tahu apa yang dibandingkan.',
+      '① Pilih strategi yang paling cocok.',
+      '② Pilih lambang <, >, atau =. Salah? Baca petunjuknya, diskusikan, coba lagi.',
+      '③ Pilih makna perbandingan dalam konteks.',
+    ],
+    soal: [
+      {
+        id: 'b1',
+        ikon: '🦠',
+        cerita:
+          'Koloni bakteri A menjadi 2 kali lipat setiap jam; setelah 8 jam banyaknya 2⁸ sel. Koloni B setelah 11 jam banyaknya 2¹¹ sel.',
+        p: { a: 2, n: 8 },
+        q: { a: 2, n: 11 },
+        maknaTanya: 'Jadi, …',
+        makna: [
+          { id: 'p', label: 'Koloni A lebih banyak.' },
+          { id: 'q', label: 'Koloni B lebih banyak.' },
+          { id: 'sama', label: 'Kedua koloni sama banyak.' },
+        ],
+      },
+      {
+        id: 'b2',
+        ikon: '🔐',
+        cerita:
+          'Gembok A punya 4 roda, tiap roda berisi 6 simbol, sehingga ada 6⁴ kombinasi. Gembok B punya 4 roda, tiap roda berisi 5 angka, sehingga ada 5⁴ kombinasi.',
+        p: { a: 6, n: 4 },
+        q: { a: 5, n: 4 },
+        maknaTanya: 'Gembok yang lebih sulit ditebak (kombinasinya lebih banyak) adalah …',
+        makna: [
+          { id: 'p', label: 'Gembok A.' },
+          { id: 'q', label: 'Gembok B.' },
+          { id: 'sama', label: 'Keduanya sama sulit.' },
+        ],
+      },
+      {
+        id: 'b3',
+        ikon: '📨',
+        cerita:
+          'Sebuah pesan berantai di grup A terkirim ke 9⁴ akun, sedangkan di grup B terkirim ke 27³ akun.',
+        p: { a: 9, n: 4 },
+        q: { a: 27, n: 3 },
+        maknaTanya: 'Jadi, …',
+        makna: [
+          { id: 'p', label: 'Pesan di grup A menjangkau lebih banyak akun.' },
+          { id: 'q', label: 'Pesan di grup B menjangkau lebih banyak akun.' },
+          { id: 'sama', label: 'Keduanya menjangkau akun yang sama banyak.' },
+        ],
+      },
+      {
+        id: 'b4',
+        ikon: '🌫️',
+        cerita:
+          'Diameter sebutir debu sekitar 10⁻⁵ m, sedangkan diameter partikel asap sekitar 10⁻⁷ m.',
+        p: { a: 10, n: -5 },
+        q: { a: 10, n: -7 },
+        maknaTanya: 'Jadi, …',
+        makna: [
+          { id: 'p', label: 'Butir debu lebih besar daripada partikel asap.' },
+          { id: 'q', label: 'Partikel asap lebih besar daripada butir debu.' },
+          { id: 'sama', label: 'Keduanya sama besar.' },
+        ],
+      },
+      {
+        id: 'b5',
+        ikon: '🧃',
+        cerita: 'Botol A berisi 7⁰ liter jus, sedangkan gelas B berisi 3⁻² liter jus.',
+        p: { a: 7, n: 0 },
+        q: { a: 3, n: -2 },
+        maknaTanya: 'Jadi, …',
+        makna: [
+          { id: 'p', label: 'Jus di botol A lebih banyak.' },
+          { id: 'q', label: 'Jus di gelas B lebih banyak.' },
+          { id: 'sama', label: 'Jus di keduanya sama banyak.' },
+        ],
+      },
+      {
+        id: 'b6',
+        ikon: '🃏',
+        cerita:
+          'Dalam permainan kartu ajaib, kartu A mengubah skor sebesar (−3)³ dan kartu B mengubah skor sebesar (−3)⁴. Makin besar nilainya, makin menguntungkan.',
+        p: { a: -3, n: 3 },
+        q: { a: -3, n: 4 },
+        maknaTanya: 'Kartu yang lebih menguntungkan adalah …',
+        makna: [
+          { id: 'p', label: 'Kartu A.' },
+          { id: 'q', label: 'Kartu B.' },
+          { id: 'sama', label: 'Keduanya sama menguntungkan.' },
+        ],
+      },
+      {
+        id: 'b7',
+        ikon: '🍰',
+        cerita:
+          'Sepotong kue A berukuran 2⁻³ loyang, sedangkan sepotong kue B berukuran 5⁻³ loyang.',
+        p: { a: 2, n: -3 },
+        q: { a: 5, n: -3 },
+        maknaTanya: 'Jadi, …',
+        makna: [
+          { id: 'p', label: 'Potongan kue A lebih besar.' },
+          { id: 'q', label: 'Potongan kue B lebih besar.' },
+          { id: 'sama', label: 'Kedua potongan sama besar.' },
+        ],
+      },
+    ],
+    nhtTugas:
+      'Jelaskan strategi yang tim pakai untuk salah satu soal, dan mengapa 9⁴ < 27³ walaupun pangkat 4 lebih besar dari 3.',
+    nextLabel: 'Lanjut ke Misi 2 →',
+  },
+
+  /* ----------------------------------------------------------
+     TAHAP 5 — MISI 2: URUTKAN!
+     Kunci urutan dihitung engine (urutanIdPangkat).
+     ---------------------------------------------------------- */
+  misiUrut: {
+    kicker: 'Tahap 5 · Misi 2: Urutkan!',
+    syntax: CL + ' · Fase 4',
+    goal: 'Mengurutkan beberapa bilangan berpangkat bulat dari terkecil ke terbesar atau sebaliknya.',
+    guru: 'Dorong tim mengelompokkan dulu: negatif, antara 0 dan 1, tepat 1, lebih dari 1. Tim boleh menulis nilai di kertas buram. Panggil nomor setelah ketiga set selesai.',
+    langkah: [
+      'Perhatikan arah urutan: naik (terkecil → terbesar) atau turun (terbesar → terkecil).',
+      'Kelompokkan atau bandingkan berpasangan dengan strategi yang cocok.',
+      'Ketuk kartu satu per satu untuk mengisi urutan, lalu tekan Periksa Urutan.',
+    ],
+    soal: [
       {
         id: 'u1',
-        r: 72,
-        n: 2,
-        label: 'Sederhanakan √72 (sisi kebun)',
-        hints: [
-          'Di luar akar ada 2 dan 3. Kalikan keduanya.',
-          'Di dalam akar tersisa satu ubin 2.',
-          '√72 = (2 × 3)√2.',
+        ikon: '🔬',
+        judul: 'Ukuran benda renik (meter)',
+        cerita: 'Urutkan ukuran benda-benda renik berikut dari yang terkecil.',
+        arah: 'naik',
+        startLabel: 'Terkecil',
+        endLabel: 'Terbesar',
+        separator: '<',
+        items: [
+          { id: 'pasir', a: 10, n: -3, teks: 'butir pasir halus' },
+          { id: 'sel', a: 10, n: -5, teks: 'sel kulit' },
+          { id: 'virus', a: 10, n: -7, teks: 'virus' },
+          { id: 'molekul', a: 10, n: -9, teks: 'molekul gula' },
+          { id: 'bakteri', a: 10, n: -6, teks: 'bakteri' },
         ],
-        temuan:
-          '√72 = √(36 × 2) = √36 × √2 = 6√2. Itulah tulisan Pak Gani! 36 adalah faktor kuadrat TERBESAR dari 72.',
       },
       {
         id: 'u2',
-        r: 48,
-        n: 2,
-        label: 'Sederhanakan √48',
-        hints: [
-          '48 = 2 × 2 × 2 × 2 × 3. Ada dua pasang ubin 2.',
-          'Di luar akar: 2 × 2 = 4.',
-          'Di dalam akar tersisa 3.',
+        ikon: '🔑',
+        judul: 'Banyak kemungkinan kata sandi',
+        cerita:
+          'Lima aplikasi memakai aturan sandi yang berbeda. Urutkan banyak kemungkinan sandinya dari yang terbanyak (paling aman).',
+        arah: 'turun',
+        startLabel: 'Terbanyak',
+        endLabel: 'Tersedikit',
+        separator: '>',
+        items: [
+          { id: 'a1', a: 2, n: 6, teks: 'aplikasi A' },
+          { id: 'a2', a: 3, n: 3, teks: 'aplikasi B' },
+          { id: 'a3', a: 5, n: 2, teks: 'aplikasi C' },
+          { id: 'a4', a: 4, n: 2, teks: 'aplikasi D' },
+          { id: 'a5', a: 10, n: 1, teks: 'aplikasi E' },
         ],
-        temuan: '√48 = √(16 × 3) = 4√3.',
       },
       {
         id: 'u3',
-        r: 54,
-        n: 3,
-        label: 'Sederhanakan ∛54',
-        hints: [
-          '54 = 2 × 3 × 3 × 3. Untuk ∛ butuh tiga ubin kembar.',
-          'Tiga ubin 3 keluar sebagai satu ubin 3.',
-          'Di dalam akar tersisa 2.',
+        ikon: '🃏',
+        judul: 'Kartu skor permainan',
+        cerita: 'Urutkan nilai kartu skor berikut dari yang terkecil.',
+        arah: 'naik',
+        startLabel: 'Terkecil',
+        endLabel: 'Terbesar',
+        separator: '<',
+        items: [
+          { id: 'k1', a: 2, n: -2, teks: 'kartu biru' },
+          { id: 'k2', a: 3, n: 0, teks: 'kartu hijau' },
+          { id: 'k3', a: 2, n: 3, teks: 'kartu emas' },
+          { id: 'k4', a: 5, n: -1, teks: 'kartu ungu' },
+          { id: 'k5', a: -2, n: 3, teks: 'kartu merah' },
         ],
-        temuan: '∛54 = ∛(27 × 2) = 3∛2. Untuk ∛, cari faktor KUBIK terbesar (27 = 3³).',
       },
     ],
-    tanya: [
-      {
-        id: 's1',
-        tanya: 'Pada √72 = √(36 × 2) = 6√2, bilangan 36 adalah …',
-        opsi: [
-          { id: 'benar', label: 'faktor bilangan kuadrat terbesar dari 72' },
-          { id: 'terbesar', label: 'faktor terbesar dari 72' },
-          { id: 'setengah', label: 'setengah dari 72' },
-          { id: 'sisa', label: 'sisa dari 72 dikurangi 36' },
-        ],
-        correct: 'benar',
-        umpan: {
-          benar:
-            'Tepat! 36 = 6² adalah faktor kuadrat terbesar, jadi √36 = 6 dapat keluar dari akar.',
-          terbesar:
-            'Faktor terbesar 72 (selain 72) adalah 36, tetapi yang penting 36 adalah bilangan KUADRAT (6²).',
-          setengah:
-            'Kebetulan 36 = 72 : 2, tetapi yang penting 36 adalah bilangan kuadrat. Pada √48, faktornya 16, bukan 24.',
-          sisa: 'Bentuk akar disederhanakan dengan PERKALIAN faktor, bukan pengurangan.',
-        },
-      },
-      {
-        id: 's2',
-        tanya: 'Rudi menulis √72 = 2√18. Mengapa jawaban itu belum paling sederhana?',
-        opsi: [
-          {
-            id: 'benar',
-            label: '18 masih memuat faktor kuadrat 9, sehingga √18 = 3√2 dan 2√18 = 6√2',
-          },
-          { id: 'salah', label: 'Karena 2√18 tidak sama nilainya dengan √72' },
-          { id: 'genap', label: 'Karena bilangan di dalam akar harus ganjil' },
-          { id: 'kecil', label: 'Karena bilangan di luar akar harus lebih besar dari 5' },
-        ],
-        correct: 'benar',
-        umpan: {
-          benar:
-            'Tepat! Nilainya sama, tetapi masih bisa disederhanakan. Gunakan faktor kuadrat TERBESAR agar sekali jalan.',
-          salah:
-            '2√18 = √(4 × 18) = √72, jadi nilainya SAMA. Masalahnya, 18 masih memuat faktor kuadrat.',
-          genap:
-            '√2 sudah paling sederhana walau 2 genap. Yang diperiksa adalah faktor kuadrat, bukan genap/ganjil.',
-          kecil:
-            'Tidak ada aturan seperti itu. Yang diperiksa adalah faktor kuadrat di dalam akar.',
-        },
-      },
-    ],
-    nextLabel: 'Lanjut Mengolah Data →',
+    salahTeks:
+      'Kartu bertanda merah belum tepat. Bandingkan kartu itu dengan tetangganya memakai strategi yang cocok (atau hitung nilainya), lalu ketuk untuk memindahkannya.',
+    nhtTugas:
+      'Jelaskan cara tim mengurutkan set kartu skor: mengapa (−2)³ paling kecil dan mengapa 5⁻¹ < 2⁻² < 3⁰.',
+    nextLabel: 'Lanjut ke Misi 3 →',
   },
 
   /* ----------------------------------------------------------
-     TAHAP 6 — MENGOLAH DATA
+     TAHAP 6 — MISI 3: CEK PENDAPAT TEMAN
+     Butir ber-`cek` diuji terhadap simbolBandingPangkat.
      ---------------------------------------------------------- */
-  olah: {
-    kicker: 'Tahap 6 · Mengolah Data',
-    syntax: 'Discovery Learning · Sintaks 4',
-    goal: 'Mengolah temuan menjadi aturan konversi akar ⇄ pangkat pecahan dan aturan menyederhanakan.',
-    guru: 'Saat misi konverter, minta murid menyebutkan dulu nilai a, m, dan n sebelum menekan tombol. Diskusikan pernyataan pilah yang paling banyak dijawab keliru.',
+  misiDiskusi: {
+    kicker: 'Tahap 6 · Misi 3: Cek Pendapat Teman',
+    syntax: CL + ' · Fase 4',
+    goal: 'Menilai kebenaran pendapat tentang perbandingan bilangan berpangkat dan memperbaiki miskonsepsi.',
+    guru: 'Setiap pernyataan hanya bisa dijawab sekali — pastikan tim berdiskusi dulu. Pilih 2–3 pernyataan yang paling banyak salah untuk dibahas secara klasikal.',
     pengantar:
-      'Gunakan data dari Lab, Tangga Pangkat 64, dan Ubin Faktor Kembar untuk menjawab pertanyaan penuntun berikut.',
-    konsep: [
-      {
-        id: 'k1',
-        tanya: 'Bentuk pangkat pecahan dari ⁵√(3²) adalah …',
-        opsi: [
-          { id: 'benar', label: '3^(2/5)' },
-          { id: 'tukar', label: '3^(5/2)' },
-          { id: 'basis', label: '2^(3/5)' },
-          { id: 'kurang', label: '3^(2−5)' },
-        ],
-        correct: 'benar',
-        umpan: {
-          benar:
-            'Tepat! Pangkat di dalam akar (2) menjadi pembilang, indeks akar (5) menjadi penyebut.',
-          tukar: 'Terbalik. Indeks akar 5 menjadi PENYEBUT, pangkat 2 menjadi pembilang.',
-          basis: 'Basisnya tetap bilangan di dalam akar, yaitu 3.',
-          kurang: 'Tidak ada pengurangan. Indeks akar menjadi penyebut pecahan pangkat.',
-        },
-      },
-      {
-        id: 'k2',
-        tanya: 'Bentuk akar dari 7^(3/4) adalah …',
-        opsi: [
-          { id: 'benar', label: '∜(7³)' },
-          { id: 'tukar', label: '∛(7⁴)' },
-          { id: 'koef', label: '4√(7³)' },
-          { id: 'bagi', label: '7³ : 4' },
-        ],
-        correct: 'benar',
-        umpan: {
-          benar: 'Tepat! Penyebut 4 menjadi indeks akar, pembilang 3 menjadi pangkat 7.',
-          tukar:
-            'Terbalik. Penyebut (4) menjadi indeks akar, pembilang (3) menjadi pangkat di dalam akar.',
-          koef: 'Angka 4 ditulis kecil di KIRI ATAS tanda akar (indeks), bukan besar di depan akar sebagai pengali.',
-          bagi: 'Penyebut pecahan pangkat bukan pembagi, melainkan indeks akar.',
-        },
-      },
-      {
-        id: 'k3',
-        tanya: 'Bentuk akar dikatakan PALING SEDERHANA bila …',
-        opsi: [
-          {
-            id: 'benar',
-            label:
-              'bilangan di dalam akar tidak lagi memuat faktor bilangan kuadrat (untuk ∛: kubik) selain 1',
-          },
-          {
-            id: 'kecil',
-            label: 'bilangan di dalam akar sekecil mungkin, walaupun nilainya berubah',
-          },
-          { id: 'prima', label: 'bilangan di luar akar adalah bilangan prima' },
-          { id: 'hilang', label: 'tanda akarnya hilang' },
-        ],
-        correct: 'benar',
-        umpan: {
-          benar:
-            'Tepat! Misalnya 6√2 sudah paling sederhana karena 2 tidak memuat faktor kuadrat selain 1.',
-          kecil: 'Nilainya tidak boleh berubah! Menyederhanakan hanya mengubah cara menulis.',
-          prima:
-            '6√2 sudah paling sederhana walau 6 bukan prima. Yang diperiksa adalah bilangan DI DALAM akar.',
-          hilang: '√2 tidak dapat dihilangkan tanda akarnya, tetapi sudah paling sederhana.',
-        },
-      },
-    ],
-    instruksiMisi:
-      'Misi Konverter: atur a, m, dan n dengan tombol − dan + sampai konverter menampilkan bentuk yang diminta. Perhatikan warna: m (pembilang) dan n (penyebut).',
-    konverterAwal: { a: 8, m: 1, n: 3 },
-    misi: [
-      {
-        id: 'm1',
-        teks: 'Tampilkan ∛(5²). Apa bentuk pangkat pecahannya?',
-        target: { a: 5, m: 2, n: 3 },
-        temuan: '∛(5²) = 5^(2/3).',
-      },
-      {
-        id: 'm2',
-        teks: 'Tampilkan 2^(3/4). Apa bentuk akarnya?',
-        target: { a: 2, m: 3, n: 4 },
-        temuan: '2^(3/4) = ∜(2³).',
-      },
-      {
-        id: 'm3',
-        teks: 'Tampilkan 10^(1/2). Apa bentuk akarnya?',
-        target: { a: 10, m: 1, n: 2 },
-        temuan: '10^(1/2) = √10. Indeks 2 biasanya tidak ditulis.',
-      },
-    ],
-    instruksiPilah:
-      'Pilah setiap pernyataan berikut: TEPAT atau KELIRU? Setiap butir hanya bisa dijawab sekali.',
-    opsiPilah: [
-      { id: 'tepat', label: 'Tepat' },
-      { id: 'keliru', label: 'Keliru' },
-    ],
-    pilah: [
-      {
-        id: 'q1',
-        teks: '∛(4²) = 4^(2/3)',
-        cek: { jenis: 'konversi', n: 3, r: 4, m: 2, pangkat: { a: 4, p: 2, q: 3 } },
-        correct: 'tepat',
-        explanation: 'Pangkat 2 menjadi pembilang, indeks 3 menjadi penyebut.',
-      },
-      {
-        id: 'q2',
-        teks: '√5 = 5^(1/2)',
-        cek: { jenis: 'konversi', n: 2, r: 5, m: 1, pangkat: { a: 5, p: 1, q: 2 } },
-        correct: 'tepat',
-        explanation: 'Akar kuadrat sama dengan pangkat ½.',
-      },
-      {
-        id: 'q3',
-        teks: '√(6³) = 6^(2/3)',
-        cek: { jenis: 'konversi', n: 2, r: 6, m: 3, pangkat: { a: 6, p: 2, q: 3 } },
-        correct: 'keliru',
-        explanation: 'Pembilang dan penyebut tertukar. √(6³) = 6^(3/2).',
-      },
-      {
-        id: 'q4',
-        teks: '∜(3⁸) = 3^(4/8)',
-        cek: { jenis: 'konversi', n: 4, r: 3, m: 8, pangkat: { a: 3, p: 4, q: 8 } },
-        correct: 'keliru',
-        explanation: 'Terbalik: ∜(3⁸) = 3^(8/4) = 3² = 9.',
-      },
-      {
-        id: 'q5',
-        teks: '√50 = 5√2',
-        cek: { jenis: 'sederhana', r: 50, n: 2, luar: 5, dalam: 2 },
-        correct: 'tepat',
-        explanation: '√50 = √(25 × 2) = 5√2.',
-      },
-      {
-        id: 'q6',
-        teks: '√12 = 4√3',
-        cek: { jenis: 'sederhana', r: 12, n: 2, luar: 4, dalam: 3 },
-        correct: 'keliru',
-        explanation: 'Faktor 4 harus diakarkan dulu: √12 = √(4 × 3) = 2√3.',
-      },
-      {
-        id: 'q7',
-        teks: '∛16 = 2∛2',
-        cek: { jenis: 'sederhana', r: 16, n: 3, luar: 2, dalam: 2 },
-        correct: 'tepat',
-        explanation: '∛16 = ∛(8 × 2) = 2∛2, karena 8 = 2³.',
-      },
-      {
-        id: 'q8',
-        teks: '√32 = 2√8',
-        cek: { jenis: 'sederhana', r: 32, n: 2, luar: 2, dalam: 8 },
-        correct: 'keliru',
-        explanation:
-          'Nilainya sama, tetapi belum paling sederhana: 8 masih memuat faktor kuadrat 4. √32 = √(16 × 2) = 4√2.',
-      },
-    ],
-    nextLabel: 'Lanjut ke Pembuktian →',
-  },
-
-  /* ----------------------------------------------------------
-     TAHAP 7 — PEMBUKTIAN
-     ---------------------------------------------------------- */
-  verifikasi: {
-    kicker: 'Tahap 7 · Pembuktian',
-    syntax: 'Discovery Learning · Sintaks 5',
-    goal: 'Membuktikan dugaan awal dan menguji temuan pada soal konversi dan penyederhanaan.',
-    guru: 'Minta murid memeriksa 6√2 dengan kalkulator: 6 × 1,4142… = 8,485… sama dengan layar kalkulator Dina. Bahas pengecoh yang paling banyak dipilih.',
-    prediksiLabel: 'Dugaan awalmu',
-    hipotesisLabel: 'Hipotesismu',
-    kesimpulanDugaan: {
-      akar: 'Dugaanmu terbukti! 72^(1/2) = √72, bilangan yang jika dikuadratkan hasilnya 72. Lalu √72 = √(36 × 2) = 6√2. Cek kalkulator: 6 × 1,4142… = 8,485…, sama dengan layar Dina.',
-      bagi: 'Dugaanmu belum tepat: 72 : 2 = 36, padahal 36 × 36 = 1.296, bukan 72. 72^(1/2) = √72 = 6√2 ≈ 8,485.',
-      kali: 'Dugaanmu belum tepat: pangkat ½ bukan mengalikan dengan ½. 72^(1/2) = √72 = 6√2 ≈ 8,485.',
-      kecil:
-        'Dugaanmu belum tepat: 72^(1/2) = √72 ≈ 8,485, tidak kecil. Pangkat pecahan berarti bentuk akar.',
-    },
-    instruksiSoal:
-      'Uji temuanmu. Setiap soal hanya bisa dijawab sekali, jadi periksa dengan teliti sebelum memilih.',
-    soal: [
-      {
-        id: 'v1',
-        pernyataan: 'Bentuk pangkat pecahan dari √72 adalah …',
-        options: [
-          { id: 'benar', label: '72^(1/2)' },
-          { id: 'kuadrat', label: '72²' },
-          { id: 'tukar', label: '2^(1/72)' },
-          { id: 'bagi', label: '72 : 2' },
-        ],
-        correct: 'benar',
-        cek: { jenis: 'pangkat', n: 2, r: 72, m: 1 },
-        explanation: '√72 berindeks 2 (tidak ditulis) dan pangkat di dalamnya 1: 72^(1/2).',
-      },
-      {
-        id: 'v2',
-        pernyataan: 'Bentuk akar dari 10^(2/3) adalah …',
-        options: [
-          { id: 'benar', label: '∛(10²)' },
-          { id: 'tukar', label: '√(10³)' },
-          { id: 'koef', label: '3√(10²)' },
-          { id: 'bagi', label: '10² : 3' },
-        ],
-        correct: 'benar',
-        cek: { jenis: 'akar', a: 10, p: 2, q: 3 },
-        explanation: 'Penyebut 3 menjadi indeks akar, pembilang 2 menjadi pangkat: ∛(10²).',
-      },
-      {
-        id: 'v3',
-        pernyataan: 'Bentuk paling sederhana dari √72 adalah …',
-        options: [
-          { id: 'benar', label: '6√2' },
-          { id: 'belum', label: '2√18' },
-          { id: 'lupa', label: '36√2' },
-          { id: 'belum2', label: '3√8' },
-        ],
-        correct: 'benar',
-        cek: { jenis: 'sederhana', r: 72, n: 2 },
-        explanation: '72 = 36 × 2 dengan 36 faktor kuadrat terbesar, jadi √72 = 6√2.',
-      },
-      {
-        id: 'v4',
-        pernyataan: 'Bentuk paling sederhana dari √45 adalah …',
-        options: [
-          { id: 'benar', label: '3√5' },
-          { id: 'tukar', label: '5√3' },
-          { id: 'lupa', label: '9√5' },
-          { id: 'hilang', label: '15' },
-        ],
-        correct: 'benar',
-        cek: { jenis: 'sederhana', r: 45, n: 2 },
-        explanation: '√45 = √(9 × 5) = 3√5.',
-      },
-      {
-        id: 'v5',
-        pernyataan: 'Bentuk paling sederhana dari ∛54 adalah …',
-        options: [
-          { id: 'benar', label: '3∛2' },
-          { id: 'lupa', label: '27∛2' },
-          { id: 'indeks', label: '3√2' },
-          { id: 'tukar', label: '2∛3' },
-        ],
-        correct: 'benar',
-        cek: { jenis: 'sederhana', r: 54, n: 3 },
-        explanation: '∛54 = ∛(27 × 2) = 3∛2. Indeks akarnya tetap 3.',
-      },
-      {
-        id: 'v6',
-        pernyataan: 'Nilai dari 27^(2/3) adalah …',
-        options: [
-          { id: 'benar', label: '9' },
-          { id: 'kali', label: '18' },
-          { id: 'akar', label: '3' },
-          { id: 'tukar', label: '729' },
-        ],
-        correct: 'benar',
-        cek: { jenis: 'nilai', a: 27, p: 2, q: 3 },
-        explanation: '27^(2/3) = (∛27)² = 3² = 9.',
-      },
-    ],
-    nextLabel: 'Lanjut Menarik Kesimpulan →',
-  },
-
-  /* ----------------------------------------------------------
-     TAHAP 8 — MENARIK KESIMPULAN
-     ---------------------------------------------------------- */
-  generalisasi: {
-    kicker: 'Tahap 8 · Menarik Kesimpulan',
-    syntax: 'Discovery Learning · Sintaks 6',
-    goal: 'Menyusun kesimpulan tentang konversi bentuk akar ⇄ pangkat pecahan dan cara menyederhanakan bentuk akar.',
-    guru: 'Setelah kesimpulan tepat, minta murid menyalinnya ke buku catatan dengan satu contoh buatan sendiri untuk setiap kalimat.',
-    instruksi:
-      'Lengkapi setiap kalimat dengan potongan yang tepat dari daftar pilihan. Setiap potongan hanya dipakai satu kali; beberapa potongan adalah pengecoh. Pratinjau di bawah pilihan menampilkan notasinya.',
-    selectPlaceholder: '— pilih potongan kalimat —',
-    kalimat: [
-      { id: 'g1', awal: 'Akar pangkat n dari a, yaitu ⁿ√a, dapat ditulis', correct: 'c1' },
-      { id: 'g2', awal: 'Secara umum, ⁿ√(aᵐ) sama dengan', correct: 'c2' },
-      { id: 'g3', awal: 'Sebaliknya, a^(m/n) dapat ditulis sebagai', correct: 'c3' },
-      { id: 'g4', awal: 'Untuk menyederhanakan √b, tulis b sebagai', correct: 'c4' },
-      { id: 'g5', awal: 'Lalu keluarkan akar faktor kuadratnya:', correct: 'c5' },
-      {
-        id: 'g6',
-        awal: 'Bentuk akar sudah paling sederhana bila bilangan di dalam akar',
-        correct: 'c6',
-      },
-    ],
-    bank: [
-      { id: 'c1', teks: 'a^(1/n), yaitu a pangkat 1/n' },
-      {
-        id: 'c2',
-        teks: 'a^(m/n): pangkat di dalam akar menjadi pembilang, indeks akar menjadi penyebut',
-      },
-      { id: 'c3', teks: 'ⁿ√(aᵐ) atau (ⁿ√a)ᵐ' },
-      {
-        id: 'c4',
-        teks: 'perkalian faktor bilangan kuadrat TERBESAR dan faktor lain, mis. √72 = √(36 × 2)',
-      },
-      { id: 'c5', teks: '√(a² × b) = a√b, sehingga √72 = 6√2' },
-      { id: 'c6', teks: 'tidak lagi memuat faktor bilangan kuadrat (untuk ∛: kubik) selain 1' },
-      { id: 'd1', teks: 'a^(n/m): indeks akar menjadi pembilang' },
-      { id: 'd2', teks: 'a : n' },
-      { id: 'd3', teks: '√(a² × b) = a²√b, sehingga √72 = 36√2' },
-      { id: 'd4', teks: 'sekecil mungkin walaupun nilainya berubah' },
-    ],
-    rangkuman: [
-      'ⁿ√a = a^(1/n), misalnya √9 = 9^(1/2) = 3 dan ∛8 = 8^(1/3) = 2.',
-      'ⁿ√(aᵐ) = (ⁿ√a)ᵐ = a^(m/n): pangkat di dalam akar → pembilang, indeks akar → penyebut.',
-      'Contoh: ∛(5²) = 5^(2/3) dan 7^(3/4) = ∜(7³).',
-      'Menyederhanakan: √72 = √(36 × 2) = √36 × √2 = 6√2; ∛54 = ∛(27 × 2) = 3∛2.',
-      'Bentuk paling sederhana: bilangan di dalam akar tidak memuat faktor kuadrat (∛: kubik) selain 1.',
-    ],
-    nextLabel: 'Lanjut ke Uji Terap →',
-  },
-
-  /* ----------------------------------------------------------
-     TAHAP 9 — UJI TERAP
-     ---------------------------------------------------------- */
-  terapkan: {
-    kicker: 'Tahap 9 · Uji Terap',
-    syntax: 'Penerapan',
-    goal: 'Menerapkan konversi bentuk akar ⇄ pangkat pecahan dan penyederhanaan bentuk akar pada berbagai konteks.',
-    guru: 'Murid mengerjakan mandiri. Amati soal yang sering dijawab keliru untuk dibahas bersama.',
-    instruksi:
-      'Kerjakan soal satu per satu. Untuk soal isian, kamu boleh mencoba lagi. Desimal ditulis dengan koma, mis. 8,48.',
-    nextLabel: 'Lanjut ke Refleksi →',
-    soal: [
+      'Teman-teman dari kelas lain menuliskan pendapat berikut. Diskusikan dalam tim: benar atau salah? Setiap pernyataan hanya bisa dijawab SEKALI.',
+    opsi: OPSI_BENAR_SALAH,
+    pernyataan: [
       {
         id: 's1',
-        type: 'input',
-        konteks: 'Ubin lantai',
-        cerita:
-          'Sebuah ubin lantai berbentuk persegi memiliki luas 144 dm², sehingga panjang sisinya 144^(1/2) dm.',
-        pertanyaan: 'Berapa dm panjang sisi ubin tersebut?',
-        jawab: 12,
-        cek: { jenis: 'nilai', a: 144, p: 1, q: 2 },
-        explanation: '144^(1/2) = √144 = 12, karena 12 × 12 = 144.',
-        hints: [
-          'Pangkat ½ sama dengan akar kuadrat.',
-          'Bilangan berapa dikuadratkan hasilnya 144?',
-        ],
+        teks: '"2¹⁰ < 10³, karena basis 2 lebih kecil daripada basis 10."',
+        correct: 'salah',
+        cek: { p: { a: 2, n: 10 }, q: { a: 10, n: 3 }, sym: 'lt' },
+        explanation:
+          '2¹⁰ = 1.024 dan 10³ = 1.000, jadi 2¹⁰ > 10³. Membandingkan basis saja tidak cukup.',
       },
       {
         id: 's2',
-        type: 'choice',
-        konteks: 'Akuarium kubus',
-        cerita:
-          'Sebuah akuarium berbentuk kubus bervolume 27.000 cm³. Panjang rusuknya ∛27.000 cm.',
-        pertanyaan: 'Bentuk pangkat pecahan dari ∛27.000 adalah …',
-        options: [
-          { id: 'benar', label: '27.000^(1/3)' },
-          { id: 'kubik', label: '27.000³' },
-          { id: 'tukar', label: '3^(1/27000)' },
-          { id: 'bagi', label: '27.000 : 3' },
-        ],
-        correct: 'benar',
-        cek: { jenis: 'pangkat', n: 3, r: 27000, m: 1 },
-        explanation: '∛ berindeks 3, jadi ∛27.000 = 27.000^(1/3).',
-        hints: ['Indeks akar menjadi penyebut pecahan pangkat.'],
+        teks: '"2⁻³ bernilai negatif, jadi 2⁻³ < 0."',
+        correct: 'salah',
+        explanation:
+          '2⁻³ = 1/8, bilangan positif. Pangkat negatif berarti kebalikan, bukan bilangan negatif.',
       },
       {
         id: 's3',
-        type: 'input',
-        konteks: 'Akuarium kubus',
-        cerita: 'Masih akuarium tadi: rusuknya 27.000^(1/3) cm.',
-        pertanyaan: 'Berapa cm panjang rusuk akuarium tersebut?',
-        jawab: 30,
-        cek: { jenis: 'nilai', a: 27000, p: 1, q: 3 },
-        explanation: '30 × 30 × 30 = 27.000, jadi ∛27.000 = 30 cm.',
-        hints: ['Coba bilangan kelipatan 10.', '30 × 30 × 30 = ?'],
+        teks: '"Jika basisnya sama dan lebih dari 1, bilangan dengan pangkat lebih besar bernilai lebih besar."',
+        correct: 'benar',
+        explanation: 'Benar, termasuk untuk pangkat negatif: 2⁻³ > 2⁻⁵ karena −3 > −5.',
       },
       {
         id: 's4',
-        type: 'choice',
-        konteks: 'Layar persegi',
-        cerita:
-          'Layar sebuah jam pintar berbentuk persegi dengan luas 50 cm². Panjang sisinya √50 cm.',
-        pertanyaan: 'Bentuk paling sederhana dari √50 adalah …',
-        options: [
-          { id: 'benar', label: '5√2' },
-          { id: 'tukar', label: '2√5' },
-          { id: 'lupa', label: '25√2' },
-          { id: 'salah', label: '10√5' },
-        ],
-        correct: 'benar',
-        cek: { jenis: 'sederhana', r: 50, n: 2 },
-        explanation: '√50 = √(25 × 2) = 5√2.',
-        hints: ['Cari faktor kuadrat terbesar dari 50.'],
+        teks: '"(−2)³ > (−2)², karena pangkat 3 lebih besar daripada 2."',
+        correct: 'salah',
+        cek: { p: { a: -2, n: 3 }, q: { a: -2, n: 2 }, sym: 'gt' },
+        explanation:
+          '(−2)³ = −8 dan (−2)² = 4, jadi (−2)³ < (−2)². Untuk basis negatif, tentukan tandanya dulu.',
       },
       {
         id: 's5',
-        type: 'input',
-        konteks: 'Pangkat pecahan',
-        cerita: 'Dina menemukan soal tantangan: 16^(3/4).',
-        pertanyaan: 'Berapakah nilai 16^(3/4)?',
-        jawab: 8,
-        cek: { jenis: 'nilai', a: 16, p: 3, q: 4 },
-        explanation: '16^(3/4) = (∜16)³ = 2³ = 8.',
-        hints: ['Kerjakan akarnya dulu: ∜16 = 2 karena 2 × 2 × 2 × 2 = 16.', 'Lalu pangkatkan 3.'],
+        teks: '"5⁰ = 3⁰, karena keduanya bernilai 1."',
+        correct: 'benar',
+        cek: { p: { a: 5, n: 0 }, q: { a: 3, n: 0 }, sym: 'eq' },
+        explanation: 'Setiap bilangan bukan nol berpangkat 0 bernilai 1.',
       },
       {
         id: 's6',
-        type: 'choice',
-        konteks: 'Kotak kado',
-        cerita: 'Sebuah kotak kado berbentuk kubus bervolume 16 dm³. Panjang rusuknya ∛16 dm.',
-        pertanyaan: 'Bentuk paling sederhana dari ∛16 adalah …',
-        options: [
-          { id: 'benar', label: '2∛2' },
-          { id: 'lupa', label: '8∛2' },
-          { id: 'indeks', label: '2√2' },
-          { id: 'kuadrat', label: '4∛1' },
-        ],
+        teks: '"10⁻⁶ < 10⁻⁵"',
         correct: 'benar',
-        cek: { jenis: 'sederhana', r: 16, n: 3 },
-        explanation: '∛16 = ∛(8 × 2) = 2∛2, karena 8 = 2³.',
-        hints: ['Untuk ∛, cari faktor KUBIK terbesar (1, 8, 27, …).'],
+        cek: { p: { a: 10, n: -6 }, q: { a: 10, n: -5 }, sym: 'lt' },
+        explanation: '10⁻⁶ = 1/1.000.000 dan 10⁻⁵ = 1/100.000. Basis sama, −6 < −5.',
       },
       {
         id: 's7',
-        type: 'choice',
-        konteks: 'Menulis ulang',
-        cerita: 'Pak Gani menulis ⁵√(2³) di papan tulis.',
-        pertanyaan: 'Bentuk pangkat pecahannya adalah …',
-        options: [
-          { id: 'benar', label: '2^(3/5)' },
-          { id: 'tukar', label: '2^(5/3)' },
-          { id: 'basis', label: '3^(2/5)' },
-          { id: 'kali', label: '2¹⁵' },
-        ],
-        correct: 'benar',
-        cek: { jenis: 'pangkat', n: 5, r: 2, m: 3 },
+        teks: '"4⁵ = 8³, karena keduanya bisa ditulis sebagai 2 berpangkat."',
+        correct: 'salah',
+        cek: { p: { a: 4, n: 5 }, q: { a: 8, n: 3 }, sym: 'eq' },
         explanation:
-          'Pangkat di dalam akar (3) menjadi pembilang, indeks (5) menjadi penyebut: 2^(3/5).',
-        hints: ['Pembilang = pangkat di dalam akar; penyebut = indeks akar.'],
+          '4⁵ = 2¹⁰ dan 8³ = 2⁹. Basisnya sama-sama 2, tetapi pangkatnya berbeda: 4⁵ > 8³.',
       },
       {
         id: 's8',
-        type: 'input',
-        konteks: 'Pagar kebun',
-        cerita: 'Sisi kebun kelas VIII-B adalah 6√2 m. Gunakan √2 ≈ 1,414.',
-        pertanyaan: 'Kira-kira berapa meter panjang sisi kebun? (tulis dengan koma)',
-        jawab: 8.484,
-        toleransi: 0.005,
-        cek: { jenis: 'hampiran', r: 72, akarDalam: 1.414 },
-        explanation: '6√2 ≈ 6 × 1,414 = 8,484 m, sama dengan layar kalkulator Dina (8,485…).',
-        hints: ['6√2 artinya 6 × √2.', '6 × 1,414 = ?'],
+        teks: '"2⁻⁵ > 2⁻³, karena 5 lebih besar daripada 3."',
+        correct: 'salah',
+        cek: { p: { a: 2, n: -5 }, q: { a: 2, n: -3 }, sym: 'gt' },
+        explanation: 'Pangkatnya −5 dan −3, dan −5 < −3. Jadi 2⁻⁵ = 1/32 < 1/8 = 2⁻³.',
       },
     ],
+    catatanLabel:
+      'Catatan tim: tulis ulang satu pernyataan yang salah menjadi pernyataan yang benar.',
+    catatanPlaceholder: 'Contoh: 2¹⁰ > 10³, karena …',
+    nhtTugas:
+      'Pilih satu pernyataan yang SALAH, lalu jelaskan letak kesalahannya dan perbaikannya.',
+    nextLabel: 'Lanjut ke Kuis Individu →',
   },
 
   /* ----------------------------------------------------------
-     TAHAP 10 — REFLEKSI
+     TAHAP 7 — KUIS INDIVIDU
+     Bank 15 soal; `komposisi` menentukan jumlah per jenis.
+     `cek` dipakai tes untuk menghitung ulang kunci dengan engine:
+       { jenis: 'lambang', p, q }       → correct = lambang p ☐ q
+       { jenis: 'terbesar'|'terkecil' } → opsi ber-p, correct = ekstrem
+       { jenis: 'urut', arah, items }   → label correct = urutan benar
      ---------------------------------------------------------- */
-  refleksi: {
-    kicker: 'Tahap 10 · Refleksi',
-    syntax: 'Penutup',
-    goal: 'Merefleksikan proses menemukan dan tingkat pemahaman.',
-    guru: 'Baca beberapa refleksi secara acak (tanpa menyebut nama) untuk menutup pelajaran.',
-    pertanyaan: [
+  kuis: {
+    kicker: 'Tahap 7 · Kuis Individu',
+    syntax: CL + ' · Fase 5',
+    goal: 'Menunjukkan penguasaan individu dalam membandingkan dan mengurutkan bilangan berpangkat bulat.',
+    guru: 'Kuis dikerjakan MANDIRI (bergantian di perangkat tim atau di perangkat masing-masing). Anggota tim tidak boleh saling membantu pada tahap ini.',
+    instruksi: 'Kerjakan sendiri. Soal dan urutan pilihan diacak untuk setiap murid.',
+    banyak: 7,
+    komposisi: { lambang: 2, ekstrem: 2, urut: 1, konteks: 2 },
+    soal: [
       {
         id: 'q1',
-        teks: 'Jelaskan dengan kata-katamu sendiri cara mengubah ∛(5²) menjadi pangkat pecahan.',
-        placeholder: 'Pertama aku melihat … lalu …',
+        jenis: 'lambang',
+        cerita: 'Bandingkan 3⁵ dan 5³.',
+        pertanyaan: 'Pernyataan yang benar adalah …',
+        cek: { jenis: 'lambang', p: { a: 3, n: 5 }, q: { a: 5, n: 3 } },
+        options: [
+          { id: 'gt', label: '3⁵ > 5³' },
+          { id: 'lt', label: '3⁵ < 5³' },
+          { id: 'eq', label: '3⁵ = 5³' },
+        ],
+        correct: 'gt',
+        explanation: '3⁵ = 243 dan 5³ = 125, jadi 3⁵ > 5³.',
       },
       {
         id: 'q2',
-        teks: 'Mengapa √72 boleh ditulis 6√2? Ceritakan dengan ubin faktor kembar.',
-        placeholder: '72 = 2 × 2 × 2 × 3 × 3, lalu …',
+        jenis: 'lambang',
+        cerita: 'Bandingkan 2⁻⁴ dan 2⁻².',
+        pertanyaan: 'Pernyataan yang benar adalah …',
+        cek: { jenis: 'lambang', p: { a: 2, n: -4 }, q: { a: 2, n: -2 } },
+        options: [
+          { id: 'lt', label: '2⁻⁴ < 2⁻²' },
+          { id: 'gt', label: '2⁻⁴ > 2⁻²' },
+          { id: 'eq', label: '2⁻⁴ = 2⁻²' },
+        ],
+        correct: 'lt',
+        explanation: 'Basis sama dan −4 < −2, jadi 2⁻⁴ (= 1/16) < 2⁻² (= 1/4).',
       },
       {
         id: 'q3',
-        teks: 'Bagian mana yang paling membingungkan? Bagaimana kamu mengatasinya?',
-        placeholder: 'Yang paling membingungkan …',
+        jenis: 'lambang',
+        cerita: 'Bandingkan 16² dan 4⁴.',
+        pertanyaan: 'Pernyataan yang benar adalah …',
+        cek: { jenis: 'lambang', p: { a: 16, n: 2 }, q: { a: 4, n: 4 } },
+        options: [
+          { id: 'eq', label: '16² = 4⁴' },
+          { id: 'gt', label: '16² > 4⁴' },
+          { id: 'lt', label: '16² < 4⁴' },
+        ],
+        correct: 'eq',
+        explanation: 'Samakan basis: 16² = (2⁴)² = 2⁸ dan 4⁴ = (2²)⁴ = 2⁸. Keduanya 256.',
+      },
+      {
+        id: 'q4',
+        jenis: 'lambang',
+        cerita: 'Bandingkan (−2)⁵ dan (−2)⁴.',
+        pertanyaan: 'Pernyataan yang benar adalah …',
+        cek: { jenis: 'lambang', p: { a: -2, n: 5 }, q: { a: -2, n: 4 } },
+        options: [
+          { id: 'lt', label: '(−2)⁵ < (−2)⁴' },
+          { id: 'gt', label: '(−2)⁵ > (−2)⁴' },
+          { id: 'eq', label: '(−2)⁵ = (−2)⁴' },
+        ],
+        correct: 'lt',
+        explanation:
+          '(−2)⁵ = −32 (pangkat ganjil) dan (−2)⁴ = 16 (pangkat genap), jadi (−2)⁵ < (−2)⁴.',
+      },
+      {
+        id: 'q5',
+        jenis: 'lambang',
+        cerita: 'Bandingkan 10⁻² dan 5⁻².',
+        pertanyaan: 'Pernyataan yang benar adalah …',
+        cek: { jenis: 'lambang', p: { a: 10, n: -2 }, q: { a: 5, n: -2 } },
+        options: [
+          { id: 'lt', label: '10⁻² < 5⁻²' },
+          { id: 'gt', label: '10⁻² > 5⁻²' },
+          { id: 'eq', label: '10⁻² = 5⁻²' },
+        ],
+        correct: 'lt',
+        explanation:
+          'Pangkat sama dan negatif: basis lebih besar → nilai lebih kecil. 10⁻² = 1/100 < 1/25 = 5⁻².',
+      },
+      {
+        id: 'q6',
+        jenis: 'ekstrem',
+        cerita: 'Perhatikan bilangan 2⁸, 4³, 3⁵, dan 5³.',
+        pertanyaan: 'Bilangan yang nilainya paling besar adalah …',
+        cek: { jenis: 'terbesar' },
+        options: [
+          { id: 'a', label: '2⁸', p: { a: 2, n: 8 } },
+          { id: 'b', label: '4³', p: { a: 4, n: 3 } },
+          { id: 'c', label: '3⁵', p: { a: 3, n: 5 } },
+          { id: 'd', label: '5³', p: { a: 5, n: 3 } },
+        ],
+        correct: 'a',
+        explanation: '2⁸ = 256, 4³ = 64, 3⁵ = 243, 5³ = 125. Terbesar: 2⁸.',
+      },
+      {
+        id: 'q7',
+        jenis: 'ekstrem',
+        cerita: 'Perhatikan bilangan 3⁻², 2⁻³, 5⁰, dan 4⁻¹.',
+        pertanyaan: 'Bilangan yang nilainya paling kecil adalah …',
+        cek: { jenis: 'terkecil' },
+        options: [
+          { id: 'a', label: '3⁻²', p: { a: 3, n: -2 } },
+          { id: 'b', label: '2⁻³', p: { a: 2, n: -3 } },
+          { id: 'c', label: '5⁰', p: { a: 5, n: 0 } },
+          { id: 'd', label: '4⁻¹', p: { a: 4, n: -1 } },
+        ],
+        correct: 'a',
+        explanation: '3⁻² = 1/9, 2⁻³ = 1/8, 5⁰ = 1, 4⁻¹ = 1/4. Terkecil: 1/9 = 3⁻².',
+      },
+      {
+        id: 'q8',
+        jenis: 'ekstrem',
+        cerita: 'Perhatikan bilangan 10⁻³, 10⁻⁵, 10⁻¹, dan 10⁻⁴.',
+        pertanyaan: 'Bilangan yang nilainya paling besar adalah …',
+        cek: { jenis: 'terbesar' },
+        options: [
+          { id: 'a', label: '10⁻¹', p: { a: 10, n: -1 } },
+          { id: 'b', label: '10⁻⁵', p: { a: 10, n: -5 } },
+          { id: 'c', label: '10⁻³', p: { a: 10, n: -3 } },
+          { id: 'd', label: '10⁻⁴', p: { a: 10, n: -4 } },
+        ],
+        correct: 'a',
+        explanation: 'Basis sama (10): pangkat terbesar adalah −1, jadi 10⁻¹ = 1/10 paling besar.',
+      },
+      {
+        id: 'q9',
+        jenis: 'ekstrem',
+        cerita: 'Perhatikan bilangan (−3)³, (−2)⁴, 2⁻¹, dan 3⁰.',
+        pertanyaan: 'Bilangan yang nilainya paling kecil adalah …',
+        cek: { jenis: 'terkecil' },
+        options: [
+          { id: 'a', label: '(−3)³', p: { a: -3, n: 3 } },
+          { id: 'b', label: '(−2)⁴', p: { a: -2, n: 4 } },
+          { id: 'c', label: '2⁻¹', p: { a: 2, n: -1 } },
+          { id: 'd', label: '3⁰', p: { a: 3, n: 0 } },
+        ],
+        correct: 'a',
+        explanation: '(−3)³ = −27 adalah satu-satunya bilangan negatif, jadi paling kecil.',
+      },
+      {
+        id: 'q10',
+        jenis: 'urut',
+        cerita: 'Bilangan: 2⁵, 3³, 4², 5².',
+        pertanyaan: 'Urutan dari yang terkecil adalah …',
+        cek: {
+          jenis: 'urut',
+          arah: 'naik',
+          items: [
+            { a: 2, n: 5 },
+            { a: 3, n: 3 },
+            { a: 4, n: 2 },
+            { a: 5, n: 2 },
+          ],
+        },
+        options: [
+          { id: 'a', label: '4², 5², 3³, 2⁵' },
+          { id: 'b', label: '2⁵, 3³, 4², 5²' },
+          { id: 'c', label: '4², 5², 2⁵, 3³' },
+          { id: 'd', label: '5², 4², 3³, 2⁵' },
+        ],
+        correct: 'a',
+        explanation: '4² = 16, 5² = 25, 3³ = 27, 2⁵ = 32.',
+      },
+      {
+        id: 'q11',
+        jenis: 'urut',
+        cerita: 'Bilangan: 10⁻², 10⁰, 10⁻⁴, 10¹.',
+        pertanyaan: 'Urutan dari yang terbesar adalah …',
+        cek: {
+          jenis: 'urut',
+          arah: 'turun',
+          items: [
+            { a: 10, n: -2 },
+            { a: 10, n: 0 },
+            { a: 10, n: -4 },
+            { a: 10, n: 1 },
+          ],
+        },
+        options: [
+          { id: 'a', label: '10¹, 10⁰, 10⁻², 10⁻⁴' },
+          { id: 'b', label: '10⁻⁴, 10⁻², 10⁰, 10¹' },
+          { id: 'c', label: '10¹, 10⁰, 10⁻⁴, 10⁻²' },
+          { id: 'd', label: '10⁻⁴, 10¹, 10⁻², 10⁰' },
+        ],
+        correct: 'a',
+        explanation: 'Basis sama (10): urutkan pangkatnya dari yang terbesar: 1 > 0 > −2 > −4.',
+      },
+      {
+        id: 'q12',
+        jenis: 'urut',
+        cerita: 'Bilangan: 3⁻¹, 3², 3⁰, 3⁻².',
+        pertanyaan: 'Urutan dari yang terkecil adalah …',
+        cek: {
+          jenis: 'urut',
+          arah: 'naik',
+          items: [
+            { a: 3, n: -1 },
+            { a: 3, n: 2 },
+            { a: 3, n: 0 },
+            { a: 3, n: -2 },
+          ],
+        },
+        options: [
+          { id: 'a', label: '3⁻², 3⁻¹, 3⁰, 3²' },
+          { id: 'b', label: '3⁻¹, 3⁻², 3⁰, 3²' },
+          { id: 'c', label: '3⁰, 3⁻¹, 3⁻², 3²' },
+          { id: 'd', label: '3², 3⁰, 3⁻¹, 3⁻²' },
+        ],
+        correct: 'a',
+        explanation: 'Basis sama (3): urutkan pangkatnya dari yang terkecil: −2 < −1 < 0 < 2.',
+      },
+      {
+        id: 'q13',
+        jenis: 'konteks',
+        cerita:
+          'Ukuran beberapa benda: sel darah merah 10⁻⁵ m, bakteri 10⁻⁶ m, virus 10⁻⁷ m, butir pasir 10⁻³ m.',
+        pertanyaan: 'Benda yang paling kecil adalah …',
+        cek: { jenis: 'terkecil' },
+        options: [
+          { id: 'a', label: 'virus (10⁻⁷ m)', p: { a: 10, n: -7 } },
+          { id: 'b', label: 'bakteri (10⁻⁶ m)', p: { a: 10, n: -6 } },
+          { id: 'c', label: 'sel darah merah (10⁻⁵ m)', p: { a: 10, n: -5 } },
+          { id: 'd', label: 'butir pasir (10⁻³ m)', p: { a: 10, n: -3 } },
+        ],
+        correct: 'a',
+        explanation: 'Basis sama (10): pangkat terkecil adalah −7, jadi virus paling kecil.',
+      },
+      {
+        id: 'q14',
+        jenis: 'konteks',
+        cerita: 'Kapasitas empat flashdisk: A = 2⁷ GB, B = 4³ GB, C = 8² GB, D = 16¹ GB.',
+        pertanyaan: 'Flashdisk dengan kapasitas terbesar adalah …',
+        cek: { jenis: 'terbesar' },
+        options: [
+          { id: 'a', label: 'flashdisk A (2⁷ GB)', p: { a: 2, n: 7 } },
+          { id: 'b', label: 'flashdisk B (4³ GB)', p: { a: 4, n: 3 } },
+          { id: 'c', label: 'flashdisk C (8² GB)', p: { a: 8, n: 2 } },
+          { id: 'd', label: 'flashdisk D (16¹ GB)', p: { a: 16, n: 1 } },
+        ],
+        correct: 'a',
+        explanation:
+          'Samakan basis 2: 2⁷, 4³ = 2⁶, 8² = 2⁶, 16¹ = 2⁴. Pangkat terbesar: 2⁷ = 128 GB.',
+      },
+      {
+        id: 'q15',
+        jenis: 'konteks',
+        cerita:
+          'Dalam lomba cerdas cermat, Tim A mengumpulkan 3⁴ poin dan Tim B mengumpulkan 9² poin.',
+        pertanyaan: 'Pernyataan yang benar adalah …',
+        cek: { jenis: 'lambang', p: { a: 3, n: 4 }, q: { a: 9, n: 2 } },
+        options: [
+          { id: 'eq', label: 'Poin kedua tim sama banyak.' },
+          { id: 'gt', label: 'Poin Tim A lebih banyak.' },
+          { id: 'lt', label: 'Poin Tim B lebih banyak.' },
+        ],
+        correct: 'eq',
+        explanation: '9² = (3²)² = 3⁴ = 81. Poin kedua tim sama.',
       },
     ],
-    diriLabel: 'Seberapa yakin kamu dapat mengonversi dan menyederhanakan bentuk akar sekarang?',
+    nextLabel: 'Lihat Penghargaan Tim →',
+  },
+
+  /* ----------------------------------------------------------
+     TAHAP 8 — PENGHARGAAN
+     ---------------------------------------------------------- */
+  penghargaan: {
+    kicker: 'Tahap 8 · Penghargaan Tim',
+    syntax: CL + ' · Fase 6',
+    goal: 'Merayakan kerja sama tim berdasarkan skor misi dan skor kuis individu.',
+    guru: 'Umumkan predikat setiap tim. Beri apresiasi khusus pada anggota yang menjelaskan dengan jelas saat nomornya dipanggil.',
+    bobot:
+      'Poin tim = 50% skor misi (benar pada percobaan pertama + penjelasan nomor) + 50% skor kuis individu.',
+    pujianLabel: 'Tulis satu pujian untuk teman satu tim (sebut namanya):',
+    pujianPlaceholder: 'Contoh: Terima kasih Dimas, penjelasanmu soal 2⁻³ > 2⁻⁵ membuatku paham.',
+    nextLabel: 'Lanjut ke Refleksi →',
+  },
+
+  /* ----------------------------------------------------------
+     TAHAP 9 — REFLEKSI
+     ---------------------------------------------------------- */
+  refleksi: {
+    kicker: 'Tahap 9 · Refleksi',
+    syntax: 'Penutup',
+    goal: 'Merefleksikan pemahaman membandingkan & mengurutkan bilangan berpangkat serta proses kerja sama.',
+    guru: 'Minta 2–3 murid membacakan refleksinya. Catat miskonsepsi yang masih muncul (mis. pangkat negatif dianggap negatif) untuk pertemuan berikutnya.',
+    pertanyaan: [
+      {
+        id: 'r1',
+        teks: 'Mengapa 2¹⁰ > 10³ walaupun basis 2 lebih kecil daripada 10? Jelaskan dengan kata-katamu.',
+        placeholder: 'Karena …',
+      },
+      {
+        id: 'r2',
+        teks: 'Strategi mana yang paling kamu sukai, dan kapan strategi itu TIDAK bisa dipakai?',
+        placeholder: 'Aku suka strategi … tetapi tidak bisa dipakai ketika …',
+      },
+      {
+        id: 'r3',
+        teks: 'Bagaimana tim kalian memastikan setiap nomor siap menjelaskan?',
+        placeholder: 'Kami …',
+      },
+    ],
+    diriLabel:
+      'Seberapa yakin kamu membandingkan dan mengurutkan bilangan berpangkat bulat sekarang?',
     diriOpsi: [
-      { id: 'sangat', label: '😄 Sangat yakin, bisa menjelaskan ke teman' },
-      { id: 'yakin', label: '🙂 Yakin' },
-      { id: 'ragu', label: '😐 Masih ragu pada beberapa bagian' },
-      { id: 'belum', label: '😟 Belum yakin, perlu bantuan' },
+      { id: 'sangat', label: '🚀 Sangat yakin — aku bisa menjelaskannya ke teman' },
+      { id: 'yakin', label: '🙂 Yakin — kadang masih perlu menghitung nilainya' },
+      { id: 'ragu', label: '🤔 Masih ragu pada pangkat negatif atau basis negatif' },
+      { id: 'bantuan', label: '🆘 Masih butuh bantuan' },
     ],
     nextLabel: 'Simpan & Selesai →',
   },
 
   /* ----------------------------------------------------------
-     TAHAP 11 — SELESAI
+     TAHAP 10 — SELESAI
      ---------------------------------------------------------- */
   selesai: {
-    judul: 'Hebat! Kamu menemukan rahasia bentuk akar',
-    teks: 'Sisi kebun VIII-B kini bisa kamu tulis dengan tiga cara yang sama nilainya: √72 = 72^(1/2) = 6√2 m.',
+    judul: 'Misi Selesai!',
+    teks: 'Kalian sudah membandingkan dan mengurutkan bilangan berpangkat bulat — bersama-sama.',
     capaian: [
-      'Mengubah bentuk akar ⁿ√(aᵐ) menjadi pangkat pecahan a^(m/n).',
-      'Mengubah pangkat pecahan a^(m/n) menjadi bentuk akar dan menghitung nilainya.',
-      'Menyederhanakan bentuk akar dengan faktor kuadrat/kubik terbesar.',
-      'Mengenali miskonsepsi: pembilang–penyebut tertukar dan faktor yang lupa diakarkan.',
+      'Memilih strategi: basis sama, pangkat sama, samakan basis, atau hitung nilai/patokan 1.',
+      'Menuliskan lambang <, >, = beserta alasannya dan memaknainya dalam konteks.',
+      'Mengurutkan bilangan berpangkat bulat positif, nol, dan negatif secara naik maupun turun.',
+      'Mengenali dan memperbaiki miskonsepsi, seperti "pangkat negatif berarti bilangan negatif".',
     ],
   },
 };

@@ -141,6 +141,11 @@
        pengaruh pencilan, data sintetis ber-r tertentu, meteran r,
        tabel langkah r, plot residu, penjelajah r, lab pencilan, panel
        =CORREL & kode JS)
+   51. Bilangan berpangkat bulat: membandingkan & mengurutkan (nilai
+       eksak aⁿ, lambang & kalimat banding, urut naik/turun, nilai
+       ekstrem, basis bersama, strategi basis sama/pangkat sama/samakan
+       basis/hitung nilai, alasan, diagnosa miskonsepsi, lab timbang
+       pangkat, pilihan lambang berdiagnosa)
    ============================================================ */
 
 /* ============================================================
@@ -2892,6 +2897,7 @@ function ensureTapOrderState(state, key, items, answer) {
  *   opts.endLabel    keterangan ujung kanan slot (mis. 'Terbesar')
  *   opts.separator   lambang di antara slot (mis. '<' atau '>')
  *   opts.successText HTML umpan balik setelah benar
+ *   opts.wrongText   HTML petunjuk saat urutan belum tepat (opsional)
  */
 function buildTapOrder(id, items, st, opts) {
   opts = opts || {};
@@ -2973,7 +2979,9 @@ function buildTapOrder(id, items, st, opts) {
         tepat +
         ' dari ' +
         n +
-        ' kartu sudah di tempat yang tepat.</strong> Kartu bertanda merah belum tepat — lihat lagi letaknya pada garis bilangan, lalu ketuk kartu itu untuk memindahkannya.'
+        ' kartu sudah di tempat yang tepat.</strong> ' +
+        (opts.wrongText ||
+          'Kartu bertanda merah belum tepat — lihat lagi letaknya pada garis bilangan, lalu ketuk kartu itu untuk memindahkannya.')
     );
   }
 
@@ -27858,4 +27866,620 @@ function buildCorrelationPanel(points, opts) {
     '</p>' +
     '</div>'
   );
+}
+
+/* ============================================================
+   51. BILANGAN BERPANGKAT BULAT — MEMBANDINGKAN & MENGURUTKAN
+   Bilangan berpangkat ditulis { a, n }: basis bulat a (≠ 0) dan
+   pangkat bulat n (positif, nol, atau negatif). Nilai dihitung eksak
+   sebagai pecahan (pangkatBulat, seksi 27) sehingga 2⁻³ vs 2⁻⁵ atau
+   2¹⁰ vs 10³ dibandingkan tanpa galat pembulatan.
+   Strategi membandingkan:
+     basisSama    — basis sama (> 1): pangkat lebih besar → lebih besar
+     pangkatSama  — pangkat sama (basis positif): n > 0 → basis lebih
+                    besar lebih besar; n < 0 → justru lebih kecil
+     samakanBasis — 4⁵ vs 8³ → 2¹⁰ vs 2⁹, lalu bandingkan pangkat
+     hitungNilai  — hitung nilainya / patokan 1 & tanda (pangkat nol,
+                    pangkat negatif, basis negatif)
+   Gaya .pkt-* ada di styles.css modul yang memakainya.
+   ============================================================ */
+
+/* '2¹⁰', '10⁻⁶', '(−2)³'. */
+function teksPangkat(p) {
+  return formatPangkat(p.a, p.n);
+}
+
+/* '2<sup>10</sup>', '10<sup>−3</sup>', '(−3)<sup>4</sup>'. */
+function pangkatHTML(p) {
+  return esc(formatBasis(p.a)) + '<sup>' + (p.n < 0 ? '−' + Math.abs(p.n) : String(p.n)) + '</sup>';
+}
+
+function nilaiBerpangkat(p) {
+  return pangkatBulat(p.a, p.n);
+}
+
+/* '2¹⁰ = 1.024', '10⁻³ = 1/1.000'. */
+function teksNilaiPangkat(p) {
+  return teksPangkat(p) + ' = ' + formatPecahan(nilaiBerpangkat(p));
+}
+
+/* −1 / 0 / 1 dari dua pecahan eksak (perkalian silang, penyebut positif). */
+function bandingNilaiEksak_(x, y) {
+  var kiri = x.num * y.den;
+  var kanan = y.num * x.den;
+  if (!Number.isSafeInteger(kiri) || !Number.isSafeInteger(kanan)) {
+    throw new Error('Nilai terlalu besar untuk dibandingkan secara eksak.');
+  }
+  return kiri < kanan ? -1 : kiri > kanan ? 1 : 0;
+}
+
+function bandingPangkat(p, q) {
+  return bandingNilaiEksak_(nilaiBerpangkat(p), nilaiBerpangkat(q));
+}
+
+function simbolDariBanding_(c) {
+  return c < 0 ? 'lt' : c > 0 ? 'gt' : 'eq';
+}
+
+function simbolBandingPangkat(p, q) {
+  return simbolDariBanding_(bandingPangkat(p, q));
+}
+
+/* '2¹⁰ > 10³'. */
+function kalimatBandingPangkat(p, q) {
+  return (
+    teksPangkat(p) + ' ' + compareSymbolText(simbolBandingPangkat(p, q)) + ' ' + teksPangkat(q)
+  );
+}
+
+/* Salinan terurut; arah 'naik' (terkecil dulu) atau 'turun'. */
+function urutkanPangkat(list, arah) {
+  var tanda = arah === 'turun' ? -1 : 1;
+  return list.slice().sort(function (x, y) {
+    return tanda * bandingPangkat(x, y);
+  });
+}
+
+function urutanIdPangkat(items, arah) {
+  return urutkanPangkat(items, arah).map(function (it) {
+    return it.id;
+  });
+}
+
+/* id item terbesar/terkecil; null bila nilai ekstrem dimiliki > 1 item. */
+function ekstremPangkat(items, jenis) {
+  var urut = urutkanPangkat(items, jenis === 'terbesar' ? 'turun' : 'naik');
+  if (urut.length > 1 && bandingPangkat(urut[0], urut[1]) === 0) return null;
+  return urut.length ? urut[0].id : null;
+}
+
+/* Eksponen i bila x = cⁱ (i ≥ 1), selain itu −1. */
+function eksponenDari_(x, c) {
+  var i = 0;
+  while (x > 1 && x % c === 0) {
+    x = x / c;
+    i += 1;
+  }
+  return x === 1 && i > 0 ? i : -1;
+}
+
+/*
+ * Basis bersama terkecil c ≥ 2 dengan a = cⁱ dan b = cʲ (a, b > 1):
+ * 4 & 8 → { c: 2, i: 2, j: 3 }. null bila tidak ada.
+ */
+function basisBersama(a, b) {
+  if (!(a > 1 && b > 1)) return null;
+  for (var c = 2; c <= Math.min(a, b); c++) {
+    var i = eksponenDari_(a, c);
+    var j = eksponenDari_(b, c);
+    if (i > 0 && j > 0) return { c: c, i: i, j: j };
+  }
+  return null;
+}
+
+var STRATEGI_BANDING_PANGKAT = [
+  {
+    id: 'basisSama',
+    ikon: '🟰',
+    label: 'Basis sama → bandingkan pangkat',
+    aturan:
+      'Bila basisnya sama dan lebih dari 1, pangkat yang lebih besar menghasilkan nilai yang lebih besar (2⁻³ > 2⁻⁵ karena −3 > −5).',
+  },
+  {
+    id: 'pangkatSama',
+    ikon: '📏',
+    label: 'Pangkat sama → bandingkan basis',
+    aturan:
+      'Bila pangkatnya sama dan positif, basis yang lebih besar menghasilkan nilai yang lebih besar. Bila pangkatnya sama tetapi negatif, basis lebih besar justru bernilai lebih kecil.',
+  },
+  {
+    id: 'samakanBasis',
+    ikon: '🔁',
+    label: 'Samakan basis dulu',
+    aturan:
+      'Tulis kedua basis sebagai pangkat dari basis yang sama, mis. 4⁵ = 2¹⁰ dan 8³ = 2⁹, lalu bandingkan pangkatnya.',
+  },
+  {
+    id: 'hitungNilai',
+    ikon: '🧮',
+    label: 'Hitung nilai / patokan 1 & tanda',
+    aturan:
+      'Hitung nilainya atau pakai patokan: a⁰ = 1, a⁻ⁿ = 1/aⁿ < 1 untuk a > 1, dan basis negatif berpangkat ganjil bernilai negatif.',
+  },
+];
+
+function opsiStrategiBandingPangkat() {
+  return STRATEGI_BANDING_PANGKAT.map(function (s) {
+    return { id: s.id, ikon: s.ikon, label: s.label, aturan: s.aturan };
+  });
+}
+
+function strategiBandingPangkat(p, q) {
+  if (p.a < 0 || q.a < 0) return 'hitungNilai';
+  if (p.a === q.a && p.a > 1) return 'basisSama';
+  if (p.n === q.n && p.n !== 0) return 'pangkatSama';
+  if (p.n !== 0 && q.n !== 0 && basisBersama(p.a, q.a)) return 'samakanBasis';
+  return 'hitungNilai';
+}
+
+/* '9⁴ = (3²)⁴ = 3⁸ dan 27³ = (3³)³ = 3⁹'; null bila tidak ada basis bersama. */
+function langkahSamakanBasis(p, q) {
+  var bb = basisBersama(p.a, q.a);
+  if (!bb) return null;
+  function satu(x, e) {
+    var baru = { a: bb.c, n: e * x.n };
+    var tengah = e === 1 ? '' : ' = (' + formatPangkat(bb.c, e) + ')' + superskrip(x.n);
+    return teksPangkat(x) + tengah + ' = ' + teksPangkat(baru);
+  }
+  return satu(p, bb.i) + ' dan ' + satu(q, bb.j);
+}
+
+/* Alasan singkat (teks polos) mengapa p ☐ q, sesuai strategi yang cocok. */
+function alasanBandingPangkat(p, q) {
+  var kal = kalimatBandingPangkat(p, q);
+  var sim = compareSymbolText(simbolBandingPangkat(p, q));
+  var strat = strategiBandingPangkat(p, q);
+  if (strat === 'basisSama') {
+    return (
+      'Basis sama-sama ' +
+      p.a +
+      ' (lebih dari 1): pangkat lebih besar → nilai lebih besar. Karena ' +
+      formatNumber(p.n, '−') +
+      ' ' +
+      compareSymbolText(simbolDariBanding_(p.n - q.n)) +
+      ' ' +
+      formatNumber(q.n, '−') +
+      ', maka ' +
+      kal +
+      '.'
+    );
+  }
+  if (strat === 'pangkatSama') {
+    var basisSim = compareSymbolText(simbolDariBanding_(p.a - q.a));
+    if (p.n > 0) {
+      return (
+        'Pangkat sama-sama ' +
+        p.n +
+        ' (positif): basis lebih besar → nilai lebih besar. Karena ' +
+        p.a +
+        ' ' +
+        basisSim +
+        ' ' +
+        q.a +
+        ', maka ' +
+        kal +
+        '.'
+      );
+    }
+    return (
+      'Pangkat sama-sama ' +
+      formatNumber(p.n, '−') +
+      ' (negatif): ' +
+      teksPangkat(p) +
+      ' = 1/' +
+      teksPangkat({ a: p.a, n: -p.n }) +
+      ', jadi basis lebih besar → nilai lebih KECIL. Karena ' +
+      p.a +
+      ' ' +
+      basisSim +
+      ' ' +
+      q.a +
+      ', maka ' +
+      kal +
+      '.'
+    );
+  }
+  if (strat === 'samakanBasis') {
+    var bb = basisBersama(p.a, q.a);
+    return (
+      'Samakan basis: ' +
+      langkahSamakanBasis(p, q) +
+      '. Basisnya sekarang sama-sama ' +
+      bb.c +
+      ', jadi bandingkan pangkatnya: ' +
+      formatNumber(bb.i * p.n, '−') +
+      ' ' +
+      sim +
+      ' ' +
+      formatNumber(bb.j * q.n, '−') +
+      ', maka ' +
+      kal +
+      '.'
+    );
+  }
+  return (
+    'Hitung nilainya: ' +
+    teksNilaiPangkat(p) +
+    ' dan ' +
+    teksNilaiPangkat(q) +
+    ', maka ' +
+    kal +
+    '.'
+  );
+}
+
+/*
+ * Diagnosa lambang pilihan murid untuk p ☐ q:
+ *   'benar' | 'negatifDianggapNegatif' (a⁻ⁿ dianggap −aⁿ) |
+ *   'nolJadiNol' (a⁰ dianggap 0) | 'abaikanTandaPangkat' (a⁻ⁿ dianggap aⁿ) |
+ *   'abaikanTandaBasis' ((−a)ⁿ dianggap aⁿ) | 'bandingPangkatSaja' |
+ *   'bandingBasisSaja' | 'kaliEksponen' (aⁿ dianggap a × n) | 'lain'
+ */
+function diagnosaBandingPangkat(p, q, symbolId) {
+  if (symbolId === simbolBandingPangkat(p, q)) return 'benar';
+  function cocok(f) {
+    return simbolDariBanding_(bandingNilaiEksak_(f(p), f(q))) === symbolId;
+  }
+  var adaNegatif = p.n < 0 || q.n < 0;
+  if (
+    adaNegatif &&
+    cocok(function (x) {
+      if (x.n >= 0) return nilaiBerpangkat(x);
+      var v = pangkatBulat(x.a, -x.n);
+      return pecahan(-v.num, v.den);
+    })
+  ) {
+    return 'negatifDianggapNegatif';
+  }
+  if (
+    (p.n === 0 || q.n === 0) &&
+    cocok(function (x) {
+      return x.n === 0 ? pecahan(0, 1) : nilaiBerpangkat(x);
+    })
+  ) {
+    return 'nolJadiNol';
+  }
+  if (
+    adaNegatif &&
+    cocok(function (x) {
+      return pangkatBulat(x.a, Math.abs(x.n));
+    })
+  ) {
+    return 'abaikanTandaPangkat';
+  }
+  if (
+    (p.a < 0 || q.a < 0) &&
+    cocok(function (x) {
+      return pangkatBulat(Math.abs(x.a), x.n);
+    })
+  ) {
+    return 'abaikanTandaBasis';
+  }
+  if (p.a !== q.a && p.n !== q.n && symbolId === simbolDariBanding_(p.n - q.n)) {
+    return 'bandingPangkatSaja';
+  }
+  if (p.a !== q.a && p.n !== q.n && symbolId === simbolDariBanding_(p.a - q.a)) {
+    return 'bandingBasisSaja';
+  }
+  if (
+    cocok(function (x) {
+      return pecahan(x.a * x.n, 1);
+    })
+  ) {
+    return 'kaliEksponen';
+  }
+  return 'lain';
+}
+
+/* Pesan umpan balik (teks polos) untuk kode diagnosaBandingPangkat. */
+function pesanBandingPangkat(kode, p, q) {
+  var nilai = teksNilaiPangkat(p) + ' dan ' + teksNilaiPangkat(q) + '.';
+  function pilih(f) {
+    return f(p) ? p : q;
+  }
+  if (kode === 'negatifDianggapNegatif') {
+    var xn = pilih(function (x) {
+      return x.n < 0;
+    });
+    return (
+      'Pangkat negatif TIDAK membuat nilainya negatif. a⁻ⁿ = 1/aⁿ, jadi ' +
+      teksNilaiPangkat(xn) +
+      ' (positif, kurang dari 1).'
+    );
+  }
+  if (kode === 'nolJadiNol') {
+    var x0 = pilih(function (x) {
+      return x.n === 0;
+    });
+    return (
+      'Bilangan (bukan nol) berpangkat 0 bernilai 1, bukan 0: ' +
+      teksNilaiPangkat(x0) +
+      '. Jadi ' +
+      nilai
+    );
+  }
+  if (kode === 'abaikanTandaPangkat') {
+    return (
+      'Tanda minus pada pangkat berarti kebalikan (1/aⁿ). Makin besar angka pangkat negatifnya, makin KECIL nilainya: ' +
+      nilai
+    );
+  }
+  if (kode === 'abaikanTandaBasis') {
+    return (
+      'Perhatikan tanda basis negatif: pangkat ganjil → hasil negatif, pangkat genap → hasil positif. ' +
+      nilai
+    );
+  }
+  if (kode === 'bandingPangkatSaja') {
+    return (
+      'Kamu hanya membandingkan pangkatnya. Basisnya berbeda, jadi pangkat saja tidak cukup. ' +
+      alasanBandingPangkat(p, q)
+    );
+  }
+  if (kode === 'bandingBasisSaja') {
+    return (
+      'Kamu hanya membandingkan basisnya. Pangkatnya berbeda, jadi basis saja tidak cukup. ' +
+      alasanBandingPangkat(p, q)
+    );
+  }
+  if (kode === 'kaliEksponen') {
+    return 'aⁿ bukan a × n, melainkan a dikalikan dengan dirinya sendiri sebanyak n kali. ' + nilai;
+  }
+  return 'Belum tepat. Coba tentukan dulu strategi yang cocok, atau hitung nilainya: ' + nilai;
+}
+
+/* ---------- Lab timbang pangkat ---------- */
+
+var LAB_BANDING_PANGKAT_BATAS = { aMin: -5, aMaks: 10, nMin: -4, nMaks: 6 };
+
+function makeLabBandingPangkatState() {
+  return { p: { a: 2, n: 3 }, q: { a: 3, n: 2 }, strategi: [] };
+}
+
+/* Mengubah basis/pangkat satu sisi sebesar `langkah`; basis 0 dilewati. */
+function ubahLabBandingPangkat(st, sisi, kunci, langkah) {
+  var B = LAB_BANDING_PANGKAT_BATAS;
+  var x = st[sisi];
+  var min = kunci === 'a' ? B.aMin : B.nMin;
+  var maks = kunci === 'a' ? B.aMaks : B.nMaks;
+  var v = x[kunci] + langkah;
+  if (kunci === 'a' && v === 0) v += langkah;
+  if (v < min || v > maks) return st;
+  x[kunci] = v;
+  return st;
+}
+
+/* Mencatat strategi pasangan yang sedang ditimbang (tanpa duplikat). */
+function catatLabBandingPangkat(st) {
+  if (!Array.isArray(st.strategi)) st.strategi = [];
+  var s = strategiBandingPangkat(st.p, st.q);
+  if (st.strategi.indexOf(s) === -1) st.strategi.push(s);
+  return st;
+}
+
+function namaStrategiBandingPangkat(id) {
+  var s = STRATEGI_BANDING_PANGKAT.filter(function (x) {
+    return x.id === id;
+  })[0];
+  return s ? s.ikon + ' ' + s.label : id;
+}
+
+function labKartuPangkat_(id, sisi, x, judul) {
+  function tombol(kunci, langkah, teks, aria) {
+    return (
+      '<button type="button" class="pkt-lab__btn" data-lab-id="' +
+      esc(id) +
+      '" data-lab-sisi="' +
+      sisi +
+      '" data-lab-kunci="' +
+      kunci +
+      '" data-lab-langkah="' +
+      langkah +
+      '" aria-label="' +
+      esc(aria) +
+      '">' +
+      teks +
+      '</button>'
+    );
+  }
+  function baris(kunci, label) {
+    return (
+      '<div class="pkt-lab__atur"><span class="pkt-lab__atur-label">' +
+      label +
+      '</span>' +
+      tombol(kunci, -1, '−', label + ' ' + judul + ' dikurangi') +
+      '<span class="pkt-lab__atur-val">' +
+      formatNumber(x[kunci], '−') +
+      '</span>' +
+      tombol(kunci, 1, '+', label + ' ' + judul + ' ditambah') +
+      '</div>'
+    );
+  }
+  return (
+    '<div class="pkt-lab__kartu">' +
+    '<p class="pkt-lab__judul">' +
+    esc(judul) +
+    '</p>' +
+    '<p class="pkt-lab__pangkat">' +
+    pangkatHTML(x) +
+    '</p>' +
+    '<p class="pkt-lab__nilai">= ' +
+    esc(formatPecahan(nilaiBerpangkat(x))) +
+    '</p>' +
+    baris('a', 'Basis') +
+    baris('n', 'Pangkat') +
+    '</div>'
+  );
+}
+
+/*
+ * Lab timbang: dua kartu aⁿ dengan tombol ± basis & pangkat, lambang
+ * perbandingan di tengah, strategi yang cocok, dan alasannya.
+ *   opts.target  banyak strategi berbeda yang harus ditemukan (default 3)
+ */
+function buildLabBandingPangkat(id, st, opts) {
+  opts = opts || {};
+  var target = opts.target || 3;
+  var sim = simbolBandingPangkat(st.p, st.q);
+  var strat = strategiBandingPangkat(st.p, st.q);
+  var dicoba = Array.isArray(st.strategi) ? st.strategi : [];
+  return (
+    '<div class="pkt-lab" id="' +
+    esc(id) +
+    '">' +
+    '<div class="pkt-lab__timbang">' +
+    labKartuPangkat_(id, 'p', st.p, 'Bilangan A') +
+    '<span class="pkt-lab__sym" aria-live="polite">' +
+    esc(compareSymbolText(sim)) +
+    '</span>' +
+    labKartuPangkat_(id, 'q', st.q, 'Bilangan B') +
+    '</div>' +
+    '<p class="pkt-lab__strategi">Strategi yang cocok: <strong>' +
+    esc(namaStrategiBandingPangkat(strat)) +
+    '</strong></p>' +
+    '<p class="pkt-lab__alasan">' +
+    esc(alasanBandingPangkat(st.p, st.q)) +
+    '</p>' +
+    '<div class="pkt-lab__temuan" aria-label="Strategi yang sudah kalian temukan">' +
+    STRATEGI_BANDING_PANGKAT.map(function (s) {
+      var ada = dicoba.indexOf(s.id) !== -1;
+      return (
+        '<span class="pkt-lab__chip' +
+        (ada ? ' is-found' : '') +
+        '">' +
+        (ada ? '✓ ' : '○ ') +
+        esc(s.label) +
+        '</span>'
+      );
+    }).join('') +
+    '</div>' +
+    '<p class="dl-caption">Strategi berbeda yang sudah ditemukan: ' +
+    Math.min(dicoba.length, STRATEGI_BANDING_PANGKAT.length) +
+    ' dari ' +
+    STRATEGI_BANDING_PANGKAT.length +
+    ' (minimal ' +
+    target +
+    ').</p>' +
+    '</div>'
+  );
+}
+
+function bindLabBandingPangkat(root, id, st, save, rerender) {
+  root.querySelectorAll('[data-lab-id="' + id + '"]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      ubahLabBandingPangkat(
+        st,
+        btn.dataset.labSisi,
+        btn.dataset.labKunci,
+        parseInt(btn.dataset.labLangkah, 10)
+      );
+      catatLabBandingPangkat(st);
+      save();
+      rerender();
+    });
+  });
+}
+
+/* ---------- Kalimat & pilihan lambang ---------- */
+
+/* Kalimat besar: [aⁿ] ☐ [bᵐ]. `symbolId` null → kotak '?'. */
+function buildKalimatBandingPangkat(p, q, symbolId) {
+  var aria = symbolId
+    ? teksPangkat(p) + ' ' + compareSymbolText(symbolId) + ' ' + teksPangkat(q)
+    : teksPangkat(p) + ' kotak kosong ' + teksPangkat(q);
+  return (
+    '<div class="cmp-sentence pkt-kalimat" aria-label="' +
+    esc(aria) +
+    '">' +
+    '<span class="pkt-chip pkt-chip--big">' +
+    pangkatHTML(p) +
+    '</span>' +
+    '<span class="cmp-sentence__sym' +
+    (symbolId ? ' is-filled' : '') +
+    '">' +
+    esc(symbolId ? compareSymbolText(symbolId) : '?') +
+    '</span>' +
+    '<span class="pkt-chip pkt-chip--big">' +
+    pangkatHTML(q) +
+    '</span>' +
+    '</div>'
+  );
+}
+
+/*
+ * Tombol lambang <, >, = untuk p ☐ q (urutan dari state teracak), boleh
+ * dicoba lagi sampai benar lalu terkunci; pilihan salah diberi pesan
+ * diagnosa miskonsepsi.
+ *   st  { chosen, wrong, diag }
+ *   opts.group  pembeda antarsoal (data-group)
+ */
+function buildPilihSimbolPangkat(p, q, order, st, opts) {
+  opts = opts || {};
+  var benarId = simbolBandingPangkat(p, q);
+  var benar = st.chosen === benarId;
+  var umpan = '';
+  if (st.chosen && !benar) {
+    umpan = buildFeedbackBox('warning', '💭', esc(pesanBandingPangkat(st.diag || 'lain', p, q)));
+  } else if (benar) {
+    umpan = buildFeedbackBox(
+      'success',
+      '✓',
+      '<strong>' +
+        esc(kalimatBandingPangkat(p, q)) +
+        '</strong>. ' +
+        esc(alasanBandingPangkat(p, q))
+    );
+  }
+  return (
+    '<div class="cmp-symbols">' +
+    buildChoiceGroup(COMPARE_SYMBOLS, order, {
+      chosen: st.chosen,
+      correctId: benar ? benarId : null,
+      grade: true,
+      locked: benar,
+      group: opts.group || 'pkt',
+      attr: 'data-pkt-sym',
+    }) +
+    '</div>' +
+    (umpan ? '<div style="margin-top:var(--space-3);">' + umpan + '</div>' : '')
+  );
+}
+
+/* Mencatat pilihan lambang (tidak berubah lagi setelah benar). */
+function catatPilihSimbolPangkat(st, p, q, symbolId) {
+  var benarId = simbolBandingPangkat(p, q);
+  if (st.chosen === benarId) return st;
+  st.chosen = symbolId;
+  if (symbolId === benarId) {
+    st.diag = null;
+  } else {
+    st.wrong = (st.wrong || 0) + 1;
+    st.diag = diagnosaBandingPangkat(p, q, symbolId);
+  }
+  return st;
+}
+
+/* Memasang event buildPilihSimbolPangkat; pasangan & state dicari lewat group. */
+function bindPilihSimbolPangkat(root, getPair, getState, save, rerender) {
+  root.querySelectorAll('[data-pkt-sym]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var group = btn.dataset.group;
+      var pair = getPair(group);
+      var st = getState(group);
+      if (!pair || !st) return;
+      catatPilihSimbolPangkat(st, pair[0], pair[1], btn.dataset.pktSym);
+      save();
+      rerender();
+    });
+  });
 }
