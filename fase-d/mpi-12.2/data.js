@@ -2,957 +2,870 @@
 
 /* ============================================================
    data.js — Konten media pembelajaran
-   Matematika: Sifat-sifat Operasi Bilangan Berpangkat Bulat
+   Matematika: Bilangan Berpangkat Bulat Negatif & Nol
    Fase D — SMP Kelas VIII · Topik 12 Bilangan Berpangkat dan Bentuk Akar
 
    Tujuan Pembelajaran:
-   Menerapkan sifat-sifat operasi bilangan berpangkat bulat
-   (perkalian, pembagian, dan pangkat dari pangkat) dalam
-   penyelesaian soal.
+   Membaca dan menuliskan bilangan berpangkat bulat negatif dan nol
+   beserta maknanya.
 
-   Prasyarat: fase-d/mpi-12.1 (membaca & menulis bilangan berpangkat,
-   pangkat nol & negatif).
+   Catatan cakupan: modul ini melanjutkan fase-d/mpi-12.1 (Membaca &
+   Menulis Bilangan Berpangkat), yang membahas pangkat bulat POSITIF
+   dan sengaja tidak membahas pangkat nol/negatif. Di sini basis tetap
+   boleh bilangan bulat apa pun (termasuk negatif, ditulis dalam
+   kurung), tetapi basis TIDAK BOLEH nol (0⁰ dan 0⁻ⁿ tak terdefinisi).
 
-   Gagasan kunci yang dibangun di seluruh modul:
-     • aⁿ = perkalian berulang a sebanyak n faktor; a⁰ = 1, a⁻ⁿ = 1/aⁿ;
-     • perkalian basis sama → faktor digabung → aᵐ × aⁿ = aᵐ⁺ⁿ;
-     • pembagian basis sama → faktor sama dicoret → aᵐ : aⁿ = aᵐ⁻ⁿ
-       (hasilnya boleh berpangkat nol atau negatif);
-     • pangkat dari pangkat → aᵐ dikalikan n kali → (aᵐ)ⁿ = aᵐˣⁿ;
-     • sifat hanya berlaku untuk BASIS YANG SAMA;
-     • miskonsepsi yang dilawan: eksponen dikalikan pada perkalian,
-       dibagi pada pembagian, dijumlahkan pada pangkat dari pangkat,
-       basis ikut dikalikan (2³ × 3² = 6⁵), tanda eksponen terbalik,
-       dan penjumlahan dianggap perkalian (2³ + 2⁴ = 2⁷).
+   Model pembelajaran: DISCOVERY LEARNING (Penemuan Terbimbing).
+   Pemetaan sintaks ke tahap media:
 
-   Model pembelajaran: COOPERATIVE LEARNING tipe JIGSAW (sintaks Arends,
-   dengan skor tim ala STAD). Pemetaan sintaks ke tahap media:
+     Sintaks 1 — Stimulation ................ tahap 'stimulasi'
+     Sintaks 2 — Problem statement .......... tahap 'masalah'
+     Sintaks 3 — Data collection ............ tahap 'tangga' & 'makna'
+     Sintaks 4 — Data processing ............ tahap 'olah'
+     Sintaks 5 — Verification ............... tahap 'verifikasi'
+     Sintaks 6 — Generalization ............. tahap 'generalisasi'
+     Penerapan & penutup .................... 'terapkan', 'refleksi', 'selesai'
 
-     Fase 1 — Menyampaikan tujuan & memotivasi ........ 'tujuan'
-     Fase 2 — Menyajikan informasi ..................... 'informasi'
-     Fase 3 — Mengorganisasikan murid ke tim asal ...... 'tim'
-     Fase 4 — Membimbing kelompok bekerja & belajar:
-              a. kelompok ahli + mengajar tim asal ..... 'ahli'
-              b. misi tim asal ......................... 'misiSederhana',
-                                                         'misiRantai'
-              c. diskusi tim ........................... 'misiDiskusi'
-     Fase 5 — Evaluasi (individu) ...................... 'kuis'
-     Fase 6 — Memberikan penghargaan ................... 'penghargaan'
-     Penutup ........................................... 'refleksi', 'selesai'
+   Rangkaian aktivitas (± 2 × 40 menit, murid berpasangan):
+     1. Stimulasi   (5')  — "Tangga Pangkat yang Terputus": tangga
+                            pangkat 2 terhenti di pangkat 1, murid
+                            menduga isi & makna anak tangga di
+                            bawahnya (tidak dinilai).
+     2. Masalah     (5')  — memilih rumusan masalah & menulis hipotesis.
+     3. Tangga      (12') — tangga pangkat interaktif 3 basis (2, 5,
+                            10) diteruskan dari pangkat 3 sampai −3;
+                            menemukan pola "setiap turun satu anak
+                            tangga, nilainya dibagi basis".
+     4. Makna       (13') — konteks pengenceran larutan pembersih &
+                            populasi bakteri mundur waktu untuk
+                            memaknai a⁰ dan a⁻ⁿ; latihan menulis &
+                            membaca notasi pangkat nol/negatif;
+                            ketuk basis/pangkat/tanda.
+     5. Olah data   (12') — pertanyaan penuntun makna & syarat a ≠ 0,
+                            ketuk basis/pangkat pada contoh berpangkat
+                            negatif, pilah 8 cara baca: tepat/keliru.
+     6. Pembuktian  (12') — membuktikan dugaan awal; menulis & membaca
+                            notasi pangkat nol/negatif, lalu menanggapi
+                            4 miskonsepsi.
+     7. Simpulan    (5')  — menyusun kesimpulan dari bank kalimat acak.
+     8. Uji terap   (10') — 8 soal kontekstual (notasi ilmiah kecil,
+                            pengenceran, populasi mundur waktu, dsb.).
+     9. Refleksi    (2')  — rekap, refleksi tertulis, penilaian diri.
 
-   Rangkaian aktivitas (± 2 × 40 menit, tim asal heterogen 3–4 murid,
-   satu perangkat per tim; kuis dikerjakan per murid):
-     1. Tujuan      (6')  — "Galeri Foto Kelas": tiga masalah memori
-                            foto (2³ × 2⁴, 2¹⁰ : 2⁶, (2³)²). Tim MENDUGA
-                            hasilnya sebagai satu bilangan berpangkat
-                            (tidak dinilai; dicek setelah tahap ahli).
-     2. Informasi   (8')  — mengingat arti aⁿ, a⁰, a⁻ⁿ; pertanyaan
-                            penuntun berdiagnosa; syarat basis sama.
-     3. Tim asal    (4')  — nama tim, anggota, kesepakatan; kartu AHLI
-                            (perkalian, pembagian, pangkat dari pangkat)
-                            dibagikan acak. Anggota ke-4 menjadi
-                            pendamping ahli.
-     4. Ahli        (20') — Jigsaw: tiap ahli berkumpul dengan ahli
-                            sejenis dari tim lain, mengamati ubin faktor,
-                            melengkapi tabel pola (nilai dihitung dari
-                            DEFINISI), menemukan hubungan eksponen, lalu
-                            kembali MENGAJARI tim asal dan memandu dua
-                            soal stasiun (eksponen nol & negatif).
-     5. Misi 1      (12') — "Sederhanakan!": tujuh soal. Pilih sifat
-                            (termasuk jebakan basis berbeda) → ahli sifat
-                            itu memimpin → isi eksponen (diagnosa) → nilai.
-     6. Misi 2      (12') — "Rantai Sifat": enam soal gabungan &
-                            kontekstual (memori, bakteri, tandon air)
-                            diselesaikan langkah demi langkah.
-     7. Misi 3      (6')  — "Cek Pendapat Teman": delapan pernyataan
-                            Benar/Salah berisi miskonsepsi + catatan Juru
-                            Bicara.
-     8. Kuis        (8')  — kuis individu: enam soal diambil acak dari
-                            bank dua belas soal.
-     9. Penghargaan (2')  — poin tim (50% misi + 50% kuis) → predikat.
-    10. Refleksi    (2')  — refleksi konsep & kerja sama, penilaian diri.
+   Catatan: seluruh daftar pilihan jawaban di berkas ini ditulis dalam
+   urutan "wajar" (jawaban benar sering di depan). Pengacakan dilakukan
+   app.js memakai ensureShuffledOrder()/ensureSortStates()/shuffleArray()
+   dari shared/engine.js, satu kali saat state disiapkan.
 
-   Catatan pengacakan: seluruh daftar pilihan di berkas ini ditulis
-   dalam urutan "wajar" (jawaban benar sering di depan). app.js
-   mengacaknya SEKALI saat state disiapkan (ensureShuffledOrder /
-   ensureSortStates / shuffleArray dari shared/engine.js) sehingga
-   tiap tim dan tiap Reset mendapat urutan berbeda — termasuk dugaan,
-   penuntun, pertanyaan hubungan eksponen, pilihan sifat di setiap
-   langkah, pernyataan diskusi, soal kuis yang terpilih beserta opsinya,
-   dan penilaian diri.
+   Konvensi bilangan berpangkat: { a, n, negLuar } — a basis (bulat,
+   ≠ 0), n pangkat (bulat, boleh 0/negatif), negLuar true untuk −aⁿ
+   (tanda di luar pangkat). Metadata `cek` pada soal pilihan/isian
+   dipakai tes untuk menghitung ulang kunci dengan engine
+   (tests/mpi-12.2-data.test.js):
+     { jenis: 'baca',  a, n, negLuar }  label opsi benar = bacaPangkat()
+     { jenis: 'tulis', a, n, negLuar }  label opsi benar = ekspresiPangkat()
 
-   Konvensi soal:
-     langkah sifat  { id, op: 'kali'|'bagi'|'pangkat'|'basisBeda', a, m, n,
-                      b (basis kedua untuk basisBeda), nilai: bool }
-     rantai sifat   { id, a, awal, langkah: [{ op, n }], nilai, satuan }
-     `a` boleh bilangan bulat atau huruf ('p', 'y').
-   Konsistensi kunci jawaban diuji tests/mpi-12.2-data.test.js terhadap
-   engine seksi 30 & 44 (pangkatBulat, cekSifatEksponen, hasilSoalSifat,
-   hasilRantai, teksRantai, diagnosaEksponenSifat).
+   Fungsi engine (shared/engine.js) yang dipakai sudah generik untuk
+   pangkat bulat apa pun: pangkatBulat, bacaPangkat, ekspresiPangkat,
+   formatPangkat, formatBasis, formatPecahan, cekBacaPangkat,
+   cekTulisPangkat, tulisPerkalianBerulang (n = 0 → "1"; n < 0 →
+   "1 : (a × a × …)"), buildPowerLadder/bindPowerLadder,
+   buildPowerAnatomy/bindPowerAnatomy, makePangkatStep/buildPangkatStep/
+   bindPangkatStep.
    ============================================================ */
 
-var CL = 'Cooperative Learning (Jigsaw)';
-
-var OPSI_BENAR_SALAH = [
-  { id: 'benar', label: '✓ Benar' },
-  { id: 'salah', label: '✗ Salah' },
-];
-
 var DATA = {
-  meta: {
-    judul: 'Sifat-sifat Operasi Bilangan Berpangkat Bulat',
-  },
-
-  tahap: [
-    { id: 'tujuan', label: 'Tujuan' },
-    { id: 'informasi', label: 'Informasi' },
-    { id: 'tim', label: 'Tim Asal' },
-    { id: 'ahli', label: 'Ahli' },
-    { id: 'misiSederhana', label: 'Misi 1' },
-    { id: 'misiRantai', label: 'Misi 2' },
-    { id: 'misiDiskusi', label: 'Misi 3' },
-    { id: 'kuis', label: 'Kuis' },
-    { id: 'penghargaan', label: 'Penghargaan' },
-    { id: 'refleksi', label: 'Refleksi' },
-    { id: 'selesai', label: 'Selesai' },
-  ],
-
-  /* Peran bergilir pada setiap misi tim (buildCoopRoleBar). */
-  peranMisi: [
-    {
-      id: 'pembaca',
-      ikon: '📖',
-      nama: 'Pembaca Soal',
-      tugas: 'Membacakan soal dan menunjuk basis serta eksponennya.',
-    },
-    {
-      id: 'penulis',
-      ikon: '✍️',
-      nama: 'Penulis',
-      tugas: 'Mengetuk pilihan dan mengetik jawaban setelah tim sepakat.',
-    },
-    {
-      id: 'pemeriksa',
-      ikon: '🔍',
-      nama: 'Pemeriksa',
-      tugas: 'Bertanya "Basisnya sama? Semua setuju?" sebelum Periksa ditekan.',
-    },
-    {
-      id: 'jubir',
-      ikon: '🎤',
-      nama: 'Juru Bicara',
-      tugas: 'Menjelaskan alasan tim dengan kalimat sendiri.',
-    },
-  ],
-
-  /* ---------- Fase 1: tujuan & motivasi ---------- */
-  tujuan: {
-    kicker: 'Tahap 1 · Tujuan & Motivasi',
-    goal: 'Mengenali tujuan belajar dan menduga cara menyederhanakan operasi bilangan berpangkat.',
-    syntax: CL + ' · Fase 1',
-    guru: 'Ceritakan masalah galeri foto kelas. Minta setiap murid menduga sendiri (1 menit), lalu bandingkan dengan teman satu tim. Banyak murid akan memilih 2¹² karena "3 × 4 = 12" — jangan dikoreksi dulu; dugaan dicek setelah para ahli selesai mengajar.',
-    judul: 'Galeri Foto Kelas VIII',
-    pengantar:
-      'Kelas VIII sedang menyusun galeri foto digital kegiatan sekolah. Semua ukurannya ternyata berupa bilangan berpangkat dengan basis 2. Apakah hasilnya bisa ditulis singkat sebagai SATU bilangan berpangkat?',
-    tp: 'Menerapkan sifat-sifat operasi bilangan berpangkat bulat (perkalian, pembagian, dan pangkat dari pangkat) dalam penyelesaian soal.',
+  /* ----------------------------------------------------------
+     TAHAP 1 — STIMULASI
+     ---------------------------------------------------------- */
+  stimulasi: {
+    kicker: 'Tahap 1 · Stimulasi',
+    syntax: 'Discovery Learning · Sintaks 1',
+    goal: 'Mengamati tangga pangkat yang terputus dan menduga isi serta makna anak tangga di bawah pangkat 1.',
+    tp: 'Membaca dan menuliskan bilangan berpangkat bulat negatif dan nol beserta maknanya.',
     tpJudul: 'Tujuan belajar hari ini',
     kriteria: [
-      'Menyederhanakan perkalian bilangan berpangkat berbasis sama: aᵐ × aⁿ.',
-      'Menyederhanakan pembagian bilangan berpangkat berbasis sama: aᵐ : aⁿ, termasuk hasil berpangkat nol dan negatif.',
-      'Menyederhanakan pangkat dari pangkat: (aᵐ)ⁿ.',
-      'Menggabungkan beberapa sifat untuk menyelesaikan soal kontekstual, serta mengenali kapan sifat TIDAK berlaku.',
+      'Menentukan nilai dan makna bilangan berpangkat nol (a⁰) dan berpangkat negatif (a⁻ⁿ).',
+      'Menuliskan bilangan berpangkat nol dan negatif dalam notasi aⁿ.',
+      'Membaca bilangan berpangkat nol dan negatif dengan cara baku.',
+      'Menjelaskan mengapa basis bilangan berpangkat nol/negatif tidak boleh nol.',
     ],
-    dugaan: [
+    guru: 'Gambar tangga pangkat 2 di papan tulis sampai pangkat 1, lalu tanyakan apa yang terjadi bila tangga diteruskan ke bawah. Biarkan murid menduga tanpa dikoreksi; tanyakan "Mengapa kamu menduga begitu?" untuk memancing alasan.',
+    judul: 'Tangga Pangkat yang Terputus',
+    cerita:
+      'Di buku catatan Kak Sari tertulis tangga pangkat 2: semakin ke atas, pangkatnya naik dan nilainya dikalikan 2. Sayangnya tangga itu berhenti di anak tangga paling bawah, pangkat 1, karena Kak Sari belum tahu apa yang terjadi jika pangkatnya diturunkan lagi.',
+    catatanBima: '2⁴ = 16 → 2³ = 8 → 2² = 4 → 2¹ = 2 → 2⁰ = ? → 2⁻¹ = ? → 2⁻² = ?',
+    keluhan:
+      '“Kalau tangganya diturunkan lagi, apa nilai 2⁰ dan 2⁻¹? Kok bisa ada pangkat nol dan pangkat negatif?”',
+    pertanyaan:
+      'Menurut dugaanmu, kalau pola tangga (setiap naik satu anak tangga, nilainya ×2) diteruskan ke BAWAH, berapakah nilai 2⁰ dan 2⁻¹?',
+    opsi: [
       {
-        id: 'dKali',
-        ikon: '📁',
-        tanya:
-          'Ada <strong>2⁴ folder</strong>, tiap folder berisi <strong>2³ foto</strong>. Banyak foto seluruhnya = 2³ × 2⁴ = …',
-        opsi: [
-          { id: 'a', label: '2⁷' },
-          { id: 'b', label: '2¹²' },
-          { id: 'c', label: '4⁷' },
-          { id: 'd', label: '2¹' },
-        ],
-        kunci: 'a',
-        penjelasan: '2³ × 2⁴ = (2 × 2 × 2) × (2 × 2 × 2 × 2) = 7 faktor 2 = 2⁷ = 128 foto.',
+        id: 'pola',
+        label: '2⁰ = 1 dan 2⁻¹ = ½ — meneruskan pola “dibagi 2” setiap turun satu anak tangga',
       },
+      { id: 'nol', label: '2⁰ = 0 dan 2⁻¹ = −2 — karena ada angka 0 dan tanda negatif' },
+      { id: 'sama', label: '2⁰ = 2 dan 2⁻¹ = 2 — nilainya tetap sama seperti 2¹' },
       {
-        id: 'dBagi',
-        ikon: '💾',
-        tanya:
-          '<strong>2¹⁰ foto</strong> dibagi rata ke <strong>2⁶ flashdisk</strong>. Isi tiap flashdisk = 2¹⁰ : 2⁶ = …',
-        opsi: [
-          { id: 'a', label: '2⁴' },
-          { id: 'b', label: '2¹⁶' },
-          { id: 'c', label: '1⁴' },
-          { id: 'd', label: '2⁶⁰' },
-        ],
-        kunci: 'a',
-        penjelasan:
-          '2¹⁰ : 2⁶ — enam faktor 2 dicoret dari sepuluh faktor 2, tersisa 4 faktor: 2⁴ = 16 foto.',
-      },
-      {
-        id: 'dPangkat',
-        ikon: '🖼️',
-        tanya:
-          'Sebuah stiker persegi berukuran 2³ piksel × 2³ piksel, yaitu <strong>(2³)²</strong> piksel. (2³)² = …',
-        opsi: [
-          { id: 'a', label: '2⁶' },
-          { id: 'b', label: '2⁵' },
-          { id: 'c', label: '2⁹' },
-          { id: 'd', label: '4³' },
-        ],
-        kunci: 'a',
-        penjelasan: '(2³)² = 2³ × 2³ = 6 faktor 2 = 2⁶ = 64 piksel.',
+        id: 'negatif',
+        label: '2⁰ = 0 dan 2⁻¹ = −½ — hasilnya jadi negatif karena pangkatnya negatif',
       },
     ],
-    alasanLabel: 'Tulis alasan dugaan tim kalian (singkat).',
-    alasanPlaceholder: 'Menurut kami … karena …',
+    alasanLabel: 'Mengapa kamu menduga begitu? (tulis singkat)',
+    alasanPlaceholder: 'Menurutku … karena …',
     catatan:
-      'Belum ada jawaban benar atau salah. Dugaan kalian akan dicek setelah para ahli selesai mengajar.',
-    nextLabel: 'Lanjut ke Informasi →',
+      'Belum ada jawaban benar atau salah. Dugaanmu akan kamu buktikan sendiri di tahap-tahap berikutnya.',
+    nextLabel: 'Lanjut ke Rumusan Masalah →',
   },
 
-  /* ---------- Fase 2: menyajikan informasi ---------- */
-  informasi: {
-    kicker: 'Tahap 2 · Menyajikan Informasi',
-    goal: 'Mengingat kembali arti bilangan berpangkat bulat dan syarat basis sama.',
-    syntax: CL + ' · Fase 2',
-    guru: 'Tayangkan tahap ini di depan kelas dan bahas pertanyaan penuntun bersama (±8 menit). JANGAN mengajarkan ketiga sifat di sini — sifat akan ditemukan sendiri oleh kelompok ahli.',
+  /* ----------------------------------------------------------
+     TAHAP 2 — IDENTIFIKASI MASALAH
+     ---------------------------------------------------------- */
+  masalah: {
+    kicker: 'Tahap 2 · Identifikasi Masalah',
+    syntax: 'Discovery Learning · Sintaks 2',
+    goal: 'Merumuskan pertanyaan inti yang akan diselidiki dan menuliskan hipotesis.',
+    guru: 'Arahkan murid memilih pertanyaan yang bisa diselidiki (bukan sekadar menghitung satu soal). Hipotesis boleh keliru; yang penting dapat diuji.',
     pengantar:
-      'Sebelum berbagi tugas sebagai ahli, ingat kembali arti bilangan berpangkat yang sudah kamu pelajari di MPI 12.1.',
-    ingatJudul: 'Ingat kembali',
-    contoh: [
-      { a: 2, n: 5, teks: 'dibaca "dua pangkat lima": basis 2, eksponen 5, ada 5 faktor 2.' },
-      { a: -3, n: 4, teks: 'basis negatif ditulis dalam kurung; ada 4 faktor (−3).' },
+      'Tangga pangkat yang terputus memunculkan beberapa pertanyaan. Pilih pertanyaan yang paling tepat untuk kita selidiki bersama.',
+    pertanyaan: 'Pertanyaan manakah yang paling tepat untuk diselidiki?',
+    opsi: [
+      {
+        id: 'inti',
+        label:
+          'Berapa nilai dan apa makna bilangan berpangkat nol dan negatif, serta bagaimana cara menuliskan dan membacanya?',
+      },
+      { id: 'hasil', label: 'Berapakah hasil dari 2⁴?' },
+      { id: 'tangga', label: 'Berapa anak tangga yang digambar Kak Sari?' },
+      { id: 'gambar', label: 'Bagaimana cara menggambar tangga yang rapi?' },
     ],
-    ingat: [
-      'aⁿ = a × a × … × a (n faktor). <strong>a</strong> disebut basis, <strong>n</strong> disebut eksponen (pangkat).',
-      'a⁰ = 1 untuk a ≠ 0, misalnya 7⁰ = 1.',
-      'a⁻ⁿ = 1/aⁿ untuk a ≠ 0, misalnya 2⁻³ = 1/2³ = 1/8.',
-    ],
-    penuntun: [
-      {
-        id: 'p1',
-        tanya: '(−3)⁴ artinya …',
-        opsi: [
-          { id: 'a', label: '(−3) × (−3) × (−3) × (−3)' },
-          { id: 'b', label: '(−3) × 4' },
-          { id: 'c', label: '(−3) + (−3) + (−3) + (−3)' },
-          { id: 'd', label: '−(3 × 3 × 3 × 3)' },
-        ],
-        correct: 'a',
-        umpan: {
-          a: 'Tepat! Eksponen 4 menyatakan BANYAK FAKTOR: (−3) dikalikan berulang 4 kali, hasilnya 81.',
-          b: 'Eksponen bukan pengali. (−3) × 4 = −12, sedangkan (−3)⁴ = 81.',
-          c: 'Itu penjumlahan berulang (= −12). Bilangan berpangkat adalah PERKALIAN berulang.',
-          d: 'Itu −3⁴ (tanpa kurung), bernilai −81. Karena ada kurung, basisnya −3, sehingga hasilnya positif 81.',
-        },
-      },
-      {
-        id: 'p2',
-        tanya: 'Nilai 5⁰ adalah …',
-        opsi: [
-          { id: 'a', label: '1' },
-          { id: 'b', label: '0' },
-          { id: 'c', label: '5' },
-          { id: 'd', label: 'Tidak dapat ditentukan' },
-        ],
-        correct: 'a',
-        umpan: {
-          a: 'Benar! Setiap bilangan (selain 0) berpangkat nol bernilai 1.',
-          b: 'Pangkat nol tidak berarti hasilnya nol. Pada tangga pangkat, 5¹ = 5 lalu dibagi 5 menjadi 5⁰ = 1.',
-          c: '5 adalah nilai 5¹. Turun satu anak tangga (dibagi 5) menghasilkan 5⁰ = 1.',
-          d: '5⁰ dapat ditentukan, yaitu 1. Yang tidak didefinisikan adalah 0⁰.',
-        },
-      },
-      {
-        id: 'p3',
-        tanya: '2⁻³ sama dengan …',
-        opsi: [
-          { id: 'a', label: '1/8' },
-          { id: 'b', label: '−8' },
-          { id: 'c', label: '−6' },
-          { id: 'd', label: '8' },
-        ],
-        correct: 'a',
-        umpan: {
-          a: 'Tepat! 2⁻³ = 1/2³ = 1/8. Eksponen negatif berarti kebalikan, bukan bilangan negatif.',
-          b: 'Tanda negatif pada eksponen tidak membuat hasilnya negatif. 2⁻³ = 1/2³ = 1/8.',
-          c: 'Eksponen bukan pengali: 2⁻³ ≠ 2 × (−3). Ingat a⁻ⁿ = 1/aⁿ.',
-          d: '8 adalah 2³. Eksponen negatif berarti kebalikannya: 1/8.',
-        },
-      },
-      {
-        id: 'p4',
-        tanya:
-          '2³ × 3² TIDAK dapat ditulis sebagai satu bilangan berpangkat dengan sifat, karena …',
-        opsi: [
-          { id: 'a', label: 'basisnya berbeda (2 dan 3)' },
-          { id: 'b', label: 'eksponennya berbeda (3 dan 2)' },
-          { id: 'c', label: 'hasilnya bukan bilangan genap' },
-          { id: 'd', label: 'sebenarnya bisa: 2³ × 3² = 6⁵' },
-        ],
-        correct: 'a',
-        umpan: {
-          a: 'Benar! Faktor 2 dan faktor 3 tidak bisa "digabung". Hitung nilainya: 8 × 9 = 72.',
-          b: 'Eksponen berbeda tidak masalah (misalnya 2³ × 2² tetap bisa disederhanakan). Yang penting basisnya sama.',
-          c: 'Genap atau ganjil tidak berpengaruh. Perhatikan basisnya: 2 dan 3.',
-          d: '6⁵ = 7.776, padahal 2³ × 3² = 8 × 9 = 72. Basis tidak boleh ikut dikalikan.',
-        },
-      },
-    ],
-    syaratJudul: 'Satu syarat penting',
-    syarat:
-      'Sifat-sifat yang akan ditemukan para ahli hanya berlaku bila BASISNYA SAMA. Periksa basis lebih dulu sebelum menyederhanakan!',
-    nextLabel: 'Bentuk Tim Asal →',
+    correct: 'inti',
+    umpan: {
+      inti: 'Tepat! Pertanyaan ini mencakup NILAI, MAKNA, cara MENULIS, dan cara MEMBACA bilangan berpangkat nol dan negatif.',
+      hasil:
+        '2⁴ = 16 sudah diketahui dari tangga bagian atas. Yang belum diketahui adalah bagian bawah tangga: pangkat 0 dan negatif.',
+      tangga:
+        'Banyaknya anak tangga bukan masalah utama kita. Yang menjadi masalah adalah makna dan nilai anak tangga di bawah pangkat 1.',
+      gambar:
+        'Kerapian gambar menarik, tetapi masalah kita adalah nilai dan makna pangkat nol dan negatif.',
+    },
+    hipotesisLabel: 'Tulis hipotesismu: berapa nilai 2⁰ dan 2⁻¹, dan apa maknanya?',
+    hipotesisPlaceholder: 'Menurutku, 2⁰ = … dan 2⁻¹ = … karena …',
+    nextLabel: 'Mulai Menyelidiki Tangga Pangkat →',
   },
 
-  /* ---------- Fase 3: mengorganisasikan kelompok ---------- */
-  tim: {
-    kicker: 'Tahap 3 · Bentuk Tim Asal',
-    goal: 'Membentuk tim asal, menyepakati aturan kerja sama, dan menerima kartu ahli.',
-    syntax: CL + ' · Fase 3',
-    guru: 'Bentuk tim asal heterogen berisi 3 murid (boleh 4: anggota keempat menjadi pendamping ahli dan ikut ke kelompok ahli yang sama). Tegaskan prinsip Jigsaw: setiap ahli adalah SATU-SATUNYA sumber sifatnya di tim, jadi tim bergantung pada penjelasannya. Skor tim juga bergantung pada kuis SETIAP anggota.',
-    namaTimLabel: 'Nama tim asal',
-    namaTimPlaceholder: 'Contoh: Tim Eksponen',
-    anggotaLabel: 'Nama anggota tim',
-    minAnggota: 2,
-    maksAnggota: 4,
-    kesepakatanJudul: 'Kesepakatan tim (centang semua)',
-    kesepakatan: [
-      {
-        id: 'ahli',
-        teks: 'Setiap ahli bertanggung jawab mempelajari sifatnya sampai bisa mengajarkannya.',
-      },
-      {
-        id: 'dengar',
-        teks: 'Saat seorang ahli mengajar, anggota lain mendengarkan dan boleh bertanya.',
-      },
-      { id: 'setuju', teks: 'Tombol jawaban baru ditekan setelah semua anggota setuju.' },
-      { id: 'bantu', teks: 'Anggota yang sudah paham menjelaskan, bukan menjawabkan.' },
+  /* ----------------------------------------------------------
+     TAHAP 3 — MENGUMPULKAN DATA A: TANGGA PANGKAT
+     ---------------------------------------------------------- */
+  tangga: {
+    kicker: 'Tahap 3 · Mengumpulkan Data (A)',
+    syntax: 'Discovery Learning · Sintaks 3',
+    goal: 'Menemukan pola nilai bilangan berpangkat saat pangkatnya diturunkan sampai nol dan negatif.',
+    guru: 'Tekankan pola "setiap turun satu anak tangga, nilai dibagi basis". Setelah tangga basis 10 selesai, hubungkan 10⁻¹ = 0,1 dan 10⁻² = 0,01 dengan nilai tempat desimal yang sudah dikenal murid.',
+    cerita:
+      'Lanjutkan tangga pangkat Kak Sari untuk tiga basis berbeda. Isi anak tangga yang kosong; kamu boleh menulis jawabannya sebagai pecahan (mis. 1/2) atau desimal (mis. 0,5).',
+    instruksi:
+      'Isi anak tangga yang kosong pada setiap tangga. Setiap turun satu anak tangga, pangkatnya berkurang 1 dan nilainya DIBAGI basis.',
+    tangga: [
+      { id: 'x2', judul: 'Tangga pangkat 2', a: 2, dari: 3, sampai: -3, diketahui: [3, 2] },
+      { id: 'x5', judul: 'Tangga pangkat 5', a: 5, dari: 2, sampai: -2, diketahui: [2, 1] },
+      { id: 'x10', judul: 'Tangga pangkat 10', a: 10, dari: 3, sampai: -3, diketahui: [3, 2] },
     ],
-    acakLabel: '🎲 Bagikan Kartu Ahli',
-    acakUlangLabel: '🎲 Bagikan Ulang Kartu Ahli',
-    ahliJudul: 'Kartu ahli tim kalian',
-    ahliCatatan:
-      'Pada tahap berikutnya, setiap ahli berkumpul dengan ahli yang sama dari tim lain (kelompok ahli), lalu kembali untuk mengajari tim asal.',
-    nextLabel: 'Menuju Kelompok Ahli →',
+    temuanTangga:
+      'Pola ini berlaku untuk basis apa pun (asalkan basisnya bukan 0): setiap turun satu anak tangga, nilainya dibagi basis. Tangga terus konsisten sampai <strong>a⁰ = 1</strong> dan pangkat negatif menghasilkan <strong>pecahan</strong> (mis. 2⁻² = ¼). Pada basis 10, hasil ini juga sama dengan bentuk desimal: 10⁻¹ = 0,1 dan 10⁻² = 0,01.',
+    nextLabel: 'Lanjut Memaknai Pangkat Nol & Negatif →',
   },
 
-  /* ---------- Fase 4a: kelompok ahli (Jigsaw) ---------- */
-  ahli: {
-    kicker: 'Tahap 4 · Kelompok Ahli',
-    goal: 'Menemukan satu sifat operasi bilangan berpangkat di kelompok ahli, lalu mengajarkannya kepada tim asal.',
-    syntax: CL + ' · Fase 4',
-    guru: 'Kelompok ahli (±12 menit): ahli sejenis dari beberapa tim duduk bersama mengerjakan bagian ① dan ②. Kembali ke tim asal (±8 menit): ahli mengajarkan sifatnya memakai ubin faktor, lalu memandu tim mengerjakan bagian ③. Keliling dan dengarkan penjelasan ahli; luruskan bila ahli hanya menghafal rumus tanpa alasan.',
-    pengantar:
-      'Setiap stasiun adalah tugas satu ahli. Di kelompok ahli: amati ubin faktor, lengkapi tabel pola, dan temukan hubungan eksponennya. Kembali ke tim asal: ajarkan sifatmu, lalu pandu tim mengerjakan soal stasiun.',
-    ajarLabel:
-      'Ahli sudah kembali ke tim asal dan menjelaskan sifat ini dengan ubin faktor. Semua anggota paham.',
-    stasiun: [
-      {
-        id: 'kali',
-        ubin: { jenis: 'kali', a: 2, m: 3, n: 2 },
-        ubinTeks:
-          '2³ × 2² = (2 × 2 × 2) × (2 × 2). Hitung banyak faktor 2 seluruhnya setelah digabung.',
-        pola: {
-          operasi: 'kali',
-          baris: [
-            { a: 2, m: 2, n: 3 },
-            { a: 2, m: 3, n: 4 },
-            { a: 10, m: 2, n: 3 },
-          ],
-        },
-        polaInstruksi:
-          'Hitung nilai setiap bentuk (kalikan nilainya), lalu tulis hasilnya sebagai satu bilangan berpangkat aᵏ.',
-        tanya: {
-          id: 'hKali',
-          tanya: 'Dari tabel, bagaimana eksponen hasil k diperoleh dari m dan n pada aᵐ × aⁿ?',
-          opsi: [
-            { id: 'jumlah', label: 'k = m + n' },
-            { id: 'kali', label: 'k = m × n' },
-            { id: 'kurang', label: 'k = m − n' },
-            { id: 'basis', label: 'basisnya ikut dikalikan, eksponennya tetap' },
-          ],
-          correct: 'jumlah',
-          umpan: {
-            jumlah:
-              'Tepat! 2² × 2³ = 2⁵ (2 + 3 = 5) dan 2³ × 2⁴ = 2⁷ (3 + 4 = 7). Faktor-faktornya digabung, jadi eksponennya DIJUMLAHKAN.',
-            kali: 'Cek baris pertama: 2² × 2³ = 32 = 2⁵, bukan 2⁶ = 64. Eksponennya tidak dikalikan.',
-            kurang:
-              'Cek baris kedua: 2³ × 2⁴ = 128 = 2⁷. Hasil perkalian justru makin besar, bukan makin kecil.',
-            basis:
-              'Basis tetap 2 di semua baris (2² × 2³ = 2⁵, bukan 4⁵). Yang berubah adalah eksponennya.',
-          },
-        },
-        soal: [
-          { id: 'sk1', op: 'kali', a: 5, m: 4, n: 3 },
-          { id: 'sk2', op: 'kali', a: 3, m: 5, n: -2 },
-        ],
-      },
-      {
-        id: 'bagi',
-        ubin: { jenis: 'bagi', a: 2, m: 5, n: 2, coret: true },
-        ubinTeks:
-          '2⁵ : 2² ditulis sebagai pecahan. Setiap faktor 2 di atas yang berpasangan dengan faktor 2 di bawah dicoret. Berapa faktor yang tersisa?',
-        pola: {
-          operasi: 'bagi',
-          baris: [
-            { a: 2, m: 5, n: 2 },
-            { a: 3, m: 6, n: 2 },
-            { a: 10, m: 5, n: 3 },
-          ],
-        },
-        polaInstruksi:
-          'Hitung nilai setiap bentuk (bagi nilainya), lalu tulis hasilnya sebagai satu bilangan berpangkat aᵏ.',
-        tanya: {
-          id: 'hBagi',
-          tanya: 'Dari tabel, bagaimana eksponen hasil k diperoleh dari m dan n pada aᵐ : aⁿ?',
-          opsi: [
-            { id: 'kurang', label: 'k = m − n' },
-            { id: 'bagi', label: 'k = m : n' },
-            { id: 'jumlah', label: 'k = m + n' },
-            { id: 'balik', label: 'k = n − m' },
-          ],
-          correct: 'kurang',
-          umpan: {
-            kurang:
-              'Tepat! 2⁵ : 2² = 2³ (5 − 2 = 3) dan 3⁶ : 3² = 3⁴ (6 − 2 = 4). Faktor yang sama dicoret, jadi eksponennya DIKURANGKAN.',
-            bagi: 'Cek baris kedua: 3⁶ : 3² = 729 : 9 = 81 = 3⁴, bukan 3³ = 27. Eksponennya tidak dibagi.',
-            jumlah: 'Pembagian membuat hasilnya lebih kecil: 2⁵ : 2² = 8 = 2³, bukan 2⁷.',
-            balik:
-              'Urutannya terbalik: 2⁵ : 2² = 2³, yaitu 5 − 2. Eksponen yang DIBAGI dikurangi eksponen PEMBAGI.',
-          },
-        },
-        soal: [
-          { id: 'sb1', op: 'bagi', a: 7, m: 9, n: 4 },
-          { id: 'sb2', op: 'bagi', a: 2, m: 3, n: 5, nilai: true },
-        ],
-      },
-      {
-        id: 'pangkat',
-        ubin: { jenis: 'pangkat', a: 2, m: 3, n: 2 },
-        ubinTeks:
-          '(2³)² = 2³ × 2³: ada 2 kelompok, tiap kelompok berisi 3 faktor 2. Berapa faktor 2 seluruhnya?',
-        pola: {
-          operasi: 'pangkat',
-          baris: [
-            { a: 2, m: 2, n: 3 },
-            { a: 2, m: 4, n: 2 },
-            { a: 10, m: 3, n: 2 },
-          ],
-        },
-        polaInstruksi:
-          'Hitung dulu nilai di dalam kurung, lalu pangkatkan. Tulis hasilnya sebagai satu bilangan berpangkat aᵏ.',
-        tanya: {
-          id: 'hPangkat',
-          tanya: 'Dari tabel, bagaimana eksponen hasil k diperoleh dari m dan n pada (aᵐ)ⁿ?',
-          opsi: [
-            { id: 'kali', label: 'k = m × n' },
-            { id: 'jumlah', label: 'k = m + n' },
-            { id: 'pangkat', label: 'k = mⁿ' },
-            { id: 'kurang', label: 'k = m − n' },
-          ],
-          correct: 'kali',
-          umpan: {
-            kali: 'Tepat! (2²)³ = 2⁶ (2 × 3 = 6) dan (2⁴)² = 2⁸ (4 × 2 = 8). aᵐ dikalikan n kali, jadi eksponennya DIKALIKAN.',
-            jumlah:
-              'Cek baris pertama: (2²)³ = 4³ = 64 = 2⁶, bukan 2⁵ = 32. Eksponennya tidak dijumlahkan.',
-            pangkat:
-              'Cek baris pertama: (2²)³ = 2⁶, sedangkan 2³ = 8 akan membuat hasilnya 2⁸ = 256. Eksponen tidak dipangkatkan.',
-            kurang: 'Memangkatkan lagi membuat hasil makin besar: (2⁴)² = 256 = 2⁸, bukan 2².',
-          },
-        },
-        soal: [
-          { id: 'sp1', op: 'pangkat', a: 5, m: 3, n: 4 },
-          { id: 'sp2', op: 'pangkat', a: 10, m: -2, n: 3 },
-        ],
-      },
+  /* ----------------------------------------------------------
+     TAHAP 4 — MENGUMPULKAN DATA B: MAKNA PANGKAT NOL & NEGATIF
+     ---------------------------------------------------------- */
+  makna: {
+    kicker: 'Tahap 4 · Mengumpulkan Data (B)',
+    syntax: 'Discovery Learning · Sintaks 3',
+    goal: 'Memaknai bilangan berpangkat nol dan negatif lewat konteks pengenceran larutan dan populasi bakteri mundur waktu, lalu berlatih menulis dan membacanya.',
+    guru: 'Setelah cerita, tekankan bahwa pangkat 0 berarti "belum ada operasi kali/bagi yang dilakukan" (nilainya tetap 1×semula), sedangkan pangkat negatif berarti "kebalikan dari mengalikan berulang", yaitu membagi berulang.',
+    ceritaLarutan:
+      'Bu Wati mencampur larutan pembersih pekat, lalu mengencerkannya berkali-kali: setiap sekali diencerkan, kepekatannya menjadi setengah (dikali ½, atau dibagi 2) dari sebelumnya. Kepekatan larutan setelah diencerkan n kali ditulis (½)ⁿ = 2⁻ⁿ dari kepekatan semula.',
+    tabelLarutan: [
+      { label: 'Sebelum diencerkan sama sekali', a: 2, n: 0 },
+      { label: 'Setelah diencerkan 1 kali', a: 2, n: -1 },
+      { label: 'Setelah diencerkan 2 kali', a: 2, n: -2 },
+      { label: 'Setelah diencerkan 3 kali', a: 2, n: -3 },
     ],
-    dugaanJudul: 'Cek dugaan tim di Tahap 1',
-    nextLabel: 'Mulai Misi 1 →',
-  },
-
-  /* ---------- Fase 4b: misi 1 — sederhanakan ---------- */
-  misiSederhana: {
-    kicker: 'Tahap 5 · Misi 1: Sederhanakan!',
-    goal: 'Memilih sifat yang tepat lalu menyederhanakan operasi bilangan berpangkat berbasis sama.',
-    syntax: CL + ' · Fase 4',
-    guru: 'Pastikan ahli sifat yang dipilih benar-benar memimpin (menjelaskan), bukan sekadar mengetik. Soal ke-4 adalah jebakan basis berbeda — tanyakan "Mengapa sifat tidak bisa dipakai?". Catat tim yang masih menjawab eksponen dikalikan pada perkalian.',
-    ronde: 1,
-    pengantar:
-      'Untuk setiap soal: (1) Pemeriksa bertanya "Basisnya sama?", (2) tim memilih sifat yang dipakai, (3) ahli sifat itu memimpin menghitung eksponen, lalu (4) bila diminta, hitung nilainya.',
-    soal: [
-      { id: 'm1', op: 'kali', a: -2, m: 3, n: 4, nilai: true },
-      { id: 'm2', op: 'bagi', a: 10, m: 8, n: 5, nilai: true },
-      { id: 'm3', op: 'pangkat', a: 3, m: 2, n: 3 },
-      { id: 'm4', op: 'basisBeda', a: 2, m: 3, b: 3, n: 2, nilai: true },
-      { id: 'm5', op: 'bagi', a: 4, m: 2, n: 5, nilai: true },
-      { id: 'm6', op: 'pangkat', a: 'p', m: 4, n: -2 },
-      { id: 'm7', op: 'kali', a: 'y', m: 6, n: -6 },
+    maknaLarutan:
+      '“Sebelum diencerkan sama sekali” berarti belum ada pengenceran yang terjadi — kepekatannya TETAP 100% dari semula, sehingga 2⁰ = 1 (dikali 1, tidak berubah). Setelah diencerkan n kali, kepekatannya menjadi 2⁻ⁿ = 1/2ⁿ dari semula — makin banyak diencerkan, makin kecil pecahannya.',
+    ceritaBakteri:
+      'Sekelompok bakteri membelah menjadi 2 setiap 20 menit. Saat ini (t = 0) banyaknya P bakteri. Berapa banyak bakteri 20 menit dan 40 menit SEBELUM sekarang?',
+    tabelBakteri: [
+      { label: 'Sekarang (t = 0)', a: 2, n: 0 },
+      { label: '20 menit sebelum sekarang', a: 2, n: -1 },
+      { label: '40 menit sebelum sekarang', a: 2, n: -2 },
     ],
-    nextLabel: 'Lanjut ke Misi 2 →',
-  },
-
-  /* ---------- Fase 4b: misi 2 — rantai sifat ---------- */
-  misiRantai: {
-    kicker: 'Tahap 6 · Misi 2: Rantai Sifat',
-    goal: 'Menerapkan beberapa sifat secara berurutan untuk menyelesaikan soal gabungan dan kontekstual.',
-    syntax: CL + ' · Fase 4',
-    guru: 'Soal gabungan memerlukan beberapa ahli bergantian memimpin. Minta Juru Bicara menjelaskan urutan langkahnya. Untuk soal kontekstual, tanyakan: "Mengapa operasinya perkalian/pembagian?"',
-    ronde: 2,
-    pengantar:
-      'Selesaikan setiap soal langkah demi langkah. Setiap langkah memakai SATU sifat; ahli sifat itu yang memimpin. Kerjakan dari dalam kurung dan dari kiri ke kanan.',
-    soal: [
+    maknaBakteri:
+      '“Sekarang” berarti belum mundur waktu sama sekali, sehingga banyak bakteri tetap P × 2⁰ = P (tidak berubah). Mundur 20 menit berarti banyak bakteri SEBELUM sempat membelah, yaitu P × 2⁻¹ = P/2 (setengah dari sekarang) — meneguhkan bahwa pangkat negatif adalah KEBALIKAN dari mengalikan berulang, yaitu membagi berulang.',
+    instruksiTulis:
+      'Tulis dalam bentuk pangkat: isi kotak BASIS (besar) dan kotak PANGKAT (kecil, boleh diisi 0 atau bilangan negatif).',
+    langkah: [
       {
-        id: 'r1',
+        id: 'm1',
+        jenis: 'tulis',
         a: 2,
-        awal: 3,
-        langkah: [
-          { op: 'kali', n: 5 },
-          { op: 'bagi', n: 4 },
+        n: 0,
+        label: 'Kepekatan larutan sebelum diencerkan sama sekali (dikali 1)',
+        hints: [
+          'Basisnya tetap 2, sesuai basis pengenceran.',
+          'Belum ada pengenceran yang terjadi, jadi pangkatnya nol.',
+          'Basis 2, pangkat 0.',
         ],
-        nilai: true,
+        temuan: '2⁰ = 1: pangkat nol berarti belum ada operasi kali/bagi yang terjadi.',
       },
       {
-        id: 'r2',
-        a: 3,
-        awal: 2,
-        langkah: [
-          { op: 'pangkat', n: 4 },
-          { op: 'bagi', n: 5 },
+        id: 'm2',
+        jenis: 'tulis',
+        a: 2,
+        n: -1,
+        label: 'Kepekatan larutan setelah diencerkan 1 kali (dibagi 2 sebanyak 1 kali)',
+        hints: [
+          'Basisnya 2.',
+          'Diencerkan 1 kali berarti dibagi 2 sebanyak 1 kali → pangkat negatif 1.',
+          'Basis 2, pangkat −1.',
         ],
-        nilai: true,
+        temuan: '2⁻¹ = ½: pangkat negatif 1 berarti dibagi basis sebanyak 1 kali.',
       },
       {
-        id: 'r3',
+        id: 'm3',
+        jenis: 'tulis',
+        a: 2,
+        n: -3,
+        label: 'Kepekatan larutan setelah diencerkan 3 kali (dibagi 2 sebanyak 3 kali)',
+        hints: [
+          'Basisnya 2.',
+          'Diencerkan 3 kali berarti dibagi 2 sebanyak 3 kali.',
+          'Basis 2, pangkat −3.',
+        ],
+        temuan:
+          '2⁻³ = ⅛: makin banyak diencerkan, makin negatif pangkatnya dan makin kecil nilainya.',
+      },
+      {
+        id: 'm4',
+        jenis: 'tulis',
         a: 5,
-        awal: 4,
-        langkah: [
-          { op: 'kali', n: -2 },
-          { op: 'pangkat', n: 3 },
+        n: -2,
+        label: 'Banyak bakteri basis-5 (membelah 5×) 2 langkah SEBELUM sekarang',
+        hints: [
+          'Mundur waktu berarti pangkatnya negatif.',
+          'Mundur 2 langkah berarti pangkat −2.',
+          'Basis 5, pangkat −2.',
         ],
-      },
-      {
-        id: 'r4',
-        ikon: '💾',
-        cerita:
-          'Sebuah flashdisk berkapasitas 2⁵ GB. Satu GB = 2¹⁰ MB, dan satu foto berukuran 2² MB.',
-        tanya: 'Berapa banyak foto yang muat di flashdisk? (kapasitas dalam MB dibagi ukuran foto)',
-        a: 2,
-        awal: 5,
-        langkah: [
-          { op: 'kali', n: 10 },
-          { op: 'bagi', n: 2 },
-        ],
-        nilai: true,
-        satuan: 'foto',
-      },
-      {
-        id: 'r5',
-        ikon: '🦠',
-        cerita:
-          'Mula-mula ada 2⁴ bakteri. Setiap 20 menit setiap bakteri membelah menjadi 2, sehingga dalam 3 jam (9 kali membelah) banyaknya dikali 2⁹. Semua bakteri lalu dibagi rata ke 2⁵ cawan.',
-        tanya: 'Berapa bakteri di setiap cawan?',
-        a: 2,
-        awal: 4,
-        langkah: [
-          { op: 'kali', n: 9 },
-          { op: 'bagi', n: 5 },
-        ],
-        nilai: true,
-        satuan: 'bakteri',
-      },
-      {
-        id: 'r6',
-        ikon: '🚰',
-        cerita:
-          'Tandon air sekolah berbentuk kubus dengan rusuk 10² cm, sehingga volumenya (10²)³ cm³. Satu liter = 10³ cm³.',
-        tanya: 'Berapa liter air yang dapat ditampung tandon itu?',
-        a: 10,
-        awal: 2,
-        langkah: [
-          { op: 'pangkat', n: 3 },
-          { op: 'bagi', n: 3 },
-        ],
-        nilai: true,
-        satuan: 'liter',
+        temuan: '5⁻² = 1/25: mundur 2 langkah waktu = dibagi basis sebanyak 2 kali.',
       },
     ],
-    nextLabel: 'Lanjut ke Misi 3 →',
+    instruksiBaca: 'Sekarang ketik cara membaca setiap bilangan berpangkat berikut.',
+    baca: [
+      {
+        id: 'b1',
+        jenis: 'baca',
+        a: 3,
+        n: 0,
+        label: 'Ketik cara membaca 3⁰',
+        hints: [
+          'Pola bacaannya: “[basis] pangkat [pangkat]”.',
+          'Pangkatnya nol, dibaca “nol”.',
+          'Dibaca “tiga pangkat nol”.',
+        ],
+        temuan: '3⁰ = 1, dibaca “tiga pangkat nol”.',
+      },
+      {
+        id: 'b2',
+        jenis: 'baca',
+        a: 4,
+        n: -2,
+        label: 'Ketik cara membaca 4⁻²',
+        hints: [
+          'Basisnya 4, pangkatnya −2.',
+          'Pangkat negatif dibaca dengan kata “negatif” sebelum angkanya.',
+          'Dibaca “empat pangkat negatif dua”.',
+        ],
+        temuan: '4⁻² = 1/16, dibaca “empat pangkat negatif dua”.',
+      },
+      {
+        id: 'b3',
+        jenis: 'baca',
+        a: -2,
+        n: -3,
+        label: 'Ketik cara membaca (−2)⁻³',
+        hints: [
+          'Basisnya −2 (ada kurung).',
+          'Pangkatnya −3.',
+          'Dibaca “negatif dua pangkat negatif tiga”.',
+        ],
+        temuan: '(−2)⁻³ = −⅛, dibaca “negatif dua pangkat negatif tiga”.',
+      },
+    ],
+    instruksiAnatomi:
+      'Ketuk bagian yang diminta pada setiap bilangan berpangkat. Perhatikan tanda − di dalam maupun di luar kurung!',
+    anatomi: [
+      { id: 'ma1', a: 3, n: -4, target: 'pangkat' },
+      { id: 'ma2', a: 7, n: 0, target: 'basis' },
+      { id: 'ma3', a: -5, n: -2, target: 'basis' },
+      { id: 'ma4', a: 6, n: -2, negLuar: true, target: 'pangkat' },
+    ],
+    umpanAnatomi: {
+      basis:
+        'Itu basisnya: bilangan yang dikalikan/dibagi berulang, ditulis besar. Yang diminta adalah pangkat.',
+      pangkat:
+        'Itu pangkatnya: angka kecil di kanan atas (boleh 0 atau negatif). Yang diminta adalah basis.',
+      tanda: 'Tanda − di luar pangkat BUKAN bagian basis maupun pangkat.',
+    },
+    nextLabel: 'Lanjut Mengolah Data →',
   },
 
-  /* ---------- Fase 4c: misi 3 — diskusi ---------- */
-  misiDiskusi: {
-    kicker: 'Tahap 7 · Misi 3: Cek Pendapat Teman',
-    goal: 'Menilai kebenaran pernyataan tentang sifat bilangan berpangkat dan menjelaskan kekeliruannya.',
-    syntax: CL + ' · Fase 4',
-    guru: 'Setiap pernyataan hanya bisa dijawab sekali, jadi tim harus berdiskusi dulu. Minta Juru Bicara beberapa tim membacakan catatannya di depan kelas.',
-    ronde: 3,
+  /* ----------------------------------------------------------
+     TAHAP 5 — MENGOLAH DATA
+     ---------------------------------------------------------- */
+  olah: {
+    kicker: 'Tahap 5 · Mengolah Data',
+    syntax: 'Discovery Learning · Sintaks 4',
+    goal: 'Mengolah temuan menjadi aturan nilai, makna, dan cara baca bilangan berpangkat nol dan negatif, termasuk syarat basis tidak boleh nol.',
+    guru: 'Setelah pertanyaan penuntun, minta satu pasangan menjelaskan mengapa 0⁻² tidak terdefinisi sebelum murid lain mengerjakan bagian pemilahan.',
     pengantar:
-      'Beberapa teman menulis pernyataan berikut. Diskusikan dalam tim, lalu tentukan Benar atau Salah. Setiap pernyataan hanya bisa dijawab sekali!',
-    opsi: OPSI_BENAR_SALAH,
-    pernyataan: [
-      {
-        id: 'd1',
-        teks: '2³ × 2⁴ = 2¹²',
-        cek: { jenis: 'sifat', op: 'kali', a: 2, m: 3, n: 4, k: 12 },
-        correct: 'salah',
-        explanation:
-          'Pada perkalian basis sama, eksponen dijumlahkan: 2³ × 2⁴ = 2³⁺⁴ = 2⁷ = 128, bukan 2¹².',
-      },
-      {
-        id: 'd2',
-        teks: '(2³)⁴ = 2¹²',
-        cek: { jenis: 'sifat', op: 'pangkat', a: 2, m: 3, n: 4, k: 12 },
-        correct: 'benar',
-        explanation: 'Pangkat dari pangkat: eksponen dikalikan, (2³)⁴ = 2³ˣ⁴ = 2¹².',
-      },
-      {
-        id: 'd3',
-        teks: '6⁸ : 6² = 6⁴',
-        cek: { jenis: 'sifat', op: 'bagi', a: 6, m: 8, n: 2, k: 4 },
-        correct: 'salah',
-        explanation: 'Pada pembagian, eksponen dikurangkan, bukan dibagi: 6⁸ : 6² = 6⁸⁻² = 6⁶.',
-      },
-      {
-        id: 'd4',
-        teks: '2³ × 3⁴ = 6⁷',
-        cek: { jenis: 'basisBeda', a: 2, m: 3, b: 3, n: 4, c: 6, k: 7 },
-        correct: 'salah',
-        explanation:
-          'Basisnya berbeda, jadi sifat tidak berlaku. 2³ × 3⁴ = 8 × 81 = 648, sedangkan 6⁷ = 279.936.',
-      },
-      {
-        id: 'd5',
-        teks: '5⁴ : 5⁴ = 5⁰ = 1',
-        cek: { jenis: 'sifat', op: 'bagi', a: 5, m: 4, n: 4, k: 0 },
-        correct: 'benar',
-        explanation: '5⁴ : 5⁴ = 5⁴⁻⁴ = 5⁰, dan bilangan yang dibagi dirinya sendiri bernilai 1.',
-      },
-      {
-        id: 'd6',
-        teks: '3² : 3⁵ = 3⁻³ = 1/27',
-        cek: { jenis: 'sifat', op: 'bagi', a: 3, m: 2, n: 5, k: -3 },
-        correct: 'benar',
-        explanation: '3² : 3⁵ = 3²⁻⁵ = 3⁻³ = 1/3³ = 1/27.',
-      },
-      {
-        id: 'd7',
-        teks: '(−2)² × (−2)³ = (−2)⁵ = −32',
-        cek: { jenis: 'sifat', op: 'kali', a: -2, m: 2, n: 3, k: 5 },
-        correct: 'benar',
-        explanation:
-          '(−2)² × (−2)³ = (−2)⁵. Lima faktor negatif (ganjil) menghasilkan bilangan negatif: −32.',
-      },
-      {
-        id: 'd8',
-        teks: '2³ + 2⁴ = 2⁷',
-        cek: { jenis: 'jumlah', a: 2, m: 3, n: 4, k: 7 },
-        correct: 'salah',
-        explanation:
-          'Sifat eksponen berlaku untuk PERKALIAN, bukan penjumlahan. 2³ + 2⁴ = 8 + 16 = 24, sedangkan 2⁷ = 128.',
-      },
-    ],
-    jubirLabel:
-      'Juru Bicara: tuliskan satu kekeliruan yang paling sering terjadi dan cara tim kalian menghindarinya.',
-    jubirPlaceholder: 'Kekeliruan yang sering terjadi adalah … Cara menghindarinya …',
-    nextLabel: 'Lanjut ke Kuis Individu →',
-  },
-
-  /* ---------- Fase 5: evaluasi individu ---------- */
-  kuis: {
-    kicker: 'Tahap 8 · Kuis Individu',
-    goal: 'Menunjukkan kemampuan menerapkan sifat operasi bilangan berpangkat secara mandiri.',
-    syntax: CL + ' · Fase 5',
-    guru: 'Kuis dikerjakan SENDIRI-SENDIRI tanpa bantuan tim. Soal diambil acak dari bank sehingga tiap murid/tim mendapat soal berbeda. Jawaban hanya bisa dipilih sekali.',
-    instruksi: 'Kerjakan sendiri. Jawaban pilihan ganda hanya dapat dipilih sekali.',
-    banyak: 6,
-    komposisi: { kali: 1, bagi: 1, pangkat: 1, gabung: 2, konteks: 1 },
-    soal: [
+      'Gunakan data dari tangga pangkat dan konteks pengenceran/mundur-waktu untuk menjawab pertanyaan penuntun berikut.',
+    konsep: [
       {
         id: 'k1',
-        jenis: 'kali',
-        type: 'choice',
-        cek: { a: 3, awal: 4, langkah: [{ op: 'kali', n: 5 }] },
-        cerita: 'Sederhanakan perkalian bilangan berpangkat berikut.',
-        pertanyaan: '3⁴ × 3⁵ = …',
-        options: [
-          { id: 'a', label: '3⁹' },
-          { id: 'b', label: '3²⁰' },
-          { id: 'c', label: '9⁹' },
-          { id: 'd', label: '3¹' },
+        tanya: 'Untuk a ≠ 0, nilai a⁰ selalu sama dengan …',
+        opsi: [
+          { id: 'benar', label: '1' },
+          { id: 'nol', label: '0' },
+          { id: 'a', label: 'a' },
+          { id: 'tergantung', label: 'tergantung nilai a' },
         ],
-        correct: 'a',
-        explanation: 'Basis sama, eksponen dijumlahkan: 3⁴⁺⁵ = 3⁹.',
+        correct: 'benar',
+        umpan: {
+          benar:
+            'Tepat! Untuk a ≠ 0, a⁰ = 1 — sesuai pola tangga: 2⁰=1, 5⁰=1, 10⁰=1, dan sesuai makna "belum ada operasi yang terjadi".',
+          nol: 'a⁰ BUKAN 0. Lihat kembali tangga pangkat: setelah 2¹=2 dibagi 2, hasilnya 1, bukan 0.',
+          a: 'a⁰ tidak sama dengan a. Misalnya 5⁰ = 1, bukan 5.',
+          tergantung: 'Nilai a⁰ selalu 1 untuk a ≠ 0 berapa pun, tidak tergantung nilai a.',
+        },
       },
       {
         id: 'k2',
-        jenis: 'kali',
-        type: 'choice',
-        cek: { a: -5, awal: 2, langkah: [{ op: 'kali', n: -6 }] },
-        cerita: 'Sederhanakan perkalian bilangan berpangkat berikut.',
-        pertanyaan: '(−5)² × (−5)⁻⁶ = …',
-        options: [
-          { id: 'a', label: '(−5)⁻⁴' },
-          { id: 'b', label: '(−5)⁻¹²' },
-          { id: 'c', label: '(−5)⁸' },
-          { id: 'd', label: '25⁻⁴' },
+        tanya: 'Makna a⁻ⁿ (untuk a ≠ 0, n bulat positif) adalah …',
+        opsi: [
+          { id: 'benar', label: 'kebalikan (pecahan 1 per) aⁿ, yaitu 1/aⁿ' },
+          { id: 'negatif', label: 'nilai negatif dari aⁿ, yaitu −aⁿ' },
+          { id: 'kaliNegatif', label: 'a dikalikan −n' },
+          { id: 'sama', label: 'sama dengan aⁿ' },
         ],
-        correct: 'a',
-        explanation: 'Eksponen dijumlahkan: 2 + (−6) = −4, jadi hasilnya (−5)⁻⁴.',
+        correct: 'benar',
+        umpan: {
+          benar:
+            'Tepat! a⁻ⁿ = 1/aⁿ. Pangkat negatif berarti kebalikan (pecahan), bukan nilai negatif.',
+          negatif: 'a⁻ⁿ tidak sama dengan −aⁿ. Misalnya 2⁻² = ¼ (positif), bukan −4.',
+          kaliNegatif: 'Pangkat bukan pengali. 2⁻² bukan 2 × (−2).',
+          sama: 'a⁻ⁿ dan aⁿ adalah kebalikan satu sama lain (hasil kali keduanya = 1), jadi tidak sama.',
+        },
       },
       {
         id: 'k3',
-        jenis: 'bagi',
-        type: 'choice',
-        cek: { a: 7, awal: 12, langkah: [{ op: 'bagi', n: 3 }] },
-        cerita: 'Sederhanakan pembagian bilangan berpangkat berikut.',
-        pertanyaan: '7¹² : 7³ = …',
-        options: [
-          { id: 'a', label: '7⁹' },
-          { id: 'b', label: '7⁴' },
-          { id: 'c', label: '7¹⁵' },
-          { id: 'd', label: '1⁹' },
+        tanya: 'Cara membaca 5⁻³ yang baku adalah …',
+        opsi: [
+          { id: 'benar', label: '“lima pangkat negatif tiga”' },
+          { id: 'minus', label: '“lima pangkat minus tiga”' },
+          { id: 'negLima', label: '“negatif lima pangkat tiga”' },
+          { id: 'kurang', label: '“lima dikurangi tiga pangkat”' },
         ],
-        correct: 'a',
-        explanation: 'Basis sama, eksponen dikurangkan: 7¹²⁻³ = 7⁹ (bukan dibagi: 12 : 3 = 4).',
+        correct: 'benar',
+        umpan: {
+          benar:
+            'Tepat! Baca basisnya, lalu kata “pangkat”, lalu kata “negatif” sebelum pangkatnya.',
+          minus: '“Minus” adalah nama operasi pengurangan. Tanda − pada pangkat dibaca “negatif”.',
+          negLima:
+            'Yang bertanda negatif adalah pangkatnya (−3), bukan basisnya. Basis 5 tetap positif.',
+          kurang: '5⁻³ bukan pengurangan. Ini notasi pangkat: basis 5, pangkat −3.',
+        },
       },
       {
         id: 'k4',
-        jenis: 'bagi',
-        type: 'choice',
-        cek: { a: 10, awal: 2, langkah: [{ op: 'bagi', n: 6 }], bentuk: 'nilai' },
-        cerita: 'Tentukan nilai pembagian bilangan berpangkat berikut.',
-        pertanyaan: 'Nilai 10² : 10⁶ adalah …',
-        options: [
-          { id: 'a', label: '1/10.000' },
-          { id: 'b', label: '−10.000' },
-          { id: 'c', label: '10.000' },
-          { id: 'd', label: '1/1.000' },
+        tanya: 'Mengapa basis pada bilangan berpangkat nol/negatif tidak boleh 0?',
+        opsi: [
+          {
+            id: 'benar',
+            label: '0⁻ⁿ = 1/0ⁿ = 1/0, dan pembagian dengan 0 tidak terdefinisi.',
+          },
+          { id: 'genap', label: 'Karena 0 adalah bilangan genap.' },
+          { id: 'kecil', label: 'Karena 0 terlalu kecil untuk dipangkatkan.' },
+          { id: 'boleh', label: 'Sebenarnya boleh; 0⁻ⁿ selalu bernilai 0.' },
         ],
-        correct: 'a',
-        explanation: '10² : 10⁶ = 10²⁻⁶ = 10⁻⁴ = 1/10⁴ = 1/10.000.',
-      },
-      {
-        id: 'k5',
-        jenis: 'pangkat',
-        type: 'choice',
-        cek: { a: 2, awal: 5, langkah: [{ op: 'pangkat', n: 3 }] },
-        cerita: 'Sederhanakan pangkat dari pangkat berikut.',
-        pertanyaan: '(2⁵)³ = …',
-        options: [
-          { id: 'a', label: '2¹⁵' },
-          { id: 'b', label: '2⁸' },
-          { id: 'c', label: '2¹²⁵' },
-          { id: 'd', label: '6⁵' },
-        ],
-        correct: 'a',
-        explanation: 'Pangkat dari pangkat: eksponen dikalikan, 5 × 3 = 15, jadi 2¹⁵.',
-      },
-      {
-        id: 'k6',
-        jenis: 'pangkat',
-        type: 'choice',
-        cek: { a: 'x', awal: 3, langkah: [{ op: 'pangkat', n: -4 }] },
-        cerita: 'Sederhanakan bentuk aljabar berpangkat berikut (x ≠ 0).',
-        pertanyaan: '(x³)⁻⁴ = …',
-        options: [
-          { id: 'a', label: 'x⁻¹²' },
-          { id: 'b', label: 'x⁻¹' },
-          { id: 'c', label: 'x⁷' },
-          { id: 'd', label: 'x¹²' },
-        ],
-        correct: 'a',
-        explanation: 'Eksponen dikalikan: 3 × (−4) = −12, jadi x⁻¹².',
-      },
-      {
-        id: 'k7',
-        jenis: 'gabung',
-        type: 'choice',
-        cek: {
-          a: 2,
-          awal: 5,
-          langkah: [
-            { op: 'kali', n: 3 },
-            { op: 'bagi', n: 6 },
-          ],
+        correct: 'benar',
+        umpan: {
+          benar:
+            'Tepat! a⁻ⁿ = 1/aⁿ. Jika a = 0, penyebutnya 0, sehingga hasilnya tidak terdefinisi.',
+          genap: 'Sifat genap/ganjil tidak berkaitan. Masalahnya ada pada pembagian dengan 0.',
+          kecil: '0 bukan "terlalu kecil"; masalahnya adalah 1/0ⁿ berarti membagi dengan 0.',
+          boleh: '0⁻ⁿ TIDAK terdefinisi, bukan bernilai 0. Coba hitung 1/0² — tidak ada hasilnya.',
         },
-        cerita: 'Sederhanakan dengan menerapkan lebih dari satu sifat.',
-        pertanyaan: '2⁵ × 2³ : 2⁶ = …',
-        options: [
-          { id: 'a', label: '2²' },
-          { id: 'b', label: '2¹⁴' },
-          { id: 'c', label: '2⁻²' },
-          { id: 'd', label: '2⁸' },
-        ],
-        correct: 'a',
-        explanation: '2⁵ × 2³ = 2⁸, lalu 2⁸ : 2⁶ = 2².',
-      },
-      {
-        id: 'k8',
-        jenis: 'gabung',
-        type: 'choice',
-        cek: {
-          a: 3,
-          awal: 2,
-          langkah: [
-            { op: 'pangkat', n: 3 },
-            { op: 'bagi', n: 4 },
-          ],
-          bentuk: 'nilai',
-        },
-        cerita: 'Tentukan nilai bentuk berikut dengan menerapkan sifat.',
-        pertanyaan: 'Nilai (3²)³ : 3⁴ adalah …',
-        options: [
-          { id: 'a', label: '9' },
-          { id: 'b', label: '3' },
-          { id: 'c', label: '27' },
-          { id: 'd', label: '1/9' },
-        ],
-        correct: 'a',
-        explanation: '(3²)³ = 3⁶, lalu 3⁶ : 3⁴ = 3² = 9.',
-      },
-      {
-        id: 'k9',
-        jenis: 'gabung',
-        type: 'choice',
-        cek: {
-          a: 5,
-          awal: 3,
-          langkah: [
-            { op: 'kali', n: -1 },
-            { op: 'pangkat', n: 2 },
-          ],
-        },
-        cerita: 'Sederhanakan dengan menerapkan lebih dari satu sifat.',
-        pertanyaan: '(5³ × 5⁻¹)² = …',
-        options: [
-          { id: 'a', label: '5⁴' },
-          { id: 'b', label: '5⁻⁶' },
-          { id: 'c', label: '5⁸' },
-          { id: 'd', label: '5³' },
-        ],
-        correct: 'a',
-        explanation: 'Dalam kurung: 5³ × 5⁻¹ = 5², lalu (5²)² = 5⁴.',
-      },
-      {
-        id: 'k10',
-        jenis: 'konteks',
-        type: 'choice',
-        cek: { a: 2, awal: 20, langkah: [{ op: 'bagi', n: 8 }] },
-        cerita: 'Sebuah server menyimpan 2²⁰ berkas yang dibagi rata ke dalam 2⁸ folder.',
-        pertanyaan: 'Banyak berkas di setiap folder adalah …',
-        options: [
-          { id: 'a', label: '2¹² berkas' },
-          { id: 'b', label: '2²⁸ berkas' },
-          { id: 'c', label: '2¹⁶⁰ berkas' },
-          { id: 'd', label: '1¹² berkas' },
-        ],
-        correct: 'a',
-        explanation: 'Dibagi rata → pembagian: 2²⁰ : 2⁸ = 2²⁰⁻⁸ = 2¹² berkas.',
-      },
-      {
-        id: 'k11',
-        jenis: 'konteks',
-        type: 'choice',
-        cek: { a: 10, awal: 4, langkah: [{ op: 'kali', n: 3 }] },
-        cerita:
-          'Satu gelas berisi sekitar 10⁴ butir gula pasir. Satu karung berisi gula sebanyak 10³ gelas.',
-        pertanyaan: 'Banyak butir gula dalam satu karung sekitar …',
-        options: [
-          { id: 'a', label: '10⁷ butir' },
-          { id: 'b', label: '10¹² butir' },
-          { id: 'c', label: '20⁷ butir' },
-          { id: 'd', label: '10¹ butir' },
-        ],
-        correct: 'a',
-        explanation: '10³ gelas × 10⁴ butir = 10³⁺⁴ = 10⁷ butir.',
-      },
-      {
-        id: 'k12',
-        jenis: 'konteks',
-        type: 'choice',
-        cek: { a: 3, awal: 4, langkah: [{ op: 'pangkat', n: 2 }] },
-        cerita: 'Lantai sebuah ruang berbentuk persegi dengan panjang sisi 3⁴ cm.',
-        pertanyaan: 'Luas lantai itu, yaitu (3⁴)² cm², sama dengan …',
-        options: [
-          { id: 'a', label: '3⁸ cm²' },
-          { id: 'b', label: '3⁶ cm²' },
-          { id: 'c', label: '3¹⁶ cm²' },
-          { id: 'd', label: '9⁴ cm²' },
-        ],
-        correct: 'a',
-        explanation: 'Luas = sisi × sisi = (3⁴)² = 3⁴ˣ² = 3⁸ cm².',
       },
     ],
-    nextLabel: 'Lihat Penghargaan Tim →',
+    instruksiAnatomi: 'Ketuk bagian yang diminta pada setiap bilangan berpangkat berikut.',
+    anatomi: [
+      { id: 'oa1', a: 4, n: -5, target: 'basis' },
+      { id: 'oa2', a: -3, n: 0, target: 'pangkat' },
+      { id: 'oa3', a: 9, n: -2, target: 'pangkat' },
+      { id: 'oa4', a: 7, n: -3, negLuar: true, target: 'basis' },
+    ],
+    umpanAnatomi: {
+      basis:
+        'Itu basisnya: bilangan yang dikalikan/dibagi berulang, ditulis besar. Yang diminta adalah pangkat.',
+      pangkat:
+        'Itu pangkatnya: angka kecil di kanan atas (boleh 0 atau negatif). Yang diminta adalah basis.',
+      tanda:
+        'Tanda − di luar pangkat BUKAN bagian basis. Basis −7 harus ditulis dengan kurung: (−7)⁻³.',
+    },
+    instruksiPilah:
+      'Pilah setiap cara baca berikut: TEPAT atau KELIRU? Setiap butir hanya bisa dijawab sekali.',
+    opsiPilah: [
+      { id: 'tepat', label: 'Tepat' },
+      { id: 'keliru', label: 'Keliru' },
+    ],
+    pilah: [
+      {
+        id: 'p1',
+        a: 6,
+        n: 0,
+        bacaan: 'enam pangkat nol',
+        correct: 'tepat',
+        explanation: 'Basis 6 dibaca dulu, lalu “pangkat nol”.',
+      },
+      {
+        id: 'p2',
+        a: 3,
+        n: -4,
+        bacaan: 'tiga pangkat negatif empat',
+        correct: 'tepat',
+        explanation: 'Basis 3 dibaca dulu, lalu “pangkat negatif empat”.',
+      },
+      {
+        id: 'p3',
+        a: 5,
+        n: -2,
+        bacaan: 'lima pangkat minus dua',
+        correct: 'keliru',
+        explanation:
+          'Tanda − pada pangkat dibaca “negatif”, bukan “minus”. Seharusnya “lima pangkat negatif dua”.',
+      },
+      {
+        id: 'p4',
+        a: -2,
+        n: 0,
+        bacaan: 'negatif dua pangkat nol',
+        correct: 'tepat',
+        explanation: 'Basisnya −2 (ada kurung), jadi dibaca “negatif dua pangkat nol”.',
+      },
+      {
+        id: 'p5',
+        a: 8,
+        n: -3,
+        bacaan: 'negatif delapan pangkat tiga',
+        correct: 'keliru',
+        explanation:
+          'Basisnya tetap 8 (positif); yang negatif adalah pangkatnya. Seharusnya “delapan pangkat negatif tiga”.',
+      },
+      {
+        id: 'p6',
+        a: 4,
+        n: -2,
+        negLuar: true,
+        bacaan: 'negatif dari empat pangkat negatif dua',
+        correct: 'tepat',
+        explanation:
+          'Tanpa kurung, basisnya 4 dan tanda − di luar pangkat, dibaca “negatif dari …”.',
+      },
+      {
+        id: 'p7',
+        a: 9,
+        n: 0,
+        bacaan: 'sembilan pangkat kosong',
+        correct: 'keliru',
+        explanation: 'Pangkat 0 dibaca “nol”, bukan “kosong”. Seharusnya “sembilan pangkat nol”.',
+      },
+      {
+        id: 'p8',
+        a: -3,
+        n: -3,
+        bacaan: 'negatif tiga pangkat negatif tiga',
+        correct: 'tepat',
+        explanation: 'Basisnya −3 (ada kurung) dan pangkatnya −3, dibaca sesuai keduanya.',
+      },
+    ],
+    nextLabel: 'Lanjut ke Pembuktian →',
   },
 
-  /* ---------- Fase 6: penghargaan ---------- */
-  penghargaan: {
-    kicker: 'Tahap 9 · Penghargaan Tim',
-    goal: 'Merayakan hasil kerja sama tim berdasarkan skor misi dan kuis individu.',
-    syntax: CL + ' · Fase 6',
-    guru: 'Umumkan predikat setiap tim. Beri penghargaan khusus "Ahli Terbaik" kepada ahli yang penjelasannya paling membantu (tanyakan kepada anggota tim). Tekankan bahwa kuis individu ikut menentukan poin tim.',
-    bobot:
-      'Poin tim = 50% skor stasiun ahli & misi (benar pada percobaan pertama) + 50% skor kuis individu.',
-    pujianLabel: 'Tulis satu pujian untuk ahli di tim kalian (siapa dan apa yang ia ajarkan).',
-    pujianPlaceholder:
-      'Contoh: Terima kasih Rina, penjelasanmu dengan ubin faktor membuatku paham mengapa eksponennya dijumlahkan.',
-    nextLabel: 'Lanjut ke Refleksi →',
-  },
-
-  /* ---------- Penutup ---------- */
-  refleksi: {
-    kicker: 'Tahap 10 · Refleksi',
-    goal: 'Merefleksikan pemahaman konsep dan cara bekerja sama dalam tim.',
-    syntax: CL + ' · Penutup',
-    guru: 'Minta 2–3 murid membacakan jawaban refleksi. Catat murid yang memilih "belum yakin" untuk pendampingan pada pertemuan berikutnya.',
-    pertanyaan: [
+  /* ----------------------------------------------------------
+     TAHAP 6 — PEMBUKTIAN
+     ---------------------------------------------------------- */
+  verifikasi: {
+    kicker: 'Tahap 6 · Pembuktian',
+    syntax: 'Discovery Learning · Sintaks 5',
+    goal: 'Membuktikan dugaan awal dan menguji temuan dengan menulis, membaca, serta menanggapi miskonsepsi.',
+    guru: 'Minta murid membandingkan dugaan awal dengan temuan. Diskusikan miskonsepsi yang paling banyak dipilih keliru di kelas.',
+    prediksiLabel: 'Dugaan awalmu',
+    hipotesisLabel: 'Hipotesismu',
+    kesimpulanDugaan: {
+      pola: 'Dugaanmu terbukti! Meneruskan pola “dibagi 2” setiap turun satu anak tangga: 2⁰ = 1 dan 2⁻¹ = ½.',
+      nol: 'Dugaanmu belum tepat: 2⁰ bukan 0. Ingat pola tangga: 2¹ = 2, dibagi 2 hasilnya 1, jadi 2⁰ = 1. Dan 2⁻¹ = ½, bukan −2.',
+      sama: 'Dugaanmu belum tepat: nilainya justru berubah (dibagi 2) setiap turun satu anak tangga. 2⁰ = 1 dan 2⁻¹ = ½, bukan tetap 2.',
+      negatif:
+        'Dugaanmu belum tepat: pangkat negatif TIDAK membuat hasilnya negatif. 2⁰ = 1 (bukan 0) dan 2⁻¹ = ½ (positif, bukan −½).',
+    },
+    instruksiTulis: 'Uji 1 — Tulis setiap bacaan berikut dalam bentuk pangkat.',
+    tulis: [
+      {
+        id: 'v1',
+        jenis: 'tulis',
+        a: 7,
+        n: 0,
+        label: '“tujuh pangkat nol”',
+        hints: ['Basisnya 7.', 'Kata “nol” menunjukkan pangkatnya 0.', 'Basis 7, pangkat 0.'],
+      },
+      {
+        id: 'v2',
+        jenis: 'tulis',
+        a: 3,
+        n: -5,
+        label: '“tiga pangkat negatif lima”',
+        hints: [
+          'Basisnya 3.',
+          'Kata “negatif” sebelum pangkat menunjukkan pangkatnya negatif.',
+          'Basis 3, pangkat −5.',
+        ],
+      },
+    ],
+    instruksiBaca: 'Uji 2 — Ketik cara membaca setiap bilangan berpangkat berikut.',
+    baca: [
       {
         id: 'r1',
-        teks: 'Mengapa 2³ × 2⁴ = 2⁷ dan bukan 2¹²? Jelaskan dengan kata-katamu (boleh memakai ubin faktor).',
-        placeholder: 'Tulis jawabanmu…',
+        jenis: 'baca',
+        a: -4,
+        n: 0,
+        label: 'Ketik cara membaca (−4)⁰',
+        hints: ['Basisnya −4 (ada kurung).', 'Dibaca “negatif empat pangkat nol”.'],
       },
       {
         id: 'r2',
-        teks: 'Kapan sifat-sifat bilangan berpangkat TIDAK dapat dipakai? Beri satu contoh.',
-        placeholder: 'Contoh: bila basisnya …',
-      },
-      {
-        id: 'r3',
-        teks: 'Berikan satu contoh dari kehidupan sehari-hari yang memerlukan operasi bilangan berpangkat.',
-        placeholder: 'Contoh: memori komputer, pertumbuhan bakteri, …',
-      },
-      {
-        id: 'r4',
-        teks: 'Apa yang kamu pelajari dari teman ahli di timmu? Apa yang kamu sumbangkan sebagai ahli?',
-        placeholder: 'Tulis jawabanmu…',
+        jenis: 'baca',
+        a: 6,
+        n: -3,
+        label: 'Ketik cara membaca 6⁻³',
+        hints: ['Basisnya 6, pangkatnya −3.', 'Dibaca “enam pangkat negatif tiga”.'],
       },
     ],
-    diriLabel: 'Seberapa yakin kamu menerapkan sifat-sifat bilangan berpangkat sekarang?',
+    instruksiSoal:
+      'Uji 3 — Tanggapi pendapat teman-teman berikut. Setiap soal hanya bisa dijawab sekali.',
+    soal: [
+      {
+        id: 's1',
+        pernyataan: 'Dodi: “5⁰ = 0, karena berapa pun dikali nol pangkatnya jadi nol.”',
+        options: [
+          {
+            id: 'benar',
+            label: 'Dodi keliru: 5⁰ = 1, bukan 0. Pangkat nol tidak berarti nilainya nol.',
+          },
+          { id: 'setuju', label: 'Dodi benar.' },
+          { id: 'lima', label: 'Dodi keliru: 5⁰ = 5.' },
+          { id: 'takTentu', label: 'Dodi keliru: 5⁰ tidak terdefinisi.' },
+        ],
+        correct: 'benar',
+        explanation:
+          'Untuk a ≠ 0, a⁰ selalu 1. Pangkat nol berarti belum ada operasi kali/bagi yang terjadi, bukan hasilnya nol.',
+      },
+      {
+        id: 's2',
+        pernyataan: 'Rani: “2⁻³ = −8, karena tanda pangkatnya negatif jadi hasilnya negatif.”',
+        options: [
+          { id: 'benar', label: 'Rani keliru: 2⁻³ = ⅛ (positif), yaitu kebalikan dari 2³ = 8.' },
+          { id: 'setuju', label: 'Rani benar.' },
+          { id: 'delapan', label: 'Rani keliru: 2⁻³ = 8.' },
+          { id: 'negDelapan', label: 'Rani keliru: 2⁻³ = −⅛.' },
+        ],
+        correct: 'benar',
+        explanation:
+          'Pangkat negatif berarti kebalikan (pecahan 1/aⁿ), bukan nilai negatif. 2⁻³ = 1/2³ = ⅛.',
+      },
+      {
+        id: 's3',
+        pernyataan: 'Sinta: “0⁻² boleh dihitung, hasilnya 0.”',
+        options: [
+          {
+            id: 'benar',
+            label: 'Sinta keliru: 0⁻² = 1/0² = 1/0, tidak terdefinisi karena pembagian dengan 0.',
+          },
+          { id: 'setuju', label: 'Sinta benar, hasilnya 0.' },
+          { id: 'satu', label: 'Sinta keliru: 0⁻² = 1.' },
+          { id: 'negatif', label: 'Sinta keliru: 0⁻² = −2.' },
+        ],
+        correct: 'benar',
+        explanation:
+          'Basis bilangan berpangkat negatif tidak boleh 0, karena a⁻ⁿ = 1/aⁿ dan membagi dengan 0 tidak terdefinisi.',
+      },
+      {
+        id: 's4',
+        pernyataan: 'Wati: “3⁻² dibaca ‘tiga pangkat minus dua’.”',
+        options: [
+          {
+            id: 'benar',
+            label: 'Wati kurang tepat: dibaca “tiga pangkat negatif dua”, bukan “minus dua”.',
+          },
+          { id: 'setuju', label: 'Wati benar, keduanya boleh dipakai.' },
+          { id: 'kurang', label: 'Wati keliru: dibaca “tiga dikurangi dua pangkat”.' },
+          {
+            id: 'positif',
+            label: 'Wati keliru: 3⁻² dibaca sebagai bilangan positif tanpa kata tambahan.',
+          },
+        ],
+        correct: 'benar',
+        explanation:
+          '“Minus” adalah nama operasi pengurangan. Tanda − pada pangkat dibaca dengan kata “negatif”.',
+      },
+    ],
+    nextLabel: 'Lanjut Menarik Kesimpulan →',
+  },
+
+  /* ----------------------------------------------------------
+     TAHAP 7 — MENARIK KESIMPULAN
+     ---------------------------------------------------------- */
+  generalisasi: {
+    kicker: 'Tahap 7 · Menarik Kesimpulan',
+    syntax: 'Discovery Learning · Sintaks 6',
+    goal: 'Menyusun kesimpulan tentang nilai, makna, dan cara membaca/menulis bilangan berpangkat nol dan negatif.',
+    guru: 'Setelah kesimpulan tepat, minta murid menyalinnya ke buku catatan dengan contoh buatan sendiri.',
+    instruksi:
+      'Lengkapi setiap kalimat dengan potongan yang tepat dari daftar pilihan. Setiap potongan hanya dipakai satu kali; beberapa potongan adalah pengecoh.',
+    selectPlaceholder: '— pilih potongan kalimat —',
+    kalimat: [
+      { id: 'g1', awal: 'Untuk a ≠ 0, nilai a⁰ selalu sama dengan', correct: 'c1' },
+      { id: 'g2', awal: 'Untuk a ≠ 0 dan n bulat positif, nilai a⁻ⁿ sama dengan', correct: 'c2' },
+      { id: 'g3', awal: 'Pangkat nol bermakna', correct: 'c3' },
+      { id: 'g4', awal: 'Pangkat negatif bermakna', correct: 'c4' },
+      { id: 'g5', awal: 'Bentuk a⁻ⁿ dibaca', correct: 'c5' },
+      { id: 'g6', awal: 'Basis bilangan berpangkat nol/negatif tidak boleh', correct: 'c6' },
+    ],
+    bank: [
+      { id: 'c1', teks: '1' },
+      { id: 'c2', teks: '1/aⁿ (kebalikan aⁿ)' },
+      { id: 'c3', teks: 'belum ada operasi kali/bagi yang terjadi' },
+      { id: 'c4', teks: 'kebalikan dari mengalikan berulang, yaitu membagi berulang' },
+      { id: 'c5', teks: '“a pangkat negatif n”' },
+      { id: 'c6', teks: '0 (nol), karena akan membagi dengan 0' },
+      { id: 'd1', teks: '0' },
+      { id: 'd2', teks: '−aⁿ (nilai negatif dari aⁿ)' },
+      { id: 'd3', teks: 'hasil kali berulang sebanyak n kali' },
+      { id: 'd4', teks: 'membuat hasilnya menjadi negatif' },
+      { id: 'd5', teks: '“a dikurangi pangkat n”' },
+      { id: 'd6', teks: 'negatif, karena hasilnya pasti positif' },
+    ],
+    rangkuman: [
+      'Untuk a ≠ 0: a⁰ = 1. Pangkat nol bermakna belum ada operasi kali/bagi yang terjadi.',
+      'Untuk a ≠ 0, n bulat positif: a⁻ⁿ = 1/aⁿ. Pangkat negatif bermakna kebalikan (membagi berulang), BUKAN nilai negatif.',
+      'a⁻ⁿ dibaca “a pangkat negatif n”, mis. 2⁻³ dibaca “dua pangkat negatif tiga”. Tanda − pada pangkat dibaca “negatif”, bukan “minus”.',
+      'Basis pada bilangan berpangkat nol/negatif tidak boleh 0, karena 0⁻ⁿ = 1/0ⁿ = 1/0 tidak terdefinisi.',
+      'Pola tangga pangkat tetap konsisten: setiap turun satu anak tangga (pangkat berkurang 1), nilainya dibagi basis — berlaku juga saat melewati pangkat 0 ke pangkat negatif.',
+    ],
+    nextLabel: 'Lanjut ke Uji Terap →',
+  },
+
+  /* ----------------------------------------------------------
+     TAHAP 8 — UJI TERAP
+     ---------------------------------------------------------- */
+  terapkan: {
+    kicker: 'Tahap 8 · Uji Terap',
+    syntax: 'Penerapan',
+    goal: 'Menerapkan makna dan cara membaca/menuliskan bilangan berpangkat nol dan negatif pada berbagai konteks.',
+    guru: 'Murid mengerjakan mandiri. Amati soal yang sering dijawab keliru untuk dibahas bersama.',
+    instruksi: 'Kerjakan soal satu per satu. Untuk soal isian, kamu boleh mencoba lagi.',
+    nextLabel: 'Lanjut ke Refleksi →',
+    soal: [
+      {
+        id: 't1',
+        type: 'choice',
+        konteks: 'Notasi ilmiah',
+        cerita: 'Ukuran sebuah virus kira-kira 10⁻⁷ meter.',
+        pertanyaan: 'Cara membaca 10⁻⁷ yang tepat adalah …',
+        options: [
+          { id: 'benar', label: 'sepuluh pangkat negatif tujuh' },
+          { id: 'minus', label: 'sepuluh pangkat minus tujuh' },
+          { id: 'negatifSepuluh', label: 'negatif sepuluh pangkat tujuh' },
+          { id: 'kurang', label: 'sepuluh dikurangi tujuh pangkat' },
+        ],
+        correct: 'benar',
+        cek: { jenis: 'baca', a: 10, n: -7 },
+        explanation:
+          '10⁻⁷: basis 10 (positif), pangkat −7, dibaca “sepuluh pangkat negatif tujuh”.',
+        hints: ['Basisnya tetap positif; yang negatif adalah pangkatnya.'],
+      },
+      {
+        id: 't2',
+        type: 'choice',
+        konteks: 'Pengenceran larutan',
+        cerita: 'Larutan pembersih diencerkan 4 kali; setiap kali diencerkan, kepekatan dikali ½.',
+        pertanyaan: 'Bentuk pangkat basis 2 untuk kepekatan setelah diencerkan 4 kali adalah …',
+        options: [
+          { id: 'benar', label: '2⁻⁴' },
+          { id: 'positif', label: '2⁴' },
+          { id: 'nol', label: '2⁰' },
+          { id: 'negHasil', label: '−2⁴' },
+        ],
+        correct: 'benar',
+        cek: { jenis: 'tulis', a: 2, n: -4 },
+        explanation:
+          'Diencerkan 4 kali berarti dibagi 2 sebanyak 4 kali, yaitu pangkat negatif 4: 2⁻⁴.',
+        hints: ['Diencerkan = dibagi basis; makin banyak diencerkan, makin negatif pangkatnya.'],
+      },
+      {
+        id: 't3',
+        type: 'input',
+        konteks: 'Nilai bilangan berpangkat',
+        cerita: 'Perhatikan bilangan berpangkat 4⁻².',
+        pertanyaan:
+          'Berapakah nilai 4⁻² dalam bentuk pecahan paling sederhana? (tulis sebagai a/b, mis. 1/16)',
+        jawab: 1 / 16,
+        cek: { jenis: 'nilai', a: 4, n: -2 },
+        explanation: '4⁻² = 1/4² = 1/16.',
+        hints: ['a⁻ⁿ = 1/aⁿ.', 'Hitung dulu 4² = 16.'],
+      },
+      {
+        id: 't4',
+        type: 'choice',
+        konteks: 'Populasi mundur waktu',
+        cerita: 'Populasi bakteri membelah menjadi 3 setiap 1 jam. Sekarang (t = 0) ada P bakteri.',
+        pertanyaan: 'Bentuk pangkat basis 3 untuk banyak bakteri 2 jam SEBELUM sekarang adalah …',
+        options: [
+          { id: 'benar', label: 'P × 3⁻²' },
+          { id: 'positif', label: 'P × 3²' },
+          { id: 'nol', label: 'P × 3⁰' },
+          { id: 'tukar', label: 'P × 2⁻³' },
+        ],
+        correct: 'benar',
+        cek: { jenis: 'tulis', a: 3, n: -2 },
+        explanation:
+          'Mundur waktu berarti pangkat negatif. Mundur 2 jam (2 langkah pembelahan) → pangkat −2: 3⁻².',
+        hints: ['Mundur waktu = kebalikan dari maju waktu, jadi pangkatnya negatif.'],
+      },
+      {
+        id: 't5',
+        type: 'choice',
+        konteks: 'Menulis dari bacaan',
+        cerita: 'Guru mendiktekan: “sembilan pangkat nol”.',
+        pertanyaan: 'Penulisan yang tepat adalah …',
+        options: [
+          { id: 'benar', label: '9⁰' },
+          { id: 'nolHasil', label: '0⁹' },
+          { id: 'satu', label: '9¹' },
+          { id: 'negatif', label: '9⁻⁰' },
+        ],
+        correct: 'benar',
+        cek: { jenis: 'tulis', a: 9, n: 0 },
+        explanation: 'Basisnya 9, pangkatnya 0 (kata “nol” menunjukkan pangkat, bukan basis).',
+        hints: ['Basis dibaca lebih dulu, baru pangkatnya.'],
+      },
+      {
+        id: 't6',
+        type: 'choice',
+        konteks: 'Menulis dari bacaan',
+        cerita: 'Guru mendiktekan: “tujuh pangkat negatif tiga”.',
+        pertanyaan: 'Penulisan yang tepat adalah …',
+        options: [
+          { id: 'benar', label: '7⁻³' },
+          { id: 'negTujuh', label: '(−7)³' },
+          { id: 'positif', label: '7³' },
+          { id: 'tukar', label: '3⁻⁷' },
+        ],
+        correct: 'benar',
+        cek: { jenis: 'tulis', a: 7, n: -3 },
+        explanation: 'Basisnya 7 (positif); kata “negatif” menunjukkan pangkatnya, yaitu −3.',
+        hints: ['Yang bertanda negatif dalam bacaan ini adalah pangkatnya, bukan basisnya.'],
+      },
+      {
+        id: 't7',
+        type: 'input',
+        konteks: 'Ukuran mikroskopis',
+        cerita:
+          'Diameter sebuah bakteri kira-kira 10⁻⁶ meter, sedangkan sebutir pasir kira-kira 10⁻³ meter.',
+        pertanyaan: 'Berapakah PANGKAT untuk menuliskan ukuran bakteri (10 dipangkatkan berapa)?',
+        jawab: -6,
+        cek: { jenis: 'pangkat', a: 10, n: -6 },
+        explanation: 'Diameter bakteri ditulis 10⁻⁶ meter, sehingga pangkatnya −6.',
+        hints: ['Pangkat adalah angka kecil di kanan atas, termasuk tandanya.'],
+      },
+      {
+        id: 't8',
+        type: 'choice',
+        konteks: 'Perbandingan nilai',
+        cerita: 'Nilai 1/25 ingin ditulis dalam bentuk bilangan berpangkat basis 5.',
+        pertanyaan: 'Bentuk pangkat basis 5 yang tepat adalah …',
+        options: [
+          { id: 'benar', label: '5⁻²' },
+          { id: 'tukar', label: '5²' },
+          { id: 'nol', label: '5⁰' },
+          { id: 'negSatu', label: '5⁻¹' },
+        ],
+        correct: 'benar',
+        cek: { jenis: 'tulis', a: 5, n: -2 },
+        explanation:
+          '5⁻² = 1/5² = 1/25. Semakin kecil (negatif) pangkatnya, semakin kecil nilainya.',
+        hints: ['a⁻ⁿ = 1/aⁿ.', 'Hitung dulu 5² = 25.'],
+      },
+    ],
+  },
+
+  /* ----------------------------------------------------------
+     TAHAP 9 — REFLEKSI
+     ---------------------------------------------------------- */
+  refleksi: {
+    kicker: 'Tahap 9 · Refleksi',
+    syntax: 'Penutup',
+    goal: 'Merefleksikan proses menemukan dan tingkat pemahaman.',
+    guru: 'Baca beberapa refleksi secara acak (tanpa menyebut nama) untuk menutup pelajaran.',
+    pertanyaan: [
+      {
+        id: 'q1',
+        teks: 'Jelaskan dengan kata-katamu sendiri makna bilangan berpangkat nol dan bilangan berpangkat negatif.',
+        placeholder: 'Pangkat nol bermakna … sedangkan pangkat negatif bermakna …',
+      },
+      {
+        id: 'q2',
+        teks: 'Bagian mana yang paling membingungkan (mis. cara baca, tanda negatif, syarat basis ≠ 0)? Bagaimana kamu mengatasinya?',
+        placeholder: 'Yang paling membingungkan …',
+      },
+      {
+        id: 'q3',
+        teks: 'Di mana lagi kamu pernah melihat bilangan berpangkat negatif atau nol di sekitarmu?',
+        placeholder: 'Misalnya pada …',
+      },
+    ],
+    diriLabel:
+      'Seberapa yakin kamu dapat membaca dan menulis bilangan berpangkat nol dan negatif sekarang?',
     diriOpsi: [
-      { id: 'sangat', label: '😄 Sangat yakin — aku bisa menjelaskannya kepada teman' },
-      { id: 'yakin', label: '🙂 Yakin — aku bisa mengerjakan sendiri' },
-      { id: 'cukup', label: '😐 Cukup — kadang masih tertukar sifatnya' },
-      { id: 'belum', label: '😟 Belum yakin — aku masih perlu dibantu' },
+      { id: 'sangat', label: '😄 Sangat yakin, bisa menjelaskan ke teman' },
+      { id: 'yakin', label: '🙂 Yakin' },
+      { id: 'ragu', label: '😐 Masih ragu pada beberapa bagian' },
+      { id: 'belum', label: '😟 Belum yakin, perlu bantuan' },
     ],
     nextLabel: 'Simpan & Selesai →',
   },
 
+  /* ----------------------------------------------------------
+     TAHAP 10 — SELESAI
+     ---------------------------------------------------------- */
   selesai: {
-    judul: 'Misi Jigsaw Tuntas!',
-    teks: 'Kalian sudah menemukan, mengajarkan, dan menerapkan tiga sifat operasi bilangan berpangkat bulat untuk menyelesaikan soal.',
+    judul: 'Hebat! Kamu menemukan makna bilangan berpangkat nol dan negatif',
+    teks: 'Tangga pangkat Kak Sari yang terputus kini lengkap: 2⁰ = 1 dan 2⁻¹ = ½, mengikuti pola “dibagi basis” setiap turun satu anak tangga.',
     capaian: [
-      'Menyederhanakan perkalian bilangan berpangkat berbasis sama: aᵐ × aⁿ = aᵐ⁺ⁿ.',
-      'Menyederhanakan pembagian bilangan berpangkat berbasis sama: aᵐ : aⁿ = aᵐ⁻ⁿ, termasuk hasil berpangkat nol dan negatif.',
-      'Menyederhanakan pangkat dari pangkat: (aᵐ)ⁿ = aᵐˣⁿ.',
-      'Menggabungkan beberapa sifat untuk menyelesaikan soal kontekstual.',
-      'Mengenali bahwa sifat hanya berlaku untuk basis yang sama.',
-      'Menjadi ahli yang mengajarkan satu sifat kepada tim.',
+      'Menentukan nilai dan makna bilangan berpangkat nol (a⁰) dan berpangkat negatif (a⁻ⁿ).',
+      'Menuliskan bilangan berpangkat nol dan negatif dalam notasi aⁿ.',
+      'Membaca bilangan berpangkat nol dan negatif dengan cara baku.',
+      'Menjelaskan mengapa basis bilangan berpangkat nol/negatif tidak boleh nol.',
     ],
   },
 };
