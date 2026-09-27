@@ -152,6 +152,10 @@
        ilmiah, cara baca, perbandingan & urutan, selisih orde, strategi
        bakukan/pangkat beda/pangkat sama, diagnosa miskonsepsi, opsi
        berdiagnosa, lab geser koma, pita orde 10ⁿ, pilihan lambang)
+   54. Volume prisma (luas alas × tinggi & kebalikannya, konversi
+       satuan volume, diagnosa miskonsepsi & opsi berpengecoh, lapisan
+       setebal 1 satuan, tampilan isometrik, lab tumpuk lapisan/kubus
+       satuan, belah balok menjadi dua prisma segitiga)
    ============================================================ */
 
 /* ============================================================
@@ -30571,5 +30575,734 @@ function bindPilihSimbolIlmiah(root, getPair, getState, save, rerender) {
       save();
       rerender();
     });
+  });
+}
+
+/* ============================================================
+   54. VOLUME PRISMA
+   Dipakai modul volume prisma (fase-d/mpi-22.4, Discovery Learning).
+   Dibangun di atas seksi 47 (ukuranAlasPrisma, lppBulat, lppAngka).
+
+   Fungsi murni:
+     volumePrisma(La, t)            La × t
+     volumePrismaAlas(pts, t)       volume dari titik-titik alas (cm)
+     tinggiDariVolume(V, La)        V ÷ La
+     luasAlasDariVolume(V, t)       V ÷ t
+     konversiVolume(v, dari, ke)    mm³ / cm³ / mL / dm³ / liter / m³
+     lapisanPrisma(t)               lapisan setebal 1 ({ z0, z1 }), sisa
+                                    pecahan menjadi lapisan teratas
+   Diagnosa miskonsepsi volume (kandidatVolumePrisma o = { luasAlas,
+   tinggi, kelilingAlas?, adaSetengah? }): lupa ½ pada luas alas,
+   tertukar luas permukaan, keliling × tinggi, ⅓ (rumus limas),
+   menjumlahkan ukuran, dan hanya satu lapisan. Opsi pilihan ganda
+   (opsiVolumePrisma) ditulis berurutan "wajar"; modul WAJIB mengacaknya.
+
+   Komponen UI (gaya .vpr-* di shared/base.css), tampilan isometrik
+   dengan arah pandang (1, 1, 1) sehingga sisi atas & dua sisi depan
+   terlihat:
+     buildVpTumpukLab   lab tumpuk lapisan setebal 1 cm pada wadah
+                        prisma (mode kubus: kisi kubus satuan pada
+                        balok), penggeser & tombol ±1 lapis
+     buildVpBelah       balok dibelah diagonal alasnya menjadi dua
+                        prisma segitiga kongruen (pisah/gabung)
+     buildVpPrismaSVG   gambar statis prisma utuh
+   ============================================================ */
+
+var VPR_COS30 = Math.cos(Math.PI / 6);
+
+function volumePrisma(luasAlas, t) {
+  return lppBulat(luasAlas * t);
+}
+
+function volumePrismaAlas(pts, t) {
+  return volumePrisma(ukuranAlasPrisma(pts).luas, t);
+}
+
+function tinggiDariVolume(v, luasAlas) {
+  return lppBulat(v / luasAlas);
+}
+
+function luasAlasDariVolume(v, t) {
+  return lppBulat(v / t);
+}
+
+/* Faktor setiap satuan dalam cm³. */
+var VPR_FAKTOR = { mm3: 0.001, cm3: 1, ml: 1, dm3: 1000, l: 1000, m3: 1000000 };
+var VPR_SATUAN = { mm3: 'mm³', cm3: 'cm³', ml: 'mL', dm3: 'dm³', l: 'liter', m3: 'm³' };
+
+function konversiVolume(nilai, dari, ke) {
+  return lppBulat((nilai * VPR_FAKTOR[dari]) / VPR_FAKTOR[ke]);
+}
+
+function lapisanPrisma(t) {
+  var out = [];
+  for (var z = 0; z < t - 1e-9; z++) {
+    out.push({ z0: z, z1: lppBulat(Math.min(z + 1, t)) });
+  }
+  return out;
+}
+
+var VPR_PESAN = {
+  benar: 'Tepat! Volume prisma = luas alas × tinggi prisma.',
+  'lupa-setengah':
+    'Hasilmu dua kali lipat. Luas alas segitiga/trapesium memakai ½, jadi hitung luas alas dengan benar lebih dulu, baru kalikan tinggi prisma.',
+  'luas-permukaan':
+    'Itu luas permukaan (2 × luas alas + keliling alas × tinggi), yaitu luas pembungkusnya. Volume mengukur isi: luas alas × tinggi.',
+  keliling:
+    'Itu keliling alas × tinggi, yaitu luas selimut. Isi satu lapisan ditentukan oleh LUAS alas, bukan kelilingnya.',
+  sepertiga:
+    'Faktor ⅓ tidak dipakai pada prisma. Prisma tersusun dari lapisan yang sama besar dari bawah sampai atas, jadi volumenya luas alas × tinggi.',
+  'jumlah-ukuran':
+    'Luas alas dan tinggi dijumlahkan. Banyak lapisan = tinggi, jadi isi satu lapisan (luas alas) DIKALI tinggi.',
+  'satu-lapis':
+    'Itu baru isi satu lapisan setebal 1 satuan. Kalikan dengan banyak lapisan, yaitu tinggi prisma.',
+  'salah-hitung':
+    'Belum tepat. Hitung lagi luas alas, lalu kalikan dengan tinggi prisma: V = luas alas × tinggi.',
+};
+
+function kandidatVolumePrisma(o) {
+  var la = o.luasAlas;
+  var t = o.tinggi;
+  var k = { benar: volumePrisma(la, t) };
+  if (o.adaSetengah) k['lupa-setengah'] = lppBulat(2 * la * t);
+  if (typeof o.kelilingAlas === 'number') {
+    k['luas-permukaan'] = lppBulat(2 * la + o.kelilingAlas * t);
+    k.keliling = lppBulat(o.kelilingAlas * t);
+  }
+  k.sepertiga = lppBulat((la * t) / 3);
+  k['jumlah-ukuran'] = lppBulat(la + t);
+  k['satu-lapis'] = lppBulat(la);
+  return k;
+}
+
+function diagnosaVolumePrisma(o, jawab) {
+  var k = kandidatVolumePrisma(o);
+  var kode = 'salah-hitung';
+  var urut = Object.keys(k);
+  for (var i = 0; i < urut.length; i++) {
+    if (hampirSama(k[urut[i]], jawab)) {
+      kode = urut[i];
+      break;
+    }
+  }
+  return { kode: kode, pesan: VPR_PESAN[kode] };
+}
+
+/* Pengecoh { nilai, pesan } untuk kartu isian seksi 47 (tanpa yang benar). */
+function pengecohVolume(o) {
+  var k = kandidatVolumePrisma(o);
+  var dipakai = [k.benar];
+  var out = [];
+  Object.keys(k).forEach(function (kode) {
+    var v = k[kode];
+    if (kode === 'benar' || v <= 0) return;
+    var ada = dipakai.some(function (x) {
+      return hampirSama(x, v);
+    });
+    if (ada) return;
+    dipakai.push(v);
+    out.push({ kode: kode, nilai: v, pesan: VPR_PESAN[kode] });
+  });
+  return out;
+}
+
+/*
+ * Opsi pilihan ganda volume: jawaban benar di depan, lalu pengecoh
+ * miskonsepsi bernilai unik (minimal 4 opsi). Modul wajib mengacaknya
+ * (ensureShuffledOrder / shuffleArray).
+ */
+function opsiVolumePrisma(o, satuan) {
+  var k = kandidatVolumePrisma(o);
+  var v = k.benar;
+  var cadangan = {
+    'tambah-alas': lppBulat(v + o.luasAlas),
+    setengah: lppBulat(v / 2),
+    'dua-kali': lppBulat(2 * v),
+    'sepuluh-kali': lppBulat(10 * v),
+  };
+  var out = [];
+  var dipakai = [];
+  function tambah(id, nilai) {
+    var ada = dipakai.some(function (x) {
+      return hampirSama(x, nilai);
+    });
+    if (ada || nilai <= 0) return;
+    dipakai.push(nilai);
+    out.push({ id: id, nilai: nilai, label: lppAngka(nilai) + (satuan ? ' ' + satuan : '') });
+  }
+  Object.keys(k).forEach(function (id) {
+    if (out.length < 5 || id === 'benar') tambah(id, k[id]);
+  });
+  Object.keys(cadangan).forEach(function (id) {
+    if (out.length < 4) tambah(id, cadangan[id]);
+  });
+  return out;
+}
+
+/* ---------- Geometri tampilan isometrik ---------- */
+
+/* Titik 3D (x, y, z) → titik layar dalam satuan (belum diskalakan). */
+function vprProyeksi(x, y, z) {
+  return [(x - y) * VPR_COS30, (x + y) * 0.5 - z];
+}
+
+/* Titik alas diurutkan berlawanan arah jarum jam (luas bertanda > 0). */
+function vprCCW(pts) {
+  return luasBertanda(pts) >= 0 ? pts : pts.slice().reverse();
+}
+
+/*
+ * Sisi-sisi prisma beralas `pts` dari z0 sampai z1, digeser (dx, dy).
+ * terlihat = normal luar menghadap arah pandang (1, 1, 1).
+ */
+function vprSisiPrisma(pts, z0, z1, dx, dy) {
+  dx = dx || 0;
+  dy = dy || 0;
+  var p = vprCCW(pts).map(function (q) {
+    return [q[0] + dx, q[1] + dy];
+  });
+  function titik(q, z) {
+    return [q[0], q[1], z];
+  }
+  var out = [
+    {
+      id: 'alas',
+      jenis: 'alas',
+      pts3: p.map(function (q) {
+        return titik(q, z0);
+      }),
+      terlihat: false,
+    },
+    {
+      id: 'atas',
+      jenis: 'atas',
+      pts3: p.map(function (q) {
+        return titik(q, z1);
+      }),
+      terlihat: true,
+    },
+  ];
+  p.forEach(function (a, i) {
+    var b = p[(i + 1) % p.length];
+    var nx = b[1] - a[1];
+    var ny = -(b[0] - a[0]);
+    out.push({
+      id: 't' + i,
+      jenis: 'tegak',
+      pts3: [titik(a, z0), titik(b, z0), titik(b, z1), titik(a, z1)],
+      terlihat: nx + ny > 1e-9,
+      kanan: nx > ny,
+    });
+  });
+  return out;
+}
+
+function vprPoly(pts3, sk, cls) {
+  return (
+    '<polygon class="' +
+    cls +
+    '" points="' +
+    pts3
+      .map(function (q) {
+        var s = vprProyeksi(q[0], q[1], q[2]);
+        return psmFmt(s[0] * sk) + ',' + psmFmt(s[1] * sk);
+      })
+      .join(' ') +
+    '"/>'
+  );
+}
+
+function vprGaris(a, b, sk, cls) {
+  var p = vprProyeksi(a[0], a[1], a[2]);
+  var q = vprProyeksi(b[0], b[1], b[2]);
+  return (
+    '<line class="' +
+    cls +
+    '" x1="' +
+    psmFmt(p[0] * sk) +
+    '" y1="' +
+    psmFmt(p[1] * sk) +
+    '" x2="' +
+    psmFmt(q[0] * sk) +
+    '" y2="' +
+    psmFmt(q[1] * sk) +
+    '"/>'
+  );
+}
+
+/* Kisi kubus satuan pada sisi yang terlihat dari balok sejajar sumbu. */
+function vprKisiBalok(pts, z0, z1, atas, sk) {
+  var xs = pts.map(function (q) {
+    return q[0];
+  });
+  var ys = pts.map(function (q) {
+    return q[1];
+  });
+  var x0 = Math.min.apply(null, xs);
+  var x1 = Math.max.apply(null, xs);
+  var y0 = Math.min.apply(null, ys);
+  var y1 = Math.max.apply(null, ys);
+  var g = '';
+  var i;
+  for (i = y0 + 1; i < y1 - 1e-9; i++) g += vprGaris([x1, i, z0], [x1, i, z1], sk, 'vpr-grid');
+  for (i = x0 + 1; i < x1 - 1e-9; i++) g += vprGaris([i, y1, z0], [i, y1, z1], sk, 'vpr-grid');
+  if (atas) {
+    for (i = x0 + 1; i < x1 - 1e-9; i++) g += vprGaris([i, y0, z1], [i, y1, z1], sk, 'vpr-grid');
+    for (i = y0 + 1; i < y1 - 1e-9; i++) g += vprGaris([x0, i, z1], [x1, i, z1], sk, 'vpr-grid');
+  }
+  return g;
+}
+
+/* Sisi terlihat satu padatan sebagai <g>. */
+function vprPadatan(sol, sk) {
+  var sisi = vprSisiPrisma(sol.pts, sol.z0, sol.z1, sol.dx, sol.dy);
+  var isi = sisi
+    .filter(function (f) {
+      return f.terlihat;
+    })
+    .map(function (f) {
+      var cls = 'vpr-face vpr-face--' + (f.jenis === 'tegak' ? 'tegak' : 'atas');
+      if (f.kanan) cls += ' vpr-face--kanan';
+      return vprPoly(f.pts3, sk, cls);
+    })
+    .join('');
+  if (sol.kisi) isi += vprKisiBalok(sol.pts, sol.z0, sol.z1, sol.kisiAtas, sk);
+  return '<g class="' + (sol.kelas || '') + '"' + (sol.attr || '') + '>' + isi + '</g>';
+}
+
+/* Batas layar (satuan) dari sekumpulan padatan. */
+function vprBatas(solids) {
+  var b = { x0: Infinity, x1: -Infinity, y0: Infinity, y1: -Infinity };
+  solids.forEach(function (sol) {
+    sol.pts.forEach(function (q) {
+      [sol.z0, sol.z1].forEach(function (z) {
+        var s = vprProyeksi(q[0] + (sol.dx || 0), q[1] + (sol.dy || 0), z);
+        b.x0 = Math.min(b.x0, s[0]);
+        b.x1 = Math.max(b.x1, s[0]);
+        b.y0 = Math.min(b.y0, s[1]);
+        b.y1 = Math.max(b.y1, s[1]);
+      });
+    });
+  });
+  return b;
+}
+
+/*
+ * Menggambar padatan-padatan (urutan = urutan gambar, belakang dulu).
+ *   opts.batas   padatan tambahan untuk menghitung ukuran gambar agar
+ *                tidak berubah saat keadaan berganti
+ *   opts.lebar   lebar gambar yang diinginkan (px, bawaan 300)
+ *   opts.label   [{ at: [x, y, z], teks, dx?, dy?, anchor? }]
+ */
+function vprSVG(solids, opts) {
+  opts = opts || {};
+  var b = vprBatas(solids.concat(opts.batas || []));
+  var lebar = opts.lebar || 300;
+  var sk = Math.min(opts.skalaMaks || 30, lebar / Math.max(b.x1 - b.x0, 1));
+  var pad = 34;
+  var isi = solids
+    .map(function (sol) {
+      return vprPadatan(sol, sk);
+    })
+    .join('');
+  var label = (opts.label || [])
+    .map(function (l) {
+      var s = vprProyeksi(l.at[0], l.at[1], l.at[2]);
+      return (
+        '<text class="lpp-ukur vpr-ukur" x="' +
+        psmFmt(s[0] * sk + (l.dx || 0)) +
+        '" y="' +
+        psmFmt(s[1] * sk + (l.dy || 0)) +
+        '"' +
+        (l.anchor ? ' style="text-anchor:' + l.anchor + '"' : '') +
+        '>' +
+        esc(l.teks) +
+        '</text>'
+      );
+    })
+    .join('');
+  return (
+    '<svg class="vpr-svg" viewBox="' +
+    psmFmt(b.x0 * sk - pad) +
+    ' ' +
+    psmFmt(b.y0 * sk - pad / 2) +
+    ' ' +
+    psmFmt((b.x1 - b.x0) * sk + 2 * pad) +
+    ' ' +
+    psmFmt((b.y1 - b.y0) * sk + pad * 1.5) +
+    '" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="' +
+    esc(opts.aria || 'Gambar prisma') +
+    '">' +
+    isi +
+    label +
+    '</svg>'
+  );
+}
+
+/* Label tinggi di rusuk tegak paling kanan pada layar. */
+function vprLabelTinggi(pts, t) {
+  var kanan = pts[0];
+  pts.forEach(function (q) {
+    if (q[0] - q[1] > kanan[0] - kanan[1]) kanan = q;
+  });
+  return { at: [kanan[0], kanan[1], t / 2], teks: lppAngka(t) + ' cm', dx: 8, anchor: 'start' };
+}
+
+function buildVpPrismaSVG(pts, t, opts) {
+  opts = opts || {};
+  return vprSVG([{ pts: pts, z0: 0, z1: t, kelas: 'vpr-padat' }], {
+    lebar: opts.lebar,
+    aria: opts.aria,
+    label: opts.tanpaLabel ? [] : [vprLabelTinggi(pts, t)],
+  });
+}
+
+/* ---------- UI: lab tumpuk lapisan ---------- */
+
+/*
+ * opts.prisma = [{ id, nama, alas: pts, t (bulat), kubus?: bool }]
+ * state[key] = { p: id aktif, n: { id: banyak lapisan }, penuh: { id: true } }
+ */
+function ensureVpTumpukState(state, key, opts) {
+  var st = state[key] && typeof state[key] === 'object' ? state[key] : {};
+  var ids = opts.prisma.map(function (p) {
+    return p.id;
+  });
+  if (ids.indexOf(st.p) === -1) st.p = ids[0];
+  if (!st.n || typeof st.n !== 'object' || Array.isArray(st.n)) st.n = {};
+  if (!st.penuh || typeof st.penuh !== 'object' || Array.isArray(st.penuh)) st.penuh = {};
+  opts.prisma.forEach(function (p) {
+    var n = st.n[p.id];
+    if (typeof n !== 'number' || isNaN(n)) n = 0;
+    st.n[p.id] = Math.max(0, Math.min(p.t, Math.round(n)));
+  });
+  state[key] = st;
+  return st;
+}
+
+function vpTumpukAktif(st, opts) {
+  for (var i = 0; i < opts.prisma.length; i++) {
+    if (opts.prisma[i].id === st.p) return opts.prisma[i];
+  }
+  return opts.prisma[0];
+}
+
+function vpTumpukAtur(st, p, n) {
+  n = Math.max(0, Math.min(p.t, Math.round(n)));
+  st.n[p.id] = n;
+  if (n >= p.t) st.penuh[p.id] = true;
+  return st;
+}
+
+function vpTumpukSelesai(st, opts) {
+  return opts.prisma.every(function (p) {
+    return !!st.penuh[p.id];
+  });
+}
+
+function vprTumpukGambar(p, n, opts) {
+  var hantu = { pts: p.alas, z0: 0, z1: p.t, kelas: 'vpr-hantu' };
+  var lapis = lapisanPrisma(n).map(function (l, i) {
+    return {
+      pts: p.alas,
+      z0: l.z0,
+      z1: l.z1,
+      kelas: 'vpr-lapis' + (i === n - 1 ? ' is-baru' : '') + (i % 2 ? ' is-genap' : ''),
+      attr: ' data-vpr-lapis="' + (i + 1) + '"',
+      kisi: !!p.kubus,
+      kisiAtas: i === n - 1,
+    };
+  });
+  var label = [vprLabelTinggi(p.alas, p.t)];
+  if (p.kubus) {
+    var xs = p.alas.map(function (q) {
+      return q[0];
+    });
+    var ys = p.alas.map(function (q) {
+      return q[1];
+    });
+    var x0 = Math.min.apply(null, xs);
+    var x1 = Math.max.apply(null, xs);
+    var y0 = Math.min.apply(null, ys);
+    var y1 = Math.max.apply(null, ys);
+    label.push({
+      at: [(x0 + x1) / 2, y1, 0],
+      teks: lppAngka(x1 - x0) + ' cm',
+      dx: -8,
+      dy: 18,
+      anchor: 'end',
+    });
+    label.push({
+      at: [x1, (y0 + y1) / 2, 0],
+      teks: lppAngka(y1 - y0) + ' cm',
+      dx: 8,
+      dy: 18,
+      anchor: 'start',
+    });
+  }
+  /* Garis wadah digambar terakhir: sisi-sisinya yang terlihat selalu
+     berada paling dekat dengan pengamat. */
+  return vprSVG(lapis.concat([hantu]), {
+    lebar: (opts && opts.lebar) || 300,
+    label: label,
+    aria:
+      p.nama +
+      ': ' +
+      n +
+      ' dari ' +
+      p.t +
+      (p.kubus ? ' lapisan kubus satuan terisi.' : ' lapisan setebal 1 cm terisi.'),
+  });
+}
+
+function vprTumpukInfo(st, p) {
+  var n = st.n[p.id];
+  return (
+    '<p class="psm-info vpr-info">Lapisan terisi: <strong>' +
+    n +
+    ' dari ' +
+    p.t +
+    ' lapisan</strong>' +
+    (n >= p.t ? ' · ✓ wadah penuh' : '') +
+    '</p>' +
+    '<p class="dl-caption vpr-caption">' +
+    (p.kubus
+      ? 'Setiap kubus satuan berukuran 1 cm × 1 cm × 1 cm, volumenya 1 cm³.'
+      : 'Setiap lapisan setebal 1 cm dan bentuknya sama persis dengan alas prisma.') +
+    '</p>'
+  );
+}
+
+function buildVpTumpukLab(id, st, opts) {
+  var p = vpTumpukAktif(st, opts);
+  var n = st.n[p.id];
+  return (
+    '<div class="vpr-lab" id="' +
+    id +
+    '">' +
+    (opts.prisma.length > 1
+      ? '<div class="psm-toolbar" role="group" aria-label="Pilih wadah">' +
+        opts.prisma
+          .map(function (q) {
+            var aktif = q.id === p.id;
+            return (
+              '<button type="button" class="psm-tool-btn' +
+              (aktif ? ' is-active' : '') +
+              '" data-vpr-p="' +
+              esc(q.id) +
+              '" aria-pressed="' +
+              (aktif ? 'true' : 'false') +
+              '">' +
+              (st.penuh[q.id] ? '✓ ' : '') +
+              esc(q.nama) +
+              '</button>'
+            );
+          })
+          .join('') +
+        '</div>'
+      : '') +
+    '<p class="vpr-lab__nama"><strong>' +
+    esc(p.nama) +
+    '</strong>' +
+    (p.info ? ' · ' + esc(p.info) : '') +
+    '</p>' +
+    '<div class="psm-stage vpr-stage" data-vpr-stage>' +
+    vprTumpukGambar(p, n, opts) +
+    '</div>' +
+    '<label class="psm-range psm-range--wide"><span>Lapisan</span><input type="range" min="0" max="' +
+    p.t +
+    '" step="1" value="' +
+    n +
+    '" data-vpr-n aria-label="Banyak lapisan yang diisikan ke ' +
+    esc(p.nama) +
+    '"></label>' +
+    '<div class="btn-group btn-group--center">' +
+    '<button type="button" class="btn btn--ghost btn--small" data-vpr-step="-1"' +
+    (n <= 0 ? ' disabled' : '') +
+    '>− 1 lapis</button>' +
+    '<button type="button" class="btn btn--primary btn--small" data-vpr-step="1"' +
+    (n >= p.t ? ' disabled' : '') +
+    '>+ 1 lapis</button>' +
+    '</div>' +
+    '<div data-vpr-info aria-live="polite">' +
+    vprTumpukInfo(st, p) +
+    '</div>' +
+    '</div>'
+  );
+}
+
+/* onChange(jenis) — 'n' | 'penuh' (baru pertama kali penuh) | 'p'. */
+function bindVpTumpukLab(root, id, st, opts, onChange) {
+  var el = root.querySelector('#' + id);
+  if (!el) return;
+  var p = vpTumpukAktif(st, opts);
+
+  function rebuild(fokus) {
+    var wadah = document.createElement('div');
+    wadah.innerHTML = buildVpTumpukLab(id, st, opts);
+    var baru = wadah.firstChild;
+    el.replaceWith(baru);
+    bindVpTumpukLab(root, id, st, opts, onChange);
+    if (fokus) {
+      var f = baru.querySelector(fokus);
+      if (f && !f.disabled) f.focus();
+      else if (f) {
+        var lain = baru.querySelector('[data-vpr-n]');
+        if (lain) lain.focus();
+      }
+    }
+  }
+  function atur(n, fokus) {
+    var sudah = !!st.penuh[p.id];
+    vpTumpukAtur(st, p, n);
+    rebuild(fokus);
+    if (onChange) onChange(!sudah && st.penuh[p.id] ? 'penuh' : 'n');
+  }
+
+  var range = el.querySelector('[data-vpr-n]');
+  if (range) {
+    range.addEventListener('input', function () {
+      var n = parseInt(range.value, 10);
+      el.querySelector('[data-vpr-stage]').innerHTML = vprTumpukGambar(p, n, opts);
+      var tmp = { n: {}, penuh: {} };
+      tmp.n[p.id] = n;
+      el.querySelector('[data-vpr-info]').innerHTML = vprTumpukInfo(tmp, p);
+    });
+    range.addEventListener('change', function () {
+      atur(parseInt(range.value, 10), '[data-vpr-n]');
+    });
+  }
+  el.querySelectorAll('[data-vpr-step]').forEach(function (b) {
+    b.addEventListener('click', function () {
+      var d = parseInt(b.getAttribute('data-vpr-step'), 10);
+      atur(st.n[p.id] + d, '[data-vpr-step="' + d + '"]');
+    });
+  });
+  el.querySelectorAll('[data-vpr-p]').forEach(function (b) {
+    b.addEventListener('click', function () {
+      var pid = b.getAttribute('data-vpr-p');
+      if (pid === st.p) return;
+      st.p = pid;
+      rebuild('[data-vpr-p="' + pid + '"]');
+      if (onChange) onChange('p');
+    });
+  });
+}
+
+/* ---------- UI: belah balok menjadi dua prisma segitiga ---------- */
+
+function ensureVpBelahState(state, key) {
+  var st = state[key] && typeof state[key] === 'object' ? state[key] : {};
+  st.pisah = !!st.pisah;
+  st.pernah = !!st.pernah;
+  state[key] = st;
+  return st;
+}
+
+/* b = { nama, p, l, t } — balok p × l (alas) setinggi t. */
+function vprBelahPadatan(b, pisah) {
+  var norm = Math.hypot(b.p, b.l);
+  var jarak = pisah ? 1.6 : 0;
+  /* Geser juga ke kanan layar (+x, −y) agar potongan depan tidak menutupi
+     potongan belakang; tetap berada di sisi luar bidang belahan. */
+  var geser = pisah ? (b.p + b.l) * 0.45 : 0;
+  var a = {
+    pts: [
+      [0, 0],
+      [b.p, 0],
+      [0, b.l],
+    ],
+    z0: 0,
+    z1: b.t,
+    kelas: 'vpr-keping vpr-keping--a',
+    attr: ' data-vpr-keping="a"',
+  };
+  var c = {
+    pts: [
+      [b.p, 0],
+      [b.p, b.l],
+      [0, b.l],
+    ],
+    z0: 0,
+    z1: b.t,
+    dx: (jarak * b.l) / norm + geser,
+    dy: (jarak * b.p) / norm - geser,
+    kelas: 'vpr-keping vpr-keping--b',
+    attr: ' data-vpr-keping="b"',
+  };
+  return [a, c];
+}
+
+function buildVpBelah(id, b, st) {
+  var solids = vprBelahPadatan(b, st.pisah);
+  /* Label di rusuk depan potongan b (selalu terlihat). */
+  var gx = solids[1].dx || 0;
+  var gy = solids[1].dy || 0;
+  var svg = vprSVG(solids, {
+    lebar: 300,
+    batas: vprBelahPadatan(b, true),
+    label: [
+      {
+        at: [b.p / 2 + gx, b.l + gy, 0],
+        teks: lppAngka(b.p) + ' cm',
+        dx: -8,
+        dy: 18,
+        anchor: 'end',
+      },
+      {
+        at: [b.p + gx, b.l / 2 + gy, 0],
+        teks: lppAngka(b.l) + ' cm',
+        dx: 8,
+        dy: 18,
+        anchor: 'start',
+      },
+      { at: [b.p + gx, gy, b.t / 2], teks: lppAngka(b.t) + ' cm', dx: 8, anchor: 'start' },
+    ],
+    aria:
+      b.nama +
+      (st.pisah
+        ? ' dibelah menurut diagonal alasnya menjadi dua prisma segitiga yang dipisahkan.'
+        : ' berbentuk balok utuh.'),
+  });
+  return (
+    '<div class="vpr-belah' +
+    (st.pisah ? ' is-pisah' : '') +
+    '" id="' +
+    id +
+    '">' +
+    '<div class="psm-stage vpr-stage">' +
+    svg +
+    '</div>' +
+    '<p class="vpr-belah__teks" aria-live="polite">' +
+    (st.pisah
+      ? 'Balok terbelah menjadi <strong>dua prisma segitiga</strong>. Alas keduanya segitiga siku-siku yang sama persis, tingginya pun sama.'
+      : 'Balok masih utuh. Belah balok menurut diagonal alasnya.') +
+    '</p>' +
+    '<div class="btn-group btn-group--center">' +
+    '<button type="button" class="btn btn--outline-primary btn--small" data-vpr-belah aria-pressed="' +
+    (st.pisah ? 'true' : 'false') +
+    '">' +
+    (st.pisah ? '🔗 Gabungkan lagi' : '✂️ Belah & pisahkan') +
+    '</button>' +
+    '</div>' +
+    '</div>'
+  );
+}
+
+function bindVpBelah(root, id, b, st, onChange) {
+  var el = root.querySelector('#' + id);
+  if (!el) return;
+  el.querySelector('[data-vpr-belah]').addEventListener('click', function () {
+    var sudah = st.pernah;
+    st.pisah = !st.pisah;
+    if (st.pisah) st.pernah = true;
+    var wadah = document.createElement('div');
+    wadah.innerHTML = buildVpBelah(id, b, st);
+    var baru = wadah.firstChild;
+    el.replaceWith(baru);
+    bindVpBelah(root, id, b, st, onChange);
+    var btn = baru.querySelector('[data-vpr-belah]');
+    if (btn) btn.focus();
+    if (onChange) onChange(!sudah && st.pernah ? 'pernah' : 'toggle');
   });
 }

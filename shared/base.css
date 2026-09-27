@@ -11694,3 +11694,138 @@ button.akar-tile:disabled {
   font-family: var(--font-mono);
   font-size: 0.78rem;
 }
+
+/* =========================================================================
+   54. Volume prisma (.vpr-*) — lab tumpuk lapisan/kubus satuan, belah
+   balok, gambar prisma isometrik. Dipakai fase-d/mpi-22.4.
+   ========================================================================= */
+
+.vpr-svg {
+  display: block;
+  width: 100%;
+  max-width: 340px;
+  height: auto;
+  max-height: 340px;
+  margin: 0 auto;
+  overflow: visible;
+}
+
+.vpr-stage {
+  display: flex;
+  justify-content: center;
+}
+
+.vpr-face {
+  stroke: var(--color-blue-strong);
+  stroke-width: 1.2;
+  stroke-linejoin: round;
+}
+
+.vpr-face--tegak {
+  fill: var(--color-blue-soft);
+}
+
+.vpr-face--tegak.vpr-face--kanan {
+  fill: #c5d7ee;
+}
+
+.vpr-face--atas {
+  fill: #eef4fb;
+}
+
+.vpr-lapis.is-genap .vpr-face--tegak {
+  fill: #d3e1f2;
+}
+
+.vpr-lapis.is-genap .vpr-face--tegak.vpr-face--kanan {
+  fill: #b8cde8;
+}
+
+.vpr-lapis.is-baru .vpr-face {
+  stroke: var(--color-purple-strong);
+}
+
+.vpr-lapis.is-baru .vpr-face--atas {
+  fill: var(--color-purple-soft);
+}
+
+.vpr-grid {
+  stroke: var(--color-blue-strong);
+  stroke-width: 0.8;
+  stroke-opacity: 0.55;
+}
+
+.vpr-hantu .vpr-face {
+  fill: none;
+  stroke: var(--color-ink-muted);
+  stroke-width: 1.2;
+  stroke-dasharray: 5 4;
+}
+
+.vpr-padat .vpr-face--tegak {
+  fill: var(--color-blue-soft);
+}
+
+.vpr-padat .vpr-face--atas {
+  fill: var(--color-orange-soft);
+  stroke: var(--color-orange-strong);
+}
+
+.vpr-keping--b .vpr-face {
+  stroke: var(--color-orange-strong);
+}
+
+.vpr-keping--b .vpr-face--tegak {
+  fill: var(--color-orange-soft);
+}
+
+.vpr-keping--b .vpr-face--tegak.vpr-face--kanan {
+  fill: #ecc7a6;
+}
+
+.vpr-keping--b .vpr-face--atas {
+  fill: #fbeee2;
+}
+
+.vpr-ukur {
+  font-size: 12px;
+}
+
+.vpr-lab,
+.vpr-belah {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  min-width: 0;
+}
+
+.vpr-lab__nama,
+.vpr-belah__teks {
+  margin: 0;
+  text-align: center;
+}
+
+.vpr-info {
+  background: var(--color-primary-soft);
+}
+
+.vpr-caption {
+  margin: var(--space-2) 0 0;
+  text-align: center;
+}
+
+.vpr-data-visual {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.vpr-data-visual .vpr-svg {
+  max-width: 200px;
+}
+
+.vpr-data-visual .dl-caption {
+  margin: 0;
+  text-align: center;
+}
