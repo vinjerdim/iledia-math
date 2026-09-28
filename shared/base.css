@@ -11997,3 +11997,80 @@ button.akar-tile:disabled {
   border-color: #1f78b4;
   background: #cfe6f7;
 }
+
+/* =========================================================================
+   57. Luas permukaan limas (engine.js seksi 57): garis tinggi segitiga
+   sisi tegak pada jaring (.lpl-tinggi) dan susun sisi tegak kipas →
+   jajargenjang/trapesium (.lpl-susun*, .lpl-segitiga*, .lpl-kurung). Lab
+   bentang limas & kartu isian memakai kelas .lpp-* seksi 47.
+   ========================================================================= */
+
+.lpl-tinggi {
+  stroke: var(--color-blue-strong);
+  stroke-width: 1.6;
+  stroke-dasharray: 5 4;
+  pointer-events: none;
+}
+
+.lpl-susun {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  min-width: 0;
+}
+
+.lpl-susun__svg {
+  display: block;
+  width: 100%;
+  max-width: 440px;
+  max-height: 300px;
+  height: auto;
+  margin: 0 auto;
+}
+
+.lpl-segitiga {
+  stroke: var(--color-ink);
+  stroke-width: 1.6;
+  stroke-linejoin: round;
+}
+
+.lpl-segitiga--genap {
+  fill: var(--color-blue-soft);
+}
+
+.lpl-segitiga--ganjil {
+  fill: var(--color-purple-soft);
+}
+
+.lpl-kurung {
+  stroke: var(--color-orange);
+  stroke-width: 3;
+  stroke-linecap: round;
+}
+
+.lpl-susun__ukur .lpp-ukur {
+  fill: var(--color-orange-strong);
+}
+
+.lpl-susun__ukur .lpp-ukur--tinggi {
+  fill: var(--color-blue-strong);
+}
+
+.lpl-susun__ukur .lpp-ukur,
+.lpl-net-ukur .lpp-ukur {
+  paint-order: stroke;
+  stroke: var(--color-surface);
+  stroke-width: 4px;
+  stroke-linejoin: round;
+}
+
+/* Fokus dari kode (setelah mengetuk sisi) tidak memunculkan kotak outline;
+   fokus keyboard tetap ditandai garis tepi tebal (.lpp-keping:focus-visible). */
+.lpl-net .lpp-keping:focus:not(:focus-visible) {
+  outline: none;
+}
+
+.lpl-susun__teks {
+  margin: 0;
+  text-align: center;
+}

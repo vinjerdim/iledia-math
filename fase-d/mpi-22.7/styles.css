@@ -1,0 +1,101 @@
+/* =========================================================================
+   fase-d/mpi-22.7/styles.css
+   Luas Permukaan Limas — Fase D (SMP Kelas IX)
+
+   Hanya memuat gaya yang KHAS modul ini. Lab bentang limas, susun sisi
+   tegak (.lpl-*), kartu isian, galeri, kartu data bergambar, kartu
+   sajian (.lpp-*, .sajian-*), gambar lipatan & limas 3D (.psm-*),
+   pilihan ganda, chip konteks, dan komponen Discovery Learning lainnya
+   berasal dari shared/base.css.
+   ========================================================================= */
+
+/* -------------------------------------------------------------------------
+   Stimulasi — cerita
+   ------------------------------------------------------------------------- */
+
+.stimulasi-cerita {
+  margin: 0 0 var(--space-4);
+  font-size: 1.05rem;
+  line-height: 1.6;
+}
+
+/* -------------------------------------------------------------------------
+   Bongkar, susun & olah — keterangan ukuran
+   ------------------------------------------------------------------------- */
+
+.lpp-cara {
+  font-family: var(--font-mono);
+  font-weight: 400;
+  color: var(--color-ink-muted);
+}
+
+.lpp-sub {
+  font-size: 0.9rem;
+  font-weight: 400;
+  color: var(--color-ink-muted);
+}
+
+/* -------------------------------------------------------------------------
+   Kesimpulan — jaring & rumus berdampingan
+   ------------------------------------------------------------------------- */
+
+.lpp-rangkum {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: var(--space-4);
+  align-items: center;
+  margin-bottom: var(--space-4);
+}
+
+.lpp-rangkum figure {
+  margin: 0;
+  min-width: 0;
+}
+
+.lpp-rangkum figcaption {
+  margin-bottom: var(--space-2);
+  font-family: var(--font-display);
+  font-weight: 700;
+  text-align: center;
+}
+
+.lpp-rumus {
+  text-align: center;
+}
+
+.lpp-rumus__baris {
+  margin: 0 0 var(--space-2);
+  font-family: var(--font-display);
+  font-size: 1.6rem;
+  font-weight: 800;
+}
+
+.lpp-rumus__baris::before {
+  content: 'LP = ';
+}
+
+.lpp-rumus__alas,
+.lpp-rumus__selimut {
+  display: inline-block;
+  padding: 0 var(--space-2);
+  border-radius: var(--radius-md);
+}
+
+.lpp-rumus__alas {
+  background: var(--color-orange-soft);
+  color: var(--color-orange-strong);
+}
+
+.lpp-rumus__selimut {
+  background: var(--color-blue-soft);
+  color: var(--color-blue-strong);
+}
+
+/* -------------------------------------------------------------------------
+   Pembuktian — gambar limas dengan garis tinggi
+   ------------------------------------------------------------------------- */
+
+.lpl-verif-gambar svg {
+  max-width: 320px;
+  max-height: 280px;
+}
