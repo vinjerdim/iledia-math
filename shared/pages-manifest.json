@@ -238,5 +238,13 @@
     "h1": "Masalah Kontekstual Luas Permukaan Limas",
     "stageCount": 10,
     "extraBody": "partials/reset-modal.html"
+  },
+  "fase-d/mpi-22.9": {
+    "title": "Volume Limas — Matematika Fase D",
+    "description": "Media pembelajaran interaktif berbasis Discovery Learning untuk menentukan rumus volume limas: Lab Tuang mengisi wadah limas dengan pasir lalu menuangnya ke wadah prisma beralas dan bertinggi sama sampai penuh (tiga kali), Lab Belah Kubus membelah kubus menjadi enam limas kongruen berpuncak di pusat kubus, kartu isian berdiagnosa, kartu data tiga cetakan, mencari tinggi limas dari tinggi sisi tegak dengan Pythagoras, pembuktian dua cara, tanggapan miskonsepsi, dan uji terap kontekstual.",
+    "kicker": "Matematika — Fase D (SMP)",
+    "h1": "Volume Limas",
+    "stageCount": 10,
+    "extraBody": "partials/reset-modal.html"
   }
 }

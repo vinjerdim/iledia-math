@@ -1,0 +1,96 @@
+/* =========================================================================
+   fase-d/mpi-22.9/styles.css
+   Volume Limas — Fase D (SMP Kelas IX)
+
+   Hanya memuat gaya yang KHAS modul ini. Lab Tuang, Lab Belah Kubus,
+   gambar limas isometrik (.vlm-*, .vpr-*), kartu isian (.lpp-*), pilihan
+   ganda, chip konteks, dan komponen Discovery Learning lainnya berasal
+   dari shared/base.css.
+   ========================================================================= */
+
+/* -------------------------------------------------------------------------
+   Stimulasi — cerita
+   ------------------------------------------------------------------------- */
+
+.stimulasi-cerita {
+  margin: 0 0 var(--space-4);
+  font-size: 1.05rem;
+  line-height: 1.6;
+}
+
+.lpp-cara {
+  font-family: var(--font-mono);
+  font-weight: 400;
+  color: var(--color-ink-muted);
+}
+
+.lpp-sub {
+  font-size: 0.9rem;
+  font-weight: 400;
+  color: var(--color-ink-muted);
+}
+
+/* -------------------------------------------------------------------------
+   Kesimpulan — limas & prisma berdampingan dengan rumus
+   ------------------------------------------------------------------------- */
+
+.vpr-rangkum {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: var(--space-4);
+  align-items: center;
+  margin-bottom: var(--space-4);
+}
+
+.vpr-rangkum figure {
+  margin: 0;
+  min-width: 0;
+}
+
+.vpr-rangkum figcaption {
+  margin-bottom: var(--space-2);
+  font-family: var(--font-display);
+  font-weight: 700;
+  text-align: center;
+}
+
+.vpr-rumus {
+  text-align: center;
+}
+
+.vpr-rumus__baris {
+  margin: 0 0 var(--space-2);
+  font-family: var(--font-display);
+  font-size: 1.6rem;
+  font-weight: 800;
+}
+
+.vpr-rumus__baris::before {
+  content: 'V = ';
+}
+
+.vpr-rumus__alas,
+.vpr-rumus__tinggi {
+  display: inline-block;
+  padding: 0 var(--space-2);
+  border-radius: var(--radius-md);
+}
+
+.vpr-rumus__alas {
+  background: var(--color-orange-soft);
+  color: var(--color-orange-strong);
+}
+
+.vpr-rumus__tinggi {
+  background: var(--color-blue-soft);
+  color: var(--color-blue-strong);
+}
+
+/* -------------------------------------------------------------------------
+   Pembuktian — gambar limas dengan garis tinggi
+   ------------------------------------------------------------------------- */
+
+.vlm-verif-gambar svg {
+  max-width: 320px;
+  max-height: 280px;
+}
