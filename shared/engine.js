@@ -35146,3 +35146,1078 @@ function bindVlBelahKubus(root, id, b, st, onChange) {
     if (onChange) onChange(!sudah && st.pernah ? 'pernah' : 'toggle');
   });
 }
+
+/* ============================================================
+   60. MASALAH KONTEKSTUAL GABUNGAN PRISMA & LIMAS
+   Dipakai modul masalah kontekstual gabungan luas permukaan & volume
+   prisma dan limas (fase-d/mpi-22.10, Problem Based Learning). Dibangun
+   di atas seksi 47 (ukuranAlasPrisma, rincianSisiPrisma, lppBulat),
+   48 (banyakMuat, pengecoh & state pemilih sisi), 54 (volumePrisma,
+   konversiVolume, vprProyeksi, vprSisiPrisma, vprPoly, vprGaris),
+   55 (kandidatMasalahVolume, vpkPesan, vpkFaktor), 57–58
+   (rincianObjekLimas, kandidatMasalahLimas, lmkPesan) dan 59
+   (volumeLimas, vlmSisiLimas).
+
+   Bangun gabungan ditulis
+     spec = { nama?, satuan?, alas: { n, s } | { p, l },
+              prisma?: { t }, limas?: { t | ts, posisi: 'atas'|'bawah' } }
+   Prisma dan limas berbagi alas yang sama. Limas 'atas' menjadi atap
+   (tugu, rumah); limas 'bawah' menjadi corong (tandon, wadah pakan).
+   Bidang tempat keduanya menempel (bidang sambung) ada di DALAM bangun,
+   jadi bukan bagian dari permukaan luarnya.
+
+   Fungsi murni:
+     alasGabungan(spec)               { pts, luas, keliling, sisi[] }
+     tinggiLimasGabungan(spec)        t limas (dari t atau tₛ, Pythagoras)
+     rincianSisiGabungan(spec, opts)  sisi luar: 'alas', 'atas', 'p0' …
+                                      (tegak prisma), 'l0' … (tegak
+                                      limas); opts.sambung → ikut
+                                      'sambung-p' & 'sambung-l'
+     volumeGabungan(spec)             { prisma, limas, total }
+     luasSisiGabungan(spec, pakai)    jumlah luas sisi ber-id `pakai`
+     luasPermukaanGabungan(spec)      jumlah luas semua sisi luar
+     gbgAngka(v)                      bilangan gaya Indonesia, ≤ 3 desimal
+   Soal kontekstual berjenis (kandidatMasalahGabungan; lihat komentarnya)
+   dengan diagnosa, pengecoh kartu isian, dan opsi pilihan ganda (modul
+   WAJIB mengacaknya).
+
+   Komponen UI (gaya .gbg-* di shared/base.css):
+     buildGbgSVG          gambar isometrik bangun gabungan; bagian prisma
+                          & limas berbeda warna, bisa dipisah untuk
+                          menampakkan bidang sambung
+     buildGbgLab          Lab Gabungan: pilih desain, pisah/gabung
+                          bagian, bacaan volume bagian demi bagian
+     buildGbgSisiPicker   pemilih sisi yang memakai bahan (chip bagian
+                          prisma, bagian limas, dan bidang sambung)
+   ============================================================ */
+
+function gbgAngka(v) {
+  var r = lppBulat(v);
+  return hampirSama(r, Math.round(r)) ? formatNumber(r) : formatDesimal(r, 3);
+}
+
+function gbgTitikAlas(alas) {
+  if (alas.p) {
+    return [
+      [0, 0],
+      [alas.p, 0],
+      [alas.p, alas.l],
+      [0, alas.l],
+    ];
+  }
+  return alasLimasBeraturan(alas.n, alas.s);
+}
+
+function alasGabungan(spec) {
+  var pts = gbgTitikAlas(spec.alas);
+  var u = ukuranAlasPrisma(pts);
+  return { pts: pts, luas: u.luas, keliling: u.keliling, sisi: u.sisi };
+}
+
+function tinggiLimasGabungan(spec) {
+  var L = spec.limas;
+  if (!L) return 0;
+  if (typeof L.t === 'number') return L.t;
+  return tinggiLimasDariSisiTegak(L.ts, lppBulat(apotemaAlas(spec.alas.n, spec.alas.s)));
+}
+
+/* Limas bagian gabungan dalam bentuk benda seksi 58 ({ n, s, t, ts? } / { p, l, t }). */
+function gbgLimasObjek(spec) {
+  var A = spec.alas;
+  var t = tinggiLimasGabungan(spec);
+  if (A.p) return { p: A.p, l: A.l, t: t };
+  var o = { n: A.n, s: A.s, t: t };
+  if (typeof spec.limas.ts === 'number') o.ts = spec.limas.ts;
+  return o;
+}
+
+function gbgPosisi(spec) {
+  return spec.limas && spec.limas.posisi === 'atas' ? 'atas' : 'bawah';
+}
+
+function rincianSisiGabungan(spec, opts) {
+  opts = opts || {};
+  var a = alasGabungan(spec);
+  var gabung = !!(spec.prisma && spec.limas);
+  var posisi = gbgPosisi(spec);
+  var out = [];
+  var sambung = [];
+  if (spec.prisma) {
+    rincianSisiPrisma(a.pts, spec.prisma.t).forEach(function (f) {
+      var g = { id: f.id, bagian: 'prisma', jenis: f.jenis, luas: f.luas };
+      if (f.jenis === 'tegak') {
+        g.id = 'p' + f.id.slice(1);
+        g.rusuk = f.panjang;
+        g.tinggi = f.lebar;
+      }
+      if (gabung && f.id === (posisi === 'atas' ? 'atas' : 'alas')) {
+        g.id = 'sambung-p';
+        g.jenis = 'sambung';
+        g.sambung = true;
+        sambung.push(g);
+      } else {
+        out.push(g);
+      }
+    });
+  }
+  if (spec.limas) {
+    rincianObjekLimas(gbgLimasObjek(spec)).forEach(function (f) {
+      if (f.jenis === 'alas') {
+        var g = { id: 'alas', bagian: 'limas', jenis: 'alas', luas: f.luas };
+        if (gabung) {
+          g.id = 'sambung-l';
+          g.jenis = 'sambung';
+          g.sambung = true;
+          sambung.push(g);
+        } else {
+          out.push(g);
+        }
+        return;
+      }
+      out.push({
+        id: 'l' + f.id.slice(1),
+        bagian: 'limas',
+        jenis: 'tegak',
+        luas: f.luas,
+        rusuk: f.alas,
+        tinggi: f.tinggi,
+      });
+    });
+  }
+  return opts.sambung ? out.concat(sambung) : out;
+}
+
+function volumeGabungan(spec) {
+  var la = alasGabungan(spec).luas;
+  var vp = spec.prisma ? volumePrisma(la, spec.prisma.t) : 0;
+  var vl = spec.limas ? volumeLimas(la, tinggiLimasGabungan(spec)) : 0;
+  return { prisma: vp, limas: vl, total: lppBulat(vp + vl) };
+}
+
+function gbgJumlahLuas(list) {
+  return lppBulat(
+    list.reduce(function (s, f) {
+      return s + f.luas;
+    }, 0)
+  );
+}
+
+function luasSisiGabungan(spec, pakai) {
+  return gbgJumlahLuas(
+    rincianSisiGabungan(spec, { sambung: true }).filter(function (f) {
+      return pakai.indexOf(f.id) !== -1;
+    })
+  );
+}
+
+function luasPermukaanGabungan(spec) {
+  return gbgJumlahLuas(rincianSisiGabungan(spec));
+}
+
+var GBG_PESAN = {
+  benar:
+    'Tepat! Kamu menghitung bangun gabungan bagian demi bagian sesuai kebutuhan benda nyatanya.',
+  'lupa-sepertiga':
+    'Volume bagian limas belum dikali ⅓. Bagian prisma: La × t; bagian limas: ⅓ × La × t. Setelah itu jumlahkan.',
+  setengah: 'Faktor volume limas bukan ½, melainkan ⅓: V limas = ⅓ × La × t limas.',
+  'lupa-limas':
+    'Bagian limasnya belum dihitung. Hitung bagian prisma DAN bagian limas, lalu jumlahkan.',
+  'lupa-prisma': 'Itu baru bagian limasnya. Tambahkan bagian prismanya.',
+  'tinggi-sisi':
+    'Volume limas memakai tinggi LIMAS (t), yaitu jarak tegak lurus puncak ke alas, bukan tinggi sisi tegak (tₛ).',
+  sambung:
+    'Bidang sambung antara prisma dan limas ikut dihitung (dua kali!). Bidang itu ada di DALAM bangun gabungan, jadi tidak memakai bahan dan tidak dihitung.',
+  'tinggi-limas':
+    'Luas sisi limas dihitung dengan tinggi limas t. Setiap sisi limas adalah segitiga yang tingginya tₛ = √(t² + a²).',
+  'lupa-setengah':
+    'Sisi tegak limas berbentuk SEGITIGA, jadi luasnya ½ × alas × tₛ. Kamu menghitungnya seperti persegi panjang.',
+  'semua-sisi':
+    'Kamu menghitung semua sisi luar. Pada benda ini ada sisi yang tidak memakai bahan (misalnya yang menempel di tanah), jadi sisi itu tidak dihitung.',
+  'salah-hitung':
+    'Belum tepat. Pisahkan bangun menjadi bagian prisma dan bagian limas, hitung setiap bagian, lalu perhatikan bidang sambung, satuan, dan pembulatannya.',
+};
+
+var GBG_JENIS_LIMAS = ['lp', 'biaya', 'ts', 'dipakai', 'wadah', 'biayaWadah', 'tinggiSisi'];
+var GBG_JENIS_VOLUME = ['isiUlang', 'muat', 'kepadatan', 'waktu', 'tinggi'];
+
+/* Sumber pesan diagnosa: 'gabungan' (seksi ini), 'limas' (58), 'volume' (55). */
+function gbgSumber(jenis) {
+  if (jenis === 'konversiLuas' || GBG_JENIS_LIMAS.indexOf(jenis) !== -1) return 'limas';
+  if (jenis === 'konversiVolume' || GBG_JENIS_VOLUME.indexOf(jenis) !== -1) return 'volume';
+  return 'gabungan';
+}
+
+function gbgPesan(kode, sumber) {
+  if (sumber === 'limas') return lmkPesan(kode);
+  if (sumber === 'volume') return vpkPesan(kode);
+  return GBG_PESAN[kode] || VPK_PESAN[kode] || GBG_PESAN['salah-hitung'];
+}
+
+function gbgSalinCek(cek, jenis) {
+  var out = {};
+  Object.keys(cek).forEach(function (k) {
+    out[k] = cek[k];
+  });
+  out.jenis = jenis;
+  return out;
+}
+
+/*
+ * Kandidat jawaban soal kontekstual gabungan { benar: v, <kode>: v }.
+ * cek.jenis:
+ *   'volume'  { bangun: spec, dari?, ke? }  V prisma + V limas (dari/ke:
+ *             kode satuan VPR_FAKTOR, mis. 'cm3' → 'l')
+ *   'luas'    { bangun: spec, pakai?: [idSisi] }  luas sisi yang memakai
+ *             bahan (bawaan: semua sisi luar)
+ *   'konversiLuas'   { nilai, dari, ke } → seksi 58 'konversi'
+ *   'konversiVolume' { nilai, dari, ke } → seksi 55 'konversi'
+ *   'ts', 'wadah', 'biayaWadah', 'dipakai', 'lp', 'biaya', 'tinggiSisi'
+ *             → kandidatMasalahLimas (seksi 58)
+ *   'isiUlang', 'muat', 'kepadatan', 'waktu', 'tinggi'
+ *             → kandidatMasalahVolume (seksi 55)
+ * Urutan kunci menentukan prioritas diagnosa bila dua nilai kebetulan sama.
+ */
+function kandidatMasalahGabungan(cek) {
+  var j = cek.jenis;
+  if (j === 'konversiLuas') return kandidatMasalahLimas(gbgSalinCek(cek, 'konversi'));
+  if (j === 'konversiVolume') return kandidatMasalahVolume(gbgSalinCek(cek, 'konversi'));
+  if (GBG_JENIS_LIMAS.indexOf(j) !== -1) return kandidatMasalahLimas(cek);
+  if (GBG_JENIS_VOLUME.indexOf(j) !== -1) return kandidatMasalahVolume(cek);
+
+  var k = {};
+  var b = cek.bangun;
+  var gabung = !!(b && b.prisma && b.limas);
+  if (j === 'volume') {
+    var v = volumeGabungan(b);
+    var la = alasGabungan(b).luas;
+    var f = cek.dari && cek.ke ? vpkFaktor(cek.dari, cek.ke) : 1;
+    k.benar = lppBulat(v.total * f);
+    if (b.limas) {
+      var tl = tinggiLimasGabungan(b);
+      k['lupa-sepertiga'] = lppBulat((v.prisma + la * tl) * f);
+      if (gabung) k['lupa-limas'] = lppBulat(v.prisma * f);
+      k.setengah = lppBulat((v.prisma + (la * tl) / 2) * f);
+      if (!b.alas.p) {
+        var ts = tinggiSisiTegakLimas(tl, lppBulat(apotemaAlas(b.alas.n, b.alas.s)));
+        k['tinggi-sisi'] = lppBulat((v.prisma + volumeLimas(la, ts)) * f);
+      }
+    }
+    if (f !== 1) {
+      k['lupa-konversi'] = v.total;
+      k['faktor-luas'] = lppBulat(v.total * Math.pow(Math.cbrt(f), 2));
+      k['faktor-panjang'] = lppBulat(v.total * Math.cbrt(f));
+    }
+    if (gabung) k['lupa-prisma'] = lppBulat(v.limas * f);
+  } else if (j === 'luas') {
+    var rinci = rincianSisiGabungan(b);
+    var pakai =
+      cek.pakai ||
+      rinci.map(function (x) {
+        return x.id;
+      });
+    k.benar = luasSisiGabungan(b, pakai);
+    var limasPakai = rinci.filter(function (x) {
+      return x.bagian === 'limas' && x.jenis === 'tegak' && pakai.indexOf(x.id) !== -1;
+    });
+    if (gabung) k.sambung = lppBulat(k.benar + 2 * alasGabungan(b).luas);
+    if (limasPakai.length) {
+      var tL = tinggiLimasGabungan(b);
+      var sumL = gbgJumlahLuas(limasPakai);
+      var pakaiT = limasPakai.reduce(function (s, x) {
+        return s + (x.rusuk * tL) / 2;
+      }, 0);
+      k['tinggi-limas'] = lppBulat(k.benar - sumL + pakaiT);
+      k['lupa-setengah'] = lppBulat(k.benar + sumL);
+      if (b.prisma) k['lupa-limas'] = lppBulat(k.benar - sumL);
+    }
+    var semua = luasPermukaanGabungan(b);
+    if (!hampirSama(semua, k.benar)) k['semua-sisi'] = semua;
+  } else {
+    throw new Error('Jenis soal tidak dikenal: ' + j);
+  }
+  Object.keys(k).forEach(function (kode) {
+    if (kode !== 'benar' && hampirSama(k[kode], k.benar)) delete k[kode];
+  });
+  return k;
+}
+
+function diagnosaMasalahGabungan(cek, jawab) {
+  var sumber = gbgSumber(cek.jenis);
+  var k = kandidatMasalahGabungan(cek);
+  var urut = Object.keys(k);
+  for (var i = 0; i < urut.length; i++) {
+    if (hampirSama(k[urut[i]], jawab)) return { kode: urut[i], pesan: gbgPesan(urut[i], sumber) };
+  }
+  return { kode: 'salah-hitung', pesan: gbgPesan('salah-hitung', sumber) };
+}
+
+/* Pengecoh { kode, nilai, pesan } untuk kartu isian seksi 47 (tanpa yang benar). */
+function pengecohMasalahGabungan(cek) {
+  var sumber = gbgSumber(cek.jenis);
+  var k = kandidatMasalahGabungan(cek);
+  var dipakai = [k.benar];
+  var out = [];
+  Object.keys(k).forEach(function (kode) {
+    var v = k[kode];
+    if (kode === 'benar' || !(v > 0)) return;
+    var ada = dipakai.some(function (x) {
+      return hampirSama(x, v);
+    });
+    if (ada) return;
+    dipakai.push(v);
+    out.push({ kode: kode, nilai: v, pesan: gbgPesan(kode, sumber) });
+  });
+  return out;
+}
+
+/*
+ * Opsi pilihan ganda soal gabungan: jawaban benar di depan, lalu pengecoh
+ * berdiagnosa bernilai unik & positif (minimal 4 opsi, ditambah cadangan
+ * bila kurang). Label memakai gbgAngka. Modul WAJIB mengacaknya.
+ *   opts.awalan  teks sebelum bilangan (mis. 'Rp')
+ */
+function opsiMasalahGabungan(cek, satuan, opts) {
+  opts = opts || {};
+  var k = kandidatMasalahGabungan(cek);
+  var b = k.benar;
+  var cadangan = { 'tambah-satu': b + 1, 'dua-kali': 2 * b, 'tambah-dua': b + 2 };
+  var out = [];
+  var dipakai = [];
+  function tambah(id, v) {
+    v = lppBulat(v);
+    var ada = dipakai.some(function (x) {
+      return hampirSama(x, v);
+    });
+    if (ada || !(v > 0)) return;
+    dipakai.push(v);
+    out.push({
+      id: id,
+      nilai: v,
+      label: (opts.awalan || '') + gbgAngka(v) + (satuan ? ' ' + satuan : ''),
+    });
+  }
+  Object.keys(k).forEach(function (id) {
+    tambah(id, k[id]);
+  });
+  Object.keys(cadangan).forEach(function (id) {
+    if (out.length < 4) tambah(id, cadangan[id]);
+  });
+  return out;
+}
+
+/* ---------- Gambar isometrik bangun gabungan ---------- */
+
+/*
+ * Geometri gambar: prisma (sisi seksi 54) dan limas (sisi seksi 59) pada
+ * ketinggian masing-masing; `pisah` menggeser limas ke samping kanan
+ * (searah x − y, jadi kedalaman gambarnya tetap) sehingga kedua bagian
+ * berdampingan dan bidang sambungnya tampak.
+ */
+function gbgGeometri(spec, pisah) {
+  var pts = vprCCW(alasGabungan(spec).pts);
+  var tP = spec.prisma ? spec.prisma.t : 0;
+  var tL = tinggiLimasGabungan(spec);
+  var posisi = gbgPosisi(spec);
+  var gabung = !!(spec.prisma && spec.limas);
+  var geser = 0;
+  if (pisah && gabung) {
+    var xs = pts.map(function (q) {
+      return q[0];
+    });
+    var ys = pts.map(function (q) {
+      return q[1];
+    });
+    geser =
+      0.6 *
+      (Math.max.apply(null, xs) -
+        Math.min.apply(null, xs) +
+        Math.max.apply(null, ys) -
+        Math.min.apply(null, ys));
+  }
+  var g = { pts: pts, posisi: posisi, gabung: gabung, prisma: null, limas: null };
+  if (spec.prisma) {
+    var z0 = spec.limas && posisi === 'bawah' ? tL : 0;
+    g.prisma = { z0: z0, z1: z0 + tP, sisi: vprSisiPrisma(pts, z0, z0 + tP) };
+  }
+  if (spec.limas) {
+    var zAlas;
+    var zPuncak;
+    if (gabung && posisi === 'atas') {
+      zAlas = tP;
+      zPuncak = tP + tL;
+    } else if (gabung || posisi === 'bawah') {
+      zAlas = tL;
+      zPuncak = 0;
+    } else {
+      zAlas = 0;
+      zPuncak = tL;
+    }
+    var alas3 = pts.map(function (q) {
+      return [q[0] + geser, q[1] - geser, zAlas];
+    });
+    var c = vlmPusat(alas3);
+    var puncak = [c[0], c[1], zPuncak];
+    g.limas = { alas3: alas3, puncak: puncak, sisi: vlmSisiLimas(alas3, puncak) };
+  }
+  return g;
+}
+
+function gbgTitikGeometri(g) {
+  var out = [];
+  if (g.prisma) {
+    g.pts.forEach(function (q) {
+      out.push([q[0], q[1], g.prisma.z0], [q[0], q[1], g.prisma.z1]);
+    });
+  }
+  if (g.limas) out = out.concat(g.limas.alas3, [g.limas.puncak]);
+  return out;
+}
+
+function gbgKelasSisi(f, bagian) {
+  var datar = f.jenis !== 'tegak';
+  return (
+    'gbg-face gbg-face--' +
+    bagian +
+    (datar ? ' gbg-face--datar' : '') +
+    (!datar && f.kanan ? ' gbg-face--kanan' : '')
+  );
+}
+
+/*
+ * opts.pisah   pisahkan limas dari prisma, tampakkan bidang sambung
+ *      .label  tulis ukuran rusuk alas, tinggi prisma, & tinggi limas
+ *      .garis  garis tinggi limas t dan tinggi sisi tegak tₛ
+ *      .batas  spec lain untuk menjaga ukuran gambar tetap (lab)
+ *      .lebar  lebar gambar (px, bawaan 300)
+ *      .aria   teks alternatif
+ */
+function buildGbgSVG(spec, opts) {
+  opts = opts || {};
+  var g = gbgGeometri(spec, !!opts.pisah);
+  var sat = ' ' + (spec.satuan || 'cm');
+  var titik = gbgTitikGeometri(g);
+  (opts.batas || []).forEach(function (s) {
+    titik = titik.concat(gbgTitikGeometri(gbgGeometri(s, !!opts.pisah)));
+  });
+  var bx = { x0: Infinity, x1: -Infinity, y0: Infinity, y1: -Infinity };
+  titik.forEach(function (q) {
+    var s = vprProyeksi(q[0], q[1], q[2]);
+    bx.x0 = Math.min(bx.x0, s[0]);
+    bx.x1 = Math.max(bx.x1, s[0]);
+    bx.y0 = Math.min(bx.y0, s[1]);
+    bx.y1 = Math.max(bx.y1, s[1]);
+  });
+  var lebar = opts.lebar || 300;
+  var sk = Math.min(
+    lebar / Math.max(bx.x1 - bx.x0, 1e-6),
+    (lebar * 1.1) / Math.max(bx.y1 - bx.y0, 1e-6)
+  );
+
+  function gambarPrisma() {
+    if (!g.prisma) return '';
+    return (
+      '<g class="gbg-bagian gbg-bagian--prisma">' +
+      g.prisma.sisi
+        .filter(function (f) {
+          if (!f.terlihat) return false;
+          return !(g.gabung && !opts.pisah && g.posisi === 'atas' && f.id === 'atas');
+        })
+        .map(function (f) {
+          var cls = gbgKelasSisi(f, 'prisma');
+          if (g.gabung && g.posisi === 'atas' && f.id === 'atas') cls += ' gbg-sambung';
+          return vprPoly(f.pts3, sk, cls);
+        })
+        .join('') +
+      '</g>'
+    );
+  }
+  function gambarLimas() {
+    if (!g.limas) return '';
+    return (
+      '<g class="gbg-bagian gbg-bagian--limas">' +
+      g.limas.sisi
+        .filter(function (f) {
+          if (!f.terlihat) return false;
+          return !(g.gabung && !opts.pisah && f.jenis === 'alas');
+        })
+        .map(function (f) {
+          var cls = gbgKelasSisi(f, 'limas');
+          if (g.gabung && f.jenis === 'alas') cls += ' gbg-sambung';
+          return vprPoly(f.pts3, sk, cls);
+        })
+        .join('') +
+      '</g>'
+    );
+  }
+  /* Bidang sambung yang tersembunyi digambar sebagai garis putus-putus. */
+  function sambungTersembunyi() {
+    if (!g.gabung || !opts.pisah) return '';
+    var f;
+    if (g.posisi === 'atas') {
+      f = g.limas.sisi[0];
+    } else {
+      f = g.prisma.sisi.filter(function (x) {
+        return x.id === 'alas';
+      })[0];
+    }
+    return f.terlihat ? '' : vprPoly(f.pts3, sk, 'gbg-sambung gbg-sambung--garis');
+  }
+
+  var isi =
+    g.posisi === 'atas'
+      ? gambarPrisma() + gambarLimas()
+      : gambarLimas() + gambarPrisma() + sambungTersembunyi();
+  if (g.posisi === 'atas') isi += sambungTersembunyi();
+
+  var garis = '';
+  var label = [];
+  function teks(at, t, dx, dy, anchor, kelas) {
+    label.push({ at: at, teks: t, dx: dx, dy: dy, anchor: anchor, kelas: kelas });
+  }
+  var sisiA = alasGabungan(spec).sisi;
+  if (opts.label) {
+    /* rusuk alas: rusuk paling depan-kiri di layar pada ketinggian yang terlihat */
+    var zRusuk = g.prisma
+      ? g.posisi === 'bawah' && g.gabung
+        ? g.prisma.z1
+        : g.prisma.z0
+      : g.limas.alas3[0][2];
+    var n = g.pts.length;
+    var urutRusuk = [];
+    for (var i = 0; i < n; i++) {
+      var a = g.pts[i];
+      var b = g.pts[(i + 1) % n];
+      var m = [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2, zRusuk];
+      urutRusuk.push({ i: i, m: m, layar: vprProyeksi(m[0], m[1], m[2]) });
+    }
+    var atasDepan = g.posisi === 'bawah' && g.gabung;
+    urutRusuk.sort(function (p, q) {
+      return atasDepan ? p.layar[1] - q.layar[1] : q.layar[1] - p.layar[1];
+    });
+    var tampil = spec.alas.p ? urutRusuk.slice(0, 2) : urutRusuk.slice(0, 1);
+    tampil.forEach(function (r) {
+      var kiri = r.layar[0] < 0 || r.layar[0] <= vprProyeksi(g.pts[0][0], g.pts[0][1], 0)[0];
+      teks(
+        r.m,
+        gbgAngka(sisiA[r.i]) + sat,
+        kiri ? -6 : 6,
+        atasDepan ? -8 : 16,
+        kiri ? 'end' : 'start'
+      );
+    });
+    if (g.prisma) {
+      var kanan = g.pts[0];
+      g.pts.forEach(function (q) {
+        if (q[0] - q[1] > kanan[0] - kanan[1]) kanan = q;
+      });
+      teks(
+        [kanan[0], kanan[1], (g.prisma.z0 + g.prisma.z1) / 2],
+        gbgAngka(spec.prisma.t) + sat,
+        8,
+        4,
+        'start'
+      );
+    }
+  }
+  if (g.limas && (opts.label || opts.garis)) {
+    var pusat = [g.limas.puncak[0], g.limas.puncak[1], g.limas.alas3[0][2]];
+    garis += vprGaris(g.limas.puncak, pusat, sk, 'gbg-garis-t');
+    /* label t di sebelah kanan limas, sejajar tengah garis tinggi */
+    var tengahT = [pusat[0], pusat[1], (pusat[2] + g.limas.puncak[2]) / 2];
+    var kananL = g.limas.alas3.reduce(function (m, q) {
+      return Math.max(m, vprProyeksi(q[0], q[1], q[2])[0]);
+    }, -Infinity);
+    teks(
+      tengahT,
+      't = ' + gbgAngka(tinggiLimasGabungan(spec)) + sat,
+      (kananL - vprProyeksi(tengahT[0], tengahT[1], tengahT[2])[0]) * sk + 8,
+      4,
+      'start',
+      'gbg-label-t'
+    );
+  }
+  if (g.limas && opts.garis) {
+    /* tₛ pada sisi tegak limas terlihat yang paling depan */
+    var sisiT = g.limas.sisi.filter(function (f) {
+      return f.jenis === 'tegak' && f.terlihat;
+    });
+    var dep = sisiT[0];
+    sisiT.forEach(function (f) {
+      var p = vprProyeksi.apply(null, vlmPusat(f.pts3));
+      var q = vprProyeksi.apply(null, vlmPusat(dep.pts3));
+      if (p[0] < q[0]) dep = f;
+    });
+    if (dep) {
+      var tengah = [
+        (dep.pts3[0][0] + dep.pts3[1][0]) / 2,
+        (dep.pts3[0][1] + dep.pts3[1][1]) / 2,
+        dep.pts3[0][2],
+      ];
+      var ri = rincianSisiGabungan(spec).filter(function (f) {
+        return f.id === 'l' + dep.id.slice(1);
+      })[0];
+      garis += vprGaris(g.limas.puncak, tengah, sk, 'gbg-garis-ts');
+      teks(
+        [
+          (tengah[0] + g.limas.puncak[0]) / 2,
+          (tengah[1] + g.limas.puncak[1]) / 2,
+          (tengah[2] + g.limas.puncak[2]) / 2,
+        ],
+        'tₛ' + (ri ? ' = ' + gbgAngka(ri.tinggi) + sat : ''),
+        -6,
+        0,
+        'end',
+        'gbg-label-ts'
+      );
+    }
+  }
+  var labelSVG = label
+    .map(function (l) {
+      var s = vprProyeksi(l.at[0], l.at[1], l.at[2]);
+      return (
+        '<text class="lpp-ukur vpr-ukur gbg-ukur' +
+        (l.kelas ? ' ' + l.kelas : '') +
+        '" x="' +
+        psmFmt(s[0] * sk + (l.dx || 0)) +
+        '" y="' +
+        psmFmt(s[1] * sk + (l.dy || 0)) +
+        '"' +
+        (l.anchor ? ' style="text-anchor:' + l.anchor + '"' : '') +
+        '>' +
+        esc(l.teks) +
+        '</text>'
+      );
+    })
+    .join('');
+  var padX = opts.label || opts.garis ? 70 : 16;
+  var padY = opts.label || opts.garis ? 26 : 12;
+  return (
+    '<svg class="vpr-svg gbg-svg" viewBox="' +
+    psmFmt(bx.x0 * sk - padX) +
+    ' ' +
+    psmFmt(bx.y0 * sk - padY) +
+    ' ' +
+    psmFmt((bx.x1 - bx.x0) * sk + 2 * padX) +
+    ' ' +
+    psmFmt((bx.y1 - bx.y0) * sk + 2 * padY) +
+    '" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="' +
+    esc(
+      opts.aria ||
+        (spec.nama || 'Bangun gabungan') + (opts.pisah ? ', bagian prisma dan limas dipisah' : '')
+    ) +
+    '">' +
+    isi +
+    garis +
+    labelSVG +
+    '</svg>'
+  );
+}
+
+/* ---------- UI: Lab Gabungan ---------- */
+
+/*
+ * cfg = { satuan?, target?: { perHari, hari }, desain: [{ id, nama, bangun, info? }] }
+ * state[key] = { d: id aktif, pisah, dilihat: [id], pernahPisah }
+ */
+function ensureGbgLabState(state, key, cfg) {
+  var st = state[key] && typeof state[key] === 'object' ? state[key] : {};
+  var ids = cfg.desain.map(function (d) {
+    return d.id;
+  });
+  if (ids.indexOf(st.d) === -1) st.d = ids[0];
+  if (typeof st.pisah !== 'boolean') st.pisah = false;
+  if (typeof st.pernahPisah !== 'boolean') st.pernahPisah = false;
+  if (!Array.isArray(st.dilihat)) st.dilihat = [];
+  st.dilihat = st.dilihat.filter(function (id) {
+    return ids.indexOf(id) !== -1;
+  });
+  if (st.dilihat.indexOf(st.d) === -1) st.dilihat.push(st.d);
+  state[key] = st;
+  return st;
+}
+
+function gbgLabDesain(cfg, id) {
+  return cfg.desain.filter(function (d) {
+    return d.id === id;
+  })[0];
+}
+
+function gbgLabAtur(st, cfg, ubah) {
+  if (ubah.d && gbgLabDesain(cfg, ubah.d)) {
+    st.d = ubah.d;
+    if (st.dilihat.indexOf(ubah.d) === -1) st.dilihat.push(ubah.d);
+  }
+  if (typeof ubah.pisah === 'boolean') {
+    st.pisah = ubah.pisah;
+    if (ubah.pisah) st.pernahPisah = true;
+  }
+  return st;
+}
+
+function gbgLabSelesai(st, cfg) {
+  var semua = cfg.desain.every(function (d) {
+    return st.dilihat.indexOf(d.id) !== -1;
+  });
+  var adaGabung = cfg.desain.some(function (d) {
+    return d.bangun.prisma && d.bangun.limas;
+  });
+  return semua && (st.pernahPisah || !adaGabung);
+}
+
+function gbgKodeSatuanVolume(satuan) {
+  return { m: 'm3', dm: 'dm3', cm: 'cm3', mm: 'mm3' }[satuan || 'cm'] || 'cm3';
+}
+
+function gbgLabInfoHTML(cfg, st) {
+  var d = gbgLabDesain(cfg, st.d);
+  var b = d.bangun;
+  var satuan = b.satuan || cfg.satuan || 'cm';
+  var a = alasGabungan(b);
+  var v = volumeGabungan(b);
+  var tl = tinggiLimasGabungan(b);
+  var s3 = ' ' + satuan + '³';
+  var liter = konversiVolume(v.total, gbgKodeSatuanVolume(satuan), 'l');
+  var baris = [['Luas alas (La)', gbgAngka(a.luas) + ' ' + satuan + '²']];
+  if (b.prisma) {
+    baris.push(['V prisma = La × ' + gbgAngka(b.prisma.t), gbgAngka(v.prisma) + s3]);
+  }
+  if (b.limas) {
+    baris.push(['V limas = ⅓ × La × ' + gbgAngka(tl), gbgAngka(v.limas) + s3]);
+  }
+  baris.push(['V total', gbgAngka(v.total) + s3 + ' = ' + gbgAngka(liter) + ' liter']);
+  var status = '';
+  if (cfg.target) {
+    var hari = banyakMuat(liter, cfg.target.perHari);
+    var ok = hari >= cfg.target.hari;
+    status =
+      '<p class="gbg-lab__syarat ' +
+      (ok ? 'is-ok' : 'is-tidak') +
+      '">' +
+      (ok ? '✓ ' : '✗ ') +
+      'Cukup untuk ' +
+      hari +
+      ' hari (' +
+      gbgAngka(liter) +
+      ' : ' +
+      gbgAngka(cfg.target.perHari) +
+      '). ' +
+      (ok ? 'Memenuhi' : 'Belum memenuhi') +
+      ' kebutuhan ' +
+      cfg.target.hari +
+      ' hari.</p>';
+  }
+  return (
+    '<p class="gbg-lab__nama"><strong>' +
+    esc(d.nama) +
+    '</strong>' +
+    (d.info ? ' — ' + esc(d.info) : '') +
+    '</p>' +
+    '<dl class="lmk-atap__baca gbg-lab__baca">' +
+    baris
+      .map(function (r) {
+        return '<div><dt>' + esc(r[0]) + '</dt><dd>' + esc(r[1]) + '</dd></div>';
+      })
+      .join('') +
+    '</dl>' +
+    status
+  );
+}
+
+function gbgLabBatas(cfg) {
+  return cfg.desain.map(function (d) {
+    return d.bangun;
+  });
+}
+
+function gbgLabInner(st, cfg) {
+  var d = gbgLabDesain(cfg, st.d);
+  return (
+    '<div class="gbg-lab__gambar">' +
+    buildGbgSVG(d.bangun, {
+      pisah: st.pisah,
+      label: true,
+      batas: gbgLabBatas(cfg),
+      lebar: 280,
+    }) +
+    '</div>' +
+    '<div class="gbg-lab__info" aria-live="polite">' +
+    gbgLabInfoHTML(cfg, st) +
+    '</div>'
+  );
+}
+
+function buildGbgLab(id, st, cfg) {
+  var d = gbgLabDesain(cfg, st.d);
+  var bisaPisah = !!(d.bangun.prisma && d.bangun.limas);
+  return (
+    '<div class="gbg-lab" id="' +
+    id +
+    '">' +
+    '<div class="psm-toolbar" role="group" aria-label="Pilih desain">' +
+    cfg.desain
+      .map(function (x) {
+        var aktif = x.id === st.d;
+        return (
+          '<button type="button" class="psm-tool-btn' +
+          (aktif ? ' is-active' : '') +
+          '" data-gbg-desain="' +
+          esc(x.id) +
+          '" aria-pressed="' +
+          (aktif ? 'true' : 'false') +
+          '">' +
+          (st.dilihat.indexOf(x.id) !== -1 ? '✓ ' : '') +
+          esc(x.nama) +
+          '</button>'
+        );
+      })
+      .join('') +
+    '</div>' +
+    '<div class="gbg-lab__isi">' +
+    gbgLabInner(st, cfg) +
+    '</div>' +
+    '<div class="btn-group btn-group--center">' +
+    '<button type="button" class="btn btn--outline-primary btn--small" data-gbg-pisah aria-pressed="' +
+    (st.pisah && bisaPisah ? 'true' : 'false') +
+    '"' +
+    (bisaPisah ? '' : ' disabled') +
+    '>' +
+    (bisaPisah
+      ? st.pisah
+        ? '🔗 Gabungkan kembali'
+        : '✂️ Pisahkan prisma & limas'
+      : 'Desain ini hanya satu bangun') +
+    '</button>' +
+    '</div>' +
+    '</div>'
+  );
+}
+
+/* onChange() dipanggil setelah desain atau pisah/gabung berubah. */
+function bindGbgLab(root, id, st, cfg, onChange) {
+  var el = root.querySelector('#' + id);
+  if (!el) return;
+  function ganti(sel) {
+    var wadah = document.createElement('div');
+    wadah.innerHTML = buildGbgLab(id, st, cfg);
+    var baru = wadah.firstChild;
+    el.replaceWith(baru);
+    bindGbgLab(root, id, st, cfg, onChange);
+    var f = baru.querySelector(sel);
+    if (f) f.focus();
+    if (onChange) onChange();
+  }
+  el.querySelectorAll('[data-gbg-desain]').forEach(function (b) {
+    b.addEventListener('click', function () {
+      var did = b.getAttribute('data-gbg-desain');
+      gbgLabAtur(st, cfg, { d: did, pisah: false });
+      ganti('[data-gbg-desain="' + did + '"]');
+    });
+  });
+  var tombol = el.querySelector('[data-gbg-pisah]');
+  if (tombol) {
+    tombol.addEventListener('click', function () {
+      gbgLabAtur(st, cfg, { pisah: !st.pisah });
+      ganti('[data-gbg-pisah]');
+    });
+  }
+}
+
+/* ---------- UI: pemilih sisi bangun gabungan ---------- */
+
+/*
+ * objek = { id, nama, bangun: spec, bahan?, namaSisi?, dipakai: [idSisi], alasan? }
+ * State memakai ensureLpSisiState / lpSisiToggle / lpSisiPeriksa (seksi 48).
+ */
+function gbgNamaSisi(objek, f) {
+  if (objek.namaSisi && objek.namaSisi[f.id]) return objek.namaSisi[f.id];
+  var id = f.id;
+  if (id === 'alas') return 'Alas';
+  if (id === 'atas') return 'Tutup atas';
+  if (id === 'sambung-p') return 'Bidang sambung pada prisma';
+  if (id === 'sambung-l') return 'Bidang sambung pada limas';
+  if (id.charAt(0) === 'p') return 'Sisi tegak prisma ' + (Number(id.slice(1)) + 1);
+  return 'Sisi tegak limas ' + (Number(id.slice(1)) + 1);
+}
+
+function gbgUkuranSisi(objek, f) {
+  var s = ' ' + (objek.bangun.satuan || 'cm');
+  var A = objek.bangun.alas;
+  if (f.jenis === 'tegak' && f.bagian === 'limas') {
+    return 'segitiga ' + gbgAngka(f.rusuk) + s + ', tₛ ' + gbgAngka(f.tinggi) + s;
+  }
+  if (f.jenis === 'tegak') return gbgAngka(f.rusuk) + s + ' × ' + gbgAngka(f.tinggi) + s;
+  if (A.p) return 'persegi panjang ' + gbgAngka(A.p) + s + ' × ' + gbgAngka(A.l) + s;
+  if (A.n === 4) return 'persegi ' + gbgAngka(A.s) + s + ' × ' + gbgAngka(A.s) + s;
+  return namaSegiN(A.n) + ' bersisi ' + gbgAngka(A.s) + s;
+}
+
+function gbgUmpanSisi(objek, st) {
+  if (st.benar) {
+    return buildFeedbackBox(
+      'success',
+      '✓',
+      '<strong>Tepat!</strong> ' + esc(objek.alasan || 'Sisi yang memakai bahan sudah lengkap.')
+    );
+  }
+  if (!st.cek || !st.hasil) return '';
+  function nama(ids) {
+    return ids
+      .map(function (id) {
+        return '<strong>' + esc(gbgNamaSisi(objek, { id: id })) + '</strong>';
+      })
+      .join(', ');
+  }
+  var buka = st.coba >= 2;
+  var baris = [];
+  var lebihSambung = st.hasil.lebih.filter(function (id) {
+    return id.indexOf('sambung') === 0;
+  });
+  var lebihLain = st.hasil.lebih.filter(function (id) {
+    return id.indexOf('sambung') !== 0;
+  });
+  if (lebihSambung.length) {
+    baris.push(
+      'Bidang sambung ada di DALAM bangun gabungan, tertutup oleh bagian lainnya, jadi tidak memakai bahan.'
+    );
+  }
+  if (st.hasil.kurang.length) {
+    baris.push(
+      'Masih ada ' +
+        st.hasil.kurang.length +
+        ' sisi yang memakai bahan belum dipilih' +
+        (buka ? ': ' + nama(st.hasil.kurang) : '') +
+        '.'
+    );
+  }
+  if (lebihLain.length) {
+    baris.push(
+      'Ada ' +
+        lebihLain.length +
+        ' sisi yang tidak memakai bahan ikut dipilih' +
+        (buka ? ': ' + nama(lebihLain) : '') +
+        '.'
+    );
+  }
+  if (!buka)
+    baris.push('Baca lagi cerita bendanya: bagian mana yang terbuka, menempel, atau tertutup?');
+  return buildFeedbackBox('warning', '💭', baris.join(' '));
+}
+
+function gbgChipSisi(objek, st, f, no) {
+  var on = st.pilih.indexOf(f.id) !== -1;
+  return (
+    '<button type="button" class="lpk-chip gbg-chip gbg-chip--' +
+    (f.sambung ? 'sambung' : f.bagian) +
+    (on ? ' is-on' : '') +
+    '" data-gbg-sisi="' +
+    esc(f.id) +
+    '" aria-pressed="' +
+    (on ? 'true' : 'false') +
+    '"' +
+    (st.benar ? ' disabled' : '') +
+    '><span class="lpk-chip__no" aria-hidden="true">' +
+    no +
+    '</span><span class="lpk-chip__nama">' +
+    esc(gbgNamaSisi(objek, f)) +
+    '</span><span class="lpk-chip__ukur">' +
+    esc(gbgUkuranSisi(objek, f)) +
+    '</span></button>'
+  );
+}
+
+function buildGbgSisiPicker(id, objek, st) {
+  var rinci = rincianSisiGabungan(objek.bangun, { sambung: true });
+  var no = 0;
+  var grup = [
+    {
+      judul: 'Bagian prisma',
+      list: rinci.filter(function (f) {
+        return f.bagian === 'prisma' && !f.sambung;
+      }),
+    },
+    {
+      judul: 'Bagian limas',
+      list: rinci.filter(function (f) {
+        return f.bagian === 'limas' && !f.sambung;
+      }),
+    },
+    {
+      judul: 'Bidang sambung (tempat prisma & limas menempel)',
+      list: rinci.filter(function (f) {
+        return f.sambung;
+      }),
+    },
+  ].filter(function (gr) {
+    return gr.list.length;
+  });
+  return (
+    '<div class="lpk-pilih gbg-pilih' +
+    (st.benar ? ' is-benar' : '') +
+    '" id="' +
+    id +
+    '">' +
+    '<div class="gbg-pilih__gambar">' +
+    buildGbgSVG(objek.bangun, {
+      pisah: !!(objek.bangun.prisma && objek.bangun.limas),
+      lebar: 240,
+      aria: objek.nama + ' dengan bagian prisma dan limas dipisah',
+    }) +
+    '</div>' +
+    grup
+      .map(function (gr) {
+        return (
+          '<div class="gbg-pilih__grup"><p class="gbg-pilih__judul">' +
+          esc(gr.judul) +
+          '</p><div class="lpk-chips" role="group" aria-label="' +
+          esc(gr.judul + ' ' + objek.nama) +
+          '">' +
+          gr.list
+            .map(function (f) {
+              no += 1;
+              return gbgChipSisi(objek, st, f, no);
+            })
+            .join('') +
+          '</div></div>'
+        );
+      })
+      .join('') +
+    '<div class="lpk-pilih__umpan" aria-live="polite">' +
+    gbgUmpanSisi(objek, st) +
+    '</div>' +
+    (st.benar
+      ? ''
+      : '<div class="btn-group btn-group--end"><button type="button" class="btn btn--primary btn--small" data-gbg-cek>Periksa pilihan sisi</button></div>') +
+    '</div>'
+  );
+}
+
+function bindGbgSisiPicker(root, id, objek, st, save, rerender) {
+  var el = root.querySelector('#' + id);
+  if (!el || st.benar) return;
+  function fokus(sel) {
+    var f = root.querySelector('#' + id + ' ' + sel);
+    if (f) f.focus();
+  }
+  el.querySelectorAll('[data-gbg-sisi]').forEach(function (b) {
+    b.addEventListener('click', function () {
+      var sid = b.getAttribute('data-gbg-sisi');
+      lpSisiToggle(st, sid);
+      save();
+      rerender();
+      fokus('[data-gbg-sisi="' + sid + '"]');
+    });
+  });
+  var cek = el.querySelector('[data-gbg-cek]');
+  if (cek) {
+    cek.addEventListener('click', function () {
+      if (!st.pilih.length) {
+        showNotice('Pilih dulu sisi yang memakai bahan.');
+        return;
+      }
+      lpSisiPeriksa(objek, st);
+      save();
+      rerender();
+      fokus(st.benar ? '.lpk-pilih__umpan' : '[data-gbg-cek]');
+    });
+  }
+}
