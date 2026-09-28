@@ -1,0 +1,51 @@
+/* =========================================================================
+   fase-d/mpi-22.10/styles.css
+   Masalah Kontekstual Gabungan Prisma & Limas — Fase D (SMP Kelas IX)
+
+   Hanya memuat gaya yang KHAS modul ini (kepala benda). Kartu surat
+   (.surat-*, .orientasi-cerita), gambar bangun gabungan, Lab Gabungan,
+   pemilih sisi gabungan & legenda warna (.gbg-*), kartu isian & galeri
+   (.lpp-*), tabel anggaran, papan proposal, chip sisi (.lpk-*),
+   pilihan ganda, pemilahan, urut-ketuk, dan kartu sajian berasal dari
+   shared/base.css.
+   ========================================================================= */
+
+/* -------------------------------------------------------------------------
+   Penyelidikan pelat — kepala benda (gambar tandon kecil + cerita)
+   ------------------------------------------------------------------------- */
+
+.benda-head {
+  display: grid;
+  grid-template-columns: 130px minmax(0, 1fr);
+  gap: var(--space-4);
+  align-items: center;
+  margin-bottom: var(--space-4);
+}
+
+.benda-head__gambar .gbg-svg {
+  max-height: 130px;
+}
+
+.benda-head__cerita {
+  margin: var(--space-2) 0 0;
+  line-height: 1.55;
+}
+
+.lpp-galeri__item .gbg-svg {
+  max-height: 150px;
+}
+
+.gbg-legenda {
+  margin-top: var(--space-3);
+}
+
+@media (max-width: 480px) {
+  .benda-head {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .benda-head__gambar {
+    max-width: 150px;
+    margin: 0 auto;
+  }
+}

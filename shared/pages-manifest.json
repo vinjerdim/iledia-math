@@ -246,5 +246,13 @@
     "h1": "Volume Limas",
     "stageCount": 10,
     "extraBody": "partials/reset-modal.html"
+  },
+  "fase-d/mpi-22.10": {
+    "title": "Masalah Kontekstual Gabungan Prisma & Limas — Matematika Fase D",
+    "description": "Media pembelajaran interaktif berbasis Problem Based Learning untuk menyelesaikan masalah kontekstual gabungan luas permukaan dan volume prisma dan limas: merencanakan Tandon Air Hujan Kebun Sekolah dengan Lab Gabungan (pisah-gabung balok dan corong limas, volume bagian demi bagian → liter → banyak hari), memilih sisi luar yang memakai pelat tanpa bidang sambung, tₛ corong dengan Pythagoras, lembar pelat dan kaleng cat dengan pembulatan sesuai konteks, waktu isi dari talang, anggaran vs dana, Papan Proposal, dan evaluasi lembar kerja kelompok lain.",
+    "kicker": "Matematika — Fase D (SMP)",
+    "h1": "Masalah Kontekstual Gabungan Prisma & Limas",
+    "stageCount": 10,
+    "extraBody": "partials/reset-modal.html"
   }
 }
