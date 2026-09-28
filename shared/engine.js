@@ -170,6 +170,11 @@
        diagnosa miskonsepsi & opsi berpengecoh, susun sisi tegak kipas →
        jajargenjang/trapesium, lab bentang limas lipat–ketuk sisi,
        jaring limas persegi panjang)
+   58. Masalah kontekstual luas permukaan limas (sisi limas yang
+       memakai bahan, ukuran atap dari tinggi atap, pengecoh tₛ,
+       diagnosa soal berjenis lp/ts/dipakai/wadah/konversi/biaya/
+       biayaWadah/tinggiSisi & opsi berpengecoh, Lab Atap, pemilih sisi
+       limas)
    ============================================================ */
 
 /* ============================================================
@@ -33153,7 +33158,9 @@ function lplJaring(p) {
   }
   var tepi = [];
   for (var i = 0; i < p.n; i++) tepi.push(i);
-  return jaringLimas({ n: p.n, susun: 'bunga', tepi: tepi, s: p.s, t: p.ts });
+  var tsP =
+    typeof p.ts === 'number' ? p.ts : tinggiSisiTegakLimas(p.t, lppBulat(apotemaAlas(p.n, p.s)));
+  return jaringLimas({ n: p.n, susun: 'bunga', tepi: tepi, s: p.s, t: tsP });
 }
 
 function lplNamaSisi(id) {
@@ -33165,8 +33172,20 @@ function lplNamaSisi(id) {
  * segitiga, label panjang rusuk alas dan tₛ.
  *   opts.pilih, opts.sorot, opts.lebar, opts.aria (seperti buildLpNetSVG)
  */
+/* Rusuk alas & tinggi (tₛ) satu kepingan segitiga sisi tegak jaring limas. */
+function lplUkurSegitiga(q) {
+  if (q.jenis !== 'tegak') return { sisi: 0, ts: 0 };
+  var m0 = [(q.pts2[0][0] + q.pts2[1][0]) / 2, (q.pts2[0][1] + q.pts2[1][1]) / 2];
+  return {
+    sisi: lppBulat(jarakTitik(q.pts2[0], q.pts2[1])),
+    ts: lppBulat(jarakTitik(m0, q.pts2[2])),
+  };
+}
+
 function buildLplNetSVG(p, opts) {
   opts = opts || {};
+  var satuan = ' ' + (opts.satuan || p.satuan || 'cm');
+  var dipilih = opts.dipilih || [];
   var jaring = lplJaring(p);
   var sk = lppSkala(jaring, opts.lebar || 300);
   var semua = [];
@@ -33178,16 +33197,20 @@ function buildLplNetSVG(p, opts) {
   var keping = jaring.pieces
     .map(function (q) {
       var cls = 'psm-net-piece psm-face--' + q.jenis;
+      var aktif = opts.sorot === q.id || dipilih.indexOf(q.id) !== -1;
       if (opts.sorot === q.id) cls += ' is-sorot';
+      if (dipilih.indexOf(q.id) !== -1) cls += ' is-dipilih';
+      var ukurQ = lplUkurSegitiga(q);
       var label =
         q.jenis === 'tegak'
           ? lplNamaSisi(q.id) +
             ': segitiga, alas ' +
-            lppAngka(p.s) +
-            ' cm, tinggi ' +
-            lppAngka(p.ts) +
-            ' cm'
-          : 'Sisi alas: ' + (p.infoAlas || namaSegiN(p.n));
+            lppAngka(ukurQ.sisi) +
+            satuan +
+            ', tinggi ' +
+            lppAngka(ukurQ.ts) +
+            satuan
+          : 'Sisi alas: ' + (p.infoAlas || (p.p ? 'persegi panjang' : namaSegiN(p.n)));
       return (
         '<polygon class="' +
         cls +
@@ -33199,7 +33222,7 @@ function buildLplNetSVG(p, opts) {
           ? ' data-lpl-sisi="' +
             q.id +
             '" tabindex="0" role="button" aria-pressed="' +
-            (opts.sorot === q.id ? 'true' : 'false') +
+            (aktif ? 'true' : 'false') +
             '" aria-label="' +
             esc(label) +
             '"'
@@ -33237,8 +33260,9 @@ function buildLplNetSVG(p, opts) {
     })
     .map(function (q) {
       var m0 = [(q.pts2[0][0] + q.pts2[1][0]) / 2, (q.pts2[0][1] + q.pts2[1][1]) / 2];
-      var sisi = lppBulat(jarakTitik(q.pts2[0], q.pts2[1]));
-      var ts = lppBulat(jarakTitik(m0, q.pts2[2]));
+      var uk = lplUkurSegitiga(q);
+      var sisi = uk.sisi;
+      var ts = uk.ts;
       var kunci = sisi + '|' + ts;
       if (sudah[kunci]) return '';
       sudah[kunci] = true;
@@ -33250,14 +33274,14 @@ function buildLplNetSVG(p, opts) {
         '" y="' +
         psmFmt(dalam[1] * sk) +
         '">' +
-        esc(lppAngka(sisi) + ' cm') +
+        esc(lppAngka(sisi) + satuan) +
         '</text>' +
         '<text class="lpp-ukur lpp-ukur--tinggi" x="' +
         psmFmt(tengah[0] * sk + 10) +
         '" y="' +
         psmFmt(tengah[1] * sk) +
         '" style="text-anchor:start">' +
-        esc('tₛ = ' + lppAngka(ts) + ' cm') +
+        esc('tₛ = ' + lppAngka(ts) + satuan) +
         '</text>'
       );
     })
@@ -33320,6 +33344,7 @@ function lplLabInner(st, p) {
 }
 
 function lplLabInfo(st, p) {
+  var sat = ' ' + (p.satuan || 'cm');
   var info = '';
   if (st.sorot && st.t < 0.001) {
     info =
@@ -33329,10 +33354,10 @@ function lplLabInfo(st, p) {
       (st.sorot === 'alas'
         ? esc(p.infoAlas || namaSegiN(p.n))
         : 'segitiga sama kaki, alas ' +
-          esc(lppAngka(p.s)) +
-          ' cm (= rusuk alas) dan tinggi segitiga ' +
-          esc(lppAngka(p.ts)) +
-          ' cm (garis putus-putus).');
+          esc(lppAngka(p.s) + sat) +
+          ' (= rusuk alas) dan tinggi segitiga ' +
+          esc(lppAngka(p.ts) + sat) +
+          ' (garis putus-putus).');
   }
   return (
     '<p class="psm-info lpp-lab__info">' +
@@ -33474,4 +33499,806 @@ function bindLplNetLab(root, id, st, opts, onChange) {
       if (onChange) onChange('p');
     });
   });
+}
+
+/* ============================================================
+   58. MASALAH KONTEKSTUAL LUAS PERMUKAAN LIMAS
+   Dipakai modul masalah kontekstual luas permukaan limas
+   (fase-d/mpi-22.8, Problem Based Learning). Dibangun di atas seksi 57
+   (rincianSisiLimas, luasPermukaanLimas, kandidatLuasPermukaanLimas,
+   tinggiSisiTegakLimas, lplJaring, buildLplNetSVG) dan seksi 48
+   (banyakWadah, konversiLuas, pengecohBanyakWadah,
+   pengecohKonversiLuas, ensureLpSisiState, lpSisiToggle,
+   lpSisiPeriksa, gaya .lpk-chip*).
+
+   Limas benda nyata ditulis { n, s, ts?, t? } (segi-n beraturan) atau
+   { p, l, t } (persegi panjang); ts dihitung dengan Pythagoras bila
+   tidak diberikan. Fungsi murni:
+     rincianObjekLimas(o)            rincian sisi seksi 57 untuk benda o
+     luasSisiDipakaiLimas(o, pakai)  jumlah luas sisi ber-id `pakai`
+     lmkUkuranAtap(cfg, t)           atap limas setinggi t → a, K, tₛ,
+                                     luas atap (tanpa alas), lembar
+                                     penutup (bulat KE ATAS), % naik
+                                     dibanding tinggi acuan
+     pengecohTinggiSisi(t, a)        { kode, nilai, pesan } kekeliruan
+                                     Pythagoras (lupa akar, dijumlah,
+                                     dikurang, memakai rusuk utuh)
+   Soal kontekstual berjenis (kandidatMasalahLimas, diagnosaMasalahLimas,
+   opsiMasalahLimas; lihat komentar kandidatMasalahLimas).
+
+   Komponen UI: Lab Atap (geser tinggi atap → penampang atap dengan
+   segitiga siku-siku a–t–tₛ, bacaan luas & lembar genteng, tombol
+   desain) dan pemilih sisi limas yang memakai bahan (ketuk kepingan
+   jaring "bunga" atau chip nama sisi). Gaya .lmk-* di shared/base.css.
+   ============================================================ */
+
+function rincianObjekLimas(o) {
+  if (o.p) {
+    var pts = [
+      [0, 0],
+      [o.p, 0],
+      [o.p, o.l],
+      [0, o.l],
+    ];
+    return rincianSisiLimas(pts, tinggiSisiLimasPersegiPanjang(o.p, o.l, o.t));
+  }
+  var ts =
+    typeof o.ts === 'number' ? o.ts : tinggiSisiTegakLimas(o.t, lppBulat(apotemaAlas(o.n, o.s)));
+  return rincianSisiLimas(alasLimasBeraturan(o.n, o.s), ts);
+}
+
+function luasSisiDipakaiLimas(o, pakai) {
+  return lppBulat(
+    rincianObjekLimas(o)
+      .filter(function (f) {
+        return pakai.indexOf(f.id) !== -1;
+      })
+      .reduce(function (s, f) {
+        return s + f.luas;
+      }, 0)
+  );
+}
+
+/*
+ * cfg = { n, sisi, luasLembar, acuan?, syaratMin?, min, max, langkah,
+ *         satuan?, desain: [{ id, nama, t }] }
+ */
+function lmkUkuranAtap(cfg, t) {
+  var a = lppBulat(apotemaAlas(cfg.n, cfg.sisi));
+  var keliling = lppBulat(cfg.n * cfg.sisi);
+  var ts = tinggiSisiTegakLimas(t, a);
+  var luas = luasSisiTegakLimas(keliling, ts);
+  var out = {
+    t: t,
+    a: a,
+    keliling: keliling,
+    ts: ts,
+    luas: luas,
+    bagi: lppBulat(luas / cfg.luasLembar),
+    lembar: banyakWadah(luas, cfg.luasLembar),
+  };
+  if (typeof cfg.acuan === 'number') {
+    var acu = luasSisiTegakLimas(keliling, tinggiSisiTegakLimas(cfg.acuan, a));
+    out.naikTinggi = Math.round((t / cfg.acuan - 1) * 100);
+    out.naikLuas = Math.round((luas / acu - 1) * 100);
+  }
+  if (typeof cfg.syaratMin === 'number') out.memenuhi = t >= cfg.syaratMin - 1e-9;
+  return out;
+}
+
+var LMK_PESAN = {
+  benar: 'Tepat! Kamu menghitung bahan limas sesuai kebutuhan benda nyatanya.',
+  'lupa-akar': 'Itu baru t² + a². Tinggi sisi tegak adalah AKAR-nya: tₛ = √(t² + a²).',
+  'jumlah-sisi':
+    'Tinggi limas dan setengah rusuk alas dijumlahkan. Pada segitiga siku-siku berlaku Pythagoras: tₛ = √(t² + a²), bukan t + a.',
+  'kurang-kuadrat':
+    'Kuadratnya dikurangkan. tₛ adalah sisi miring (terpanjang), jadi kuadratnya DIJUMLAHKAN: tₛ = √(t² + a²).',
+  'pakai-rusuk':
+    'Kamu memakai rusuk alas utuh. Kaki segitiga siku-siku adalah SETENGAH rusuk alas (jarak kaki tinggi limas ke tengah rusuk alas).',
+  'lupa-dua': 'Dari LP = La + ½ × K × tₛ, maka tₛ = 2 × (LP − La) : K. Kamu lupa mengalikan 2.',
+  'ts-tanpa-alas': 'Luas alas belum dikurangkan. tₛ = 2 × (LP − La) : K.',
+  'lupa-bagi':
+    'Itu baru luas semua sisi tegak (LP − La). Kalikan 2, lalu bagi dengan keliling alas untuk mendapatkan tₛ.',
+  'lupa-harga': 'Itu baru banyak atau luas bahannya. Biaya = banyak bahan × harga satuannya.',
+  'salah-hitung':
+    'Belum tepat. Tentukan dulu sisi limas yang memakai bahan, cari tₛ dengan Pythagoras bila perlu, lalu perhatikan satuan dan pembulatannya.',
+};
+
+function lmkPesan(kode) {
+  return LMK_PESAN[kode] || LPL_PESAN[kode] || LPK_PESAN[kode] || LMK_PESAN['salah-hitung'];
+}
+
+function lmkPengecoh(kode, nilai) {
+  return { kode: kode, nilai: lppBulat(nilai), pesan: lmkPesan(kode) };
+}
+
+function pengecohTinggiSisi(t, a) {
+  var benar = tinggiSisiTegakLimas(t, a);
+  return lpkSaring(
+    [
+      lmkPengecoh('lupa-akar', t * t + a * a),
+      lmkPengecoh('jumlah-sisi', t + a),
+      lmkPengecoh('kurang-kuadrat', Math.sqrt(Math.abs(t * t - a * a))),
+      lmkPengecoh('pakai-rusuk', Math.sqrt(t * t + 4 * a * a)),
+    ],
+    benar
+  );
+}
+
+/*
+ * Kandidat jawaban soal kontekstual limas { benar: v, <kodeKekeliruan>: v }.
+ * cek.jenis:
+ *   'lp'         { luasAlas, kelilingAlas, tinggiSisi, tanpaAlas?,
+ *                  tinggiLimas?, sisiAlas? }
+ *   'ts'         { t, a }                         → tₛ (Pythagoras)
+ *   'dipakai'    { limas: o, pakai: [idSisi] }    → luas bahan
+ *   'wadah'      { luasSatu, banyak, isiWadah }   → banyak wadah dibeli
+ *   'konversi'   { nilai, dari, ke }              → satuan luas
+ *   'biaya'      seperti 'lp' + { harga }         → LP × harga
+ *   'biayaWadah' { luas, isiWadah, harga }        → wadah (ke atas) × harga
+ *   'tinggiSisi' { luasPermukaan, luasAlas, kelilingAlas } → tₛ
+ * Urutan kunci menentukan prioritas diagnosa bila dua nilai kebetulan sama.
+ */
+function kandidatMasalahLimas(cek) {
+  var k = {};
+  function tambah(list) {
+    list.forEach(function (p) {
+      if (!Object.prototype.hasOwnProperty.call(k, p.kode)) k[p.kode] = p.nilai;
+    });
+  }
+  function dariLp(kali) {
+    var lp = kandidatLuasPermukaanLimas({
+      luasAlas: cek.luasAlas,
+      kelilingAlas: cek.kelilingAlas,
+      tinggiSisi: cek.tinggiSisi,
+      tanpaAlas: !!cek.tanpaAlas,
+      tinggiLimas: cek.tinggiLimas,
+      sisiAlas: cek.sisiAlas,
+    });
+    Object.keys(lp).forEach(function (kode) {
+      k[kode] = lppBulat(lp[kode] * kali);
+    });
+    return lp;
+  }
+  if (cek.jenis === 'lp') {
+    dariLp(1);
+  } else if (cek.jenis === 'biaya') {
+    var lpB = dariLp(cek.harga);
+    k['lupa-harga'] = lpB.benar;
+  } else if (cek.jenis === 'ts') {
+    k.benar = tinggiSisiTegakLimas(cek.t, cek.a);
+    tambah(pengecohTinggiSisi(cek.t, cek.a));
+  } else if (cek.jenis === 'dipakai') {
+    var rinci = rincianObjekLimas(cek.limas);
+    var benar = luasSisiDipakaiLimas(cek.limas, cek.pakai);
+    var alas = rinci[0].luas;
+    var tegak = rinci
+      .filter(function (f) {
+        return f.jenis === 'tegak' && cek.pakai.indexOf(f.id) !== -1;
+      })
+      .reduce(function (s, f) {
+        return s + f.luas;
+      }, 0);
+    k.benar = benar;
+    if (cek.pakai.indexOf('alas') === -1) {
+      k['pakai-alas'] = lppBulat(benar + alas);
+    } else {
+      k['tanpa-alas'] = lppBulat(benar - alas);
+      k['dua-alas'] = lppBulat(benar + alas);
+    }
+    k['lupa-setengah'] = lppBulat(benar + tegak);
+  } else if (cek.jenis === 'wadah') {
+    var total = cek.luasSatu * cek.banyak;
+    k.benar = banyakWadah(total, cek.isiWadah);
+    tambah(pengecohBanyakWadah(total, cek.isiWadah));
+    k['lupa-banyak'] = banyakWadah(cek.luasSatu, cek.isiWadah);
+  } else if (cek.jenis === 'konversi') {
+    k.benar = konversiLuas(cek.nilai, cek.dari, cek.ke);
+    tambah(pengecohKonversiLuas(cek.nilai, cek.dari, cek.ke));
+  } else if (cek.jenis === 'biayaWadah') {
+    var n = banyakWadah(cek.luas, cek.isiWadah);
+    k.benar = lppBulat(n * cek.harga);
+    tambah(
+      pengecohBanyakWadah(cek.luas, cek.isiWadah).map(function (p) {
+        return { kode: p.kode, nilai: lppBulat(p.nilai * cek.harga) };
+      })
+    );
+    k['lupa-harga'] = n;
+  } else if (cek.jenis === 'tinggiSisi') {
+    k.benar = tinggiSisiDariLuasPermukaan(cek.luasPermukaan, cek.luasAlas, cek.kelilingAlas);
+    k['lupa-dua'] = lppBulat((cek.luasPermukaan - cek.luasAlas) / cek.kelilingAlas);
+    k['ts-tanpa-alas'] = lppBulat((2 * cek.luasPermukaan) / cek.kelilingAlas);
+    k['lupa-bagi'] = lppBulat(cek.luasPermukaan - cek.luasAlas);
+  } else {
+    throw new Error('Jenis soal tidak dikenal: ' + cek.jenis);
+  }
+  Object.keys(k).forEach(function (kode) {
+    if (kode !== 'benar' && hampirSama(k[kode], k.benar)) delete k[kode];
+  });
+  return k;
+}
+
+function diagnosaMasalahLimas(cek, jawab) {
+  var k = kandidatMasalahLimas(cek);
+  var urut = Object.keys(k);
+  for (var i = 0; i < urut.length; i++) {
+    if (hampirSama(k[urut[i]], jawab)) return { kode: urut[i], pesan: lmkPesan(urut[i]) };
+  }
+  return { kode: 'salah-hitung', pesan: lmkPesan('salah-hitung') };
+}
+
+/*
+ * Opsi pilihan ganda soal kontekstual limas: jawaban benar di depan, lalu
+ * pengecoh berdiagnosa bernilai unik & positif (minimal 4 opsi, ditambah
+ * cadangan bila kurang). Modul WAJIB mengacaknya (ensureShuffledOrder /
+ * optionOrder).
+ *   opts.awalan  teks sebelum bilangan (mis. 'Rp')
+ */
+function opsiMasalahLimas(cek, satuan, opts) {
+  opts = opts || {};
+  var k = kandidatMasalahLimas(cek);
+  var b = k.benar;
+  var cadangan = { 'tambah-satu': b + 1, 'dua-kali': 2 * b, 'tambah-dua': b + 2 };
+  var out = [];
+  var dipakai = [];
+  function tambah(id, v) {
+    v = lppBulat(v);
+    var ada = dipakai.some(function (x) {
+      return hampirSama(x, v);
+    });
+    if (ada || !(v > 0)) return;
+    dipakai.push(v);
+    out.push({
+      id: id,
+      nilai: v,
+      label: (opts.awalan || '') + lppAngka(v) + (satuan ? ' ' + satuan : ''),
+    });
+  }
+  Object.keys(k).forEach(function (id) {
+    tambah(id, k[id]);
+  });
+  Object.keys(cadangan).forEach(function (id) {
+    if (out.length < 4) tambah(id, cadangan[id]);
+  });
+  return out;
+}
+
+/* ---------- UI: Lab Atap ---------- */
+
+/* state[key] = { t, dicoba: [idDesain] } — t mulai dari desain pertama. */
+function ensureLmkAtapState(state, key, cfg) {
+  var st = state[key] && typeof state[key] === 'object' ? state[key] : {};
+  if (typeof st.t !== 'number' || st.t < cfg.min || st.t > cfg.max) {
+    st.t = cfg.desain && cfg.desain.length ? cfg.desain[0].t : cfg.min;
+  }
+  if (!Array.isArray(st.dicoba)) st.dicoba = [];
+  state[key] = st;
+  return st;
+}
+
+/* Mengatur tinggi atap (dibatasi & dibulatkan ke langkah slider). */
+function lmkAtapAtur(st, cfg, t) {
+  var langkah = cfg.langkah || 0.1;
+  var v = Math.min(cfg.max, Math.max(cfg.min, t));
+  v = lppBulat(Math.round(v / langkah) * langkah);
+  st.t = v;
+  (cfg.desain || []).forEach(function (d) {
+    if (hampirSama(d.t, v) && st.dicoba.indexOf(d.id) === -1) st.dicoba.push(d.id);
+  });
+  return st;
+}
+
+/* Penampang atap: segitiga alas 2a, tinggi t, sisi miring tₛ (setengahnya disorot). */
+function lmkAtapGambar(cfg, t) {
+  var u = lmkUkuranAtap(cfg, t);
+  var sat = ' ' + (cfg.satuan || 'm');
+  var W = 320;
+  var sk = Math.min(240 / (2 * u.a), 55);
+  var H = Math.round(cfg.max * sk + 70);
+  var cx = W / 2;
+  var y0 = H - 40;
+  var xa = cx - u.a * sk;
+  var xb = cx + u.a * sk;
+  var yt = y0 - t * sk;
+  function f(v) {
+    return psmFmt(v);
+  }
+  var tiang = sk * 0.5;
+  return (
+    '<svg class="lmk-atap__svg" viewBox="0 0 ' +
+    W +
+    ' ' +
+    H +
+    '" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="' +
+    esc(
+      'Penampang atap limas: tinggi atap ' +
+        lppAngka(t) +
+        sat +
+        ', setengah rusuk alas ' +
+        lppAngka(u.a) +
+        sat +
+        ', tinggi sisi tegak ' +
+        lppAngka(u.ts) +
+        sat
+    ) +
+    '">' +
+    '<rect class="lmk-atap__tiang" x="' +
+    f(xa + 6) +
+    '" y="' +
+    f(y0) +
+    '" width="8" height="' +
+    f(Math.min(tiang, H - y0)) +
+    '"/>' +
+    '<rect class="lmk-atap__tiang" x="' +
+    f(xb - 14) +
+    '" y="' +
+    f(y0) +
+    '" width="8" height="' +
+    f(Math.min(tiang, H - y0)) +
+    '"/>' +
+    '<polygon class="lmk-atap__atap" points="' +
+    f(xa) +
+    ',' +
+    f(y0) +
+    ' ' +
+    f(xb) +
+    ',' +
+    f(y0) +
+    ' ' +
+    f(cx) +
+    ',' +
+    f(yt) +
+    '"/>' +
+    '<polygon class="lmk-atap__siku" points="' +
+    f(cx) +
+    ',' +
+    f(y0) +
+    ' ' +
+    f(xb) +
+    ',' +
+    f(y0) +
+    ' ' +
+    f(cx) +
+    ',' +
+    f(yt) +
+    '"/>' +
+    '<line class="lmk-atap__t" x1="' +
+    f(cx) +
+    '" y1="' +
+    f(y0) +
+    '" x2="' +
+    f(cx) +
+    '" y2="' +
+    f(yt) +
+    '"/>' +
+    '<polyline class="lmk-atap__kotak" points="' +
+    f(cx) +
+    ',' +
+    f(y0 - 10) +
+    ' ' +
+    f(cx + 10) +
+    ',' +
+    f(y0 - 10) +
+    ' ' +
+    f(cx + 10) +
+    ',' +
+    f(y0) +
+    '"/>' +
+    '<line class="lmk-atap__ts" x1="' +
+    f(cx) +
+    '" y1="' +
+    f(yt) +
+    '" x2="' +
+    f(xb) +
+    '" y2="' +
+    f(y0) +
+    '"/>' +
+    '<g class="lmk-atap__label" aria-hidden="true">' +
+    '<text x="' +
+    f(cx - 6) +
+    '" y="' +
+    f((y0 + yt) / 2) +
+    '" style="text-anchor:end">t = ' +
+    esc(lppAngka(t) + sat) +
+    '</text>' +
+    '<text x="' +
+    f((cx + xb) / 2) +
+    '" y="' +
+    f(y0 + 20) +
+    '" style="text-anchor:middle">a = ' +
+    esc(lppAngka(u.a) + sat) +
+    '</text>' +
+    '<text class="lmk-atap__label-ts" x="' +
+    f((cx + xb) / 2 + 8) +
+    '" y="' +
+    f((y0 + yt) / 2 - 4) +
+    '">tₛ ' +
+    (hampirSama(Math.round(u.ts * 100) / 100, u.ts) ? '= ' : '≈ ') +
+    esc(lppAngka(u.ts) + sat) +
+    '</text>' +
+    '</g></svg>'
+  );
+}
+
+function lmkAtapInfoHTML(cfg, st) {
+  var u = lmkUkuranAtap(cfg, st.t);
+  var sat = ' ' + (cfg.satuan || 'm');
+  var sat2 = sat + '²';
+  var tsBulat = Math.round(u.ts * 100) / 100;
+  var sama = hampirSama(tsBulat, u.ts) ? ' = ' : ' ≈ ';
+  var baris = [
+    ['Tinggi atap (t)', lppAngka(u.t) + sat],
+    ['Setengah rusuk alas (a)', lppAngka(u.a) + sat],
+    [
+      'Tinggi sisi tegak (tₛ)',
+      '√(' + lppAngka(u.t) + '² + ' + lppAngka(u.a) + '²)' + sama + lppAngka(u.ts) + sat,
+    ],
+    [
+      'Luas atap (sisi tegak saja)',
+      '½ × ' + lppAngka(u.keliling) + ' × ' + lppAngka(u.ts) + sama + lppAngka(u.luas) + sat2,
+    ],
+    [
+      'Genteng (1 lembar = ' + lppAngka(cfg.luasLembar) + sat2 + ')',
+      lppAngka(u.luas) +
+        ' : ' +
+        lppAngka(cfg.luasLembar) +
+        (hampirSama(u.bagi, u.lembar) ? ' = ' : ' ≈ ' + lppAngka(u.bagi) + ' → ') +
+        u.lembar +
+        ' lembar',
+    ],
+  ];
+  var naik = '';
+  if (typeof u.naikTinggi === 'number' && !hampirSama(u.t, cfg.acuan)) {
+    naik =
+      '<p class="lmk-atap__naik">Dibanding atap setinggi ' +
+      esc(lppAngka(cfg.acuan) + sat) +
+      ': tinggi ' +
+      (u.naikTinggi >= 0 ? 'naik ' : 'turun ') +
+      Math.abs(u.naikTinggi) +
+      '%, luas atap ' +
+      (u.naikLuas >= 0 ? 'naik ' : 'turun ') +
+      Math.abs(u.naikLuas) +
+      '%.</p>';
+  }
+  var syarat = '';
+  if (typeof u.memenuhi === 'boolean') {
+    syarat =
+      '<p class="lmk-atap__syarat ' +
+      (u.memenuhi ? 'is-ok' : 'is-tidak') +
+      '">' +
+      (u.memenuhi ? '✓ Memenuhi' : '✗ Belum memenuhi') +
+      ' syarat tinggi atap ≥ ' +
+      esc(lppAngka(cfg.syaratMin) + sat) +
+      '</p>';
+  }
+  return (
+    '<dl class="lmk-atap__baca">' +
+    baris
+      .map(function (b) {
+        return '<div><dt>' + esc(b[0]) + '</dt><dd>' + esc(b[1]) + '</dd></div>';
+      })
+      .join('') +
+    '</dl>' +
+    naik +
+    syarat
+  );
+}
+
+function lmkAtapInner(cfg, st) {
+  return (
+    '<div class="lmk-atap__gambar" data-lmk-gambar>' +
+    lmkAtapGambar(cfg, st.t) +
+    '</div>' +
+    '<div class="lmk-atap__info" data-lmk-info aria-live="polite">' +
+    lmkAtapInfoHTML(cfg, st) +
+    '</div>'
+  );
+}
+
+function buildLmkAtapLab(id, st, cfg) {
+  var sat = cfg.satuan || 'm';
+  return (
+    '<div class="lmk-atap" id="' +
+    id +
+    '">' +
+    '<div class="psm-toolbar" role="group" aria-label="Pilih desain atap">' +
+    (cfg.desain || [])
+      .map(function (d) {
+        var aktif = hampirSama(d.t, st.t);
+        return (
+          '<button type="button" class="psm-tool-btn' +
+          (aktif ? ' is-active' : '') +
+          '" data-lmk-desain="' +
+          esc(d.id) +
+          '" aria-pressed="' +
+          (aktif ? 'true' : 'false') +
+          '">' +
+          (st.dicoba.indexOf(d.id) !== -1 ? '✓ ' : '') +
+          esc(d.nama) +
+          ' · ' +
+          esc(lppAngka(d.t) + ' ' + sat) +
+          '</button>'
+        );
+      })
+      .join('') +
+    '</div>' +
+    '<div class="lmk-atap__isi" data-lmk-isi>' +
+    lmkAtapInner(cfg, st) +
+    '</div>' +
+    '<label class="psm-range psm-range--wide"><span>Tinggi atap</span><input type="range" min="' +
+    cfg.min +
+    '" max="' +
+    cfg.max +
+    '" step="' +
+    (cfg.langkah || 0.1) +
+    '" value="' +
+    st.t +
+    '" data-lmk-t aria-label="Tinggi atap (' +
+    esc(sat) +
+    ')" aria-valuetext="' +
+    esc(lppAngka(st.t) + ' ' + sat) +
+    '"></label>' +
+    '</div>'
+  );
+}
+
+/* onChange() dipanggil setelah tinggi atap berubah (untuk menyimpan state). */
+function bindLmkAtapLab(root, id, st, cfg, onChange) {
+  var el = root.querySelector('#' + id);
+  if (!el) return;
+  var isi = el.querySelector('[data-lmk-isi]');
+  var range = el.querySelector('[data-lmk-t]');
+  function segar() {
+    isi.innerHTML = lmkAtapInner(cfg, st);
+    range.setAttribute('aria-valuetext', lppAngka(st.t) + ' ' + (cfg.satuan || 'm'));
+    el.querySelectorAll('[data-lmk-desain]').forEach(function (b) {
+      var d = (cfg.desain || []).filter(function (x) {
+        return x.id === b.getAttribute('data-lmk-desain');
+      })[0];
+      var aktif = hampirSama(d.t, st.t);
+      b.classList.toggle('is-active', aktif);
+      b.setAttribute('aria-pressed', aktif ? 'true' : 'false');
+      b.textContent =
+        (st.dicoba.indexOf(d.id) !== -1 ? '✓ ' : '') +
+        d.nama +
+        ' · ' +
+        lppAngka(d.t) +
+        ' ' +
+        (cfg.satuan || 'm');
+    });
+  }
+  range.addEventListener('input', function () {
+    lmkAtapAtur(st, cfg, parseFloat(range.value));
+    segar();
+  });
+  range.addEventListener('change', function () {
+    if (onChange) onChange();
+  });
+  el.querySelectorAll('[data-lmk-desain]').forEach(function (b) {
+    b.addEventListener('click', function () {
+      var d = (cfg.desain || []).filter(function (x) {
+        return x.id === b.getAttribute('data-lmk-desain');
+      })[0];
+      lmkAtapAtur(st, cfg, d.t);
+      range.value = st.t;
+      segar();
+      if (onChange) onChange();
+    });
+  });
+}
+
+/* ---------- UI: pemilih sisi limas yang memakai bahan ---------- */
+
+/*
+ * objek = { id, nama, n, s, ts? | p, l, t, satuan?, bahan?, namaSisi?,
+ *           dipakai: [idSisi], alasan? }
+ * State memakai ensureLpSisiState / lpSisiToggle / lpSisiPeriksa (seksi 48).
+ */
+function lmkNamaSisi(objek, id) {
+  return (objek.namaSisi && objek.namaSisi[id]) || lplNamaSisi(id);
+}
+
+function lmkUkuranSisi(objek, f) {
+  var s = ' ' + (objek.satuan || 'cm');
+  if (f.jenis === 'tegak') {
+    return 'segitiga ' + lppAngka(f.alas) + s + ', tₛ ' + lppAngka(f.tinggi) + s;
+  }
+  if (objek.p) return 'persegi panjang ' + lppAngka(objek.p) + s + ' × ' + lppAngka(objek.l) + s;
+  return (objek.n === 4 ? 'persegi' : namaSegiN(objek.n)) + ' bersisi ' + lppAngka(objek.s) + s;
+}
+
+function lmkUmpanSisi(objek, st) {
+  if (st.benar) {
+    return buildFeedbackBox(
+      'success',
+      '✓',
+      '<strong>Tepat!</strong> ' + esc(objek.alasan || 'Sisi yang memakai bahan sudah lengkap.')
+    );
+  }
+  if (!st.cek || !st.hasil) return '';
+  function nama(ids) {
+    return ids
+      .map(function (id) {
+        return '<strong>' + esc(lmkNamaSisi(objek, id)) + '</strong>';
+      })
+      .join(', ');
+  }
+  var buka = st.coba >= 2;
+  var baris = [];
+  if (st.hasil.kurang.length) {
+    baris.push(
+      'Masih ada ' +
+        st.hasil.kurang.length +
+        ' sisi yang memakai bahan belum dipilih' +
+        (buka ? ': ' + nama(st.hasil.kurang) : '') +
+        '.'
+    );
+  }
+  if (st.hasil.lebih.length) {
+    baris.push(
+      'Ada ' +
+        st.hasil.lebih.length +
+        ' sisi yang tidak memakai bahan ikut dipilih' +
+        (buka ? ': ' + nama(st.hasil.lebih) : '') +
+        '.'
+    );
+  }
+  if (!buka)
+    baris.push('Baca lagi cerita bendanya: bagian mana yang terbuka atau memakai bahan lain?');
+  return buildFeedbackBox('warning', '💭', baris.join(' '));
+}
+
+function buildLmkSisiPicker(id, objek, st) {
+  var rinci = rincianObjekLimas(objek);
+  return (
+    '<div class="lpk-pilih lmk-pilih' +
+    (st.benar ? ' is-benar' : '') +
+    '" id="' +
+    id +
+    '">' +
+    '<div class="psm-stage psm-stage--net lpp-stage">' +
+    buildLplNetSVG(objek, {
+      pilih: !st.benar,
+      dipilih: st.pilih,
+      lebar: 280,
+      aria:
+        'Jaring-jaring ' +
+        objek.nama +
+        (st.benar ? '' : '. Ketuk sisi yang memakai bahan untuk memilihnya.'),
+    }) +
+    '</div>' +
+    '<div class="lpk-chips" role="group" aria-label="Sisi-sisi ' +
+    esc(objek.nama) +
+    '">' +
+    rinci
+      .map(function (f, i) {
+        var on = st.pilih.indexOf(f.id) !== -1;
+        return (
+          '<button type="button" class="lpk-chip psm-face--' +
+          f.jenis +
+          (on ? ' is-on' : '') +
+          '" data-lmk-sisi="' +
+          f.id +
+          '" aria-pressed="' +
+          (on ? 'true' : 'false') +
+          '"' +
+          (st.benar ? ' disabled' : '') +
+          '><span class="lpk-chip__no" aria-hidden="true">' +
+          (i + 1) +
+          '</span><span class="lpk-chip__nama">' +
+          esc(lmkNamaSisi(objek, f.id)) +
+          '</span><span class="lpk-chip__ukur">' +
+          esc(lmkUkuranSisi(objek, f)) +
+          '</span></button>'
+        );
+      })
+      .join('') +
+    '</div>' +
+    '<div class="lpk-pilih__umpan" aria-live="polite">' +
+    lmkUmpanSisi(objek, st) +
+    '</div>' +
+    (st.benar
+      ? ''
+      : '<div class="btn-group btn-group--end"><button type="button" class="btn btn--primary btn--small" data-lmk-cek>Periksa pilihan sisi</button></div>') +
+    '</div>'
+  );
+}
+
+function bindLmkSisiPicker(root, id, objek, st, save, rerender) {
+  var el = root.querySelector('#' + id);
+  if (!el || st.benar) return;
+  function fokus(sel) {
+    var f = root.querySelector('#' + id + ' ' + sel);
+    if (f) f.focus();
+  }
+  function toggle(sid, sel) {
+    lpSisiToggle(st, sid);
+    save();
+    rerender();
+    fokus(sel);
+  }
+  el.querySelectorAll('[data-lmk-sisi]').forEach(function (b) {
+    b.addEventListener('click', function () {
+      var sid = b.getAttribute('data-lmk-sisi');
+      toggle(sid, '[data-lmk-sisi="' + sid + '"]');
+    });
+  });
+  el.querySelectorAll('[data-lpl-sisi]').forEach(function (k) {
+    function pilih() {
+      var sid = k.getAttribute('data-lpl-sisi');
+      toggle(sid, '[data-lpl-sisi="' + sid + '"]');
+    }
+    k.addEventListener('click', pilih);
+    k.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        pilih();
+      }
+    });
+  });
+  var cek = el.querySelector('[data-lmk-cek]');
+  if (cek) {
+    cek.addEventListener('click', function () {
+      if (!st.pilih.length) {
+        showNotice('Pilih dulu sisi yang memakai bahan.');
+        return;
+      }
+      lpSisiPeriksa(objek, st);
+      save();
+      rerender();
+      fokus(st.benar ? '.lpk-pilih__umpan' : '[data-lmk-cek]');
+    });
+  }
+}
+
+/* ---------- Gambar 3D limas benda nyata ---------- */
+
+/*
+ * o = { nama, n, s, t?|ts? } atau { nama, p, l, t }; model seksi 56
+ * diskalakan sebanding ukuran nyata (limas persegi panjang: titik alas
+ * persegi direntang menjadi p × l).
+ *   opts.garis  tampilkan garis tinggi limas TO & tinggi sisi tegak TP
+ *   opts.skala  skala gambar (default 70)
+ */
+function buildLmkLimasSVG(o, opts) {
+  opts = opts || {};
+  var n = o.p ? 4 : o.n;
+  var model = modelLimas(n, { r: 1, tinggi: 1 });
+  var t = o.t;
+  if (typeof t !== 'number') t = tinggiLimasDariSisiTegak(o.ts, apotemaAlas(o.n, o.s));
+  var norm;
+  if (o.p) {
+    norm = Math.hypot(o.p / 2, o.l / 2);
+    model.titik.forEach(function (q) {
+      if (q.jenis !== 'alas') return;
+      q.pos = [
+        ((q.pos[0] < 0 ? -1 : 1) * o.p) / 2 / norm,
+        ((q.pos[1] < 0 ? -1 : 1) * o.l) / 2 / norm,
+        0,
+      ];
+    });
+  } else {
+    norm = o.s / (2 * Math.sin(Math.PI / n));
+  }
+  model.titik[n].pos = [0, 0, t / norm];
+  model.tinggi = t / norm;
+  model.pusat = psmPusat(
+    model.titik.map(function (q) {
+      return q.pos;
+    })
+  );
+  var A = model.titik[0].pos;
+  var B = model.titik[1].pos;
+  model.kakiTinggi = { O: [0, 0, 0], P: [(A[0] + B[0]) / 2, (A[1] + B[1]) / 2, 0] };
+  return buildPrismSVG(
+    model,
+    { azimut: -25, elevasi: 20 },
+    {
+      skala: opts.skala || 70,
+      garis: opts.garis ? garisTinggiLimas(model) : undefined,
+      aria:
+        opts.aria ||
+        o.nama + (opts.garis ? ' dengan garis tinggi limas TO dan tinggi sisi tegak TP' : ''),
+    }
+  );
 }

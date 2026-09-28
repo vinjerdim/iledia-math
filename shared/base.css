@@ -12074,3 +12074,145 @@ button.akar-tile:disabled {
   margin: 0;
   text-align: center;
 }
+
+/* =========================================================================
+   58. Masalah kontekstual luas permukaan limas (engine.js seksi 58): Lab
+   Atap (.lmk-atap*: penampang atap dengan segitiga siku-siku a–t–tₛ,
+   bacaan luas & lembar, syarat tinggi), gambar limas benda nyata
+   (.lmk-gambar), dan pemilih sisi limas (.lmk-pilih; chip .lpk-chip*
+   dari seksi 48).
+   ========================================================================= */
+
+.lmk-atap {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.lmk-atap__isi {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: var(--space-4);
+  align-items: center;
+}
+
+.lmk-atap__svg {
+  display: block;
+  width: 100%;
+  max-width: 340px;
+  height: auto;
+  margin: 0 auto;
+}
+
+.lmk-atap__tiang {
+  fill: var(--color-ink-muted);
+}
+
+.lmk-atap__atap {
+  fill: var(--color-orange-soft);
+  stroke: var(--color-orange);
+  stroke-width: 2;
+  stroke-linejoin: round;
+}
+
+.lmk-atap__siku {
+  fill: var(--color-blue-soft);
+  fill-opacity: 0.7;
+}
+
+.lmk-atap__t {
+  stroke: var(--color-error);
+  stroke-width: 2.5;
+  stroke-dasharray: 6 4;
+}
+
+.lmk-atap__ts {
+  stroke: var(--color-success);
+  stroke-width: 3.5;
+  stroke-linecap: round;
+}
+
+.lmk-atap__kotak {
+  fill: none;
+  stroke: var(--color-ink);
+  stroke-width: 1.5;
+}
+
+.lmk-atap__label text {
+  font-size: 14px;
+  font-weight: 700;
+  fill: var(--color-ink);
+  paint-order: stroke;
+  stroke: var(--color-surface);
+  stroke-width: 4px;
+  stroke-linejoin: round;
+}
+
+.lmk-atap__label .lmk-atap__label-ts {
+  fill: var(--color-success-strong);
+}
+
+.lmk-atap__baca {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0;
+}
+
+.lmk-atap__baca > div {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: var(--space-1) var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-md);
+  background: var(--color-primary-soft);
+}
+
+.lmk-atap__baca dt {
+  font-size: 0.85rem;
+  color: var(--color-ink-muted);
+}
+
+.lmk-atap__baca dd {
+  margin: 0;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.lmk-atap__naik,
+.lmk-atap__syarat {
+  margin: var(--space-2) 0 0;
+  font-size: 0.92rem;
+  line-height: 1.5;
+}
+
+.lmk-atap__syarat {
+  font-weight: 700;
+}
+
+.lmk-atap__syarat.is-ok {
+  color: var(--color-success-strong);
+}
+
+.lmk-atap__syarat.is-tidak {
+  color: var(--color-error-strong);
+}
+
+.lmk-gambar .psm-svg {
+  max-width: 220px;
+  max-height: 200px;
+}
+
+.lpp-galeri__item .lmk-gambar .psm-svg {
+  max-height: 150px;
+}
+
+.lmk-pilih .lpl-net {
+  max-width: 320px;
+}
+
+@media (max-width: 640px) {
+  .lmk-atap__isi {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
