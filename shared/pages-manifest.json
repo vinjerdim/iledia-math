@@ -222,5 +222,13 @@
     "h1": "Unsur-unsur & Jaring-jaring Limas",
     "stageCount": 10,
     "extraBody": "partials/reset-modal.html"
+  },
+  "fase-d/mpi-22.7": {
+    "title": "Luas Permukaan Limas — Matematika Fase D",
+    "description": "Media pembelajaran interaktif berbasis Discovery Learning untuk menentukan rumus luas permukaan limas: Lab Bentang Limas melipat–membuka jaring-jaring lampion dan mengetuk setiap sisinya, kartu luas tiap sisi berdiagnosa, menyusun segitiga sisi tegak menjadi jajargenjang/trapesium berukuran keliling alas × tinggi sisi tegak, kartu data limas persegi dan persegi panjang, mencari tinggi sisi tegak dengan Pythagoras, pembuktian dua cara, tanggapan miskonsepsi, dan uji terap kontekstual.",
+    "kicker": "Matematika — Fase D (SMP)",
+    "h1": "Luas Permukaan Limas",
+    "stageCount": 10,
+    "extraBody": "partials/reset-modal.html"
   }
 }
