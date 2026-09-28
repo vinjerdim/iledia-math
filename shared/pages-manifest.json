@@ -230,5 +230,13 @@
     "h1": "Luas Permukaan Limas",
     "stageCount": 10,
     "extraBody": "partials/reset-modal.html"
+  },
+  "fase-d/mpi-22.8": {
+    "title": "Masalah Kontekstual Luas Permukaan Limas — Matematika Fase D",
+    "description": "Media pembelajaran interaktif berbasis Problem Based Learning untuk menyelesaikan masalah kontekstual luas permukaan limas: merencanakan Gazebo Pojok Baca dengan Lab Atap (tinggi atap → tinggi sisi tegak dengan Pythagoras → luas atap & lembar genteng), memilih sisi limas yang memakai bahan pada atap, tenda dongeng, dan kotak suvenir, menghitung banyak bahan dengan pembulatan ke atas, konversi cm² → m², anggaran vs dana, menyajikan Papan Proposal, dan mengevaluasi lembar kerja kelompok lain.",
+    "kicker": "Matematika — Fase D (SMP)",
+    "h1": "Masalah Kontekstual Luas Permukaan Limas",
+    "stageCount": 10,
+    "extraBody": "partials/reset-modal.html"
   }
 }
