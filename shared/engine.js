@@ -156,6 +156,11 @@
        satuan volume, diagnosa miskonsepsi & opsi berpengecoh, lapisan
        setebal 1 satuan, tampilan isometrik, lab tumpuk lapisan/kubus
        satuan, belah balok menjadi dua prisma segitiga)
+   55. Masalah kontekstual volume prisma (waktu isi & durasi, persen
+       isi, volume air, banyak muat menurut kepadatan, diagnosa soal
+       berjenis volume/konversi/isi ulang/muat/kepadatan/waktu/tinggi/
+       biaya, pengecoh & opsi berpengecoh, gambar prisma rebah, Lab Isi
+       Air)
    ============================================================ */
 
 /* ============================================================
@@ -31304,5 +31309,547 @@ function bindVpBelah(root, id, b, st, onChange) {
     var btn = baru.querySelector('[data-vpr-belah]');
     if (btn) btn.focus();
     if (onChange) onChange(!sudah && st.pernah ? 'pernah' : 'toggle');
+  });
+}
+
+/* ============================================================
+   55. MASALAH KONTEKSTUAL VOLUME PRISMA
+   Dipakai modul masalah kontekstual volume prisma (fase-d/mpi-22.5,
+   Problem Based Learning). Dibangun di atas seksi 47 (ukuranAlasPrisma,
+   lppBulat, lppAngka), 48 (banyakWadah, banyakMuat, rekapAnggaran) dan
+   54 (volumePrisma, konversiVolume, kandidatVolumePrisma, vprProyeksi,
+   vprCCW, vprSVG).
+
+   Benda nyata sering berupa prisma yang REBAH (kolam berdasar miring,
+   talang, tenda): alasnya berdiri tegak, dan "tinggi prisma" adalah
+   panjang bendanya. Hasil volume lalu diubah ke liter, dibandingkan
+   dengan wadah lain, waktu pompa, atau biaya. Fungsi murni:
+     waktuIsi(liter, debit)          menit = liter ÷ (liter/menit)
+     formatDurasi(menit)             '7 jam 20 menit'
+     persenIsi(vAir, vWadah)         persen isi wadah
+     volumeAir(pts, h)               volume air setinggi h pada prisma
+                                     tegak beralas pts
+     banyakMuatKepadatan(V, per)     banyak ikan/benda = V × per,
+                                     dibulatkan KE BAWAH
+   Diagnosa soal kontekstual berjenis (kandidatMasalahVolume; lihat
+   komentarnya), diagnosaMasalahVolume, pengecohMasalahVolume (untuk
+   kartu isian seksi 47), dan opsiMasalahVolume (4 opsi, jawaban benar
+   di depan; modul WAJIB mengacaknya).
+
+   Komponen UI (gaya .vpk-* di shared/base.css):
+     buildVpRebahSVG   prisma rebah isometrik (alas di bidang x–z,
+                       memanjang searah sumbu y), alas disorot
+     buildVpAirLab     Lab Isi Air: penggeser tinggi air pada wadah
+                       prisma tegak, bacaan volume (cm³ & liter), persen
+                       isi, dan status target volume
+   ============================================================ */
+
+function waktuIsi(liter, debit) {
+  return lppBulat(liter / debit);
+}
+
+function formatDurasi(menit) {
+  var m = Math.round(menit);
+  var jam = Math.floor(m / 60);
+  var sisa = m % 60;
+  if (!jam) return sisa + ' menit';
+  return jam + ' jam' + (sisa ? ' ' + sisa + ' menit' : '');
+}
+
+function persenIsi(vAir, vWadah) {
+  return lppBulat((vAir / vWadah) * 100);
+}
+
+function volumeAir(pts, h) {
+  return volumePrisma(ukuranAlasPrisma(pts).luas, h);
+}
+
+function banyakMuatKepadatan(volume, per) {
+  return Math.floor(lppBulat(volume * per) + 1e-9);
+}
+
+var VPK_PESAN = {
+  benar: 'Tepat! Hitunganmu sesuai dengan kebutuhan masalah nyatanya.',
+  'lupa-konversi':
+    'Angkanya masih dalam satuan awal. Ubah dulu satuannya sesuai yang ditanyakan (1 m³ = 1.000 liter, 1 liter = 1.000 cm³).',
+  'faktor-panjang':
+    'Faktor yang kamu pakai adalah faktor satuan PANJANG (×10 per tingkat). Satuan volume berubah 1.000 kali setiap satu tingkat: 1 m³ = 1.000 dm³ = 1.000 liter.',
+  'faktor-luas':
+    'Faktor yang kamu pakai adalah faktor satuan LUAS (×100 per tingkat). Satuan volume berubah 1.000 kali setiap satu tingkat: 1 m³ = 1.000 dm³ = 1.000 liter.',
+  'arah-terbalik':
+    'Arah konversinya terbalik. Dari satuan besar ke kecil dikali (m³ → liter: × 1.000), dari kecil ke besar dibagi (cm³ → liter: : 1.000).',
+  'bulat-bawah':
+    'Kamu membulatkan ke bawah, sehingga airnya KURANG. Banyak kali mengisi ulang selalu dibulatkan ke atas agar kebutuhan terpenuhi.',
+  'belum-bulat':
+    'Hasil bagi ini belum bulat, padahal yang dihitung adalah banyak benda atau banyak kali pengisian. Bulatkan sesuai konteksnya.',
+  'muat-atas':
+    'Kamu membulatkan ke atas, padahal isinya tidak cukup untuk yang terakhir. Banyak benda yang dapat ditampung dibulatkan ke bawah.',
+  'bagi-kepadatan':
+    'Volume dibagi kepadatan. Kepadatan 25 ekor per m³ berarti setiap 1 m³ memuat 25 ekor, jadi volume DIKALI kepadatan.',
+  'kali-debit':
+    'Volume dikali debit. Debit menyatakan liter per menit, jadi waktu = volume : debit.',
+  'satuan-waktu':
+    'Satuan waktunya belum sesuai. Ingat 1 jam = 60 menit; periksa apakah yang ditanyakan menit atau jam.',
+  'kali-alas':
+    'Volume dikali luas alas. Karena V = luas alas × tinggi, maka tinggi = V : luas alas.',
+  'bagi-keliling':
+    'Volume dibagi keliling alas. Tinggi air = volume : LUAS alas, bukan kelilingnya.',
+  'tinggi-lupa-setengah':
+    'Luas alas segitiga/trapesium memakai ½. Hitung luas alas dengan benar, lalu tinggi = V : luas alas.',
+  'lupa-kurang':
+    'Air yang sudah tersedia belum dikurangkan. Yang dibeli hanya kekurangannya: kebutuhan − yang sudah ada.',
+  'salah-hitung':
+    'Belum tepat. Kenali dulu alas dan tinggi prisma, hitung V = luas alas × tinggi, lalu perhatikan satuan dan pembulatannya.',
+};
+
+function vpkPesan(kode) {
+  return VPK_PESAN[kode] || VPR_PESAN[kode] || VPK_PESAN['salah-hitung'];
+}
+
+/* Faktor satuan volume dari → ke (mis. m3 → l = 1.000). */
+function vpkFaktor(dari, ke) {
+  if (!VPR_FAKTOR[dari] || !VPR_FAKTOR[ke]) {
+    throw new Error('Satuan volume tidak dikenal: ' + dari + ' → ' + ke);
+  }
+  return VPR_FAKTOR[dari] / VPR_FAKTOR[ke];
+}
+
+/*
+ * Kandidat jawaban soal kontekstual volume { benar: v, <kode>: v }.
+ * cek.jenis:
+ *   'volume'    { luasAlas, tinggi, kelilingAlas?, adaSetengah?, dari?, ke? }
+ *               (dari/ke: kode satuan VPR_FAKTOR untuk mengubah hasil)
+ *   'konversi'  { nilai, dari, ke }
+ *   'isiUlang'  { volume, isiWadah }   banyak kali mengisi → KE ATAS
+ *   'muat'      { volume, isiSatu }    banyak benda terisi → KE BAWAH
+ *   'kepadatan' { volume, per }        banyak ikan = V × per → KE BAWAH
+ *   'waktu'     { volume (liter), debit (liter/menit), keJam?, volumeAsal? }
+ *   'tinggi'    { volume, luasAlas, kelilingAlas?, adaSetengah? }
+ *   'biaya'     { kebutuhan, tersedia?, harga, faktorSatuan? }
+ * Urutan kunci menentukan prioritas diagnosa & urutan pengecoh.
+ */
+function kandidatMasalahVolume(cek) {
+  var k = {};
+  var j = cek.jenis;
+  if (j === 'volume') {
+    var dasar = kandidatVolumePrisma({
+      luasAlas: cek.luasAlas,
+      tinggi: cek.tinggi,
+      kelilingAlas: cek.kelilingAlas,
+      adaSetengah: !!cek.adaSetengah,
+    });
+    var f = cek.dari && cek.ke ? vpkFaktor(cek.dari, cek.ke) : 1;
+    Object.keys(dasar).forEach(function (kode) {
+      k[kode] = lppBulat(dasar[kode] * f);
+      if (kode === 'benar' && f !== 1) k['lupa-konversi'] = dasar.benar;
+    });
+  } else if (j === 'konversi') {
+    var fk = vpkFaktor(cek.dari, cek.ke);
+    k.benar = konversiVolume(cek.nilai, cek.dari, cek.ke);
+    k['faktor-panjang'] = lppBulat(cek.nilai * Math.cbrt(fk));
+    k['faktor-luas'] = lppBulat(cek.nilai * Math.pow(Math.cbrt(fk), 2));
+    k['arah-terbalik'] = lppBulat(cek.nilai / fk);
+  } else if (j === 'isiUlang') {
+    var bagi = lppBulat(cek.volume / cek.isiWadah);
+    k.benar = banyakWadah(cek.volume, cek.isiWadah);
+    k['bulat-bawah'] = Math.floor(bagi + 1e-9);
+    k['belum-bulat'] = bagi;
+  } else if (j === 'muat') {
+    var q = lppBulat(cek.volume / cek.isiSatu);
+    k.benar = banyakMuat(cek.volume, cek.isiSatu);
+    k['muat-atas'] = Math.ceil(q - 1e-9);
+    k['belum-bulat'] = q;
+  } else if (j === 'kepadatan') {
+    var kali = lppBulat(cek.volume * cek.per);
+    k.benar = banyakMuatKepadatan(cek.volume, cek.per);
+    k['muat-atas'] = Math.ceil(kali - 1e-9);
+    k['belum-bulat'] = kali;
+    k['bagi-kepadatan'] = lppBulat(cek.volume / cek.per);
+  } else if (j === 'waktu') {
+    var bagiJam = cek.keJam ? 60 : 1;
+    var menit = waktuIsi(cek.volume, cek.debit);
+    k.benar = lppBulat(menit / bagiJam);
+    k['kali-debit'] = lppBulat((cek.volume * cek.debit) / bagiJam);
+    k['satuan-waktu'] = cek.keJam ? menit : lppBulat(menit / 60);
+    if (typeof cek.volumeAsal === 'number') {
+      k['lupa-konversi'] = lppBulat(cek.volumeAsal / cek.debit / bagiJam);
+    }
+  } else if (j === 'tinggi') {
+    k.benar = tinggiDariVolume(cek.volume, cek.luasAlas);
+    k['kali-alas'] = lppBulat(cek.volume * cek.luasAlas);
+    if (cek.adaSetengah) k['tinggi-lupa-setengah'] = lppBulat(cek.volume / (2 * cek.luasAlas));
+    if (typeof cek.kelilingAlas === 'number') {
+      k['bagi-keliling'] = lppBulat(cek.volume / cek.kelilingAlas);
+    }
+  } else if (j === 'biaya') {
+    var ada = cek.tersedia || 0;
+    var beli = lppBulat(cek.kebutuhan - ada);
+    k.benar = lppBulat(beli * cek.harga);
+    if (ada) k['lupa-kurang'] = lppBulat(cek.kebutuhan * cek.harga);
+    if (cek.faktorSatuan) k['lupa-konversi'] = lppBulat(beli * cek.faktorSatuan * cek.harga);
+  } else {
+    throw new Error('Jenis soal tidak dikenal: ' + j);
+  }
+  Object.keys(k).forEach(function (kode) {
+    if (kode !== 'benar' && hampirSama(k[kode], k.benar)) delete k[kode];
+  });
+  return k;
+}
+
+function diagnosaMasalahVolume(cek, jawab) {
+  var k = kandidatMasalahVolume(cek);
+  var urut = Object.keys(k);
+  for (var i = 0; i < urut.length; i++) {
+    if (hampirSama(k[urut[i]], jawab)) return { kode: urut[i], pesan: vpkPesan(urut[i]) };
+  }
+  return { kode: 'salah-hitung', pesan: vpkPesan('salah-hitung') };
+}
+
+/* Pengecoh { kode, nilai, pesan } untuk kartu isian seksi 47. */
+function pengecohMasalahVolume(cek) {
+  var k = kandidatMasalahVolume(cek);
+  var dipakai = [k.benar];
+  var out = [];
+  Object.keys(k).forEach(function (kode) {
+    var v = k[kode];
+    if (kode === 'benar' || !(v > 0)) return;
+    var sudah = dipakai.some(function (x) {
+      return hampirSama(x, v);
+    });
+    if (sudah) return;
+    dipakai.push(v);
+    out.push({ kode: kode, nilai: v, pesan: vpkPesan(kode) });
+  });
+  return out;
+}
+
+/*
+ * Opsi pilihan ganda (tepat 4): jawaban benar di depan, lalu pengecoh
+ * berdiagnosa menurut urutan prioritas, ditambah cadangan bila kurang.
+ * Nilai < 0,01 dilewati agar label berkoma tetap terbaca utuh.
+ *   opts.awalan  teks sebelum bilangan (mis. 'Rp')
+ * Modul WAJIB mengacaknya (ensureShuffledOrder / shuffleArray).
+ */
+function opsiMasalahVolume(cek, satuan, opts) {
+  opts = opts || {};
+  var k = kandidatMasalahVolume(cek);
+  var b = k.benar;
+  var cadangan = { 'dua-kali': 2 * b, setengah: b / 2, 'tambah-satu': b + 1 };
+  var out = [];
+  var dipakai = [];
+  function tambah(id, v) {
+    v = lppBulat(v);
+    var ada = dipakai.some(function (x) {
+      return hampirSama(x, v);
+    });
+    if (ada || !(v >= 0.01) || out.length >= 4) return;
+    dipakai.push(v);
+    out.push({
+      id: id,
+      nilai: v,
+      label: (opts.awalan || '') + lppAngka(v) + (satuan ? ' ' + satuan : ''),
+    });
+  }
+  Object.keys(k).forEach(function (id) {
+    tambah(id, k[id]);
+  });
+  Object.keys(cadangan).forEach(function (id) {
+    tambah(id, cadangan[id]);
+  });
+  return out;
+}
+
+/* ---------- Gambar prisma rebah ---------- */
+
+/*
+ * Sisi prisma rebah: penampang `pts` ([x, z], z ke atas) berdiri pada
+ * bidang y = 0 dan y = panjang. terlihat = normal luar menghadap arah
+ * pandang (1, 1, 1); atas = sisi selimut yang menghadap ke atas.
+ */
+function vpkSisiRebah(pts, panjang) {
+  var p = vprCCW(pts);
+  function titik(q, y) {
+    return [q[0], y, q[1]];
+  }
+  var out = [
+    {
+      id: 'alasBelakang',
+      jenis: 'alas',
+      pts3: p.map(function (q) {
+        return titik(q, 0);
+      }),
+      terlihat: false,
+    },
+    {
+      id: 'alasDepan',
+      jenis: 'alas',
+      pts3: p.map(function (q) {
+        return titik(q, panjang);
+      }),
+      terlihat: true,
+    },
+  ];
+  p.forEach(function (a, i) {
+    var b = p[(i + 1) % p.length];
+    var dx = b[0] - a[0];
+    var dz = b[1] - a[1];
+    /* normal luar (dz, 0, −dx) untuk penampang berlawanan jarum jam */
+    var nx = dz;
+    var nz = -dx;
+    out.push({
+      id: 's' + i,
+      jenis: 'selimut',
+      pts3: [titik(a, 0), titik(b, 0), titik(b, panjang), titik(a, panjang)],
+      terlihat: nx + nz > 1e-9,
+      atas: nz > Math.abs(nx),
+      kanan: nx > Math.abs(nz),
+    });
+  });
+  return out;
+}
+
+function vpkSVGSisi(faces, opts) {
+  opts = opts || {};
+  var b = { x0: Infinity, x1: -Infinity, y0: Infinity, y1: -Infinity };
+  faces.forEach(function (f) {
+    f.pts3.forEach(function (q) {
+      var s = vprProyeksi(q[0], q[1], q[2]);
+      b.x0 = Math.min(b.x0, s[0]);
+      b.x1 = Math.max(b.x1, s[0]);
+      b.y0 = Math.min(b.y0, s[1]);
+      b.y1 = Math.max(b.y1, s[1]);
+    });
+  });
+  var lebar = opts.lebar || 300;
+  var sk = Math.min(opts.skalaMaks || 60, lebar / Math.max(b.x1 - b.x0, 0.001));
+  var pad = 34;
+  var isi = faces
+    .filter(function (f) {
+      return f.terlihat;
+    })
+    .map(function (f) {
+      var cls = 'vpr-face';
+      if (f.jenis === 'alas' && opts.sorotAlas !== false) cls += ' vpk-face--alas';
+      else if (f.atas) cls += ' vpr-face--atas';
+      else cls += ' vpr-face--tegak' + (f.kanan ? ' vpr-face--kanan' : '');
+      return vprPoly(f.pts3, sk, cls);
+    })
+    .join('');
+  var label = (opts.label || [])
+    .map(function (l) {
+      var s = vprProyeksi(l.at[0], l.at[1], l.at[2]);
+      return (
+        '<text class="lpp-ukur vpr-ukur" x="' +
+        psmFmt(s[0] * sk + (l.dx || 0)) +
+        '" y="' +
+        psmFmt(s[1] * sk + (l.dy || 0)) +
+        '"' +
+        (l.anchor ? ' style="text-anchor:' + l.anchor + '"' : '') +
+        '>' +
+        esc(l.teks) +
+        '</text>'
+      );
+    })
+    .join('');
+  return (
+    '<svg class="vpr-svg vpk-svg" viewBox="' +
+    psmFmt(b.x0 * sk - pad) +
+    ' ' +
+    psmFmt(b.y0 * sk - pad / 2) +
+    ' ' +
+    psmFmt((b.x1 - b.x0) * sk + 2 * pad) +
+    ' ' +
+    psmFmt((b.y1 - b.y0) * sk + pad * 1.5) +
+    '" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="' +
+    esc(opts.aria || 'Gambar prisma rebah') +
+    '">' +
+    isi +
+    label +
+    '</svg>'
+  );
+}
+
+/*
+ * opts.lebar, opts.aria, opts.satuan ('m' bawaan), opts.sorotAlas
+ * (bawaan true), opts.label tambahan [{ at: [x, y, z], teks, … }].
+ * Label panjang prisma otomatis dipasang di rusuk bawah-kanan.
+ */
+function buildVpRebahSVG(pts, panjang, opts) {
+  opts = opts || {};
+  var satuan = opts.satuan || 'm';
+  var xs = pts.map(function (q) {
+    return q[0];
+  });
+  var zs = pts.map(function (q) {
+    return q[1];
+  });
+  var xMaks = Math.max.apply(null, xs);
+  var zMin = Math.min.apply(null, zs);
+  var label = [
+    {
+      at: [xMaks, panjang / 2, zMin],
+      teks: lppAngka(panjang) + ' ' + satuan,
+      dx: 8,
+      dy: 14,
+      anchor: 'start',
+    },
+  ].concat(opts.label || []);
+  return vpkSVGSisi(vpkSisiRebah(pts, panjang), {
+    lebar: opts.lebar,
+    aria: opts.aria,
+    sorotAlas: opts.sorotAlas,
+    label: label,
+  });
+}
+
+/* ---------- UI: Lab Isi Air ---------- */
+
+/*
+ * cfg = { wadah: { id, nama, alas: pts (cm), t (cm, bulat), info? },
+ *         target: volume sasaran (cm³) }
+ * state[key] = { h: tinggi air (cm), tercapai: bool, geser: banyak aksi }
+ */
+function ensureVpAirState(state, key, cfg) {
+  var st = state[key] && typeof state[key] === 'object' ? state[key] : {};
+  var h = st.h;
+  if (typeof h !== 'number' || isNaN(h)) h = 0;
+  st.h = Math.max(0, Math.min(cfg.wadah.t, Math.round(h)));
+  st.tercapai = !!st.tercapai;
+  st.geser = typeof st.geser === 'number' && st.geser >= 0 ? st.geser : 0;
+  state[key] = st;
+  return st;
+}
+
+function vpAirInfo(cfg, h) {
+  var v = volumeAir(cfg.wadah.alas, h);
+  var penuh = volumeAir(cfg.wadah.alas, cfg.wadah.t);
+  return {
+    volume: v,
+    liter: konversiVolume(v, 'cm3', 'l'),
+    persen: persenIsi(v, penuh),
+    pas: hampirSama(v, cfg.target),
+  };
+}
+
+function vpAirAtur(st, cfg, h) {
+  st.h = Math.max(0, Math.min(cfg.wadah.t, Math.round(h)));
+  st.geser += 1;
+  if (vpAirInfo(cfg, st.h).pas) st.tercapai = true;
+  return st;
+}
+
+function vpAirGambar(cfg, h) {
+  var w = cfg.wadah;
+  var solids = [];
+  if (h > 0) solids.push({ pts: w.alas, z0: 0, z1: h, kelas: 'vpk-air' });
+  solids.push({ pts: w.alas, z0: 0, z1: w.t, kelas: 'vpr-hantu' });
+  var label = [vprLabelTinggi(w.alas, w.t)];
+  if (h > 0) {
+    var kiri = w.alas[0];
+    w.alas.forEach(function (q) {
+      if (q[1] - q[0] > kiri[1] - kiri[0]) kiri = q;
+    });
+    label.push({ at: [kiri[0], kiri[1], h], teks: 'air ' + h + ' cm', dx: -8, anchor: 'end' });
+  }
+  return vprSVG(solids, {
+    lebar: 280,
+    label: label,
+    aria: w.nama + ' berisi air setinggi ' + h + ' cm dari ' + w.t + ' cm.',
+  });
+}
+
+function vpAirInfoHTML(cfg, st) {
+  var i = vpAirInfo(cfg, st.h);
+  var target = konversiVolume(cfg.target, 'cm3', 'l');
+  return (
+    '<p class="psm-info vpr-info vpk-air-info">Tinggi air <strong>' +
+    st.h +
+    ' cm</strong> · Volume air <strong>' +
+    esc(lppAngka(i.volume)) +
+    ' cm³ = ' +
+    esc(lppAngka(i.liter)) +
+    ' liter</strong> · ' +
+    esc(lppAngka(i.persen)) +
+    '% penuh</p>' +
+    '<p class="dl-caption vpr-caption">' +
+    (i.pas
+      ? '🎯 Tepat ' + esc(lppAngka(target)) + ' liter! Catat tinggi airnya.'
+      : 'Target: ' +
+        esc(lppAngka(target)) +
+        ' liter. ' +
+        (i.volume < cfg.target ? 'Airnya masih kurang.' : 'Airnya kelebihan.')) +
+    '</p>'
+  );
+}
+
+function buildVpAirLab(id, st, cfg) {
+  var w = cfg.wadah;
+  return (
+    '<div class="vpr-lab vpk-air-lab" id="' +
+    id +
+    '">' +
+    '<p class="vpr-lab__nama"><strong>' +
+    esc(w.nama) +
+    '</strong>' +
+    (w.info ? ' · ' + esc(w.info) : '') +
+    '</p>' +
+    '<div class="psm-stage vpr-stage" data-vpk-stage>' +
+    vpAirGambar(cfg, st.h) +
+    '</div>' +
+    '<label class="psm-range psm-range--wide"><span>Tinggi air</span><input type="range" min="0" max="' +
+    w.t +
+    '" step="1" value="' +
+    st.h +
+    '" data-vpk-h aria-label="Tinggi air pada ' +
+    esc(w.nama) +
+    ' (cm)"></label>' +
+    '<div class="btn-group btn-group--center">' +
+    '<button type="button" class="btn btn--ghost btn--small" data-vpk-step="-1"' +
+    (st.h <= 0 ? ' disabled' : '') +
+    '>− 1 cm</button>' +
+    '<button type="button" class="btn btn--primary btn--small" data-vpk-step="1"' +
+    (st.h >= w.t ? ' disabled' : '') +
+    '>+ 1 cm</button>' +
+    '</div>' +
+    '<div data-vpk-info aria-live="polite">' +
+    vpAirInfoHTML(cfg, st) +
+    '</div>' +
+    '</div>'
+  );
+}
+
+/* onChange(jenis) — 'h' | 'tercapai' (baru pertama kali tepat target). */
+function bindVpAirLab(root, id, st, cfg, onChange) {
+  var el = root.querySelector('#' + id);
+  if (!el) return;
+
+  function atur(h, fokus) {
+    var sudah = st.tercapai;
+    vpAirAtur(st, cfg, h);
+    var wadah = document.createElement('div');
+    wadah.innerHTML = buildVpAirLab(id, st, cfg);
+    var baru = wadah.firstChild;
+    el.replaceWith(baru);
+    bindVpAirLab(root, id, st, cfg, onChange);
+    var f = baru.querySelector(fokus);
+    if (f && f.disabled) f = baru.querySelector('[data-vpk-h]');
+    if (f) f.focus();
+    if (onChange) onChange(!sudah && st.tercapai ? 'tercapai' : 'h');
+  }
+
+  var range = el.querySelector('[data-vpk-h]');
+  range.addEventListener('input', function () {
+    var h = parseInt(range.value, 10);
+    el.querySelector('[data-vpk-stage]').innerHTML = vpAirGambar(cfg, h);
+    el.querySelector('[data-vpk-info]').innerHTML = vpAirInfoHTML(cfg, { h: h });
+  });
+  range.addEventListener('change', function () {
+    atur(parseInt(range.value, 10), '[data-vpk-h]');
+  });
+  el.querySelectorAll('[data-vpk-step]').forEach(function (b) {
+    b.addEventListener('click', function () {
+      var d = parseInt(b.getAttribute('data-vpk-step'), 10);
+      atur(st.h + d, '[data-vpk-step="' + d + '"]');
+    });
   });
 }
