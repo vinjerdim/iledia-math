@@ -11829,3 +11829,108 @@ button.akar-tile:disabled {
   margin: 0;
   text-align: center;
 }
+
+/* =========================================================================
+   55. Masalah kontekstual volume prisma (.vpk-*) — prisma rebah dengan
+   alas disorot, Lab Isi Air. Dipakai fase-d/mpi-22.5.
+   ========================================================================= */
+
+.vpk-face--alas {
+  fill: var(--color-orange-soft);
+  stroke: var(--color-orange-strong);
+}
+
+.vpk-svg .vpr-face--atas {
+  fill: #cfe6f7;
+}
+
+.vpk-air .vpr-face {
+  stroke: #1f78b4;
+  stroke-width: 1;
+}
+
+.vpk-air .vpr-face--tegak {
+  fill: #8cc4ea;
+}
+
+.vpk-air .vpr-face--tegak.vpr-face--kanan {
+  fill: #6fb0df;
+}
+
+.vpk-air .vpr-face--atas {
+  fill: #c3e2f7;
+}
+
+.vpk-svg .vpr-ukur {
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.vpk-air-info {
+  line-height: 1.6;
+}
+
+.vpk-galeri {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: var(--space-3);
+  margin: var(--space-4) 0;
+}
+
+.vpk-galeri__item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0;
+  padding: var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  min-width: 0;
+}
+
+.vpk-galeri__item .vpr-svg {
+  max-width: 220px;
+  max-height: 170px;
+}
+
+.vpk-galeri__item figcaption {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  font-weight: 700;
+  text-align: center;
+}
+
+.vpk-galeri__item figcaption span {
+  font-weight: 400;
+  font-size: 0.85rem;
+  color: var(--color-ink-muted);
+}
+
+.vpk-legenda {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--space-3);
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--color-ink-muted);
+}
+
+.vpk-legenda__warna {
+  display: inline-block;
+  width: 0.9em;
+  height: 0.9em;
+  margin-right: var(--space-1);
+  border: 1px solid var(--color-orange-strong);
+  border-radius: 2px;
+  background: var(--color-orange-soft);
+  vertical-align: -0.1em;
+}
+
+.vpk-legenda__warna--air {
+  border-color: #1f78b4;
+  background: #cfe6f7;
+}

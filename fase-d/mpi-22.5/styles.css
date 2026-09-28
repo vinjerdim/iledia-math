@@ -1,0 +1,26 @@
+/* =========================================================================
+   fase-d/mpi-22.5/styles.css
+   Masalah Kontekstual Volume Prisma — Fase D (SMP Kelas IX)
+
+   Hampir semua gaya berasal dari shared/base.css: kartu surat OSIS
+   (.surat-*, .orientasi-cerita), kartu isian (.lpp-*), tabel anggaran &
+   papan proposal (.lpk-*), gambar prisma isometrik (.vpr-*), serta
+   galeri kolam rebah, legenda, dan Lab Isi Air (.vpk-*). Berkas ini
+   hanya memuat penyesuaian khas modul.
+   ========================================================================= */
+
+/* Gambar kolam di kartu data sedikit lebih kecil agar isian tetap lega. */
+.lpp-kartu__visual .vpk-svg {
+  max-width: 190px;
+  max-height: 150px;
+}
+
+@media (max-width: 480px) {
+  .vpk-galeri {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .vpk-air-info {
+    font-size: 0.9rem;
+  }
+}

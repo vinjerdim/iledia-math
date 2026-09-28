@@ -159,6 +159,14 @@
     "stageCount": 10,
     "extraBody": "partials/reset-modal.html"
   },
+  "fase-d/mpi-22.5": {
+    "title": "Masalah Kontekstual Volume Prisma — Matematika Fase D",
+    "description": "Media pembelajaran interaktif berbasis Problem Based Learning untuk menyelesaikan masalah kontekstual volume prisma: merencanakan Kolam Nila Adiwiyata dengan mengenali alas prisma rebah pada tiga desain kolam, menghitung volume dan daya tampung ikan, mengubah m³ ke liter, menghitung isi ulang tandon air hujan, waktu pompa, dan biaya air PDAM, menemukan tinggi air bak karantina di Lab Isi Air, menyajikan Papan Proposal, dan mengevaluasi lembar kerja kelompok lain.",
+    "kicker": "Matematika — Fase D (SMP)",
+    "h1": "Masalah Kontekstual Volume Prisma",
+    "stageCount": 10,
+    "extraBody": "partials/reset-modal.html"
+  },
   "fase-e/mpi-1.1": {
     "title": "Sifat Operasi Bilangan Berpangkat — Matematika Fase E",
     "description": "Media pembelajaran interaktif berbasis Discovery Learning untuk menggeneralisasi sifat perkalian dan pembagian bilangan berpangkat bulat positif serta sifat pangkat dari pangkat melalui eksplorasi pola numerik: tabel pangkat, tabel pola, lab uji sifat, dan ubin faktor.",
