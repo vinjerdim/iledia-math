@@ -214,5 +214,13 @@
     "h1": "Koefisien Korelasi & Kesesuaian Model Linear",
     "stageCount": 10,
     "extraBody": "partials/reset-modal.html"
+  },
+  "fase-d/mpi-22.6": {
+    "title": "Unsur-unsur & Jaring-jaring Limas — Matematika Fase D",
+    "description": "Media pembelajaran interaktif berbasis Discovery Learning untuk mengidentifikasi unsur-unsur limas (titik sudut dan titik puncak, rusuk alas, rusuk tegak, sisi alas, sisi tegak, dan tinggi) serta jaring-jaring limas melalui kegiatan memutar model 3D limas, menampilkan garis tinggi, melipat jaring-jaring kerajinan kertas, dan merakit jaring-jaring kipas.",
+    "kicker": "Matematika — Fase D (SMP)",
+    "h1": "Unsur-unsur & Jaring-jaring Limas",
+    "stageCount": 10,
+    "extraBody": "partials/reset-modal.html"
   }
 }
