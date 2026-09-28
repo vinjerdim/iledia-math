@@ -12216,3 +12216,144 @@ button.akar-tile:disabled {
     grid-template-columns: minmax(0, 1fr);
   }
 }
+
+/* =========================================================================
+   59. Volume limas (engine.js seksi 59, .vlm-*) — gambar limas isometrik,
+   Lab Tuang (wadah limas & prisma, pasir), Lab Belah Kubus (enam limas).
+   Dipakai fase-d/mpi-22.9. Memakai ulang .vpr-* seksi 54.
+   ========================================================================= */
+
+.vlm-svg {
+  max-width: 380px;
+}
+
+.vlm-rusuk-belakang {
+  fill: none;
+  stroke: var(--color-ink-muted);
+  stroke-width: 1;
+  stroke-dasharray: 4 4;
+}
+
+.vlm-wadah .vpr-face {
+  fill: var(--color-blue-soft);
+  fill-opacity: 0.45;
+}
+
+.vlm-wadah.is-isi .vpr-face,
+.vlm-pasir .vpr-face {
+  fill: #e9c98f;
+  fill-opacity: 1;
+  stroke: var(--color-orange-strong);
+}
+
+.vlm-wadah.is-isi .vpr-face--kanan,
+.vlm-pasir .vpr-face--tegak.vpr-face--kanan {
+  fill: #d9b273;
+}
+
+.vlm-pasir .vpr-face--atas {
+  fill: #f3dcae;
+}
+
+.vlm-pasir.is-penuh .vpr-face {
+  stroke: var(--color-success-strong);
+}
+
+.vlm-prisma .vpr-face {
+  stroke: var(--color-blue-strong);
+  stroke-dasharray: none;
+}
+
+.vlm-tanda {
+  font-size: 11px;
+  fill: var(--color-ink-muted);
+}
+
+.vlm-nama {
+  font-size: 12px;
+  font-weight: 700;
+  fill: var(--color-ink);
+}
+
+.vlm-garis-tinggi {
+  stroke: var(--color-error);
+  stroke-width: 1.6;
+  stroke-dasharray: 5 3;
+}
+
+.vlm-padat .vpr-face--tegak {
+  fill: var(--color-blue-soft);
+}
+
+.vlm-padat .vpr-face--tegak.vpr-face--kanan {
+  fill: #c5d7ee;
+}
+
+.vlm-keping .vpr-face {
+  stroke-width: 1.1;
+}
+
+.vlm-keping--z .vpr-face {
+  fill: var(--color-orange-soft);
+  stroke: var(--color-orange-strong);
+}
+
+.vlm-keping--z .vpr-face--kanan {
+  fill: #ecc7a6;
+}
+
+.vlm-keping--x .vpr-face {
+  fill: var(--color-blue-soft);
+  stroke: var(--color-blue-strong);
+}
+
+.vlm-keping--x .vpr-face--kanan {
+  fill: #c5d7ee;
+}
+
+.vlm-keping--y .vpr-face {
+  fill: var(--color-purple-soft);
+  stroke: var(--color-purple-strong);
+}
+
+.vlm-keping--y .vpr-face--kanan {
+  fill: #dcc6ec;
+}
+
+.vlm-belah__gambar {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-3);
+  align-items: center;
+}
+
+.is-pisah .vlm-belah__gambar {
+  grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+}
+
+.vlm-belah__satu {
+  margin: 0;
+}
+
+.vlm-belah__satu figcaption {
+  margin-top: var(--space-1);
+  font-size: 0.85rem;
+  font-weight: 700;
+  text-align: center;
+  color: var(--color-ink-muted);
+}
+
+.vlm-belah__satu .vpr-svg {
+  max-width: 200px;
+}
+
+@media (max-width: 560px) {
+  .is-pisah .vlm-belah__gambar {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.vlm-tinggi-label {
+  fill: var(--color-error);
+  font-weight: 700;
+}

@@ -175,6 +175,10 @@
        diagnosa soal berjenis lp/ts/dipakai/wadah/konversi/biaya/
        biayaWadah/tinggiSisi & opsi berpengecoh, Lab Atap, pemilih sisi
        limas)
+   59. Volume limas (⅓ × luas alas × tinggi & kebalikannya, diagnosa
+       miskonsepsi lupa ⅓ / ½ / memakai tₛ & opsi berpengecoh, kubus
+       dibelah menjadi 6 limas, sisi limas isometrik, Lab Tuang limas →
+       prisma, Lab Belah Kubus)
    ============================================================ */
 
 /* ============================================================
@@ -34301,4 +34305,844 @@ function buildLmkLimasSVG(o, opts) {
         o.nama + (opts.garis ? ' dengan garis tinggi limas TO dan tinggi sisi tegak TP' : ''),
     }
   );
+}
+
+/* ============================================================
+   59. VOLUME LIMAS
+   Dipakai modul volume limas (fase-d/mpi-22.9, Discovery Learning).
+   Dibangun di atas seksi 47 (ukuranAlasPrisma, lppBulat, lppAngka),
+   54 (volumePrisma, vprProyeksi, vprPoly, vprGaris, vprPadatan,
+   vprLabelTinggi) dan 57 (tinggiLimasDariSisiTegak).
+
+   Fungsi murni:
+     volumeLimas(La, t)               ⅓ × La × t
+     volumeLimasAlas(pts, t)          volume dari titik-titik alas (cm)
+     tinggiLimasDariVolume(V, La)     3V ÷ La
+     luasAlasLimasDariVolume(V, t)    3V ÷ t
+     belahKubusLimas(s)               kubus rusuk s = 6 limas kongruen
+                                      berpuncak di pusat kubus
+   Diagnosa miskonsepsi (kandidatVolumeLimas o = { luasAlas, tinggi,
+   tinggiSisi?, adaSetengah? }): lupa ⅓ (volume prisma), memakai ½,
+   memakai tinggi sisi tegak tₛ, lupa ½ pada luas alas segitiga, dan
+   menjumlahkan ukuran. Opsi pilihan ganda (opsiVolumeLimas) ditulis
+   berurutan "wajar"; modul WAJIB mengacaknya.
+
+   Komponen UI (gaya .vlm-* di shared/base.css; tampilan isometrik
+   seksi 54 dengan arah pandang (1, 1, 1)):
+     buildVlmLimasSVG    gambar statis limas (opsional garis tinggi)
+     buildVlTuangLab     Lab Tuang: isi wadah limas dengan pasir lalu
+                         tuang ke wadah prisma beralas & bertinggi sama;
+                         pasir di prisma naik ⅓ tinggi setiap tuangan
+     buildVlBelahKubus   kubus dibelah menjadi 6 limas persegi yang
+                         berpuncak di pusat kubus (gabung/pisah), plus
+                         satu limas berlabel alas & tinggi
+   ============================================================ */
+
+var VLM_TUANG = 3;
+
+function volumeLimas(luasAlas, t) {
+  return lppBulat((luasAlas * t) / 3);
+}
+
+function volumeLimasAlas(pts, t) {
+  return volumeLimas(ukuranAlasPrisma(pts).luas, t);
+}
+
+function tinggiLimasDariVolume(v, luasAlas) {
+  return lppBulat((3 * v) / luasAlas);
+}
+
+function luasAlasLimasDariVolume(v, t) {
+  return lppBulat((3 * v) / t);
+}
+
+function belahKubusLimas(s) {
+  var vk = lppBulat(s * s * s);
+  return {
+    rusuk: s,
+    volumeKubus: vk,
+    banyak: 6,
+    volumeLimas: lppBulat(vk / 6),
+    luasAlas: lppBulat(s * s),
+    tinggi: lppBulat(s / 2),
+    luasAlasKaliTinggi: lppBulat((s * s * s) / 2),
+  };
+}
+
+var VLM_PESAN = {
+  benar: 'Tepat! Volume limas = ⅓ × luas alas × tinggi limas.',
+  'lupa-sepertiga':
+    'Itu volume PRISMA yang alas dan tingginya sama (La × t). Isi limas hanya ⅓ dari prisma itu, jadi kalikan ⅓ (atau bagi 3).',
+  setengah:
+    'Faktornya bukan ½. Di Lab Tuang, isi limas harus dituang 3 kali untuk memenuhi prisma, jadi volume limas = ⅓ × La × t.',
+  'tinggi-sisi':
+    'Kamu memakai tinggi sisi tegak (tₛ). Rumus volume memakai tinggi LIMAS, yaitu jarak tegak lurus dari puncak ke alas. Cari dulu t dengan Pythagoras bila perlu.',
+  'lupa-setengah':
+    'Hasilmu dua kali lipat. Luas alas segitiga memakai ½ × alas × tinggi segitiga. Hitung luas alas dengan benar, baru kalikan ⅓ × t.',
+  'jumlah-ukuran':
+    'Luas alas dan tinggi dijumlahkan. Volume diperoleh dengan MENGALIKAN: ⅓ × La × t.',
+  'salah-hitung':
+    'Belum tepat. Hitung luas alas, kalikan dengan tinggi limas, lalu bagi 3: V = ⅓ × La × t.',
+};
+
+function kandidatVolumeLimas(o) {
+  var la = o.luasAlas;
+  var t = o.tinggi;
+  var k = { benar: volumeLimas(la, t) };
+  k['lupa-sepertiga'] = lppBulat(la * t);
+  k.setengah = lppBulat((la * t) / 2);
+  if (typeof o.tinggiSisi === 'number') k['tinggi-sisi'] = volumeLimas(la, o.tinggiSisi);
+  if (o.adaSetengah) k['lupa-setengah'] = volumeLimas(2 * la, t);
+  k['jumlah-ukuran'] = lppBulat(la + t);
+  return k;
+}
+
+function diagnosaVolumeLimas(o, jawab) {
+  var k = kandidatVolumeLimas(o);
+  var kode = 'salah-hitung';
+  var urut = Object.keys(k);
+  for (var i = 0; i < urut.length; i++) {
+    if (hampirSama(k[urut[i]], jawab)) {
+      kode = urut[i];
+      break;
+    }
+  }
+  return { kode: kode, pesan: VLM_PESAN[kode] };
+}
+
+/* Pengecoh { kode, nilai, pesan } untuk kartu isian seksi 47 (tanpa yang benar). */
+function pengecohVolumeLimas(o) {
+  var k = kandidatVolumeLimas(o);
+  var dipakai = [k.benar];
+  var out = [];
+  Object.keys(k).forEach(function (kode) {
+    var v = k[kode];
+    if (kode === 'benar' || v <= 0) return;
+    var ada = dipakai.some(function (x) {
+      return hampirSama(x, v);
+    });
+    if (ada) return;
+    dipakai.push(v);
+    out.push({ kode: kode, nilai: v, pesan: VLM_PESAN[kode] });
+  });
+  return out;
+}
+
+/*
+ * Opsi pilihan ganda volume limas: jawaban benar di depan, lalu pengecoh
+ * miskonsepsi bernilai unik (minimal 4 opsi). Modul wajib mengacaknya
+ * (ensureShuffledOrder / shuffleArray).
+ */
+function opsiVolumeLimas(o, satuan) {
+  var k = kandidatVolumeLimas(o);
+  var v = k.benar;
+  var cadangan = {
+    'dua-kali': lppBulat(2 * v),
+    'tambah-alas': lppBulat(v + o.luasAlas),
+    'sepertiga-lagi': lppBulat(v / 3),
+  };
+  var out = [];
+  var dipakai = [];
+  function tambah(id, nilai) {
+    var ada = dipakai.some(function (x) {
+      return hampirSama(x, nilai);
+    });
+    if (ada || nilai <= 0) return;
+    dipakai.push(nilai);
+    out.push({ id: id, nilai: nilai, label: lppAngka(nilai) + (satuan ? ' ' + satuan : '') });
+  }
+  Object.keys(k).forEach(function (id) {
+    if (out.length < 5 || id === 'benar') tambah(id, k[id]);
+  });
+  Object.keys(cadangan).forEach(function (id) {
+    if (out.length < 4) tambah(id, cadangan[id]);
+  });
+  return out;
+}
+
+/* ---------- Geometri limas isometrik ---------- */
+
+function vlmKurang(a, b) {
+  return [a[0] - b[0], a[1] - b[1], a[2] - b[2]];
+}
+
+function vlmPusat(list) {
+  var c = [0, 0, 0];
+  list.forEach(function (q) {
+    c[0] += q[0] / list.length;
+    c[1] += q[1] / list.length;
+    c[2] += q[2] / list.length;
+  });
+  return c;
+}
+
+/*
+ * Sisi-sisi limas beralas `alas3` (titik 3D) berpuncak `puncak`.
+ * Normal setiap sisi diarahkan KELUAR (menjauhi titik tengah limas);
+ * terlihat = normal luar menghadap arah pandang (1, 1, 1).
+ */
+function vlmSisiLimas(alas3, puncak) {
+  var semua = alas3.concat([puncak]);
+  var tengah = vlmPusat(semua);
+  function sisi(id, jenis, pts3) {
+    var u = vlmKurang(pts3[1], pts3[0]);
+    var w = vlmKurang(pts3[2], pts3[0]);
+    var n = [u[1] * w[2] - u[2] * w[1], u[2] * w[0] - u[0] * w[2], u[0] * w[1] - u[1] * w[0]];
+    var arah = vlmKurang(vlmPusat(pts3), tengah);
+    if (n[0] * arah[0] + n[1] * arah[1] + n[2] * arah[2] < 0) n = [-n[0], -n[1], -n[2]];
+    var panjang = Math.hypot(n[0], n[1], n[2]) || 1;
+    return {
+      id: id,
+      jenis: jenis,
+      pts3: pts3,
+      terlihat: (n[0] + n[1] + n[2]) / panjang > 1e-6,
+      kanan: n[0] > n[1],
+    };
+  }
+  var out = [sisi('alas', 'alas', alas3)];
+  alas3.forEach(function (a, i) {
+    var b = alas3[(i + 1) % alas3.length];
+    out.push(sisi('t' + i, 'tegak', [a, b, puncak]));
+  });
+  return out;
+}
+
+/* Semua titik 3D sebuah benda (limas atau prisma seksi 54). */
+function vlmTitikBenda(b) {
+  if (b.jenis === 'limas') return b.alas3.concat([b.puncak]);
+  var out = [];
+  b.pts.forEach(function (q) {
+    [b.z0, b.z1].forEach(function (z) {
+      out.push([q[0] + (b.dx || 0), q[1] + (b.dy || 0), z]);
+    });
+  });
+  return out;
+}
+
+/*
+ * Rusuk limas yang tersembunyi: rusuk yang SEMUA sisi di sebelahnya tidak
+ * terlihat. Rusuk alas ke-i diapit alas & sisi tegak ke-i; rusuk tegak
+ * ke-i diapit sisi tegak ke-(i − 1) & ke-i.
+ */
+function vlmRusukTersembunyi(alas3, puncak) {
+  var sisi = vlmSisiLimas(alas3, puncak);
+  var n = alas3.length;
+  var lihat = {};
+  sisi.forEach(function (f) {
+    lihat[f.id] = f.terlihat;
+  });
+  var out = [];
+  alas3.forEach(function (a, i) {
+    if (!lihat.alas && !lihat['t' + i]) out.push([a, alas3[(i + 1) % n]]);
+    if (!lihat['t' + ((i + n - 1) % n)] && !lihat['t' + i]) out.push([a, puncak]);
+  });
+  return out;
+}
+
+/* Limas sebagai <g>: sisi terlihat, lalu (bila `tembus`) rusuk tersembunyi putus-putus. */
+function vlmPadatanLimas(b, sk) {
+  var isi = vlmSisiLimas(b.alas3, b.puncak)
+    .filter(function (f) {
+      return f.terlihat;
+    })
+    .map(function (f) {
+      var cls = 'vpr-face vpr-face--' + (f.jenis === 'tegak' ? 'tegak' : 'atas');
+      if (f.kanan) cls += ' vpr-face--kanan';
+      return vprPoly(f.pts3, sk, cls);
+    })
+    .join('');
+  if (b.tembus) {
+    isi += vlmRusukTersembunyi(b.alas3, b.puncak)
+      .map(function (r) {
+        return vprGaris(r[0], r[1], sk, 'vlm-rusuk-belakang');
+      })
+      .join('');
+  }
+  return '<g class="' + (b.kelas || '') + '"' + (b.attr || '') + '>' + isi + '</g>';
+}
+
+/*
+ * Menggambar benda-benda (urutan = urutan gambar, belakang dulu).
+ * benda = { jenis: 'limas', alas3, puncak, tembus? } atau prisma seksi 54
+ * { pts, z0, z1, dx?, dy?, kisi? }; keduanya boleh punya kelas & attr.
+ *   opts.batas   benda tambahan untuk ukuran gambar yang tetap
+ *   opts.lebar   lebar gambar (px, bawaan 300)
+ *   opts.label   [{ at: [x, y, z], teks, dx?, dy?, anchor? }]
+ *   opts.garis   [{ a: [x, y, z], b: [x, y, z], kelas }]
+ */
+function vlmSVG(benda, opts) {
+  opts = opts || {};
+  var b = { x0: Infinity, x1: -Infinity, y0: Infinity, y1: -Infinity };
+  benda.concat(opts.batas || []).forEach(function (x) {
+    vlmTitikBenda(x).forEach(function (q) {
+      var s = vprProyeksi(q[0], q[1], q[2]);
+      b.x0 = Math.min(b.x0, s[0]);
+      b.x1 = Math.max(b.x1, s[0]);
+      b.y0 = Math.min(b.y0, s[1]);
+      b.y1 = Math.max(b.y1, s[1]);
+    });
+  });
+  var lebar = opts.lebar || 300;
+  var sk = Math.min(opts.skalaMaks || 30, lebar / Math.max(b.x1 - b.x0, 1));
+  var pad = 34;
+  var isi = benda
+    .map(function (x) {
+      return x.jenis === 'limas' ? vlmPadatanLimas(x, sk) : vprPadatan(x, sk);
+    })
+    .join('');
+  var garis = (opts.garis || [])
+    .map(function (g) {
+      return vprGaris(g.a, g.b, sk, g.kelas || 'vlm-garis');
+    })
+    .join('');
+  var label = (opts.label || [])
+    .map(function (l) {
+      var s = vprProyeksi(l.at[0], l.at[1], l.at[2]);
+      return (
+        '<text class="lpp-ukur vpr-ukur' +
+        (l.kelas ? ' ' + l.kelas : '') +
+        '" x="' +
+        psmFmt(s[0] * sk + (l.dx || 0)) +
+        '" y="' +
+        psmFmt(s[1] * sk + (l.dy || 0)) +
+        '"' +
+        (l.anchor ? ' style="text-anchor:' + l.anchor + '"' : '') +
+        '>' +
+        esc(l.teks) +
+        '</text>'
+      );
+    })
+    .join('');
+  return (
+    '<svg class="vpr-svg vlm-svg" viewBox="' +
+    psmFmt(b.x0 * sk - pad) +
+    ' ' +
+    psmFmt(b.y0 * sk - pad / 2) +
+    ' ' +
+    psmFmt((b.x1 - b.x0) * sk + 2 * pad) +
+    ' ' +
+    psmFmt((b.y1 - b.y0) * sk + pad * 1.5) +
+    '" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="' +
+    esc(opts.aria || 'Gambar limas') +
+    '">' +
+    isi +
+    garis +
+    label +
+    '</svg>'
+  );
+}
+
+/* Limas tegak beralas `pts` (z = 0) berpuncak di atas titik tengah alas. */
+function vlmLimasTegak(pts, t, dx, dy) {
+  dx = dx || 0;
+  dy = dy || 0;
+  var alas3 = pts.map(function (q) {
+    return [q[0] + dx, q[1] + dy, 0];
+  });
+  var c = vlmPusat(alas3);
+  return { jenis: 'limas', alas3: alas3, puncak: [c[0], c[1], t] };
+}
+
+function buildVlmLimasSVG(pts, t, opts) {
+  opts = opts || {};
+  var limas = vlmLimasTegak(pts, t);
+  limas.kelas = 'vlm-padat';
+  limas.tembus = !!opts.garisTinggi;
+  var kaki = [limas.puncak[0], limas.puncak[1], 0];
+  return vlmSVG([limas], {
+    lebar: opts.lebar,
+    aria: opts.aria,
+    garis: opts.garisTinggi ? [{ a: limas.puncak, b: kaki, kelas: 'vlm-garis-tinggi' }] : [],
+    label: opts.garisTinggi
+      ? [{ at: [kaki[0], kaki[1], t / 2], teks: lppAngka(t) + ' cm', dx: 6, anchor: 'start' }]
+      : [],
+  });
+}
+
+/* ---------- UI: Lab Tuang (limas → prisma) ---------- */
+
+/*
+ * opts.pasangan = [{ id, nama, alas: pts, t, info? }]
+ * state[key] = { p: id aktif, isi: { id: bool }, tuang: { id: 0..3 },
+ *                penuh: { id: true } }
+ */
+function ensureVlTuangState(state, key, opts) {
+  var st = state[key] && typeof state[key] === 'object' ? state[key] : {};
+  var ids = opts.pasangan.map(function (p) {
+    return p.id;
+  });
+  if (ids.indexOf(st.p) === -1) st.p = ids[0];
+  ['isi', 'tuang', 'penuh'].forEach(function (k) {
+    if (!st[k] || typeof st[k] !== 'object' || Array.isArray(st[k])) st[k] = {};
+  });
+  opts.pasangan.forEach(function (p) {
+    var n = st.tuang[p.id];
+    if (typeof n !== 'number' || isNaN(n)) n = 0;
+    n = Math.max(0, Math.min(VLM_TUANG, Math.round(n)));
+    st.tuang[p.id] = n;
+    st.isi[p.id] = st.isi[p.id] === true && n < VLM_TUANG;
+    if (n >= VLM_TUANG) st.penuh[p.id] = true;
+  });
+  state[key] = st;
+  return st;
+}
+
+function vlTuangAktif(st, opts) {
+  for (var i = 0; i < opts.pasangan.length; i++) {
+    if (opts.pasangan[i].id === st.p) return opts.pasangan[i];
+  }
+  return opts.pasangan[0];
+}
+
+/* aksi: 'isi' (limas diisi penuh), 'tuang' (isi limas → prisma), 'kosong'. */
+function vlTuangAksi(st, p, aksi) {
+  var n = st.tuang[p.id] || 0;
+  if (aksi === 'isi') {
+    if (n < VLM_TUANG) st.isi[p.id] = true;
+  } else if (aksi === 'tuang') {
+    if (st.isi[p.id]) {
+      st.isi[p.id] = false;
+      st.tuang[p.id] = Math.min(VLM_TUANG, n + 1);
+      if (st.tuang[p.id] >= VLM_TUANG) st.penuh[p.id] = true;
+    }
+  } else if (aksi === 'kosong') {
+    st.tuang[p.id] = 0;
+    st.isi[p.id] = false;
+  }
+  return st;
+}
+
+function vlTuangSelesai(st, opts) {
+  return opts.pasangan.every(function (p) {
+    return !!st.penuh[p.id];
+  });
+}
+
+var VLM_PECAHAN = ['0', '⅓', '⅔', '1'];
+
+function vlmBentang(pts) {
+  var xs = pts.map(function (q) {
+    return q[0];
+  });
+  var ys = pts.map(function (q) {
+    return q[1];
+  });
+  return {
+    x0: Math.min.apply(null, xs),
+    x1: Math.max.apply(null, xs),
+    y0: Math.min.apply(null, ys),
+    y1: Math.max.apply(null, ys),
+  };
+}
+
+function vlTuangGambar(p, isi, n, opts) {
+  var r = vlmBentang(p.alas);
+  var g = (r.x1 - r.x0 + (r.y1 - r.y0)) * 0.62 + 2;
+  var limas = vlmLimasTegak(p.alas, p.t);
+  limas.tembus = true;
+  limas.kelas = 'vlm-wadah' + (isi ? ' is-isi' : '');
+  if (isi) limas.attr = ' data-vlm-pasir-limas';
+  var benda = [limas];
+  var level = lppBulat((n * p.t) / VLM_TUANG);
+  if (n > 0) {
+    benda.push({
+      pts: p.alas,
+      z0: 0,
+      z1: level,
+      dx: g,
+      dy: -g,
+      kelas: 'vlm-pasir' + (n >= VLM_TUANG ? ' is-penuh' : ''),
+      attr: ' data-vlm-pasir-prisma',
+    });
+  }
+  var wadah = { pts: p.alas, z0: 0, z1: p.t, dx: g, dy: -g, kelas: 'vpr-hantu vlm-prisma' };
+  benda.push(wadah);
+  /* Titik alas paling kanan, paling kiri, dan paling depan pada layar. */
+  var kanan = p.alas[0];
+  var kiri = p.alas[0];
+  var depan = p.alas[0];
+  p.alas.forEach(function (q) {
+    if (q[0] - q[1] > kanan[0] - kanan[1]) kanan = q;
+    if (q[0] - q[1] < kiri[0] - kiri[1]) kiri = q;
+    if (q[0] + q[1] > depan[0] + depan[1]) depan = q;
+  });
+  var label = [
+    {
+      at: [kiri[0] + g, kiri[1] - g, p.t / 2],
+      teks: lppAngka(p.t) + ' cm',
+      dx: -8,
+      anchor: 'end',
+    },
+  ];
+  for (var i = 1; i < VLM_TUANG; i++) {
+    label.push({
+      at: [kanan[0] + g, kanan[1] - g, (i * p.t) / VLM_TUANG],
+      teks: '— ' + VLM_PECAHAN[i],
+      dx: 4,
+      anchor: 'start',
+      kelas: 'vlm-tanda',
+    });
+  }
+  return vlmSVG(benda, {
+    lebar: (opts && opts.lebar) || 320,
+    label: label.concat([
+      { at: [depan[0], depan[1], 0], teks: 'limas', dy: 22, anchor: 'middle', kelas: 'vlm-nama' },
+      {
+        at: [depan[0] + g, depan[1] - g, 0],
+        teks: 'prisma',
+        dy: 22,
+        anchor: 'middle',
+        kelas: 'vlm-nama',
+      },
+    ]),
+    aria:
+      p.nama +
+      ': wadah limas ' +
+      (isi ? 'penuh pasir' : 'kosong') +
+      ', wadah prisma beralas dan bertinggi sama terisi ' +
+      VLM_PECAHAN[n] +
+      ' bagian setelah ' +
+      n +
+      ' kali tuang.',
+  });
+}
+
+function vlTuangInfo(st, p) {
+  var n = st.tuang[p.id];
+  return (
+    '<p class="psm-info vpr-info">Isi limas dituang ke prisma: <strong>' +
+    n +
+    ' kali</strong> · prisma terisi <strong>' +
+    (n >= VLM_TUANG ? 'penuh' : n ? VLM_PECAHAN[n] + ' bagian' : 'belum terisi') +
+    '</strong>' +
+    (n >= VLM_TUANG ? ' ✓' : '') +
+    '</p>' +
+    '<p class="dl-caption vpr-caption">' +
+    (st.isi[p.id]
+      ? 'Wadah limas penuh pasir. Tuang isinya ke wadah prisma.'
+      : n >= VLM_TUANG
+      ? 'Prisma sudah penuh. Kosongkan bila ingin mengulang percobaan.'
+      : 'Isi wadah limas sampai penuh (rata dengan puncak), lalu tuang ke prisma.') +
+    '</p>'
+  );
+}
+
+function buildVlTuangLab(id, st, opts) {
+  var p = vlTuangAktif(st, opts);
+  var n = st.tuang[p.id];
+  var isi = !!st.isi[p.id];
+  return (
+    '<div class="vpr-lab vlm-lab" id="' +
+    id +
+    '">' +
+    (opts.pasangan.length > 1
+      ? '<div class="psm-toolbar" role="group" aria-label="Pilih pasangan wadah">' +
+        opts.pasangan
+          .map(function (q) {
+            var aktif = q.id === p.id;
+            return (
+              '<button type="button" class="psm-tool-btn' +
+              (aktif ? ' is-active' : '') +
+              '" data-vlm-p="' +
+              esc(q.id) +
+              '" aria-pressed="' +
+              (aktif ? 'true' : 'false') +
+              '">' +
+              (st.penuh[q.id] ? '✓ ' : '') +
+              esc(q.nama) +
+              '</button>'
+            );
+          })
+          .join('') +
+        '</div>'
+      : '') +
+    '<p class="vpr-lab__nama"><strong>' +
+    esc(p.nama) +
+    '</strong>' +
+    (p.info ? ' · ' + esc(p.info) : '') +
+    '</p>' +
+    '<div class="psm-stage vpr-stage">' +
+    vlTuangGambar(p, isi, n, opts) +
+    '</div>' +
+    '<div class="btn-group btn-group--center">' +
+    '<button type="button" class="btn btn--outline-primary btn--small" data-vlm-aksi="isi"' +
+    (isi || n >= VLM_TUANG ? ' disabled' : '') +
+    '>🪣 Isi limas dengan pasir</button>' +
+    '<button type="button" class="btn btn--primary btn--small" data-vlm-aksi="tuang"' +
+    (isi ? '' : ' disabled') +
+    '>⤵ Tuang ke prisma</button>' +
+    '<button type="button" class="btn btn--ghost btn--small" data-vlm-aksi="kosong"' +
+    (n > 0 || isi ? '' : ' disabled') +
+    '>↺ Kosongkan</button>' +
+    '</div>' +
+    '<div aria-live="polite">' +
+    vlTuangInfo(st, p) +
+    '</div>' +
+    '</div>'
+  );
+}
+
+/* onChange(jenis) — 'aksi' | 'penuh' (baru pertama kali penuh) | 'p'. */
+function bindVlTuangLab(root, id, st, opts, onChange) {
+  var el = root.querySelector('#' + id);
+  if (!el) return;
+  var p = vlTuangAktif(st, opts);
+
+  function rebuild(fokus) {
+    var wadah = document.createElement('div');
+    wadah.innerHTML = buildVlTuangLab(id, st, opts);
+    var baru = wadah.firstChild;
+    el.replaceWith(baru);
+    bindVlTuangLab(root, id, st, opts, onChange);
+    var f = baru.querySelector(fokus);
+    if (!f || f.disabled) f = baru.querySelector('[data-vlm-aksi]:not([disabled])');
+    if (f) f.focus();
+  }
+
+  el.querySelectorAll('[data-vlm-aksi]').forEach(function (b) {
+    b.addEventListener('click', function () {
+      var aksi = b.getAttribute('data-vlm-aksi');
+      var sudah = !!st.penuh[p.id];
+      vlTuangAksi(st, p, aksi);
+      var lanjut = { isi: 'tuang', tuang: 'isi', kosong: 'isi' }[aksi];
+      rebuild('[data-vlm-aksi="' + lanjut + '"]');
+      if (onChange) onChange(!sudah && st.penuh[p.id] ? 'penuh' : 'aksi');
+    });
+  });
+  el.querySelectorAll('[data-vlm-p]').forEach(function (b) {
+    b.addEventListener('click', function () {
+      var pid = b.getAttribute('data-vlm-p');
+      if (pid === st.p) return;
+      st.p = pid;
+      rebuild('[data-vlm-p="' + pid + '"]');
+      if (onChange) onChange('p');
+    });
+  });
+}
+
+/* ---------- UI: Lab Belah Kubus ---------- */
+
+function ensureVlBelahState(state, key) {
+  var st = state[key] && typeof state[key] === 'object' ? state[key] : {};
+  st.pisah = !!st.pisah;
+  st.pernah = !!st.pernah;
+  state[key] = st;
+  return st;
+}
+
+/*
+ * Enam limas persegi dari kubus rusuk s (sudut di (0, 0, 0)): alasnya
+ * sisi-sisi kubus, puncaknya pusat kubus. Saat `pisah`, setiap limas
+ * digeser menjauhi pusat searah normal alasnya. Diurutkan belakang dulu.
+ */
+/*
+ * Arah pandang isometrik (1, 1, 1) sejajar diagonal ruang kubus, sehingga
+ * pusat kubus tampak berimpit dengan titik sudut depannya. Kubus diputar
+ * VLM_PUTAR radian mengelilingi sumbu tegak yang melalui pusatnya agar
+ * puncak keenam limas terlihat.
+ */
+var VLM_PUTAR = (25 * Math.PI) / 180;
+
+function vlmPutar(q, s) {
+  var h = s / 2;
+  var c = Math.cos(VLM_PUTAR);
+  var n = Math.sin(VLM_PUTAR);
+  var x = q[0] - h;
+  var y = q[1] - h;
+  return [h + x * c - y * n, h + x * n + y * c, q[2]];
+}
+
+function vlmBelahKepingan(s, pisah) {
+  var h = s / 2;
+  var d = pisah ? s * 1.1 : 0;
+  var spec = [
+    { id: 'bawah', sumbu: 'z', n: [0, 0, -1] },
+    { id: 'atas', sumbu: 'z', n: [0, 0, 1] },
+    { id: 'kiri', sumbu: 'x', n: [-1, 0, 0] },
+    { id: 'kanan', sumbu: 'x', n: [1, 0, 0] },
+    { id: 'belakang', sumbu: 'y', n: [0, -1, 0] },
+    { id: 'depan', sumbu: 'y', n: [0, 1, 0] },
+  ];
+  function sudut(n) {
+    /* Empat titik sisi kubus yang bernormal n, berurutan keliling. */
+    var k = n[0] ? 0 : n[1] ? 1 : 2;
+    var nilai = n[k] > 0 ? s : 0;
+    var a = (k + 1) % 3;
+    var b = (k + 2) % 3;
+    return [
+      [0, 0],
+      [s, 0],
+      [s, s],
+      [0, s],
+    ].map(function (q) {
+      var p = [0, 0, 0];
+      p[k] = nilai;
+      p[a] = q[0];
+      p[b] = q[1];
+      return p;
+    });
+  }
+  return spec
+    .map(function (x) {
+      var g = [x.n[0] * d, x.n[1] * d, x.n[2] * d];
+      function pindah(q) {
+        return vlmPutar([q[0] + g[0], q[1] + g[1], q[2] + g[2]], s);
+      }
+      var alas3 = sudut(x.n).map(pindah);
+      var c = vlmPusat(alas3);
+      return {
+        id: x.id,
+        jenis: 'limas',
+        alas3: alas3,
+        puncak: pindah([h, h, h]),
+        kelas: 'vlm-keping vlm-keping--' + x.sumbu,
+        attr: ' data-vlm-keping="' + x.id + '"',
+        tembus: pisah,
+        kedalaman: c[0] + c[1] + c[2],
+      };
+    })
+    .sort(function (a, b) {
+      return a.kedalaman - b.kedalaman;
+    });
+}
+
+function vlmSatuLimasSVG(s) {
+  var limas = vlmLimasTegak(
+    [
+      [0, 0],
+      [s, 0],
+      [s, s],
+      [0, s],
+    ].map(function (q) {
+      return vlmPutar([q[0], q[1], 0], s);
+    }),
+    s / 2
+  );
+  limas.kelas = 'vlm-keping vlm-keping--z';
+  limas.tembus = true;
+  var A = limas.alas3;
+  var kaki = [limas.puncak[0], limas.puncak[1], 0];
+  function tengah(p, q) {
+    return [(p[0] + q[0]) / 2, (p[1] + q[1]) / 2, 0];
+  }
+  return vlmSVG([limas], {
+    lebar: 220,
+    garis: [{ a: limas.puncak, b: kaki, kelas: 'vlm-garis-tinggi' }],
+    label: [
+      { at: tengah(A[2], A[3]), teks: lppAngka(s) + ' cm', dx: -6, dy: 16, anchor: 'end' },
+      { at: tengah(A[1], A[2]), teks: lppAngka(s) + ' cm', dx: 6, dy: 16, anchor: 'start' },
+      {
+        at: [kaki[0], kaki[1], s / 2],
+        teks: 't = ' + lppAngka(s / 2) + ' cm',
+        dy: -8,
+        anchor: 'middle',
+        kelas: 'vlm-tinggi-label',
+      },
+    ],
+    aria:
+      'Satu limas persegi hasil belahan: alas ' +
+      lppAngka(s) +
+      ' cm × ' +
+      lppAngka(s) +
+      ' cm, tinggi ' +
+      lppAngka(s / 2) +
+      ' cm (setengah rusuk kubus).',
+  });
+}
+
+/* Label rusuk pada dua rusuk alas depan & rusuk tegak paling kanan kubus yang diputar. */
+function vlmLabelKubus(s) {
+  var sudut = [
+    [0, 0],
+    [s, 0],
+    [s, s],
+    [0, s],
+  ].map(function (q) {
+    return vlmPutar([q[0], q[1], 0], s);
+  });
+  var i = 0;
+  var k = 0;
+  sudut.forEach(function (q, j) {
+    if (q[0] + q[1] > sudut[i][0] + sudut[i][1]) i = j;
+    if (q[0] - q[1] > sudut[k][0] - sudut[k][1]) k = j;
+  });
+  var depan = sudut[i];
+  function tengah(q) {
+    return [(depan[0] + q[0]) / 2, (depan[1] + q[1]) / 2, 0];
+  }
+  var kiri = sudut[(i + 1) % 4];
+  var kanan = sudut[(i + 3) % 4];
+  if (kiri[0] - kiri[1] > kanan[0] - kanan[1]) {
+    var tukar = kiri;
+    kiri = kanan;
+    kanan = tukar;
+  }
+  var teks = lppAngka(s) + ' cm';
+  return [
+    { at: tengah(kiri), teks: teks, dx: -8, dy: 18, anchor: 'end' },
+    { at: tengah(kanan), teks: teks, dx: 8, dy: 18, anchor: 'start' },
+    { at: [sudut[k][0], sudut[k][1], s / 2], teks: teks, dx: 8, anchor: 'start' },
+  ];
+}
+
+/* b = { s, nama } — kubus rusuk s. */
+function buildVlBelahKubus(id, b, st) {
+  var svg = vlmSVG(vlmBelahKepingan(b.s, st.pisah), {
+    lebar: 300,
+    batas: vlmBelahKepingan(b.s, true),
+    label: st.pisah ? [] : vlmLabelKubus(b.s),
+    aria:
+      b.nama +
+      (st.pisah
+        ? ' dibelah menjadi enam limas persegi yang sama besar dan dipisahkan.'
+        : ' berbentuk kubus utuh.'),
+  });
+  return (
+    '<div class="vpr-belah vlm-belah' +
+    (st.pisah ? ' is-pisah' : '') +
+    '" id="' +
+    id +
+    '">' +
+    '<div class="vlm-belah__gambar">' +
+    '<div class="psm-stage vpr-stage">' +
+    svg +
+    '</div>' +
+    (st.pisah
+      ? '<figure class="vlm-belah__satu" data-vlm-satu><div class="psm-stage vpr-stage">' +
+        vlmSatuLimasSVG(b.s) +
+        '</div><figcaption>Satu limas diambil</figcaption></figure>'
+      : '') +
+    '</div>' +
+    '<p class="vpr-belah__teks" aria-live="polite">' +
+    (st.pisah
+      ? 'Kubus terbelah menjadi <strong>6 limas persegi yang sama persis</strong>. Alas setiap limas adalah satu sisi kubus, dan puncaknya di pusat kubus.'
+      : 'Kubus masih utuh. Bayangkan titik pusat kubus dihubungkan ke kedelapan titik sudutnya, lalu belah.') +
+    '</p>' +
+    '<div class="btn-group btn-group--center">' +
+    '<button type="button" class="btn btn--outline-primary btn--small" data-vlm-belah aria-pressed="' +
+    (st.pisah ? 'true' : 'false') +
+    '">' +
+    (st.pisah ? '🔗 Gabungkan lagi' : '✂️ Belah dari pusat kubus') +
+    '</button>' +
+    '</div>' +
+    '</div>'
+  );
+}
+
+function bindVlBelahKubus(root, id, b, st, onChange) {
+  var el = root.querySelector('#' + id);
+  if (!el) return;
+  el.querySelector('[data-vlm-belah]').addEventListener('click', function () {
+    var sudah = st.pernah;
+    st.pisah = !st.pisah;
+    if (st.pisah) st.pernah = true;
+    var wadah = document.createElement('div');
+    wadah.innerHTML = buildVlBelahKubus(id, b, st);
+    var baru = wadah.firstChild;
+    el.replaceWith(baru);
+    bindVlBelahKubus(root, id, b, st, onChange);
+    var btn = baru.querySelector('[data-vlm-belah]');
+    if (btn) btn.focus();
+    if (onChange) onChange(!sudah && st.pernah ? 'pernah' : 'toggle');
+  });
 }
