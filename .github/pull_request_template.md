@@ -4,7 +4,7 @@
 
 ## Jenis perubahan
 
-- [ ] `feat` — modul MPI baru
+- [ ] `feat` — modul MPI baru atau revisi modul MPI yang sudah ada (pilih salah satu)
 - [ ] `feat` — revisi modul MPI yang sudah ada
 - [ ] `shared` — perubahan `engine.js` / `base.css` / `page-template.html` / manifest
 - [ ] `fix` — perbaikan bug
@@ -19,7 +19,7 @@
 
 ## Konteks pedagogis (khusus modul MPI)
 
-- **Fase:** <!-- D / F -->
+- **Fase:** <!-- D / E / F -->
 - **Tujuan Pembelajaran (TP):**
 - **Model pembelajaran:** <!-- Discovery Learning / PBL / ... -->
 - **Pemetaan sintaks → tahap media:**
@@ -32,7 +32,7 @@
 - [ ] Diuji manual di browser desktop dan lebar ponsel (tanpa scroll horizontal)
 - [ ] Aksesibilitas dasar: skip-link, label form, fokus keyboard, kontras warna
 - [ ] Tidak ada error di console; tombol reset dan progres berfungsi
-- [ ] Konten matematika dan kunci jawaban sudah dicek ulang
+- [ ] Konten dalam modul dan kunci jawaban sudah dicek ulang
 - [ ] Quality Gate Sonar lulus / isu baru sudah ditangani
 
 ## Tangkapan layar / demo
