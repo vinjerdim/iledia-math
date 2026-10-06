@@ -47,6 +47,14 @@
     "stageCount": 10,
     "extraBody": "partials/reset-modal.html"
   },
+  "fase-d/mpi-2.1": {
+    "title": "Penjumlahan & Pengurangan Bilangan Bulat dalam Masalah Kontekstual — Matematika Fase D",
+    "description": "Media pembelajaran interaktif berbasis Discovery Learning untuk menerapkan penjumlahan dan pengurangan bilangan bulat dalam masalah kontekstual: suhu, ketinggian, dan saldo keuangan, melalui Lab Lompatan (simulator garis bilangan), pola penjumlahan, tabel pola pengurangan a − b = a + (−b), pemodelan cerita perubahan dan selisih, serta isian berdiagnosa miskonsepsi.",
+    "kicker": "Matematika — Fase D (SMP)",
+    "h1": "Penjumlahan & Pengurangan Bilangan Bulat dalam Masalah Kontekstual",
+    "stageCount": 11,
+    "extraBody": "partials/reset-modal.html"
+  },
   "fase-f/mpi-1.1": {
     "title": "Konsep Barisan Aritmetika & Beda — Matematika Fase F",
     "description": "Media pembelajaran interaktif berbasis Inquiry Learning untuk mengidentifikasi dan menjelaskan konsep barisan aritmetika serta menentukan beda dari suatu barisan bilangan.",
