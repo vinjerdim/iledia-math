@@ -1,0 +1,321 @@
+/* =========================================================================
+   fase-d/mpi-2.1/styles.css
+   Penjumlahan & Pengurangan Bilangan Bulat dalam Masalah Kontekstual — Fase D
+
+   Hanya memuat gaya yang KHAS modul ini. Seluruh dasar design system
+   (panel, tombol, kotak umpan balik, pilihan ganda, pemilahan, pertanyaan
+   penuntun .quiz-item--guided, tabel .data-table, perbandingan dugaan
+   .dugaan-row, kartu ringkasan, navigasi tahap, modal), simulator operasi
+   (.int-sim*, .int-stepper*), garis bilangan berlompatan (.nlj-*), dan
+   isian berpemeriksa (.dl-step, .bbk-satuan, .bbk-soal-tag) berasal dari
+   shared/base.css.
+   ========================================================================= */
+
+/* -------------------------------------------------------------------------
+   Label konteks (suhu, ketinggian, saldo)
+   ------------------------------------------------------------------------- */
+
+.ops-konteks {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: 2px var(--space-2);
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.ops-konteks--suhu {
+  background: var(--color-orange-soft);
+  color: var(--color-orange-strong);
+}
+
+.ops-konteks--ketinggian {
+  background: var(--color-blue-soft);
+  color: var(--color-blue-strong);
+}
+
+.ops-konteks--saldo {
+  background: var(--color-success-soft);
+  color: var(--color-success-strong);
+}
+
+/* -------------------------------------------------------------------------
+   Tahap 1 — Stimulasi: kabar perubahan
+   ------------------------------------------------------------------------- */
+
+.kabar-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: var(--space-3);
+  margin-top: var(--space-4);
+}
+
+.kabar-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--color-border);
+  border-top: 5px solid var(--color-warning);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+}
+
+.kabar-card--suhu {
+  border-top-color: var(--color-orange);
+}
+
+.kabar-card--ketinggian {
+  border-top-color: var(--color-blue);
+}
+
+.kabar-card--saldo {
+  border-top-color: var(--color-success);
+}
+
+.kabar-card__head {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.kabar-card__ikon {
+  font-size: 1.6rem;
+  line-height: 1;
+}
+
+.kabar-card__sumber {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--color-ink-muted);
+}
+
+.kabar-card__sorot {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: var(--color-ink);
+}
+
+.kabar-card__teks {
+  margin: 0;
+  font-size: 0.92rem;
+}
+
+/* -------------------------------------------------------------------------
+   Tahap 3 & 4c — kartu percobaan / cerita
+   ------------------------------------------------------------------------- */
+
+.ops-progress {
+  margin: 0 0 var(--space-2);
+  font-weight: 700;
+}
+
+.ops-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  margin-bottom: var(--space-5);
+}
+
+.ops-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  border: 2px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  min-width: 0;
+}
+
+.ops-card.is-done {
+  border-color: var(--color-success);
+}
+
+.ops-card .dl-step,
+.ops-card .quiz-item {
+  margin: 0;
+}
+
+.ops-card__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.ops-card__no {
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+.ops-card__cerita {
+  margin: 0;
+}
+
+.ops-jenis {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--color-purple-strong);
+}
+
+/* Petunjuk pengaturan simulator */
+.ops-atur {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ops-atur li {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 92px;
+  padding: var(--space-2) var(--space-3);
+  border: 1px dashed var(--color-border-strong);
+  border-radius: var(--radius-md);
+  background: var(--color-bg);
+}
+
+.ops-atur span {
+  font-size: 0.75rem;
+  color: var(--color-ink-muted);
+}
+
+.ops-atur strong {
+  font-family: var(--font-mono);
+  font-size: 1.25rem;
+}
+
+.ops-status {
+  margin: 0;
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--color-warning-strong);
+}
+
+.ops-status.is-ok {
+  color: var(--color-success-strong);
+}
+
+/* -------------------------------------------------------------------------
+   Tahap 3 & 4b — tabel data
+   ------------------------------------------------------------------------- */
+
+.data-table__num {
+  font-family: var(--font-mono);
+  font-size: 1.05rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.data-table tr.is-neg td:last-child {
+  color: var(--color-blue-strong);
+}
+
+.data-table tr.is-pos td:last-child {
+  color: var(--color-orange-strong);
+}
+
+.ops-pola {
+  display: grid;
+  grid-template-columns: minmax(200px, 260px) 1fr;
+  gap: var(--space-4);
+  align-items: start;
+}
+
+.ops-pola__isian {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  min-width: 0;
+}
+
+.ops-pola__isian .dl-step {
+  margin: 0;
+}
+
+.ops-pola-table__baru td {
+  background: var(--color-warning-soft);
+}
+
+/* -------------------------------------------------------------------------
+   Tahap 4–5 — temuan & hipotesis
+   ------------------------------------------------------------------------- */
+
+.temuan-list {
+  margin: 0;
+  padding-left: var(--space-5);
+  line-height: 1.7;
+}
+
+.hipotesis-box {
+  margin-top: var(--space-4);
+  padding: var(--space-3) var(--space-4);
+  border-left: 4px solid var(--color-purple);
+  border-radius: var(--radius-md);
+  background: var(--color-purple-soft);
+}
+
+.hipotesis-box__label {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--color-purple-strong);
+}
+
+.hipotesis-box p {
+  margin: var(--space-1) 0 var(--space-2);
+  font-style: italic;
+}
+
+/* -------------------------------------------------------------------------
+   Tahap Selesai — contoh
+   ------------------------------------------------------------------------- */
+
+.contoh-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: var(--space-3);
+  margin: var(--space-4) 0;
+}
+
+.contoh-grid .formula-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.contoh-grid__num {
+  font-family: var(--font-mono);
+  font-size: 1.25rem;
+}
+
+/* -------------------------------------------------------------------------
+   Responsif
+   ------------------------------------------------------------------------- */
+
+@media (max-width: 600px) {
+  .ops-card {
+    padding: var(--space-3);
+  }
+
+  .ops-pola {
+    grid-template-columns: 1fr;
+  }
+
+  .ops-atur li {
+    min-width: 0;
+    flex: 1 1 0;
+  }
+
+  .kabar-card__sorot {
+    font-size: 1.2rem;
+  }
+}

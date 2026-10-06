@@ -4413,7 +4413,10 @@ function buildInfoPoster(opts) {
    Dipakai modul penjumlahan & pengurangan bilangan bulat
    (fase-d/mpi-2.1): garis bilangan dengan busur lompatan,
    simulator operasi (titik awal, tanda operasi, bilangan kedua),
-   dan stepper bilangan bulat ramah sentuh. Gaya .nlj-*, .int-sim*,
+   stepper bilangan bulat ramah sentuh, model kalimat matematika
+   dari cerita (kalimatPerubahan, selisihBulat), dan diagnosa
+   miskonsepsi hasil operasi (diagnosaOperasiBulat — dipakai juga
+   langkah isian jenis 'hitung' pada seksi 29). Gaya .nlj-*, .int-sim*,
    .int-stepper* ada di shared/base.css.
    ============================================================ */
 
@@ -4463,6 +4466,123 @@ function arahLompatan(by) {
 }
 
 /*
+ * Model kalimat matematika untuk cerita perubahan: keadaan awal `awal`
+ * lalu 'naik' (bertambah, menerima, mendaki) atau 'turun' (berkurang,
+ * membayar, menyelam) sebesar `besar` (diambil nilai mutlaknya).
+ *   kalimatPerubahan(-4, 'naik', 7)  → { a: −4, op: '+', b: 7, hasil: 3, teks: '−4 + 7' }
+ *   kalimatPerubahan(4, 'turun', 7)  → { a: 4, op: '-', b: 7, hasil: −3, teks: '4 − 7' }
+ */
+function kalimatPerubahan(awal, arah, besar) {
+  var op = arah === 'turun' ? '-' : '+';
+  var b = Math.abs(besar);
+  return {
+    a: awal,
+    op: op,
+    b: b,
+    hasil: hasilOperasiBulat(awal, op, b),
+    teks: fmtOperasiBulat(awal, op, b),
+  };
+}
+
+/*
+ * Model selisih dua keadaan (suhu, ketinggian, saldo): keadaan yang
+ * lebih tinggi dikurangi keadaan yang lebih rendah, sehingga selisihnya
+ * tidak pernah negatif. selisihBulat(8, -5) → teks '8 − (−5)', hasil 13.
+ */
+function selisihBulat(p, q) {
+  var a = Math.max(p, q);
+  var b = Math.min(p, q);
+  return { a: a, op: '-', b: b, hasil: a - b, teks: fmtOperasiBulat(a, '-', b) };
+}
+
+/*
+ * Memeriksa hasil a op b ('+' / '-') yang diketik murid dan mendiagnosis
+ * miskonsepsi khas. Isian dibaca parseBilanganBulat (seksi 29), jadi
+ * '−', '–', '+' di depan, dan titik pemisah ribuan diterima.
+ * Mengembalikan { benar, kode, pesan }; kode:
+ *   'benar'
+ *   'kosong' | 'tanda-belakang' | 'kata-min' | 'kurung' | 'bukan-bulat'
+ *   'tanda-hasil'     besar hasil tepat, tandanya terbalik
+ *   'kurang-salah'    a − b dikerjakan sebagai a + b (lawan tidak diambil)
+ *   'arah-terbalik'   a + b dikerjakan sebagai a − b (arah lompatan terbalik)
+ *   'abaikan-negatif' tanda negatif diabaikan: |a| op |b|
+ *   'lain'
+ */
+function diagnosaOperasiBulat(str, a, op, b) {
+  var p = parseBilanganBulat(str);
+  if (!p.ok) return { benar: false, kode: p.kode, pesan: p.pesan };
+  var v = p.value;
+  var r = integerJumps(a, op, b);
+  var h = r.hasil;
+  var kalimat = fmtOperasiBulat(a, op, b);
+  if (v === h) {
+    return { benar: true, kode: 'benar', pesan: 'Tepat! ' + kalimat + ' = ' + fmtBulat(h) + '.' };
+  }
+  if (h !== 0 && v === -h) {
+    return {
+      benar: false,
+      kode: 'tanda-hasil',
+      pesan:
+        'Besar hasilmu sudah tepat, tetapi <strong>tandanya terbalik</strong>. Lihat titik akhirnya pada garis bilangan: di kiri 0 berarti negatif, di kanan 0 berarti positif.',
+    };
+  }
+  if (op === '-' && v === a + b) {
+    return {
+      benar: false,
+      kode: 'kurang-salah',
+      pesan:
+        'Mengurangkan sebuah bilangan sama dengan <strong>menjumlahkan lawannya</strong>: ' +
+        kalimat +
+        ' = ' +
+        r.setara +
+        '. Lawan dari ' +
+        fmtBulat(b) +
+        ' adalah ' +
+        fmtBulat(-b) +
+        '.',
+    };
+  }
+  if (op === '+' && v === a - b) {
+    return {
+      benar: false,
+      kode: 'arah-terbalik',
+      pesan:
+        'Arah lompatanmu terbalik. Menjumlahkan bilangan ' +
+        (b < 0
+          ? 'negatif berarti melompat ke <strong>kiri</strong>'
+          : 'positif berarti melompat ke <strong>kanan</strong>') +
+        ' sebanyak ' +
+        Math.abs(b) +
+        ' langkah dari ' +
+        fmtBulat(a) +
+        '.',
+    };
+  }
+  if ((a < 0 || b < 0) && v === hasilOperasiBulat(Math.abs(a), op, Math.abs(b))) {
+    return {
+      benar: false,
+      kode: 'abaikan-negatif',
+      pesan:
+        'Sepertinya tanda negatifnya diabaikan. ' +
+        fmtBulat(a < 0 ? a : b) +
+        ' berada di kiri 0 — mulailah dari titik yang tepat pada garis bilangan.',
+    };
+  }
+  return {
+    benar: false,
+    kode: 'lain',
+    pesan:
+      'Belum tepat. Gambarkan di garis bilangan: mulai dari ' +
+      fmtBulat(a) +
+      ', lalu melompat ' +
+      Math.abs(r.by) +
+      ' langkah ke ' +
+      (r.by >= 0 ? 'kanan' : 'kiri') +
+      '.',
+  };
+}
+
+/*
  * Garis bilangan statis (SVG) dengan busur lompatan.
  *   id              id elemen <svg>
  *   opts.min, max   rentang (default −10 … 10)
@@ -4490,7 +4610,7 @@ function buildNumberLineJumps(id, opts) {
   var unit = 40;
   var padX = 34;
   var axisY = 104;
-  var H = 150;
+  var H = 166;
   var W = padX * 2 + (max - min) * unit;
   function xOf(v) {
     return padX + (Math.max(min, Math.min(max, v)) - min) * unit;
@@ -11525,11 +11645,15 @@ function makeCekStep() {
  * Memeriksa isian langkah dan menyimpan hasilnya ke st.
  *   step.jenis 'tulis' → diagnosaTulisBulat(input, step.jawab)
  *   step.jenis 'baca'  → cekCaraBaca(input, step.jawab)
+ *   step.jenis 'hitung' → diagnosaOperasiBulat(input, step.a, step.op, step.b)
+ *                        (hasil penjumlahan/pengurangan, seksi 17)
  * Isian kosong tidak dihitung sebagai percobaan.
  */
 function periksaCekStep(st, step, input) {
-  var r =
-    step.jenis === 'baca' ? cekCaraBaca(input, step.jawab) : diagnosaTulisBulat(input, step.jawab);
+  var r;
+  if (step.jenis === 'baca') r = cekCaraBaca(input, step.jawab);
+  else if (step.jenis === 'hitung') r = diagnosaOperasiBulat(input, step.a, step.op, step.b);
+  else r = diagnosaTulisBulat(input, step.jawab);
   st.input = String(input || '').trim();
   st.kode = r.kode;
   st.pesan = r.pesan;
@@ -11543,8 +11667,8 @@ function periksaCekStep(st, step, input) {
  * Satu langkah isian berpemeriksa (notasi atau cara baca) dengan umpan
  * balik diagnosa miskonsepsi.
  *   id    awalan id DOM (→ idInput, idCheck, idHint)
- *   step  { jenis: 'tulis'|'baca', jawab, label, hints, temuan,
- *           satuan, placeholder }
+ *   step  { jenis: 'tulis'|'baca'|'hitung', jawab, label, hints, temuan,
+ *           satuan, placeholder } — 'hitung' juga memerlukan a, op, b
  *   num   nomor langkah opsional
  */
 function buildCekStep(id, st, step, num) {
