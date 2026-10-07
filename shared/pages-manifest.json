@@ -63,6 +63,14 @@
     "stageCount": 10,
     "extraBody": "partials/reset-modal.html"
   },
+  "fase-d/mpi-2.3": {
+    "title": "Penjumlahan & Pengurangan Pecahan dalam Masalah Kontekstual — Matematika Fase D",
+    "description": "Media pembelajaran interaktif berbasis Problem Based Learning untuk menerapkan penjumlahan dan pengurangan bilangan rasional (pecahan) dalam masalah kontekstual: tepung, pita hias, dan meja stand di bazar sekolah, melalui Lab Pita (memotong supaya pas dengan KPK), pecahan campuran dan negatif di garis bilangan, isian berdiagnosa miskonsepsi, detektif solusi kelompok lain, dan Papan Solusi Stand.",
+    "kicker": "Matematika — Fase D (SMP)",
+    "h1": "Penjumlahan & Pengurangan Pecahan dalam Masalah Kontekstual",
+    "stageCount": 10,
+    "extraBody": "partials/reset-modal.html"
+  },
   "fase-f/mpi-1.1": {
     "title": "Konsep Barisan Aritmetika & Beda — Matematika Fase F",
     "description": "Media pembelajaran interaktif berbasis Inquiry Learning untuk mengidentifikasi dan menjelaskan konsep barisan aritmetika serta menentukan beda dari suatu barisan bilangan.",

@@ -1,0 +1,222 @@
+/* =========================================================================
+   fase-d/mpi-2.3/styles.css
+   Penjumlahan & Pengurangan Pecahan dalam Masalah Kontekstual — Fase D
+   (Problem Based Learning)
+
+   Hanya memuat gaya yang KHAS modul ini. Seluruh dasar design system
+   (panel, tombol, kotak umpan balik, pilihan ganda, pemilahan, pertanyaan
+   penuntun, perbandingan dugaan .dugaan-row, kartu ringkasan, urut-ketuk,
+   papan info .info-poster, navigasi tahap, modal), chip bilangan
+   .num-chip, garis bilangan pecahan .frac-nl, dan Lab Pita .pita-op
+   berasal dari shared/base.css.
+   ========================================================================= */
+
+/* -------------------------------------------------------------------------
+   Tahap 1 — Orientasi: catatan persiapan stand
+   ------------------------------------------------------------------------- */
+
+.catatan-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  gap: var(--space-3);
+  margin-top: var(--space-4);
+}
+
+.catatan-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  min-width: 0;
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--color-border);
+  border-top: 5px solid var(--color-orange);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+}
+
+.catatan-card__head {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.catatan-card__ikon {
+  font-size: 1.4rem;
+}
+
+.catatan-card__judul {
+  margin: 0;
+  font-size: 0.98rem;
+}
+
+.catatan-card__teks {
+  margin: 0;
+  font-size: 0.92rem;
+  color: var(--color-ink-muted);
+}
+
+.data-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.data-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: 36px;
+}
+
+.data-row__nama {
+  flex: 1 1 8rem;
+  font-weight: 600;
+}
+
+.data-row__nilai {
+  white-space: nowrap;
+}
+
+.num-chip--tanya {
+  border-style: dashed;
+  color: var(--color-purple-strong);
+}
+
+/* -------------------------------------------------------------------------
+   Kalimat operasi berchip: a + b = hasil
+   ------------------------------------------------------------------------- */
+
+.kalimat-op {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1) var(--space-2);
+  vertical-align: middle;
+}
+
+.kalimat-op__sym {
+  font-weight: 700;
+  color: var(--color-ink-muted);
+}
+
+/* -------------------------------------------------------------------------
+   Tahap 3–6 — langkah isian & kartu Lab Pita
+   ------------------------------------------------------------------------- */
+
+.langkah-op-list,
+.lab-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.langkah-op {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.langkah-op .pita-op--tetap {
+  padding: var(--space-3);
+  border-radius: var(--radius-md);
+  background: var(--color-bg);
+}
+
+.lab-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  min-width: 0;
+  padding: var(--space-4);
+  border: 2px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+}
+
+.lab-card.is-done {
+  border-color: var(--color-success);
+}
+
+.lab-card__judul {
+  margin: 0;
+  font-weight: 600;
+}
+
+.isian-op__input {
+  flex: 1 1 9rem;
+  max-width: 14rem;
+}
+
+/* -------------------------------------------------------------------------
+   Temuan, hipotesis & papan solusi
+   ------------------------------------------------------------------------- */
+
+.temuan-list {
+  margin: 0;
+  padding-left: var(--space-5);
+  line-height: 1.7;
+}
+
+.hipotesis-box {
+  margin-top: var(--space-4);
+  padding: var(--space-3) var(--space-4);
+  border-left: 4px solid var(--color-purple);
+  border-radius: var(--radius-md);
+  background: var(--color-purple-soft);
+}
+
+.hipotesis-box__label {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--color-purple-strong);
+}
+
+.hipotesis-box p {
+  margin: var(--space-1) 0 var(--space-2);
+  font-style: italic;
+}
+
+#posterWrap {
+  margin: var(--space-4) 0;
+}
+
+/* -------------------------------------------------------------------------
+   Tahap Uji Terap & Selesai
+   ------------------------------------------------------------------------- */
+
+.dl-exercise .dl-input-row .input-text {
+  flex: 1 1 10rem;
+  max-width: 16rem;
+}
+
+.contoh-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: var(--space-3);
+  margin: var(--space-4) 0;
+}
+
+.contoh-grid .formula-card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-2);
+}
+
+/* -------------------------------------------------------------------------
+   Responsif
+   ------------------------------------------------------------------------- */
+
+@media (max-width: 600px) {
+  .lab-card {
+    padding: var(--space-3);
+  }
+
+  .isian-op__input {
+    max-width: none;
+  }
+}
