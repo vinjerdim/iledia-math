@@ -1,0 +1,225 @@
+/* =========================================================================
+   fase-d/mpi-2.2/styles.css
+   Perkalian & Pembagian Bilangan Bulat dalam Masalah Kontekstual — Fase D
+
+   Hanya memuat gaya yang KHAS modul ini. Seluruh dasar design system
+   (panel, tombol, kotak umpan balik, pilihan ganda, tabel .data-table,
+   kartu ringkasan, navigasi tahap, modal), garis bilangan berlompatan
+   (.nlj-*), tabel aturan tanda (.sign-grid*), langkah operasi campuran
+   (.expr-steps*), isian berpemeriksa (.dl-step, .bbk-satuan,
+   .bbk-soal-tag), dan komponen Think-Pair-Share (.tps-*) berasal dari
+   shared/base.css.
+   ========================================================================= */
+
+/* -------------------------------------------------------------------------
+   Label konteks (suhu, kedalaman, keuangan, skor)
+   ------------------------------------------------------------------------- */
+
+.kb-konteks {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: 2px var(--space-2);
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.kb-konteks--suhu {
+  background: var(--color-orange-soft);
+  color: var(--color-orange-strong);
+}
+
+.kb-konteks--kedalaman {
+  background: var(--color-blue-soft);
+  color: var(--color-blue-strong);
+}
+
+.kb-konteks--uang {
+  background: var(--color-success-soft);
+  color: var(--color-success-strong);
+}
+
+.kb-konteks--skor {
+  background: var(--color-purple-soft);
+  color: var(--color-purple-strong);
+}
+
+/* -------------------------------------------------------------------------
+   Kartu cerita pembuka
+   ------------------------------------------------------------------------- */
+
+.kb-cerita {
+  display: flex;
+  gap: var(--space-3);
+  align-items: flex-start;
+  margin-bottom: var(--space-3);
+}
+
+.kb-cerita__ikon {
+  flex: 0 0 auto;
+  font-size: 2rem;
+  line-height: 1;
+}
+
+.kb-cerita__judul {
+  margin: 0 0 var(--space-1);
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 1.1rem;
+}
+
+.kb-cerita__teks {
+  margin: 0;
+}
+
+/* -------------------------------------------------------------------------
+   Tahap Tujuan: isian nama pasangan
+   ------------------------------------------------------------------------- */
+
+.kb-nama {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: var(--space-3);
+}
+
+.kb-subjudul {
+  margin: var(--space-4) 0 var(--space-2);
+}
+
+/* -------------------------------------------------------------------------
+   Tabel pola perkalian
+   ------------------------------------------------------------------------- */
+
+.kb-pola {
+  display: grid;
+  grid-template-columns: minmax(0, 220px) minmax(0, 1fr);
+  gap: var(--space-4);
+  align-items: start;
+}
+
+.kb-pola__isian .dl-step {
+  margin-bottom: var(--space-3);
+}
+
+.kb-num {
+  font-family: var(--font-mono);
+  text-align: center;
+  white-space: nowrap;
+}
+
+.kb-pola-table__baru td {
+  background: var(--color-warning-soft);
+}
+
+@media (max-width: 640px) {
+  .kb-pola {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* -------------------------------------------------------------------------
+   Kartu masalah kontekstual & operasi campuran
+   ------------------------------------------------------------------------- */
+
+.kb-progres {
+  margin: 0 0 var(--space-3);
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--color-ink-muted);
+}
+
+.kb-masalah {
+  margin-bottom: var(--space-4);
+  padding: var(--space-4);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+}
+
+.kb-masalah.is-done {
+  border-color: var(--color-success);
+}
+
+.kb-masalah__head {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  align-items: center;
+  margin-bottom: var(--space-2);
+}
+
+.kb-masalah__no {
+  font-family: var(--font-display);
+  font-weight: 700;
+}
+
+.kb-masalah__cerita {
+  margin: 0 0 var(--space-2);
+}
+
+.kb-masalah__tanya {
+  margin: 0 0 var(--space-3);
+}
+
+.kb-masalah .expr-steps {
+  overflow-wrap: anywhere;
+}
+
+/* -------------------------------------------------------------------------
+   Temuan, rangkuman & halaman selesai
+   ------------------------------------------------------------------------- */
+
+.kb-temuan {
+  margin: 0;
+  padding-left: var(--space-5);
+}
+
+.kb-temuan li + li {
+  margin-top: var(--space-2);
+}
+
+.kb-rangkuman {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.kb-rangkuman li {
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+  font-family: var(--font-mono);
+  overflow-wrap: anywhere;
+}
+
+.kb-rangkuman li + li {
+  margin-top: var(--space-2);
+}
+
+.kb-pasangan-nama {
+  margin: 0 0 var(--space-2);
+  font-weight: 700;
+  color: var(--color-purple-strong);
+  overflow-wrap: anywhere;
+}
+
+.kb-aturan {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: var(--space-3);
+  margin: var(--space-4) 0;
+}
+
+.kb-aturan .formula-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  text-align: center;
+}
+
+.kb-aturan__teks {
+  font-family: var(--font-mono);
+  font-size: 1.15rem;
+}

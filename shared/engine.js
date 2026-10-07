@@ -179,6 +179,10 @@
        miskonsepsi lupa ⅓ / ½ / memakai tₛ & opsi berpengecoh, kubus
        dibelah menjadi 6 limas, sisi limas isometrik, Lab Tuang limas →
        prisma, Lab Belah Kubus)
+   60. Masalah kontekstual gabungan prisma & limas
+   61. Komponen Cooperative Learning tipe Think-Pair-Share (bilah
+       fase, pertanyaan pikir → pasangan → sepakat dengan opsi acak,
+       juru bicara acak, kartu berbagi)
    ============================================================ */
 
 /* ============================================================
@@ -5024,16 +5028,20 @@ function bindIntegerOpSimulator(root, id, sim, opts, onChange) {
    (fase-d/mpi-2.2): hasil & tanda operasi, perkalian sebagai
    penjumlahan berulang pada garis bilangan, tabel aturan tanda
    (dugaan maupun perbandingan dugaan–data), dan pengerjaan
-   operasi campuran langkah demi langkah. Gaya .sign-grid* dan
-   .expr-steps* ada di shared/base.css.
+   operasi campuran langkah demi langkah, serta diagnosa miskonsepsi
+   hasil kali/bagi (diagnosaKaliBagiBulat — dipakai juga langkah isian
+   jenis 'hitung' pada seksi 29). Gaya .sign-grid* dan .expr-steps*
+   ada di shared/base.css.
    ============================================================ */
 
 /* Hasil a op b untuk op '+', '-', '×'/'*', ':'/'/'. */
 function hasilOperasiBulat(a, op, b) {
-  if (op === '-') return a - b;
-  if (op === '×' || op === '*') return a * b;
-  if (op === ':' || op === '/') return a / b;
-  return a + b;
+  var h;
+  if (op === '-') h = a - b;
+  else if (op === '×' || op === '*') h = a * b;
+  else if (op === ':' || op === '/') h = a / b;
+  else h = a + b;
+  return h === 0 ? 0 : h; /* buang −0, mis. 0 : (−7) */
 }
 
 /* Tanda bilangan: 'positif' | 'negatif' | 'nol'. */
@@ -5265,6 +5273,96 @@ function exprStepsDone(states) {
   return states.every(function (s) {
     return s.done;
   });
+}
+
+/*
+ * Memeriksa hasil a op b (op '×'/'*' atau ':'/'/') yang diketik murid dan
+ * mendiagnosis miskonsepsi khas. Isian dibaca parseBilanganBulat (seksi
+ * 29), jadi '−', '–', '+' di depan, dan titik pemisah ribuan diterima.
+ * Mengembalikan { benar, kode, pesan }; kode:
+ *   'benar'
+ *   'kosong' | 'tanda-belakang' | 'kata-min' | 'kurung' | 'bukan-bulat'
+ *   'tanda-hasil'  besar hasil tepat, tandanya terbalik (aturan tanda)
+ *   'jadi-jumlah'  dikerjakan sebagai a + b
+ *   'jadi-kurang'  dikerjakan sebagai a − b
+ *   'jadi-kali'    pembagian dikerjakan sebagai perkalian
+ *   'lain'
+ */
+function diagnosaKaliBagiBulat(str, a, op, b) {
+  var p = parseBilanganBulat(str);
+  if (!p.ok) return { benar: false, kode: p.kode, pesan: p.pesan };
+  var v = p.value;
+  var bagi = op === ':' || op === '/';
+  var h = hasilOperasiBulat(a, bagi ? ':' : '×', b);
+  var kalimat = fmtOperasiBulat(a, bagi ? ':' : '×', b);
+  var namaOp = bagi ? 'pembagian' : 'perkalian';
+  if (v === h) {
+    return { benar: true, kode: 'benar', pesan: 'Tepat! ' + kalimat + ' = ' + fmtBulat(h) + '.' };
+  }
+  if (h !== 0 && v === -h) {
+    var sama = a < 0 === b < 0;
+    return {
+      benar: false,
+      kode: 'tanda-hasil',
+      pesan:
+        'Besar hasilmu sudah tepat, tetapi <strong>tandanya terbalik</strong>. ' +
+        fmtBulat(a) +
+        ' dan ' +
+        fmtBulat(b) +
+        (sama
+          ? ' tandanya sama, jadi hasil ' + namaOp + 'nya <strong>positif</strong>.'
+          : ' tandanya berbeda, jadi hasil ' + namaOp + 'nya <strong>negatif</strong>.'),
+    };
+  }
+  if (bagi && v === a * b) {
+    return {
+      benar: false,
+      kode: 'jadi-kali',
+      pesan:
+        'Kamu mengalikan, padahal soalnya <strong>pembagian</strong>. Cari bilangan yang jika dikalikan ' +
+        fmtBulat(b) +
+        ' menghasilkan ' +
+        fmtBulat(a) +
+        '.',
+    };
+  }
+  if (v === a + b) {
+    return {
+      benar: false,
+      kode: 'jadi-jumlah',
+      pesan:
+        'Kamu menjumlahkan kedua bilangan, padahal soalnya <strong>' +
+        namaOp +
+        '</strong> (' +
+        kalimat +
+        ').',
+    };
+  }
+  if (v === a - b) {
+    return {
+      benar: false,
+      kode: 'jadi-kurang',
+      pesan:
+        'Kamu mengurangkan kedua bilangan, padahal soalnya <strong>' +
+        namaOp +
+        '</strong> (' +
+        kalimat +
+        ').',
+    };
+  }
+  return {
+    benar: false,
+    kode: 'lain',
+    pesan: bagi
+      ? 'Belum tepat. Pikirkan perkalian kebalikannya: ' +
+        (b < 0 ? '(' + fmtBulat(b) + ')' : fmtBulat(b)) +
+        ' × … = ' +
+        fmtBulat(a) +
+        ', lalu cek tandanya dengan aturan tanda.'
+      : 'Belum tepat. Hitung ' +
+        kalimat +
+        ': kalikan dulu tanpa tanda, lalu tentukan tandanya dengan aturan tanda.',
+  };
 }
 
 /* ============================================================
@@ -11646,12 +11744,15 @@ function makeCekStep() {
  *   step.jenis 'tulis' → diagnosaTulisBulat(input, step.jawab)
  *   step.jenis 'baca'  → cekCaraBaca(input, step.jawab)
  *   step.jenis 'hitung' → diagnosaOperasiBulat(input, step.a, step.op, step.b)
- *                        (hasil penjumlahan/pengurangan, seksi 17)
+ *                        (hasil penjumlahan/pengurangan, seksi 17) atau,
+ *                        untuk op ×/:, diagnosaKaliBagiBulat (seksi 18)
  * Isian kosong tidak dihitung sebagai percobaan.
  */
 function periksaCekStep(st, step, input) {
   var r;
   if (step.jenis === 'baca') r = cekCaraBaca(input, step.jawab);
+  else if (step.jenis === 'hitung' && ['×', '*', ':', '/'].indexOf(step.op) !== -1)
+    r = diagnosaKaliBagiBulat(input, step.a, step.op, step.b);
   else if (step.jenis === 'hitung') r = diagnosaOperasiBulat(input, step.a, step.op, step.b);
   else r = diagnosaTulisBulat(input, step.jawab);
   st.input = String(input || '').trim();
@@ -36344,4 +36445,337 @@ function bindGbgSisiPicker(root, id, objek, st, save, rerender) {
       fokus(st.benar ? '.lpk-pilih__umpan' : '[data-gbg-cek]');
     });
   }
+}
+
+/* ============================================================
+   61. KOMPONEN COOPERATIVE LEARNING TIPE THINK-PAIR-SHARE
+   Dipakai modul perkalian & pembagian bilangan bulat (fase-d/mpi-2.2).
+   Siklus Think-Pair-Share untuk satu pertanyaan pilihan ganda:
+     1. Pikir    murid memilih jawabannya SENDIRI (tidak dinilai) lalu
+                 menguncinya — akuntabilitas individu;
+     2. Pasang   murid mencatat jawaban pasangannya; media menunjukkan
+                 apakah jawaban keduanya sama atau berbeda dan memberi
+                 pemantik diskusi;
+     3. Sepakat  pasangan memilih jawaban kesepakatan yang DINILAI
+                 (boleh mencoba lagi sampai tepat, tiap opsi berumpan
+                 balik) — hasil inilah yang dibagikan ke kelas.
+   State tiap pertanyaan { pilih, kunci, pasangan, sepakat, cobaSepakat,
+   optionOrder } disiapkan ensureTpsStates() sehingga urutan opsi DIACAK
+   sekali lalu disimpan (dipakai ketiga fase agar mudah dibandingkan).
+     q = { id, tanya (HTML), opsi: [{ id, label }], correct,
+           umpan: { <idOpsi>: html }, diskusi }
+   Kartu berbagi (buildTpsShareCard) menampilkan juru bicara pasangan
+   yang dipilih acak (pilihJuruBicara) dan kalimat pemantik.
+   Gaya .tps-* ada di shared/base.css.
+   ============================================================ */
+
+var TPS_FASE = [
+  { id: 'pikir', ikon: '🤔', nama: 'Pikir', tugas: 'Kerjakan sendiri dulu' },
+  { id: 'pasang', ikon: '👥', nama: 'Berpasangan', tugas: 'Bandingkan & sepakati' },
+  { id: 'berbagi', ikon: '📢', nama: 'Berbagi', tugas: 'Jelaskan ke kelas' },
+];
+
+/*
+ * Bilah tiga fase TPS. `aktif` berupa id fase atau array id (mis.
+ * ['pikir', 'pasang'] untuk tahap yang memuat dua fase).
+ *   opts.pesan  instruksi singkat di bawah bilah (di-escape)
+ */
+function buildTpsBanner(aktif, opts) {
+  opts = opts || {};
+  var list = Array.isArray(aktif) ? aktif : [aktif];
+  return (
+    '<div class="tps-banner">' +
+    '<ol class="tps-banner__list" aria-label="Fase Think-Pair-Share">' +
+    TPS_FASE.map(function (f) {
+      var on = list.indexOf(f.id) !== -1;
+      return (
+        '<li class="tps-banner__step tps-banner__step--' +
+        f.id +
+        (on ? ' tps-banner__step--aktif" aria-current="step"' : '"') +
+        '>' +
+        '<span class="tps-banner__ikon" aria-hidden="true">' +
+        f.ikon +
+        '</span>' +
+        '<span class="tps-banner__nama">' +
+        esc(f.nama) +
+        '</span>' +
+        '<span class="tps-banner__tugas">' +
+        esc(f.tugas) +
+        '</span>' +
+        '</li>'
+      );
+    }).join('') +
+    '</ol>' +
+    (opts.pesan ? '<p class="tps-banner__pesan">' + esc(opts.pesan) + '</p>' : '') +
+    '</div>'
+  );
+}
+
+/* State default satu pertanyaan TPS. */
+function makeTpsState() {
+  return {
+    pilih: null,
+    kunci: false,
+    pasangan: null,
+    sepakat: null,
+    cobaSepakat: 0,
+    optionOrder: null,
+  };
+}
+
+/*
+ * Menyiapkan state[key] = { <idPertanyaan>: state TPS } untuk `list`;
+ * state lama dipertahankan, urutan opsi diacak sekali (ensureShuffledOrder).
+ */
+function ensureTpsStates(state, key, list) {
+  var map = state[key] && typeof state[key] === 'object' ? state[key] : {};
+  var next = {};
+  list.forEach(function (q) {
+    var st = map[q.id];
+    if (!st || typeof st !== 'object') st = makeTpsState();
+    ensureShuffledOrder(st, 'optionOrder', q.opsi);
+    next[q.id] = st;
+  });
+  state[key] = next;
+  return next;
+}
+
+/* Fase pertanyaan saat ini: 'pikir' | 'pasang' | 'sepakat' | 'selesai'. */
+function tpsTahap(q, st) {
+  if (!st || !st.kunci || !st.pilih) return 'pikir';
+  if (!st.pasangan) return 'pasang';
+  if (st.sepakat !== q.correct) return 'sepakat';
+  return 'selesai';
+}
+
+/* Membandingkan jawaban sendiri dan pasangan: 'sama' | 'beda' | null. */
+function tpsBanding(st) {
+  if (!st || !st.pilih || !st.pasangan) return null;
+  return st.pilih === st.pasangan ? 'sama' : 'beda';
+}
+
+function tpsSemuaSelesai(list, states) {
+  return list.every(function (q) {
+    return tpsTahap(q, states[q.id]) === 'selesai';
+  });
+}
+
+/*
+ * Memilih juru bicara secara acak dari nama anggota yang terisi.
+ * `rnd` opsional (default Math.random) agar dapat diuji.
+ */
+function pilihJuruBicara(anggota, rnd) {
+  var nama = (anggota || [])
+    .map(function (m) {
+      return String(m || '').trim();
+    })
+    .filter(function (m) {
+      return m;
+    });
+  if (!nama.length) return '';
+  var r = (rnd || Math.random)();
+  return nama[Math.min(nama.length - 1, Math.floor(r * nama.length))];
+}
+
+/*
+ * Satu pertanyaan Think-Pair-Share.
+ *   id    awalan id DOM (tombol kunci: id + 'Kunci')
+ *   q     pertanyaan (lihat kepala seksi)
+ *   st    state TPS (makeTpsState / ensureTpsStates)
+ *   opts.namaSaya, opts.namaPasangan   nama untuk label (di-escape)
+ *   opts.num                           nomor pertanyaan opsional
+ */
+function buildTpsQuestion(id, q, st, opts) {
+  opts = opts || {};
+  var tahap = tpsTahap(q, st);
+  var saya = String(opts.namaSaya || '').trim() || 'Aku';
+  var pasangan = String(opts.namaPasangan || '').trim() || 'pasanganku';
+  var order = st.optionOrder;
+
+  function langkah(ikon, label, status) {
+    return (
+      '<li class="tps-q__fase tps-q__fase--' +
+      status +
+      '"><span aria-hidden="true">' +
+      ikon +
+      '</span> ' +
+      esc(label) +
+      '</li>'
+    );
+  }
+  var urutan = ['pikir', 'pasang', 'sepakat', 'selesai'];
+  var posisi = urutan.indexOf(tahap);
+  function status(i) {
+    if (i < posisi) return 'selesai';
+    return i === posisi ? 'aktif' : 'nanti';
+  }
+
+  var html =
+    '<div class="quiz-item tps-q' +
+    (tahap === 'selesai' ? ' tps-q--selesai' : '') +
+    '" id="' +
+    id +
+    '">' +
+    '<p class="exercise-label">' +
+    (opts.num ? '<span class="dl-step__num">' + opts.num + '</span>' : '') +
+    q.tanya +
+    '</p>' +
+    '<ol class="tps-q__fase-list" aria-label="Langkah pertanyaan ini">' +
+    langkah('🤔', 'Pikir sendiri', status(0)) +
+    langkah('👥', 'Tanya pasangan', status(1)) +
+    langkah('🤝', 'Sepakati', status(2)) +
+    '</ol>';
+
+  if (tahap === 'pikir') {
+    return (
+      html +
+      '<p class="tps-q__instruksi">🤔 <strong>' +
+      esc(saya) +
+      '</strong>, pilih jawabanmu sendiri tanpa berdiskusi. Belum dinilai.</p>' +
+      buildChoiceGroup(q.opsi, order, {
+        chosen: st.pilih,
+        group: q.id,
+        attr: 'data-tps-pikir',
+      }) +
+      '<div class="btn-group btn-group--end">' +
+      '<button type="button" class="btn btn--primary btn--small" id="' +
+      id +
+      'Kunci"' +
+      (st.pilih ? '' : ' disabled') +
+      '>🔒 Kunci jawabanku</button>' +
+      '</div>' +
+      '</div>'
+    );
+  }
+
+  html +=
+    '<p class="tps-q__kunci">🔒 Jawaban ' +
+    esc(saya) +
+    ': <strong>' +
+    findOptionLabel(q.opsi, st.pilih) +
+    '</strong></p>';
+
+  if (tahap === 'pasang') {
+    return (
+      html +
+      '<p class="tps-q__instruksi">👥 Tanyakan jawaban <strong>' +
+      esc(pasangan) +
+      '</strong>, lalu ketuk jawaban yang ia pilih.</p>' +
+      buildChoiceGroup(q.opsi, order, {
+        chosen: null,
+        group: q.id,
+        attr: 'data-tps-pasang',
+      }) +
+      '</div>'
+    );
+  }
+
+  var banding = tpsBanding(st);
+  var benar = st.sepakat === q.correct;
+  html +=
+    '<p class="tps-q__kunci">👥 Jawaban ' +
+    esc(pasangan) +
+    ': <strong>' +
+    findOptionLabel(q.opsi, st.pasangan) +
+    '</strong></p>' +
+    buildFeedbackBox(
+      'info',
+      banding === 'sama' ? '🤝' : '⚖️',
+      (banding === 'sama'
+        ? '<strong>Jawaban kalian sama.</strong> Jelaskan alasan masing-masing dan pastikan alasannya juga sama kuat.'
+        : '<strong>Jawaban kalian berbeda!</strong> Masing-masing jelaskan alasannya, lalu cari jawaban yang paling bisa dipertanggungjawabkan.') +
+        (q.diskusi ? ' <em>' + q.diskusi + '</em>' : '')
+    ) +
+    '<p class="tps-q__instruksi">🤝 Pilih <strong>jawaban kesepakatan</strong> kalian berdua:</p>' +
+    buildChoiceGroup(q.opsi, order, {
+      chosen: st.sepakat,
+      correctId: benar ? q.correct : null,
+      grade: true,
+      locked: benar,
+      group: q.id,
+      attr: 'data-tps-sepakat',
+    }) +
+    buildGuidedChoiceFeedback(st.sepakat, benar, q.umpan);
+  return html + '</div>';
+}
+
+/* Memasang event buildTpsQuestion; `save` lalu `rerender` setelah perubahan. */
+function bindTpsQuestion(root, id, q, st, save, rerender) {
+  var el = root.querySelector('#' + id);
+  if (!el) return;
+  el.querySelectorAll('[data-tps-pikir]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      if (st.kunci) return;
+      st.pilih = btn.dataset.tpsPikir;
+      save();
+      rerender();
+    });
+  });
+  var kunci = el.querySelector('#' + id + 'Kunci');
+  if (kunci) {
+    kunci.addEventListener('click', function () {
+      if (!st.pilih) return;
+      st.kunci = true;
+      save();
+      rerender();
+    });
+  }
+  el.querySelectorAll('[data-tps-pasang]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      st.pasangan = btn.dataset.tpsPasang;
+      save();
+      rerender();
+    });
+  });
+  el.querySelectorAll('[data-tps-sepakat]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      if (st.sepakat === q.correct) return;
+      st.sepakat = btn.dataset.tpsSepakat;
+      st.cobaSepakat = (st.cobaSepakat || 0) + 1;
+      save();
+      rerender();
+    });
+  });
+}
+
+/*
+ * Kartu fase Berbagi: juru bicara pasangan, kalimat pemantik, tombol
+ * "Acak ulang juru bicara" (id + 'Acak') dan "Kami sudah berbagi"
+ * (id + 'Sudah'; hilang setelah opts.sudah).
+ *   opts.juruBicara  nama (di-escape)
+ *   opts.pemantik    array kalimat pemantik (HTML)
+ *   opts.sudah       true → kartu ditandai selesai
+ */
+function buildTpsShareCard(id, opts) {
+  opts = opts || {};
+  return (
+    '<div class="tps-share' +
+    (opts.sudah ? ' tps-share--sudah' : '') +
+    '" id="' +
+    id +
+    '">' +
+    '<p class="tps-share__label">📢 Juru bicara pasanganmu</p>' +
+    '<p class="tps-share__nama">' +
+    esc(opts.juruBicara || '—') +
+    '</p>' +
+    '<p class="tps-share__sub">Gunakan kalimat pemantik ini saat berbagi ke kelas:</p>' +
+    '<ol class="tps-share__pemantik">' +
+    (opts.pemantik || [])
+      .map(function (p) {
+        return '<li>' + p + '</li>';
+      })
+      .join('') +
+    '</ol>' +
+    (opts.sudah
+      ? '<p class="tps-share__done">✓ Pasangan kalian sudah berbagi. Dengarkan dan tanggapi pasangan lain.</p>'
+      : '<div class="btn-group btn-group--spread">' +
+        '<button type="button" class="btn btn--ghost btn--small" id="' +
+        id +
+        'Acak">🎲 Acak ulang juru bicara</button>' +
+        '<button type="button" class="btn btn--primary btn--small" id="' +
+        id +
+        'Sudah">✓ Kami sudah berbagi</button>' +
+        '</div>') +
+    '</div>'
+  );
 }
