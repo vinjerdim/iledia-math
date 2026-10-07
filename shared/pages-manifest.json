@@ -55,6 +55,14 @@
     "stageCount": 11,
     "extraBody": "partials/reset-modal.html"
   },
+  "fase-d/mpi-2.2": {
+    "title": "Perkalian & Pembagian Bilangan Bulat dalam Masalah Kontekstual — Matematika Fase D",
+    "description": "Media pembelajaran interaktif berbasis Cooperative Learning tipe Think-Pair-Share untuk menerapkan perkalian dan pembagian bilangan bulat beserta aturan tandanya dalam masalah kontekstual: suhu, kedalaman, keuangan, dan skor, melalui penjumlahan berulang pada garis bilangan, tabel pola, tabel aturan tanda (tebakan vs data), pertanyaan Pikir–Tanya Pasangan–Sepakati, juru bicara acak, operasi campuran langkah demi langkah, dan uji mandiri berdiagnosa.",
+    "kicker": "Matematika — Fase D (SMP)",
+    "h1": "Perkalian & Pembagian Bilangan Bulat dalam Masalah Kontekstual",
+    "stageCount": 10,
+    "extraBody": "partials/reset-modal.html"
+  },
   "fase-f/mpi-1.1": {
     "title": "Konsep Barisan Aritmetika & Beda — Matematika Fase F",
     "description": "Media pembelajaran interaktif berbasis Inquiry Learning untuk mengidentifikasi dan menjelaskan konsep barisan aritmetika serta menentukan beda dari suatu barisan bilangan.",
