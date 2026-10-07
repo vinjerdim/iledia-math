@@ -183,6 +183,10 @@
    61. Komponen Cooperative Learning tipe Think-Pair-Share (bilah
        fase, pertanyaan pikir → pasangan → sepakat dengan opsi acak,
        juru bicara acak, kartu berbagi)
+   62. Pecahan: penjumlahan & pengurangan dalam masalah kontekstual
+       (nilai rasional eksak, kalimat operasi, samakan penyebut, isian
+       berdiagnosa miskonsepsi & opsi berpengecoh, Lab Pita potong
+       per utuh, langkah isian operasi)
    ============================================================ */
 
 /* ============================================================
@@ -36778,4 +36782,721 @@ function buildTpsShareCard(id, opts) {
         '</div>') +
     '</div>'
   );
+}
+
+/* ============================================================
+   62. PECAHAN — PENJUMLAHAN & PENGURANGAN DALAM MASALAH KONTEKSTUAL
+   Dipakai modul penjumlahan & pengurangan bilangan rasional (pecahan)
+   dalam masalah kontekstual (fase-d/mpi-2.3). Memakai ulang seksi 1
+   (gcd, kpk, shuffleArray), seksi 7 (ensureShuffledOrder, buildHint*),
+   seksi 10 (buildFracInline), seksi 35 (parseTeksPecahan) dan seksi
+   36/38 (pecahanDari, pecahanBiasaBertanda, teksPecahanNilai,
+   tulisTerpadu).
+
+   Bilangan di DATA ditulis sebagai STRING bentuk aslinya: '3/4',
+   '2 1/2', '-3/4', atau bulat '5'. Nilai eksak disimpan sebagai
+   rasional { num, den } (tanda di pembilang, den > 0).
+   Isinya:
+     • rasionalDari / sederhanakanRasional / operasiPecahan /
+       teksRasional — nilai & hasil operasi paling sederhana;
+     • fmtOperasiPecahan — kalimat matematika "a + b", "a − (−b)";
+     • langkahSamakanPenyebut — KPK & pecahan senilai tiap suku;
+     • parseIsianRasional — isian bulat/biasa/campuran/negatif;
+     • diagnosaOperasiPecahan + PESAN_OPERASI_PECAHAN — miskonsepsi
+       penyebut ikut dijumlah, pembilang tidak ikut dikalikan, operasi
+       terbalik, salah tanda, meminjam, lupa bilangan bulat, belum
+       sederhana;
+     • opsiOperasiPecahan — pilihan berpengecoh (urutan wajar; app.js
+       yang mengacak);
+     • Lab Pita (pilihanPenyebutPita, cekPenyebutPita, ensurePitaState,
+       pitaPas, buildPitaOperasi, bindPitaOperasi) — murid memilih
+       menjadi berapa potong setiap 1 utuh dipotong; hanya kelipatan
+       persekutuan penyebut yang membuat potongan pas;
+     • langkah isian operasi (makeIsianOperasi, periksaIsianOperasi,
+       buildIsianOperasi, bindIsianOperasi) dengan umpan balik diagnosa.
+   Gaya .pita-op* ada di shared/base.css.
+   ============================================================ */
+
+/* Teks/angka/objek → rasional { num, den } (belum disederhanakan, den > 0). */
+function rasionalDari(x) {
+  if (typeof x === 'number') {
+    if (!isFinite(x) || Math.round(x) !== x) throw new Error('Bukan bilangan bulat: ' + x);
+    return { num: x, den: 1 };
+  }
+  if (x && typeof x === 'object') {
+    if ('whole' in x || 'neg' in x) return pecahanBiasaBertanda(x);
+    return x.den < 0 ? { num: -x.num, den: -x.den } : { num: x.num, den: x.den };
+  }
+  var s = String(x == null ? '' : x)
+    .trim()
+    .replace(/[−–]/g, '-');
+  if (/^[+-]?\d+$/.test(s)) return { num: parseInt(s, 10) || 0, den: 1 };
+  return pecahanBiasaBertanda(s);
+}
+
+/* Bentuk paling sederhana; tanda pindah ke pembilang, nol → 0/1. */
+function sederhanakanRasional(v) {
+  var num = v.den < 0 ? -v.num : v.num;
+  var den = Math.abs(v.den);
+  if (num === 0) return { num: 0, den: 1 };
+  var f = gcd(num, den) || 1;
+  return { num: num / f, den: den / f };
+}
+
+function samaRasional(a, b) {
+  return a.num * b.den === b.num * a.den;
+}
+
+/* Hasil a op b ('+' | '-') belum disederhanakan, dengan penyebut KPK. */
+function hitungRasional(a, op, b) {
+  if (op !== '+' && op !== '-') throw new Error('Operasi tidak dikenal: ' + op);
+  var p = rasionalDari(a);
+  var q = rasionalDari(b);
+  var d = kpk(p.den, q.den);
+  var n1 = p.num * (d / p.den);
+  var n2 = q.num * (d / q.den);
+  return { num: op === '+' ? n1 + n2 : n1 - n2, den: d };
+}
+
+/* Hasil eksak paling sederhana dari a op b. */
+function operasiPecahan(a, op, b) {
+  return sederhanakanRasional(hitungRasional(a, op, b));
+}
+
+/* { num, den } → teks; bentuk 'campuran' (default) atau 'biasa'. */
+function teksRasional(v, bentuk) {
+  var sign = v.num < 0 && v.den > 0 ? '−' : '';
+  var n = Math.abs(v.num);
+  var d = Math.abs(v.den);
+  if (n === 0) return '0';
+  if (d === 1) return sign + n;
+  if (bentuk === 'biasa') return sign + n + '/' + d;
+  var w = Math.floor(n / d);
+  var r = n - w * d;
+  if (!r) return sign + w;
+  return sign + (w ? w + ' ' : '') + r + '/' + d;
+}
+
+/* Satu suku kalimat operasi; suku negatif di posisi kedua diberi kurung. */
+function fmtSukuPecahan(x, kurung) {
+  var t = tulisTerpadu(String(x));
+  return kurung && t.charAt(0) === '−' ? '(' + t + ')' : t;
+}
+
+/* Kalimat matematika: fmtOperasiPecahan('-1/2', '-', '-3/4') → "−1/2 − (−3/4)". */
+function fmtOperasiPecahan(a, op, b) {
+  return fmtSukuPecahan(a) + (op === '+' ? ' + ' : ' − ') + fmtSukuPecahan(b, true);
+}
+
+/*
+ * Menyamakan penyebut dua suku (campuran diubah ke pecahan biasa dulu):
+ *   langkahSamakanPenyebut('1/2', '1/3') →
+ *     { kpk: 6, a: {3, 6}, b: {2, 6}, faktorA: 3, faktorB: 2 }
+ */
+function langkahSamakanPenyebut(a, b) {
+  var p = rasionalDari(a);
+  var q = rasionalDari(b);
+  var d = kpk(p.den, q.den);
+  var fa = d / p.den;
+  var fb = d / q.den;
+  return {
+    kpk: d,
+    a: { num: p.num * fa, den: d },
+    b: { num: q.num * fb, den: d },
+    faktorA: fa,
+    faktorB: fb,
+  };
+}
+
+/*
+ * Mengurai isian jawaban: bulat "3", biasa "7/12", campuran "2 1/12",
+ * negatif "−1/2". Mengembalikan { value: {num, den}, bentuk, p, error }:
+ *   bentuk  'bulat' | 'biasa' | 'campuran'
+ *   p       bentuk tertulis { whole, num, den, neg } (untuk cek sederhana)
+ *   error   null | 'kosong' | 'format' | 'nol-penyebut'
+ */
+function parseIsianRasional(str) {
+  var s = String(str == null ? '' : str)
+    .trim()
+    .replace(/[−–]/g, '-');
+  if (!s) return { value: null, bentuk: null, p: null, error: 'kosong' };
+  var bulat = /^([+-])? ?(\d{1,6})$/.exec(s);
+  if (bulat) {
+    var n = parseInt(bulat[2], 10);
+    return {
+      value: { num: bulat[1] === '-' && n ? -n : n, den: 1 },
+      bentuk: 'bulat',
+      p: { whole: n, num: 0, den: 1, neg: bulat[1] === '-' && n > 0 },
+      error: null,
+    };
+  }
+  var r = parseTeksPecahan(s);
+  if (r.error) return { value: null, bentuk: null, p: null, error: r.error };
+  return {
+    value: pecahanBiasaBertanda(r.value),
+    bentuk: r.value.whole ? 'campuran' : 'biasa',
+    p: r.value,
+    error: null,
+  };
+}
+
+/* Apakah bentuk tertulis sudah paling sederhana? */
+function isianSederhana(r) {
+  if (r.bentuk === 'bulat') return true;
+  if (r.p.num === 0) return false;
+  return gcd(r.p.num, r.p.den) === 1;
+}
+
+/* Bilangan bulat & bagian pecahan suatu suku (bertanda sama). */
+function uraiSukuPecahan(x) {
+  var v = rasionalDari(x);
+  var neg = v.num < 0;
+  var n = Math.abs(v.num);
+  var w = Math.floor(n / v.den);
+  return { neg: neg, whole: w, frac: { num: (neg ? -1 : 1) * (n - w * v.den), den: v.den } };
+}
+
+/* Suku ditulis sebagai pecahan biasa (bukan campuran, bukan bulat)? */
+function sukuPecahanBiasa(x) {
+  var s = String(x).trim();
+  return s.indexOf('/') !== -1 && !/\d\s+\d/.test(s);
+}
+
+/*
+ * Hasil yang muncul dari miskonsepsi khas a op b — { kode: {num, den} }.
+ * Hanya pola yang masuk akal untuk soal itu yang diisi.
+ */
+function hasilMiskonsepsiPecahan(a, op, b) {
+  var out = {};
+  var p = rasionalDari(a);
+  var q = rasionalDari(b);
+  var biasa = sukuPecahanBiasa(a) && sukuPecahanBiasa(b);
+  if (biasa) {
+    var dNaif = op === '+' ? p.den + q.den : p.den - q.den;
+    if (dNaif) {
+      out['penyebut-dijumlah'] = { num: op === '+' ? p.num + q.num : p.num - q.num, den: dNaif };
+    }
+    if (p.den !== q.den) {
+      out['pembilang-tidak-diubah'] = {
+        num: op === '+' ? p.num + q.num : p.num - q.num,
+        den: kpk(p.den, q.den),
+      };
+    }
+  }
+  var ua = uraiSukuPecahan(a);
+  var ub = uraiSukuPecahan(b);
+  if (
+    op === '-' &&
+    !ua.neg &&
+    !ub.neg &&
+    ua.whole >= ub.whole &&
+    ua.frac.num * ub.frac.den < ub.frac.num * ua.frac.den
+  ) {
+    var selisih = hitungRasional(ub.frac, '-', ua.frac);
+    out.meminjam = hitungRasional({ num: ua.whole - ub.whole, den: 1 }, '+', selisih);
+  }
+  if (ua.whole || ub.whole) out['lupa-bulat'] = hitungRasional(ua.frac, op, ub.frac);
+  out['operasi-terbalik'] = hitungRasional(a, op === '+' ? '-' : '+', b);
+  var benar = hitungRasional(a, op, b);
+  if (benar.num) out['salah-tanda'] = { num: -benar.num, den: benar.den };
+  return out;
+}
+
+var URUTAN_MISKONSEPSI_PECAHAN = [
+  'penyebut-dijumlah',
+  'pembilang-tidak-diubah',
+  'meminjam',
+  'salah-tanda',
+  'operasi-terbalik',
+  'lupa-bulat',
+];
+
+/* Prioritas pengecoh pilihan ganda: yang paling sering ditulis murid dulu. */
+var URUTAN_PENGECOH_PECAHAN = [
+  'penyebut-dijumlah',
+  'pembilang-tidak-diubah',
+  'meminjam',
+  'lupa-bulat',
+  'operasi-terbalik',
+  'salah-tanda',
+];
+
+var PESAN_OPERASI_PECAHAN = {
+  kosong: 'Tulis jawabanmu terlebih dahulu, misalnya 7/12, 2 1/4, atau −1/2.',
+  format:
+    'Tulis jawaban sebagai pecahan dengan garis miring (3/4), pecahan campuran (2 1/4), atau bilangan bulat (3). Desimal belum dipakai di sini.',
+  'nol-penyebut': 'Penyebut tidak boleh 0. Periksa lagi penyebut jawabanmu.',
+  'belum-sederhana':
+    'Nilainya sudah tepat! Sekarang <strong>sederhanakan</strong>: bagi pembilang dan penyebut dengan FPB-nya.',
+  'penyebut-dijumlah':
+    'Penyebutnya ikut kamu jumlahkan/kurangkan. Penyebut adalah <strong>ukuran potongan</strong>, bukan banyaknya. Samakan penyebut lebih dulu, lalu hanya <strong>pembilang</strong> yang dijumlahkan atau dikurangkan.',
+  'pembilang-tidak-diubah':
+    'Penyebut bersamanya sudah benar, tetapi pembilang belum ikut diubah. Kalikan pembilang dengan bilangan yang sama seperti penyebutnya agar pecahannya <strong>senilai</strong>.',
+  'operasi-terbalik':
+    'Sepertinya operasinya tertukar. Baca lagi soalnya: apakah ditambah (+) atau dikurangi (−)?',
+  'salah-tanda':
+    'Angkanya tepat, tetapi tandanya terbalik. Bandingkan besar kedua suku: hasilnya positif atau negatif?',
+  meminjam:
+    'Bagian pecahan suku pertama lebih kecil, jadi tidak bisa langsung dikurangi. <strong>Pinjam 1 utuh</strong> dari bilangan bulatnya (atau ubah ke pecahan biasa dulu).',
+  'lupa-bulat':
+    'Bagian pecahannya sudah dihitung, tetapi <strong>bilangan bulatnya</strong> terlupa. Ikutkan juga bilangan bulatnya.',
+  salah:
+    'Belum tepat. Ikuti langkahnya: samakan penyebut, jumlahkan/kurangkan pembilang, lalu sederhanakan.',
+};
+
+/*
+ * Memeriksa isian teks jawaban a op b. Mengembalikan { benar, kode, pesan }:
+ *   kode 'benar' | 'kosong' | 'format' | 'nol-penyebut' | 'belum-sederhana'
+ *   | salah satu URUTAN_MISKONSEPSI_PECAHAN | 'salah'.
+ * Jawaban benar boleh berbentuk biasa maupun campuran asal paling sederhana.
+ */
+function diagnosaOperasiPecahan(jawab, a, op, b) {
+  function hasil(kode, pesan) {
+    return { benar: kode === 'benar', kode: kode, pesan: pesan || PESAN_OPERASI_PECAHAN[kode] };
+  }
+  var r = parseIsianRasional(jawab);
+  if (r.error) return hasil(r.error);
+  var benar = operasiPecahan(a, op, b);
+  if (samaRasional(r.value, benar)) {
+    if (!isianSederhana(r)) return hasil('belum-sederhana');
+    var campur = teksRasional(benar);
+    var biasa = teksRasional(benar, 'biasa');
+    var lain = r.bentuk === 'biasa' && campur !== biasa ? ' Bisa juga ditulis ' + campur + '.' : '';
+    return hasil('benar', 'Tepat! ' + fmtOperasiPecahan(a, op, b) + ' = ' + campur + '.' + lain);
+  }
+  var pola = hasilMiskonsepsiPecahan(a, op, b);
+  for (var i = 0; i < URUTAN_MISKONSEPSI_PECAHAN.length; i++) {
+    var k = URUTAN_MISKONSEPSI_PECAHAN[i];
+    if (pola[k] && samaRasional(r.value, pola[k])) return hasil(k);
+  }
+  return hasil('salah');
+}
+
+var UMPAN_OPSI_PECAHAN = {
+  benar: 'Tepat! Penyebut disamakan, pembilang dioperasikan, lalu hasilnya disederhanakan.',
+  'penyebut-dijumlah':
+    'Pilihan ini muncul bila penyebut ikut dijumlah/dikurang. Penyebut adalah ukuran potongan — samakan dulu, baru pembilangnya yang dihitung.',
+  'pembilang-tidak-diubah':
+    'Pilihan ini muncul bila penyebut sudah disamakan tetapi pembilang tidak ikut dikalikan.',
+  meminjam: 'Pilihan ini muncul bila bagian pecahan dikurangkan terbalik tanpa meminjam 1 utuh.',
+  'lupa-bulat': 'Pilihan ini muncul bila bilangan bulatnya terlupa.',
+  'operasi-terbalik': 'Pilihan ini hasil operasi kebalikannya. Baca lagi: ditambah atau dikurangi?',
+  'salah-tanda': 'Angkanya mirip, tetapi tandanya terbalik.',
+  dekat: 'Hasilnya meleset sedikit. Hitung ulang pembilang setelah penyebut disamakan.',
+};
+
+/*
+ * Empat pilihan untuk a op b: { id, label, benar, umpan }. Pilihan
+ * pertama selalu yang benar (id 'benar'); pengecoh dari miskonsepsi
+ * (label ditulis seperti yang biasa ditulis murid), lalu nilai dekat
+ * bila kurang. Nilai & label dijamin berbeda. TIDAK diacak di sini.
+ */
+function opsiOperasiPecahan(a, op, b) {
+  var benar = operasiPecahan(a, op, b);
+  var out = [
+    { id: 'benar', label: teksRasional(benar), benar: true, umpan: UMPAN_OPSI_PECAHAN.benar },
+  ];
+  var nilai = [benar];
+  function tambah(id, v, label, umpan) {
+    if (out.length >= 4) return;
+    var s = sederhanakanRasional(v);
+    for (var i = 0; i < nilai.length; i++) if (samaRasional(nilai[i], s)) return;
+    out.push({ id: id, label: label, benar: false, umpan: umpan });
+    nilai.push(s);
+  }
+  var pola = hasilMiskonsepsiPecahan(a, op, b);
+  URUTAN_PENGECOH_PECAHAN.forEach(function (k) {
+    if (!pola[k]) return;
+    var v = pola[k];
+    var mentah = k === 'penyebut-dijumlah' || k === 'pembilang-tidak-diubah';
+    var label = mentah
+      ? teksRasional({ num: v.den < 0 ? -v.num : v.num, den: Math.abs(v.den) }, 'biasa')
+      : teksRasional(sederhanakanRasional(v));
+    tambah(k, v, label, UMPAN_OPSI_PECAHAN[k]);
+  });
+  var d = langkahSamakanPenyebut(a, b).kpk;
+  for (var j = 1; out.length < 4 && j <= 6; j++) {
+    [1, -1].forEach(function (arah) {
+      var v = sederhanakanRasional({
+        num: benar.num * d + arah * j * benar.den,
+        den: benar.den * d,
+      });
+      tambah('dekat-' + (arah > 0 ? '+' : '-') + j, v, teksRasional(v), UMPAN_OPSI_PECAHAN.dekat);
+    });
+  }
+  return out;
+}
+
+/* ---------- Lab Pita ---------- */
+
+/* 'kpk' | 'kelipatan' | 'tidak-pas' — apakah n potong per utuh pas untuk kedua suku? */
+function cekPenyebutPita(a, b, n) {
+  n = parseInt(n, 10);
+  var p = sederhanakanRasional(rasionalDari(a));
+  var q = sederhanakanRasional(rasionalDari(b));
+  if (!n || n % p.den || n % q.den) return 'tidak-pas';
+  return n === kpk(p.den, q.den) ? 'kpk' : 'kelipatan';
+}
+
+/*
+ * Empat calon "banyak potong per utuh": KPK, jumlah penyebut (miskonsepsi),
+ * hasil kali penyebut, 2 × KPK, penyebut terbesar + 1 … (berbeda, 2–36).
+ * Urutan wajar; app.js/ensurePitaState yang mengacak.
+ */
+function pilihanPenyebutPita(a, b) {
+  var p = sederhanakanRasional(rasionalDari(a));
+  var q = sederhanakanRasional(rasionalDari(b));
+  var k = kpk(p.den, q.den);
+  var calon = [k, p.den + q.den, p.den * q.den, 2 * k, Math.max(p.den, q.den) + 1, k + 1, k - 1];
+  var out = [];
+  calon.forEach(function (n) {
+    if (out.length < 4 && n >= 2 && n <= 36 && out.indexOf(n) === -1) out.push(n);
+  });
+  return out;
+}
+
+/* state[key] = { order: id pilihan teracak (string), pilih: n | null, coba }. */
+function ensurePitaState(state, key, a, b) {
+  var st = state[key];
+  if (!st || typeof st !== 'object') st = { order: null, pilih: null, coba: 0 };
+  var opsi = pilihanPenyebutPita(a, b).map(function (n) {
+    return { id: String(n) };
+  });
+  ensureShuffledOrder(st, 'order', opsi);
+  if (typeof st.coba !== 'number') st.coba = 0;
+  if (st.pilih !== null && optionIds(opsi).indexOf(String(st.pilih)) === -1) st.pilih = null;
+  state[key] = st;
+  return st;
+}
+
+/* Lab selesai bila potongan yang dipilih pas untuk kedua suku. */
+function pitaPas(a, b, st) {
+  return !!st.pilih && cekPenyebutPita(a, b, st.pilih) !== 'tidak-pas';
+}
+
+/* Sel-sel satu baris pita: nilai v (≥ 0) di `units` utuh, n potong per utuh. */
+function selPita(v, n, units, cls, ambil) {
+  var isi = (v.num / v.den) * n;
+  var ambilDari = ambil ? isi - ambil : Infinity;
+  var html = '';
+  for (var u = 0; u < units; u++) {
+    html += '<span class="pita-op__unit" style="grid-template-columns:repeat(' + n + ',1fr)">';
+    for (var j = 0; j < n; j++) {
+      var i = u * n + j;
+      var f = Math.max(0, Math.min(1, isi - i));
+      var c = 'pita-op__cell';
+      var gaya = '';
+      if (f >= 1 - 1e-9) c += ' ' + cls;
+      else if (f > 1e-9) {
+        c += ' ' + cls + ' is-part';
+        gaya = ' style="--fill:' + Math.round(f * 100) + '%"';
+      }
+      if (f > 1e-9 && i >= ambilDari - 1e-9) c += ' is-taken';
+      html += '<span class="' + c + '"' + gaya + '></span>';
+    }
+    html += '</span>';
+  }
+  return html;
+}
+
+function barisPita(label, sel, mod) {
+  return (
+    '<div class="pita-op__row' +
+    (mod ? ' pita-op__row--' + mod : '') +
+    '"><span class="pita-op__label">' +
+    label +
+    '</span><span class="pita-op__bar">' +
+    sel +
+    '</span></div>'
+  );
+}
+
+/*
+ * Lab Pita untuk a op b (nilai suku & hasil ≥ 0). Sebelum memilih, tiap
+ * pita dipotong menurut penyebutnya sendiri. Setelah memilih n, kedua pita
+ * dipotong n per utuh: bila tidak pas, potongan terakhir hanya terarsir
+ * sebagian (.is-part). Bila pas, muncul baris hasil: penjumlahan menggabung
+ * potongan A (.is-a) dan B (.is-b); pengurangan mencoret potongan A yang
+ * diambil (.is-taken).
+ *   st    dari ensurePitaState
+ *   opts  { namaA, namaB, tetap }
+ *         tetap  true → tampilan saja (tanpa tombol pilihan & umpan
+ *                balik), mis. st = { pilih: penyebut } untuk soal
+ *                berpenyebut sama
+ */
+function buildPitaOperasi(id, a, op, b, st, opts) {
+  opts = opts || {};
+  var p = sederhanakanRasional(rasionalDari(a));
+  var q = sederhanakanRasional(rasionalDari(b));
+  var hasil = operasiPecahan(a, op, b);
+  var units = Math.max(
+    1,
+    Math.ceil(Math.max(p.num / p.den, q.num / q.den, Math.abs(hasil.num) / hasil.den) - 1e-9)
+  );
+  var n = st.pilih ? parseInt(st.pilih, 10) : 0;
+  var kode = n ? cekPenyebutPita(a, b, n) : null;
+  var pas = kode && kode !== 'tidak-pas';
+  var tombol = (st.order || [])
+    .map(function (v) {
+      var on = String(st.pilih) === String(v);
+      return (
+        '<button type="button" class="pita-op__pick' +
+        (on ? (pas ? ' is-correct' : ' is-incorrect') : '') +
+        '" data-pita="' +
+        esc(id) +
+        '" data-pita-n="' +
+        esc(String(v)) +
+        '" aria-pressed="' +
+        (on ? 'true' : 'false') +
+        '"' +
+        (pas ? ' disabled' : '') +
+        '>' +
+        esc(String(v)) +
+        '</button>'
+      );
+    })
+    .join('');
+  var nA = n || p.den;
+  var nB = n || q.den;
+  var rows =
+    barisPita(
+      (opts.namaA ? esc(opts.namaA) + ' ' : '') + buildFracInlineTeks(a),
+      selPita(p, nA, units, 'is-a'),
+      'a'
+    ) +
+    barisPita(
+      (opts.namaB ? esc(opts.namaB) + ' ' : '') + buildFracInlineTeks(b),
+      selPita(q, nB, units, 'is-b'),
+      'b'
+    );
+  if (pas) {
+    var cA = (p.num / p.den) * n;
+    var cB = (q.num / q.den) * n;
+    var selHasil = op === '+' ? selPitaGabung(cA, cB, n, units) : selPita(p, n, units, 'is-a', cB);
+    rows += barisPita(op === '+' ? 'Digabung' : 'Diambil', selHasil, 'hasil');
+  }
+  var umpan = '';
+  if (kode === 'kpk') {
+    umpan = buildFeedbackBox(
+      'success',
+      '✓',
+      '<strong>Pas!</strong> Setiap 1 utuh dipotong menjadi ' +
+        n +
+        ' bagian. ' +
+        n +
+        ' adalah KPK penyebut ' +
+        p.den +
+        ' dan ' +
+        q.den +
+        ', jadi potongannya paling besar sekaligus pas untuk kedua pita.'
+    );
+  } else if (kode === 'kelipatan') {
+    umpan = buildFeedbackBox(
+      'info',
+      '👍',
+      '<strong>Pas juga!</strong> ' +
+        n +
+        ' habis dibagi ' +
+        p.den +
+        ' dan ' +
+        q.den +
+        ', tetapi bukan yang terkecil (KPK-nya ' +
+        kpk(p.den, q.den) +
+        '). Hasilnya nanti perlu disederhanakan.'
+    );
+  } else if (kode === 'tidak-pas') {
+    umpan = buildFeedbackBox(
+      'warning',
+      '✂️',
+      '<strong>Belum pas.</strong> Dengan ' +
+        n +
+        ' potong per utuh, ada potongan yang hanya terarsir sebagian. Pilih bilangan yang habis dibagi ' +
+        p.den +
+        ' <em>dan</em> ' +
+        q.den +
+        '.'
+    );
+  }
+  var kepala = opts.tetap
+    ? ''
+    : '<p class="pita-op__tanya">✂️ Potong setiap 1 utuh menjadi berapa bagian sama besar?</p>' +
+      '<div class="pita-op__picks" role="group" aria-label="Banyak potongan per utuh">' +
+      tombol +
+      '</div>';
+  if (opts.tetap) umpan = '';
+  return (
+    '<div class="pita-op' +
+    (opts.tetap ? ' pita-op--tetap' : '') +
+    '" id="' +
+    esc(id) +
+    '">' +
+    kepala +
+    '<figure class="pita-op__fig" role="img" aria-label="' +
+    esc(
+      'Pita ' +
+        fmtOperasiPecahan(a, op, b) +
+        (n
+          ? ', setiap utuh dipotong ' + n + ' bagian'
+          : ', dipotong menurut penyebut masing-masing')
+    ) +
+    '">' +
+    rows +
+    '</figure>' +
+    (umpan ? '<div class="pita-op__umpan">' + umpan + '</div>' : '') +
+    '</div>'
+  );
+}
+
+/* Label pecahan bersusun dari teks suku ('1 1/2', '3/4', '5'). */
+function buildFracInlineTeks(x) {
+  var u = uraiSukuPecahan(x);
+  var fn = Math.abs(u.frac.num);
+  if (!fn) return esc(tulisTerpadu(String(x)));
+  return (u.neg ? '−' : '') + buildFracInline(fn, u.frac.den, u.whole || null);
+}
+
+/* Baris hasil penjumlahan: cA potong A lalu cB potong B. */
+function selPitaGabung(cA, cB, n, units) {
+  var html = '';
+  for (var u = 0; u < units; u++) {
+    html += '<span class="pita-op__unit" style="grid-template-columns:repeat(' + n + ',1fr)">';
+    for (var j = 0; j < n; j++) {
+      var i = u * n + j;
+      var c = 'pita-op__cell';
+      if (i < cA) c += ' is-a';
+      else if (i < cA + cB) c += ' is-b';
+      html += '<span class="' + c + '"></span>';
+    }
+    html += '</span>';
+  }
+  return html;
+}
+
+/* Memasang tombol pilihan Lab Pita; pilihan terkunci setelah pas. */
+function bindPitaOperasi(root, id, a, b, st, save, rerender) {
+  root.querySelectorAll('[data-pita="' + id + '"]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      if (pitaPas(a, b, st)) return;
+      st.pilih = parseInt(btn.dataset.pitaN, 10);
+      st.coba += 1;
+      save();
+      rerender();
+    });
+  });
+}
+
+/* ---------- langkah isian operasi ---------- */
+
+function makeIsianOperasi() {
+  return { input: '', done: false, kode: null, pesan: '', attempts: 0, hintLevel: 0 };
+}
+
+/* Memeriksa isian & menyimpannya ke st. Isian kosong tidak dihitung. */
+function periksaIsianOperasi(st, soal, input) {
+  st.input = String(input == null ? '' : input).trim();
+  var r = diagnosaOperasiPecahan(st.input, soal.a, soal.op, soal.b);
+  st.kode = r.kode;
+  st.pesan = r.pesan;
+  if (r.kode === 'kosong') return r;
+  st.attempts += 1;
+  st.done = r.benar;
+  return r;
+}
+
+/*
+ * Langkah isian hasil a op b dengan umpan balik diagnosa.
+ *   soal { a, op, b, label (HTML), hints, temuan, satuan, placeholder }
+ */
+function buildIsianOperasi(id, st, soal, num) {
+  var head =
+    '<p class="dl-step__label">' +
+    (num ? '<span class="dl-step__num">' + num + '</span>' : '') +
+    soal.label +
+    '</p>';
+  if (st.done) {
+    return (
+      '<div class="dl-step dl-step--done">' +
+      head +
+      '<p class="dl-step__answer">✓ ' +
+      esc(fmtOperasiPecahan(soal.a, soal.op, soal.b)) +
+      ' = <strong>' +
+      esc(teksRasional(operasiPecahan(soal.a, soal.op, soal.b))) +
+      '</strong>' +
+      (soal.satuan ? ' ' + esc(soal.satuan) : '') +
+      '</p>' +
+      (soal.temuan ? buildFeedbackBox('success', '💡', soal.temuan) : '') +
+      '</div>'
+    );
+  }
+  var salah = st.attempts > 0 && st.kode && st.kode !== 'benar' && st.kode !== 'kosong';
+  var info = st.kode === 'belum-sederhana';
+  return (
+    '<div class="dl-step">' +
+    head +
+    '<div class="dl-input-row">' +
+    '<input type="text" class="input-text isian-op__input' +
+    (salah && !info ? ' has-error' : '') +
+    '" id="' +
+    esc(id) +
+    'Input" inputmode="text" autocomplete="off" spellcheck="false" value="' +
+    esc(st.input || '') +
+    '" aria-label="Jawaban ' +
+    esc(fmtOperasiPecahan(soal.a, soal.op, soal.b)) +
+    '" placeholder="' +
+    esc(soal.placeholder || 'mis. 1 3/4 atau −1/2') +
+    '">' +
+    (soal.satuan ? '<span class="bbk-satuan">' + esc(soal.satuan) + '</span>' : '') +
+    '<button type="button" class="btn btn--primary" id="' +
+    esc(id) +
+    'Check">Periksa</button>' +
+    buildHintToggle(id + 'Hint', soal.hints, st.hintLevel) +
+    '</div>' +
+    (salah
+      ? '<div style="margin-top:var(--space-3);">' +
+        buildFeedbackBox(
+          info ? 'warning' : 'error',
+          info ? '✂️' : '✗',
+          '<strong>' + esc(st.input) + '</strong> — ' + st.pesan
+        ) +
+        '</div>'
+      : '') +
+    buildHintStack(soal.hints, st.hintLevel) +
+    '</div>'
+  );
+}
+
+/* Memasang tombol Periksa (dan Enter) serta Petunjuk buildIsianOperasi. */
+function bindIsianOperasi(id, st, soal, save, rerender) {
+  var inp = document.getElementById(id + 'Input');
+  var btn = document.getElementById(id + 'Check');
+  var hint = document.getElementById(id + 'Hint');
+  function periksa() {
+    var r = periksaIsianOperasi(st, soal, inp ? inp.value : '');
+    if (r.kode === 'kosong') {
+      showNotice(r.pesan);
+      return;
+    }
+    save();
+    rerender();
+    if (!r.benar) {
+      var again = document.getElementById(id + 'Input');
+      if (again) again.focus();
+    }
+  }
+  if (btn) btn.addEventListener('click', periksa);
+  if (inp) {
+    inp.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        periksa();
+      }
+    });
+  }
+  if (hint) {
+    hint.addEventListener('click', function () {
+      st.hintLevel = Math.min(st.hintLevel + 1, (soal.hints || []).length);
+      save();
+      rerender();
+    });
+  }
 }

@@ -12761,3 +12761,157 @@ button.akar-tile:disabled {
     display: none;
   }
 }
+
+/* =========================================================================
+   Lab Pita operasi pecahan (engine seksi 62 — buildPitaOperasi)
+   ========================================================================= */
+
+.pita-op {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.pita-op__tanya {
+  margin: 0;
+  font-weight: 600;
+}
+
+.pita-op__picks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.pita-op__pick {
+  min-width: 52px;
+  min-height: 44px;
+  padding: var(--space-2) var(--space-3);
+  border: 2px solid var(--color-border-strong);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  color: var(--color-ink);
+  font: inherit;
+  font-size: 1.1rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.pita-op__pick:hover:not(:disabled) {
+  border-color: var(--color-primary);
+  background: var(--color-primary-soft);
+}
+
+.pita-op__pick:focus-visible {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+.pita-op__pick:disabled {
+  cursor: default;
+}
+
+.pita-op__pick.is-correct {
+  border-color: var(--color-success);
+  background: var(--color-success-soft);
+  color: var(--color-success-strong);
+}
+
+.pita-op__pick.is-incorrect {
+  border-color: var(--color-warning);
+  background: var(--color-warning-soft);
+  color: var(--color-warning-strong);
+}
+
+.pita-op__fig {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0;
+}
+
+.pita-op__row {
+  display: grid;
+  grid-template-columns: minmax(84px, 120px) 1fr;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.pita-op__label {
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.pita-op__row--hasil {
+  padding-top: var(--space-2);
+  border-top: 2px dashed var(--color-border-strong);
+}
+
+.pita-op__bar {
+  display: flex;
+  gap: 6px;
+  min-width: 0;
+}
+
+.pita-op__unit {
+  display: grid;
+  flex: 1 1 0;
+  gap: 2px;
+  min-width: 0;
+  height: 34px;
+  padding: 3px;
+  border: 2px solid var(--color-ink);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+}
+
+.pita-op__cell {
+  position: relative;
+  border-radius: 2px;
+  background: var(--color-bg-grid);
+}
+
+.pita-op__cell.is-a {
+  background: var(--color-blue);
+}
+
+.pita-op__cell.is-b {
+  background: var(--color-orange);
+}
+
+/* Potongan yang hanya terarsir sebagian: tanda "tidak pas". */
+.pita-op__cell.is-part {
+  background: linear-gradient(
+    90deg,
+    var(--pita-fill, var(--color-blue)) var(--fill, 50%),
+    var(--color-warning-soft) var(--fill, 50%)
+  );
+  outline: 2px dashed var(--color-warning);
+  outline-offset: -2px;
+}
+
+.pita-op__cell.is-b.is-part {
+  --pita-fill: var(--color-orange);
+}
+
+/* Potongan yang diambil pada pengurangan. */
+.pita-op__cell.is-taken {
+  background: repeating-linear-gradient(
+    45deg,
+    var(--color-blue-soft),
+    var(--color-blue-soft) 4px,
+    var(--color-surface) 4px,
+    var(--color-surface) 8px
+  );
+  outline: 2px solid var(--color-blue);
+  outline-offset: -2px;
+}
+
+@media (max-width: 480px) {
+  .pita-op__row {
+    grid-template-columns: 1fr;
+    gap: var(--space-1);
+  }
+
+  .pita-op__unit {
+    height: 28px;
+  }
+}
