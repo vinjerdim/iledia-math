@@ -12915,3 +12915,140 @@ button.akar-tile:disabled {
     height: 28px;
   }
 }
+
+/* =========================================================================
+   Pita kelompok & model luas perkalian/pembagian pecahan
+   (engine seksi 63 — buildPitaKelompok, buildLuasPecahan)
+   ========================================================================= */
+
+.pita-klp {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0;
+}
+
+.pita-klp__row {
+  display: grid;
+  grid-template-columns: minmax(84px, 120px) 1fr;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.pita-klp__row:not(:has(.pita-klp__label)) {
+  grid-template-columns: 1fr;
+}
+
+.pita-klp__label {
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.pita-klp__bar {
+  display: flex;
+  gap: 6px;
+  min-width: 0;
+}
+
+.pita-klp__unit {
+  display: grid;
+  flex: 1 1 0;
+  gap: 2px;
+  min-width: 0;
+  height: 34px;
+  padding: 3px;
+  border: 2px solid var(--color-ink);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+}
+
+.pita-klp__cell {
+  border-radius: 2px;
+  background: var(--color-bg-grid);
+}
+
+.pita-klp__cell.is-g0 {
+  background: var(--color-blue);
+}
+
+.pita-klp__cell.is-g1 {
+  background: var(--color-orange);
+}
+
+/* Sisa yang tidak cukup satu kelompok penuh. */
+.pita-klp__cell.is-sisa {
+  background: repeating-linear-gradient(
+    45deg,
+    var(--color-purple-soft),
+    var(--color-purple-soft) 4px,
+    var(--color-surface) 4px,
+    var(--color-surface) 8px
+  );
+  outline: 2px dashed var(--color-purple);
+  outline-offset: -2px;
+}
+
+/* Awal tiap kelompok: garis pembatas tebal di kiri. */
+.pita-klp__cell.is-awal {
+  box-shadow: inset 3px 0 0 var(--color-ink);
+}
+
+.pita-klp__cap {
+  font-size: 0.88rem;
+  color: var(--color-ink-muted);
+}
+
+.luas-pk {
+  display: grid;
+  justify-items: center;
+  gap: var(--space-2);
+  margin: 0;
+}
+
+.luas-pk__grid {
+  display: grid;
+  gap: 2px;
+  width: min(100%, 260px);
+  aspect-ratio: 1 / 1;
+  padding: 3px;
+  border: 2px solid var(--color-ink);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+}
+
+.luas-pk__cell {
+  border-radius: 2px;
+  background: var(--color-bg-grid);
+}
+
+.luas-pk__cell.is-b {
+  background: var(--color-orange-soft);
+  outline: 2px solid var(--color-orange);
+  outline-offset: -2px;
+}
+
+.luas-pk__cell.is-a {
+  background: var(--color-blue-soft);
+}
+
+/* Irisan: terarsir dua kali = hasil kali. */
+.luas-pk__cell.is-ab {
+  background: var(--color-purple);
+}
+
+.luas-pk__cap {
+  max-width: 34ch;
+  font-size: 0.88rem;
+  text-align: center;
+  color: var(--color-ink-muted);
+}
+
+@media (max-width: 480px) {
+  .pita-klp__row {
+    grid-template-columns: 1fr;
+    gap: var(--space-1);
+  }
+
+  .pita-klp__unit {
+    height: 28px;
+  }
+}

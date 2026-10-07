@@ -71,6 +71,14 @@
     "stageCount": 10,
     "extraBody": "partials/reset-modal.html"
   },
+  "fase-d/mpi-2.4": {
+    "title": "Perkalian & Pembagian Pecahan dalam Masalah Kontekstual — Matematika Fase D",
+    "description": "Media pembelajaran interaktif berbasis Cooperative Learning tipe Jigsaw untuk menerapkan perkalian dan pembagian bilangan rasional (pecahan) dalam masalah kontekstual pesanan bazar sekolah: resep, kantong gula, pita, suhu, dan kas kelas, melalui kartu ahli empat strategi (kali bilangan bulat, bagian dari bagian, pembagian kali kebalikan, campuran & tanda), model luas, pita kelompok, misi tim, isian berdiagnosa miskonsepsi, kuis individu, dan penghargaan tim.",
+    "kicker": "Matematika — Fase D (SMP)",
+    "h1": "Perkalian & Pembagian Pecahan dalam Masalah Kontekstual",
+    "stageCount": 11,
+    "extraBody": "partials/reset-modal.html"
+  },
   "fase-f/mpi-1.1": {
     "title": "Konsep Barisan Aritmetika & Beda — Matematika Fase F",
     "description": "Media pembelajaran interaktif berbasis Inquiry Learning untuk mengidentifikasi dan menjelaskan konsep barisan aritmetika serta menentukan beda dari suatu barisan bilangan.",
