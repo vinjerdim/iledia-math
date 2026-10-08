@@ -38030,3 +38030,1072 @@ function jenisOperasiKaliBagi(a, op, b) {
   }
   return out;
 }
+
+/* ============================================================
+   64. BILANGAN DESIMAL — OPERASI HITUNG & KONVERSI PECAHAN–DESIMAL
+   Dipakai modul operasi hitung bilangan desimal & konversi pecahan ↔
+   desimal dalam masalah kontekstual (fase-d/mpi-2.5). Bilangan di
+   DATA tetap STRING berkoma bentuk aslinya ('1,25', '0,8', '3/4',
+   '1 1/2'); hitungan dilakukan EKSAK lewat nilai rasional seksi 38
+   (uraiTerpadu, nilaiTerpadu, tulisTerpadu, pangkatSepuluhUntuk,
+   teksDesimalNilai, penyebutPersepuluhan) sehingga 0,1 + 0,2 = 0,3.
+   Isinya:
+     • opDesimal / hasilOperasiDesimal / fmtOperasiDesimal /
+       teksDesimalEksak — hasil & kalimat matematika baku;
+     • langkahTambahKurangDesimal (samakan banyak angka di belakang
+       koma), langkahKaliDesimal (kali tanpa koma, letak koma = jumlah
+       angka desimal), langkahBagiDesimal (geser koma pembagi & yang
+       dibagi bersama-sama);
+     • diagnosaOperasiDesimal + PESAN_OPERASI_DESIMAL — miskonsepsi
+       rata kanan, koma bergeser, operasi tertukar, titik desimal,
+       jawaban dalam bentuk pecahan;
+     • opsiOperasiDesimal — pilihan berpengecoh (urutan wajar; app.js
+       yang mengacak);
+     • pecahanKeDesimal (pembagian bersusun, mendeteksi desimal
+       berulang) / desimalKePecahan (penyebut 10ⁿ lalu sederhanakan);
+     • diagnosaKonversiPD + PESAN_KONVERSI_PD / opsiKonversiPD;
+     • langkah isian berdiagnosa: periksaOpDesimalStep,
+       buildOpDesimalStep, bindOpDesimalStep (state: makeDesimalStep);
+     • tampilan: buildPetakSeratus / buildPetakLuas (model 10 × 10),
+       buildPengaturArsir / bindPengaturArsir, buildBersusunDesimal
+       (koma sejajar vs. rata kanan), buildGelasTakar (pembagian
+       sebagai "berapa takaran di dalam total").
+   Gaya .petak100, .bersusun-dec, .gelas-takar ada di shared/base.css.
+   ============================================================ */
+
+/* Lambang operasi baku: '+', '−', '×', ':'; null bila tidak dikenal. */
+function opDesimal(op) {
+  var o = String(op == null ? '' : op).trim();
+  if (o === '+') return '+';
+  if (o === '-' || o === '−' || o === '–') return '−';
+  if (o === '×' || o === 'x' || o === 'X' || o === '*') return '×';
+  if (o === ':' || o === '÷' || o === '/') return ':';
+  return null;
+}
+
+/* Nilai rasional paling sederhana dari a op b (eksak). */
+function nilaiOperasiDesimal(a, op, b) {
+  var o = opDesimal(op);
+  if (!o) throw new Error('Operasi tidak dikenal: ' + op);
+  var p = nilaiTerpadu(a);
+  var q = nilaiTerpadu(b);
+  if (!p || !q) throw new Error('Bilangan tidak valid: ' + a + ' / ' + b);
+  var v;
+  if (o === '+') v = { num: p.num * q.den + q.num * p.den, den: p.den * q.den };
+  else if (o === '−') v = { num: p.num * q.den - q.num * p.den, den: p.den * q.den };
+  else if (o === '×') v = { num: p.num * q.num, den: p.den * q.den };
+  else {
+    if (q.num === 0) throw new Error('Pembagian dengan nol');
+    v = { num: p.num * q.den, den: p.den * q.num };
+  }
+  return sederhanakanRasional(v);
+}
+
+/*
+ * Teks desimal berkoma dari nilai { num, den }: berhenti → "2,05";
+ * berulang → "0,333…" (lihat pecahanKeDesimal).
+ */
+function teksDesimalEksak(v) {
+  v = sederhanakanRasional(v);
+  var k = pangkatSepuluhUntuk(v.den);
+  if (k !== null) return teksDesimalNilai(v, k);
+  return uraiDesimalBerulang(v).teks;
+}
+
+/* Hasil a op b sebagai teks desimal: hasilOperasiDesimal('0,1', '+', '0,2') → "0,3". */
+function hasilOperasiDesimal(a, op, b) {
+  return teksDesimalEksak(nilaiOperasiDesimal(a, op, b));
+}
+
+/* Suku kalimat operasi; suku kedua yang negatif diberi kurung. */
+function fmtSukuDesimal(x, kurung) {
+  var t = tulisTerpadu(String(x));
+  return kurung && t.charAt(0) === '−' ? '(' + t + ')' : t;
+}
+
+/* Kalimat matematika: fmtOperasiDesimal('1,5', ':', '-0,3') → "1,5 : (−0,3)". */
+function fmtOperasiDesimal(a, op, b) {
+  return fmtSukuDesimal(a) + ' ' + opDesimal(op) + ' ' + fmtSukuDesimal(b, true);
+}
+
+/* Bagian bulat & desimal tanpa tanda: "−1,25" → { neg, bulat: '1', pecahan: '25' }. */
+function digitDesimalBertanda(str) {
+  var s = normalTerpadu(str);
+  var neg = s.charAt(0) === '-';
+  var p = desimalDigits(s.replace(/^[+-]/, ''));
+  return p ? { neg: neg, bulat: p.bulat, pecahan: p.pecahan } : null;
+}
+
+/* Bilangan tanpa koma ("1,25" → 125) dan banyak angka di belakang koma. */
+function tanpaKomaDesimal(str) {
+  var p = digitDesimalBertanda(str);
+  if (!p) return null;
+  var n = parseInt(p.bulat + p.pecahan, 10);
+  return { n: p.neg ? -n : n, angka: p.pecahan.length };
+}
+
+/*
+ * Penjumlahan/pengurangan bersusun: banyak angka di belakang koma
+ * disamakan dengan nol pengisi.
+ *   langkahTambahKurangDesimal('1,25', '+', '0,8') →
+ *     { a: '1,25', b: '0,80', angka: 2, hasil: '2,05' }
+ */
+function langkahTambahKurangDesimal(a, op, b) {
+  var n = Math.max(banyakAngkaDesimal(a), banyakAngkaDesimal(b));
+  return {
+    a: samakanDigitDesimal(a, n),
+    b: samakanDigitDesimal(b, n),
+    angka: n,
+    hasil: hasilOperasiDesimal(a, op, b),
+  };
+}
+
+/*
+ * Perkalian: kalikan seperti bilangan bulat, lalu banyak angka di
+ * belakang koma hasil = jumlah banyak angka di belakang koma kedua
+ * bilangan. langkahKaliDesimal('0,3', '0,4') →
+ *   { bulatA: 3, bulatB: 4, angkaA: 1, angkaB: 1, hasilBulat: 12,
+ *     angka: 2, hasil: '0,12' }
+ */
+function langkahKaliDesimal(a, b) {
+  var p = tanpaKomaDesimal(a);
+  var q = tanpaKomaDesimal(b);
+  return {
+    bulatA: p.n,
+    bulatB: q.n,
+    angkaA: p.angka,
+    angkaB: q.angka,
+    hasilBulat: p.n * q.n,
+    angka: p.angka + q.angka,
+    hasil: hasilOperasiDesimal(a, '×', b),
+  };
+}
+
+/*
+ * Pembagian: pembagi dan yang dibagi dikalikan 10, 100, … yang sama
+ * sampai pembagi menjadi bilangan bulat (hasil bagi tetap).
+ *   langkahBagiDesimal('1,5', '0,3') → { faktor: 10, a: '15', b: '3', hasil: '5' }
+ */
+function langkahBagiDesimal(a, b) {
+  var k = banyakAngkaDesimal(String(b).replace(/^[−–+-]/, ''));
+  var f = Math.pow(10, k);
+  var skala = function (x) {
+    return teksDesimalEksak(
+      sederhanakanRasional({ num: nilaiTerpadu(x).num * f, den: nilaiTerpadu(x).den })
+    );
+  };
+  return { faktor: f, a: skala(a), b: skala(b), hasil: hasilOperasiDesimal(a, ':', b) };
+}
+
+var PESAN_OPERASI_DESIMAL = {
+  kosong: 'Isi jawabanmu terlebih dahulu.',
+  format: 'Tulis jawaban berupa bilangan desimal berkoma, mis. 2,05 atau 0,12.',
+  titik:
+    'Di Indonesia pemisah desimal ditulis dengan koma, bukan titik. Contoh: 2,05 (bukan 2.05).',
+  'rata-kanan':
+    'Sepertinya bilangan disusun rata kanan. Pada penjumlahan/pengurangan desimal, KOMA harus sejajar: satuan di bawah satuan, persepuluhan di bawah persepuluhan. Tambahkan nol pengisi bila perlu (0,8 = 0,80).',
+  'koma-geser':
+    'Angka-angkanya sudah benar, tetapi letak komanya bergeser. Periksa lagi banyak angka di belakang koma pada hasilmu.',
+  'operasi-terbalik':
+    'Itu hasil operasi yang lain. Baca lagi lambang operasinya (+, −, ×, atau :) dan hitung ulang.',
+  bentuk: 'Nilainya sudah benar, tetapi soal meminta jawaban dalam bentuk desimal berkoma.',
+  salah: 'Belum tepat. Coba hitung ulang langkah demi langkah dan perhatikan letak koma.',
+};
+
+/* Pesan koma bergeser yang menyebut aturan sesuai operasinya. */
+function pesanKomaGeserDesimal(a, op, b) {
+  var o = opDesimal(op);
+  if (o === '×') {
+    var l = langkahKaliDesimal(a, b);
+    return (
+      'Angka-angkanya benar, tetapi letak koma bergeser. Pada perkalian, banyak angka di belakang koma hasil = ' +
+      l.angkaA +
+      ' + ' +
+      l.angkaB +
+      ' = ' +
+      l.angka +
+      ' angka di belakang koma.'
+    );
+  }
+  if (o === ':') {
+    var m = langkahBagiDesimal(a, b);
+    return (
+      'Letak komanya bergeser. Kalikan pembagi DAN yang dibagi dengan bilangan yang sama' +
+      (m.faktor > 1 ? ' (× ' + m.faktor + ')' : '') +
+      ' sehingga pembagi tidak lagi punya angka di belakang koma: ' +
+      tulisTerpadu(m.a) +
+      ' : ' +
+      tulisTerpadu(m.b) +
+      '.'
+    );
+  }
+  return PESAN_OPERASI_DESIMAL['koma-geser'];
+}
+
+/* Operasi pasangan yang sering tertukar. */
+function opTerbalikDesimal(op) {
+  return { '+': '−', '−': '+', '×': ':', ':': '×' }[opDesimal(op)];
+}
+
+/* Nilai a op b bila disusun RATA KANAN (koma diabaikan), atau null. */
+function nilaiRataKananDesimal(a, op, b) {
+  var o = opDesimal(op);
+  if (o !== '+' && o !== '−') return null;
+  var p = tanpaKomaDesimal(a);
+  var q = tanpaKomaDesimal(b);
+  if (!p || !q || p.angka === q.angka) return null;
+  var n = Math.max(p.angka, q.angka);
+  return sederhanakanRasional({ num: o === '+' ? p.n + q.n : p.n - q.n, den: Math.pow(10, n) });
+}
+
+/* Nilai x kali 10^k (k boleh negatif). */
+function kaliPangkatSepuluh(v, k) {
+  var f = Math.pow(10, Math.abs(k));
+  return sederhanakanRasional(
+    k >= 0 ? { num: v.num * f, den: v.den } : { num: v.num, den: v.den * f }
+  );
+}
+
+/* Apakah x = v × 10^k untuk suatu k ≠ 0 (|k| ≤ 4)? */
+function komaBergeser(x, v) {
+  if (v.num === 0) return false;
+  for (var k = -4; k <= 4; k++) {
+    if (k !== 0 && samaRasional(x, kaliPangkatSepuluh(v, k))) return true;
+  }
+  return false;
+}
+
+/* Isian bertitik desimal (mis. "2.05")? */
+function isianBertitik(s) {
+  return /^[+−–-]?\d+\.\d+$/.test(s);
+}
+
+/*
+ * Memeriksa hasil a op b yang ditulis murid. Mengembalikan
+ * { benar, kode, pesan }; kode 'benar' | 'kosong' | 'format' | 'titik' |
+ * 'bentuk' | 'operasi-terbalik' | 'rata-kanan' | 'koma-geser' | 'salah'.
+ * Penulisan senilai (2,050; 5,0; -0,3) diterima.
+ */
+function diagnosaOperasiDesimal(isian, a, op, b) {
+  function hasil(kode) {
+    var pesan =
+      kode === 'benar'
+        ? 'Tepat! ' + fmtOperasiDesimal(a, op, b) + ' = ' + hasilOperasiDesimal(a, op, b) + '.'
+        : kode === 'koma-geser'
+        ? pesanKomaGeserDesimal(a, op, b)
+        : PESAN_OPERASI_DESIMAL[kode];
+    return { benar: kode === 'benar', kode: kode, pesan: pesan };
+  }
+  var s = String(isian == null ? '' : isian).replace(/\s/g, '');
+  if (!s) return hasil('kosong');
+  if (isianBertitik(s)) return hasil('titik');
+  var u = uraiTerpadu(s);
+  if (!u) return hasil('format');
+  var x = nilaiTerpadu(s);
+  var v = nilaiOperasiDesimal(a, op, b);
+  if (u.jenis === 'pecahan') return hasil(samaRasional(x, v) ? 'bentuk' : 'salah');
+  if (samaRasional(x, v)) return hasil('benar');
+  var t = nilaiOperasiDesimal(a, opTerbalikDesimal(op), b);
+  if (samaRasional(x, t)) return hasil('operasi-terbalik');
+  var rk = nilaiRataKananDesimal(a, op, b);
+  if (rk && samaRasional(x, rk)) return hasil('rata-kanan');
+  if (komaBergeser(x, v)) return hasil('koma-geser');
+  return hasil('salah');
+}
+
+/* Menambah opsi { id, nilai } ke daftar bila labelnya baru dan sah. */
+function tambahOpsiDesimal(opsi, dipakai, id, v, umpan, bolehNegatif) {
+  if (!v || opsi.length >= 4) return;
+  if (!bolehNegatif && v.num < 0) return;
+  var label = teksDesimalEksak(v);
+  if (label.indexOf('…') !== -1 || dipakai[label]) return;
+  dipakai[label] = true;
+  opsi.push({ id: id, label: label, benar: false, umpan: umpan });
+}
+
+/*
+ * Pilihan hasil a op b: satu benar (id 'baku') dan tiga pengecoh unik
+ * dari: 'rata-kanan', 'koma-kanan' / 'koma-kiri' (koma bergeser),
+ * 'terbalik' (operasi tertukar), lalu 'dekat-*' bila masih kurang.
+ * Urutan wajar; app.js mengacaknya. Setiap opsi: { id, label, benar, umpan }.
+ */
+function opsiOperasiDesimal(a, op, b) {
+  var v = nilaiOperasiDesimal(a, op, b);
+  var baku = teksDesimalEksak(v);
+  var opsi = [
+    {
+      id: 'baku',
+      label: baku,
+      benar: true,
+      umpan: 'Tepat! ' + fmtOperasiDesimal(a, op, b) + ' = ' + baku + '.',
+    },
+  ];
+  var dipakai = {};
+  dipakai[baku] = true;
+  var neg = v.num < 0;
+  var geser = pesanKomaGeserDesimal(a, op, b);
+  tambahOpsiDesimal(
+    opsi,
+    dipakai,
+    'rata-kanan',
+    nilaiRataKananDesimal(a, op, b),
+    PESAN_OPERASI_DESIMAL['rata-kanan'],
+    neg
+  );
+  var o = opDesimal(op);
+  var arahPertama = o === ':' ? -1 : 1;
+  tambahOpsiDesimal(opsi, dipakai, 'koma-kanan', kaliPangkatSepuluh(v, arahPertama), geser, neg);
+  tambahOpsiDesimal(
+    opsi,
+    dipakai,
+    'terbalik',
+    nilaiOperasiDesimal(a, opTerbalikDesimal(op), b),
+    PESAN_OPERASI_DESIMAL['operasi-terbalik'],
+    neg
+  );
+  tambahOpsiDesimal(opsi, dipakai, 'koma-kiri', kaliPangkatSepuluh(v, -arahPertama), geser, neg);
+  var langkah = Math.pow(10, Math.max(1, pangkatSepuluhUntuk(v.den) || 1));
+  [1, -1, 2].forEach(function (d, i) {
+    tambahOpsiDesimal(
+      opsi,
+      dipakai,
+      'dekat-' + (i + 1),
+      sederhanakanRasional({ num: v.num * langkah + d * v.den, den: v.den * langkah }),
+      PESAN_OPERASI_DESIMAL.salah,
+      neg
+    );
+  });
+  return opsi;
+}
+
+/*
+ * Pecahan → desimal dengan pembagian bersusun (pembilang : penyebut).
+ *   uraiDesimalBerulang({ num: 1, den: 6 }) →
+ *     { neg, bulat: '0', depan: '1', periode: '6', berulang: true, teks: '0,1666…' }
+ */
+function uraiDesimalBerulang(v) {
+  var neg = v.num < 0;
+  var n = Math.abs(v.num);
+  var d = v.den;
+  var bulat = Math.floor(n / d);
+  var sisa = n - bulat * d;
+  var digit = '';
+  var posisi = {};
+  var awalUlang = -1;
+  while (sisa !== 0 && digit.length < 60) {
+    if (posisi[sisa] !== undefined) {
+      awalUlang = posisi[sisa];
+      break;
+    }
+    posisi[sisa] = digit.length;
+    sisa *= 10;
+    digit += String(Math.floor(sisa / d));
+    sisa = sisa % d;
+  }
+  var tanda = neg && v.num !== 0 ? '−' : '';
+  if (awalUlang === -1) {
+    return {
+      neg: neg,
+      bulat: String(bulat),
+      depan: digit,
+      periode: '',
+      berulang: false,
+      teks: tanda + bulat + (digit ? ',' + digit : ''),
+    };
+  }
+  var depan = digit.slice(0, awalUlang);
+  var periode = digit.slice(awalUlang);
+  var ulang = Math.max(2, Math.ceil(3 / periode.length));
+  var tulis = depan;
+  for (var i = 0; i < ulang; i++) tulis += periode;
+  return {
+    neg: neg,
+    bulat: String(bulat),
+    depan: depan,
+    periode: periode,
+    berulang: true,
+    teks: tanda + bulat + ',' + tulis + '…',
+  };
+}
+
+/*
+ * Pecahan (biasa/campuran/negatif) → desimal.
+ *   pecahanKeDesimal('3/4') → { teks: '0,75', berulang: false,
+ *     persepuluhan: '75/100', depan: '75', periode: '', nilai }
+ *   pecahanKeDesimal('1/3') → { teks: '0,333…', berulang: true,
+ *     periode: '3', persepuluhan: null, … }
+ */
+function pecahanKeDesimal(str) {
+  var v = nilaiTerpadu(str);
+  if (!v) return null;
+  var u = uraiDesimalBerulang(v);
+  u.nilai = v;
+  u.persepuluhan = u.berulang ? null : penyebutPersepuluhan(str);
+  return u;
+}
+
+/*
+ * Desimal → pecahan: penyebut 10ⁿ (n = banyak angka di belakang koma),
+ * lalu disederhanakan dengan FPB.
+ *   desimalKePecahan('1,25') → { awal: '125/100', fpb: 25, sederhana: '1 1/4' }
+ */
+function desimalKePecahan(str) {
+  var t = tanpaKomaDesimal(str);
+  if (!t) return null;
+  var den = Math.pow(10, t.angka);
+  var f = gcd(t.n, den) || 1;
+  var tanda = t.n < 0 ? '−' : '';
+  return {
+    awal: tanda + Math.abs(t.n) + '/' + den,
+    pembilang: Math.abs(t.n),
+    penyebut: den,
+    fpb: f,
+    sederhana: teksRasional({ num: t.n / f, den: den / f }),
+  };
+}
+
+var PESAN_KONVERSI_PD = {
+  kosong: 'Isi jawabanmu terlebih dahulu.',
+  format: 'Tulis jawabanmu sebagai bilangan, mis. 0,75 atau 3/4.',
+  titik: 'Pemisah desimal ditulis dengan koma, bukan titik. Contoh: 0,75 (bukan 0.75).',
+  'pembilang-koma':
+    'Pembilang dan penyebut tidak boleh langsung dipisah atau digabung dengan koma. Pecahan berarti pembagian: pembilang : penyebut. Atau jadikan penyebutnya 10, 100, atau 1000 lebih dulu.',
+  'koma-geser':
+    'Angka-angkanya sudah benar, tetapi letak komanya bergeser. Ingat: penyebut 10 → satu angka di belakang koma, 100 → dua angka, 1000 → tiga angka.',
+  'kurang-teliti':
+    'Desimalnya berulang dan tidak pernah berhenti. Tulis setidaknya dua angka di belakang koma (mis. 0,33) atau beri tanda … (0,333…).',
+  bentuk: 'Nilainya sudah benar, tetapi bentuknya belum sesuai yang diminta soal.',
+  'belum-sederhana':
+    'Nilainya sudah benar! Langkah terakhir: sederhanakan pecahannya dengan membagi pembilang dan penyebut dengan FPB-nya.',
+  'penyebut-salah':
+    'Penyebutnya belum tepat. Banyak angka di belakang koma menentukan penyebut: 1 angka → 10, 2 angka → 100, 3 angka → 1000.',
+  salah: 'Belum tepat. Coba ubah langkah demi langkah dan periksa nilai tempatnya.',
+};
+
+/* Kandidat salah tulis "pembilang-koma": 3/4 → "3,4" dan "0,34". */
+function pembilangKomaPD(soal) {
+  var u = uraiTerpadu(soal);
+  if (!u || u.jenis !== 'pecahan') return [];
+  var p = u.p;
+  var w = p.whole || 0;
+  return [(w ? w + ',' + p.num : p.num + ',') + p.den, w + ',' + p.num + p.den].map(function (t) {
+    return t.replace(/,$/, '');
+  });
+}
+
+/* Membuang tanda … / ... di akhir isian desimal berulang. */
+function tanpaElipsis(s) {
+  return s.replace(/(…|\.{2,})$/, '');
+}
+
+/* Apakah desimal x (k angka di belakang koma) = v dipotong atau dibulatkan ke k angka? */
+function hampiranDesimal(x, v, k) {
+  var f = Math.pow(10, k);
+  var skala = (Math.abs(v.num) * f) / v.den;
+  var kandidat = [Math.floor(skala), Math.round(skala)];
+  var xs = Math.abs(x.num * f) / x.den;
+  return (
+    x.num < 0 === v.num < 0 &&
+    kandidat.some(function (c) {
+      return Math.abs(xs - c) < 1e-9;
+    })
+  );
+}
+
+/*
+ * Memeriksa konversi yang ditulis murid. arah 'keDesimal' (soal pecahan,
+ * jawab desimal) atau 'kePecahan' (soal desimal, jawab pecahan paling
+ * sederhana). Mengembalikan { benar, kode, pesan }; kode 'benar' |
+ * 'kosong' | 'format' | 'titik' | 'bentuk' | 'pembilang-koma' |
+ * 'koma-geser' | 'kurang-teliti' | 'belum-sederhana' | 'penyebut-salah' |
+ * 'salah'.
+ */
+function diagnosaKonversiPD(isian, soal, arah) {
+  function hasil(kode) {
+    var pesan = PESAN_KONVERSI_PD[kode];
+    if (kode === 'benar') {
+      pesan =
+        arah === 'kePecahan'
+          ? 'Tepat! ' +
+            tulisTerpadu(soal) +
+            ' = ' +
+            desimalKePecahan(soal).awal +
+            ' = ' +
+            desimalKePecahan(soal).sederhana +
+            '.'
+          : 'Tepat! ' + tulisTerpadu(soal) + ' = ' + pecahanKeDesimal(soal).teks + '.';
+    }
+    return { benar: kode === 'benar', kode: kode, pesan: pesan };
+  }
+  var s = String(isian == null ? '' : isian).trim();
+  if (!s) return hasil('kosong');
+  var v = nilaiTerpadu(soal);
+
+  if (arah === 'kePecahan') {
+    var r = parseIsianRasional(s);
+    if (r.error) {
+      var ud = uraiTerpadu(s.replace(/\s/g, ''));
+      return hasil(ud && ud.jenis === 'desimal' ? 'bentuk' : 'format');
+    }
+    if (samaRasional(r.value, v)) return hasil(isianSederhana(r) ? 'benar' : 'belum-sederhana');
+    var dk = desimalKePecahan(soal);
+    if (
+      r.p &&
+      !r.p.whole &&
+      r.p.num === dk.pembilang &&
+      /^10*$/.test(String(r.p.den)) &&
+      r.p.den !== dk.penyebut
+    ) {
+      return hasil('penyebut-salah');
+    }
+    return hasil('salah');
+  }
+
+  var s0 = tanpaElipsis(s.replace(/\s/g, ''));
+  var elipsis = s0 !== s.replace(/\s/g, '');
+  if (isianBertitik(s0)) return hasil('titik');
+  var u = uraiTerpadu(s0);
+  if (!u) return hasil('format');
+  if (u.jenis === 'pecahan') return hasil('bentuk');
+  var x = nilaiTerpadu(s0);
+  var target = pecahanKeDesimal(soal);
+  if (pembilangKomaPD(soal).indexOf(s0.replace(/^[+-]/, '')) !== -1) {
+    return hasil('pembilang-koma');
+  }
+  if (!target.berulang) {
+    if (samaRasional(x, v)) return hasil('benar');
+    if (komaBergeser(x, v)) return hasil('koma-geser');
+    return hasil('salah');
+  }
+  var k = u.jenis === 'desimal' ? u.digits[3].length : 0;
+  if (k >= 2 && hampiranDesimal(x, v, k)) return hasil('benar');
+  if (elipsis && k >= 1 && hampiranDesimal(x, v, k)) return hasil('benar');
+  if (k === 1 && hampiranDesimal(x, v, k)) return hasil('kurang-teliti');
+  return hasil('salah');
+}
+
+/*
+ * Pilihan konversi: satu benar (id 'baku') dan tiga pengecoh unik.
+ *   keDesimal: 'pembilang-koma' (3/4 → 3,4 / 0,34), 'koma-geser',
+ *              'terbalik' (penyebut : pembilang), 'potong' (berulang → 1 angka)
+ *   kePecahan: 'belum-sederhana' (75/100), 'penyebut-salah' (75/10, 75/1000)
+ * lalu 'dekat-*' bila masih kurang. Urutan wajar; app.js mengacaknya.
+ */
+function opsiKonversiPD(soal, arah) {
+  var opsi = [];
+  var dipakai = {};
+  function tambah(id, label, kode) {
+    if (!label || opsi.length >= 4 || dipakai[label]) return;
+    if (id !== 'baku' && diagnosaKonversiPD(label, soal, arah).benar) return;
+    dipakai[label] = true;
+    opsi.push({
+      id: id,
+      label: label,
+      benar: id === 'baku',
+      umpan: id === 'baku' ? diagnosaKonversiPD(label, soal, arah).pesan : PESAN_KONVERSI_PD[kode],
+    });
+  }
+
+  if (arah === 'kePecahan') {
+    var d = desimalKePecahan(soal);
+    tambah('baku', d.sederhana);
+    if (d.fpb > 1) tambah('belum-sederhana', d.awal, 'belum-sederhana');
+    tambah('penyebut-kecil', d.pembilang + '/' + d.penyebut / 10, 'penyebut-salah');
+    tambah('penyebut-besar', d.pembilang + '/' + d.penyebut * 10, 'penyebut-salah');
+    var vs = nilaiTerpadu(soal);
+    [1, -1, 2].forEach(function (k, i) {
+      var c = sederhanakanRasional({ num: vs.num * 10 + k * vs.den, den: vs.den * 10 });
+      if (c.num > 0) tambah('dekat-' + (i + 1), teksRasional(c), 'salah');
+    });
+    return opsi;
+  }
+
+  var t = pecahanKeDesimal(soal);
+  var v = t.nilai;
+  tambah('baku', t.teks);
+  pembilangKomaPD(soal).forEach(function (l, i) {
+    tambah('pembilang-koma-' + (i + 1), l, 'pembilang-koma');
+  });
+  if (t.berulang) {
+    tambah('potong', t.bulat + ',' + (t.depan + t.periode).charAt(0), 'kurang-teliti');
+  } else {
+    tambah('koma-geser', teksDesimalEksak(kaliPangkatSepuluh(v, 1)), 'koma-geser');
+  }
+  if (v.num !== 0) {
+    var balik = teksDesimalEksak({ num: v.den, den: Math.abs(v.num) });
+    tambah('terbalik', balik, 'salah');
+  }
+  [1, -1, 2].forEach(function (k, i) {
+    var c = sederhanakanRasional({ num: v.num * 10 + k * v.den, den: v.den * 10 });
+    if (c.num > 0 && pangkatSepuluhUntuk(c.den) !== null) {
+      tambah('dekat-' + (i + 1), teksDesimalEksak(c), 'salah');
+    }
+  });
+  return opsi;
+}
+
+/* Memeriksa isian yang nilainya harus sama dengan `jawab` (bentuk bebas). */
+function diagnosaNilaiDesimal(isian, jawab) {
+  var s = String(isian == null ? '' : isian).replace(/\s/g, '');
+  if (!s) return { benar: false, kode: 'kosong', pesan: PESAN_OPERASI_DESIMAL.kosong };
+  if (isianBertitik(s)) return { benar: false, kode: 'titik', pesan: PESAN_OPERASI_DESIMAL.titik };
+  var x = nilaiTerpadu(s);
+  if (!x) return { benar: false, kode: 'format', pesan: PESAN_OPERASI_DESIMAL.format };
+  if (samaRasional(x, nilaiTerpadu(jawab))) {
+    return { benar: true, kode: 'benar', pesan: 'Tepat!' };
+  }
+  return { benar: false, kode: 'salah', pesan: PESAN_OPERASI_DESIMAL.salah };
+}
+
+/* Teks jawaban baku langkah isian (untuk ditampilkan setelah benar). */
+function jawabOpDesimalStep(step) {
+  if (step.jenis === 'hitung') return hasilOperasiDesimal(step.a, step.op, step.b);
+  if (step.jenis === 'keDesimal') return pecahanKeDesimal(step.soal).teks;
+  if (step.jenis === 'kePecahan') return desimalKePecahan(step.soal).sederhana;
+  return tulisTerpadu(step.jawab);
+}
+
+/*
+ * Memeriksa isian langkah dan menyimpan hasilnya ke st (makeDesimalStep).
+ *   step.jenis 'hitung'    → diagnosaOperasiDesimal(input, a, op, b)
+ *   step.jenis 'keDesimal' → diagnosaKonversiPD(input, soal, 'keDesimal')
+ *   step.jenis 'kePecahan' → diagnosaKonversiPD(input, soal, 'kePecahan')
+ *   step.jenis 'nilai'     → nilai isian = step.jawab (bentuk apa saja)
+ * Isian kosong tidak dihitung sebagai percobaan.
+ */
+function periksaOpDesimalStep(st, step, input) {
+  st.input = String(input == null ? '' : input).trim();
+  var r;
+  if (step.jenis === 'hitung') r = diagnosaOperasiDesimal(st.input, step.a, step.op, step.b);
+  else if (step.jenis === 'keDesimal' || step.jenis === 'kePecahan')
+    r = diagnosaKonversiPD(st.input, step.soal, step.jenis);
+  else r = diagnosaNilaiDesimal(st.input, step.jawab);
+  st.kode = r.kode;
+  st.pesan = r.pesan;
+  if (r.kode === 'kosong') return r;
+  st.attempts += 1;
+  st.done = r.benar;
+  return r;
+}
+
+/*
+ * Satu langkah isian berdiagnosa untuk operasi/konversi desimal.
+ *   id    awalan id DOM (→ idInput, idCheck, idHint)
+ *   step  { jenis, a, op, b | soal | jawab, label, hints, temuan,
+ *           satuan, placeholder }
+ *   num   nomor langkah opsional
+ */
+function buildOpDesimalStep(id, st, step, num) {
+  var head =
+    '<p class="dl-step__label">' +
+    (num ? '<span class="dl-step__num">' + num + '</span>' : '') +
+    step.label +
+    '</p>';
+  if (st.done) {
+    return (
+      '<div class="dl-step dl-step--done">' +
+      head +
+      '<p class="dl-step__answer">✓ ' +
+      buildBilanganChip(jawabOpDesimalStep(step)) +
+      (step.satuan ? ' ' + esc(step.satuan) : '') +
+      '</p>' +
+      (step.temuan ? buildFeedbackBox('success', '💡', step.temuan) : '') +
+      '</div>'
+    );
+  }
+  var salah = st.attempts > 0 && st.kode && st.kode !== 'benar' && st.kode !== 'kosong';
+  var pecahan = step.jenis === 'kePecahan';
+  return (
+    '<div class="dl-step">' +
+    head +
+    '<div class="dl-input-row dec-step__row">' +
+    '<input type="text" class="input-text dec-step__input' +
+    (salah ? ' has-error' : '') +
+    '" id="' +
+    id +
+    'Input" inputmode="' +
+    (pecahan ? 'text' : 'decimal') +
+    '" autocapitalize="off" spellcheck="false" autocomplete="off" value="' +
+    esc(st.input || '') +
+    '" aria-label="' +
+    esc(pecahan ? 'Jawaban berupa pecahan' : 'Jawaban berupa bilangan desimal') +
+    '" placeholder="' +
+    esc(step.placeholder || (pecahan ? 'mis. 3/4' : 'mis. 2,05')) +
+    '">' +
+    (step.satuan ? '<span class="bbk-satuan">' + esc(step.satuan) + '</span>' : '') +
+    '<button type="button" class="btn btn--primary" id="' +
+    id +
+    'Check">Periksa</button>' +
+    buildHintToggle(id + 'Hint', step.hints, st.hintLevel) +
+    '</div>' +
+    (salah
+      ? '<div style="margin-top:var(--space-3);">' +
+        buildFeedbackBox('error', '✗', '<strong>' + esc(st.input) + '</strong> — ' + st.pesan) +
+        '</div>'
+      : '') +
+    buildHintStack(step.hints, st.hintLevel) +
+    '</div>'
+  );
+}
+
+/* Memasang event buildOpDesimalStep; `save` lalu `rerender` dipanggil setelah perubahan. */
+function bindOpDesimalStep(id, st, step, save, rerender) {
+  var inp = document.getElementById(id + 'Input');
+  var btn = document.getElementById(id + 'Check');
+  var hint = document.getElementById(id + 'Hint');
+  if (inp && btn) {
+    inp.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter') btn.click();
+    });
+    btn.addEventListener('click', function () {
+      var r = periksaOpDesimalStep(st, step, inp.value);
+      if (r.kode === 'kosong') {
+        showNotice(r.pesan);
+        return;
+      }
+      save();
+      rerender();
+      if (!st.done) {
+        var again = document.getElementById(id + 'Input');
+        if (again) again.focus();
+      }
+    });
+  }
+  if (hint) {
+    hint.addEventListener('click', function () {
+      st.hintLevel = Math.min(st.hintLevel + 1, (step.hints || []).length);
+      save();
+      rerender();
+    });
+  }
+}
+
+/* Teks desimal dari banyak perseratus: 75 → "0,75", 100 → "1". */
+function desimalPerseratus(n) {
+  return teksDesimalEksak(sederhanakanRasional({ num: n, den: 100 }));
+}
+
+/*
+ * Petak seratus (10 × 10): `arsir` petak pertama diarsir (dibaca per
+ * baris dari kiri atas). 1 petak = 0,01; 1 baris = 0,1.
+ *   opts.caption  keterangan di bawah petak (default "n petak = 0,nn")
+ */
+function buildPetakSeratus(arsir, opts) {
+  opts = opts || {};
+  var n = Math.max(0, Math.min(100, Math.round(arsir) || 0));
+  var sel = '';
+  for (var i = 0; i < 100; i++) {
+    sel += '<span class="petak100__sel' + (i < n ? ' is-on' : '') + '"></span>';
+  }
+  var cap = opts.caption || n + ' dari 100 petak = ' + desimalPerseratus(n);
+  return (
+    '<figure class="petak100" role="img" aria-label="' +
+    esc('Petak seratus: ' + n + ' dari 100 petak diarsir, nilainya ' + desimalPerseratus(n)) +
+    '">' +
+    '<span class="petak100__grid" aria-hidden="true">' +
+    sel +
+    '</span>' +
+    '<figcaption class="petak100__cap" aria-hidden="true">' +
+    esc(cap) +
+    '</figcaption>' +
+    '</figure>'
+  );
+}
+
+/*
+ * Model luas perkalian dua desimal persepuluhan (≤ 1) pada petak
+ * seratus: a × 10 baris diarsir biru, b × 10 kolom diarsir oranye,
+ * petak yang terarsir keduanya (.is-both) = hasil kali dalam perseratus.
+ */
+function buildPetakLuas(a, b) {
+  var baris = Math.round((nilaiTerpadu(a).num * 10) / nilaiTerpadu(a).den);
+  var kolom = Math.round((nilaiTerpadu(b).num * 10) / nilaiTerpadu(b).den);
+  var sel = '';
+  for (var r = 0; r < 10; r++) {
+    for (var c = 0; c < 10; c++) {
+      var di = r < baris;
+      var dk = c < kolom;
+      var cls = di && dk ? ' is-both' : di ? ' is-a' : dk ? ' is-b' : '';
+      sel += '<span class="petak100__sel' + cls + '"></span>';
+    }
+  }
+  var hasil = baris * kolom;
+  var teks =
+    tulisTerpadu(a) +
+    ' × ' +
+    tulisTerpadu(b) +
+    ' = ' +
+    hasil +
+    ' petak dari 100 = ' +
+    desimalPerseratus(hasil);
+  return (
+    '<figure class="petak100 petak100--luas" role="img" aria-label="' +
+    esc(
+      'Model luas: ' +
+        baris +
+        ' baris (' +
+        tulisTerpadu(a) +
+        ') dan ' +
+        kolom +
+        ' kolom (' +
+        tulisTerpadu(b) +
+        ') diarsir. ' +
+        teks
+    ) +
+    '">' +
+    '<span class="petak100__grid" aria-hidden="true">' +
+    sel +
+    '</span>' +
+    '<figcaption class="petak100__cap" aria-hidden="true">' +
+    '<span class="petak100__key petak100__key--a">' +
+    esc(tulisTerpadu(a)) +
+    ' = ' +
+    baris +
+    ' baris</span> ' +
+    '<span class="petak100__key petak100__key--b">' +
+    esc(tulisTerpadu(b)) +
+    ' = ' +
+    kolom +
+    ' kolom</span> ' +
+    '<strong>' +
+    esc(teks) +
+    '</strong>' +
+    '</figcaption>' +
+    '</figure>'
+  );
+}
+
+/* Tombol pengatur banyak petak terarsir (−10, −1, +1, +10). */
+function buildPengaturArsir(id, n) {
+  return (
+    '<div class="petak100-ctrl" role="group" aria-label="Atur banyak petak yang diarsir">' +
+    [
+      [-10, '−10'],
+      [-1, '−1'],
+      [1, '+1'],
+      [10, '+10'],
+    ]
+      .map(function (d) {
+        var mati = (d[0] < 0 && n <= 0) || (d[0] > 0 && n >= 100);
+        return (
+          '<button type="button" class="btn btn--ghost btn--small petak100-ctrl__btn" data-arsir="' +
+          esc(id) +
+          '" data-langkah="' +
+          d[0] +
+          '"' +
+          (mati ? ' disabled' : '') +
+          ' aria-label="' +
+          (d[0] > 0 ? 'Tambah ' : 'Kurangi ') +
+          Math.abs(d[0]) +
+          ' petak">' +
+          d[1] +
+          '</button>'
+        );
+      })
+      .join('') +
+    '<output class="petak100-ctrl__out" aria-live="polite">' +
+    n +
+    ' petak</output>' +
+    '</div>'
+  );
+}
+
+/* Memasang tombol buildPengaturArsir; onChange(delta) dipanggil saat diklik. */
+function bindPengaturArsir(root, id, onChange) {
+  root.querySelectorAll('[data-arsir="' + id + '"]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      onChange(parseInt(btn.dataset.langkah, 10));
+    });
+  });
+}
+
+/* Sel-sel satu baris bersusun. */
+function selBersusun(chars, cls) {
+  return chars
+    .map(function (c) {
+      var k = 'bersusun-dec__sel';
+      if (c && c.nol) k += ' bersusun-dec__nol';
+      if (c && c.koma) k += ' bersusun-dec__koma';
+      return '<span class="' + k + (cls ? ' ' + cls : '') + '">' + esc(c ? c.t : '') + '</span>';
+    })
+    .join('');
+}
+
+/*
+ * Penjumlahan/pengurangan bersusun.
+ *   opts.rataKanan  true → angka disusun rata kanan (cara KELIRU,
+ *                   .bersusun-dec--rata-kanan), tanpa nol pengisi
+ *   opts.tandai     true → beri warna benar/keliru (.bersusun-dec--benar /
+ *                   .bersusun-dec--salah). Tanpa ini tampilannya netral,
+ *                   sehingga tidak membocorkan jawaban sebelum murid memilih.
+ *   opts.hasil      true → tampilkan baris hasil (hanya cara rata koma)
+ * Nol pengisi tampil samar (.bersusun-dec__nol).
+ */
+function buildBersusunDesimal(a, op, b, opts) {
+  opts = opts || {};
+  var o = opDesimal(op);
+  var rows = [a, b];
+  var hasilTeks = hasilOperasiDesimal(a, o, b);
+  var tampilHasil = opts.hasil && !opts.rataKanan;
+  if (tampilHasil) rows.push(hasilTeks);
+  var data = rows.map(function (s) {
+    return desimalDigits(String(s).replace(/^[−-]/, '')) || { bulat: '0', pecahan: '' };
+  });
+  var grid;
+  if (opts.rataKanan) {
+    var teks = data.map(function (p) {
+      return (p.bulat + (p.pecahan ? ',' + p.pecahan : '')).split('');
+    });
+    var lebar = Math.max.apply(
+      null,
+      teks.map(function (t) {
+        return t.length;
+      })
+    );
+    grid = teks.map(function (t) {
+      var out = [];
+      for (var i = 0; i < lebar - t.length; i++) out.push(null);
+      return out.concat(
+        t.map(function (ch) {
+          return { t: ch, koma: ch === ',' };
+        })
+      );
+    });
+  } else {
+    var L = 1;
+    var n = 0;
+    data.forEach(function (p) {
+      L = Math.max(L, p.bulat.length);
+      n = Math.max(n, p.pecahan.length);
+    });
+    grid = data.map(function (p) {
+      var out = [];
+      for (var i = 0; i < L - p.bulat.length; i++) out.push(null);
+      p.bulat.split('').forEach(function (ch) {
+        out.push({ t: ch });
+      });
+      if (n) {
+        out.push({ t: ',', koma: true });
+        for (var j = 0; j < n; j++) {
+          out.push(j < p.pecahan.length ? { t: p.pecahan.charAt(j) } : { t: '0', nol: true });
+        }
+      }
+      return out;
+    });
+  }
+  var cols = grid[0].length;
+  var html = '';
+  grid.forEach(function (row, i) {
+    var lambang = i === 1 ? o : '';
+    var cls = i === 2 ? 'bersusun-dec__row bersusun-dec__row--hasil' : 'bersusun-dec__row';
+    html +=
+      '<span class="' +
+      cls +
+      '"><span class="bersusun-dec__op">' +
+      esc(lambang) +
+      '</span>' +
+      selBersusun(row) +
+      '</span>';
+  });
+  var aria = opts.rataKanan
+    ? 'Susunan dengan angka rata kanan: ' + tulisTerpadu(a) + ' ' + o + ' ' + tulisTerpadu(b)
+    : 'Susunan dengan koma sejajar: ' +
+      samakanDigitDesimal(a, Math.max(banyakAngkaDesimal(a), banyakAngkaDesimal(b))) +
+      ' ' +
+      o +
+      ' ' +
+      samakanDigitDesimal(b, Math.max(banyakAngkaDesimal(a), banyakAngkaDesimal(b))) +
+      (tampilHasil ? ' = ' + hasilTeks : '');
+  /* <span> agar sah dipakai di dalam tombol pilihan (buildChoiceGroup). */
+  return (
+    '<span class="bersusun-dec' +
+    (opts.rataKanan ? ' bersusun-dec--rata-kanan' : '') +
+    (opts.tandai ? (opts.rataKanan ? ' bersusun-dec--salah' : ' bersusun-dec--benar') : '') +
+    '" role="img" aria-label="' +
+    esc(aria) +
+    '" style="--bd-cols:' +
+    cols +
+    '">' +
+    html +
+    '</span>'
+  );
+}
+
+/*
+ * Pembagian sebagai "berapa takaran di dalam total": botol `total`
+ * liter dituang ke gelas `takaran` liter. Setiap gelas penuh menjadi
+ * satu .gelas-takar__isi; sisa (bila ada) ditandai .gelas-takar__sisa.
+ *   opts.satuan  satuan (default 'L')
+ *   opts.tuang   banyak gelas yang SUDAH dituang (untuk alat bertahap);
+ *                gelas yang sudah dituang diberi .is-dituang. Bila tidak
+ *                diisi, semua gelas dianggap sudah dituang.
+ */
+function buildGelasTakar(total, takaran, opts) {
+  opts = opts || {};
+  var satuan = opts.satuan || 'L';
+  var t = nilaiTerpadu(total);
+  var k = nilaiTerpadu(takaran);
+  var bagi = sederhanakanRasional({ num: t.num * k.den, den: t.den * k.num });
+  var penuh = Math.floor(bagi.num / bagi.den);
+  var sisa = bagi.num - penuh * bagi.den;
+  var tuang = typeof opts.tuang === 'number' ? Math.min(opts.tuang, penuh) : penuh;
+  var isi = '';
+  for (var i = 0; i < penuh; i++) {
+    isi +=
+      '<span class="gelas-takar__isi' +
+      (i < tuang ? ' is-dituang' : '') +
+      '"><span class="gelas-takar__no">' +
+      (i + 1) +
+      '</span>' +
+      esc(tulisTerpadu(takaran)) +
+      '</span>';
+  }
+  if (sisa) {
+    isi += '<span class="gelas-takar__sisa" style="flex-grow:' + sisa / bagi.den + '">sisa</span>';
+  }
+  var teks =
+    tulisTerpadu(total) +
+    ' ' +
+    satuan +
+    ' : ' +
+    tulisTerpadu(takaran) +
+    ' ' +
+    satuan +
+    ' = ' +
+    teksDesimalEksak(bagi) +
+    (sisa ? '' : ' gelas');
+  if (tuang < penuh) {
+    teks =
+      'Sudah dituang: ' +
+      tuang +
+      ' gelas · sisa di botol ' +
+      teksDesimalEksak(
+        sederhanakanRasional({ num: t.num * k.den - tuang * k.num * t.den, den: t.den * k.den })
+      ) +
+      ' ' +
+      satuan;
+  }
+  return (
+    '<figure class="gelas-takar" role="img" aria-label="' +
+    esc(
+      'Botol ' +
+        tulisTerpadu(total) +
+        ' ' +
+        satuan +
+        ' dituang ke gelas ' +
+        tulisTerpadu(takaran) +
+        ' ' +
+        satuan +
+        ': ' +
+        teks
+    ) +
+    '">' +
+    '<span class="gelas-takar__botol" aria-hidden="true">' +
+    isi +
+    '</span>' +
+    '<figcaption class="gelas-takar__cap" aria-hidden="true">' +
+    esc(teks) +
+    '</figcaption>' +
+    '</figure>'
+  );
+}
