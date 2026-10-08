@@ -103,6 +103,14 @@
     "stageCount": 10,
     "extraBody": "partials/reset-modal.html"
   },
+  "fase-d/mpi-3.1": {
+    "title": "Rasio & Rasio Ekuivalen dalam Situasi Sehari-hari — Matematika Fase D",
+    "description": "Media pembelajaran interaktif berbasis Inquiry Learning untuk menjelaskan konsep rasio dan rasio ekuivalen sebagai perbandingan dua besaran melalui pengamatan situasi sehari-hari: Kedai Es Sirup Kelas VII, kelompok piket, resep, buah, cat, dan skor, melalui Lab Amati Rasio berdiagnosa, Lab Racik sirup–air dengan gelas berwarna dan tabel rasio, diagram pita, serta Lab Cek Ekuivalen (bentuk paling sederhana & perkalian silang).",
+    "kicker": "Matematika — Fase D (SMP)",
+    "h1": "Rasio & Rasio Ekuivalen dalam Situasi Sehari-hari",
+    "stageCount": 11,
+    "extraBody": "partials/reset-modal.html"
+  },
   "fase-f/mpi-1.1": {
     "title": "Konsep Barisan Aritmetika & Beda — Matematika Fase F",
     "description": "Media pembelajaran interaktif berbasis Inquiry Learning untuk mengidentifikasi dan menjelaskan konsep barisan aritmetika serta menentukan beda dari suatu barisan bilangan.",

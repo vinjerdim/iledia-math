@@ -205,6 +205,10 @@
        rincian & syarat anggaran, isian berdiagnosa miskonsepsi & opsi
        berpengecoh, struk belanja, Lab Diskon, Timbangan Untung–Rugi,
        Papan Anggaran)
+   67. Rasio & rasio ekuivalen (bentuk paling sederhana, ekuivalen lewat
+       perkalian silang, isian rasio berdiagnosa urutan tertukar/bagian vs
+       keseluruhan/tambah sama, suku hilang, lab racik sirup–air, gelas
+       campuran, ikon benda, diagram pita, tabel rasio, cek ekuivalen)
    ============================================================ */
 
 /* ============================================================
@@ -41080,6 +41084,597 @@ function bindPapanAnggaran(root, id, st, opts, onChange) {
     bindFinStepper(root, id + '-' + p.id, function (arah) {
       ubahPapanAnggaran(st, p.id, arah, opts);
       onChange();
+    });
+  });
+}
+
+/* ============================================================
+   67. RASIO & RASIO EKUIVALEN — PERBANDINGAN DUA BESARAN
+   Dipakai modul konsep rasio dan rasio ekuivalen melalui situasi
+   sehari-hari (fase-d/mpi-3.1, Inquiry Learning). Semua suku rasio
+   berupa bilangan asli; pemeriksaan ekuivalen memakai perkalian
+   silang sehingga eksak. Isinya:
+     • fmtRasio, sederhanakanRasio (FPB, memakai gcd seksi 1),
+       rasioSederhana, rasioSetara, kepekatanRasio, bandingRasaRasio;
+     • parseIsianRasio — membaca isian murid "2 : 3", "2∶3", "2/3",
+       "2 banding 3", termasuk titik ribuan;
+     • kunciRasioSituasi — kunci & pengecoh (tertukar, keseluruhan,
+       bagian–bagian) dari dua besaran dan totalnya;
+     • diagnosaRasio + PESAN_RASIO — miskonsepsi urutan tertukar,
+       bagian vs keseluruhan, belum paling sederhana, tambah sama;
+     • nilaiRasioHilang / diagnosaRasioHilang — suku hilang pada
+       a : b = c : ?, termasuk miskonsepsi aditif;
+     • periksaSoalRasio / jawabSoalRasio — pemeriksa isian soal
+       berjenis 'situasi', 'hilang', 'sederhana';
+     • lab racik: operasiRasio, ensurePencampurState,
+       terapkanAksiPencampur, jenisAksiDicoba, warnaCampuran;
+     • tampilan: buildGelasCampuran (gelas SVG + kadar), buildIkonRasio
+       (ikon benda berkelompok), buildPitaRasio (diagram pita),
+       buildTabelRasio, buildCekSetara (bentuk sederhana & perkalian
+       silang), buildPencampurRasio + bindPencampurRasio.
+   Gaya .gelas-rasio*, .ikon-rasio*, .pita-rasio*, .cek-setara*,
+   .pencampur* ada di shared/base.css.
+   ============================================================ */
+
+/* "2 : 3" — suku ditulis dengan pemisah ribuan titik. */
+function fmtRasio(a, b) {
+  return formatNumber(a) + ' : ' + formatNumber(b);
+}
+
+/* Bentuk paling sederhana a : b beserta FPB-nya. */
+function sederhanakanRasio(a, b) {
+  var f = gcd(a, b) || 1;
+  return { a: a / f, b: b / f, fpb: f };
+}
+
+function rasioSederhana(a, b) {
+  return gcd(a, b) === 1;
+}
+
+/* a : b ekuivalen dengan c : d ⇔ a × d = b × c (semua suku positif). */
+function rasioSetara(a, b, c, d) {
+  if (!(a > 0 && b > 0 && c > 0 && d > 0)) return false;
+  return a * d === b * c;
+}
+
+/* Kadar besaran pertama terhadap seluruh campuran: a / (a + b). */
+function kepekatanRasio(a, b) {
+  return a / (a + b);
+}
+
+/*
+ * Membandingkan rasa campuran c : d terhadap a : b (mis. sirup : air).
+ * Kadar c/(c+d) > a/(a+b) ⇔ c × b > a × d, jadi cukup perkalian silang.
+ */
+function bandingRasaRasio(a, b, c, d) {
+  var kiri = c * b;
+  var kanan = a * d;
+  if (kiri === kanan) return 'sama';
+  return kiri > kanan ? 'lebihPekat' : 'lebihEncer';
+}
+
+/* Suku rasio: angka bulat, boleh bertitik ribuan ("15.000"). */
+function bacaSukuRasio(str) {
+  if (/^\d+$/.test(str)) return parseInt(str, 10);
+  if (/^\d{1,3}(\.\d{3})+$/.test(str)) return parseInt(str.replace(/\./g, ''), 10);
+  return null;
+}
+
+/*
+ * Membaca isian rasio murid. Pemisah yang diterima: ":", "∶" (U+2236),
+ * "/", "banding", "berbanding". Mengembalikan { a, b, kode } dengan kode
+ * 'ok' | 'kosong' | 'format' | 'nol'.
+ */
+function parseIsianRasio(str) {
+  var s = String(str === null || str === undefined ? '' : str)
+    .trim()
+    .toLowerCase();
+  if (!s) return { a: null, b: null, kode: 'kosong' };
+  var bagian = s.split(/\s*(?::|∶|\/|\bberbanding\b|\bbanding\b)\s*/);
+  if (bagian.length !== 2) return { a: null, b: null, kode: 'format' };
+  var a = bacaSukuRasio(bagian[0].trim());
+  var b = bacaSukuRasio(bagian[1].trim());
+  if (a === null || b === null) return { a: null, b: null, kode: 'format' };
+  if (a === 0 || b === 0) return { a: a, b: b, kode: 'nol' };
+  return { a: a, b: b, kode: 'ok' };
+}
+
+/*
+ * Kunci dan pengecoh rasio dari situasi dua besaran a dan b (total
+ * a + b). P dan Q ∈ 'a' | 'b' | 'total': yang ditanyakan adalah
+ * "rasio P terhadap Q".
+ *   tertukar      Q : P
+ *   keseluruhan   P : total     (bila P dan Q sama-sama bagian)
+ *   bagianBagian  bagian : bagian lain (bila salah satunya total)
+ */
+function kunciRasioSituasi(a, b, P, Q) {
+  var nilai = { a: a, b: b, total: a + b };
+  var lain = { a: 'b', b: 'a' };
+  var pengecoh = [{ a: nilai[Q], b: nilai[P], kode: 'tertukar' }];
+  if (P !== 'total' && Q !== 'total') {
+    pengecoh.push({ a: nilai[P], b: nilai.total, kode: 'keseluruhan' });
+  } else if (Q === 'total') {
+    pengecoh.push({ a: nilai[P], b: nilai[lain[P]], kode: 'bagianBagian' });
+  } else {
+    pengecoh.push({ a: nilai[lain[Q]], b: nilai[Q], kode: 'bagianBagian' });
+  }
+  return { kunci: { a: nilai[P], b: nilai[Q] }, pengecoh: pengecoh };
+}
+
+var PESAN_RASIO = {
+  benar: 'Tepat! Rasiomu membandingkan kedua besaran dengan urutan yang benar.',
+  kosong: 'Isi rasionya lebih dulu, mis. 2 : 3.',
+  format: 'Tulis rasio dengan dua bilangan bulat dan tanda titik dua, mis. 2 : 3.',
+  nol: 'Suku rasio pada situasi ini tidak boleh nol. Hitung lagi banyak bendanya.',
+  tertukar:
+    'Urutannya tertukar. Suku pertama adalah besaran yang disebut lebih dulu ("rasio … terhadap …").',
+  keseluruhan:
+    'Kamu membandingkan dengan seluruh benda (total). Yang ditanya adalah bagian terhadap bagian lainnya.',
+  bagianBagian:
+    'Kamu membandingkan dua bagian. Yang ditanya adalah bagian terhadap keseluruhan — jumlahkan dulu semua bagiannya.',
+  belumSederhana:
+    'Rasiomu sudah ekuivalen, tetapi belum paling sederhana. Bagi kedua suku dengan FPB-nya.',
+  tambahSama:
+    'Kamu menambah atau mengurangi kedua suku dengan bilangan yang sama. Itu mengubah rasio — gunakan perkalian atau pembagian.',
+  salah: 'Belum tepat. Hitung lagi banyak setiap besaran, lalu tulis sesuai urutan yang ditanya.',
+};
+
+function hasilDiagnosaRasio(kode) {
+  return { kode: kode, benar: kode === 'benar', pesan: PESAN_RASIO[kode] };
+}
+
+/*
+ * Mendiagnosa isian rasio terhadap kunci { a, b }.
+ *   opts.pengecoh   [{ a, b, kode }] — rasio miskonsepsi (lihat
+ *                   kunciRasioSituasi); dicek setelah kunci
+ *   opts.sederhana  true → isian harus bentuk paling sederhana
+ * Rasio yang ekuivalen dengan kunci diterima (kecuali opts.sederhana).
+ */
+function diagnosaRasio(isian, kunci, opts) {
+  opts = opts || {};
+  var p = parseIsianRasio(isian);
+  if (p.kode !== 'ok') return hasilDiagnosaRasio(p.kode);
+  if (rasioSetara(p.a, p.b, kunci.a, kunci.b)) {
+    if (opts.sederhana && !rasioSederhana(p.a, p.b)) return hasilDiagnosaRasio('belumSederhana');
+    return hasilDiagnosaRasio('benar');
+  }
+  var pengecoh = (opts.pengecoh || []).concat([{ a: kunci.b, b: kunci.a, kode: 'tertukar' }]);
+  for (var i = 0; i < pengecoh.length; i++) {
+    if (rasioSetara(p.a, p.b, pengecoh[i].a, pengecoh[i].b)) {
+      return hasilDiagnosaRasio(pengecoh[i].kode);
+    }
+  }
+  if (p.a - kunci.a === p.b - kunci.b) return hasilDiagnosaRasio('tambahSama');
+  return hasilDiagnosaRasio('salah');
+}
+
+/*
+ * Suku yang hilang pada a : b = … . posisi 'kanan': diketahui suku
+ * pertama x (a : b = x : ?); 'kiri': diketahui suku kedua x (a : b = ? : x).
+ */
+function nilaiRasioHilang(a, b, x, posisi) {
+  return posisi === 'kiri' ? (a * x) / b : (b * x) / a;
+}
+
+/*
+ * Diagnosa isian suku hilang: benar, tambahSama (berpikir aditif:
+ * selisih dipertahankan), tertukar (memakai pengali kebalikan), salah.
+ */
+function diagnosaRasioHilang(isian, a, b, x, posisi) {
+  var s = String(isian === null || isian === undefined ? '' : isian).trim();
+  if (!s) return hasilDiagnosaRasio('kosong');
+  var v = bacaSukuRasio(s);
+  if (v === null) {
+    return { kode: 'format', benar: false, pesan: 'Tulis jawabanmu berupa satu bilangan bulat.' };
+  }
+  var jawab = nilaiRasioHilang(a, b, x, posisi);
+  if (v === jawab) return hasilDiagnosaRasio('benar');
+  var aditif = posisi === 'kiri' ? a + (x - b) : b + (x - a);
+  if (v === aditif) return hasilDiagnosaRasio('tambahSama');
+  var kebalikan = posisi === 'kiri' ? (b * x) / a : (a * x) / b;
+  if (v === kebalikan) {
+    return {
+      kode: 'tertukar',
+      benar: false,
+      pesan:
+        'Pengalinya terbalik. Cari dulu "berapa kali lipat" dari suku yang diketahui, lalu kalikan suku pasangannya dengan bilangan yang sama.',
+    };
+  }
+  return {
+    kode: 'salah',
+    benar: false,
+    pesan:
+      'Belum tepat. Cari bilangan pengali (atau pembagi) yang sama untuk kedua suku, lalu terapkan.',
+  };
+}
+
+/* Jawaban baku soal isian rasio (teks), menurut s.cek.jenis. */
+function jawabSoalRasio(s) {
+  var c = s.cek;
+  if (c.jenis === 'situasi') {
+    var k = kunciRasioSituasi(c.a, c.b, c.P, c.Q).kunci;
+    var kb = c.sederhana ? sederhanakanRasio(k.a, k.b) : k;
+    return fmtRasio(kb.a, kb.b);
+  }
+  if (c.jenis === 'hilang') return formatNumber(nilaiRasioHilang(c.a, c.b, c.x, c.posisi));
+  if (c.jenis === 'sederhana') {
+    var sd = sederhanakanRasio(c.a, c.b);
+    return fmtRasio(sd.a, sd.b);
+  }
+  throw new Error('Jenis soal rasio tidak dikenal: ' + c.jenis);
+}
+
+/* Memeriksa isian soal rasio → { kode, benar, pesan }. */
+function periksaSoalRasio(isian, s) {
+  var c = s.cek;
+  if (c.jenis === 'situasi') {
+    var k = kunciRasioSituasi(c.a, c.b, c.P, c.Q);
+    return diagnosaRasio(isian, k.kunci, { pengecoh: k.pengecoh, sederhana: c.sederhana });
+  }
+  if (c.jenis === 'hilang') return diagnosaRasioHilang(isian, c.a, c.b, c.x, c.posisi);
+  if (c.jenis === 'sederhana') {
+    return diagnosaRasio(isian, { a: c.a, b: c.b }, { sederhana: true });
+  }
+  throw new Error('Jenis soal rasio tidak dikenal: ' + c.jenis);
+}
+
+/* ---------- Lab racik (pencampur rasio) ---------- */
+
+/*
+ * Menerapkan aksi 'kaliN' | 'bagiN' | 'tambahN' pada kedua suku.
+ * 'bagiN' tidak berlaku (ok: false) bila salah satu suku tak habis dibagi.
+ */
+function operasiRasio(a, b, aksi) {
+  var m = /^(kali|bagi|tambah)(\d+)$/.exec(aksi);
+  if (!m) throw new Error('Aksi rasio tidak dikenal: ' + aksi);
+  var n = parseInt(m[2], 10);
+  if (m[1] === 'kali') return { a: a * n, b: b * n, ok: true };
+  if (m[1] === 'tambah') return { a: a + n, b: b + n, ok: true };
+  if (a % n !== 0 || b % n !== 0) return { a: a, b: b, ok: false };
+  return { a: a / n, b: b / n, ok: true };
+}
+
+/* Memastikan state lab racik { awal, a, b, riwayat } valid. */
+function ensurePencampurState(st, a, b) {
+  if (!st.awal || st.awal.a !== a || st.awal.b !== b) {
+    st.awal = { a: a, b: b };
+    st.a = a;
+    st.b = b;
+    st.riwayat = [];
+  }
+  if (!(st.a > 0) || !(st.b > 0)) {
+    st.a = a;
+    st.b = b;
+  }
+  if (!Array.isArray(st.riwayat)) st.riwayat = [];
+  return st;
+}
+
+/* Menerapkan aksi pada state lab (termasuk 'awal'); false bila tidak berlaku. */
+function terapkanAksiPencampur(st, aksi) {
+  var hasil =
+    aksi === 'awal' ? { a: st.awal.a, b: st.awal.b, ok: true } : operasiRasio(st.a, st.b, aksi);
+  if (!hasil.ok) return false;
+  st.a = hasil.a;
+  st.b = hasil.b;
+  st.riwayat.push({ a: hasil.a, b: hasil.b, aksi: aksi });
+  return true;
+}
+
+/* Jenis aksi yang sudah dicoba: 'kali' | 'bagi' | 'tambah' | 'awal'. */
+function jenisAksiDicoba(st) {
+  var ada = {};
+  (st.riwayat || []).forEach(function (r) {
+    ada[String(r.aksi).replace(/\d+$/, '')] = true;
+  });
+  return Object.keys(ada);
+}
+
+/*
+ * Warna campuran menurut kadar a/(a+b): dari air (biru muda) ke sirup
+ * (merah stroberi). Rasio ekuivalen → kadar sama → warna sama.
+ */
+function warnaCampuran(a, b) {
+  var t = kepekatanRasio(a, b);
+  var air = [222, 239, 250];
+  var sirup = [160, 18, 64];
+  return (
+    'rgb(' +
+    air
+      .map(function (v, i) {
+        return Math.round(v + (sirup[i] - v) * t);
+      })
+      .join(', ') +
+    ')'
+  );
+}
+
+function teksBesaranRasio(n, satuan, nama) {
+  return formatNumber(n) + (satuan ? ' ' + satuan : '') + ' ' + nama;
+}
+
+/*
+ * Gelas campuran (SVG) dengan warna menurut kadar, keterangan rasio,
+ * dan meter kadar "a dari a + b bagian".
+ *   opts.namaA, opts.namaB, opts.satuan, opts.judul
+ */
+function buildGelasCampuran(a, b, opts) {
+  opts = opts || {};
+  var namaA = opts.namaA || 'sirup';
+  var namaB = opts.namaB || 'air';
+  var ket =
+    teksBesaranRasio(a, opts.satuan, namaA) + ' : ' + teksBesaranRasio(b, opts.satuan, namaB);
+  var warna = warnaCampuran(a, b);
+  var persen = Math.round(kepekatanRasio(a, b) * 100);
+  return (
+    '<figure class="gelas-rasio">' +
+    (opts.judul
+      ? '<figcaption class="gelas-rasio__judul">' + esc(opts.judul) + '</figcaption>'
+      : '') +
+    '<svg class="gelas-rasio__svg" viewBox="0 0 80 100" role="img" aria-label="' +
+    esc((opts.judul ? opts.judul + ': ' : '') + ket) +
+    '">' +
+    '<path d="M14 18 L66 18 L60 92 L20 92 Z" fill="' +
+    warna +
+    '" />' +
+    '<path d="M10 6 L70 6 L60 94 L20 94 Z" fill="none" stroke="currentColor" stroke-width="3" stroke-linejoin="round" />' +
+    '<rect x="22" y="26" width="5" height="44" rx="2" fill="#ffffff" opacity="0.45" />' +
+    '</svg>' +
+    '<p class="gelas-rasio__ket">' +
+    esc(ket) +
+    '</p>' +
+    '<div class="gelas-rasio__meter" aria-hidden="true"><span style="width:' +
+    persen +
+    '%;background:' +
+    warna +
+    '"></span></div>' +
+    '<p class="gelas-rasio__kadar">' +
+    esc(namaA.charAt(0).toUpperCase() + namaA.slice(1)) +
+    ': ' +
+    formatNumber(a) +
+    ' dari ' +
+    formatNumber(a + b) +
+    ' bagian</p>' +
+    '</figure>'
+  );
+}
+
+/*
+ * Ikon benda per kelompok, mis. 4 🧑 dan 6 👧.
+ *   kelompok  [{ ikon, n, nama }]
+ */
+function buildIkonRasio(kelompok) {
+  var aria = kelompok
+    .map(function (k) {
+      return formatNumber(k.n) + ' ' + k.nama;
+    })
+    .join(' dan ');
+  return (
+    '<div class="ikon-rasio" role="img" aria-label="' +
+    esc(aria) +
+    '">' +
+    kelompok
+      .map(function (k) {
+        var isi = '';
+        for (var i = 0; i < k.n; i++) {
+          isi += '<span class="ikon-rasio__item" aria-hidden="true">' + k.ikon + '</span>';
+        }
+        return (
+          '<div class="ikon-rasio__baris"><span class="ikon-rasio__isi">' +
+          isi +
+          '</span><span class="ikon-rasio__label" aria-hidden="true">' +
+          formatNumber(k.n) +
+          ' ' +
+          esc(k.nama) +
+          '</span></div>'
+        );
+      })
+      .join('') +
+    '</div>'
+  );
+}
+
+/*
+ * Diagram pita a : b — satu sel per satuan, dua baris. opts.grup (bila
+ * membagi habis a dan b) memecah tiap baris menjadi `grup` kelompok
+ * sama besar, sehingga tampak bentuk sederhananya.
+ */
+function buildPitaRasio(a, b, opts) {
+  opts = opts || {};
+  var grup = opts.grup && a % opts.grup === 0 && b % opts.grup === 0 ? opts.grup : 1;
+  function baris(n, nama, kelas) {
+    var per = n / grup;
+    var html = '';
+    for (var g = 0; g < grup; g++) {
+      var sel = '';
+      for (var i = 0; i < per; i++) sel += '<span class="pita-rasio__sel"></span>';
+      html += '<span class="pita-rasio__grup">' + sel + '</span>';
+    }
+    return (
+      '<div class="pita-rasio__baris pita-rasio__baris--' +
+      kelas +
+      '"><span class="pita-rasio__nama">' +
+      esc(nama) +
+      '</span><span class="pita-rasio__isi">' +
+      html +
+      '</span><span class="pita-rasio__n">' +
+      formatNumber(n) +
+      '</span></div>'
+    );
+  }
+  return (
+    '<div class="pita-rasio' +
+    (grup > 1 ? ' pita-rasio--grup' : '') +
+    '" role="img" aria-label="' +
+    esc(
+      'Diagram pita ' +
+        (opts.namaA || 'A') +
+        ' ' +
+        formatNumber(a) +
+        ' dan ' +
+        (opts.namaB || 'B') +
+        ' ' +
+        formatNumber(b) +
+        (grup > 1 ? ', dibagi menjadi ' + grup + ' kelompok sama besar' : '')
+    ) +
+    '">' +
+    baris(a, opts.namaA || 'A', 'a') +
+    baris(b, opts.namaB || 'B', 'b') +
+    '</div>'
+  );
+}
+
+/*
+ * Tabel rasio. baris [{ a, b, aksi? }]; opts.namaA, opts.namaB,
+ * opts.caption, opts.acuan { a, b } → kolom "Ekuivalen dengan …?".
+ */
+function buildTabelRasio(baris, opts) {
+  opts = opts || {};
+  var acuan = opts.acuan;
+  return (
+    '<div class="table-scroll"><table class="data-table tabel-rasio">' +
+    (opts.caption ? '<caption>' + esc(opts.caption) + '</caption>' : '') +
+    '<thead><tr><th scope="col">' +
+    esc(opts.namaA || 'A') +
+    '</th><th scope="col">' +
+    esc(opts.namaB || 'B') +
+    '</th><th scope="col">Rasio</th><th scope="col">Paling sederhana</th>' +
+    (acuan
+      ? '<th scope="col">Ekuivalen dengan ' + esc(fmtRasio(acuan.a, acuan.b)) + '?</th>'
+      : '') +
+    '</tr></thead><tbody>' +
+    baris
+      .map(function (r) {
+        var sd = sederhanakanRasio(r.a, r.b);
+        var setara = acuan ? rasioSetara(r.a, r.b, acuan.a, acuan.b) : null;
+        return (
+          '<tr' +
+          (acuan ? ' class="' + (setara ? 'is-setara' : 'is-beda') + '"' : '') +
+          '><td>' +
+          formatNumber(r.a) +
+          '</td><td>' +
+          formatNumber(r.b) +
+          '</td><td>' +
+          esc(fmtRasio(r.a, r.b)) +
+          '</td><td>' +
+          esc(fmtRasio(sd.a, sd.b)) +
+          '</td>' +
+          (acuan ? '<td>' + (setara ? '✓ ya' : '✗ tidak') + '</td>' : '') +
+          '</tr>'
+        );
+      })
+      .join('') +
+    '</tbody></table></div>'
+  );
+}
+
+/* Dua cara memeriksa a : b dan c : d: bentuk sederhana & perkalian silang. */
+function buildCekSetara(a, b, c, d) {
+  var s1 = sederhanakanRasio(a, b);
+  var s2 = sederhanakanRasio(c, d);
+  var setara = rasioSetara(a, b, c, d);
+  return (
+    '<div class="cek-setara' +
+    (setara ? ' is-setara' : ' is-beda') +
+    '">' +
+    '<p class="cek-setara__baris"><span class="cek-setara__label">Bentuk paling sederhana</span> ' +
+    esc(fmtRasio(a, b)) +
+    ' → <strong>' +
+    esc(fmtRasio(s1.a, s1.b)) +
+    '</strong>; ' +
+    esc(fmtRasio(c, d)) +
+    ' → <strong>' +
+    esc(fmtRasio(s2.a, s2.b)) +
+    '</strong></p>' +
+    '<p class="cek-setara__baris"><span class="cek-setara__label">Perkalian silang</span> ' +
+    formatNumber(a) +
+    ' × ' +
+    formatNumber(d) +
+    ' = ' +
+    formatNumber(a * d) +
+    ' dan ' +
+    formatNumber(b) +
+    ' × ' +
+    formatNumber(c) +
+    ' = ' +
+    formatNumber(b * c) +
+    '</p>' +
+    '<p class="cek-setara__vonis">' +
+    (setara ? '✓ Kedua rasio ekuivalen.' : '✗ Kedua rasio tidak ekuivalen.') +
+    '</p>' +
+    '</div>'
+  );
+}
+
+var LABEL_RASA_RASIO = {
+  sama: 'Rasanya sama dengan gelas awal — rasionya ekuivalen.',
+  lebihPekat: 'Rasanya berubah: lebih manis daripada gelas awal — rasionya tidak ekuivalen.',
+  lebihEncer: 'Rasanya berubah: lebih tawar daripada gelas awal — rasionya tidak ekuivalen.',
+};
+
+/*
+ * Lab racik: gelas awal vs gelas sekarang, vonis rasa, tombol aksi
+ * (opts.aksi [{ id, label }] + tombol kembali ke awal), dan tabel
+ * riwayat percobaan. st dari ensurePencampurState.
+ */
+function buildPencampurRasio(id, st, opts) {
+  var gopts = { namaA: opts.namaA, namaB: opts.namaB, satuan: opts.satuan };
+  var rasa = bandingRasaRasio(st.awal.a, st.awal.b, st.a, st.b);
+  var tombol = opts.aksi
+    .map(function (ak) {
+      var bisa = operasiRasio(st.a, st.b, ak.id).ok;
+      return (
+        '<button type="button" class="btn btn--outline-primary pencampur__aksi" data-aksi="' +
+        esc(ak.id) +
+        '"' +
+        (bisa ? '' : ' disabled title="Tidak habis dibagi"') +
+        '>' +
+        esc(ak.label) +
+        '</button>'
+      );
+    })
+    .join('');
+  return (
+    '<div class="pencampur" data-pencampur="' +
+    esc(id) +
+    '">' +
+    '<div class="pencampur__gelas">' +
+    buildGelasCampuran(st.awal.a, st.awal.b, Object.assign({ judul: 'Gelas awal' }, gopts)) +
+    buildGelasCampuran(st.a, st.b, Object.assign({ judul: 'Gelas racikanmu' }, gopts)) +
+    '</div>' +
+    '<p class="pencampur__vonis pencampur__vonis--' +
+    rasa +
+    '" role="status">' +
+    (rasa === 'sama' ? '😋 ' : '🤔 ') +
+    esc(LABEL_RASA_RASIO[rasa]) +
+    '</p>' +
+    '<div class="pencampur__tombol" role="group" aria-label="Ubah takaran kedua bahan">' +
+    tombol +
+    '<button type="button" class="btn btn--ghost pencampur__aksi" data-aksi="awal">↺ Gelas awal</button>' +
+    '</div>' +
+    (st.riwayat.length
+      ? buildTabelRasio(
+          st.riwayat.map(function (r) {
+            return { a: r.a, b: r.b };
+          }),
+          {
+            namaA: opts.namaA,
+            namaB: opts.namaB,
+            acuan: st.awal,
+            caption: 'Catatan percobaanmu',
+          }
+        )
+      : '') +
+    '</div>'
+  );
+}
+
+function bindPencampurRasio(root, id, st, onChange) {
+  var wrap = root.querySelector('[data-pencampur="' + id + '"]');
+  if (!wrap) return;
+  wrap.querySelectorAll('[data-aksi]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      if (terapkanAksiPencampur(st, btn.dataset.aksi)) onChange();
     });
   });
 }
