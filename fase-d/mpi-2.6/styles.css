@@ -1,0 +1,242 @@
+/* =========================================================================
+   fase-d/mpi-2.6/styles.css
+   Pembulatan & Penaksiran untuk Menilai Kewajaran Jawaban — Fase D
+
+   Hanya memuat gaya yang KHAS modul ini. Seluruh dasar design system
+   (panel, tombol, kotak umpan balik, pilihan ganda, pemilahan, pertanyaan
+   penuntun .quiz-item--guided, tabel .data-table, perbandingan dugaan
+   .dugaan-row, kartu ringkasan, navigasi tahap, modal), alat bersama
+   pembulatan & penaksiran (.bulat-garis*, .wajar-meter*, .taksir-tabel*),
+   dan isian berdiagnosa (.dec-step__*, .bbk-satuan, .bbk-soal-tag) berasal
+   dari shared/base.css.
+   ========================================================================= */
+
+/* -------------------------------------------------------------------------
+   Label konteks
+   ------------------------------------------------------------------------- */
+
+.taksir-konteks {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: 2px var(--space-2);
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.taksir-konteks--belanja {
+  background: var(--color-success-soft);
+  color: var(--color-success-strong);
+}
+
+.taksir-konteks--jalan {
+  background: var(--color-purple-soft);
+  color: var(--color-purple-strong);
+}
+
+.taksir-konteks--dapur {
+  background: var(--color-orange-soft);
+  color: var(--color-orange-strong);
+}
+
+.taksir-konteks--cuaca,
+.taksir-konteks--ukur {
+  background: var(--color-blue-soft);
+  color: var(--color-blue-strong);
+}
+
+/* -------------------------------------------------------------------------
+   Tahap 1 — Orientasi: kartu "layar kalkulator"
+   ------------------------------------------------------------------------- */
+
+.kalku-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: var(--space-3);
+  margin-top: var(--space-4);
+}
+
+.kalku-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--color-border-strong);
+  border-top: 5px solid var(--color-success);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+}
+
+.kalku-card--jalan {
+  border-top-color: var(--color-purple);
+}
+
+.kalku-card--dapur {
+  border-top-color: var(--color-orange);
+}
+
+.kalku-card__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+.kalku-card__siapa {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--color-ink-muted);
+}
+
+.kalku-card__teks {
+  margin: 0;
+  font-size: 0.92rem;
+}
+
+.kalku-card__layar {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-md);
+  background: var(--color-ink);
+  color: var(--color-surface);
+  font-family: var(--font-mono);
+  overflow-wrap: anywhere;
+}
+
+.kalku-card__soal {
+  font-size: 0.85rem;
+  opacity: 0.85;
+}
+
+.kalku-card__hasil {
+  font-size: 1.35rem;
+  font-weight: 700;
+}
+
+.kalku-card__satuan {
+  margin: 0;
+  font-size: 0.8rem;
+  color: var(--color-ink-muted);
+  text-align: right;
+}
+
+/* -------------------------------------------------------------------------
+   Tahap 4 — Lab: kartu percobaan
+   ------------------------------------------------------------------------- */
+
+.taksir-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  margin-bottom: var(--space-4);
+}
+
+.taksir-card {
+  padding: var(--space-4);
+  border: 2px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+}
+
+.taksir-card.is-done {
+  border-color: var(--color-success);
+}
+
+.taksir-card__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  margin-bottom: var(--space-2);
+}
+
+.taksir-card__no {
+  font-weight: 700;
+}
+
+.taksir-card__cerita {
+  margin: 0 0 var(--space-2);
+}
+
+.taksir-pilih {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin: var(--space-3) 0;
+}
+
+.taksir-pilih .btn {
+  min-height: 44px;
+}
+
+/* Banding strategi: taksiran vs hasil sebenarnya */
+.taksir-banding {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  margin: var(--space-3) 0;
+  padding: var(--space-3) var(--space-4);
+  border: 1px dashed var(--color-border-strong);
+  border-radius: var(--radius-md);
+}
+
+.taksir-banding__baris {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: var(--space-2);
+  margin: 0;
+}
+
+.taksir-banding__baris strong {
+  font-family: var(--font-mono);
+}
+
+/* -------------------------------------------------------------------------
+   Tahap 4c — Lab Kewajaran
+   ------------------------------------------------------------------------- */
+
+.wajar-klaim {
+  font-family: var(--font-mono);
+  color: var(--color-error-strong);
+}
+
+/* -------------------------------------------------------------------------
+   Tahap 5 — Uji Hipotesis
+   ------------------------------------------------------------------------- */
+
+.hipotesis-box {
+  margin-top: var(--space-4);
+  padding: var(--space-3) var(--space-4);
+  border: 1px dashed var(--color-border-strong);
+  border-radius: var(--radius-md);
+}
+
+.hipotesis-box__label {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--color-ink-muted);
+}
+
+/* -------------------------------------------------------------------------
+   Tahap Selesai
+   ------------------------------------------------------------------------- */
+
+.taksir-contoh-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: var(--space-3);
+  margin: var(--space-4) 0;
+  text-align: left;
+}
+
+.taksir-contoh-grid__num {
+  font-family: var(--font-mono);
+  font-size: 1.1rem;
+}

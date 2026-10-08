@@ -13280,3 +13280,220 @@ button.akar-tile:disabled {
   font-weight: 700;
   text-align: center;
 }
+
+/* =========================================================================
+   65. Pembulatan & penaksiran untuk menilai kewajaran jawaban (engine.js
+   seksi 65, fase-d/mpi-2.6): garis bilangan pembulatan (.bulat-garis),
+   meter kewajaran (.wajar-meter), dan tabel data taksiran (.taksir-tabel).
+   ========================================================================= */
+
+.bulat-garis {
+  margin: var(--space-3) 0;
+}
+
+.bulat-garis__svg {
+  display: block;
+  width: 100%;
+  max-width: 460px;
+  height: auto;
+  margin: 0 auto;
+  overflow: visible;
+}
+
+.bulat-garis__zona--bawah {
+  fill: var(--color-blue-soft);
+}
+
+.bulat-garis__zona--atas {
+  fill: var(--color-orange-soft);
+}
+
+.bulat-garis__sumbu {
+  stroke: var(--color-ink);
+  stroke-width: 2;
+}
+
+.bulat-garis__ruas {
+  stroke: var(--color-ink-muted);
+  stroke-width: 1;
+}
+
+.bulat-garis__ujung {
+  stroke: var(--color-ink);
+  stroke-width: 2.5;
+}
+
+.bulat-garis__tengah {
+  stroke: var(--color-purple);
+  stroke-width: 2;
+  stroke-dasharray: 4 3;
+}
+
+.bulat-garis__titik {
+  fill: var(--color-error);
+  stroke: var(--color-surface);
+  stroke-width: 2;
+}
+
+.bulat-garis__hasil path {
+  fill: none;
+  stroke: var(--color-success);
+  stroke-width: 2.5;
+}
+
+.bulat-garis__hasil polygon {
+  fill: var(--color-success);
+}
+
+.bulat-garis__hasil circle {
+  fill: none;
+  stroke: var(--color-success);
+  stroke-width: 3;
+}
+
+.bulat-garis__label {
+  fill: var(--color-ink);
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.bulat-garis__label--v {
+  fill: var(--color-error-strong);
+}
+
+.bulat-garis__label--tengah {
+  fill: var(--color-purple-strong);
+  font-size: 11px;
+}
+
+.bulat-garis__cap {
+  margin-top: var(--space-1);
+  font-size: 0.85rem;
+  color: var(--color-ink-muted);
+  text-align: center;
+}
+
+/* Meter kewajaran: zona hijau di sekitar taksiran. */
+.wajar-meter {
+  margin: var(--space-2) 0;
+  padding: var(--space-3);
+  border: 2px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+}
+
+.wajar-meter--ya {
+  border-color: var(--color-success);
+}
+
+.wajar-meter--tidak {
+  border-color: var(--color-error);
+}
+
+.wajar-meter__track {
+  position: relative;
+  height: 14px;
+  margin: 30px 12px;
+  border-radius: 999px;
+  background: var(--color-bg-grid);
+}
+
+.wajar-meter__zona {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  border-radius: 999px;
+  background: var(--color-success-soft);
+  outline: 1px solid var(--color-success);
+}
+
+.wajar-meter__tanda {
+  position: absolute;
+  top: 50%;
+  width: 14px;
+  height: 14px;
+  margin-left: -7px;
+  border-radius: 50%;
+  transform: translateY(-50%);
+}
+
+.wajar-meter__tanda > span {
+  position: absolute;
+  left: 50%;
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  font-weight: 700;
+  white-space: nowrap;
+  transform: translateX(-50%);
+}
+
+.wajar-meter__tanda--taksir {
+  background: var(--color-blue);
+}
+
+.wajar-meter__tanda--taksir > span {
+  bottom: 18px;
+  color: var(--color-blue-strong);
+}
+
+.wajar-meter__tanda--jawab {
+  border: 2px solid var(--color-surface);
+  background: var(--color-error);
+}
+
+.wajar-meter--ya .wajar-meter__tanda--jawab {
+  background: var(--color-success);
+}
+
+.wajar-meter__tanda--jawab > span {
+  top: 18px;
+  color: var(--color-ink);
+}
+
+.wajar-meter__cap {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--color-ink-muted);
+}
+
+.wajar-meter__vonis {
+  font-weight: 700;
+  color: var(--color-error-strong);
+}
+
+.wajar-meter--ya .wajar-meter__vonis {
+  color: var(--color-success-strong);
+}
+
+/* Tabel data taksiran. */
+.taksir-tabel td {
+  font-family: var(--font-mono);
+  white-space: nowrap;
+}
+
+.taksir-tabel__arah--lebih {
+  color: var(--color-orange-strong);
+  font-weight: 700;
+}
+
+.taksir-tabel__arah--kurang {
+  color: var(--color-blue-strong);
+  font-weight: 700;
+}
+
+.taksir-tabel__arah--sama {
+  color: var(--color-success-strong);
+  font-weight: 700;
+}
+
+.wajar-meter__tanda.is-kiri > span {
+  left: -4px;
+  transform: none;
+}
+
+.wajar-meter__tanda.is-kanan > span {
+  right: -4px;
+  left: auto;
+  transform: none;
+}
