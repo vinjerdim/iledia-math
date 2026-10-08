@@ -13052,3 +13052,231 @@ button.akar-tile:disabled {
     height: 28px;
   }
 }
+
+/* =========================================================================
+   64. Operasi hitung desimal & konversi pecahan–desimal (engine.js seksi 64,
+   fase-d/mpi-2.5): Petak Seratus (.petak100), pengatur arsir
+   (.petak100-ctrl), Papan Bersusun (.bersusun-dec), Gelas Takar
+   (.gelas-takar), dan isian desimal (.dec-step__*).
+   ========================================================================= */
+
+/* Isian desimal + tombol Periksa boleh turun baris di layar sempit. */
+.dec-step__row {
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.dec-step__input {
+  flex: 0 1 9rem;
+  font-family: var(--font-mono);
+  font-size: 1.1rem;
+}
+
+.petak100 {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+  margin: var(--space-3) auto;
+}
+
+.petak100__grid {
+  display: grid;
+  grid-template-columns: repeat(10, 1fr);
+  gap: 2px;
+  width: min(100%, 260px);
+  aspect-ratio: 1;
+  padding: 3px;
+  border: 2px solid var(--color-border-strong);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+}
+
+/* 1 petak = 0,01; 1 baris (10 petak) = 0,1. */
+.petak100__sel {
+  border-radius: 2px;
+  background: var(--color-bg-grid);
+}
+
+.petak100__sel.is-on {
+  background: var(--color-blue);
+}
+
+.petak100--luas .petak100__sel.is-a {
+  background: var(--color-blue-soft);
+}
+
+.petak100--luas .petak100__sel.is-b {
+  background: var(--color-orange-soft);
+  outline: 2px solid var(--color-orange);
+  outline-offset: -2px;
+}
+
+/* Irisan: terarsir dua kali = hasil kali. */
+.petak100--luas .petak100__sel.is-both {
+  background: var(--color-purple);
+}
+
+.petak100__cap {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--space-1) var(--space-3);
+  max-width: 36ch;
+  font-size: 0.9rem;
+  text-align: center;
+  color: var(--color-ink-muted);
+}
+
+.petak100__cap strong {
+  flex-basis: 100%;
+  color: var(--color-ink);
+}
+
+.petak100__key {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.petak100__key::before {
+  content: '';
+  width: 0.9em;
+  height: 0.9em;
+  border-radius: 2px;
+}
+
+.petak100__key--a::before {
+  background: var(--color-blue-soft);
+  border: 1px solid var(--color-blue);
+}
+
+.petak100__key--b::before {
+  background: var(--color-orange-soft);
+  border: 2px solid var(--color-orange);
+}
+
+.petak100-ctrl {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.petak100-ctrl__btn {
+  min-width: 48px;
+  min-height: 44px;
+  font-family: var(--font-mono);
+  font-weight: 700;
+}
+
+.petak100-ctrl__out {
+  min-width: 6.5em;
+  font-weight: 700;
+  text-align: center;
+}
+
+/* Papan Bersusun: setiap angka satu kolom; koma membentuk kolom sendiri. */
+.bersusun-dec {
+  display: inline-grid;
+  gap: 2px;
+  padding: var(--space-2) var(--space-3);
+  border: 2px solid var(--color-border-strong);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  font-family: var(--font-mono);
+  font-size: 1.15rem;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+/* Warna benar/keliru hanya setelah murid menjawab (opts.tandai). */
+.bersusun-dec--benar {
+  border-color: var(--color-success);
+}
+
+.bersusun-dec--salah {
+  border-color: var(--color-error);
+  border-style: dashed;
+}
+
+.bersusun-dec__row {
+  display: grid;
+  grid-template-columns: 1.2em repeat(var(--bd-cols, 4), 0.9em);
+  justify-items: center;
+}
+
+.bersusun-dec__row--hasil {
+  padding-top: 2px;
+  border-top: 2px solid var(--color-ink);
+  color: var(--color-success-strong);
+}
+
+.bersusun-dec__op {
+  color: var(--color-ink-muted);
+}
+
+.bersusun-dec__koma {
+  color: var(--color-orange-strong);
+}
+
+.bersusun-dec__nol {
+  color: var(--color-purple);
+  font-style: italic;
+}
+
+/* Gelas Takar: botol dibagi menjadi gelas-gelas berisi `takaran`. */
+.gelas-takar {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin: var(--space-3) 0;
+}
+
+.gelas-takar__botol {
+  display: flex;
+  gap: 3px;
+  min-height: 56px;
+  padding: 4px;
+  border: 2px solid var(--color-blue);
+  border-radius: var(--radius-md) var(--radius-md) 18px 18px;
+  background: var(--color-surface);
+}
+
+.gelas-takar__isi,
+.gelas-takar__sisa {
+  display: flex;
+  flex: 1 1 0;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+  border-radius: 4px;
+  background: var(--color-orange-soft);
+  color: var(--color-orange-strong);
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.gelas-takar__isi.is-dituang {
+  background: var(--color-success-soft);
+  color: var(--color-success-strong);
+  outline: 2px solid var(--color-success);
+  outline-offset: -2px;
+}
+
+.gelas-takar__no {
+  font-size: 1rem;
+}
+
+.gelas-takar__sisa {
+  background: var(--color-bg-grid);
+  color: var(--color-ink-muted);
+}
+
+.gelas-takar__cap {
+  font-weight: 700;
+  text-align: center;
+}

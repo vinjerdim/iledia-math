@@ -79,6 +79,14 @@
     "stageCount": 11,
     "extraBody": "partials/reset-modal.html"
   },
+  "fase-d/mpi-2.5": {
+    "title": "Operasi Hitung Desimal & Konversi Pecahan–Desimal dalam Masalah Kontekstual — Matematika Fase D",
+    "description": "Media pembelajaran interaktif berbasis Discovery Learning untuk menerapkan penjumlahan, pengurangan, perkalian, dan pembagian bilangan desimal serta mengonversi pecahan ↔ desimal dalam masalah kontekstual: belanja koperasi, takaran dapur, ukuran kain, dan olahraga, melalui Lab Desimal (Petak Seratus, Papan Bersusun, Model Luas, Gelas Takar), tabel pola letak koma, desimal berulang, dan isian berdiagnosa miskonsepsi.",
+    "kicker": "Matematika — Fase D (SMP)",
+    "h1": "Operasi Hitung Desimal & Konversi Pecahan–Desimal dalam Masalah Kontekstual",
+    "stageCount": 11,
+    "extraBody": "partials/reset-modal.html"
+  },
   "fase-f/mpi-1.1": {
     "title": "Konsep Barisan Aritmetika & Beda — Matematika Fase F",
     "description": "Media pembelajaran interaktif berbasis Inquiry Learning untuk mengidentifikasi dan menjelaskan konsep barisan aritmetika serta menentukan beda dari suatu barisan bilangan.",
