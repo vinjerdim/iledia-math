@@ -13497,3 +13497,452 @@ button.akar-tile:disabled {
   left: auto;
   transform: none;
 }
+
+/* =========================================================================
+   66. Literasi finansial: diskon, untung–rugi & anggaran (engine.js
+   seksi 66, fase-d/mpi-2.7): langkah isian rupiah/persen (.fin-step),
+   struk belanja (.struk), stepper nilai (.fin-stepper), Lab Diskon
+   (.lab-diskon), Timbangan Untung–Rugi (.timbang), dan Papan Anggaran
+   (.papan-anggaran).
+   ========================================================================= */
+
+.fin-step__row {
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.fin-step__input {
+  flex: 0 1 10rem;
+  min-width: 0;
+  font-family: var(--font-mono);
+  font-size: 1.1rem;
+}
+
+.fin-jawab {
+  font-family: var(--font-mono);
+  font-size: 1.05rem;
+}
+
+/* Struk belanja bergaya kertas kasir. */
+.struk {
+  max-width: 340px;
+  margin: 0 auto;
+  padding: var(--space-4);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  box-shadow: 0 2px 0 var(--color-border);
+  font-family: var(--font-mono);
+  font-size: 0.88rem;
+  color: var(--color-ink);
+}
+
+.struk__toko {
+  margin-bottom: var(--space-2);
+  padding-bottom: var(--space-2);
+  border-bottom: 2px dashed var(--color-border-strong);
+  text-align: center;
+  font-weight: 700;
+}
+
+.struk__tabel {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.struk__tabel th,
+.struk__tabel td {
+  padding: 3px 0;
+  vertical-align: top;
+  font-weight: 400;
+  text-align: left;
+}
+
+.struk__tabel td {
+  text-align: right;
+  white-space: nowrap;
+  padding-left: var(--space-2);
+}
+
+.struk__qty {
+  display: block;
+  font-size: 0.78rem;
+  color: var(--color-ink-muted);
+}
+
+.struk__garis th,
+.struk__garis td {
+  border-top: 1px dashed var(--color-border-strong);
+  padding-top: var(--space-2);
+}
+
+.struk__promo th,
+.struk__promo td {
+  color: var(--color-success-strong);
+}
+
+.struk__total th,
+.struk__total td {
+  border-top: 2px dashed var(--color-border-strong);
+  padding-top: var(--space-2);
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.struk__catatan {
+  margin: var(--space-2) 0 0;
+  font-size: 0.78rem;
+  color: var(--color-ink-muted);
+  text-align: center;
+}
+
+/* Stepper nilai bebas (Rp, %, banyak barang). */
+.fin-stepper__val {
+  min-width: 7.5ch;
+  text-align: center;
+  font-family: var(--font-mono);
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--color-ink);
+}
+
+/* Lab Diskon. */
+.lab-diskon,
+.timbang,
+.papan-anggaran {
+  border: 2px dashed var(--color-border-strong);
+  border-radius: var(--radius-md);
+  padding: var(--space-4);
+  background: var(--color-bg);
+}
+
+.lab-diskon__kontrol,
+.timbang__kontrol {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--space-4) var(--space-6);
+  margin-bottom: var(--space-4);
+}
+
+.lab-diskon__barang {
+  margin: 0 0 var(--space-2);
+}
+
+.lab-diskon__bar,
+.papan-anggaran__bar {
+  display: flex;
+  width: 100%;
+  height: 32px;
+  overflow: hidden;
+  border-radius: var(--radius-md);
+  border: 2px solid var(--color-border-strong);
+  background: var(--color-surface);
+}
+
+.lab-diskon__seg,
+.papan-anggaran__seg {
+  display: block;
+  height: 100%;
+  transition: width 0.25s ease;
+}
+
+.lab-diskon__seg--akhir,
+.lab-diskon__kunci--akhir {
+  background: var(--color-primary);
+}
+
+.lab-diskon__seg--p1,
+.lab-diskon__kunci--p1 {
+  background: var(--color-orange);
+}
+
+.lab-diskon__seg--p2,
+.lab-diskon__kunci--p2 {
+  background: repeating-linear-gradient(
+    45deg,
+    var(--color-orange-soft),
+    var(--color-orange-soft) 6px,
+    var(--color-orange) 6px,
+    var(--color-orange) 9px
+  );
+}
+
+.lab-diskon__legenda {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-4);
+  margin: var(--space-2) 0 var(--space-3);
+  padding: 0;
+  list-style: none;
+  font-size: 0.82rem;
+  color: var(--color-ink-muted);
+}
+
+.lab-diskon__legenda li {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.lab-diskon__kunci {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border-radius: 3px;
+}
+
+.lab-diskon__hasil {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: var(--space-2);
+  margin: 0;
+}
+
+.lab-diskon__hasil > div {
+  padding: var(--space-2) var(--space-3);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+}
+
+.lab-diskon__hasil dt {
+  font-size: 0.78rem;
+  color: var(--color-ink-muted);
+}
+
+.lab-diskon__hasil dd {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: 1.05rem;
+  font-weight: 700;
+}
+
+.lab-diskon__akhir {
+  border-color: var(--color-primary) !important;
+}
+
+.lab-diskon__setara {
+  border-color: var(--color-success) !important;
+  background: var(--color-success-soft) !important;
+}
+
+/* Timbangan Untung–Rugi. */
+.timbang__alat {
+  position: relative;
+  max-width: 460px;
+  height: 120px;
+  margin: 0 auto var(--space-3);
+}
+
+.timbang__lengan {
+  position: absolute;
+  top: 30px;
+  left: 4%;
+  right: 4%;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  border-top: 6px solid var(--color-ink-muted);
+  border-radius: 3px;
+  transform-origin: 50% 0;
+  transition: transform 0.35s ease;
+}
+
+.timbang__piring {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 0;
+  max-width: 48%;
+  margin-top: var(--space-2);
+  padding: var(--space-1) var(--space-3);
+  border-radius: 0 0 var(--radius-md) var(--radius-md);
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-align: center;
+}
+
+.timbang__piring strong {
+  font-family: var(--font-mono);
+  font-size: 0.95rem;
+}
+
+.timbang__piring--modal {
+  background: var(--color-orange-soft);
+  color: var(--color-orange-strong);
+}
+
+.timbang__piring--jual {
+  background: var(--color-blue-soft);
+  color: var(--color-blue-strong);
+}
+
+.timbang__tiang {
+  position: absolute;
+  top: 30px;
+  bottom: 0;
+  left: 50%;
+  width: 8px;
+  margin-left: -4px;
+  background: var(--color-border-strong);
+  border-radius: 4px;
+}
+
+.timbang__hasil {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-1);
+  text-align: center;
+  font-size: 0.92rem;
+}
+
+.timbang__status {
+  padding: 2px var(--space-3);
+  border-radius: 999px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  background: var(--color-warning-soft);
+  color: var(--color-warning-strong);
+}
+
+.timbang--untung .timbang__status {
+  background: var(--color-success-soft);
+  color: var(--color-success-strong);
+}
+
+.timbang--rugi .timbang__status {
+  background: var(--color-error-soft);
+  color: var(--color-error-strong);
+}
+
+/* Papan Anggaran. */
+.papan-anggaran__masuk {
+  margin: 0 0 var(--space-3);
+  text-align: center;
+}
+
+.papan-anggaran__pos {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
+}
+
+.papan-anggaran__item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-1);
+  padding: var(--space-3);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-top: 5px solid var(--color-border-strong);
+  border-radius: var(--radius-md);
+}
+
+.papan-anggaran__item--kebutuhan {
+  border-top-color: var(--color-blue);
+}
+
+.papan-anggaran__item--keinginan {
+  border-top-color: var(--color-purple);
+}
+
+.papan-anggaran__item--tabungan {
+  border-top-color: var(--color-success);
+}
+
+.papan-anggaran__jenis {
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-ink-muted);
+}
+
+.papan-anggaran__persen {
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+  color: var(--color-ink-muted);
+}
+
+.papan-anggaran__seg--kebutuhan {
+  background: var(--color-blue);
+}
+
+.papan-anggaran__seg--keinginan {
+  background: var(--color-purple);
+}
+
+.papan-anggaran__seg--tabungan {
+  background: var(--color-success);
+}
+
+.papan-anggaran__seg--lain {
+  background: var(--color-orange);
+}
+
+.papan-anggaran__seg--sisa {
+  background: repeating-linear-gradient(
+    45deg,
+    var(--color-surface),
+    var(--color-surface) 6px,
+    var(--color-bg-grid) 6px,
+    var(--color-bg-grid) 12px
+  );
+}
+
+.papan-anggaran__ringkas {
+  margin: var(--space-2) 0;
+  text-align: center;
+}
+
+.papan-anggaran__ringkas.is-defisit {
+  color: var(--color-error-strong);
+  font-weight: 700;
+}
+
+.papan-anggaran__syarat {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  font-size: 0.9rem;
+}
+
+.papan-anggaran__syarat .is-ok {
+  color: var(--color-success-strong);
+}
+
+.papan-anggaran__syarat .is-belum {
+  color: var(--color-ink);
+}
+
+@media (max-width: 480px) {
+  .lab-diskon,
+  .timbang,
+  .papan-anggaran {
+    padding: var(--space-3);
+  }
+
+  .timbang__piring {
+    padding: var(--space-1) var(--space-2);
+    font-size: 0.72rem;
+  }
+
+  .timbang__piring strong {
+    font-size: 0.82rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lab-diskon__seg,
+  .papan-anggaran__seg,
+  .timbang__lengan {
+    transition: none;
+  }
+}

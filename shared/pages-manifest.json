@@ -95,6 +95,14 @@
     "stageCount": 11,
     "extraBody": "partials/reset-modal.html"
   },
+  "fase-d/mpi-2.7": {
+    "title": "Literasi Finansial: Diskon, Untung–Rugi & Anggaran Sederhana — Matematika Fase D",
+    "description": "Media pembelajaran interaktif berbasis Problem Based Learning untuk menerapkan operasi aritmatika bilangan real dalam masalah literasi finansial stand es teh di bazar sekolah: membandingkan promo toko di Lab Diskon (diskon tunggal, bertingkat, beli–gratis), menentukan harga jual dan untung–rugi dengan Timbangan Untung–Rugi, menyusun anggaran dana kas di Papan Anggaran, isian berdiagnosa miskonsepsi, detektif solusi kelompok lain, dan Papan Rencana Usaha.",
+    "kicker": "Matematika — Fase D (SMP)",
+    "h1": "Literasi Finansial: Diskon, Untung–Rugi & Anggaran Sederhana",
+    "stageCount": 10,
+    "extraBody": "partials/reset-modal.html"
+  },
   "fase-f/mpi-1.1": {
     "title": "Konsep Barisan Aritmetika & Beda — Matematika Fase F",
     "description": "Media pembelajaran interaktif berbasis Inquiry Learning untuk mengidentifikasi dan menjelaskan konsep barisan aritmetika serta menentukan beda dari suatu barisan bilangan.",

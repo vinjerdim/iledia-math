@@ -1,0 +1,190 @@
+/* =========================================================================
+   fase-d/mpi-2.7/styles.css
+   Literasi Finansial: Diskon, Untung–Rugi & Anggaran Sederhana — Fase D
+
+   Hanya memuat gaya yang KHAS modul ini. Seluruh dasar design system
+   (panel, tombol, kotak umpan balik, pilihan ganda, pemilahan, urut-ketuk,
+   pertanyaan penuntun, perbandingan dugaan .dugaan-row, kartu ringkasan,
+   poster .info-poster, navigasi tahap, modal) dan alat literasi finansial
+   bersama (.fin-step*, .struk*, .fin-stepper*, .lab-diskon*, .timbang*,
+   .papan-anggaran*) berasal dari shared/base.css.
+   ========================================================================= */
+
+/* -------------------------------------------------------------------------
+   Label konteks
+   ------------------------------------------------------------------------- */
+
+.fin-konteks {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: 2px var(--space-2);
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.fin-konteks--belanja {
+  background: var(--color-success-soft);
+  color: var(--color-success-strong);
+}
+
+.fin-konteks--dagang {
+  background: var(--color-orange-soft);
+  color: var(--color-orange-strong);
+}
+
+.fin-konteks--anggaran {
+  background: var(--color-purple-soft);
+  color: var(--color-purple-strong);
+}
+
+/* -------------------------------------------------------------------------
+   Tahap 1 & 3 — papan promo toko & catatan kelompok
+   ------------------------------------------------------------------------- */
+
+.promo-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: var(--space-3);
+  margin: var(--space-4) 0;
+}
+
+.promo-toko {
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--color-border-strong);
+  border-top: 5px solid var(--color-orange);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+}
+
+.promo-toko__nama {
+  margin: 0 0 var(--space-2);
+  font-size: 1.05rem;
+}
+
+.promo-toko__list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.promo-toko__list li {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.promo-toko__barang {
+  font-size: 0.9rem;
+}
+
+.promo-toko__label {
+  align-self: flex-start;
+  padding: 2px var(--space-2);
+  border-radius: var(--radius-sm);
+  background: var(--color-error-soft);
+  color: var(--color-error-strong);
+  font-weight: 800;
+  font-size: 0.85rem;
+}
+
+.catatan-list {
+  margin: 0;
+  padding-left: var(--space-5);
+}
+
+.catatan-list li + li {
+  margin-top: var(--space-1);
+}
+
+/* -------------------------------------------------------------------------
+   Tahap 3 — misi Lab Diskon
+   ------------------------------------------------------------------------- */
+
+.misi-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin: 0 0 var(--space-3);
+  padding: 0;
+  list-style: none;
+}
+
+.misi-list li {
+  padding: var(--space-1) var(--space-3);
+  border: 1px dashed var(--color-border-strong);
+  border-radius: 999px;
+  font-size: 0.88rem;
+}
+
+.misi-list li.is-ok {
+  border-style: solid;
+  border-color: var(--color-success);
+  background: var(--color-success-soft);
+  color: var(--color-success-strong);
+  font-weight: 700;
+}
+
+/* -------------------------------------------------------------------------
+   Tahap 4 & 6 — tata letak dua kolom (struk + alat/poster)
+   ------------------------------------------------------------------------- */
+
+.fin-dua {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-4);
+  align-items: start;
+  margin-bottom: var(--space-4);
+}
+
+@media (min-width: 860px) {
+  .fin-dua {
+    grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+  }
+
+  .fin-dua > .struk:first-child {
+    order: 2;
+  }
+}
+
+.fin-dua > .panel {
+  margin: 0;
+}
+
+/* -------------------------------------------------------------------------
+   Tahap 7 — hipotesis & penutup
+   ------------------------------------------------------------------------- */
+
+.hipotesis-box {
+  margin-top: var(--space-4);
+  padding: var(--space-3) var(--space-4);
+  border: 1px dashed var(--color-border-strong);
+  border-radius: var(--radius-md);
+}
+
+.hipotesis-box__label {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--color-ink-muted);
+}
+
+.hipotesis-box p {
+  margin: var(--space-1) 0 var(--space-2);
+}
+
+.fin-contoh-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: var(--space-3);
+  margin: var(--space-4) 0;
+}
+
+.fin-contoh-grid__teks {
+  font-family: var(--font-mono);
+  font-size: 1.05rem;
+}
