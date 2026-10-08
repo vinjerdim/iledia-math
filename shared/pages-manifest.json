@@ -87,6 +87,14 @@
     "stageCount": 11,
     "extraBody": "partials/reset-modal.html"
   },
+  "fase-d/mpi-2.6": {
+    "title": "Pembulatan & Penaksiran untuk Menilai Kewajaran Jawaban — Matematika Fase D",
+    "description": "Media pembelajaran interaktif berbasis Inquiry Learning untuk menerapkan strategi pembulatan dan penaksiran (estimasi) hasil operasi aritmatika bilangan real dalam menilai kewajaran jawaban pada masalah sehari-hari: belanja, perjalanan, dapur kemah, dan cuaca, melalui Lab Pembulatan (garis bilangan berdiagnosa), Lab Taksiran (strategi angka pertama, satuan & bilangan kompatibel), dan Lab Kewajaran (meter kewajaran jawaban kalkulator).",
+    "kicker": "Matematika — Fase D (SMP)",
+    "h1": "Pembulatan & Penaksiran untuk Menilai Kewajaran Jawaban",
+    "stageCount": 11,
+    "extraBody": "partials/reset-modal.html"
+  },
   "fase-f/mpi-1.1": {
     "title": "Konsep Barisan Aritmetika & Beda — Matematika Fase F",
     "description": "Media pembelajaran interaktif berbasis Inquiry Learning untuk mengidentifikasi dan menjelaskan konsep barisan aritmetika serta menentukan beda dari suatu barisan bilangan.",

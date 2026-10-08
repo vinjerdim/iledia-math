@@ -191,6 +191,14 @@
        (hasil eksak × dan :, kebalikan, langkah kali kebalikan, isian
        berdiagnosa miskonsepsi & opsi berpengecoh, pita kelompok
        "berapa banyak … di dalam …", model luas "bagian dari bagian")
+   64. Bilangan desimal: operasi hitung & konversi pecahan–desimal
+       (hasil eksak, letak koma, diagnosa miskonsepsi, desimal
+       berulang, langkah isian berdiagnosa, alat Lab Desimal)
+   65. Pembulatan & penaksiran untuk menilai kewajaran jawaban
+       (pembulatan ke nilai tempat & angka pertama, diagnosa
+       miskonsepsi pembulatan, taksiran operasi berstrategi, arah &
+       galat taksiran, kewajaran jawaban kalkulator, garis pembulatan,
+       meter kewajaran, tabel taksiran)
    ============================================================ */
 
 /* ============================================================
@@ -38652,6 +38660,10 @@ function jawabOpDesimalStep(step) {
   if (step.jenis === 'hitung') return hasilOperasiDesimal(step.a, step.op, step.b);
   if (step.jenis === 'keDesimal') return pecahanKeDesimal(step.soal).teks;
   if (step.jenis === 'kePecahan') return desimalKePecahan(step.soal).sederhana;
+  if (step.jenis === 'bulat') return bulatkanKeTempat(step.soal, step.tempat);
+  if (step.jenis === 'taksir') {
+    return taksirOperasi(step.a, step.op, step.b, step.strategi || strategiBaku(step.op)).hasil;
+  }
   return tulisTerpadu(step.jawab);
 }
 
@@ -38661,6 +38673,8 @@ function jawabOpDesimalStep(step) {
  *   step.jenis 'keDesimal' → diagnosaKonversiPD(input, soal, 'keDesimal')
  *   step.jenis 'kePecahan' → diagnosaKonversiPD(input, soal, 'kePecahan')
  *   step.jenis 'nilai'     → nilai isian = step.jawab (bentuk apa saja)
+ *   step.jenis 'bulat'     → diagnosaPembulatan(input, soal, tempat) (seksi 65)
+ *   step.jenis 'taksir'    → diagnosaTaksiran(input, a, op, b, strategi) (seksi 65)
  * Isian kosong tidak dihitung sebagai percobaan.
  */
 function periksaOpDesimalStep(st, step, input) {
@@ -38669,6 +38683,9 @@ function periksaOpDesimalStep(st, step, input) {
   if (step.jenis === 'hitung') r = diagnosaOperasiDesimal(st.input, step.a, step.op, step.b);
   else if (step.jenis === 'keDesimal' || step.jenis === 'kePecahan')
     r = diagnosaKonversiPD(st.input, step.soal, step.jenis);
+  else if (step.jenis === 'bulat') r = diagnosaPembulatan(st.input, step.soal, step.tempat);
+  else if (step.jenis === 'taksir')
+    r = diagnosaTaksiran(st.input, step.a, step.op, step.b, step.strategi);
   else r = diagnosaNilaiDesimal(st.input, step.jawab);
   st.kode = r.kode;
   st.pesan = r.pesan;
@@ -39097,5 +39114,870 @@ function buildGelasTakar(total, takaran, opts) {
     esc(teks) +
     '</figcaption>' +
     '</figure>'
+  );
+}
+
+/* ============================================================
+   65. PEMBULATAN & PENAKSIRAN — MENILAI KEWAJARAN JAWABAN
+   Dipakai modul pembulatan & penaksiran hasil operasi bilangan real
+   untuk menilai kewajaran jawaban (fase-d/mpi-2.6, Inquiry Learning).
+   Bilangan di DATA berupa STRING berkoma tanpa titik ribuan ('12900',
+   '2,47', '−18,6', '3/4'); hitungan eksak lewat nilai rasional seksi 38
+   & 64 (nilaiTerpadu, nilaiOperasiDesimal, teksDesimalEksak,
+   kaliPangkatSepuluh, samaRasional). Isinya:
+     • kTempat / namaTempatBulat / bulatkanRasional (dekat, potong,
+       naik) / bulatkanKeTempat / tempatAngkaPertama /
+       bulatkanAngkaPertama — pembulatan "setengah menjauhi nol";
+     • fmtBilanganBesar (titik ribuan, koma desimal) & nilaiIsianBulat
+       (membaca isian murid, termasuk "13.000" dan "Rp");
+     • diagnosaPembulatan + PESAN_PEMBULATAN — miskonsepsi berantai,
+       memotong, angka 5 ke bawah, selalu naik, tempat salah, nol hilang;
+       opsiPembulatan — pilihan berpengecoh (app.js yang mengacak);
+     • taksirOperasi (strategi nama tempat | 'angkaPertama' |
+       'kompatibel'), strategiBaku, arahTaksiran, persenGalat;
+     • nilaiKewajaran + PESAN_KEWAJARAN — jawaban kalkulator tepat,
+       wajar, koma bergeser, operasi tertukar, tanda salah, atau jauh;
+     • diagnosaTaksiran + PESAN_TAKSIRAN / opsiTaksiran;
+     • langkah isian: periksaOpDesimalStep seksi 64 menerima jenis
+       'bulat' { soal, tempat } dan 'taksir' { a, op, b, strategi };
+     • tampilan: buildGarisPembulatan (garis bilangan dua titik bulat
+       & titik tengah), buildMeterKewajaran (zona sekitar taksiran),
+       buildTabelTaksiran (taksiran vs hasil sebenarnya).
+   Gaya .bulat-garis*, .wajar-meter*, .taksir-tabel* ada di
+   shared/base.css.
+   ============================================================ */
+
+/* Nama tempat → banyak angka di belakang koma (negatif = puluhan, …). */
+var TEMPAT_BULAT = {
+  ribuan: -3,
+  ratusan: -2,
+  puluhan: -1,
+  satuan: 0,
+  persepuluhan: 1,
+  perseratusan: 2,
+  perseribuan: 3,
+};
+
+var NAMA_TEMPAT_BULAT = {
+  '-6': 'jutaan',
+  '-5': 'ratus ribuan',
+  '-4': 'puluh ribuan',
+  '-3': 'ribuan',
+  '-2': 'ratusan',
+  '-1': 'puluhan',
+  0: 'satuan',
+  1: 'persepuluhan',
+  2: 'perseratusan',
+  3: 'perseribuan',
+  4: 'per sepuluh ribuan',
+};
+
+/* 'ratusan' → −2; bilangan diteruskan apa adanya. */
+function kTempat(tempat) {
+  if (typeof tempat === 'number') return tempat;
+  if (Object.prototype.hasOwnProperty.call(TEMPAT_BULAT, tempat)) return TEMPAT_BULAT[tempat];
+  throw new Error('Tempat pembulatan tidak dikenal: ' + tempat);
+}
+
+function namaTempatBulat(k) {
+  return NAMA_TEMPAT_BULAT[String(k)] || '';
+}
+
+/*
+ * Membulatkan nilai { num, den } ke kelipatan 10^(−k).
+ *   mode 'dekat' (default) — setengah menjauhi nol (angka 5 naik);
+ *   mode 'potong'          — membuang angka di kanannya;
+ *   mode 'naik'            — selalu naik bila ada sisa.
+ */
+function bulatkanRasional(v, k, mode) {
+  var neg = v.num < 0;
+  var num = Math.abs(v.num);
+  var den = v.den;
+  if (k >= 0) num *= Math.pow(10, k);
+  else den *= Math.pow(10, -k);
+  var f = Math.floor(num / den);
+  var r = num - f * den;
+  if (mode === 'naik') {
+    if (r > 0) f += 1;
+  } else if (mode !== 'potong' && 2 * r >= den) {
+    f += 1;
+  }
+  if (f === 0) return { num: 0, den: 1 };
+  var hasil = k >= 0 ? { num: f, den: Math.pow(10, k) } : { num: f * Math.pow(10, -k), den: 1 };
+  if (neg) hasil.num = -hasil.num;
+  return sederhanakanRasional(hasil);
+}
+
+/* Teks berkoma dengan tepat max(k, 0) angka desimal: ({4,1}, 1) → "4,0". */
+function teksBulatTetap(v, k) {
+  if (k <= 0) return teksDesimalEksak(v);
+  var skala = Math.pow(10, k);
+  var n = Math.round((Math.abs(v.num) * skala) / v.den);
+  var bulat = Math.floor(n / skala);
+  var sisa = String(n - bulat * skala);
+  while (sisa.length < k) sisa = '0' + sisa;
+  return (v.num < 0 && n > 0 ? '−' : '') + bulat + ',' + sisa;
+}
+
+/* Nilai rasional hasil pembulatan str ke `tempat` (nama atau k). */
+function nilaiBulatkan(str, tempat, mode) {
+  var v = nilaiTerpadu(str);
+  return v ? bulatkanRasional(v, kTempat(tempat), mode) : null;
+}
+
+/* bulatkanKeTempat('3,96', 'persepuluhan') → "4,0"; ('12900', 'ribuan') → "13000". */
+function bulatkanKeTempat(str, tempat) {
+  var k = kTempat(tempat);
+  var v = nilaiBulatkan(str, k);
+  return v ? teksBulatTetap(v, k) : null;
+}
+
+/* k dari angka bukan nol pertama nilai v: 487 → −2, 0,0456 → 2. */
+function tempatAngkaPertamaNilai(v) {
+  var n = Math.abs(v.num);
+  var d = v.den;
+  var k = 0;
+  if (n === 0) return 0;
+  while (n >= 10 * d) {
+    d *= 10;
+    k -= 1;
+  }
+  while (n < d) {
+    n *= 10;
+    k += 1;
+  }
+  return k;
+}
+
+function tempatAngkaPertama(str) {
+  var v = nilaiTerpadu(str);
+  return v ? tempatAngkaPertamaNilai(v) : null;
+}
+
+/* Membulatkan ke nilai tempat terbesar: 48,7 → "50", 0,0456 → "0,05". */
+function bulatkanAngkaPertama(str) {
+  var v = nilaiTerpadu(str);
+  if (!v) return null;
+  var k = tempatAngkaPertamaNilai(v);
+  return teksBulatTetap(bulatkanRasional(v, k), k);
+}
+
+/* Tampilan baku: "22000" → "22.000", "-1234,5" → "−1.234,5". */
+function fmtBilanganBesar(str) {
+  var m = /^([+-])?(\d+)(?:,(\d+))?$/.exec(normalTerpadu(str));
+  if (!m) return tulisTerpadu(str);
+  var nol = !/[1-9]/.test(m[2] + (m[3] || ''));
+  return (
+    (m[1] === '-' && !nol ? '−' : '') + formatNumber(parseInt(m[2], 10)) + (m[3] ? ',' + m[3] : '')
+  );
+}
+
+/*
+ * Membaca isian murid → { nilai, kode: null } atau { kode: 'kosong' |
+ * 'titik' | 'format' }. Titik ribuan ("13.000") dan awalan "Rp" diterima.
+ */
+function nilaiIsianBulat(isian) {
+  var s = String(isian == null ? '' : isian)
+    .replace(/rp\.?/i, '')
+    .replace(/\s/g, '')
+    .replace(/[−–]/g, '-');
+  if (!s) return { kode: 'kosong' };
+  if (/^[+-]?\d{1,3}(\.\d{3})+(,\d+)?$/.test(s)) s = s.replace(/\./g, '');
+  else if (isianBertitik(s)) return { kode: 'titik' };
+  var v = nilaiTerpadu(s);
+  return v ? { nilai: v, kode: null } : { kode: 'format' };
+}
+
+/* Angka tepat di kanan tempat k (angka penentu pembulatan). */
+function angkaPenentu(v, k) {
+  var w = bulatkanRasional(v, k + 1, 'potong');
+  var n = Math.abs(w.num * Math.pow(10, k + 1)) / w.den;
+  return Math.round(n) % 10;
+}
+
+/* Pembulatan berantai dari angka paling kanan sampai tempat k (null bila tak relevan). */
+function bulatBerantai(v, k) {
+  var akhir = pangkatSepuluhUntuk(v.den);
+  if (akhir === null || akhir <= k + 1) return null;
+  var w = v;
+  for (var j = akhir - 1; j >= k; j--) w = bulatkanRasional(w, j);
+  return w;
+}
+
+var PESAN_PEMBULATAN = {
+  kosong: 'Tulis dulu hasil pembulatanmu, ya.',
+  format: 'Tulis satu bilangan saja, misalnya 2,5 atau 13.000.',
+  titik:
+    'Di Indonesia tanda desimal adalah koma (,). Titik dipakai sebagai pemisah ribuan — tulis 2,5, bukan 2.5.',
+  berantai:
+    'Kamu membulatkan berantai dari angka paling kanan. Pembulatan cukup SEKALI: lihat hanya satu angka tepat di kanan tempat yang diminta.',
+  potong:
+    'Kamu memotong (membuang) angka di belakangnya. Karena angka penentunya ≥ 5, angka pada tempat pembulatan harus naik satu.',
+  'lima-ke-bawah':
+    'Angka penentunya tepat 5. Menurut aturan pembulatan, angka 5 ikut dibulatkan ke ATAS.',
+  'selalu-naik':
+    'Kamu selalu membulatkan ke atas. Bila angka penentunya kurang dari 5, angka pada tempat pembulatan tetap.',
+  'tempat-salah':
+    'Kamu membulatkan ke nilai tempat yang lain. Cek lagi tempat yang diminta (persepuluhan = satu angka di belakang koma).',
+  'tanpa-nol':
+    'Nilainya jadi jauh lebih kecil! Saat membulatkan ke puluhan, ratusan, atau ribuan, angka di kanannya diganti 0 — bukan dihapus.',
+  salah:
+    'Belum tepat. Tandai tempat yang diminta, lalu lihat satu angka di kanannya: kurang dari 5 tetap, 5 atau lebih naik satu.',
+};
+
+/* Pesan diagnosa beserta angka penentu & nama tempatnya. */
+function pesanPembulatan(kode, v, k) {
+  var pesan = PESAN_PEMBULATAN[kode];
+  if (kode === 'potong' || kode === 'lima-ke-bawah' || kode === 'selalu-naik') {
+    pesan +=
+      ' Angka penentunya (tepat di kanan tempat ' +
+      namaTempatBulat(k) +
+      ') adalah ' +
+      angkaPenentu(v, k) +
+      '.';
+  }
+  return pesan;
+}
+
+/* Kode miskonsepsi untuk nilai x sebagai hasil pembulatan v ke tempat k. */
+function kodePembulatan(x, v, k) {
+  var benar = bulatkanRasional(v, k);
+  if (samaRasional(x, benar)) return 'benar';
+  var rantai = bulatBerantai(v, k);
+  if (rantai && !samaRasional(rantai, benar) && samaRasional(x, rantai)) return 'berantai';
+  var potong = bulatkanRasional(v, k, 'potong');
+  if (!samaRasional(potong, benar) && samaRasional(x, potong)) {
+    return angkaPenentu(v, k) === 5 ? 'lima-ke-bawah' : 'potong';
+  }
+  var naik = bulatkanRasional(v, k, 'naik');
+  if (!samaRasional(naik, benar) && samaRasional(x, naik)) return 'selalu-naik';
+  var geser = [1, -1, 2, -2];
+  for (var i = 0; i < geser.length; i++) {
+    var lain = bulatkanRasional(v, k + geser[i]);
+    if (!samaRasional(lain, benar) && samaRasional(x, lain)) return 'tempat-salah';
+  }
+  for (var m = 1; m <= -k; m++) {
+    if (samaRasional(kaliPangkatSepuluh(x, m), benar)) return 'tanpa-nol';
+  }
+  return 'salah';
+}
+
+/*
+ * Memeriksa hasil pembulatan yang ditulis murid → { benar, kode, pesan }.
+ * Penulisan senilai ("4" untuk "4,0", "13.000") diterima.
+ */
+function diagnosaPembulatan(isian, str, tempat) {
+  var k = kTempat(tempat);
+  var p = nilaiIsianBulat(isian);
+  if (p.kode) return { benar: false, kode: p.kode, pesan: PESAN_PEMBULATAN[p.kode] };
+  var v = nilaiTerpadu(str);
+  var kode = kodePembulatan(p.nilai, v, k);
+  if (kode === 'benar') return { benar: true, kode: 'benar', pesan: 'Tepat!' };
+  return { benar: false, kode: kode, pesan: pesanPembulatan(kode, v, k) };
+}
+
+/* Menambah opsi { id, label, benar, kode } bila nilainya belum dipakai. */
+function tambahOpsiBulat(opsi, nilai, id, v, label, kode) {
+  if (opsi.length >= 4 || !v) return;
+  for (var i = 0; i < nilai.length; i++) if (samaRasional(nilai[i], v)) return;
+  nilai.push(v);
+  opsi.push({ id: id, label: label, benar: kode === 'benar', kode: kode });
+}
+
+/* Satu jawaban benar + tiga pengecoh khas (urutan wajar; app.js yang mengacak). */
+function opsiPembulatan(str, tempat) {
+  var k = kTempat(tempat);
+  var v = nilaiTerpadu(str);
+  var opsi = [];
+  var nilai = [];
+  function tambah(id, w, kk, kode) {
+    if (w) tambahOpsiBulat(opsi, nilai, id, w, fmtBilanganBesar(teksBulatTetap(w, kk)), kode);
+  }
+  var benar = bulatkanRasional(v, k);
+  tambah('benar', benar, k, 'benar');
+  tambah(
+    'potong',
+    bulatkanRasional(v, k, 'potong'),
+    k,
+    angkaPenentu(v, k) === 5 ? 'lima-ke-bawah' : 'potong'
+  );
+  tambah('berantai', bulatBerantai(v, k), k, 'berantai');
+  tambah('naik', bulatkanRasional(v, k, 'naik'), k, 'selalu-naik');
+  tambah('tempat-kanan', bulatkanRasional(v, k + 1), k + 1, 'tempat-salah');
+  if (k < 0) {
+    var kecil = kaliPangkatSepuluh(benar, k);
+    tambahOpsiBulat(
+      opsi,
+      nilai,
+      'tanpa-nol',
+      kecil,
+      fmtBilanganBesar(teksDesimalEksak(kecil)),
+      'tanpa-nol'
+    );
+  }
+  tambah('tempat-kiri', bulatkanRasional(v, k - 1), k - 1, 'tempat-salah');
+  var unit = k >= 0 ? { num: 1, den: Math.pow(10, k) } : { num: Math.pow(10, -k), den: 1 };
+  tambah(
+    'plus',
+    sederhanakanRasional({
+      num: benar.num * unit.den + unit.num * benar.den,
+      den: benar.den * unit.den,
+    }),
+    k,
+    'salah'
+  );
+  tambah(
+    'minus',
+    sederhanakanRasional({
+      num: benar.num * unit.den - unit.num * benar.den,
+      den: benar.den * unit.den,
+    }),
+    k,
+    'salah'
+  );
+  return opsi;
+}
+
+/* Strategi taksiran baku: pembagian memakai bilangan kompatibel. */
+function strategiBaku(op) {
+  return opDesimal(op) === ':' ? 'kompatibel' : 'angkaPertama';
+}
+
+/* Suku kalimat taksiran; suku kedua yang negatif diberi kurung. */
+function fmtSukuTaksir(str, kurung) {
+  var t = fmtBilanganBesar(str);
+  return kurung && t.charAt(0) === '−' ? '(' + t + ')' : t;
+}
+
+/*
+ * Taksiran a op b dengan membulatkan kedua bilangan lebih dulu.
+ *   strategi nama tempat ('satuan', 'ribuan', …) — keduanya ke tempat itu;
+ *   'angkaPertama' — keduanya ke nilai tempat terbesarnya;
+ *   'kompatibel'   — (pembagian) pembagi ke angka pertama, yang dibagi
+ *                    ke kelipatan pembagi yang hasil baginya "bulat".
+ * → { a, b, op, hasil, nilai, teks } (a, b, hasil teks berkoma tanpa
+ *   titik ribuan; teks kalimat tampilan "50 × 3 = 150").
+ */
+function taksirOperasi(a, op, b, strategi) {
+  var o = opDesimal(op);
+  var a2;
+  var b2;
+  if (strategi === 'kompatibel' && o === ':') {
+    b2 = bulatkanAngkaPertama(b);
+    var q = nilaiOperasiDesimal(a, ':', b2);
+    var q2 = bulatkanRasional(q, tempatAngkaPertamaNilai(q));
+    a2 = teksDesimalEksak(nilaiOperasiDesimal(teksDesimalEksak(q2), '×', b2));
+  } else if (strategi === 'angkaPertama' || strategi === 'kompatibel') {
+    a2 = bulatkanAngkaPertama(a);
+    b2 = bulatkanAngkaPertama(b);
+  } else {
+    a2 = teksDesimalEksak(nilaiBulatkan(a, strategi));
+    b2 = teksDesimalEksak(nilaiBulatkan(b, strategi));
+  }
+  a2 = teksDesimalEksak(nilaiTerpadu(a2));
+  b2 = teksDesimalEksak(nilaiTerpadu(b2));
+  var nilai = nilaiOperasiDesimal(a2, o, b2);
+  var hasil = teksDesimalEksak(nilai);
+  return {
+    a: a2,
+    b: b2,
+    op: o,
+    hasil: hasil,
+    nilai: nilai,
+    teks:
+      fmtSukuTaksir(a2) + ' ' + o + ' ' + fmtSukuTaksir(b2, true) + ' = ' + fmtBilanganBesar(hasil),
+  };
+}
+
+/* 'lebih' | 'kurang' | 'sama' — taksiran dibanding hasil sebenarnya. */
+function arahTaksiran(a, op, b, strategi) {
+  var t = taksirOperasi(a, op, b, strategi || strategiBaku(op)).nilai;
+  var c = compareFractions(t, nilaiOperasiDesimal(a, op, b));
+  return c > 0 ? 'lebih' : c < 0 ? 'kurang' : 'sama';
+}
+
+/* Persen selisih taksiran terhadap hasil sebenarnya (1 angka desimal). */
+function persenGalat(taksiran, eksak) {
+  return persenGalatNilai(nilaiTerpadu(taksiran), nilaiTerpadu(eksak));
+}
+
+function persenGalatNilai(t, e) {
+  var te = t.num / t.den;
+  var ee = e.num / e.den;
+  if (ee === 0) return te === 0 ? 0 : Infinity;
+  return Math.round((Math.abs(te - ee) / Math.abs(ee)) * 1000) / 10;
+}
+
+/* Hasil a o2 b untuk operasi lain (pembagian nol dilewati). */
+function hasilOperasiLain(a, o, b) {
+  var out = [];
+  ['+', '−', '×', ':'].forEach(function (o2) {
+    if (o2 === o || (o2 === ':' && nilaiTerpadu(b).num === 0)) return;
+    out.push(nilaiOperasiDesimal(a, o2, b));
+  });
+  return out;
+}
+
+function samaSalahSatu(x, list) {
+  return list.some(function (v) {
+    return samaRasional(x, v);
+  });
+}
+
+/* Rentang rasio jawaban : taksiran yang masih dianggap wajar. */
+var RENTANG_WAJAR = { min: 0.4, max: 2.5 };
+
+function rasioWajar(x, t) {
+  if (t.num === 0) return x.num === 0 ? 1 : Infinity;
+  return x.num / x.den / (t.num / t.den);
+}
+
+var PESAN_KEWAJARAN = {
+  kosong: 'Tulis dulu jawaban yang ingin dinilai kewajarannya.',
+  format: 'Tulis satu bilangan saja, misalnya 152,3 atau 22.000.',
+  titik: 'Di Indonesia tanda desimal adalah koma (,), bukan titik.',
+  tepat: 'Jawaban ini tepat sama dengan hasil sebenarnya — dan tentu dekat dengan taksirannya.',
+  wajar:
+    'Jawaban ini WAJAR: besarnya dekat dengan taksiran. Wajar belum tentu tepat, tetapi tidak ada kesalahan besar.',
+  'koma-geser':
+    'TIDAK WAJAR: jawaban ini 10, 100, atau 1.000 kali lipat dari hasil sebenarnya — koma desimalnya bergeser.',
+  'operasi-tertukar':
+    'TIDAK WAJAR: jawaban ini cocok dengan hasil operasi LAIN. Sepertinya tombol operasinya tertukar.',
+  tanda: 'TIDAK WAJAR: tanda jawabannya (positif/negatif) berlawanan dengan taksirannya.',
+  jauh: 'TIDAK WAJAR: jawaban ini terlalu jauh dari taksiran. Ada langkah hitung yang keliru.',
+};
+
+/*
+ * Menilai kewajaran "jawaban kalkulator" untuk a op b dengan
+ * membandingkannya pada taksiran strategi baku.
+ * → { wajar, kode, pesan, rasio, taksiran, taksiranTeks }.
+ */
+function nilaiKewajaran(jawaban, a, op, b) {
+  var o = opDesimal(op);
+  var t = taksirOperasi(a, o, b, strategiBaku(o));
+  var dasar = { taksiran: t.hasil, taksiranTeks: t.teks };
+  var p = nilaiIsianBulat(jawaban);
+  if (p.kode) {
+    return Object.assign(
+      { wajar: false, kode: p.kode, pesan: PESAN_KEWAJARAN[p.kode], rasio: null },
+      dasar
+    );
+  }
+  var x = p.nilai;
+  var e = nilaiOperasiDesimal(a, o, b);
+  var rasio = rasioWajar(x, t.nilai);
+  var kode;
+  if (samaRasional(x, e)) kode = 'tepat';
+  else if (komaBergeser(x, e)) kode = 'koma-geser';
+  else if (e.num !== 0 && x.num < 0 !== e.num < 0) kode = 'tanda';
+  else if (rasio >= RENTANG_WAJAR.min && rasio <= RENTANG_WAJAR.max) kode = 'wajar';
+  else if (samaSalahSatu(x, hasilOperasiLain(a, o, b))) kode = 'operasi-tertukar';
+  else kode = 'jauh';
+  return Object.assign(
+    {
+      wajar: kode === 'tepat' || kode === 'wajar',
+      kode: kode,
+      pesan: PESAN_KEWAJARAN[kode],
+      rasio: rasio,
+    },
+    dasar
+  );
+}
+
+var PESAN_TAKSIRAN = {
+  kosong: 'Tulis dulu hasil taksiranmu, ya.',
+  format: 'Tulis satu bilangan saja, misalnya 150 atau 22.000.',
+  titik: 'Di Indonesia tanda desimal adalah koma (,). Titik dipakai sebagai pemisah ribuan.',
+  eksak:
+    'Itu hasil hitung yang TEPAT, bukan taksiran. Bulatkan dulu setiap bilangan, lalu hitung dengan bilangan bulatan itu.',
+  'koma-geser':
+    'Letak komanya bergeser — taksiranmu 10, 100, atau 1.000 kali lipat. Periksa lagi nilai tempat bilangan bulatanmu.',
+  'operasi-tertukar':
+    'Kamu memakai operasi yang lain. Perhatikan lagi lambang operasinya (+, −, ×, :).',
+  potong:
+    'Kamu memotong bilangannya, bukan membulatkan. Lihat angka di kanan angka pertama: 5 atau lebih → naik satu.',
+  dekat:
+    'Hampir! Taksiranmu sudah dekat, tetapi bulatkan setiap bilangan sesuai strategi yang diminta, lalu hitung lagi.',
+  salah:
+    'Belum tepat. Bulatkan setiap bilangan sesuai strategi, tulis kalimat taksirannya, lalu hitung dengan bilangan bulatan itu.',
+};
+
+/* Memeriksa hasil taksiran yang ditulis murid → { benar, kode, pesan }. */
+function diagnosaTaksiran(isian, a, op, b, strategi) {
+  var o = opDesimal(op);
+  var p = nilaiIsianBulat(isian);
+  if (p.kode) return { benar: false, kode: p.kode, pesan: PESAN_TAKSIRAN[p.kode] };
+  var x = p.nilai;
+  var t = taksirOperasi(a, o, b, strategi || strategiBaku(o));
+  var kode;
+  if (samaRasional(x, t.nilai)) kode = 'benar';
+  else if (samaRasional(x, nilaiOperasiDesimal(a, o, b))) kode = 'eksak';
+  else if (komaBergeser(x, t.nilai)) kode = 'koma-geser';
+  else if (samaSalahSatu(x, hasilOperasiLain(t.a, o, t.b))) kode = 'operasi-tertukar';
+  else if (t.nilai.num !== 0 && Math.abs(rasioWajar(x, t.nilai) - 1) <= 0.1) kode = 'dekat';
+  else kode = 'salah';
+  if (kode === 'benar') return { benar: true, kode: 'benar', pesan: 'Tepat!' };
+  return { benar: false, kode: kode, pesan: PESAN_TAKSIRAN[kode] };
+}
+
+/* Operasi yang paling sering tertukar dengan o. */
+var OPERASI_TERTUKAR = { '+': '×', '−': '+', '×': '+', ':': '×' };
+
+/* Taksiran strategi baku + pengecoh khas (urutan wajar; app.js yang mengacak). */
+function opsiTaksiran(a, op, b) {
+  var o = opDesimal(op);
+  var t = taksirOperasi(a, o, b, strategiBaku(o));
+  var opsi = [];
+  var nilai = [];
+  function tambah(id, v, kode) {
+    tambahOpsiBulat(opsi, nilai, id, v, fmtBilanganBesar(teksDesimalEksak(v)), kode);
+  }
+  function potongPertama(s) {
+    var v = nilaiTerpadu(s);
+    return teksDesimalEksak(bulatkanRasional(v, tempatAngkaPertamaNilai(v), 'potong'));
+  }
+  tambah('benar', t.nilai, 'benar');
+  tambah('tertukar', nilaiOperasiDesimal(t.a, OPERASI_TERTUKAR[o], t.b), 'operasi-tertukar');
+  /* Memotong ke angka pertama tidak pernah menghasilkan nol untuk b ≠ 0. */
+  if (nilaiTerpadu(b).num !== 0) {
+    tambah('potong', nilaiOperasiDesimal(potongPertama(a), o, potongPertama(b)), 'potong');
+  }
+  tambah('koma-besar', kaliPangkatSepuluh(t.nilai, 1), 'koma-geser');
+  tambah('koma-kecil', kaliPangkatSepuluh(t.nilai, -1), 'koma-geser');
+  tambah('dua-kali', sederhanakanRasional({ num: t.nilai.num * 2, den: t.nilai.den }), 'salah');
+  return opsi;
+}
+
+/* --------------------------- Tampilan --------------------------- */
+
+/* Nilai pecahan biasa (float) untuk posisi tampilan saja. */
+function nilaiFloat(v) {
+  return v.num / v.den;
+}
+
+/*
+ * Garis bilangan pembulatan: dua kelipatan terdekat dari tempat yang
+ * diminta, titik tengahnya, sepuluh ruas kecil, dan letak bilangan.
+ *   opts.tampilHasil — panah ke hasil pembulatan & ujung yang disorot.
+ */
+function buildGarisPembulatan(str, tempat, opts) {
+  opts = opts || {};
+  var k = kTempat(tempat);
+  var v = nilaiTerpadu(str);
+  var bawah = bulatkanRasional(v, k, 'potong');
+  var atas = bulatkanRasional(v, k, 'naik');
+  if (samaRasional(bawah, atas)) {
+    var unit = k >= 0 ? { num: 1, den: Math.pow(10, k) } : { num: Math.pow(10, -k), den: 1 };
+    atas = sederhanakanRasional({
+      num: bawah.num * unit.den + (v.num < 0 ? -1 : 1) * unit.num * bawah.den,
+      den: bawah.den * unit.den,
+    });
+  }
+  if (compareFractions(bawah, atas) > 0) {
+    var tukar = bawah;
+    bawah = atas;
+    atas = tukar;
+  }
+  var tengah = sederhanakanRasional({
+    num: bawah.num * atas.den + atas.num * bawah.den,
+    den: 2 * bawah.den * atas.den,
+  });
+  var hasil = bulatkanRasional(v, k);
+  var W = 340;
+  var X0 = 34;
+  var X1 = W - 34;
+  var Y = 56;
+  var lo = nilaiFloat(bawah);
+  var hi = nilaiFloat(atas);
+  function xOf(w) {
+    return X0 + ((nilaiFloat(w) - lo) / (hi - lo)) * (X1 - X0);
+  }
+  var xm = (X0 + X1) / 2;
+  var xv = xOf(v);
+  var teksBawah = fmtBilanganBesar(teksBulatTetap(bawah, k));
+  var teksAtas = fmtBilanganBesar(teksBulatTetap(atas, k));
+  var teksTengah = fmtBilanganBesar(teksDesimalEksak(tengah));
+  var teksV = fmtBilanganBesar(normalTerpadu(str));
+  var teksHasil = fmtBilanganBesar(teksBulatTetap(hasil, k));
+  var hasilAtas = samaRasional(hasil, atas);
+  var ticks = '';
+  for (var i = 1; i < 10; i++) {
+    var xt = X0 + (i / 10) * (X1 - X0);
+    ticks +=
+      '<line class="bulat-garis__ruas" x1="' +
+      xt +
+      '" y1="' +
+      (Y - 5) +
+      '" x2="' +
+      xt +
+      '" y2="' +
+      (Y + 5) +
+      '"/>';
+  }
+  var panah = '';
+  if (opts.tampilHasil) {
+    var xh = hasilAtas ? X1 : X0;
+    var arah = xh > xv ? -1 : 1;
+    panah =
+      '<g class="bulat-garis__hasil">' +
+      '<path d="M' +
+      xv.toFixed(1) +
+      ' ' +
+      (Y - 14) +
+      ' Q ' +
+      ((xv + xh) / 2).toFixed(1) +
+      ' ' +
+      (Y - 40) +
+      ' ' +
+      xh +
+      ' ' +
+      (Y - 12) +
+      '"/>' +
+      '<polygon points="' +
+      xh +
+      ',' +
+      (Y - 8) +
+      ' ' +
+      (xh + arah * 7) +
+      ',' +
+      (Y - 17) +
+      ' ' +
+      (xh - arah * 3) +
+      ',' +
+      (Y - 18) +
+      '"/>' +
+      '<circle cx="' +
+      xh +
+      '" cy="' +
+      Y +
+      '" r="9"/>' +
+      '</g>';
+  }
+  var svg =
+    '<svg viewBox="0 0 ' +
+    W +
+    ' 96" class="bulat-garis__svg" aria-hidden="true" focusable="false">' +
+    '<rect class="bulat-garis__zona bulat-garis__zona--bawah" x="' +
+    X0 +
+    '" y="' +
+    (Y - 10) +
+    '" width="' +
+    (xm - X0) +
+    '" height="20" rx="4"/>' +
+    '<rect class="bulat-garis__zona bulat-garis__zona--atas" x="' +
+    xm +
+    '" y="' +
+    (Y - 10) +
+    '" width="' +
+    (X1 - xm) +
+    '" height="20" rx="4"/>' +
+    '<line class="bulat-garis__sumbu" x1="' +
+    (X0 - 14) +
+    '" y1="' +
+    Y +
+    '" x2="' +
+    (X1 + 14) +
+    '" y2="' +
+    Y +
+    '"/>' +
+    ticks +
+    '<line class="bulat-garis__tengah" x1="' +
+    xm +
+    '" y1="' +
+    (Y - 16) +
+    '" x2="' +
+    xm +
+    '" y2="' +
+    (Y + 16) +
+    '"/>' +
+    '<line class="bulat-garis__ujung" x1="' +
+    X0 +
+    '" y1="' +
+    (Y - 12) +
+    '" x2="' +
+    X0 +
+    '" y2="' +
+    (Y + 12) +
+    '"/>' +
+    '<line class="bulat-garis__ujung" x1="' +
+    X1 +
+    '" y1="' +
+    (Y - 12) +
+    '" x2="' +
+    X1 +
+    '" y2="' +
+    (Y + 12) +
+    '"/>' +
+    panah +
+    '<circle class="bulat-garis__titik" cx="' +
+    xv.toFixed(1) +
+    '" cy="' +
+    Y +
+    '" r="6"/>' +
+    '<text class="bulat-garis__label bulat-garis__label--v" x="' +
+    xv.toFixed(1) +
+    '" y="' +
+    (Y - 20) +
+    '" text-anchor="middle">' +
+    esc(teksV) +
+    '</text>' +
+    '<text class="bulat-garis__label" x="' +
+    X0 +
+    '" y="' +
+    (Y + 32) +
+    '" text-anchor="middle">' +
+    esc(teksBawah) +
+    '</text>' +
+    '<text class="bulat-garis__label bulat-garis__label--tengah" x="' +
+    xm +
+    '" y="' +
+    (Y + 32) +
+    '" text-anchor="middle">' +
+    esc(teksTengah) +
+    '</text>' +
+    '<text class="bulat-garis__label" x="' +
+    X1 +
+    '" y="' +
+    (Y + 32) +
+    '" text-anchor="middle">' +
+    esc(teksAtas) +
+    '</text>' +
+    '</svg>';
+  var cap =
+    teksV +
+    ' terletak di antara ' +
+    teksBawah +
+    ' dan ' +
+    teksAtas +
+    '; titik tengahnya ' +
+    teksTengah +
+    '.';
+  if (opts.tampilHasil) {
+    cap += ' Dibulatkan ke ' + namaTempatBulat(k) + ' terdekat: ' + teksHasil + '.';
+  }
+  return (
+    '<figure class="bulat-garis" role="img" aria-label="' +
+    esc(cap) +
+    '">' +
+    svg +
+    '<figcaption class="bulat-garis__cap" aria-hidden="true">' +
+    esc(cap) +
+    '</figcaption>' +
+    '</figure>'
+  );
+}
+
+/*
+ * Meter kewajaran: zona hijau = 0,4 sampai 2,5 kali taksiran; penanda
+ * taksiran (atas) dan jawaban (bawah) pada skala linear yang sama.
+ *   opts.wajar — paksa vonis; default dihitung dari rasio.
+ */
+function buildMeterKewajaran(taksiran, jawaban, opts) {
+  opts = opts || {};
+  var t = nilaiTerpadu(taksiran);
+  var p = nilaiIsianBulat(jawaban);
+  var x = p.kode ? t : p.nilai;
+  var tf = Math.abs(nilaiFloat(t));
+  var xf = Math.abs(nilaiFloat(x));
+  var rasio = rasioWajar(x, t);
+  var wajar =
+    typeof opts.wajar === 'boolean'
+      ? opts.wajar
+      : rasio >= RENTANG_WAJAR.min && rasio <= RENTANG_WAJAR.max;
+  var maks = Math.max(xf, tf * RENTANG_WAJAR.max) * 1.1 || 1;
+  function pos(f) {
+    return Math.max(0, Math.min(100, (f / maks) * 100)).toFixed(1);
+  }
+  /* Label di dekat tepi ditambatkan ke dalam agar tidak keluar panel. */
+  function tepi(f) {
+    var x = Number(pos(f));
+    return x < 15 ? ' is-kiri' : x > 85 ? ' is-kanan' : '';
+  }
+  var zKiri = pos(tf * RENTANG_WAJAR.min);
+  var zLebar = (pos(tf * RENTANG_WAJAR.max) - zKiri).toFixed(1);
+  var teksT = fmtBilanganBesar(teksDesimalEksak(t));
+  var teksX = fmtBilanganBesar(teksDesimalEksak(x));
+  var vonis = wajar ? '✓ Wajar' : '✗ Tidak wajar';
+  return (
+    '<div class="wajar-meter wajar-meter--' +
+    (wajar ? 'ya' : 'tidak') +
+    '" role="img" aria-label="' +
+    esc('Taksiran ' + teksT + ', jawaban ' + teksX + ': ' + vonis) +
+    '">' +
+    '<div class="wajar-meter__track" aria-hidden="true">' +
+    '<span class="wajar-meter__zona" style="left:' +
+    zKiri +
+    '%;width:' +
+    zLebar +
+    '%"></span>' +
+    '<span class="wajar-meter__tanda wajar-meter__tanda--taksir' +
+    tepi(tf) +
+    '" style="left:' +
+    pos(tf) +
+    '%"><span>≈ ' +
+    esc(teksT) +
+    '</span></span>' +
+    '<span class="wajar-meter__tanda wajar-meter__tanda--jawab' +
+    tepi(xf) +
+    '" style="left:' +
+    pos(xf) +
+    '%"><span>' +
+    esc(teksX) +
+    '</span></span>' +
+    '</div>' +
+    '<p class="wajar-meter__cap" aria-hidden="true"><span class="wajar-meter__vonis">' +
+    vonis +
+    '</span> ' +
+    esc(opts.keterangan || 'Zona hijau: sekitar taksiran (0,4 sampai 2,5 kali taksiran).') +
+    '</p>' +
+    '</div>'
+  );
+}
+
+var LABEL_ARAH_TAKSIRAN = {
+  lebih: '▲ lebih besar',
+  kurang: '▼ kurang dari hasil',
+  sama: '= sama persis',
+};
+
+/*
+ * Tabel data taksiran: rows [{ a, op, b, strategi }] → operasi,
+ * kalimat taksiran, hasil sebenarnya, selisih persen, dan arah.
+ */
+function buildTabelTaksiran(rows) {
+  return (
+    '<div class="table-scroll"><table class="data-table taksir-tabel">' +
+    '<thead><tr><th scope="col">Operasi</th><th scope="col">Taksiran</th>' +
+    '<th scope="col">Hasil sebenarnya</th><th scope="col">Selisih</th><th scope="col">Taksiran …</th></tr></thead>' +
+    '<tbody>' +
+    rows
+      .map(function (r) {
+        var o = opDesimal(r.op);
+        var strategi = r.strategi || strategiBaku(o);
+        var t = taksirOperasi(r.a, o, r.b, strategi);
+        var e = nilaiOperasiDesimal(r.a, o, r.b);
+        var arah = arahTaksiran(r.a, o, r.b, strategi);
+        return (
+          '<tr><td>' +
+          esc(fmtSukuTaksir(r.a) + ' ' + o + ' ' + fmtSukuTaksir(r.b, true)) +
+          '</td>' +
+          '<td>' +
+          esc(t.teks) +
+          '</td>' +
+          '<td><strong>' +
+          esc(fmtBilanganBesar(teksDesimalEksak(e))) +
+          '</strong></td>' +
+          '<td>' +
+          esc(String(persenGalatNilai(t.nilai, e)).replace('.', ',')) +
+          '%</td>' +
+          '<td class="taksir-tabel__arah taksir-tabel__arah--' +
+          arah +
+          '">' +
+          esc(LABEL_ARAH_TAKSIRAN[arah]) +
+          '</td></tr>'
+        );
+      })
+      .join('') +
+    '</tbody></table></div>'
   );
 }
