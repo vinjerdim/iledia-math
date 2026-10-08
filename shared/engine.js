@@ -199,6 +199,12 @@
        miskonsepsi pembulatan, taksiran operasi berstrategi, arah &
        galat taksiran, kewajaran jawaban kalkulator, garis pembulatan,
        meter kewajaran, tabel taksiran)
+   66. Literasi finansial: diskon, untung–rugi & anggaran sederhana
+       (persen dari, diskon tunggal/bertingkat/setara, promo beli–gratis
+       & potongan, untung/rugi & persennya, harga jual dari persen,
+       rincian & syarat anggaran, isian berdiagnosa miskonsepsi & opsi
+       berpengecoh, struk belanja, Lab Diskon, Timbangan Untung–Rugi,
+       Papan Anggaran)
    ============================================================ */
 
 /* ============================================================
@@ -39980,4 +39986,1100 @@ function buildTabelTaksiran(rows) {
       .join('') +
     '</tbody></table></div>'
   );
+}
+
+/* ============================================================
+   66. LITERASI FINANSIAL — DISKON, UNTUNG–RUGI & ANGGARAN
+   Dipakai modul penerapan operasi bilangan real pada masalah
+   literasi finansial (fase-d/mpi-2.7, Problem Based Learning).
+   Nilai uang berupa ANGKA rupiah (bilangan bulat di DATA); persen
+   berupa angka (20 = 20%). Hasil dirapikan rapiFin agar galat biner
+   (mis. 0,1 + 0,2) tidak muncul. Format & isian memakai seksi 22
+   (formatRupiah, parseInputAngka) dan rekapAnggaran seksi 48. Isinya:
+     • persenDari, hargaSetelahDiskon, diskonBertingkat (diskon kedua
+       dari harga setelah diskon pertama), diskonEkuivalen;
+     • hargaPromo ('tanpa' | 'diskon' | 'bertingkat' | 'beliGratis' |
+       'potongan' minimal belanja) & promoTermurah;
+     • untungRugi (persen terhadap harga BELI), hargaJualDariPersen,
+       hargaBeliDariJual;
+     • rincianAnggaran (total, sisa, persen per pos & per jenis
+       kebutuhan/keinginan/tabungan) & periksaAnggaran (syarat);
+     • jawabFinansial / satuanFinansial / fmtJawabFinansial — kunci
+       langkah isian berjenis 'diskonAkhir', 'diskonPotongan',
+       'diskonSetara', 'promo', 'untungBesar', 'untungPersen',
+       'hargaJual', 'sisaAnggaran', 'persenPos', 'nilai';
+     • diagnosaFinansial + PESAN_FINANSIAL — miskonsepsi persen
+       dijumlah, potongan saja, angka persen dikurangkan langsung,
+       persen dari harga jual, arah untung/rugi terbalik, dll.;
+       opsiFinansial — pilihan berpengecoh (app.js yang mengacak);
+     • langkah isian makeFinStep / periksaFinStep / buildFinStep /
+       bindFinStep;
+     • tampilan: buildStrukBelanja, Lab Diskon (buildLabDiskon /
+       bindLabDiskon), Timbangan Untung–Rugi (buildTimbanganUntung /
+       bindTimbanganUntung), Papan Anggaran (buildPapanAnggaran /
+       bindPapanAnggaran).
+   Gaya .struk*, .fin-stepper*, .lab-diskon*, .timbang*, .papan-anggaran*
+   ada di shared/base.css.
+   ============================================================ */
+
+/* Membuang galat biner: 0.30000000000000004 → 0.3. */
+function rapiFin(v) {
+  return Math.round(v * 1e6) / 1e6;
+}
+
+/* Membulatkan ke dua angka desimal (untuk persen). */
+function bulatDuaDesimal(v) {
+  return Math.round(rapiFin(v) * 100) / 100;
+}
+
+/* p% dari n: persenDari(20, 45000) → 9000. */
+function persenDari(p, n) {
+  return rapiFin((n * p) / 100);
+}
+
+function hargaSetelahDiskon(harga, p) {
+  return rapiFin(harga - persenDari(p, harga));
+}
+
+function daftarPersen(persen) {
+  return Array.isArray(persen) ? persen : [persen];
+}
+
+/*
+ * Diskon bertingkat: setiap diskon dihitung dari harga SETELAH diskon
+ * sebelumnya. → { awal, akhir, potongan, langkah: [{ persen, dasar,
+ * potongan, sisa }] }
+ */
+function diskonBertingkat(harga, persen) {
+  var dasar = harga;
+  var langkah = daftarPersen(persen).map(function (p) {
+    var pot = persenDari(p, dasar);
+    var sisa = rapiFin(dasar - pot);
+    var l = { persen: p, dasar: dasar, potongan: pot, sisa: sisa };
+    dasar = sisa;
+    return l;
+  });
+  return { awal: harga, akhir: dasar, potongan: rapiFin(harga - dasar), langkah: langkah };
+}
+
+/* Persen diskon tunggal yang setara: [20, 10] → 28. */
+function diskonEkuivalen(persen) {
+  var sisa = daftarPersen(persen).reduce(function (s, p) {
+    return s * (1 - p / 100);
+  }, 1);
+  return bulatDuaDesimal(100 - sisa * 100);
+}
+
+/*
+ * Total bayar untuk `qty` barang berharga satuan promo.harga.
+ *   { jenis: 'tanpa' }
+ *   { jenis: 'diskon', persen }
+ *   { jenis: 'bertingkat', persen: [p1, p2] }
+ *   { jenis: 'beliGratis', beli, gratis }   — mis. beli 3 gratis 1
+ *   { jenis: 'potongan', potongan, minBelanja }
+ * → { normal, total, potongan, bayarUnit }
+ */
+function hargaPromo(promo, qty) {
+  var normal = rapiFin(promo.harga * qty);
+  var total = normal;
+  var bayarUnit = qty;
+  if (promo.jenis === 'diskon') total = hargaSetelahDiskon(normal, promo.persen);
+  else if (promo.jenis === 'bertingkat') total = diskonBertingkat(normal, promo.persen).akhir;
+  else if (promo.jenis === 'beliGratis') {
+    var isiPaket = promo.beli + promo.gratis;
+    var paket = Math.floor(qty / isiPaket);
+    bayarUnit = paket * promo.beli + (qty - paket * isiPaket);
+    total = rapiFin(bayarUnit * promo.harga);
+  } else if (promo.jenis === 'potongan') {
+    total = normal >= promo.minBelanja ? rapiFin(normal - promo.potongan) : normal;
+  }
+  return { normal: normal, total: total, potongan: rapiFin(normal - total), bayarUnit: bayarUnit };
+}
+
+/* list [{ id, promo }] → { id, total, semua: [{ id, total }] } (seri → yang pertama). */
+function promoTermurah(list, qty) {
+  var semua = list.map(function (t) {
+    return { id: t.id, total: hargaPromo(t.promo, qty).total };
+  });
+  var terbaik = semua.reduce(function (m, t) {
+    return t.total < m.total ? t : m;
+  }, semua[0]);
+  return { id: terbaik.id, total: terbaik.total, semua: semua };
+}
+
+/* → { status: 'untung' | 'rugi' | 'impas', besar, persen } — persen terhadap harga BELI. */
+function untungRugi(beli, jual) {
+  var selisih = rapiFin(jual - beli);
+  var status = selisih > 0 ? 'untung' : selisih < 0 ? 'rugi' : 'impas';
+  var besar = Math.abs(selisih);
+  return { status: status, besar: besar, persen: beli ? bulatDuaDesimal((besar / beli) * 100) : 0 };
+}
+
+/* Harga jual agar untung/rugi `persen`% dari harga beli. */
+function hargaJualDariPersen(beli, persen, status) {
+  var arah = status === 'rugi' ? -1 : 1;
+  return rapiFin(beli + arah * persenDari(persen, beli));
+}
+
+/* Harga beli bila harga jual dan persen untung/rugi diketahui. */
+function hargaBeliDariJual(jual, persen, status) {
+  var arah = status === 'rugi' ? -1 : 1;
+  return rapiFin((jual * 100) / (100 + arah * persen));
+}
+
+var JENIS_ANGGARAN = ['kebutuhan', 'keinginan', 'tabungan'];
+
+/*
+ * pos [{ id, nama, nilai, jenis }] → { total, sisa, cukup, persen: { id: % },
+ * perJenis: { kebutuhan, keinginan, tabungan } }. Persen terhadap pemasukan.
+ */
+function rincianAnggaran(pemasukan, pos) {
+  var rekap = rekapAnggaran(
+    pos.map(function (p) {
+      return { id: p.id, nama: p.nama, biaya: p.nilai };
+    }),
+    pemasukan
+  );
+  var persen = {};
+  var perJenis = {};
+  JENIS_ANGGARAN.forEach(function (j) {
+    perJenis[j] = 0;
+  });
+  pos.forEach(function (p) {
+    persen[p.id] = pemasukan ? bulatDuaDesimal((p.nilai / pemasukan) * 100) : 0;
+    if (p.jenis) perJenis[p.jenis] = rapiFin((perJenis[p.jenis] || 0) + p.nilai);
+  });
+  return {
+    total: rapiFin(rekap.total),
+    sisa: rapiFin(rekap.sisa),
+    cukup: rekap.cukup,
+    persen: persen,
+    perJenis: perJenis,
+  };
+}
+
+/*
+ * Memeriksa anggaran terhadap syarat:
+ *   syarat.tabunganMinPersen   tabungan ≥ p% pemasukan
+ *   syarat.keinginanMaksPersen keinginan ≤ p% pemasukan
+ *   syarat.wajib               { idPos: nilai minimal }
+ * Syarat "tidak defisit" selalu diperiksa. → { ok, rincian, butir: [{ id, ok, teks }] }
+ */
+function periksaAnggaran(pemasukan, pos, syarat) {
+  syarat = syarat || {};
+  var r = rincianAnggaran(pemasukan, pos);
+  var butir = [
+    {
+      id: 'seimbang',
+      ok: r.cukup,
+      teks: r.cukup
+        ? 'Pengeluaran tidak melebihi pemasukan (sisa ' + formatRupiah(r.sisa) + ').'
+        : 'Pengeluaran melebihi pemasukan — defisit ' + formatRupiah(-r.sisa) + '.',
+    },
+  ];
+  var persenJenis = function (j) {
+    return pemasukan ? bulatDuaDesimal((r.perJenis[j] / pemasukan) * 100) : 0;
+  };
+  if (typeof syarat.tabunganMinPersen === 'number') {
+    var pt = persenJenis('tabungan');
+    butir.push({
+      id: 'tabungan',
+      ok: pt >= syarat.tabunganMinPersen,
+      teks:
+        'Tabungan minimal ' +
+        fmtPersenFin(syarat.tabunganMinPersen) +
+        ' dari pemasukan (sekarang ' +
+        fmtPersenFin(pt) +
+        ').',
+    });
+  }
+  if (typeof syarat.keinginanMaksPersen === 'number') {
+    var pk = persenJenis('keinginan');
+    butir.push({
+      id: 'keinginan',
+      ok: pk <= syarat.keinginanMaksPersen,
+      teks:
+        'Pos keinginan paling banyak ' +
+        fmtPersenFin(syarat.keinginanMaksPersen) +
+        ' dari pemasukan (sekarang ' +
+        fmtPersenFin(pk) +
+        ').',
+    });
+  }
+  Object.keys(syarat.wajib || {}).forEach(function (id) {
+    var p = pos.filter(function (x) {
+      return x.id === id;
+    })[0];
+    var min = syarat.wajib[id];
+    butir.push({
+      id: 'wajib-' + id,
+      ok: !!p && p.nilai >= min,
+      teks: (p ? p.nama : id) + ' minimal ' + formatRupiah(min) + '.',
+    });
+  });
+  return {
+    ok: butir.every(function (b) {
+      return b.ok;
+    }),
+    rincian: r,
+    butir: butir,
+  };
+}
+
+/* 25 → '25%', 12.5 → '12,5%'. */
+function fmtPersenFin(p) {
+  return formatDesimal(p, 2) + '%';
+}
+
+/* Rupiah dengan sen bila perlu: 53333.33 → 'Rp53.333,33'. */
+function fmtRupiahFin(n) {
+  var r = rapiFin(n);
+  if (Number.isInteger(r)) return formatRupiah(r);
+  var bulat = Math.trunc(r);
+  var sen = formatDesimal(Math.abs(r - bulat), 2).split(',')[1] || '';
+  return formatRupiah(bulat) + (sen ? ',' + sen : '');
+}
+
+function jumlahDaftar(list) {
+  return rapiFin(
+    list.reduce(function (s, v) {
+      return s + v;
+    }, 0)
+  );
+}
+
+/* Kunci langkah isian finansial (angka). */
+function jawabFinansial(step) {
+  switch (step.jenis) {
+    case 'diskonAkhir':
+      return diskonBertingkat(step.harga, step.persen).akhir;
+    case 'diskonPotongan':
+      return diskonBertingkat(step.harga, step.persen).potongan;
+    case 'diskonSetara':
+      return diskonEkuivalen(step.persen);
+    case 'promo':
+      return hargaPromo(step.promo, step.qty).total;
+    case 'untungBesar':
+      return untungRugi(step.beli, step.jual).besar;
+    case 'untungPersen':
+      return untungRugi(step.beli, step.jual).persen;
+    case 'hargaJual':
+      return hargaJualDariPersen(step.beli, step.persen, step.status);
+    case 'sisaAnggaran':
+      return rapiFin(step.pemasukan - jumlahDaftar(step.pengeluaran));
+    case 'persenPos':
+      return bulatDuaDesimal((step.nilai / step.pemasukan) * 100);
+    default:
+      return step.jawab;
+  }
+}
+
+function satuanFinansial(step) {
+  if (step.satuan) return step.satuan;
+  return ['diskonSetara', 'untungPersen', 'persenPos'].indexOf(step.jenis) !== -1 ? '%' : 'rupiah';
+}
+
+function fmtNilaiFin(v, satuan) {
+  return satuan === '%' ? fmtPersenFin(v) : fmtRupiahFin(v);
+}
+
+function fmtJawabFinansial(step) {
+  return fmtNilaiFin(jawabFinansial(step), satuanFinansial(step));
+}
+
+var PESAN_FINANSIAL = {
+  kosong: 'Tulis dulu jawabanmu, ya.',
+  format:
+    'Tulis satu bilangan saja, misalnya 36.000 atau Rp36.000 untuk uang, dan 12,5 atau 12,5% untuk persen.',
+  dijumlah:
+    'Kamu menjumlahkan persen diskonnya. Pada diskon bertingkat, diskon kedua dihitung dari harga SETELAH diskon pertama, jadi diskon totalnya lebih kecil dari jumlah persennya.',
+  'pertama-saja':
+    'Itu baru hasil diskon pertama. Hitung lagi diskon kedua dari harga setelah diskon pertama.',
+  'hanya-potongan': 'Itu besar POTONGAN harganya. Harga yang dibayar = harga awal − potongan.',
+  'harga-akhir':
+    'Itu harga yang dibayar setelah diskon. Yang ditanyakan adalah besar potongannya (harga awal − harga akhir).',
+  'kurang-angka':
+    'Kamu langsung mengurangkan atau menambahkan angka persennya ke rupiah. Ubah dulu persen menjadi rupiah: p% × harga = (p : 100) × harga.',
+  ditambah: 'Diskon MENGURANGI harga, bukan menambah. Harga akhir = harga awal − potongan.',
+  koma: 'Nilainya 10 kali lebih besar atau lebih kecil. Periksa lagi banyak angka nol atau letak komanya.',
+  'tanpa-promo':
+    'Itu harga normal tanpa promo. Terapkan dulu aturan promonya pada banyak barang yang dibeli.',
+  'gratis-sekali':
+    'Barang gratis kamu hitung sekali saja. Setiap paket (mis. beli 3 dapat 4 barang) memberi barang gratis — hitung dulu ada berapa paket.',
+  'dari-jual':
+    'Kamu membagi dengan harga JUAL. Persen untung atau rugi dihitung terhadap harga BELI (modal): persen = (untung : harga beli) × 100%.',
+  rupiah:
+    'Itu besar untung/ruginya dalam rupiah. Yang ditanyakan persennya: (besar : harga beli) × 100%.',
+  'tanpa-100': 'Hasil baginya belum dikalikan 100%. Contoh: 0,25 = 25%.',
+  tanda:
+    'Statusnya memang rugi, tetapi BESAR kerugian ditulis sebagai bilangan positif (tanpa tanda minus).',
+  'hanya-untung': 'Itu baru besar keuntungannya. Harga jual = harga beli + untung (atau − rugi).',
+  'arah-terbalik':
+    'Arahnya terbalik. Untung berarti harga jual LEBIH dari harga beli; rugi berarti harga jual KURANG dari harga beli.',
+  total: 'Itu jumlah pengeluarannya. Sisa = pemasukan − jumlah pengeluaran.',
+  terbalik:
+    'Pembagiannya terbalik. Persen pos = (nilai pos : pemasukan) × 100%, hasilnya pasti tidak lebih dari 100%.',
+  salah:
+    'Belum tepat. Tuliskan dulu kalimat matematikanya (apa yang diketahui, operasi apa yang dipakai), lalu hitung lagi dengan teliti.',
+};
+
+function cocokFin(x, y, satuan) {
+  return Math.abs(x - y) <= (satuan === '%' ? 0.0051 : 0.5);
+}
+
+/* Daftar [kode, nilai] miskonsepsi untuk langkah `step` (urut prioritas). */
+function pengecohFinansial(step) {
+  var out = [];
+  var tambah = function (kode, nilai) {
+    if (typeof nilai === 'number' && isFinite(nilai)) out.push([kode, rapiFin(nilai)]);
+  };
+  var daftar;
+  var d;
+  var u;
+  switch (step.jenis) {
+    case 'diskonAkhir':
+      daftar = daftarPersen(step.persen);
+      d = diskonBertingkat(step.harga, daftar);
+      if (daftar.length > 1) {
+        tambah('dijumlah', hargaSetelahDiskon(step.harga, jumlahDaftar(daftar)));
+        tambah('pertama-saja', d.langkah[0].sisa);
+      }
+      tambah('hanya-potongan', d.potongan);
+      tambah('kurang-angka', step.harga - jumlahDaftar(daftar));
+      tambah('ditambah', step.harga + d.potongan);
+      break;
+    case 'diskonPotongan':
+      daftar = daftarPersen(step.persen);
+      d = diskonBertingkat(step.harga, daftar);
+      if (daftar.length > 1) {
+        tambah('dijumlah', persenDari(jumlahDaftar(daftar), step.harga));
+        tambah('pertama-saja', d.langkah[0].potongan);
+      }
+      tambah('harga-akhir', d.akhir);
+      break;
+    case 'diskonSetara':
+      tambah('dijumlah', jumlahDaftar(daftarPersen(step.persen)));
+      tambah('pertama-saja', daftarPersen(step.persen)[0]);
+      break;
+    case 'promo':
+      d = hargaPromo(step.promo, step.qty);
+      tambah('tanpa-promo', d.normal);
+      if (step.promo.jenis === 'beliGratis') {
+        tambah('gratis-sekali', step.promo.harga * (step.qty - step.promo.gratis));
+      }
+      if (step.promo.jenis === 'bertingkat') {
+        tambah('dijumlah', hargaSetelahDiskon(d.normal, jumlahDaftar(step.promo.persen)));
+      }
+      tambah('hanya-potongan', d.potongan);
+      break;
+    case 'untungBesar':
+      u = untungRugi(step.beli, step.jual);
+      if (u.besar) tambah('tanda', -u.besar);
+      tambah('dijumlah', step.beli + step.jual);
+      break;
+    case 'untungPersen':
+      u = untungRugi(step.beli, step.jual);
+      tambah('dari-jual', bulatDuaDesimal((u.besar / step.jual) * 100));
+      tambah('rupiah', u.besar);
+      tambah('tanpa-100', u.persen / 100);
+      break;
+    case 'hargaJual':
+      tambah('kurang-angka', step.beli + (step.status === 'rugi' ? -1 : 1) * step.persen);
+      tambah('hanya-untung', persenDari(step.persen, step.beli));
+      tambah(
+        'arah-terbalik',
+        hargaJualDariPersen(step.beli, step.persen, step.status === 'rugi' ? 'untung' : 'rugi')
+      );
+      tambah(
+        'dari-jual',
+        Math.round(
+          hargaBeliDariJual(step.beli, step.persen, step.status === 'rugi' ? 'untung' : 'rugi')
+        )
+      );
+      break;
+    case 'sisaAnggaran':
+      tambah('total', jumlahDaftar(step.pengeluaran));
+      tambah('dijumlah', step.pemasukan + jumlahDaftar(step.pengeluaran));
+      break;
+    case 'persenPos':
+      tambah('terbalik', bulatDuaDesimal((step.pemasukan / step.nilai) * 100));
+      tambah('tanpa-100', rapiFin(step.nilai / step.pemasukan));
+      break;
+    default:
+      break;
+  }
+  return out;
+}
+
+/*
+ * Memeriksa isian murid untuk langkah finansial `step`.
+ * → { benar, kode, pesan } — kode 'benar', 'kosong', 'format', kode
+ * miskonsepsi pada PESAN_FINANSIAL, 'koma', atau 'salah'.
+ */
+function diagnosaFinansial(isian, step) {
+  var p = parseInputAngka(isian === undefined || isian === null ? '' : String(isian));
+  var hasil = function (kode) {
+    return {
+      benar: kode === 'benar',
+      kode: kode,
+      pesan: kode === 'benar' ? 'Tepat!' : PESAN_FINANSIAL[kode],
+    };
+  };
+  if (p.error === 'empty') return hasil('kosong');
+  if (p.error) return hasil('format');
+  var x = p.value;
+  var satuan = satuanFinansial(step);
+  var jawab = jawabFinansial(step);
+  if (cocokFin(x, jawab, satuan)) return hasil('benar');
+  var peng = pengecohFinansial(step);
+  for (var i = 0; i < peng.length; i++) {
+    if (!cocokFin(peng[i][1], jawab, satuan) && cocokFin(x, peng[i][1], satuan)) {
+      return hasil(peng[i][0]);
+    }
+  }
+  if (jawab && (cocokFin(x, jawab * 10, satuan) || cocokFin(x, jawab / 10, satuan))) {
+    return hasil('koma');
+  }
+  return hasil('salah');
+}
+
+/*
+ * Pilihan berpengecoh untuk langkah finansial: kunci + nilai miskonsepsi
+ * (+ geser koma bila kurang dari `min` opsi), paling banyak `maks` opsi
+ * (default 4–5, sesuai huruf A–E). Urutan TIDAK diacak — app.js yang
+ * mengacak. → [{ id, label, nilai, benar, kode, umpan }]
+ */
+function opsiFinansial(step, min, maks) {
+  min = min || 4;
+  maks = maks || 5;
+  var satuan = satuanFinansial(step);
+  var jawab = jawabFinansial(step);
+  var opsi = [];
+  var dipakai = {};
+  var tambah = function (id, nilai, kode) {
+    var label = fmtNilaiFin(nilai, kode === 'rupiah' ? 'rupiah' : satuan);
+    if (dipakai[label] || (nilai < 0 && kode !== 'tanda')) return;
+    dipakai[label] = true;
+    opsi.push({
+      id: id,
+      label: label,
+      nilai: nilai,
+      benar: kode === 'benar',
+      kode: kode,
+      umpan: kode === 'benar' ? 'Tepat!' : PESAN_FINANSIAL[kode],
+    });
+  };
+  tambah('baku', jawab, 'benar');
+  pengecohFinansial(step).forEach(function (pg) {
+    if (diagnosaFinansial(pg[1], step).kode === pg[0]) tambah(pg[0], pg[1], pg[0]);
+  });
+  if (opsi.length < min && jawab) tambah('koma-kecil', rapiFin(jawab / 10), 'koma');
+  if (opsi.length < min && jawab) tambah('koma-besar', rapiFin(jawab * 10), 'koma');
+  return opsi.slice(0, maks);
+}
+
+/* State default langkah isian finansial. */
+function makeFinStep() {
+  return { input: '', done: false, kode: null, pesan: '', attempts: 0, hintLevel: 0 };
+}
+
+/* Memeriksa isian & menyimpan hasilnya ke st. Isian kosong tidak dihitung. */
+function periksaFinStep(st, step, input) {
+  st.input = String(input === undefined || input === null ? '' : input).trim();
+  var r = diagnosaFinansial(st.input, step);
+  st.kode = r.kode;
+  st.pesan = r.pesan;
+  if (r.kode === 'kosong') return r;
+  st.attempts += 1;
+  st.done = r.benar;
+  return r;
+}
+
+/*
+ * Satu langkah isian finansial berdiagnosa.
+ *   id    awalan id DOM (→ idInput, idCheck, idHint)
+ *   step  { jenis, …data, label (HTML), hints, temuan, placeholder }
+ *   num   nomor langkah opsional
+ */
+function buildFinStep(id, st, step, num) {
+  var satuan = satuanFinansial(step);
+  var head =
+    '<p class="dl-step__label">' +
+    (num ? '<span class="dl-step__num">' + num + '</span>' : '') +
+    step.label +
+    '</p>';
+  if (st.done) {
+    return (
+      '<div class="dl-step dl-step--done">' +
+      head +
+      '<p class="dl-step__answer">✓ <strong class="fin-jawab">' +
+      esc(fmtJawabFinansial(step)) +
+      '</strong></p>' +
+      (step.temuan ? buildFeedbackBox('success', '💡', step.temuan) : '') +
+      '</div>'
+    );
+  }
+  var salah = st.attempts > 0 && st.kode && st.kode !== 'benar' && st.kode !== 'kosong';
+  var persen = satuan === '%';
+  return (
+    '<div class="dl-step">' +
+    head +
+    '<div class="dl-input-row fin-step__row">' +
+    (persen ? '' : '<span class="bbk-satuan">Rp</span>') +
+    '<input type="text" class="input-text fin-step__input' +
+    (salah ? ' has-error' : '') +
+    '" id="' +
+    id +
+    'Input" inputmode="decimal" autocapitalize="off" spellcheck="false" autocomplete="off" value="' +
+    esc(st.input || '') +
+    '" aria-label="' +
+    esc(persen ? 'Jawaban dalam persen' : 'Jawaban dalam rupiah') +
+    '" placeholder="' +
+    esc(step.placeholder || (persen ? 'mis. 12,5' : 'mis. 36.000')) +
+    '">' +
+    (persen ? '<span class="bbk-satuan">%</span>' : '') +
+    '<button type="button" class="btn btn--primary" id="' +
+    id +
+    'Check">Periksa</button>' +
+    buildHintToggle(id + 'Hint', step.hints, st.hintLevel) +
+    '</div>' +
+    (salah
+      ? '<div style="margin-top:var(--space-3);">' +
+        buildFeedbackBox(
+          'error',
+          '✗',
+          '<strong>' + esc(st.input) + '</strong> — ' + esc(st.pesan)
+        ) +
+        '</div>'
+      : '') +
+    buildHintStack(step.hints, st.hintLevel) +
+    '</div>'
+  );
+}
+
+/* Memasang event buildFinStep; `save` lalu `rerender` dipanggil setelah perubahan. */
+function bindFinStep(id, st, step, save, rerender) {
+  var inp = document.getElementById(id + 'Input');
+  var btn = document.getElementById(id + 'Check');
+  var hint = document.getElementById(id + 'Hint');
+  if (inp && btn) {
+    inp.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter') btn.click();
+    });
+    btn.addEventListener('click', function () {
+      var r = periksaFinStep(st, step, inp.value);
+      if (r.kode === 'kosong') {
+        showNotice(r.pesan);
+        return;
+      }
+      save();
+      rerender();
+      if (!st.done) {
+        var again = document.getElementById(id + 'Input');
+        if (again) again.focus();
+      }
+    });
+  }
+  if (hint) {
+    hint.addEventListener('click', function () {
+      st.hintLevel = Math.min(st.hintLevel + 1, (step.hints || []).length);
+      save();
+      rerender();
+    });
+  }
+}
+
+/* ---------- UI: struk belanja ---------- */
+
+/*
+ * Struk belanja bergaya kertas kasir.
+ *   s.toko     nama toko
+ *   s.ikon     emoji toko (opsional)
+ *   s.baris    [{ nama, qty, harga }] — harga satuan
+ *   s.promo    [{ label, potong }] — potongan (angka positif)
+ *   s.catatan  teks kecil di bawah total (opsional)
+ *   s.sembunyikanTotal true → total ditulis "?" (murid menghitung sendiri)
+ */
+function buildStrukBelanja(s) {
+  var baris = s.baris || [];
+  var promo = s.promo || [];
+  var subtotal = jumlahDaftar(
+    baris.map(function (b) {
+      return b.harga * b.qty;
+    })
+  );
+  var total = rapiFin(
+    subtotal -
+      jumlahDaftar(
+        promo.map(function (p) {
+          return p.potong;
+        })
+      )
+  );
+  return (
+    '<figure class="struk">' +
+    '<figcaption class="struk__toko">' +
+    (s.ikon ? '<span aria-hidden="true">' + s.ikon + '</span> ' : '') +
+    esc(s.toko || 'Struk belanja') +
+    '</figcaption>' +
+    '<table class="struk__tabel">' +
+    '<caption class="sr-only">' +
+    esc('Rincian struk ' + (s.toko || '')) +
+    '</caption>' +
+    '<tbody>' +
+    baris
+      .map(function (b) {
+        return (
+          '<tr><th scope="row">' +
+          esc(b.nama) +
+          (b.qty === 1
+            ? ''
+            : '<span class="struk__qty">' +
+              esc(b.qty + ' × ' + formatRupiah(b.harga)) +
+              '</span>') +
+          '</th><td>' +
+          esc(formatRupiah(rapiFin(b.harga * b.qty))) +
+          '</td></tr>'
+        );
+      })
+      .join('') +
+    (promo.length
+      ? '<tr class="struk__garis"><th scope="row">Subtotal</th><td>' +
+        esc(formatRupiah(subtotal)) +
+        '</td></tr>' +
+        promo
+          .map(function (p) {
+            return (
+              '<tr class="struk__promo"><th scope="row">' +
+              esc(p.label) +
+              '</th><td>' +
+              esc(formatRupiah(-p.potong)) +
+              '</td></tr>'
+            );
+          })
+          .join('')
+      : '') +
+    '<tr class="struk__total"><th scope="row">TOTAL</th><td>' +
+    esc(s.sembunyikanTotal ? 'Rp ?' : formatRupiah(total)) +
+    '</td></tr>' +
+    '</tbody></table>' +
+    (s.catatan ? '<p class="struk__catatan">' + esc(s.catatan) + '</p>' : '') +
+    '</figure>'
+  );
+}
+
+/* ---------- UI: stepper nilai finansial ---------- */
+
+/*
+ * Stepper [−] nilai [+] dengan teks nilai bebas (Rp…, …%, … gelas).
+ *   opts.minDis / opts.maxDis  true → tombol − / + dimatikan
+ *   opts.langkah               teks langkah untuk aria (mis. 'Rp500')
+ */
+function buildFinStepper(id, label, teks, opts) {
+  opts = opts || {};
+  var langkah = opts.langkah ? ' ' + opts.langkah : '';
+  return (
+    '<div class="int-stepper fin-stepper" role="group" aria-label="' +
+    esc(label) +
+    '">' +
+    '<span class="int-stepper__label">' +
+    esc(label) +
+    '</span>' +
+    '<div class="int-stepper__row">' +
+    '<button type="button" class="int-stepper__btn" id="' +
+    id +
+    'Dec" aria-label="' +
+    esc('Kurangi ' + label.toLowerCase() + langkah) +
+    '"' +
+    (opts.minDis ? ' disabled' : '') +
+    '>−</button>' +
+    '<output class="fin-stepper__val" aria-live="polite">' +
+    esc(teks) +
+    '</output>' +
+    '<button type="button" class="int-stepper__btn" id="' +
+    id +
+    'Inc" aria-label="' +
+    esc('Tambah ' + label.toLowerCase() + langkah) +
+    '"' +
+    (opts.maxDis ? ' disabled' : '') +
+    '>+</button>' +
+    '</div>' +
+    '</div>'
+  );
+}
+
+function bindFinStepper(root, id, onChange) {
+  bindIntegerStepper(root, id, onChange);
+}
+
+function batasi(v, min, max) {
+  return Math.max(min, Math.min(max, v));
+}
+
+/* ---------- UI: Lab Diskon ---------- */
+
+/* st { p1, p2 } — dua diskon bertingkat (p2 = 0 → diskon tunggal). */
+function ubahLabDiskon(st, key, arah, opts) {
+  opts = opts || {};
+  var langkah = opts.langkah || 5;
+  var maks = typeof opts.maks === 'number' ? opts.maks : 50;
+  st[key] = batasi((st[key] || 0) + arah * langkah, 0, maks);
+}
+
+function persenLebar(v, total) {
+  return total ? formatDesimal(batasi((v / total) * 100, 0, 100), 2).replace(',', '.') : '0';
+}
+
+/*
+ * Lab Diskon: dua stepper diskon dan batang harga yang memperlihatkan
+ * potongan pertama, potongan kedua (dari sisa), dan harga akhir, beserta
+ * perbandingan "jumlah persen" vs "diskon setara".
+ *   opts.harga  harga awal (rupiah)
+ *   opts.nama   nama barang
+ *   opts.langkah, opts.maks  langkah & batas persen (default 5 & 50)
+ */
+function buildLabDiskon(id, st, opts) {
+  opts = opts || {};
+  var maks = typeof opts.maks === 'number' ? opts.maks : 50;
+  var langkah = opts.langkah || 5;
+  var harga = opts.harga;
+  var persen = [st.p1 || 0, st.p2 || 0];
+  var d = diskonBertingkat(harga, persen);
+  var jumlahP = persen[0] + persen[1];
+  var setara = diskonEkuivalen(persen);
+  var seg = function (cls, nilai, label) {
+    return nilai > 0
+      ? '<span class="lab-diskon__seg lab-diskon__seg--' +
+          cls +
+          '" style="width:' +
+          persenLebar(nilai, harga) +
+          '%" title="' +
+          esc(label) +
+          '"></span>'
+      : '';
+  };
+  return (
+    '<div class="lab-diskon" id="' +
+    id +
+    '">' +
+    '<div class="lab-diskon__kontrol">' +
+    buildFinStepper(id + 'P1', 'Diskon pertama', fmtPersenFin(persen[0]), {
+      minDis: persen[0] <= 0,
+      maxDis: persen[0] >= maks,
+      langkah: langkah + '%',
+    }) +
+    buildFinStepper(id + 'P2', 'Diskon tambahan', fmtPersenFin(persen[1]), {
+      minDis: persen[1] <= 0,
+      maxDis: persen[1] >= maks,
+      langkah: langkah + '%',
+    }) +
+    '</div>' +
+    '<p class="lab-diskon__barang">' +
+    esc(opts.nama || 'Barang') +
+    ' — harga awal <strong>' +
+    esc(formatRupiah(harga)) +
+    '</strong></p>' +
+    '<div class="lab-diskon__bar" role="img" aria-label="' +
+    esc(
+      'Potongan pertama ' +
+        formatRupiah(d.langkah[0].potongan) +
+        ', potongan kedua ' +
+        formatRupiah(d.langkah[1].potongan) +
+        ', harga akhir ' +
+        formatRupiah(d.akhir)
+    ) +
+    '">' +
+    seg('akhir', d.akhir, 'Harga akhir') +
+    seg('p2', d.langkah[1].potongan, 'Potongan kedua') +
+    seg('p1', d.langkah[0].potongan, 'Potongan pertama') +
+    '</div>' +
+    '<ul class="lab-diskon__legenda">' +
+    '<li><span class="lab-diskon__kunci lab-diskon__kunci--akhir"></span>Harga akhir</li>' +
+    '<li><span class="lab-diskon__kunci lab-diskon__kunci--p2"></span>Potongan kedua</li>' +
+    '<li><span class="lab-diskon__kunci lab-diskon__kunci--p1"></span>Potongan pertama</li>' +
+    '</ul>' +
+    '<dl class="lab-diskon__hasil" aria-live="polite">' +
+    '<div><dt>Potongan 1 (' +
+    esc(fmtPersenFin(persen[0])) +
+    ' × ' +
+    esc(formatRupiah(harga)) +
+    ')</dt><dd>' +
+    esc(fmtRupiahFin(d.langkah[0].potongan)) +
+    '</dd></div>' +
+    '<div><dt>Potongan 2 (' +
+    esc(fmtPersenFin(persen[1])) +
+    ' × ' +
+    esc(fmtRupiahFin(d.langkah[0].sisa)) +
+    ')</dt><dd>' +
+    esc(fmtRupiahFin(d.langkah[1].potongan)) +
+    '</dd></div>' +
+    '<div class="lab-diskon__akhir"><dt>Harga akhir</dt><dd>' +
+    esc(fmtRupiahFin(d.akhir)) +
+    '</dd></div>' +
+    '<div><dt>Jumlah angka persen</dt><dd>' +
+    esc(fmtPersenFin(jumlahP)) +
+    '</dd></div>' +
+    '<div class="lab-diskon__setara"><dt>Diskon setara sebenarnya</dt><dd>' +
+    esc(fmtPersenFin(setara)) +
+    '</dd></div>' +
+    '</dl>' +
+    '</div>'
+  );
+}
+
+/* onChange() dipanggil setelah st berubah (modul menyimpan & merender ulang). */
+function bindLabDiskon(root, id, st, opts, onChange) {
+  ['p1', 'p2'].forEach(function (k) {
+    bindFinStepper(root, id + k.toUpperCase(), function (arah) {
+      ubahLabDiskon(st, k, arah, opts);
+      onChange();
+    });
+  });
+}
+
+/* ---------- UI: Timbangan Untung–Rugi ---------- */
+
+/* st { jual, terjual } — harga jual per unit & banyak unit terjual. */
+function ubahTimbangan(st, key, arah, opts) {
+  opts = opts || {};
+  if (key === 'jual') {
+    st.jual = batasi(
+      st.jual + arah * (opts.langkahJual || 500),
+      typeof opts.minJual === 'number' ? opts.minJual : 0,
+      typeof opts.maksJual === 'number' ? opts.maksJual : 20000
+    );
+  } else {
+    st.terjual = batasi(
+      st.terjual + arah * (opts.langkahTerjual || 5),
+      0,
+      typeof opts.maksTerjual === 'number' ? opts.maksTerjual : 100
+    );
+  }
+}
+
+/*
+ * Timbangan Untung–Rugi: modal (harga beli total) di satu lengan dan
+ * pendapatan (harga jual × banyak terjual) di lengan lain. Lengan yang
+ * lebih berat turun; status, besar, dan persen untung/rugi ditampilkan.
+ *   opts.modal   harga beli total (rupiah)
+ *   opts.satuan  nama satuan barang (mis. 'gelas')
+ *   opts.langkahJual, minJual, maksJual, langkahTerjual, maksTerjual
+ */
+function buildTimbanganUntung(id, st, opts) {
+  opts = opts || {};
+  var modal = opts.modal;
+  var satuan = opts.satuan || 'barang';
+  var pendapatan = rapiFin(st.jual * st.terjual);
+  var u = untungRugi(modal, pendapatan);
+  var miring = u.status === 'impas' ? 0 : batasi(((pendapatan - modal) / modal) * 20, -12, 12);
+  var label = { untung: 'UNTUNG', rugi: 'RUGI', impas: 'IMPAS' }[u.status];
+  var minJual = typeof opts.minJual === 'number' ? opts.minJual : 0;
+  var maksJual = typeof opts.maksJual === 'number' ? opts.maksJual : 20000;
+  var maksTerjual = typeof opts.maksTerjual === 'number' ? opts.maksTerjual : 100;
+  return (
+    '<div class="timbang timbang--' +
+    u.status +
+    '" id="' +
+    id +
+    '">' +
+    '<div class="timbang__kontrol">' +
+    buildFinStepper(id + 'Jual', 'Harga jual per ' + satuan, formatRupiah(st.jual), {
+      minDis: st.jual <= minJual,
+      maxDis: st.jual >= maksJual,
+      langkah: formatRupiah(opts.langkahJual || 500),
+    }) +
+    buildFinStepper(id + 'Terjual', 'Banyak terjual', st.terjual + ' ' + satuan, {
+      minDis: st.terjual <= 0,
+      maxDis: st.terjual >= maksTerjual,
+      langkah: String(opts.langkahTerjual || 5),
+    }) +
+    '</div>' +
+    '<div class="timbang__alat" role="img" aria-label="' +
+    esc(
+      'Modal ' +
+        formatRupiah(modal) +
+        ', pendapatan ' +
+        formatRupiah(pendapatan) +
+        ': ' +
+        label.toLowerCase()
+    ) +
+    '">' +
+    '<div class="timbang__lengan" style="transform:rotate(' +
+    formatDesimal(-miring, 1).replace(',', '.') +
+    'deg)">' +
+    '<span class="timbang__piring timbang__piring--modal">🧾 Modal<strong>' +
+    esc(formatRupiah(modal)) +
+    '</strong></span>' +
+    '<span class="timbang__piring timbang__piring--jual">💰 Pendapatan<strong>' +
+    esc(formatRupiah(pendapatan)) +
+    '</strong></span>' +
+    '</div>' +
+    '<span class="timbang__tiang" aria-hidden="true"></span>' +
+    '</div>' +
+    '<div class="timbang__hasil" aria-live="polite">' +
+    '<span class="timbang__status">' +
+    label +
+    '</span>' +
+    '<span>Pendapatan − modal = ' +
+    esc(
+      formatRupiah(pendapatan) +
+        ' − ' +
+        formatRupiah(modal) +
+        ' = ' +
+        formatRupiah(rapiFin(pendapatan - modal))
+    ) +
+    '</span>' +
+    (u.status === 'impas'
+      ? '<span>Tidak untung, tidak rugi.</span>'
+      : '<span>Persen ' +
+        u.status +
+        ' = ' +
+        esc(formatRupiah(u.besar)) +
+        ' : ' +
+        esc(formatRupiah(modal)) +
+        ' × 100% = <strong>' +
+        esc(fmtPersenFin(u.persen)) +
+        '</strong></span>') +
+    '</div>' +
+    '</div>'
+  );
+}
+
+function bindTimbanganUntung(root, id, st, opts, onChange) {
+  bindFinStepper(root, id + 'Jual', function (arah) {
+    ubahTimbangan(st, 'jual', arah, opts);
+    onChange();
+  });
+  bindFinStepper(root, id + 'Terjual', function (arah) {
+    ubahTimbangan(st, 'terjual', arah, opts);
+    onChange();
+  });
+}
+
+/* ---------- UI: Papan Anggaran ---------- */
+
+/* Nilai pos dari state papan: [{ …pos, nilai }]. */
+function nilaiPosAnggaran(st, pos) {
+  var nilai = (st && st.nilai) || {};
+  return pos.map(function (p) {
+    return Object.assign({}, p, { nilai: nilai[p.id] || 0 });
+  });
+}
+
+function ubahPapanAnggaran(st, idPos, arah, opts) {
+  if (!st.nilai) st.nilai = {};
+  var langkah = (opts && opts.langkah) || 10000;
+  st.nilai[idPos] = Math.max(0, rapiFin((st.nilai[idPos] || 0) + arah * langkah));
+}
+
+/*
+ * Papan Anggaran: stepper per pos, batang tumpuk alokasi terhadap
+ * pemasukan, sisa/defisit, dan daftar periksa syarat.
+ *   st          { nilai: { idPos: rupiah } }
+ *   opts.pemasukan  total pemasukan
+ *   opts.pos        [{ id, nama, ikon, jenis }]
+ *   opts.langkah    langkah stepper (default Rp10.000)
+ *   opts.syarat     syarat periksaAnggaran
+ */
+function buildPapanAnggaran(id, st, opts) {
+  var pos = nilaiPosAnggaran(st, opts.pos);
+  var cek = periksaAnggaran(opts.pemasukan, pos, opts.syarat);
+  var r = cek.rincian;
+  var langkah = opts.langkah || 10000;
+  var skala = Math.max(opts.pemasukan, r.total);
+  return (
+    '<div class="papan-anggaran" id="' +
+    id +
+    '">' +
+    '<p class="papan-anggaran__masuk">Pemasukan: <strong>' +
+    esc(formatRupiah(opts.pemasukan)) +
+    '</strong></p>' +
+    '<div class="papan-anggaran__pos">' +
+    pos
+      .map(function (p) {
+        return (
+          '<div class="papan-anggaran__item papan-anggaran__item--' +
+          esc(p.jenis || 'lain') +
+          '">' +
+          '<span class="papan-anggaran__jenis">' +
+          (p.ikon ? '<span aria-hidden="true">' + p.ikon + '</span> ' : '') +
+          esc(p.jenis || '') +
+          '</span>' +
+          buildFinStepper(id + '-' + p.id, p.nama, formatRupiah(p.nilai), {
+            minDis: p.nilai <= 0,
+            langkah: formatRupiah(langkah),
+          }) +
+          '<span class="papan-anggaran__persen">' +
+          esc(fmtPersenFin(r.persen[p.id])) +
+          '</span>' +
+          '</div>'
+        );
+      })
+      .join('') +
+    '</div>' +
+    '<div class="papan-anggaran__bar" role="img" aria-label="' +
+    esc(
+      pos
+        .map(function (p) {
+          return p.nama + ' ' + formatRupiah(p.nilai);
+        })
+        .join(', ') +
+        '; ' +
+        (r.cukup ? 'sisa ' + formatRupiah(r.sisa) : 'defisit ' + formatRupiah(-r.sisa))
+    ) +
+    '">' +
+    pos
+      .map(function (p) {
+        return p.nilai > 0
+          ? '<span class="papan-anggaran__seg papan-anggaran__seg--' +
+              esc(p.jenis || 'lain') +
+              '" style="width:' +
+              persenLebar(p.nilai, skala) +
+              '%"></span>'
+          : '';
+      })
+      .join('') +
+    (r.sisa > 0
+      ? '<span class="papan-anggaran__seg papan-anggaran__seg--sisa" style="width:' +
+        persenLebar(r.sisa, skala) +
+        '%"></span>'
+      : '') +
+    '</div>' +
+    '<p class="papan-anggaran__ringkas' +
+    (r.cukup ? '' : ' is-defisit') +
+    '" aria-live="polite">Total pengeluaran <strong>' +
+    esc(formatRupiah(r.total)) +
+    '</strong> · ' +
+    (r.cukup
+      ? 'Sisa <strong>' + esc(formatRupiah(r.sisa)) + '</strong>'
+      : 'Defisit <strong>' + esc(formatRupiah(-r.sisa)) + '</strong>') +
+    '</p>' +
+    '<ul class="papan-anggaran__syarat">' +
+    cek.butir
+      .map(function (b) {
+        return (
+          '<li class="' +
+          (b.ok ? 'is-ok' : 'is-belum') +
+          '"><span aria-hidden="true">' +
+          (b.ok ? '✅' : '⬜') +
+          '</span> <span class="sr-only">' +
+          (b.ok ? 'Terpenuhi: ' : 'Belum terpenuhi: ') +
+          '</span>' +
+          esc(b.teks) +
+          '</li>'
+        );
+      })
+      .join('') +
+    '</ul>' +
+    '</div>'
+  );
+}
+
+function bindPapanAnggaran(root, id, st, opts, onChange) {
+  opts.pos.forEach(function (p) {
+    bindFinStepper(root, id + '-' + p.id, function (arah) {
+      ubahPapanAnggaran(st, p.id, arah, opts);
+      onChange();
+    });
+  });
 }
