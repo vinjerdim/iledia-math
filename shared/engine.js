@@ -187,6 +187,10 @@
        (nilai rasional eksak, kalimat operasi, samakan penyebut, isian
        berdiagnosa miskonsepsi & opsi berpengecoh, Lab Pita potong
        per utuh, langkah isian operasi)
+   63. Pecahan: perkalian & pembagian dalam masalah kontekstual
+       (hasil eksak × dan :, kebalikan, langkah kali kebalikan, isian
+       berdiagnosa miskonsepsi & opsi berpengecoh, pita kelompok
+       "berapa banyak … di dalam …", model luas "bagian dari bagian")
    ============================================================ */
 
 /* ============================================================
@@ -37394,7 +37398,7 @@ function makeIsianOperasi() {
 /* Memeriksa isian & menyimpannya ke st. Isian kosong tidak dihitung. */
 function periksaIsianOperasi(st, soal, input) {
   st.input = String(input == null ? '' : input).trim();
-  var r = diagnosaOperasiPecahan(st.input, soal.a, soal.op, soal.b);
+  var r = diagnosaOperasiRasional(st.input, soal.a, soal.op, soal.b);
   st.kode = r.kode;
   st.pesan = r.pesan;
   if (r.kode === 'kosong') return r;
@@ -37406,6 +37410,7 @@ function periksaIsianOperasi(st, soal, input) {
 /*
  * Langkah isian hasil a op b dengan umpan balik diagnosa.
  *   soal { a, op, b, label (HTML), hints, temuan, satuan, placeholder }
+ *   op   '+' | '-' (diagnosa seksi 62) atau '×' | ':' (diagnosa seksi 63)
  */
 function buildIsianOperasi(id, st, soal, num) {
   var head =
@@ -37418,9 +37423,9 @@ function buildIsianOperasi(id, st, soal, num) {
       '<div class="dl-step dl-step--done">' +
       head +
       '<p class="dl-step__answer">✓ ' +
-      esc(fmtOperasiPecahan(soal.a, soal.op, soal.b)) +
+      esc(fmtOperasiRasional(soal.a, soal.op, soal.b)) +
       ' = <strong>' +
-      esc(teksRasional(operasiPecahan(soal.a, soal.op, soal.b))) +
+      esc(teksRasional(operasiRasional(soal.a, soal.op, soal.b))) +
       '</strong>' +
       (soal.satuan ? ' ' + esc(soal.satuan) : '') +
       '</p>' +
@@ -37441,7 +37446,7 @@ function buildIsianOperasi(id, st, soal, num) {
     'Input" inputmode="text" autocomplete="off" spellcheck="false" value="' +
     esc(st.input || '') +
     '" aria-label="Jawaban ' +
-    esc(fmtOperasiPecahan(soal.a, soal.op, soal.b)) +
+    esc(fmtOperasiRasional(soal.a, soal.op, soal.b)) +
     '" placeholder="' +
     esc(soal.placeholder || 'mis. 1 3/4 atau −1/2') +
     '">' +
@@ -37499,4 +37504,529 @@ function bindIsianOperasi(id, st, soal, save, rerender) {
       rerender();
     });
   }
+}
+
+/* ============================================================
+   63. PECAHAN — PERKALIAN & PEMBAGIAN DALAM MASALAH KONTEKSTUAL
+   Dipakai modul perkalian & pembagian bilangan rasional (pecahan)
+   dalam masalah kontekstual (fase-d/mpi-2.4). Memakai ulang seksi 62
+   (rasionalDari, sederhanakanRasional, samaRasional, teksRasional,
+   fmtSukuPecahan, langkahSamakanPenyebut, parseIsianRasional,
+   isianSederhana, uraiSukuPecahan, sukuPecahanBiasa, makeIsianOperasi,
+   buildIsianOperasi) — langkah isian seksi 62 kini menerima juga
+   op '×' dan ':' lewat operasiRasional / fmtOperasiRasional /
+   diagnosaOperasiRasional.
+
+   Bilangan di DATA tetap ditulis sebagai STRING bentuk aslinya ('3/4',
+   '2 1/2', '-3/4', '5'). Isinya:
+     • opKaliBagi — menormalkan lambang ('*', 'x', '÷', '/' …);
+     • kaliBagiPecahan / hitungKaliBagiRasional / kebalikanRasional —
+       hasil eksak (pembagian = kali kebalikan);
+     • fmtOperasiKaliBagi — kalimat matematika "a × b", "a : (−b)";
+     • langkahKaliBagiPecahan — ubah ke pecahan biasa → kali kebalikan
+       → kalikan pembilang & penyebut → sederhanakan;
+     • diagnosaKaliBagiPecahan + PESAN_KALI_BAGI_PECAHAN — miskonsepsi
+       pembagi tidak dibalik, bilangan pertama yang dibalik, penyebut
+       dipertahankan (disamakan lalu hanya pembilang dikali), bilangan
+       bulat ikut mengalikan penyebut, campuran dikali terpisah, lupa
+       bilangan bulat, salah tanda, operasi terbalik, belum sederhana;
+     • opsiKaliBagiPecahan — pilihan berpengecoh (urutan wajar; app.js
+       yang mengacak);
+     • hitungPitaKelompok / buildPitaKelompok — pita yang dikelompokkan
+       per ukuran: "berapa banyak 1/8 di dalam 3/4" (pembagian) maupun
+       penjumlahan berulang "3 kali 2/5" (perkalian bilangan bulat);
+     • buildLuasPecahan — model luas "a bagian dari b" (a × b) dengan
+       arsiran ganda;
+     • jenisOperasiKaliBagi — jenis operasi (bulat × pecahan, pecahan ×
+       pecahan, pembagian, campuran/tanda) untuk memilih strategi.
+   Gaya .pita-klp* dan .luas-pk* ada di shared/base.css.
+   ============================================================ */
+
+/* Lambang operasi → '×' | ':' (null bila bukan perkalian/pembagian). */
+function opKaliBagi(op) {
+  var s = String(op == null ? '' : op)
+    .trim()
+    .toLowerCase();
+  if (s === '×' || s === '*' || s === 'x' || s === '·' || s === 'kali') return '×';
+  if (s === ':' || s === '÷' || s === '/' || s === 'bagi') return ':';
+  return null;
+}
+
+/* Kebalikan (invers perkalian) suatu suku; tanda tetap di pembilang. */
+function kebalikanRasional(x) {
+  var v = sederhanakanRasional(rasionalDari(x));
+  if (!v.num) throw new Error('Nol tidak punya kebalikan');
+  return v.num < 0 ? { num: -v.den, den: -v.num } : { num: v.den, den: v.num };
+}
+
+/* Hasil a op b ('×' | ':') belum disederhanakan; pembagian = kali kebalikan. */
+function hitungKaliBagiRasional(a, op, b) {
+  var o = opKaliBagi(op);
+  if (!o) throw new Error('Operasi tidak dikenal: ' + op);
+  var p = rasionalDari(a);
+  var q = rasionalDari(b);
+  if (o === ':') {
+    if (!q.num) throw new Error('Pembagian dengan nol');
+    q = q.num < 0 ? { num: -q.den, den: -q.num } : { num: q.den, den: q.num };
+  }
+  return { num: p.num * q.num, den: p.den * q.den };
+}
+
+/* Hasil eksak paling sederhana dari a op b ('×' | ':'). */
+function kaliBagiPecahan(a, op, b) {
+  return sederhanakanRasional(hitungKaliBagiRasional(a, op, b));
+}
+
+/* Kalimat matematika: fmtOperasiKaliBagi('-2/3', '×', '-3/4') → "−2/3 × (−3/4)". */
+function fmtOperasiKaliBagi(a, op, b) {
+  return fmtSukuPecahan(a) + (opKaliBagi(op) === ':' ? ' : ' : ' × ') + fmtSukuPecahan(b, true);
+}
+
+/* Satu pintu untuk + − × : (dipakai langkah isian operasi seksi 62). */
+function operasiRasional(a, op, b) {
+  return opKaliBagi(op) ? kaliBagiPecahan(a, op, b) : operasiPecahan(a, op, b);
+}
+
+function fmtOperasiRasional(a, op, b) {
+  return opKaliBagi(op) ? fmtOperasiKaliBagi(a, op, b) : fmtOperasiPecahan(a, op, b);
+}
+
+function diagnosaOperasiRasional(jawab, a, op, b) {
+  return opKaliBagi(op)
+    ? diagnosaKaliBagiPecahan(jawab, a, op, b)
+    : diagnosaOperasiPecahan(jawab, a, op, b);
+}
+
+/* Suku bilangan bulat tertulis ('3', '−2')? */
+function sukuBulat(x) {
+  return /^[+\-−]?\d+$/.test(String(x).trim());
+}
+
+/* Suku campuran sejati (punya bilangan bulat DAN bagian pecahan)? */
+function sukuCampuran(x) {
+  var u = uraiSukuPecahan(x);
+  return u.whole > 0 && u.frac.num !== 0;
+}
+
+/* Rasional → teks pecahan biasa (bulat ditulis n/1); suku negatif kedua berkurung. */
+function teksSukuRasional(v, kurung) {
+  var t = v.den === 1 ? (v.num < 0 ? '−' : '') + Math.abs(v.num) + '/1' : teksRasional(v, 'biasa');
+  return kurung && t.charAt(0) === '−' ? '(' + t + ')' : t;
+}
+
+function teksFaktor(n, kurung) {
+  var t = (n < 0 ? '−' : '') + Math.abs(n);
+  return kurung && n < 0 ? '(' + t + ')' : t;
+}
+
+/*
+ * Langkah penyelesaian a op b. Mengembalikan { langkah: [{ id, teks }], hasil }:
+ *   'biasa'      ubah suku campuran/bulat ke pecahan biasa (bila ada)
+ *   'balik'      pembagian → kali kebalikan pembagi (op ':')
+ *   'kali'       kalikan pembilang dengan pembilang, penyebut dengan penyebut
+ *   'sederhana'  sederhanakan / tulis sebagai pecahan campuran (bila berbeda)
+ */
+function langkahKaliBagiPecahan(a, op, b) {
+  var o = opKaliBagi(op);
+  if (!o) throw new Error('Operasi tidak dikenal: ' + op);
+  var p = rasionalDari(a);
+  var q = rasionalDari(b);
+  var lambang = o === ':' ? ' : ' : ' × ';
+  var langkah = [];
+  var perluBiasa = !sukuPecahanBiasa(a) || !sukuPecahanBiasa(b);
+  var kiri = teksSukuRasional(p);
+  var kanan = teksSukuRasional(q, true);
+  if (perluBiasa) {
+    langkah.push({
+      id: 'biasa',
+      teks: fmtOperasiKaliBagi(a, o, b) + ' = ' + kiri + lambang + kanan,
+    });
+  }
+  var r = q;
+  if (o === ':') {
+    if (!q.num) throw new Error('Pembagian dengan nol');
+    r = q.num < 0 ? { num: -q.den, den: -q.num } : { num: q.den, den: q.num };
+    langkah.push({
+      id: 'balik',
+      teks: kiri + ' : ' + kanan + ' = ' + kiri + ' × ' + teksSukuRasional(r, true),
+    });
+  }
+  var mentah = { num: p.num * r.num, den: p.den * r.den };
+  var awal = langkah.length
+    ? kiri + ' × ' + teksSukuRasional(r, true)
+    : fmtOperasiKaliBagi(a, o, b);
+  langkah.push({
+    id: 'kali',
+    teks:
+      awal +
+      ' = (' +
+      teksFaktor(p.num) +
+      ' × ' +
+      teksFaktor(r.num, true) +
+      ')/(' +
+      p.den +
+      ' × ' +
+      r.den +
+      ') = ' +
+      teksRasional(mentah, 'biasa'),
+  });
+  var hasil = sederhanakanRasional(mentah);
+  var biasa = teksRasional(hasil, 'biasa');
+  var campur = teksRasional(hasil);
+  var tMentah = teksRasional(mentah, 'biasa');
+  if (biasa !== tMentah || campur !== biasa) {
+    langkah.push({
+      id: 'sederhana',
+      teks:
+        tMentah +
+        (biasa !== tMentah ? ' = ' + biasa : '') +
+        (campur !== biasa ? ' = ' + campur : ''),
+    });
+  }
+  return { langkah: langkah, hasil: hasil };
+}
+
+/* Bagian pecahan suku campuran; suku lain utuh apa adanya. */
+function bagianPecahanSuku(x) {
+  return sukuCampuran(x) ? uraiSukuPecahan(x).frac : rasionalDari(x);
+}
+
+/*
+ * Hasil yang muncul dari miskonsepsi khas a op b ('×' | ':') — { kode: {num, den} }.
+ * Hanya pola yang masuk akal untuk soal itu yang diisi. Pola
+ * 'kali-penyebut-juga' disertai `mentah` (pecahan seperti ditulis murid).
+ */
+function hasilMiskonsepsiKaliBagi(a, op, b) {
+  var o = opKaliBagi(op);
+  var out = {};
+  var p = rasionalDari(a);
+  var q = rasionalDari(b);
+  if (o === ':') {
+    out['tidak-dibalik'] = { num: p.num * q.num, den: p.den * q.den };
+    if (p.num) {
+      var bp = p.num < 0 ? { num: -p.den, den: -p.num } : { num: p.den, den: p.num };
+      out['balik-pertama'] = { num: bp.num * q.num, den: bp.den * q.den };
+    }
+  } else {
+    if (sukuPecahanBiasa(a) && sukuPecahanBiasa(b)) {
+      var L = langkahSamakanPenyebut(a, b);
+      out['penyebut-tetap'] = { num: L.a.num * L.b.num, den: L.kpk };
+    }
+    var nBulat = sukuBulat(a) ? p.num : sukuBulat(b) ? q.num : 0;
+    var lain = sukuBulat(a) ? b : a;
+    if (nBulat > 1 && !sukuBulat(lain) && sukuPecahanBiasa(lain)) {
+      var f = rasionalDari(lain);
+      out['kali-penyebut-juga'] = {
+        num: f.num,
+        den: f.den,
+        mentah: { num: f.num * nBulat, den: f.den * nBulat },
+      };
+    }
+    if (sukuCampuran(a) && sukuCampuran(b)) {
+      var ua = uraiSukuPecahan(a);
+      var ub = uraiSukuPecahan(b);
+      var tanda = ua.neg !== ub.neg ? -1 : 1;
+      var kaliFrac = hitungKaliBagiRasional(ua.frac, '×', ub.frac);
+      out['campuran-terpisah'] = hitungRasional(
+        { num: tanda * ua.whole * ub.whole, den: 1 },
+        '+',
+        kaliFrac
+      );
+    }
+  }
+  if (sukuCampuran(a) || sukuCampuran(b)) {
+    out['lupa-bulat'] = hitungKaliBagiRasional(bagianPecahanSuku(a), o, bagianPecahanSuku(b));
+  }
+  if (o === '×' && q.num) out['operasi-terbalik'] = hitungKaliBagiRasional(a, ':', b);
+  var benar = hitungKaliBagiRasional(a, o, b);
+  if (benar.num) out['salah-tanda'] = { num: -benar.num, den: benar.den };
+  return out;
+}
+
+var URUTAN_MISKONSEPSI_KALI_BAGI = [
+  'tidak-dibalik',
+  'balik-pertama',
+  'kali-penyebut-juga',
+  'penyebut-tetap',
+  'campuran-terpisah',
+  'lupa-bulat',
+  'salah-tanda',
+  'operasi-terbalik',
+];
+
+var PESAN_KALI_BAGI_PECAHAN = {
+  kosong: 'Tulis jawabanmu terlebih dahulu, misalnya 3/10, 2 1/2, 6, atau −1/2.',
+  format:
+    'Tulis jawaban sebagai pecahan dengan garis miring (3/4), pecahan campuran (2 1/4), atau bilangan bulat (6). Desimal belum dipakai di sini.',
+  'nol-penyebut': 'Penyebut tidak boleh 0. Periksa lagi penyebut jawabanmu.',
+  'belum-sederhana':
+    'Nilainya sudah tepat! Sekarang <strong>sederhanakan</strong>: bagi pembilang dan penyebut dengan FPB-nya.',
+  'tidak-dibalik':
+    'Pembaginya belum dibalik. Membagi dengan suatu pecahan sama dengan <strong>mengalikan dengan kebalikannya</strong>: a : (c/d) = a × (d/c).',
+  'balik-pertama':
+    'Yang dibalik seharusnya <strong>pembagi</strong> (bilangan kedua), bukan bilangan pertama. Biarkan yang dibagi tetap, lalu kalikan dengan kebalikan pembagi.',
+  'penyebut-tetap':
+    'Pada perkalian, penyebut <strong>tidak perlu disamakan</strong> dan tidak dipertahankan. Kalikan pembilang dengan pembilang, penyebut dengan penyebut.',
+  'kali-penyebut-juga':
+    'Bilangan bulat hanya mengalikan <strong>pembilang</strong>. Jika pembilang dan penyebut sama-sama dikali, pecahannya hanya menjadi senilai — nilainya tidak berubah. Ingat: 3 × 2/5 = 2/5 + 2/5 + 2/5.',
+  'campuran-terpisah':
+    'Bilangan bulat dan bagian pecahan tidak boleh dikalikan terpisah. Ubah setiap pecahan campuran menjadi <strong>pecahan biasa</strong> dulu, lalu kalikan.',
+  'lupa-bulat':
+    'Bilangan bulat pada pecahan campuran terlupa. Ubah pecahan campuran menjadi <strong>pecahan biasa</strong> dulu agar bilangan bulatnya ikut dihitung.',
+  'salah-tanda':
+    'Angkanya tepat, tetapi tandanya terbalik. Ingat aturan tanda: tanda sama → positif, tanda berbeda → negatif.',
+  'operasi-terbalik':
+    'Sepertinya operasinya tertukar. Baca lagi soalnya: dikali (×) atau dibagi (:)?',
+  salah:
+    'Belum tepat. Ikuti langkahnya: ubah ke pecahan biasa, balik pembagi bila membagi, kalikan pembilang dan penyebut, lalu sederhanakan.',
+};
+
+/*
+ * Memeriksa isian teks jawaban a op b ('×' | ':'). Mengembalikan
+ * { benar, kode, pesan }: kode 'benar' | 'kosong' | 'format' |
+ * 'nol-penyebut' | 'belum-sederhana' | salah satu
+ * URUTAN_MISKONSEPSI_KALI_BAGI | 'salah'. Jawaban benar boleh berbentuk
+ * biasa maupun campuran asal paling sederhana.
+ */
+function diagnosaKaliBagiPecahan(jawab, a, op, b) {
+  function hasil(kode, pesan) {
+    return { benar: kode === 'benar', kode: kode, pesan: pesan || PESAN_KALI_BAGI_PECAHAN[kode] };
+  }
+  var r = parseIsianRasional(jawab);
+  if (r.error) return hasil(r.error);
+  var benar = kaliBagiPecahan(a, op, b);
+  if (samaRasional(r.value, benar)) {
+    if (!isianSederhana(r)) return hasil('belum-sederhana');
+    var campur = teksRasional(benar);
+    var biasa = teksRasional(benar, 'biasa');
+    var lain = r.bentuk === 'biasa' && campur !== biasa ? ' Bisa juga ditulis ' + campur + '.' : '';
+    return hasil('benar', 'Tepat! ' + fmtOperasiKaliBagi(a, op, b) + ' = ' + campur + '.' + lain);
+  }
+  var pola = hasilMiskonsepsiKaliBagi(a, op, b);
+  for (var i = 0; i < URUTAN_MISKONSEPSI_KALI_BAGI.length; i++) {
+    var k = URUTAN_MISKONSEPSI_KALI_BAGI[i];
+    if (pola[k] && samaRasional(r.value, pola[k])) return hasil(k);
+  }
+  return hasil('salah');
+}
+
+var UMPAN_OPSI_KALI_BAGI = {
+  benar: 'Tepat! Ubah ke pecahan biasa, balik pembagi bila membagi, kalikan, lalu sederhanakan.',
+  'tidak-dibalik':
+    'Pilihan ini muncul bila pembagi tidak dibalik. Membagi dengan pecahan = mengalikan dengan kebalikannya.',
+  'balik-pertama':
+    'Pilihan ini muncul bila yang dibalik bilangan pertama. Yang dibalik adalah pembagi (bilangan kedua).',
+  'penyebut-tetap':
+    'Pilihan ini muncul bila penyebut disamakan lalu dipertahankan. Pada perkalian, penyebut juga dikalikan.',
+  'kali-penyebut-juga':
+    'Pilihan ini hanya pecahan senilai — pembilang dan penyebut sama-sama dikali. Bilangan bulat hanya mengalikan pembilang.',
+  'campuran-terpisah':
+    'Pilihan ini muncul bila bilangan bulat dan bagian pecahan dikalikan terpisah. Ubah ke pecahan biasa dulu.',
+  'lupa-bulat': 'Pilihan ini muncul bila bilangan bulat pada pecahan campuran terlupa.',
+  'salah-tanda': 'Angkanya mirip, tetapi tandanya terbalik. Periksa aturan tanda.',
+  'operasi-terbalik': 'Pilihan ini hasil operasi kebalikannya. Baca lagi: dikali atau dibagi?',
+  dekat: 'Hasilnya meleset sedikit. Hitung ulang hasil kali pembilang dan penyebutnya.',
+};
+
+var URUTAN_PENGECOH_KALI_BAGI = [
+  'tidak-dibalik',
+  'balik-pertama',
+  'kali-penyebut-juga',
+  'penyebut-tetap',
+  'campuran-terpisah',
+  'lupa-bulat',
+  'operasi-terbalik',
+  'salah-tanda',
+];
+
+/*
+ * Empat pilihan untuk a op b ('×' | ':'): { id, label, benar, umpan }.
+ * Pilihan pertama selalu yang benar (id 'benar'); pengecoh dari
+ * miskonsepsi, lalu nilai dekat bila kurang. Nilai & label dijamin
+ * berbeda. TIDAK diacak di sini.
+ */
+function opsiKaliBagiPecahan(a, op, b) {
+  var benar = kaliBagiPecahan(a, op, b);
+  var out = [
+    { id: 'benar', label: teksRasional(benar), benar: true, umpan: UMPAN_OPSI_KALI_BAGI.benar },
+  ];
+  var nilai = [benar];
+  function tambah(id, v, label, umpan) {
+    if (out.length >= 4) return;
+    var s = sederhanakanRasional(v);
+    for (var i = 0; i < nilai.length; i++) if (samaRasional(nilai[i], s)) return;
+    out.push({ id: id, label: label, benar: false, umpan: umpan });
+    nilai.push(s);
+  }
+  var pola = hasilMiskonsepsiKaliBagi(a, op, b);
+  URUTAN_PENGECOH_KALI_BAGI.forEach(function (k) {
+    var v = pola[k];
+    if (!v) return;
+    var label = v.mentah
+      ? teksRasional(v.mentah, 'biasa')
+      : teksRasional(sederhanakanRasional({ num: v.num, den: v.den }));
+    tambah(k, { num: v.num, den: v.den }, label, UMPAN_OPSI_KALI_BAGI[k]);
+  });
+  for (var j = 1; out.length < 4 && j <= 8; j++) {
+    [1, -1].forEach(function (arah) {
+      var v = sederhanakanRasional({ num: benar.num + arah * j, den: benar.den });
+      tambah('dekat-' + (arah > 0 ? '+' : '-') + j, v, teksRasional(v), UMPAN_OPSI_KALI_BAGI.dekat);
+    });
+  }
+  return out;
+}
+
+/* ---------- Pita kelompok ---------- */
+
+/*
+ * Berapa banyak kelompok berukuran `ukuran` di dalam `total` (keduanya
+ * positif). Mengembalikan { utuh, sisa, hasil, potong }:
+ *   utuh    banyak kelompok penuh
+ *   sisa    sisa sebagai bagian dari SATU kelompok (paling sederhana)
+ *   hasil   total : ukuran (paling sederhana)
+ *   potong  banyak potongan per 1 utuh pada gambar (KPK penyebut)
+ */
+function hitungPitaKelompok(total, ukuran) {
+  var t = sederhanakanRasional(rasionalDari(total));
+  var u = sederhanakanRasional(rasionalDari(ukuran));
+  if (t.num < 0 || u.num <= 0) throw new Error('Pita kelompok memerlukan bilangan positif');
+  var n = kpk(t.den, u.den);
+  var sel = (t.num * n) / t.den;
+  var per = (u.num * n) / u.den;
+  var utuh = Math.floor(sel / per);
+  return {
+    utuh: utuh,
+    sisa: sederhanakanRasional({ num: sel - utuh * per, den: per }),
+    hasil: kaliBagiPecahan(total, ':', ukuran),
+    potong: n,
+  };
+}
+
+/*
+ * Pita sepanjang `total` yang dikelompokkan per `ukuran`. Tiap 1 utuh
+ * dipotong menjadi KPK penyebut; kelompok penuh berselang warna
+ * (.is-g0 / .is-g1, sel pertama tiap kelompok .is-awal), kelompok yang
+ * tidak penuh .is-sisa.
+ *   opts { label, caption }  label: teks/HTML tepercaya di kiri pita
+ */
+function buildPitaKelompok(total, ukuran, opts) {
+  opts = opts || {};
+  var h = hitungPitaKelompok(total, ukuran);
+  var t = sederhanakanRasional(rasionalDari(total));
+  var u = sederhanakanRasional(rasionalDari(ukuran));
+  var n = h.potong;
+  var sel = (t.num * n) / t.den;
+  var per = (u.num * n) / u.den;
+  var units = Math.max(1, Math.ceil(t.num / t.den - 1e-9));
+  var html = '';
+  for (var k = 0; k < units; k++) {
+    html += '<span class="pita-klp__unit" style="grid-template-columns:repeat(' + n + ',1fr)">';
+    for (var j = 0; j < n; j++) {
+      var i = k * n + j;
+      var c = 'pita-klp__cell';
+      if (i < sel) {
+        var g = Math.floor(i / per);
+        c += g < h.utuh ? ' is-g' + (g % 2) : ' is-sisa';
+        if (i % per === 0) c += ' is-awal';
+      }
+      html += '<span class="' + c + '"></span>';
+    }
+    html += '</span>';
+  }
+  var tT = tulisTerpadu(String(total));
+  var tU = tulisTerpadu(String(ukuran));
+  var ket =
+    h.utuh +
+    ' kelompok ' +
+    tU +
+    (h.sisa.num ? ' dan sisa ' + teksRasional(h.sisa) + ' kelompok' : '');
+  return (
+    '<figure class="pita-klp" role="img" aria-label="' +
+    esc('Pita ' + tT + ' dibagi menjadi kelompok ' + tU + ': ' + ket) +
+    '">' +
+    '<div class="pita-klp__row">' +
+    (opts.label ? '<span class="pita-klp__label">' + opts.label + '</span>' : '') +
+    '<span class="pita-klp__bar">' +
+    html +
+    '</span></div>' +
+    '<figcaption class="pita-klp__cap">' +
+    (opts.caption || esc(ket)) +
+    '</figcaption>' +
+    '</figure>'
+  );
+}
+
+/* ---------- Model luas ---------- */
+
+/*
+ * Model luas a × b ("a bagian dari b") untuk 0 ≤ a, b ≤ 1. Persegi
+ * dipotong b.den kolom (b.num kolom diarsir .is-b) dan a.den baris
+ * (a.num baris diarsir .is-a); irisannya .is-ab = a × b.
+ *   opts.tahap  'b' → hanya arsiran b (langkah pertama); default 'ab'
+ */
+function buildLuasPecahan(a, b, opts) {
+  opts = opts || {};
+  var p = sederhanakanRasional(rasionalDari(a));
+  var q = sederhanakanRasional(rasionalDari(b));
+  if (p.num < 0 || q.num < 0 || p.num > p.den || q.num > q.den) {
+    throw new Error('Model luas hanya untuk pecahan 0 sampai 1');
+  }
+  var penuh = opts.tahap !== 'b';
+  var cells = '';
+  for (var r = 0; r < p.den; r++) {
+    for (var c = 0; c < q.den; c++) {
+      var inB = c < q.num;
+      var inA = penuh && r < p.num;
+      var cls = 'luas-pk__cell';
+      if (inA && inB) cls += ' is-ab';
+      else if (inB) cls += ' is-b';
+      else if (inA) cls += ' is-a';
+      cells += '<span class="' + cls + '"></span>';
+    }
+  }
+  var tA = tulisTerpadu(String(a));
+  var tB = tulisTerpadu(String(b));
+  var label = penuh
+    ? tA +
+      ' bagian dari ' +
+      tB +
+      ': ' +
+      p.num * q.num +
+      ' dari ' +
+      p.den * q.den +
+      ' kotak terarsir dua kali'
+    : tB + ': ' + q.num + ' dari ' + q.den + ' kolom diarsir';
+  return (
+    '<figure class="luas-pk" role="img" aria-label="' +
+    esc('Model luas ' + label) +
+    '">' +
+    '<span class="luas-pk__grid" style="grid-template-columns:repeat(' +
+    q.den +
+    ',1fr);grid-template-rows:repeat(' +
+    p.den +
+    ',1fr)">' +
+    cells +
+    '</span>' +
+    '<figcaption class="luas-pk__cap">' +
+    esc(label) +
+    '</figcaption>' +
+    '</figure>'
+  );
+}
+
+/*
+ * Jenis operasi a op b untuk memilih strategi yang cocok:
+ *   'kaliBulat'      bilangan bulat × pecahan (penjumlahan berulang)
+ *   'kaliPecahan'    pecahan × pecahan ("bagian dari bagian")
+ *   'bagi'           pembagian (berapa banyak … di dalam …, kali kebalikan)
+ *   'campuranTanda'  tambahan bila ada pecahan campuran atau bilangan negatif
+ */
+function jenisOperasiKaliBagi(a, op, b) {
+  var o = opKaliBagi(op);
+  if (!o) throw new Error('Operasi tidak dikenal: ' + op);
+  var out = [o === ':' ? 'bagi' : sukuBulat(a) || sukuBulat(b) ? 'kaliBulat' : 'kaliPecahan'];
+  if (sukuCampuran(a) || sukuCampuran(b) || rasionalDari(a).num < 0 || rasionalDari(b).num < 0) {
+    out.push('campuranTanda');
+  }
+  return out;
 }
