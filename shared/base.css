@@ -14596,3 +14596,221 @@ button.akar-tile:disabled {
     min-width: 460px;
   }
 }
+
+/* -------------------------------------------------------------------------
+   Perbandingan senilai & berbalik nilai (engine seksi 70)
+   Lab Proporsi, tabel bukti hasil bagi & hasil kali, grafik titik,
+   batang senilai, dan persegi berbalik nilai.
+   ------------------------------------------------------------------------- */
+
+.lab-proporsi {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.lab-proporsi__kontrol {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.lab-proporsi__status {
+  margin: 0;
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-md);
+  background: var(--color-primary-soft);
+  font-size: 1.05rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.lab-proporsi__coba {
+  margin: 0;
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: var(--color-ink-muted);
+}
+
+.lab-proporsi__coba.is-cukup {
+  color: var(--color-success-strong);
+}
+
+.lab-proporsi__data {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: var(--space-4);
+  align-items: start;
+}
+
+.tabel-proporsi-wrap {
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+.tabel-proporsi {
+  width: 100%;
+  font-variant-numeric: tabular-nums;
+}
+
+.tabel-proporsi caption {
+  margin-bottom: var(--space-1);
+  font-size: 0.82rem;
+  font-weight: 700;
+  text-align: left;
+  color: var(--color-ink-muted);
+}
+
+.tabel-proporsi td,
+.tabel-proporsi th {
+  text-align: center;
+}
+
+.tabel-proporsi tr.is-aktif td {
+  background: var(--color-primary-soft);
+  font-weight: 700;
+}
+
+.grafik-proporsi {
+  margin: 0;
+}
+
+.grafik-proporsi svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-width: 420px;
+}
+
+.grafik-proporsi__sumbu {
+  stroke: var(--color-ink);
+  stroke-width: 1.5;
+}
+
+.grafik-proporsi__garis {
+  fill: none;
+  stroke: var(--color-primary);
+  stroke-width: 2;
+  stroke-dasharray: 5 4;
+}
+
+.grafik-proporsi__titik {
+  fill: var(--color-primary);
+  stroke: var(--color-surface);
+  stroke-width: 2;
+}
+
+.grafik-proporsi__titik.is-aktif {
+  fill: var(--color-orange);
+}
+
+.grafik-proporsi__teks {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  fill: var(--color-ink-muted);
+}
+
+.grafik-proporsi__nama {
+  font-size: 11px;
+  font-weight: 700;
+  fill: var(--color-ink);
+}
+
+.batang-proporsi {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.batang-proporsi__baris {
+  display: grid;
+  grid-template-columns: 7.5rem 1fr 6.5rem;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.batang-proporsi__nama {
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+.batang-proporsi__jalur {
+  height: 22px;
+  border-radius: 999px;
+  background: var(--color-bg-grid);
+  overflow: hidden;
+}
+
+.batang-proporsi__isi {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  transition: width 0.25s ease;
+}
+
+.batang-proporsi__isi--x {
+  background: var(--color-orange);
+}
+
+.batang-proporsi__isi--y {
+  background: var(--color-success);
+}
+
+.batang-proporsi__nilai {
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  text-align: right;
+}
+
+.persegi-berbalik {
+  margin: 0;
+}
+
+.persegi-berbalik svg {
+  display: block;
+  width: 100%;
+  max-width: 360px;
+  height: auto;
+  border-bottom: 2px solid var(--color-ink);
+  border-left: 2px solid var(--color-ink);
+}
+
+.persegi-berbalik__bidang {
+  fill: var(--color-purple-soft);
+  stroke: var(--color-purple);
+  stroke-width: 2;
+  transition:
+    width 0.25s ease,
+    height 0.25s ease,
+    y 0.25s ease;
+}
+
+.persegi-berbalik__sekat {
+  stroke: var(--color-purple);
+  stroke-width: 1;
+  stroke-dasharray: 3 3;
+}
+
+.persegi-berbalik__teks {
+  margin-top: var(--space-2);
+  font-size: 0.9rem;
+  font-variant-numeric: tabular-nums;
+}
+
+@media (max-width: 480px) {
+  .batang-proporsi__baris {
+    grid-template-columns: 1fr auto;
+  }
+
+  .batang-proporsi__jalur {
+    grid-column: 1 / -1;
+    grid-row: 2;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .batang-proporsi__isi,
+  .persegi-berbalik__bidang {
+    transition: none;
+  }
+}

@@ -1,0 +1,129 @@
+/* =========================================================================
+   fase-d/mpi-3.4/styles.css
+   Perbandingan Senilai & Berbalik Nilai — Fase D
+
+   Hanya memuat gaya yang KHAS modul ini. Seluruh dasar design system
+   (panel, tombol, kotak umpan balik, pilihan ganda, pemilahan, pertanyaan
+   penuntun .quiz-item--guided, tabel .data-table, perbandingan dugaan
+   .dugaan-row, kartu ringkasan, navigasi tahap, modal) dan alat bersama
+   proporsi (.lab-proporsi*, .tabel-proporsi*, .grafik-proporsi*,
+   .batang-proporsi*, .persegi-berbalik*) berasal dari shared/base.css.
+   ========================================================================= */
+
+/* -------------------------------------------------------------------------
+   Label konteks
+   ------------------------------------------------------------------------- */
+
+.proporsi-konteks {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: 2px var(--space-2);
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.proporsi-konteks--dapur,
+.proporsi-konteks--ternak {
+  background: var(--color-orange-soft);
+  color: var(--color-orange-strong);
+}
+
+.proporsi-konteks--belanja,
+.proporsi-konteks--alam {
+  background: var(--color-success-soft);
+  color: var(--color-success-strong);
+}
+
+.proporsi-konteks--perjalanan,
+.proporsi-konteks--kelas {
+  background: var(--color-blue-soft);
+  color: var(--color-blue-strong);
+}
+
+.proporsi-konteks--kerja {
+  background: var(--color-purple-soft);
+  color: var(--color-purple-strong);
+}
+
+/* -------------------------------------------------------------------------
+   Orientasi — dua kejadian dapur umum
+   ------------------------------------------------------------------------- */
+
+.kejadian-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: var(--space-3);
+  margin-top: var(--space-4);
+}
+
+.kejadian-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-1);
+  padding: var(--space-4);
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  text-align: center;
+}
+
+.kejadian-card__ikon {
+  font-size: 2.2rem;
+  line-height: 1;
+}
+
+.kejadian-card__judul {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--color-ink-muted);
+}
+
+.kejadian-card__teks {
+  font-size: 1.15rem;
+  font-variant-numeric: tabular-nums;
+}
+
+/* -------------------------------------------------------------------------
+   Lab Pilah — tabel data di dalam butir pemilahan
+   ------------------------------------------------------------------------- */
+
+.sort-item__visual .tabel-proporsi {
+  max-width: 420px;
+}
+
+/* -------------------------------------------------------------------------
+   Uji hipotesis — kotak hipotesis
+   ------------------------------------------------------------------------- */
+
+.hipotesis-box {
+  margin-top: var(--space-4);
+  padding: var(--space-3) var(--space-4);
+  border: 1px dashed var(--color-border-strong);
+  border-radius: var(--radius-md);
+}
+
+.hipotesis-box__label {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--color-ink-muted);
+}
+
+/* -------------------------------------------------------------------------
+   Tahap Selesai
+   ------------------------------------------------------------------------- */
+
+.proporsi-contoh-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: var(--space-3);
+  margin: var(--space-4) 0;
+}
+
+.proporsi-contoh-grid__num {
+  font-size: 1.15rem;
+  font-variant-numeric: tabular-nums;
+}

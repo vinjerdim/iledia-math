@@ -127,6 +127,14 @@
     "stageCount": 10,
     "extraBody": "partials/reset-modal.html"
   },
+  "fase-d/mpi-3.4": {
+    "title": "Perbandingan Senilai & Berbalik Nilai — Matematika Fase D",
+    "description": "Media pembelajaran interaktif berbasis Inquiry Learning untuk menganalisis perbandingan senilai dan berbalik nilai dalam menyelesaikan masalah proporsi sehari-hari di Dapur Umum Bakti Sosial Kelas VII: Lab Senilai (beras → porsi) dan Lab Berbalik Nilai (relawan → lama memasak) dengan tabel hasil bagi & hasil kali, grafik, dan persegi berluas tetap, Lab Pilah tabel senilai / berbalik nilai / bukan keduanya, langkah isian berdiagnosa miskonsepsi (model tertukar, pola tambah, lupa membagi), serta uji terap acak.",
+    "kicker": "Matematika — Fase D (SMP)",
+    "h1": "Perbandingan Senilai & Berbalik Nilai",
+    "stageCount": 11,
+    "extraBody": "partials/reset-modal.html"
+  },
   "fase-f/mpi-1.1": {
     "title": "Konsep Barisan Aritmetika & Beda — Matematika Fase F",
     "description": "Media pembelajaran interaktif berbasis Inquiry Learning untuk mengidentifikasi dan menjelaskan konsep barisan aritmetika serta menentukan beda dari suatu barisan bilangan.",
