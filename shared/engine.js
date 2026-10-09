@@ -43586,3 +43586,693 @@ function bindDenahSkala(root, id, st, cfg, onChange) {
     });
   });
 }
+
+/* ============================================================
+   70. PERBANDINGAN SENILAI & BERBALIK NILAI
+   Dipakai fase-d/mpi-3.4 (Inquiry Learning). Memakai ulang isian
+   angka seksi 68 (parseAngkaRasio, fmtAngkaRasio, rapiRasio) dan
+   langkah isian buildLangkahRasio dengan pemeriksa periksaSoalProporsi.
+
+   Notasi cek soal:
+     { jenis: 'senilai' | 'berbalik', x1, y1, x2 }  → y2
+     { jenis: 'bagi', x, y }                         → y : x
+     { jenis: 'kali', x, y }                         → x × y
+     { jenis: 'jenis', baris: [{ x, y }] }          → 'senilai' |
+                                                      'berbalik' | 'bukan'
+   ============================================================ */
+
+/* ---------- Hitungan dasar ---------- */
+
+/* Senilai: y2 = y1 × x2 : x1 (hasil bagi y : x tetap). */
+function nilaiSenilai(x1, y1, x2) {
+  return rapiRasio((y1 * x2) / x1);
+}
+
+/* Berbalik nilai: y2 = x1 × y1 : x2 (hasil kali x × y tetap). */
+function nilaiBerbalik(x1, y1, x2) {
+  return rapiRasio((x1 * y1) / x2);
+}
+
+/* Nilai tetap: hasil bagi y : x (senilai) atau hasil kali x × y (berbalik). */
+function konstantaProporsi(jenis, x, y) {
+  return jenis === 'senilai' ? rapiRasio(y / x) : rapiRasio(x * y);
+}
+
+/* Jenis perbandingan dari tabel ≥ 2 baris { x, y } (x, y > 0). */
+function jenisPerbandinganTabel(baris) {
+  if (!Array.isArray(baris) || baris.length < 2) return 'bukan';
+  var b0 = baris[0];
+  var tetap = function (jenis) {
+    var k = konstantaProporsi(jenis, b0.x, b0.y);
+    return baris.every(function (b) {
+      return samaAngkaRasio(konstantaProporsi(jenis, b.x, b.y), k);
+    });
+  };
+  if (tetap('senilai')) return 'senilai';
+  if (tetap('berbalik')) return 'berbalik';
+  return 'bukan';
+}
+
+var NAMA_JENIS_PROPORSI = {
+  senilai: 'senilai',
+  berbalik: 'berbalik nilai',
+  bukan: 'bukan keduanya',
+};
+
+function namaJenisProporsi(jenis) {
+  return NAMA_JENIS_PROPORSI[jenis] || jenis;
+}
+
+/* ---------- Diagnosa ---------- */
+
+var PESAN_PROPORSI = {
+  benarSenilai:
+    'Tepat! Pada perbandingan senilai, kedua besaran berubah dengan pengali yang sama, jadi hasil baginya tetap.',
+  benarBerbalik: 'Tepat! Pada perbandingan berbalik nilai, hasil kali kedua besaran selalu tetap.',
+  benarBagi: 'Tepat! Itulah hasil bagi besaran kedua oleh besaran pertama.',
+  benarKali: 'Tepat! Itulah hasil kali kedua besaran.',
+  tertukarSenilai:
+    'Kamu memakai cara berbalik nilai. Di sini, jika besaran pertama bertambah, besaran kedua juga bertambah dengan pengali yang sama — ini perbandingan senilai: y₂ = y₁ × x₂ : x₁.',
+  tertukarBerbalik:
+    'Kamu memakai cara senilai. Di sini, jika besaran pertama bertambah, besaran kedua justru berkurang — ini perbandingan berbalik nilai: x₁ × y₁ = x₂ × y₂, jadi y₂ = x₁ × y₁ : x₂.',
+  tambah:
+    'Kamu menambah atau mengurangi dengan selisih yang sama. Perbandingan bekerja dengan perkalian dan pembagian, bukan penjumlahan.',
+  lupaBagiSenilai:
+    'Kamu sudah mengalikan y₁ × x₂, tetapi belum membaginya dengan x₁. Ingat: y₂ = y₁ × x₂ : x₁.',
+  lupaBagiBerbalik:
+    'Itu hasil kali x₁ × y₁ (nilai tetapnya). Bagi lagi dengan x₂ untuk mendapatkan y₂.',
+  terbalikBagi:
+    'Pembagiannya terbalik. Hasil bagi yang diminta adalah besaran kedua dibagi besaran pertama (y : x).',
+  tertukarBagi:
+    'Itu hasil kali. Yang diminta adalah hasil bagi besaran kedua oleh besaran pertama.',
+  tertukarKali: 'Itu hasil bagi. Yang diminta adalah hasil kali kedua besaran (x × y).',
+  tambahKali: 'Itu hasil jumlah. Yang diminta adalah hasil kali kedua besaran (x × y).',
+  salahNilai:
+    'Belum tepat. Tentukan dulu jenis perbandingannya: senilai (hasil bagi tetap) atau berbalik nilai (hasil kali tetap), lalu hitung lagi.',
+  salahKonstanta: 'Belum tepat. Hitung lagi dengan teliti memakai nilai pada tabel.',
+  salahJenis:
+    'Belum tepat. Periksa hasil bagi y : x dan hasil kali x × y pada setiap baris: mana yang selalu tetap?',
+};
+
+function hasilProporsi(kode, pesan) {
+  return { kode: kode, benar: kode === 'benar', pesan: pesan };
+}
+
+/* Jenis cek yang jawabannya berupa satu bilangan. */
+function jenisAngkaProporsi(jenis) {
+  return ['senilai', 'berbalik', 'bagi', 'kali'].indexOf(jenis) !== -1;
+}
+
+/* Nilai baku cek berjawaban bilangan. */
+function nilaiSoalProporsi(c) {
+  if (c.jenis === 'senilai') return nilaiSenilai(c.x1, c.y1, c.x2);
+  if (c.jenis === 'berbalik') return nilaiBerbalik(c.x1, c.y1, c.x2);
+  if (c.jenis === 'bagi') return konstantaProporsi('senilai', c.x, c.y);
+  return konstantaProporsi('berbalik', c.x, c.y);
+}
+
+/*
+ * Calon jawaban keliru { nilai, kode } untuk cek bilangan, urut menurut
+ * prioritas diagnosa. Nilai ≤ 0 dibuang.
+ */
+function calonKeliruProporsi(c) {
+  var out = [];
+  if (c.jenis === 'senilai' || c.jenis === 'berbalik') {
+    var senilai = c.jenis === 'senilai';
+    var beda = c.x2 - c.x1;
+    out.push({
+      nilai: senilai ? nilaiBerbalik(c.x1, c.y1, c.x2) : nilaiSenilai(c.x1, c.y1, c.x2),
+      kode: 'tertukar',
+    });
+    out.push({ nilai: rapiRasio(senilai ? c.y1 + beda : c.y1 - beda), kode: 'tambah' });
+    out.push({
+      nilai: rapiRasio(senilai ? c.y1 * c.x2 : c.x1 * c.y1),
+      kode: 'lupaBagi',
+    });
+  } else if (c.jenis === 'bagi') {
+    out.push({ nilai: rapiRasio(c.x / c.y), kode: 'terbalikBagi' });
+    out.push({ nilai: rapiRasio(c.x * c.y), kode: 'tertukar' });
+  } else {
+    out.push({ nilai: rapiRasio(c.y / c.x), kode: 'tertukar' });
+    out.push({ nilai: rapiRasio(c.x / c.y), kode: 'tertukar' });
+    out.push({ nilai: rapiRasio(c.x + c.y), kode: 'tambah' });
+  }
+  return out.filter(function (g) {
+    return g.nilai > 0;
+  });
+}
+
+/* Pesan diagnosa untuk kode keliru pada cek c. */
+function pesanKeliruProporsi(kode, c) {
+  var senilai = c.jenis === 'senilai';
+  if (c.jenis === 'bagi') {
+    return kode === 'terbalikBagi' ? PESAN_PROPORSI.terbalikBagi : PESAN_PROPORSI.tertukarBagi;
+  }
+  if (c.jenis === 'kali') {
+    return kode === 'tambah' ? PESAN_PROPORSI.tambahKali : PESAN_PROPORSI.tertukarKali;
+  }
+  if (kode === 'tertukar') {
+    return senilai ? PESAN_PROPORSI.tertukarSenilai : PESAN_PROPORSI.tertukarBerbalik;
+  }
+  if (kode === 'lupaBagi') {
+    return senilai ? PESAN_PROPORSI.lupaBagiSenilai : PESAN_PROPORSI.lupaBagiBerbalik;
+  }
+  return PESAN_PROPORSI.tambah;
+}
+
+function pesanBenarProporsi(c) {
+  if (c.jenis === 'senilai') return PESAN_PROPORSI.benarSenilai;
+  if (c.jenis === 'berbalik') return PESAN_PROPORSI.benarBerbalik;
+  if (c.jenis === 'bagi') return PESAN_PROPORSI.benarBagi;
+  return PESAN_PROPORSI.benarKali;
+}
+
+/* Diagnosa isian bilangan untuk cek c → { kode, benar, pesan }. */
+function diagnosaProporsi(isian, c) {
+  var p = parseAngkaRasio(isian);
+  var takTerbaca = cekBacaAngkaRasio(p);
+  if (takTerbaca) return takTerbaca;
+  if (samaAngkaRasio(p.nilai, nilaiSoalProporsi(c))) {
+    return hasilProporsi('benar', pesanBenarProporsi(c));
+  }
+  var calon = calonKeliruProporsi(c);
+  for (var i = 0; i < calon.length; i++) {
+    if (samaAngkaRasio(p.nilai, calon[i].nilai)) {
+      return hasilProporsi(calon[i].kode, pesanKeliruProporsi(calon[i].kode, c));
+    }
+  }
+  var konstanta = c.jenis === 'bagi' || c.jenis === 'kali';
+  return hasilProporsi(
+    'salah',
+    konstanta ? PESAN_PROPORSI.salahKonstanta : PESAN_PROPORSI.salahNilai
+  );
+}
+
+/* ---------- Pemeriksa soal ---------- */
+
+/* Memeriksa isian soal s = { cek } → { kode, benar, pesan }. */
+function periksaSoalProporsi(isian, s) {
+  var c = s.cek;
+  if (c.jenis === 'jenis') {
+    var benar = String(isian) === jenisPerbandinganTabel(c.baris);
+    return hasilProporsi(benar ? 'benar' : 'salah', benar ? 'Tepat!' : PESAN_PROPORSI.salahJenis);
+  }
+  return diagnosaProporsi(isian, c);
+}
+
+/* Jawaban baku soal (teks bilangan, atau id jenis untuk cek 'jenis'). */
+function jawabSoalProporsi(s) {
+  var c = s.cek;
+  if (c.jenis === 'jenis') return jenisPerbandinganTabel(c.baris);
+  return fmtAngkaRasio(nilaiSoalProporsi(c));
+}
+
+/* Langkah { cek } siap untuk buildLangkahRasio (seksi 68). */
+function siapkanLangkahProporsi(step) {
+  return Object.assign({}, step, {
+    periksa: periksaSoalProporsi,
+    angka: jenisAngkaProporsi(step.cek.jenis),
+  });
+}
+
+/* ---------- Opsi pilihan ganda ---------- */
+
+var OPSI_JENIS_PROPORSI = [
+  {
+    id: 'senilai',
+    label: 'Senilai — hasil bagi y : x selalu tetap',
+    umpan: 'Periksa lagi: apakah hasil bagi y : x pada setiap baris benar-benar sama?',
+  },
+  {
+    id: 'berbalik',
+    label: 'Berbalik nilai — hasil kali x × y selalu tetap',
+    umpan: 'Periksa lagi: apakah hasil kali x × y pada setiap baris benar-benar sama?',
+  },
+  {
+    id: 'bukan',
+    label: 'Bukan keduanya — hasil bagi maupun hasil kali berubah-ubah',
+    umpan:
+      'Coba hitung hasil bagi y : x dan hasil kali x × y pada setiap baris; salah satunya ternyata tetap.',
+  },
+  {
+    id: 'selisih',
+    label: 'Senilai — selisih y − x selalu tetap',
+    umpan:
+      'Selisih yang tetap bukan ciri perbandingan. Senilai berarti hasil bagi y : x yang tetap, bukan selisihnya.',
+  },
+];
+
+/*
+ * Opsi pilihan ganda soal proporsi: kunci (id 'baku') lalu pengecoh
+ * berdiagnosa — label unik, minimal 4 opsi. Urutan wajar; acak di app.
+ */
+function opsiSoalProporsi(s) {
+  var c = s.cek;
+  if (c.jenis === 'jenis') {
+    var kunci = jenisPerbandinganTabel(c.baris);
+    var baku = OPSI_JENIS_PROPORSI.filter(function (o) {
+      return o.id === kunci;
+    })[0];
+    return [{ id: 'baku', label: baku.label, umpan: 'Tepat!' }].concat(
+      OPSI_JENIS_PROPORSI.filter(function (o) {
+        return o.id !== kunci;
+      }).map(function (o) {
+        return { id: o.id, label: o.label, umpan: o.umpan };
+      })
+    );
+  }
+
+  var out = [];
+  var dipakai = {};
+  var sat = s.satuan ? ' ' + s.satuan : '';
+  var tambah = function (id, nilai, umpan) {
+    var label = fmtAngkaRasio(nilai) + sat;
+    if (dipakai[label] || out.length >= 4) return;
+    dipakai[label] = true;
+    out.push({ id: id, label: label, umpan: umpan });
+  };
+  var nilaiBaku = nilaiSoalProporsi(c);
+  tambah('baku', nilaiBaku, pesanBenarProporsi(c));
+  calonKeliruProporsi(c).forEach(function (g) {
+    if (layakOpsiSkala(g.nilai)) tambah(g.kode, g.nilai, pesanKeliruProporsi(g.kode, c));
+  });
+  [2, 0.5, 10, 3].forEach(function (k, i) {
+    var x = rapiRasio(nilaiBaku * k);
+    if (layakOpsiSkala(x)) tambah('salah' + (i + 1), x, PESAN_PROPORSI.salahNilai);
+  });
+  return out;
+}
+
+/* ---------- UI: tabel & grafik ---------- */
+
+/* Nilai bukti tabel: dibulatkan 2 desimal, diberi "≈" bila tidak tepat. */
+function fmtBuktiProporsi(v) {
+  var r = Math.round(v * 100) / 100;
+  return (samaAngkaRasio(r, v) ? '' : '≈ ') + fmtAngkaRasio(r);
+}
+
+/*
+ * Tabel x, y dengan kolom hasil bagi (y : x) dan hasil kali (x × y).
+ *   opts.namaX, opts.namaY  judul kolom
+ *   opts.caption            keterangan tabel
+ *   opts.aktif              nilai x baris yang disorot
+ *   opts.bukti              false → tanpa kolom hasil bagi & hasil kali
+ */
+function buildTabelProporsi(baris, opts) {
+  opts = opts || {};
+  var bukti = opts.bukti !== false;
+  return (
+    '<div class="tabel-proporsi-wrap"><table class="data-table tabel-proporsi">' +
+    (opts.caption ? '<caption>' + esc(opts.caption) + '</caption>' : '') +
+    '<thead><tr><th scope="col">' +
+    esc(opts.namaX || 'x') +
+    '</th><th scope="col">' +
+    esc(opts.namaY || 'y') +
+    '</th>' +
+    (bukti ? '<th scope="col">y : x</th><th scope="col">x × y</th>' : '') +
+    '</tr></thead><tbody>' +
+    baris
+      .map(function (b) {
+        return (
+          '<tr' +
+          (opts.aktif === b.x ? ' class="is-aktif"' : '') +
+          '><td>' +
+          esc(fmtAngkaRasio(b.x)) +
+          '</td><td>' +
+          esc(fmtAngkaRasio(b.y)) +
+          '</td>' +
+          (bukti
+            ? '<td>' +
+              esc(fmtBuktiProporsi(konstantaProporsi('senilai', b.x, b.y))) +
+              '</td><td>' +
+              esc(fmtBuktiProporsi(konstantaProporsi('berbalik', b.x, b.y))) +
+              '</td>'
+            : '') +
+          '</tr>'
+        );
+      })
+      .join('') +
+    '</tbody></table></div>'
+  );
+}
+
+/*
+ * Grafik titik (x, y) yang disambung garis menurut urutan x.
+ *   opts.namaX, opts.namaY  nama sumbu
+ *   opts.maksX, opts.maksY  batas sumbu (default: nilai terbesar)
+ *   opts.aktif              nilai x titik yang disorot
+ */
+function buildGrafikProporsi(baris, opts) {
+  opts = opts || {};
+  var W = 320;
+  var H = 220;
+  var kiri = 44;
+  var bawah = 34;
+  var atas = 14;
+  var kanan = 14;
+  var urut = baris.slice().sort(function (a, b) {
+    return a.x - b.x;
+  });
+  var maksX =
+    opts.maksX ||
+    Math.max.apply(
+      null,
+      urut.map(function (b) {
+        return b.x;
+      })
+    );
+  var maksY =
+    opts.maksY ||
+    Math.max.apply(
+      null,
+      urut.map(function (b) {
+        return b.y;
+      })
+    );
+  var px = function (x) {
+    return rapiRasio(kiri + (x / maksX) * (W - kiri - kanan));
+  };
+  var py = function (y) {
+    return rapiRasio(H - bawah - (y / maksY) * (H - bawah - atas));
+  };
+  var titik = urut
+    .map(function (b) {
+      return (
+        '<circle cx="' +
+        px(b.x) +
+        '" cy="' +
+        py(b.y) +
+        '" r="' +
+        (opts.aktif === b.x ? 7 : 5) +
+        '" class="grafik-proporsi__titik' +
+        (opts.aktif === b.x ? ' is-aktif' : '') +
+        '"/>'
+      );
+    })
+    .join('');
+  var garis =
+    urut.length > 1
+      ? '<polyline class="grafik-proporsi__garis" points="' +
+        urut
+          .map(function (b) {
+            return px(b.x) + ',' + py(b.y);
+          })
+          .join(' ') +
+        '"/>'
+      : '';
+  var deskripsi =
+    'Grafik ' +
+    (opts.namaY || 'y') +
+    ' terhadap ' +
+    (opts.namaX || 'x') +
+    ': ' +
+    (urut.length
+      ? urut
+          .map(function (b) {
+            return '(' + fmtAngkaRasio(b.x) + ', ' + fmtAngkaRasio(b.y) + ')';
+          })
+          .join(', ')
+      : 'belum ada titik');
+  return (
+    '<figure class="grafik-proporsi">' +
+    '<svg viewBox="0 0 ' +
+    W +
+    ' ' +
+    H +
+    '" role="img" aria-label="' +
+    esc(deskripsi) +
+    '">' +
+    '<line class="grafik-proporsi__sumbu" x1="' +
+    kiri +
+    '" y1="' +
+    (H - bawah) +
+    '" x2="' +
+    (W - kanan) +
+    '" y2="' +
+    (H - bawah) +
+    '"/>' +
+    '<line class="grafik-proporsi__sumbu" x1="' +
+    kiri +
+    '" y1="' +
+    atas +
+    '" x2="' +
+    kiri +
+    '" y2="' +
+    (H - bawah) +
+    '"/>' +
+    '<text class="grafik-proporsi__teks" x="' +
+    (kiri - 6) +
+    '" y="' +
+    (H - bawah + 14) +
+    '" text-anchor="end">0</text>' +
+    '<text class="grafik-proporsi__teks" x="' +
+    px(maksX) +
+    '" y="' +
+    (H - bawah + 14) +
+    '" text-anchor="middle">' +
+    esc(fmtAngkaRasio(maksX)) +
+    '</text>' +
+    '<text class="grafik-proporsi__teks" x="' +
+    (kiri - 6) +
+    '" y="' +
+    (py(maksY) + 4) +
+    '" text-anchor="end">' +
+    esc(fmtAngkaRasio(maksY)) +
+    '</text>' +
+    '<text class="grafik-proporsi__nama" x="' +
+    (W - kanan) +
+    '" y="' +
+    (H - 4) +
+    '" text-anchor="end">' +
+    esc(opts.namaX || 'x') +
+    ' →</text>' +
+    '<text class="grafik-proporsi__nama" x="' +
+    (kiri + 6) +
+    '" y="' +
+    (atas + 4) +
+    '">↑ ' +
+    esc(opts.namaY || 'y') +
+    '</text>' +
+    garis +
+    titik +
+    '</svg>' +
+    '</figure>'
+  );
+}
+
+/* ---------- UI: batang senilai & persegi berbalik nilai ---------- */
+
+function persenProporsi(v, maks) {
+  return rapiRasio(Math.max(0, Math.min(100, (v / maks) * 100)));
+}
+
+/*
+ * Dua batang mendatar (x dan y) yang sama-sama memanjang — gambaran
+ * perbandingan senilai. opts { namaX, namaY, satX, satY, maksX, maksY }.
+ */
+function buildBatangProporsi(x, y, opts) {
+  var baris = function (nama, nilai, satuan, maks, kelas) {
+    return (
+      '<div class="batang-proporsi__baris">' +
+      '<span class="batang-proporsi__nama">' +
+      esc(nama) +
+      '</span>' +
+      '<span class="batang-proporsi__jalur"><span class="batang-proporsi__isi ' +
+      kelas +
+      '" style="width:' +
+      persenProporsi(nilai, maks) +
+      '%"></span></span>' +
+      '<span class="batang-proporsi__nilai">' +
+      esc(fmtAngkaRasio(nilai) + ' ' + satuan) +
+      '</span>' +
+      '</div>'
+    );
+  };
+  return (
+    '<div class="batang-proporsi" aria-hidden="true">' +
+    baris(opts.namaX, x, opts.satX, opts.maksX, 'batang-proporsi__isi--x') +
+    baris(opts.namaY, y, opts.satY, opts.maksY, 'batang-proporsi__isi--y') +
+    '</div>'
+  );
+}
+
+/*
+ * Persegi panjang x kolom × tinggi y: luasnya (x × y) selalu sama pada
+ * perbandingan berbalik nilai. opts { satX, satY, maksX, maksY }.
+ */
+function buildPersegiBerbalik(x, y, opts) {
+  var W = 300;
+  var H = 150;
+  var lebar = rapiRasio((x / opts.maksX) * W);
+  var tinggi = rapiRasio((y / opts.maksY) * H);
+  var kolom = '';
+  var n = Math.round(x);
+  if (n === x && n <= 24) {
+    for (var i = 1; i < n; i++) {
+      var gx = rapiRasio((lebar / n) * i);
+      kolom +=
+        '<line class="persegi-berbalik__sekat" x1="' +
+        gx +
+        '" y1="' +
+        (H - tinggi) +
+        '" x2="' +
+        gx +
+        '" y2="' +
+        H +
+        '"/>';
+    }
+  }
+  var teks =
+    fmtAngkaRasio(x) +
+    ' × ' +
+    fmtAngkaRasio(y) +
+    ' = ' +
+    fmtAngkaRasio(konstantaProporsi('berbalik', x, y));
+  return (
+    '<figure class="persegi-berbalik">' +
+    '<svg viewBox="0 0 ' +
+    W +
+    ' ' +
+    H +
+    '" aria-hidden="true">' +
+    '<rect class="persegi-berbalik__bidang" x="0" y="' +
+    rapiRasio(H - tinggi) +
+    '" width="' +
+    lebar +
+    '" height="' +
+    tinggi +
+    '"/>' +
+    kolom +
+    '</svg>' +
+    '<figcaption class="persegi-berbalik__teks">' +
+    esc(fmtAngkaRasio(x) + ' ' + opts.satX + ' × ' + fmtAngkaRasio(y) + ' ' + opts.satY) +
+    ' → luas <strong>' +
+    esc(teks) +
+    '</strong></figcaption>' +
+    '</figure>'
+  );
+}
+
+/* ---------- UI: Lab Proporsi ---------- */
+
+/*
+ * cfg = { jenis: 'senilai' | 'berbalik', k, pilihan: [x], awal, minCoba,
+ *         labelX, namaX, namaY, satX, satY }
+ * Senilai: y = k × x. Berbalik nilai: y = k : x.
+ */
+function nilaiLabProporsi(cfg, x) {
+  return cfg.jenis === 'senilai' ? rapiRasio(cfg.k * x) : rapiRasio(cfg.k / x);
+}
+
+/* State lab { kunci, x, dicoba }; konfigurasi berubah atau rusak → disetel ulang. */
+function ensureLabProporsi(st, cfg) {
+  var kunci = [cfg.jenis, cfg.k, cfg.pilihan.join(',')].join('|');
+  if (st.kunci !== kunci || !Array.isArray(st.dicoba) || cfg.pilihan.indexOf(st.x) === -1) {
+    st.kunci = kunci;
+    st.x = cfg.awal;
+    st.dicoba = [cfg.awal];
+  }
+  return st;
+}
+
+/* Pindah ke pilihan x sebelum/sesudahnya. true bila berubah. */
+function ubahLabProporsi(st, cfg, arah) {
+  var i = cfg.pilihan.indexOf(st.x) + arah;
+  if (i < 0 || i >= cfg.pilihan.length) return false;
+  st.x = cfg.pilihan[i];
+  if (st.dicoba.indexOf(st.x) === -1) st.dicoba.push(st.x);
+  return true;
+}
+
+function labProporsiCukup(st, cfg) {
+  return st.dicoba.length >= cfg.minCoba;
+}
+
+/* Baris { x, y } yang sudah dicoba, urut menurut x. */
+function barisLabProporsi(st, cfg) {
+  return st.dicoba
+    .slice()
+    .sort(function (a, b) {
+      return a - b;
+    })
+    .map(function (x) {
+      return { x: x, y: nilaiLabProporsi(cfg, x) };
+    });
+}
+
+function buildLabProporsi(id, st, cfg) {
+  var i = cfg.pilihan.indexOf(st.x);
+  var y = nilaiLabProporsi(cfg, st.x);
+  var maksX = cfg.pilihan[cfg.pilihan.length - 1];
+  var ys = cfg.pilihan.map(function (x) {
+    return nilaiLabProporsi(cfg, x);
+  });
+  var maksY = Math.max.apply(null, ys);
+  var visual =
+    cfg.jenis === 'senilai'
+      ? buildBatangProporsi(st.x, y, {
+          namaX: cfg.namaX,
+          namaY: cfg.namaY,
+          satX: cfg.satX,
+          satY: cfg.satY,
+          maksX: maksX,
+          maksY: maksY,
+        })
+      : buildPersegiBerbalik(st.x, y, {
+          satX: cfg.satX,
+          satY: cfg.satY,
+          maksX: maksX,
+          maksY: maksY,
+        });
+  var cukup = labProporsiCukup(st, cfg);
+  return (
+    '<div class="lab-proporsi lab-proporsi--' +
+    cfg.jenis +
+    '">' +
+    '<div class="lab-proporsi__kontrol">' +
+    buildFinStepper(id, cfg.labelX, fmtAngkaRasio(st.x) + ' ' + cfg.satX, {
+      minDis: i <= 0,
+      maxDis: i >= cfg.pilihan.length - 1,
+    }) +
+    '<p class="lab-proporsi__status" role="status">' +
+    '<strong>' +
+    esc(fmtAngkaRasio(st.x) + ' ' + cfg.satX) +
+    '</strong> <span aria-hidden="true">→</span><span class="sr-only">menghasilkan</span> <strong>' +
+    esc(fmtAngkaRasio(y) + ' ' + cfg.satY) +
+    '</strong></p>' +
+    '</div>' +
+    visual +
+    '<p class="lab-proporsi__coba' +
+    (cukup ? ' is-cukup' : '') +
+    '">' +
+    (cukup ? '✅ ' : '🔎 ') +
+    'Percobaan ' +
+    st.dicoba.length +
+    ' dari minimal ' +
+    cfg.minCoba +
+    ' nilai berbeda' +
+    '</p>' +
+    '<div class="lab-proporsi__data">' +
+    buildTabelProporsi(barisLabProporsi(st, cfg), {
+      namaX: cfg.namaX,
+      namaY: cfg.namaY,
+      caption: 'Catatan percobaan',
+      aktif: st.x,
+    }) +
+    buildGrafikProporsi(barisLabProporsi(st, cfg), {
+      namaX: cfg.namaX,
+      namaY: cfg.namaY,
+      maksX: maksX,
+      maksY: maksY,
+      aktif: st.x,
+    }) +
+    '</div>' +
+    '</div>'
+  );
+}
+
+function bindLabProporsi(root, id, st, cfg, onChange) {
+  bindFinStepper(root, id, function (arah) {
+    if (ubahLabProporsi(st, cfg, arah)) onChange();
+  });
+}
