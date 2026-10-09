@@ -111,6 +111,14 @@
     "stageCount": 11,
     "extraBody": "partials/reset-modal.html"
   },
+  "fase-d/mpi-3.2": {
+    "title": "Masalah Kontekstual Rasio & Konversi Satuan — Matematika Fase D",
+    "description": "Media pembelajaran interaktif berbasis Cooperative Learning tipe Think-Pair-Share untuk menyelesaikan masalah kontekstual yang melibatkan rasio dan penyederhanaan rasio, termasuk konversi satuan panjang, massa, volume, dan waktu, dalam persiapan kemah Kelas VII: Lab Samakan Satuan, pertanyaan Pikir–Tanya Pasangan–Sepakati dengan pengecoh miskonsepsi, juru bicara acak, masalah membagi menurut rasio dan suku hilang bersatuan, serta uji mandiri berdiagnosa.",
+    "kicker": "Matematika — Fase D (SMP)",
+    "h1": "Masalah Kontekstual Rasio & Konversi Satuan",
+    "stageCount": 8,
+    "extraBody": "partials/reset-modal.html"
+  },
   "fase-f/mpi-1.1": {
     "title": "Konsep Barisan Aritmetika & Beda — Matematika Fase F",
     "description": "Media pembelajaran interaktif berbasis Inquiry Learning untuk mengidentifikasi dan menjelaskan konsep barisan aritmetika serta menentukan beda dari suatu barisan bilangan.",

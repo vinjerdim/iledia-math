@@ -14196,3 +14196,160 @@ button.akar-tile:disabled {
     flex: 1 1 calc(50% - var(--space-2));
   }
 }
+
+/* =========================================================================
+   68. Rasio dengan konversi satuan (engine.js seksi 68, fase-d/mpi-3.1 &
+   mpi-3.2): isian rasio bertombol sisip ":" (.rasio-input, .rasio-sisip)
+   dan Lab Samakan Satuan (.lab-satuan).
+   ========================================================================= */
+
+.rasio-input {
+  min-width: 8em;
+}
+
+.rasio-sisip {
+  min-width: 44px;
+  min-height: 44px;
+  font-size: 1.2rem;
+  font-weight: 700;
+}
+
+.lab-satuan {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.lab-satuan__asli {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: var(--space-3);
+}
+
+.lab-satuan__kartu {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  padding: var(--space-3) var(--space-4);
+  border: 2px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+}
+
+.lab-satuan__kartu span {
+  font-size: 0.85rem;
+  color: var(--color-ink-muted);
+}
+
+.lab-satuan__kartu strong {
+  font-family: var(--font-display);
+  font-size: 1.4rem;
+}
+
+.lab-satuan__tombol {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.lab-satuan__aksi {
+  min-height: 44px;
+}
+
+.lab-satuan__hasil {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.lab-satuan__baris {
+  display: grid;
+  grid-template-columns: minmax(7em, auto) 1fr auto;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.lab-satuan__nama {
+  font-weight: 600;
+}
+
+.lab-satuan__batang {
+  display: block;
+  height: 22px;
+  border-radius: var(--radius-sm);
+  background: var(--color-bg-grid);
+  overflow: hidden;
+}
+
+.lab-satuan__batang span {
+  display: block;
+  height: 100%;
+  min-width: 4px;
+  border-radius: var(--radius-sm);
+}
+
+.lab-satuan__baris--a .lab-satuan__batang span {
+  background: var(--color-blue);
+}
+
+.lab-satuan__baris--b .lab-satuan__batang span {
+  background: var(--color-orange);
+}
+
+.lab-satuan__nilai {
+  font-family: var(--font-mono);
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.lab-satuan__status {
+  margin: 0;
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-md);
+  background: var(--color-primary-soft);
+  line-height: 1.8;
+}
+
+.lab-satuan__label {
+  display: inline-block;
+  margin-right: var(--space-2);
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--color-primary-strong);
+}
+
+.lab-satuan__op {
+  display: inline-block;
+  padding: 0 var(--space-2);
+  border-radius: 999px;
+  background: var(--color-surface);
+  font-size: 0.85rem;
+  color: var(--color-ink-muted);
+}
+
+.lab-satuan__suku {
+  white-space: nowrap;
+}
+
+.lab-satuan__akhir {
+  margin: 0;
+  font-size: 1.1rem;
+}
+
+@media (max-width: 480px) {
+  .lab-satuan__baris {
+    grid-template-columns: 1fr auto;
+  }
+
+  .lab-satuan__batang {
+    grid-column: 1 / -1;
+    grid-row: 2;
+  }
+
+  .lab-satuan__aksi {
+    flex: 1 1 calc(50% - var(--space-2));
+  }
+}

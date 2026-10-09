@@ -1,0 +1,225 @@
+/* =========================================================================
+   fase-d/mpi-3.2/styles.css
+   Masalah Kontekstual Rasio & Konversi Satuan — Fase D
+
+   Hanya memuat gaya yang KHAS modul ini. Seluruh dasar design system
+   (panel, tombol, kotak umpan balik, pilihan ganda, pertanyaan penuntun
+   .quiz-item--guided, kartu ringkasan, navigasi tahap, modal), komponen
+   Think-Pair-Share (.tps-*), isian berpemeriksa (.dl-step, .bbk-satuan,
+   .bbk-soal-tag), isian rasio (.rasio-input, .rasio-sisip), dan Lab
+   Samakan Satuan (.lab-satuan*) berasal dari shared/base.css.
+   ========================================================================= */
+
+/* -------------------------------------------------------------------------
+   Label konteks
+   ------------------------------------------------------------------------- */
+
+.rs-konteks {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: 2px var(--space-2);
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.rs-konteks--tenda {
+  background: var(--color-success-soft);
+  color: var(--color-success-strong);
+}
+
+.rs-konteks--dapur {
+  background: var(--color-orange-soft);
+  color: var(--color-orange-strong);
+}
+
+.rs-konteks--jadwal {
+  background: var(--color-purple-soft);
+  color: var(--color-purple-strong);
+}
+
+.rs-konteks--jelajah {
+  background: var(--color-warning-soft);
+  color: var(--color-warning-strong);
+}
+
+.rs-konteks--minuman {
+  background: var(--color-blue-soft);
+  color: var(--color-blue-strong);
+}
+
+/* -------------------------------------------------------------------------
+   Kartu cerita, nama pasangan, pertanyaan
+   ------------------------------------------------------------------------- */
+
+.rs-cerita {
+  display: flex;
+  gap: var(--space-3);
+  align-items: flex-start;
+  margin-bottom: var(--space-3);
+}
+
+.rs-cerita__ikon {
+  flex: 0 0 auto;
+  font-size: 2rem;
+  line-height: 1;
+}
+
+.rs-cerita__judul {
+  margin: 0 0 var(--space-1);
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 1.1rem;
+}
+
+.rs-cerita__teks {
+  margin: 0;
+}
+
+.rs-tanya {
+  margin: 0 0 var(--space-3);
+}
+
+.rs-nama {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: var(--space-3);
+}
+
+.rs-subjudul {
+  margin: var(--space-4) 0 var(--space-2);
+}
+
+/* -------------------------------------------------------------------------
+   Kartu fakta konversi
+   ------------------------------------------------------------------------- */
+
+.rs-fakta {
+  margin: var(--space-3) 0;
+  padding: var(--space-3) var(--space-4);
+  border: 1px dashed var(--color-border-strong);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+}
+
+.rs-fakta summary {
+  min-height: 32px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.rs-fakta__list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: var(--space-2) var(--space-4);
+  margin: var(--space-3) 0 0;
+}
+
+.rs-fakta__list dt {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--color-ink-muted);
+}
+
+.rs-fakta__list dd {
+  margin: 0;
+  font-family: var(--font-mono);
+}
+
+/* -------------------------------------------------------------------------
+   Kartu masalah kontekstual
+   ------------------------------------------------------------------------- */
+
+.rs-progres {
+  margin: 0 0 var(--space-3);
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--color-ink-muted);
+}
+
+.rs-masalah {
+  margin-bottom: var(--space-4);
+  padding: var(--space-4);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+}
+
+.rs-masalah.is-done {
+  border-color: var(--color-success);
+}
+
+.rs-masalah__head {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  align-items: center;
+  margin-bottom: var(--space-2);
+}
+
+.rs-masalah__no {
+  font-family: var(--font-display);
+  font-weight: 700;
+}
+
+.rs-masalah__cerita {
+  margin: 0 0 var(--space-2);
+}
+
+.rs-masalah__tanya {
+  margin: 0 0 var(--space-3);
+}
+
+.rs-masalah__langkah {
+  margin-top: var(--space-4);
+}
+
+/* -------------------------------------------------------------------------
+   Rangkuman & halaman selesai
+   ------------------------------------------------------------------------- */
+
+.rs-rangkuman {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.rs-rangkuman li {
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+  overflow-wrap: anywhere;
+}
+
+.rs-rangkuman li + li {
+  margin-top: var(--space-2);
+}
+
+.rs-pasangan-nama {
+  margin: 0 0 var(--space-2);
+  font-weight: 700;
+  color: var(--color-purple-strong);
+  overflow-wrap: anywhere;
+}
+
+.rs-aturan {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: var(--space-3);
+  margin: var(--space-4) 0;
+}
+
+.rs-aturan .formula-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  text-align: center;
+}
+
+.rs-aturan__teks {
+  font-family: var(--font-mono);
+  font-size: 1rem;
+  overflow-wrap: anywhere;
+}
