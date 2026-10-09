@@ -209,6 +209,11 @@
        perkalian silang, isian rasio berdiagnosa urutan tertukar/bagian vs
        keseluruhan/tambah sama, suku hilang, lab racik sirup–air, gelas
        campuran, ikon benda, diagram pita, tabel rasio, cek ekuivalen)
+   68. Rasio dengan konversi satuan dalam masalah kontekstual (tabel
+       satuan panjang/massa/waktu/volume, konversi eksak, rasio dua
+       besaran bersatuan berbeda, diagnosa tanpa konversi/salah faktor,
+       membagi menurut rasio, suku hilang bersatuan, isian & langkah
+       rasio bersama, Lab Samakan Satuan)
    ============================================================ */
 
 /* ============================================================
@@ -41217,6 +41222,11 @@ var PESAN_RASIO = {
   tambahSama:
     'Kamu menambah atau mengurangi kedua suku dengan bilangan yang sama. Itu mengubah rasio — gunakan perkalian atau pembagian.',
   salah: 'Belum tepat. Hitung lagi banyak setiap besaran, lalu tulis sesuai urutan yang ditanya.',
+  /* Seksi 68 — rasio dua besaran bersatuan berbeda. */
+  tanpaKonversi:
+    'Satuannya belum disamakan. Ubah dulu kedua besaran ke satuan yang sama, baru bandingkan bilangannya.',
+  salahFaktor:
+    'Satuannya sudah disamakan, tetapi faktor konversinya keliru. Ingat: 1 km = 1.000 m, 1 m = 100 cm, 1 kg = 1.000 g, 1 L = 1.000 mL, 1 jam = 60 menit.',
 };
 
 function hasilDiagnosaRasio(kode) {
@@ -41675,6 +41685,772 @@ function bindPencampurRasio(root, id, st, onChange) {
   wrap.querySelectorAll('[data-aksi]').forEach(function (btn) {
     btn.addEventListener('click', function () {
       if (terapkanAksiPencampur(st, btn.dataset.aksi)) onChange();
+    });
+  });
+}
+
+/* ============================================================
+   68. RASIO DENGAN KONVERSI SATUAN — MASALAH KONTEKSTUAL
+   Dipakai modul masalah kontekstual rasio & penyederhanaan rasio,
+   termasuk konversi satuan (fase-d/mpi-3.2, Think-Pair-Share).
+   Memakai ulang seksi 67 (fmtRasio, sederhanakanRasio, rasioSetara,
+   parseIsianRasio, diagnosaRasio + PESAN_RASIO, nilaiRasioHilang,
+   periksaSoalRasio, jawabSoalRasio), seksi 29 (makeCekStep) dan
+   seksi 7 (buildHintToggle, buildHintStack). Isinya:
+     • SATUAN_RASIO (panjang km/m/cm/mm, massa kg/ons/g, waktu
+       jam/menit/detik, volume L/mL) — nilai dalam satuan terkecil;
+       faktorSatuanRasio, konversiSatuanRasio (eksak, termasuk desimal),
+       faktaKonversiRasio ("1 m = 100 cm"), satuanTerkecil;
+     • sukuBulatRasio — suku desimal dikalikan 10, 100, … sampai bulat;
+     • rasioBedaSatuan — samakan satuan lalu sederhanakan dengan FPB;
+     • pengecohRasioSatuan, diagnosaRasioSatuan, opsiRasioSatuan —
+       miskonsepsi tanpa konversi, salah faktor, tertukar, belum
+       sederhana (opsi berurutan wajar; app.js yang mengacak);
+     • parseAngkaRasio / fmtAngkaRasio — isian angka bulat, ribuan
+       bertitik, atau desimal berkoma;
+     • diagnosaKonversiRasio — "2 m = … cm" (tanpa konversi, salah
+       faktor, arah terbalik);
+     • nilaiBagiRasio / diagnosaBagiRasio — membagi total menurut rasio
+       (bagian lain, dibagi suku, satu bagian, tanpa konversi);
+     • diagnosaHilangSatuan — suku hilang dengan satuan jawaban berbeda;
+     • periksaSoalRasioSatuan / jawabSoalRasioSatuan — pemeriksa soal
+       berjenis 'satuan', 'konversi', 'bagi', 'hilangSatuan', dan jenis
+       seksi 67;
+     • isian & langkah rasio bersama: buildIsianRasio / bindIsianRasio
+       (tombol sisip " : " untuk keyboard ponsel), periksaLangkahRasio,
+       buildLangkahRasio / bindLangkahRasio;
+     • Lab Samakan Satuan: ensureLabSatuanState, pilihSatuanLab,
+       buildLabSamakanSatuan / bindLabSamakanSatuan.
+   Gaya .lab-satuan* ada di shared/base.css.
+   ============================================================ */
+
+/* Nilai tiap satuan dinyatakan dalam satuan terkecil besarannya. */
+var SATUAN_RASIO = {
+  km: { besaran: 'panjang', nilai: 1000000 },
+  m: { besaran: 'panjang', nilai: 1000 },
+  cm: { besaran: 'panjang', nilai: 10 },
+  mm: { besaran: 'panjang', nilai: 1 },
+  kg: { besaran: 'massa', nilai: 1000 },
+  ons: { besaran: 'massa', nilai: 100 },
+  g: { besaran: 'massa', nilai: 1 },
+  jam: { besaran: 'waktu', nilai: 3600 },
+  menit: { besaran: 'waktu', nilai: 60 },
+  detik: { besaran: 'waktu', nilai: 1 },
+  L: { besaran: 'volume', nilai: 1000 },
+  mL: { besaran: 'volume', nilai: 1 },
+};
+
+/* Membuang galat pembulatan biner (0,3 × 1.000 = 300,00000000000006). */
+function rapiRasio(x) {
+  return Math.round(x * 1e9) / 1e9;
+}
+
+function satuanRasio(s) {
+  var info = SATUAN_RASIO[s];
+  if (!info) throw new Error('Satuan tidak dikenal: ' + s);
+  return info;
+}
+
+/* Bilangan pengali dari satuan `dari` ke satuan `ke` (m → cm: 100). */
+function faktorSatuanRasio(dari, ke) {
+  var a = satuanRasio(dari);
+  var b = satuanRasio(ke);
+  if (a.besaran !== b.besaran) {
+    throw new Error('Satuan ' + dari + ' dan ' + ke + ' bukan besaran yang sama');
+  }
+  return rapiRasio(a.nilai / b.nilai);
+}
+
+function konversiSatuanRasio(nilai, dari, ke) {
+  faktorSatuanRasio(dari, ke);
+  return rapiRasio((nilai * satuanRasio(dari).nilai) / satuanRasio(ke).nilai);
+}
+
+/* Fakta konversi untuk umpan balik: "1 m = 100 cm" / "100 cm = 1 m". */
+function faktaKonversiRasio(dari, ke) {
+  var f = faktorSatuanRasio(dari, ke);
+  if (f >= 1) return '1 ' + dari + ' = ' + formatNumber(f) + ' ' + ke;
+  return formatNumber(faktorSatuanRasio(ke, dari)) + ' ' + dari + ' = 1 ' + ke;
+}
+
+function satuanTerkecil(satA, satB) {
+  return satuanRasio(satA).nilai <= satuanRasio(satB).nilai ? satA : satB;
+}
+
+function bulatRasio(x) {
+  return Math.abs(x - Math.round(x)) < 1e-9;
+}
+
+/* Mengalikan kedua suku dengan 10, 100, … sampai keduanya bulat. */
+function sukuBulatRasio(a, b) {
+  var skala = 1;
+  while (!(bulatRasio(a * skala) && bulatRasio(b * skala)) && skala < 1e6) skala *= 10;
+  return { a: Math.round(a * skala), b: Math.round(b * skala), skala: skala };
+}
+
+/*
+ * Rasio a satA : b satB setelah satuan disamakan ke `ke` (default
+ * satuan yang lebih kecil). a, b = suku bulat; nilaiA, nilaiB = nilai
+ * dalam satuan `ke` (boleh desimal); sederhana = { a, b, fpb }.
+ */
+function rasioBedaSatuan(a, satA, b, satB, ke) {
+  var tujuan = ke || satuanTerkecil(satA, satB);
+  var na = konversiSatuanRasio(a, satA, tujuan);
+  var nb = konversiSatuanRasio(b, satB, tujuan);
+  var s = sukuBulatRasio(na, nb);
+  return {
+    a: s.a,
+    b: s.b,
+    nilaiA: na,
+    nilaiB: nb,
+    satuan: tujuan,
+    sederhana: sederhanakanRasio(s.a, s.b),
+  };
+}
+
+/* Faktor keliru yang sering dipakai murid sebagai ganti faktor f. */
+function faktorKeliruRasio(f) {
+  if (f === 60) return [100];
+  if (f === 3600) return [60, 100];
+  return [10, 100, 1000].filter(function (x) {
+    return x !== f;
+  });
+}
+
+/*
+ * Pengecoh rasio bersatuan berbeda (urutan: tanpa konversi, lalu salah
+ * faktor). Pengecoh yang ekuivalen dengan kunci atau pengecoh sebelumnya
+ * dibuang; satuan sama → [].
+ */
+function pengecohRasioSatuan(a, satA, b, satB) {
+  if (satA === satB) return [];
+  var kunci = rasioBedaSatuan(a, satA, b, satB);
+  var aBesar = satuanRasio(satA).nilai > satuanRasio(satB).nilai;
+  var f = aBesar ? faktorSatuanRasio(satA, satB) : faktorSatuanRasio(satB, satA);
+  var calon = [{ x: a, y: b, kode: 'tanpaKonversi' }];
+  faktorKeliruRasio(f).forEach(function (w) {
+    calon.push({ x: aBesar ? a * w : a, y: aBesar ? b : b * w, kode: 'salahFaktor' });
+  });
+  var out = [];
+  calon.forEach(function (c) {
+    var s = sukuBulatRasio(c.x, c.y);
+    var sama = rasioSetara(s.a, s.b, kunci.a, kunci.b) || rasioSetara(s.a, s.b, kunci.b, kunci.a);
+    var ganda = out.some(function (o) {
+      return rasioSetara(s.a, s.b, o.a, o.b);
+    });
+    if (!sama && !ganda) out.push({ a: s.a, b: s.b, kode: c.kode });
+  });
+  return out;
+}
+
+/*
+ * Diagnosa isian rasio c = { a, satA, b, satB, sederhana } — "rasio
+ * a satA terhadap b satB". sederhana false → rasio ekuivalen apa pun
+ * diterima; selain itu harus bentuk paling sederhana.
+ */
+function diagnosaRasioSatuan(isian, c) {
+  var k = rasioBedaSatuan(c.a, c.satA, c.b, c.satB);
+  return diagnosaRasio(
+    isian,
+    { a: k.a, b: k.b },
+    { pengecoh: pengecohRasioSatuan(c.a, c.satA, c.b, c.satB), sederhana: c.sederhana !== false }
+  );
+}
+
+var PESAN_RASIO_SATUAN = {
+  benar: 'Tepat! Satuannya disamakan dulu, lalu kedua suku dibagi FPB-nya sampai paling sederhana.',
+};
+
+/*
+ * Opsi pilihan ganda rasio bersatuan: kunci (bentuk paling sederhana),
+ * belum sederhana, tanpa konversi, tertukar, salah faktor — label unik,
+ * id = kode diagnosa, umpan dari PESAN_RASIO. Urutan wajar; acak di app.
+ */
+function opsiRasioSatuan(c) {
+  var k = rasioBedaSatuan(c.a, c.satA, c.b, c.satB);
+  var calon = [{ a: k.sederhana.a, b: k.sederhana.b, kode: 'benar' }];
+  if (k.sederhana.fpb > 1) calon.push({ a: k.a, b: k.b, kode: 'belumSederhana' });
+  var pengecoh = pengecohRasioSatuan(c.a, c.satA, c.b, c.satB);
+  var tanpa = pengecoh.filter(function (p) {
+    return p.kode === 'tanpaKonversi';
+  });
+  var faktor = pengecoh.filter(function (p) {
+    return p.kode === 'salahFaktor';
+  });
+  tanpa.forEach(function (p) {
+    calon.push(p);
+  });
+  calon.push({ a: k.sederhana.b, b: k.sederhana.a, kode: 'tertukar' });
+  if (faktor.length) calon.push(faktor[0]);
+
+  var out = [];
+  var dipakai = {};
+  calon.forEach(function (o) {
+    var bentuk = o.kode === 'belumSederhana' ? o : sederhanakanRasio(o.a, o.b);
+    var label = fmtRasio(bentuk.a, bentuk.b);
+    if (dipakai[label] || dipakai[o.kode]) return;
+    dipakai[label] = true;
+    dipakai[o.kode] = true;
+    out.push({
+      id: o.kode,
+      label: label,
+      kode: o.kode,
+      umpan: o.kode === 'benar' ? PESAN_RASIO_SATUAN.benar : PESAN_RASIO[o.kode],
+    });
+  });
+  return out;
+}
+
+/* ---------- Isian angka ---------- */
+
+/* "1200", "1.200" (ribuan), "1,5" (desimal) → { nilai, kode }. */
+function parseAngkaRasio(str) {
+  var s = String(str === null || str === undefined ? '' : str)
+    .trim()
+    .replace(/\s+/g, '');
+  if (!s) return { nilai: null, kode: 'kosong' };
+  var m = /^(\d+|\d{1,3}(?:\.\d{3})+)(?:,(\d+))?$/.exec(s);
+  if (!m) return { nilai: null, kode: 'format' };
+  var bulat = parseInt(m[1].replace(/\./g, ''), 10);
+  return { nilai: m[2] ? parseFloat(bulat + '.' + m[2]) : bulat, kode: 'ok' };
+}
+
+/* 1200 → "1.200", 1.5 → "1,5". */
+function fmtAngkaRasio(n) {
+  var r = rapiRasio(n);
+  if (bulatRasio(r)) return formatNumber(r);
+  var bagian = String(r).split('.');
+  return formatNumber(parseInt(bagian[0], 10)) + ',' + bagian[1];
+}
+
+var PESAN_ANGKA_RASIO = {
+  kosong: 'Isi jawabanmu lebih dulu.',
+  format: 'Tulis satu bilangan, mis. 1.200 atau 1,5 (desimal memakai koma).',
+};
+
+function hasilAngkaRasio(kode, pesan) {
+  return { kode: kode, benar: kode === 'benar', pesan: pesan || PESAN_ANGKA_RASIO[kode] };
+}
+
+/* Hasil parse yang tidak terbaca → hasil diagnosa; selain itu null. */
+function cekBacaAngkaRasio(p) {
+  return p.kode === 'ok' ? null : hasilAngkaRasio(p.kode);
+}
+
+function samaAngkaRasio(v, x) {
+  return Math.abs(v - x) < 1e-6;
+}
+
+/* Diagnosa konversi c = { nilai, dari, ke }: "2 m = … cm". */
+function diagnosaKonversiRasio(isian, c) {
+  var p = parseAngkaRasio(isian);
+  var baca = cekBacaAngkaRasio(p);
+  if (baca) return baca;
+  var v = p.nilai;
+  var f = faktorSatuanRasio(c.dari, c.ke);
+  var fakta = faktaKonversiRasio(c.dari, c.ke);
+  if (samaAngkaRasio(v, rapiRasio(c.nilai * f))) {
+    return hasilAngkaRasio('benar', 'Tepat! Karena ' + fakta + '.');
+  }
+  if (samaAngkaRasio(v, c.nilai)) {
+    return hasilAngkaRasio(
+      'tanpaKonversi',
+      'Bilangannya belum diubah. Satuannya berganti, jadi bilangannya juga berubah: ' + fakta + '.'
+    );
+  }
+  var balik = faktorSatuanRasio(c.ke, c.dari);
+  if (samaAngkaRasio(v, rapiRasio(c.nilai * balik))) {
+    return hasilAngkaRasio(
+      'arahTerbalik',
+      'Arahnya terbalik. Dari satuan besar ke satuan kecil, bilangannya menjadi lebih besar (dikali); sebaliknya dibagi. Ingat: ' +
+        fakta +
+        '.'
+    );
+  }
+  var naik = f >= 1;
+  var keliru = faktorKeliruRasio(naik ? f : balik).some(function (w) {
+    return samaAngkaRasio(v, rapiRasio(naik ? c.nilai * w : c.nilai / w));
+  });
+  if (keliru) {
+    return hasilAngkaRasio('salahFaktor', 'Faktor konversinya keliru. Ingat: ' + fakta + '.');
+  }
+  return hasilAngkaRasio('salah', 'Belum tepat. Gunakan fakta ' + fakta + ', lalu hitung lagi.');
+}
+
+/* ---------- Membagi menurut rasio ---------- */
+
+/* Bagian `bagian` ('a' | 'b') dari total yang dibagi menurut a : b. */
+function nilaiBagiRasio(total, a, b, bagian) {
+  return rapiRasio((total * (bagian === 'b' ? b : a)) / (a + b));
+}
+
+/*
+ * Diagnosa c = { total, satTotal, a, b, bagian, satJawab }: total dibagi
+ * menurut a : b, ditanya bagian `bagian` dalam satuan satJawab.
+ */
+function diagnosaBagiRasio(isian, c) {
+  var p = parseAngkaRasio(isian);
+  var baca = cekBacaAngkaRasio(p);
+  if (baca) return baca;
+  var v = p.nilai;
+  var totalK = konversiSatuanRasio(c.total, c.satTotal, c.satJawab);
+  var lain = c.bagian === 'b' ? 'a' : 'b';
+  var suku = c.bagian === 'b' ? c.b : c.a;
+  var sukuLain = c.bagian === 'b' ? c.a : c.b;
+  if (samaAngkaRasio(v, nilaiBagiRasio(totalK, c.a, c.b, c.bagian))) {
+    return hasilAngkaRasio(
+      'benar',
+      'Tepat! Total dibagi menjadi ' +
+        (c.a + c.b) +
+        ' bagian sama besar, lalu diambil ' +
+        suku +
+        ' bagian.'
+    );
+  }
+  if (c.satTotal !== c.satJawab && samaAngkaRasio(v, nilaiBagiRasio(c.total, c.a, c.b, c.bagian))) {
+    return hasilAngkaRasio(
+      'tanpaKonversi',
+      'Hasilmu masih dalam satuan ' +
+        c.satTotal +
+        '. Yang ditanya dalam ' +
+        c.satJawab +
+        ' — ingat ' +
+        faktaKonversiRasio(c.satTotal, c.satJawab) +
+        '.'
+    );
+  }
+  if (samaAngkaRasio(v, nilaiBagiRasio(totalK, c.a, c.b, lain))) {
+    return hasilAngkaRasio(
+      'bagianLain',
+      'Itu bagian yang lain. Suku pertama rasio milik besaran yang disebut lebih dulu.'
+    );
+  }
+  if (samaAngkaRasio(v, rapiRasio((totalK * suku) / sukuLain))) {
+    return hasilAngkaRasio(
+      'bagiSuku',
+      'Total dibagi dengan JUMLAH semua bagian (' +
+        c.a +
+        ' + ' +
+        c.b +
+        ' = ' +
+        (c.a + c.b) +
+        '), bukan dengan suku yang lain.'
+    );
+  }
+  if (samaAngkaRasio(v, rapiRasio(totalK / (c.a + c.b)))) {
+    return hasilAngkaRasio(
+      'satuBagian',
+      'Itu baru nilai SATU bagian. Kalikan dengan banyak bagian yang ditanya (' + suku + ' bagian).'
+    );
+  }
+  return hasilAngkaRasio(
+    'salah',
+    'Belum tepat. Hitung jumlah bagian, cari nilai satu bagian, lalu kalikan dengan banyak bagian yang ditanya.'
+  );
+}
+
+/* ---------- Suku hilang bersatuan ---------- */
+
+/*
+ * Diagnosa c = { a, b, x, satX, posisi, satJawab }: a : b = x satX : ?
+ * (posisi 'kanan') atau ? : x satX ('kiri'), jawaban dalam satJawab.
+ */
+function diagnosaHilangSatuan(isian, c) {
+  var p = parseAngkaRasio(isian);
+  var baca = cekBacaAngkaRasio(p);
+  if (baca) return baca;
+  var v = p.nilai;
+  var xK = konversiSatuanRasio(c.x, c.satX, c.satJawab);
+  var jawab = rapiRasio(nilaiRasioHilang(c.a, c.b, xK, c.posisi));
+  if (samaAngkaRasio(v, jawab)) {
+    return hasilAngkaRasio('benar', 'Tepat! Kedua suku dikalikan dengan bilangan yang sama.');
+  }
+  if (c.satX !== c.satJawab && samaAngkaRasio(v, nilaiRasioHilang(c.a, c.b, c.x, c.posisi))) {
+    return hasilAngkaRasio(
+      'tanpaKonversi',
+      'Hasilmu masih dalam satuan ' +
+        c.satX +
+        '. Yang ditanya dalam ' +
+        c.satJawab +
+        ' — ingat ' +
+        faktaKonversiRasio(c.satX, c.satJawab) +
+        '.'
+    );
+  }
+  var tetap = c.posisi === 'kiri' ? c.b : c.a;
+  var cari = c.posisi === 'kiri' ? c.a : c.b;
+  var aditif = [
+    cari + (xK - tetap),
+    konversiSatuanRasio(cari + (c.x - tetap), c.satX, c.satJawab),
+    cari + (c.x - tetap),
+  ];
+  if (
+    aditif.some(function (x) {
+      return samaAngkaRasio(v, rapiRasio(x));
+    })
+  ) {
+    return hasilAngkaRasio('tambahSama', PESAN_RASIO.tambahSama);
+  }
+  if (samaAngkaRasio(v, rapiRasio((tetap * xK) / cari))) {
+    return hasilAngkaRasio(
+      'tertukar',
+      'Pengalinya terbalik. Cari dulu "berapa kali lipat" dari suku yang diketahui, lalu kalikan suku pasangannya dengan bilangan yang sama.'
+    );
+  }
+  return hasilAngkaRasio(
+    'salah',
+    'Belum tepat. Samakan satuannya, cari bilangan pengali yang sama untuk kedua suku, lalu terapkan.'
+  );
+}
+
+/* ---------- Pemeriksa soal ---------- */
+
+/* Jenis soal yang jawabannya berupa satu bilangan (bukan rasio). */
+function jenisAngkaRasio(jenis) {
+  return ['konversi', 'bagi', 'hilangSatuan', 'hilang'].indexOf(jenis) !== -1;
+}
+
+/* Memeriksa isian soal s = { cek } → { kode, benar, pesan }. */
+function periksaSoalRasioSatuan(isian, s) {
+  var c = s.cek;
+  if (c.jenis === 'satuan') return diagnosaRasioSatuan(isian, c);
+  if (c.jenis === 'konversi') return diagnosaKonversiRasio(isian, c);
+  if (c.jenis === 'bagi') return diagnosaBagiRasio(isian, c);
+  if (c.jenis === 'hilangSatuan') return diagnosaHilangSatuan(isian, c);
+  return periksaSoalRasio(isian, s);
+}
+
+/* Jawaban baku soal (teks). */
+function jawabSoalRasioSatuan(s) {
+  var c = s.cek;
+  if (c.jenis === 'satuan') {
+    var k = rasioBedaSatuan(c.a, c.satA, c.b, c.satB);
+    return c.sederhana === false ? fmtRasio(k.a, k.b) : fmtRasio(k.sederhana.a, k.sederhana.b);
+  }
+  if (c.jenis === 'konversi') return fmtAngkaRasio(konversiSatuanRasio(c.nilai, c.dari, c.ke));
+  if (c.jenis === 'bagi') {
+    var t = konversiSatuanRasio(c.total, c.satTotal, c.satJawab);
+    return fmtAngkaRasio(nilaiBagiRasio(t, c.a, c.b, c.bagian));
+  }
+  if (c.jenis === 'hilangSatuan') {
+    var xK = konversiSatuanRasio(c.x, c.satX, c.satJawab);
+    return fmtAngkaRasio(nilaiRasioHilang(c.a, c.b, xK, c.posisi));
+  }
+  return jawabSoalRasio(s);
+}
+
+/* ---------- Isian & langkah rasio bersama ---------- */
+
+/* Kotak isian rasio + tombol sisip " : " untuk keyboard ponsel. */
+function buildIsianRasio(id, st, placeholder, aria) {
+  return (
+    '<div class="dl-input-row">' +
+    '<input type="text" class="input-text dl-num-input rasio-input' +
+    (st.salah ? ' has-error' : '') +
+    '" id="' +
+    id +
+    'Input" inputmode="text" autocomplete="off" value="' +
+    esc(st.input) +
+    '" placeholder="' +
+    esc(placeholder) +
+    '" aria-label="' +
+    esc(aria) +
+    '">' +
+    '<button type="button" class="btn btn--ghost btn--small rasio-sisip" id="' +
+    id +
+    'Colon" aria-label="Sisipkan tanda titik dua">:</button>' +
+    '<button type="button" class="btn btn--primary" id="' +
+    id +
+    'Check">Periksa</button>' +
+    '</div>'
+  );
+}
+
+/* Memasang Enter, tombol sisip, dan tombol Periksa → onCheck(nilai). */
+function bindIsianRasio(id, onCheck) {
+  var inp = document.getElementById(id + 'Input');
+  var colon = document.getElementById(id + 'Colon');
+  var btn = document.getElementById(id + 'Check');
+  if (!inp || !btn) return;
+  inp.addEventListener('keydown', function (e) {
+    if (e.key === 'Enter') btn.click();
+  });
+  if (colon) {
+    colon.addEventListener('click', function () {
+      var v = inp.value.replace(/\s+$/, '');
+      inp.value = v + (v ? ' : ' : '');
+      inp.focus();
+    });
+  }
+  btn.addEventListener('click', function () {
+    onCheck(inp.value);
+  });
+}
+
+/* Isian tak terbaca (kosong/format/nol) tidak dihitung sebagai percobaan. */
+function isianTakTerbacaRasio(kode) {
+  return kode === 'kosong' || kode === 'format' || kode === 'nol';
+}
+
+/*
+ * Memeriksa langkah { cek } dan menyimpan hasil ke st (makeCekStep).
+ * Isian tak terbaca tidak mengubah st.
+ */
+function periksaLangkahRasio(st, step, input) {
+  var r = periksaSoalRasioSatuan(input, { cek: step.cek });
+  if (isianTakTerbacaRasio(r.kode)) return r;
+  st.input = String(input || '').trim();
+  st.kode = r.kode;
+  st.pesan = r.pesan;
+  st.attempts += 1;
+  st.done = r.benar;
+  return r;
+}
+
+/*
+ * Satu langkah isian rasio/angka berdiagnosa.
+ *   step  { label (HTML), cek, hints, temuan (HTML), satuan, placeholder }
+ *   num   nomor langkah opsional
+ */
+function buildLangkahRasio(id, st, step, num) {
+  var angka = jenisAngkaRasio(step.cek.jenis);
+  var head =
+    '<p class="dl-step__label">' +
+    (num ? '<span class="dl-step__num">' + num + '</span>' : '') +
+    step.label +
+    '</p>';
+  if (st.done) {
+    var p = angka ? null : parseIsianRasio(st.input);
+    var tampil = angka ? fmtAngkaRasio(parseAngkaRasio(st.input).nilai) : fmtRasio(p.a, p.b);
+    return (
+      '<div class="dl-step dl-step--done">' +
+      head +
+      '<p class="dl-step__answer">✓ ' +
+      esc(tampil) +
+      (step.satuan ? ' ' + esc(step.satuan) : '') +
+      '</p>' +
+      (step.temuan ? buildFeedbackBox('success', '💡', step.temuan) : '') +
+      '</div>'
+    );
+  }
+  var salah = st.attempts > 0 && !!st.kode && st.kode !== 'benar';
+  var aria = String(step.label).replace(/<[^>]*>/g, '');
+  var isian = angka
+    ? '<div class="dl-input-row">' +
+      '<input type="text" class="input-text dl-num-input' +
+      (salah ? ' has-error' : '') +
+      '" id="' +
+      id +
+      'Input" inputmode="decimal" autocomplete="off" value="' +
+      esc(st.input || '') +
+      '" placeholder="' +
+      esc(step.placeholder || 'mis. 1.200') +
+      '" aria-label="' +
+      esc(aria) +
+      '">' +
+      (step.satuan ? '<span class="bbk-satuan">' + esc(step.satuan) + '</span>' : '') +
+      '<button type="button" class="btn btn--primary" id="' +
+      id +
+      'Check">Periksa</button>' +
+      '</div>'
+    : buildIsianRasio(
+        id,
+        { input: st.input || '', salah: salah },
+        step.placeholder || 'mis. 4 : 1',
+        aria
+      );
+  return (
+    '<div class="dl-step">' +
+    head +
+    isian +
+    (step.hints && step.hints.length
+      ? '<div class="btn-group" style="margin-top:var(--space-2);">' +
+        buildHintToggle(id + 'Hint', step.hints, st.hintLevel) +
+        '</div>'
+      : '') +
+    (salah
+      ? '<div style="margin-top:var(--space-3);">' +
+        buildFeedbackBox(
+          'error',
+          '✗',
+          '<strong>' + esc(st.input) + '</strong> — ' + esc(st.pesan)
+        ) +
+        '</div>'
+      : '') +
+    buildHintStack(step.hints, st.hintLevel) +
+    '</div>'
+  );
+}
+
+/* Memasang event buildLangkahRasio; `save` lalu `rerender` setelah perubahan. */
+function bindLangkahRasio(id, st, step, save, rerender) {
+  bindIsianRasio(id, function (val) {
+    var r = periksaLangkahRasio(st, step, val);
+    if (isianTakTerbacaRasio(r.kode)) {
+      showNotice(r.pesan);
+      return;
+    }
+    save();
+    rerender();
+    if (!st.done) {
+      var again = document.getElementById(id + 'Input');
+      if (again) again.focus();
+    }
+  });
+  var hint = document.getElementById(id + 'Hint');
+  if (hint) {
+    hint.addEventListener('click', function () {
+      st.hintLevel = Math.min(st.hintLevel + 1, (step.hints || []).length);
+      save();
+      rerender();
+    });
+  }
+}
+
+/* ---------- Lab Samakan Satuan ---------- */
+
+/*
+ * State lab { kunci, ke, dicoba } untuk cfg = { a, satA, b, satB,
+ * namaA, namaB, pilihan: [satuan] }. Konfigurasi berubah atau state
+ * rusak → disetel ulang.
+ */
+function ensureLabSatuanState(st, cfg) {
+  var kunci = [cfg.a, cfg.satA, cfg.b, cfg.satB].join('|');
+  if (st.kunci !== kunci || !Array.isArray(st.dicoba)) {
+    st.kunci = kunci;
+    st.ke = null;
+    st.dicoba = [];
+  }
+  if (st.ke !== null && cfg.pilihan.indexOf(st.ke) === -1) st.ke = null;
+  return st;
+}
+
+/* Memilih satuan tujuan; false bila di luar cfg.pilihan. */
+function pilihSatuanLab(st, cfg, ke) {
+  if (cfg.pilihan.indexOf(ke) === -1) return false;
+  st.ke = ke;
+  if (st.dicoba.indexOf(ke) === -1) st.dicoba.push(ke);
+  return true;
+}
+
+function batangLabSatuan(nama, nilai, satuan, persen, kelas) {
+  return (
+    '<div class="lab-satuan__baris lab-satuan__baris--' +
+    kelas +
+    '">' +
+    '<span class="lab-satuan__nama">' +
+    esc(nama) +
+    '</span>' +
+    '<span class="lab-satuan__batang"><span style="width:' +
+    persen +
+    '%"></span></span>' +
+    '<span class="lab-satuan__nilai">' +
+    esc(fmtAngkaRasio(nilai) + ' ' + satuan) +
+    '</span>' +
+    '</div>'
+  );
+}
+
+/*
+ * Lab Samakan Satuan: dua besaran dengan satuan aslinya, tombol "Ubah
+ * semua ke …", batang perbandingan sepanjang nilai sebenarnya, dan
+ * langkah rasio: (kalikan sampai bulat) → bagi FPB → paling sederhana.
+ */
+function buildLabSamakanSatuan(id, st, cfg) {
+  var asli =
+    '<div class="lab-satuan__asli">' +
+    '<p class="lab-satuan__kartu"><span>' +
+    esc(cfg.namaA) +
+    '</span><strong>' +
+    esc(fmtAngkaRasio(cfg.a) + ' ' + cfg.satA) +
+    '</strong></p>' +
+    '<p class="lab-satuan__kartu"><span>' +
+    esc(cfg.namaB) +
+    '</span><strong>' +
+    esc(fmtAngkaRasio(cfg.b) + ' ' + cfg.satB) +
+    '</strong></p>' +
+    '</div>';
+
+  var tombol =
+    '<div class="lab-satuan__tombol" role="group" aria-label="Pilih satuan yang sama untuk kedua besaran">' +
+    cfg.pilihan
+      .map(function (s) {
+        var on = st.ke === s;
+        return (
+          '<button type="button" class="btn ' +
+          (on ? 'btn--primary' : 'btn--outline-primary') +
+          ' lab-satuan__aksi" data-ke="' +
+          esc(s) +
+          '" aria-pressed="' +
+          (on ? 'true' : 'false') +
+          '">Ubah semua ke ' +
+          esc(s) +
+          '</button>'
+        );
+      })
+      .join('') +
+    '</div>';
+
+  var hasil;
+  if (!st.ke) {
+    hasil =
+      '<p class="lab-satuan__status" role="status">Satuannya masih berbeda (' +
+      esc(cfg.satA) +
+      ' dan ' +
+      esc(cfg.satB) +
+      '). Pilih satu satuan untuk kedua besaran.</p>';
+  } else {
+    var r = rasioBedaSatuan(cfg.a, cfg.satA, cfg.b, cfg.satB, st.ke);
+    var maks = Math.max(r.nilaiA, r.nilaiB);
+    var rasioAwal = fmtAngkaRasio(r.nilaiA) + ' : ' + fmtAngkaRasio(r.nilaiB);
+    var skala = r.a / r.nilaiA;
+    var langkah = [esc(rasioAwal)];
+    if (bulatRasio(skala) && Math.round(skala) > 1) {
+      langkah.push(
+        '<span class="lab-satuan__op">× ' +
+          formatNumber(skala) +
+          ' agar bulat</span> ' +
+          esc(fmtRasio(r.a, r.b))
+      );
+    }
+    if (r.sederhana.fpb > 1) {
+      langkah.push(
+        '<span class="lab-satuan__op">: FPB ' +
+          formatNumber(r.sederhana.fpb) +
+          '</span> ' +
+          esc(fmtRasio(r.sederhana.a, r.sederhana.b))
+      );
+    }
+    hasil =
+      '<div class="lab-satuan__hasil">' +
+      batangLabSatuan(cfg.namaA, r.nilaiA, st.ke, Math.round((r.nilaiA / maks) * 100), 'a') +
+      batangLabSatuan(cfg.namaB, r.nilaiB, st.ke, Math.round((r.nilaiB / maks) * 100), 'b') +
+      '</div>' +
+      '<p class="lab-satuan__status" role="status"><span class="lab-satuan__label">Rasio dalam ' +
+      esc(st.ke) +
+      '</span> ' +
+      langkah
+        .map(function (l) {
+          return '<span class="lab-satuan__suku">' + l + '</span>';
+        })
+        .join(' <span aria-hidden="true">→</span> ') +
+      '</p>' +
+      '<p class="lab-satuan__akhir">Paling sederhana: <strong>' +
+      esc(fmtRasio(r.sederhana.a, r.sederhana.b)) +
+      '</strong></p>';
+  }
+
+  return (
+    '<div class="lab-satuan" data-lab-satuan="' + esc(id) + '">' + asli + tombol + hasil + '</div>'
+  );
+}
+
+function bindLabSamakanSatuan(root, id, st, cfg, onChange) {
+  var wrap = root.querySelector('[data-lab-satuan="' + id + '"]');
+  if (!wrap) return;
+  wrap.querySelectorAll('[data-ke]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      if (pilihSatuanLab(st, cfg, btn.dataset.ke)) onChange();
     });
   });
 }

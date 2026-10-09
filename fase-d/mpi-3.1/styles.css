@@ -7,7 +7,8 @@
    penuntun .quiz-item--guided, tabel .data-table, perbandingan dugaan
    .dugaan-row, kartu ringkasan, navigasi tahap, modal) dan alat bersama
    rasio (.gelas-rasio*, .ikon-rasio*, .pita-rasio*, .tabel-rasio*,
-   .cek-setara*, .pencampur*) berasal dari shared/base.css.
+   .cek-setara*, .pencampur*) serta isian rasio (.rasio-input, .rasio-sisip)
+   berasal dari shared/base.css.
    ========================================================================= */
 
 /* -------------------------------------------------------------------------
@@ -97,17 +98,6 @@
 
 .situasi-card__cerita {
   margin: var(--space-2) 0 0;
-}
-
-.rasio-input {
-  min-width: 8em;
-}
-
-.rasio-sisip {
-  min-width: 44px;
-  min-height: 44px;
-  font-size: 1.2rem;
-  font-weight: 700;
 }
 
 /* -------------------------------------------------------------------------

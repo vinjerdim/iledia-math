@@ -12,6 +12,8 @@
        buildTpPanel, buildChoiceGroup, buildSortItems,
        buildGuidedQuizList, buildDlStep, buildDlPanel,
        buildDlNextButton, buildHintToggle, buildHintStack;
+     • seksi 68: buildIsianRasio / bindIsianRasio (isian rasio dengan
+       tombol sisip " : ");
      • seksi 67 (rasio & rasio ekuivalen): periksaSoalRasio,
        jawabSoalRasio, diagnosaRasioHilang, sederhanakanRasio,
        jenisAksiDicoba, serta tampilan buildGelasCampuran,
@@ -572,51 +574,6 @@ function renderHipotesis(container) {
    Situasi dibuka satu per satu. Isian rasio diperiksa
    periksaSoalRasio sehingga pesan salahnya berupa diagnosa.
    ============================================================ */
-
-/* Kotak isian rasio + tombol sisip " : " untuk keyboard ponsel. */
-function buildIsianRasio(id, st, placeholder, aria) {
-  return (
-    '<div class="dl-input-row">' +
-    '<input type="text" class="input-text dl-num-input rasio-input' +
-    (st.salah ? ' has-error' : '') +
-    '" id="' +
-    id +
-    'Input" inputmode="text" autocomplete="off" value="' +
-    esc(st.input) +
-    '" placeholder="' +
-    esc(placeholder) +
-    '" aria-label="' +
-    esc(aria) +
-    '">' +
-    '<button type="button" class="btn btn--ghost btn--small rasio-sisip" id="' +
-    id +
-    'Colon" aria-label="Sisipkan tanda titik dua">:</button>' +
-    '<button type="button" class="btn btn--primary" id="' +
-    id +
-    'Check">Periksa</button>' +
-    '</div>'
-  );
-}
-
-function bindIsianRasio(id, onCheck) {
-  var inp = document.getElementById(id + 'Input');
-  var colon = document.getElementById(id + 'Colon');
-  var btn = document.getElementById(id + 'Check');
-  if (!inp || !btn) return;
-  inp.addEventListener('keydown', function (e) {
-    if (e.key === 'Enter') btn.click();
-  });
-  if (colon) {
-    colon.addEventListener('click', function () {
-      var v = inp.value.replace(/\s+$/, '');
-      inp.value = v + (v ? ' : ' : '');
-      inp.focus();
-    });
-  }
-  btn.addEventListener('click', function () {
-    onCheck(inp.value);
-  });
-}
 
 function buildSituasiCard(s, i, total, st) {
   var head =
