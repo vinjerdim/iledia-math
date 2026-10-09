@@ -219,6 +219,11 @@
        operasi terbalik/satu cm saja/skala terbalik, opsi berpengecoh,
        langkah isian lewat buildLangkahRasio, Lab Peta berpenggaris,
        batang skala, Pembanding Skala, Lab Denah)
+   70. Perbandingan senilai & berbalik nilai (hasil bagi & hasil kali
+       tetap, suku hilang, pilah tabel, Lab Proporsi)
+   71. Pola susunan benda (batang korek api, ubin, kursi: banyak benda
+       tiap tahap, tambahan, jenis keteraturan, isian berdiagnosa, opsi
+       berpengecoh, gambar susunan SVG, Lab Susun)
    ============================================================ */
 
 /* ============================================================
@@ -44275,4 +44280,1006 @@ function bindLabProporsi(root, id, st, cfg, onChange) {
   bindFinStepper(root, id, function (arah) {
     if (ubahLabProporsi(st, cfg, arah)) onChange();
   });
+}
+
+/* ============================================================
+   71. POLA SUSUNAN BENDA
+   Dipakai fase-d/mpi-4.1 (Discovery Learning): mengenali dan
+   mendeskripsikan keteraturan pola pada susunan batang korek api,
+   ubin, dan kursi dengan mengamati, mencatat, dan membandingkan
+   tiap tahap. Memakai ulang selisihBerurutan & fmtSuku (seksi 32),
+   parseAngkaRasio (seksi 68), buildFinStepper (seksi 66), dan
+   langkah isian buildLangkahRasio (seksi 68) lewat siapkanLangkahPola.
+
+   Notasi cek soal:
+     { jenis, n }                       → banyak benda pada tahap n
+     { jenis, n, minta: 'tambahan' }    → benda BARU pada tahap n
+     { suku: [..], n }                  → suku ke-n barisan yang
+                                          diketahui suku-suku awalnya
+     { jenis | suku, minta: 'keteraturan' }
+                                        → 'tetap' | 'bertingkat' |
+                                          'tidakTeratur'
+   Gaya .pola-* dan .lab-susun* ada di shared/base.css.
+   ============================================================ */
+
+/* ---------- Spesifikasi susunan ---------- */
+
+/*
+ * benda     'korek' | 'ubin' | 'kursi' (menentukan gambar)
+ * hitung    banyak benda pada tahap n
+ * terpisah  (opsional) hitungan keliru bila benda yang dipakai bersama
+ *           dihitung dua kali — dipakai diagnosa 'hitungTerpisah'
+ * deskripsi teks pembaca layar untuk gambar tahap n; sengaja TIDAK
+ *           menyebut banyak benda agar murid tetap menghitung sendiri
+ */
+var POLA_BENDA = {
+  korekPersegi: {
+    benda: 'korek',
+    nama: 'Persegi korek api berjajar',
+    satuan: 'batang',
+    hitung: function (n) {
+      return 3 * n + 1;
+    },
+    terpisah: function (n) {
+      return 4 * n;
+    },
+    deskripsi: function (n) {
+      return n + ' persegi berjajar yang dibuat dari batang korek api';
+    },
+  },
+  korekSegitiga: {
+    benda: 'korek',
+    nama: 'Segitiga korek api berjajar',
+    satuan: 'batang',
+    hitung: function (n) {
+      return 2 * n + 1;
+    },
+    terpisah: function (n) {
+      return 3 * n;
+    },
+    deskripsi: function (n) {
+      return n + ' segitiga berjajar yang dibuat dari batang korek api';
+    },
+  },
+  ubinPersegi: {
+    benda: 'ubin',
+    nama: 'Lantai ubin persegi',
+    satuan: 'ubin',
+    hitung: function (n) {
+      return n * n;
+    },
+    deskripsi: function (n) {
+      return 'lantai ubin berbentuk persegi dengan panjang sisi ' + n + ' ubin';
+    },
+  },
+  ubinL: {
+    benda: 'ubin',
+    nama: 'Ubin bentuk huruf L',
+    satuan: 'ubin',
+    hitung: function (n) {
+      return 2 * n - 1;
+    },
+    deskripsi: function (n) {
+      return 'ubin berbentuk huruf L, setiap lengannya sepanjang ' + n + ' ubin';
+    },
+  },
+  ubinTangga: {
+    benda: 'ubin',
+    nama: 'Ubin bertingkat seperti tangga',
+    satuan: 'ubin',
+    hitung: function (n) {
+      return (n * (n + 1)) / 2;
+    },
+    deskripsi: function (n) {
+      return 'ubin bertingkat seperti tangga dengan ' + n + ' anak tangga';
+    },
+  },
+  kursiDeret: {
+    benda: 'kursi',
+    nama: 'Meja disambung berderet',
+    satuan: 'kursi',
+    hitung: function (n) {
+      return 2 * n + 2;
+    },
+    terpisah: function (n) {
+      return 4 * n;
+    },
+    deskripsi: function (n) {
+      return n + ' meja disambung berderet dan dikelilingi kursi';
+    },
+  },
+  kursiTerpisah: {
+    benda: 'kursi',
+    nama: 'Meja terpisah',
+    satuan: 'kursi',
+    hitung: function (n) {
+      return 4 * n;
+    },
+    deskripsi: function (n) {
+      return n + ' meja terpisah, masing-masing dikelilingi kursi';
+    },
+  },
+};
+
+var IKON_BENDA_POLA = { korek: '🔥', ubin: '🟫', kursi: '🪑' };
+
+/* ---------- Hitungan dasar ---------- */
+
+function tahapValidPola(n) {
+  return typeof n === 'number' && isFinite(n) && Math.floor(n) === n && n >= 1;
+}
+
+/* Banyak benda pada tahap n; NaN bila jenis/tahap tidak valid. */
+function banyakBendaPola(jenis, n) {
+  var P = POLA_BENDA[jenis];
+  if (!P || !tahapValidPola(n)) return NaN;
+  return P.hitung(n);
+}
+
+/* [tahap 1, tahap 2, …, tahap k]. */
+function barisanPola(jenis, k) {
+  var out = [];
+  for (var n = 1; n <= k; n++) out.push(banyakBendaPola(jenis, n));
+  return out;
+}
+
+/* Benda baru pada tahap n (tahap 1: seluruh bendanya baru). */
+function tambahanPola(jenis, n) {
+  if (n === 1) return banyakBendaPola(jenis, 1);
+  return banyakBendaPola(jenis, n) - banyakBendaPola(jenis, n - 1);
+}
+
+function semuaSamaPola(arr) {
+  return arr.every(function (v) {
+    return hampirSama(v, arr[0]);
+  });
+}
+
+/*
+ * Jenis keteraturan barisan (≥ 3 suku):
+ *   'tetap'        tambahan (selisih) selalu sama — 4, 7, 10, 13
+ *   'bertingkat'   tambahannya berubah secara teratur (selisih
+ *                  tingkat dua tetap) — 1, 4, 9, 16
+ *   'tidakTeratur' selain itu — 5, 9, 6, 12
+ * Tiga suku dengan tambahan berbeda dianggap bertingkat hanya bila
+ * tambahannya searah (sama-sama positif atau negatif).
+ */
+function jenisKeteraturan(terms) {
+  if (!Array.isArray(terms) || terms.length < 3) return null;
+  var d = selisihBerurutan(terms);
+  if (semuaSamaPola(d)) return 'tetap';
+  var d2 = selisihBerurutan(d);
+  if (d2.length === 1) {
+    return d[0] * d[1] > 0 ? 'bertingkat' : 'tidakTeratur';
+  }
+  return semuaSamaPola(d2) ? 'bertingkat' : 'tidakTeratur';
+}
+
+/* Suku ke-n barisan yang diketahui awalnya; NaN bila tidak teratur. */
+function lanjutkanBarisanPola(terms, n) {
+  var k = jenisKeteraturan(terms);
+  if (!tahapValidPola(n) || !k || k === 'tidakTeratur') return NaN;
+  if (n <= terms.length) return terms[n - 1];
+  var t = terms.slice();
+  var d = selisihBerurutan(t);
+  var tambah = d[d.length - 1];
+  var lompat = k === 'tetap' ? 0 : tambah - d[d.length - 2];
+  while (t.length < n) {
+    tambah += lompat;
+    t.push(bulatkanSuku(t[t.length - 1] + tambah));
+  }
+  return t[n - 1];
+}
+
+/* Kalimat keteraturan pola dalam kata-kata (untuk temuan & simpulan). */
+function deskripsiPola(terms, satuan) {
+  var k = jenisKeteraturan(terms);
+  var sat = satuan ? ' ' + satuan : '';
+  var d = selisihBerurutan(terms);
+  if (k === 'tetap') {
+    return (
+      'Tahap 1 terdiri atas ' +
+      fmtSuku(terms[0]) +
+      sat +
+      ', lalu setiap tahap ' +
+      (d[0] < 0 ? 'berkurang ' : 'bertambah ') +
+      fmtSuku(Math.abs(d[0])) +
+      sat +
+      '.'
+    );
+  }
+  if (k === 'bertingkat') {
+    var lompat = d[1] - d[0];
+    return (
+      'Tahap 1 terdiri atas ' +
+      fmtSuku(terms[0]) +
+      sat +
+      '. Tambahannya ' +
+      d.map(fmtSuku).join(', ') +
+      ', … — setiap tahap tambahannya ' +
+      fmtSuku(Math.abs(lompat)) +
+      (lompat > 0 ? ' lebih banyak' : ' lebih sedikit') +
+      ' daripada tahap sebelumnya.'
+    );
+  }
+  if (k === 'tidakTeratur') {
+    return (
+      'Banyaknya ' +
+      terms.map(fmtSuku).join(', ') +
+      sat +
+      ' berubah tidak teratur, sehingga tahap berikutnya tidak dapat ditentukan dengan pasti.'
+    );
+  }
+  return '';
+}
+
+/* ---------- Pemeriksa soal ---------- */
+
+var PESAN_POLA = {
+  benar: 'Tepat!',
+  kosong: 'Isi jawabanmu lebih dulu.',
+  format: 'Banyak benda selalu bilangan bulat. Tulis satu bilangan, mis. 13.',
+  tahapSebelumnya:
+    'Itu banyak benda pada tahap sebelumnya. Jangan lupa menambahkan benda baru untuk tahap yang ditanyakan.',
+  tahapBerikutnya:
+    'Itu banyak benda satu tahap sesudahnya. Periksa lagi nomor tahap yang ditanyakan.',
+  tambahSekali:
+    'Kamu baru menambahkan satu kali. Dari tahap terakhir yang diketahui sampai tahap yang ditanyakan ada beberapa tahap — tambahkan untuk setiap tahap yang dilewati.',
+  hitungTerpisah:
+    'Kamu menghitung setiap bagian seolah-olah terpisah. Pada susunan ini ada benda yang dipakai bersama oleh dua bagian yang bersebelahan — hitung sekali saja.',
+  kaliTambahan:
+    'Sepertinya kamu mengalikan tambahan dengan nomor tahap. Tahap 1 tidak dimulai dari nol benda, jadi hasilnya meleset. Lanjutkan tabel tahap demi tahap.',
+  gandakan:
+    'Menggandakan banyak benda pada tahap separuhnya tidak tepat, karena benda awal atau benda yang dipakai bersama ikut terhitung dua kali. Lanjutkan pola tahap demi tahap.',
+  banyak:
+    'Itu banyak SELURUH benda pada tahap tersebut. Yang ditanyakan hanya benda yang BARU ditambahkan, yaitu selisih dengan tahap sebelumnya.',
+  salah:
+    'Belum tepat. Hitung ulang dengan teliti, atau lanjutkan tabel tahap demi tahap dengan tambahan yang kamu temukan.',
+  salahKeteraturan:
+    'Belum tepat. Hitung tambahan dari tahap ke tahap, lalu perhatikan: apakah tambahannya selalu sama, berubah teratur, atau tidak teratur?',
+};
+
+function hasilPola(kode, pesan) {
+  return { kode: kode, benar: kode === 'benar', pesan: pesan };
+}
+
+/* Fungsi k → banyak benda tahap k untuk cek c. */
+function fungsiSukuPola(c) {
+  if (c.suku) {
+    return function (k) {
+      return lanjutkanBarisanPola(c.suku, k);
+    };
+  }
+  return function (k) {
+    return banyakBendaPola(c.jenis, k);
+  };
+}
+
+function keteraturanSoalPola(c) {
+  return jenisKeteraturan(c.suku ? c.suku : barisanPola(c.jenis, 4));
+}
+
+/* Nilai baku cek c (bilangan; id keteraturan untuk minta 'keteraturan'). */
+function nilaiSoalPola(c) {
+  if (c.minta === 'keteraturan') return keteraturanSoalPola(c);
+  var U = fungsiSukuPola(c);
+  if (c.minta === 'tambahan') return c.n === 1 ? U(1) : U(c.n) - U(c.n - 1);
+  return U(c.n);
+}
+
+/* Jawaban keliru yang lazim beserta kodenya, urut menurut prioritas diagnosa. */
+function calonKeliruPola(c) {
+  var U = fungsiSukuPola(c);
+  var n = c.n;
+  var out = [];
+  var tambah = function (kode, nilai) {
+    if (typeof nilai === 'number' && isFinite(nilai) && nilai > 0) {
+      out.push({ kode: kode, nilai: nilai });
+    }
+  };
+  if (c.minta === 'tambahan') {
+    tambah('banyak', U(n));
+    return out;
+  }
+  if (n > 1) tambah('tahapSebelumnya', U(n - 1));
+  if (c.suku && n > c.suku.length + 1) {
+    var akhir = c.suku[c.suku.length - 1];
+    tambah('tambahSekali', akhir + (akhir - c.suku[c.suku.length - 2]));
+  }
+  tambah('tahapBerikutnya', U(n + 1));
+  var P = c.jenis && POLA_BENDA[c.jenis];
+  if (P && P.terpisah) tambah('hitungTerpisah', P.terpisah(n));
+  tambah('kaliTambahan', (U(2) - U(1)) * n);
+  if (n % 2 === 0) tambah('gandakan', 2 * U(n / 2));
+  return out;
+}
+
+/* Diagnosa isian bilangan untuk cek c → { kode, benar, pesan }. */
+function diagnosaPola(isian, c) {
+  var p = parseAngkaRasio(isian);
+  if (p.kode === 'kosong') return hasilPola('kosong', PESAN_POLA.kosong);
+  if (p.kode !== 'ok' || Math.floor(p.nilai) !== p.nilai) {
+    return hasilPola('format', PESAN_POLA.format);
+  }
+  var nilai = nilaiSoalPola(c);
+  if (p.nilai === nilai) return hasilPola('benar', PESAN_POLA.benar);
+  var calon = calonKeliruPola(c);
+  for (var i = 0; i < calon.length; i++) {
+    if (calon[i].nilai !== nilai && calon[i].nilai === p.nilai) {
+      return hasilPola(calon[i].kode, PESAN_POLA[calon[i].kode]);
+    }
+  }
+  return hasilPola('salah', PESAN_POLA.salah);
+}
+
+/* Memeriksa isian soal s = { cek } → { kode, benar, pesan }. */
+function periksaSoalPola(isian, s) {
+  var c = s.cek;
+  if (c.minta === 'keteraturan') {
+    var benar = String(isian) === keteraturanSoalPola(c);
+    return hasilPola(
+      benar ? 'benar' : 'salahKeteraturan',
+      benar ? PESAN_POLA.benar : PESAN_POLA.salahKeteraturan
+    );
+  }
+  return diagnosaPola(isian, c);
+}
+
+/* Jawaban baku soal: teks bilangan (1.300) atau id keteraturan. */
+function jawabSoalPola(s) {
+  var c = s.cek;
+  if (c.minta === 'keteraturan') return keteraturanSoalPola(c);
+  return formatNumber(nilaiSoalPola(c));
+}
+
+/* Langkah { cek } siap untuk buildLangkahRasio (seksi 68). */
+function siapkanLangkahPola(step) {
+  return Object.assign({}, step, { periksa: periksaSoalPola, angka: true });
+}
+
+/* ---------- Opsi pilihan ganda ---------- */
+
+var OPSI_KETERATURAN = {
+  tetap: {
+    label: 'Bertambah tetap — tambahannya selalu sama setiap tahap',
+    umpan: 'Hitung lagi tambahan dari tahap ke tahap: apakah benar-benar selalu sama?',
+  },
+  bertingkat: {
+    label: 'Bertambah bertingkat — tambahannya berubah secara teratur',
+    umpan:
+      'Hitung tambahan dari tahap ke tahap. Apakah tambahannya berubah dengan aturan yang sama, atau justru selalu sama?',
+  },
+  tidakTeratur: {
+    label: 'Tidak teratur — tambahannya berubah tanpa aturan',
+    umpan:
+      'Perhatikan lagi tambahan dari tahap ke tahap; ternyata ada aturan yang dapat kamu temukan.',
+  },
+  sama: {
+    label: 'Tidak bertambah — banyak bendanya sama di setiap tahap',
+    umpan: 'Banyak benda pada susunan ini berubah dari tahap ke tahap, jadi tidak selalu sama.',
+  },
+};
+
+var URUTAN_KETERATURAN = ['tetap', 'bertingkat', 'tidakTeratur', 'sama'];
+
+/*
+ * Opsi pilihan ganda soal pola: kunci (id 'baku') lalu pengecoh
+ * berdiagnosa — label unik, minimal 4 opsi. Urutan wajar; acak di app.
+ */
+function opsiSoalPola(s) {
+  var c = s.cek;
+  if (c.minta === 'keteraturan') {
+    var kunci = keteraturanSoalPola(c);
+    return [{ id: 'baku', label: OPSI_KETERATURAN[kunci].label, umpan: PESAN_POLA.benar }].concat(
+      URUTAN_KETERATURAN.filter(function (k) {
+        return k !== kunci;
+      }).map(function (k) {
+        return { id: k, label: OPSI_KETERATURAN[k].label, umpan: OPSI_KETERATURAN[k].umpan };
+      })
+    );
+  }
+  var out = [];
+  var dipakai = {};
+  var sat = s.satuan ? ' ' + s.satuan : '';
+  var tambah = function (id, nilai, umpan) {
+    if (!(nilai > 0) || Math.floor(nilai) !== nilai || out.length >= 4) return;
+    var label = formatNumber(nilai) + sat;
+    if (dipakai[label]) return;
+    dipakai[label] = true;
+    out.push({ id: id, label: label, umpan: umpan });
+  };
+  var baku = nilaiSoalPola(c);
+  tambah('baku', baku, PESAN_POLA.benar);
+  calonKeliruPola(c).forEach(function (g) {
+    tambah(g.kode, g.nilai, PESAN_POLA[g.kode]);
+  });
+  var U = fungsiSukuPola(c);
+  var d = U(2) - U(1);
+  [baku + d, baku + 1, baku - 1, baku * 2, baku + 2 * d, baku + 2, baku + 10].forEach(
+    function (x, i) {
+      tambah('salah' + (i + 1), x, PESAN_POLA.salah);
+    }
+  );
+  return out;
+}
+
+/* ---------- UI: gambar susunan (SVG) ---------- */
+
+/* Atribut penanda benda yang dihitung; kelas is-baru/is-lama hanya saat disorot. */
+function atributBendaPola(cls, baru, sorot) {
+  return (
+    ' class="' +
+    cls +
+    (sorot ? (baru ? ' is-baru' : ' is-lama') : '') +
+    '" data-benda="1"' +
+    (baru ? ' data-baru="1"' : '')
+  );
+}
+
+function svgPola(benda, w, h, isi, label) {
+  return (
+    '<svg class="pola-svg pola-svg--' +
+    benda +
+    '" viewBox="0 0 ' +
+    w +
+    ' ' +
+    h +
+    '" width="' +
+    w +
+    '" height="' +
+    h +
+    '" role="img" aria-label="' +
+    esc(label) +
+    '">' +
+    isi +
+    '</svg>'
+  );
+}
+
+/* Batang korek api dari (x1, y1) ke (x2, y2); kepala korek di ujung kedua. */
+function batangKorekPola(b, baru, sorot) {
+  var dx = b.x2 - b.x1;
+  var dy = b.y2 - b.y1;
+  var pj = Math.sqrt(dx * dx + dy * dy);
+  var ux = dx / pj;
+  var uy = dy / pj;
+  var sela = 4;
+  var x1 = b.x1 + ux * sela;
+  var y1 = b.y1 + uy * sela;
+  var x2 = b.x2 - ux * sela;
+  var y2 = b.y2 - uy * sela;
+  var r = function (v) {
+    return Math.round(v * 10) / 10;
+  };
+  return (
+    '<g' +
+    atributBendaPola('pola-korek', baru, sorot) +
+    '>' +
+    '<line class="pola-korek__batang" x1="' +
+    r(x1) +
+    '" y1="' +
+    r(y1) +
+    '" x2="' +
+    r(x2) +
+    '" y2="' +
+    r(y2) +
+    '"/>' +
+    '<circle class="pola-korek__kepala" cx="' +
+    r(x2) +
+    '" cy="' +
+    r(y2) +
+    '" r="3.5"/>' +
+    '</g>'
+  );
+}
+
+/* Daftar batang { x1, y1, x2, y2, k } — k = indeks bagian (persegi/segitiga). */
+function batangSusunanKorek(jenis, n) {
+  var L = 40;
+  var out = [];
+  if (jenis === 'korekPersegi') {
+    out.push({ x1: 0, y1: L, x2: 0, y2: 0, k: 0 });
+    for (var i = 0; i < n; i++) {
+      out.push({ x1: i * L, y1: 0, x2: (i + 1) * L, y2: 0, k: i });
+      out.push({ x1: i * L, y1: L, x2: (i + 1) * L, y2: L, k: i });
+      out.push({ x1: (i + 1) * L, y1: L, x2: (i + 1) * L, y2: 0, k: i });
+    }
+    return out;
+  }
+  /* korekSegitiga: titik bawah B_j = (jL, h), titik atas T_j = (jL + L/2, 0). */
+  var h = Math.round(L * 0.866 * 10) / 10;
+  var B = function (j) {
+    return { x: j * L, y: h };
+  };
+  var T = function (j) {
+    return { x: j * L + L / 2, y: 0 };
+  };
+  var garis = function (p, q, k) {
+    return { x1: p.x, y1: p.y, x2: q.x, y2: q.y, k: k };
+  };
+  out.push(garis(B(0), T(0), 0));
+  for (var t = 1; t <= n; t++) {
+    if (t % 2 === 1) {
+      var a = (t - 1) / 2;
+      out.push(garis(B(a), B(a + 1), t - 1));
+      out.push(garis(B(a + 1), T(a), t - 1));
+    } else {
+      var b = (t - 2) / 2;
+      out.push(garis(T(b), T(b + 1), t - 1));
+      out.push(garis(B(b + 1), T(b + 1), t - 1));
+    }
+  }
+  return out;
+}
+
+function susunanKorekPola(jenis, n, sorot) {
+  var pad = 10;
+  var batang = batangSusunanKorek(jenis, n);
+  var maksX = 0;
+  var maksY = 0;
+  batang.forEach(function (b) {
+    maksX = Math.max(maksX, b.x1, b.x2);
+    maksY = Math.max(maksY, b.y1, b.y2);
+  });
+  var isi = batang
+    .map(function (b) {
+      return batangKorekPola(
+        { x1: b.x1 + pad, y1: b.y1 + pad, x2: b.x2 + pad, y2: b.y2 + pad },
+        b.k === n - 1,
+        sorot
+      );
+    })
+    .join('');
+  return { w: Math.ceil(maksX + 2 * pad), h: Math.ceil(maksY + 2 * pad), isi: isi };
+}
+
+/* Petak ubin { c, r, baru } — r dihitung dari atas. */
+function petakSusunanUbin(jenis, n) {
+  var out = [];
+  var i;
+  if (jenis === 'ubinPersegi') {
+    for (var r = 0; r < n; r++) {
+      for (var c = 0; c < n; c++) out.push({ c: c, r: r, baru: r === n - 1 || c === n - 1 });
+    }
+  } else if (jenis === 'ubinL') {
+    /* Sudut L di kiri bawah; lengan tumbuh ke atas dan ke kanan. */
+    out.push({ c: 0, r: n - 1, baru: n === 1 });
+    for (i = 1; i < n; i++) {
+      out.push({ c: 0, r: n - 1 - i, baru: i === n - 1 });
+      out.push({ c: i, r: n - 1, baru: i === n - 1 });
+    }
+  } else {
+    /* ubinTangga: kolom ke-c setinggi c + 1, rata bawah. */
+    for (var k = 0; k < n; k++) {
+      for (i = 0; i <= k; i++) out.push({ c: k, r: n - 1 - i, baru: k === n - 1 });
+    }
+  }
+  return out;
+}
+
+function susunanUbinPola(jenis, n, sorot) {
+  var s = 26;
+  var pad = 6;
+  var petak = petakSusunanUbin(jenis, n);
+  var isi = petak
+    .map(function (p) {
+      return (
+        '<rect' +
+        atributBendaPola('pola-ubin', p.baru, sorot) +
+        ' x="' +
+        (pad + p.c * s) +
+        '" y="' +
+        (pad + p.r * s) +
+        '" width="' +
+        s +
+        '" height="' +
+        s +
+        '" rx="2"/>'
+      );
+    })
+    .join('');
+  return { w: n * s + 2 * pad, h: n * s + 2 * pad, isi: isi };
+}
+
+/* Satu kursi (dudukan + sandaran di sisi yang menjauhi meja). */
+function kursiPola(x, y, sisi, baru, sorot) {
+  var u = 16;
+  var sandaran = {
+    atas: [x, y, u, 4],
+    bawah: [x, y + u - 4, u, 4],
+    kiri: [x, y, 4, u],
+    kanan: [x + u - 4, y, 4, u],
+  }[sisi];
+  return (
+    '<g' +
+    atributBendaPola('pola-kursi', baru, sorot) +
+    '>' +
+    '<rect class="pola-kursi__dudukan" x="' +
+    x +
+    '" y="' +
+    y +
+    '" width="' +
+    u +
+    '" height="' +
+    u +
+    '" rx="3"/>' +
+    '<rect class="pola-kursi__sandaran" x="' +
+    sandaran[0] +
+    '" y="' +
+    sandaran[1] +
+    '" width="' +
+    sandaran[2] +
+    '" height="' +
+    sandaran[3] +
+    '" rx="1"/>' +
+    '</g>'
+  );
+}
+
+function mejaPola(x, y, w, h) {
+  return (
+    '<rect class="pola-meja" x="' +
+    x +
+    '" y="' +
+    y +
+    '" width="' +
+    w +
+    '" height="' +
+    h +
+    '" rx="2"/>'
+  );
+}
+
+function susunanKursiPola(jenis, n, sorot) {
+  var W = 44;
+  var H = 32;
+  var u = 16;
+  var g = 4;
+  var pad = 4;
+  var y0 = pad + u + g;
+  var meja = '';
+  var kursi = '';
+  var lebar;
+  if (jenis === 'kursiDeret') {
+    var x0 = pad + u + g;
+    for (var i = 0; i < n; i++) {
+      var x = x0 + i * W;
+      var baruIni = i === n - 1;
+      meja += mejaPola(x, y0, W, H);
+      kursi += kursiPola(x + (W - u) / 2, y0 - g - u, 'atas', baruIni, sorot);
+      kursi += kursiPola(x + (W - u) / 2, y0 + H + g, 'bawah', baruIni, sorot);
+    }
+    kursi += kursiPola(pad, y0 + (H - u) / 2, 'kiri', n === 1, sorot);
+    kursi += kursiPola(x0 + n * W + g, y0 + (H - u) / 2, 'kanan', n === 1, sorot);
+    lebar = x0 + n * W + g + u + pad;
+  } else {
+    var blok = W + 2 * (u + g) + 12;
+    for (var j = 0; j < n; j++) {
+      var xm = pad + u + g + j * blok;
+      var baru = j === n - 1;
+      meja += mejaPola(xm, y0, W, H);
+      kursi += kursiPola(xm + (W - u) / 2, y0 - g - u, 'atas', baru, sorot);
+      kursi += kursiPola(xm + (W - u) / 2, y0 + H + g, 'bawah', baru, sorot);
+      kursi += kursiPola(xm - g - u, y0 + (H - u) / 2, 'kiri', baru, sorot);
+      kursi += kursiPola(xm + W + g, y0 + (H - u) / 2, 'kanan', baru, sorot);
+    }
+    lebar = n * blok - 12 + 2 * pad;
+  }
+  return { w: lebar, h: y0 + H + g + u + pad, isi: meja + kursi };
+}
+
+/*
+ * Gambar susunan jenis pada tahap n.
+ *   opts.sorotBaru  true → benda baru (dibanding tahap sebelumnya)
+ *                   diberi kelas is-baru, benda lama is-lama
+ * Setiap benda yang dihitung bertanda data-benda="1"; benda baru juga
+ * data-baru="1" (meja tidak dihitung).
+ */
+function buildSusunanPola(jenis, n, opts) {
+  opts = opts || {};
+  var P = POLA_BENDA[jenis];
+  if (!P || !tahapValidPola(n)) return '';
+  var sorot = !!opts.sorotBaru;
+  var g;
+  if (P.benda === 'korek') g = susunanKorekPola(jenis, n, sorot);
+  else if (P.benda === 'ubin') g = susunanUbinPola(jenis, n, sorot);
+  else g = susunanKursiPola(jenis, n, sorot);
+  return svgPola(P.benda, g.w, g.h, g.isi, 'Tahap ' + n + ': ' + P.deskripsi(n));
+}
+
+/*
+ * Tahap 1..k berdampingan dengan label "Tahap t".
+ *   opts.tanya      true → tambahkan kotak "?" untuk tahap k + 1
+ *   opts.sorotBaru  diteruskan ke buildSusunanPola
+ */
+function buildDeretSusunan(jenis, k, opts) {
+  opts = opts || {};
+  var html = '';
+  for (var t = 1; t <= k; t++) {
+    html +=
+      '<figure class="pola-deret__tahap" role="listitem">' +
+      buildSusunanPola(jenis, t, { sorotBaru: opts.sorotBaru }) +
+      '<figcaption>Tahap ' +
+      t +
+      '</figcaption>' +
+      '</figure>';
+  }
+  if (opts.tanya) {
+    html +=
+      '<figure class="pola-deret__tahap pola-deret__tahap--tanya" role="listitem">' +
+      '<span class="pola-deret__tanya" aria-hidden="true">?</span>' +
+      '<figcaption>Tahap ' +
+      (k + 1) +
+      '<span class="sr-only"> belum digambar</span></figcaption>' +
+      '</figure>';
+  }
+  return (
+    '<div class="pola-deret" role="list" aria-label="' +
+    esc(POLA_BENDA[jenis].nama) +
+    '">' +
+    html +
+    '</div>'
+  );
+}
+
+/* ---------- UI: Lab Susun ---------- */
+
+/*
+ * cfg = { jenisList: [jenis], tahapCatat, tahapMaks }
+ * State { kunci, jenis, n, sorot, catat: { <jenis>: [makeCekStep()] } }:
+ * murid memilih susunan, menggeser tahap 1..tahapMaks, menyorot benda
+ * baru, lalu MENGHITUNG dan mencatat banyak benda tahap 1..tahapCatat.
+ */
+function ensureLabSusun(st, cfg) {
+  var kunci = [cfg.jenisList.join(','), cfg.tahapCatat, cfg.tahapMaks].join('|');
+  var rusak =
+    !st.catat ||
+    typeof st.catat !== 'object' ||
+    cfg.jenisList.indexOf(st.jenis) === -1 ||
+    !tahapValidPola(st.n) ||
+    st.n > cfg.tahapMaks;
+  if (st.kunci !== kunci || rusak) {
+    st.kunci = kunci;
+    st.jenis = cfg.jenisList[0];
+    st.n = 1;
+    st.sorot = false;
+    st.catat = {};
+    cfg.jenisList.forEach(function (j) {
+      st.catat[j] = [];
+      for (var i = 0; i < cfg.tahapCatat; i++) st.catat[j].push(makeCekStep());
+    });
+  }
+  return st;
+}
+
+/* Geser tahap yang digambar; true bila berubah. */
+function ubahTahapLabSusun(st, cfg, arah) {
+  var n = st.n + arah;
+  if (n < 1 || n > cfg.tahapMaks) return false;
+  st.n = n;
+  return true;
+}
+
+function pilihJenisLabSusun(st, cfg, jenis) {
+  if (cfg.jenisList.indexOf(jenis) === -1 || st.jenis === jenis) return false;
+  st.jenis = jenis;
+  st.n = 1;
+  return true;
+}
+
+/*
+ * Memeriksa catatan susunan `jenis` yang terisi dan belum benar.
+ * Mengembalikan { kosong, takTerbaca }.
+ */
+function catatLabSusun(st, cfg, jenis) {
+  var kosong = 0;
+  var takTerbaca = 0;
+  st.catat[jenis].forEach(function (c, i) {
+    if (c.done) return;
+    var r = diagnosaPola(c.input, { jenis: jenis, n: i + 1 });
+    if (r.kode === 'kosong') {
+      kosong += 1;
+      c.kode = null;
+      c.pesan = '';
+      return;
+    }
+    if (r.kode === 'format') takTerbaca += 1;
+    c.kode = r.kode;
+    c.pesan = r.pesan;
+    c.attempts += 1;
+    c.done = r.benar;
+  });
+  return { kosong: kosong, takTerbaca: takTerbaca };
+}
+
+function labSusunJenisLengkap(st, jenis) {
+  return st.catat[jenis].every(function (c) {
+    return c.done;
+  });
+}
+
+function labSusunLengkap(st, cfg) {
+  return cfg.jenisList.every(function (j) {
+    return labSusunJenisLengkap(st, j);
+  });
+}
+
+/* Data tercatat (benar) susunan `jenis`: tahap 1..tahapCatat. */
+function dataLabSusun(st, cfg, jenis) {
+  return barisanPola(jenis, cfg.tahapCatat);
+}
+
+function buildLabSusun(id, st, cfg) {
+  var P = POLA_BENDA[st.jenis];
+  var catat = st.catat[st.jenis];
+  var lengkap = labSusunJenisLengkap(st, st.jenis);
+
+  var tab =
+    '<div class="lab-susun__tab" role="group" aria-label="Pilih susunan benda">' +
+    cfg.jenisList
+      .map(function (j) {
+        var Q = POLA_BENDA[j];
+        var selesai = labSusunJenisLengkap(st, j);
+        return (
+          '<button type="button" class="lab-susun__tab-btn' +
+          (j === st.jenis ? ' is-aktif' : '') +
+          (selesai ? ' is-selesai' : '') +
+          '" data-susun-jenis="' +
+          j +
+          '" aria-pressed="' +
+          (j === st.jenis ? 'true' : 'false') +
+          '"><span aria-hidden="true">' +
+          IKON_BENDA_POLA[Q.benda] +
+          '</span> ' +
+          esc(Q.nama) +
+          (selesai ? ' <span aria-label="selesai">✓</span>' : '') +
+          '</button>'
+        );
+      })
+      .join('') +
+    '</div>';
+
+  var kontrol =
+    '<div class="lab-susun__kontrol">' +
+    buildFinStepper(id + 'Tahap', 'Tahap', String(st.n), {
+      minDis: st.n <= 1,
+      maxDis: st.n >= cfg.tahapMaks,
+    }) +
+    '<label class="lab-susun__sorot"><input type="checkbox" id="' +
+    id +
+    'Sorot"' +
+    (st.sorot ? ' checked' : '') +
+    '> Sorot benda yang baru ditambahkan</label>' +
+    '</div>';
+
+  var gambar =
+    '<figure class="lab-susun__gambar">' +
+    buildSusunanPola(st.jenis, st.n, { sorotBaru: st.sorot }) +
+    '<figcaption>Tahap ' +
+    st.n +
+    ' — hitung banyak ' +
+    P.satuan +
+    (P.benda === 'kursi' ? ' (mejanya tidak dihitung)' : '') +
+    (st.sorot ? '. Oranye = baru ditambahkan, pudar = sudah ada sebelumnya.' : '') +
+    '</figcaption>' +
+    '</figure>';
+
+  var baris = catat
+    .map(function (c, i) {
+      var salah = c.attempts > 0 && !!c.kode && c.kode !== 'benar';
+      return (
+        '<tr' +
+        (i + 1 === st.n ? ' class="is-aktif"' : '') +
+        '><th scope="row">Tahap ' +
+        (i + 1) +
+        '</th><td>' +
+        (c.done
+          ? '<span class="lab-susun__ok">✓ ' +
+            formatNumber(banyakBendaPola(st.jenis, i + 1)) +
+            '</span>'
+          : buildDlNumInput(id + 'In' + i, c.input, {
+              error: salah,
+              aria: 'Banyak ' + P.satuan + ' tahap ' + (i + 1),
+              placeholder: '?',
+            })) +
+        '</td></tr>'
+      );
+    })
+    .join('');
+
+  var umpan = catat
+    .map(function (c, i) {
+      if (c.done || !c.kode || c.kode === 'benar') return '';
+      return buildFeedbackBox(
+        'error',
+        '✗',
+        '<strong>Tahap ' + (i + 1) + ':</strong> ' + esc(c.pesan)
+      );
+    })
+    .join('');
+
+  var tabel =
+    '<div class="lab-susun__catat">' +
+    '<table class="data-table lab-susun__tabel">' +
+    '<caption>Catatan pengamatan: ' +
+    esc(P.nama) +
+    '</caption>' +
+    '<thead><tr><th scope="col">Tahap</th><th scope="col">Banyak ' +
+    P.satuan +
+    '</th></tr></thead>' +
+    '<tbody>' +
+    baris +
+    '</tbody></table>' +
+    (lengkap
+      ? buildFeedbackBox(
+          'success',
+          '✓',
+          'Catatan lengkap: <strong>' +
+            barisanPola(st.jenis, cfg.tahapCatat).map(formatNumber).join(', ') +
+            '</strong> ' +
+            P.satuan +
+            '.'
+        )
+      : '<div class="btn-group"><button type="button" class="btn btn--primary" id="' +
+        id +
+        'Check">Periksa catatan</button></div>') +
+    (umpan ? '<div class="lab-susun__umpan">' + umpan + '</div>' : '') +
+    '</div>';
+
+  return (
+    '<div class="lab-susun lab-susun--' +
+    P.benda +
+    '" id="' +
+    id +
+    '">' +
+    tab +
+    kontrol +
+    '<div class="lab-susun__isi">' +
+    gambar +
+    tabel +
+    '</div>' +
+    '</div>'
+  );
+}
+
+/*
+ * Memasang event Lab Susun. Isian disimpan saat diketik (tanpa render
+ * ulang); onChange dipanggil setelah pilih susunan, geser tahap, sorot,
+ * atau Periksa.
+ */
+function bindLabSusun(root, id, st, cfg, onChange) {
+  root.querySelectorAll('[data-susun-jenis]').forEach(function (tab) {
+    tab.addEventListener('click', function () {
+      if (pilihJenisLabSusun(st, cfg, tab.dataset.susunJenis)) onChange();
+    });
+  });
+  bindFinStepper(root, id + 'Tahap', function (arah) {
+    if (ubahTahapLabSusun(st, cfg, arah)) onChange();
+  });
+  var sorot = root.querySelector('#' + id + 'Sorot');
+  if (sorot) {
+    sorot.addEventListener('change', function () {
+      st.sorot = sorot.checked;
+      onChange();
+    });
+  }
+  var btn = root.querySelector('#' + id + 'Check');
+  st.catat[st.jenis].forEach(function (c, i) {
+    var inp = root.querySelector('#' + id + 'In' + i);
+    if (!inp) return;
+    inp.addEventListener('input', function () {
+      c.input = inp.value;
+    });
+    inp.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter' && btn) btn.click();
+    });
+  });
+  if (btn) {
+    btn.addEventListener('click', function () {
+      var r = catatLabSusun(st, cfg, st.jenis);
+      onChange();
+      if (r.takTerbaca) showNotice('Tulis banyak benda berupa bilangan bulat, mis. 7.');
+      else if (r.kosong) showNotice('Masih ada tahap yang belum kamu catat.');
+    });
+  }
 }
