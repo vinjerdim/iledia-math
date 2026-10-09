@@ -1,0 +1,163 @@
+/* =========================================================================
+   fase-d/mpi-4.1/styles.css
+   Pola pada Susunan Benda — Fase D
+
+   Hanya memuat gaya yang KHAS modul ini. Seluruh dasar design system
+   (panel, tombol, kotak umpan balik, pilihan ganda, pemilahan, pertanyaan
+   penuntun .quiz-item--guided, tabel .data-table, jembatan selisih
+   .bar-tracker, kartu barisan .seq-tiles, perbandingan dugaan .dugaan-row,
+   kartu ringkasan, navigasi tahap, modal) dan alat bersama pola susunan
+   benda (.pola-svg, .pola-deret*, .lab-susun*) berasal dari shared/base.css.
+   ========================================================================= */
+
+/* -------------------------------------------------------------------------
+   Label konteks soal
+   ------------------------------------------------------------------------- */
+
+.pola-konteks {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: 2px var(--space-2);
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.pola-konteks--korek {
+  background: var(--color-orange-soft);
+  color: var(--color-orange-strong);
+}
+
+.pola-konteks--ubin {
+  background: var(--color-blue-soft);
+  color: var(--color-blue-strong);
+}
+
+.pola-konteks--kursi {
+  background: var(--color-purple-soft);
+  color: var(--color-purple-strong);
+}
+
+.pola-konteks--lain {
+  background: var(--color-success-soft);
+  color: var(--color-success-strong);
+}
+
+/* -------------------------------------------------------------------------
+   Stimulasi — tiga kartu susunan
+   ------------------------------------------------------------------------- */
+
+.pola-kartu-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: var(--space-3);
+  margin-top: var(--space-4);
+}
+
+.pola-kartu {
+  min-width: 0;
+  padding: var(--space-4);
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+}
+
+.pola-kartu__judul {
+  margin: 0 0 var(--space-1);
+  font-size: 1rem;
+}
+
+.pola-kartu__teks {
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--color-ink-muted);
+}
+
+/* -------------------------------------------------------------------------
+   Lab Susun — tips & ringkasan data
+   ------------------------------------------------------------------------- */
+
+.pola-tips {
+  margin-bottom: var(--space-3);
+}
+
+.pola-tips summary {
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.pola-tips ul {
+  margin: var(--space-2) 0 0;
+  padding-left: var(--space-5);
+}
+
+.pola-ringkas-wrap {
+  margin-top: var(--space-3);
+  overflow-x: auto;
+}
+
+.pola-ringkas td {
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+/* -------------------------------------------------------------------------
+   Olah data — gambar bukti tahap 5
+   ------------------------------------------------------------------------- */
+
+.pola-bukti {
+  margin: 0 0 var(--space-3);
+  padding: var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-bg);
+}
+
+.pola-bukti figcaption {
+  margin-top: var(--space-2);
+  font-size: 0.85rem;
+  color: var(--color-ink-muted);
+  text-align: center;
+}
+
+/* -------------------------------------------------------------------------
+   Verifikasi — kotak hipotesis
+   ------------------------------------------------------------------------- */
+
+.pola-hipotesis {
+  margin-top: var(--space-4);
+  padding: var(--space-3) var(--space-4);
+  border: 1px dashed var(--color-border-strong);
+  border-radius: var(--radius-md);
+}
+
+.pola-hipotesis__label {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--color-ink-muted);
+}
+
+/* -------------------------------------------------------------------------
+   Tahap Selesai
+   ------------------------------------------------------------------------- */
+
+.pola-contoh-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: var(--space-3);
+  margin: var(--space-4) 0;
+}
+
+.pola-contoh {
+  min-width: 0;
+}
+
+.pola-contoh__barisan {
+  font-size: 1.1rem;
+  font-variant-numeric: tabular-nums;
+}
