@@ -14353,3 +14353,246 @@ button.akar-tile:disabled {
     flex: 1 1 calc(50% - var(--space-2));
   }
 }
+
+/* =========================================================================
+   69. Skala pada peta & denah (engine.js seksi 69, fase-d/mpi-3.3):
+   Lab Peta berpenggaris (.peta-skala), batang skala (.batang-skala),
+   Pembanding Skala (.banding-skala), dan Lab Denah (.denah-skala).
+   ========================================================================= */
+
+.peta-skala,
+.banding-skala,
+.denah-skala {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.peta-skala__kanvas,
+.banding-skala__kanvas,
+.denah-skala__kanvas {
+  max-width: 100%;
+  overflow-x: auto;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+}
+
+.peta-skala__kanvas svg,
+.banding-skala__kanvas svg,
+.denah-skala__kanvas svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.peta-skala__kanvas,
+.denah-skala__kanvas {
+  max-width: 640px;
+}
+
+.peta-skala__latar {
+  fill: #f1f6ec;
+}
+
+.peta-skala__petak line,
+.denah-skala__petak line {
+  stroke: var(--color-border);
+  stroke-width: 1;
+}
+
+.peta-skala__jalan {
+  stroke: #c9b48a;
+  stroke-width: 9;
+  stroke-linecap: round;
+}
+
+.peta-skala__jalan.is-sorot {
+  stroke: var(--color-orange);
+}
+
+.peta-skala__jalan.is-aktif {
+  stroke: var(--color-primary);
+}
+
+.peta-skala__tempat circle {
+  fill: var(--color-surface);
+  stroke: var(--color-ink);
+  stroke-width: 2;
+}
+
+.peta-skala__ikon {
+  font-size: 16px;
+}
+
+.peta-skala__nama {
+  font-family: var(--font-display);
+  font-size: 14px;
+  font-weight: 700;
+  fill: var(--color-ink);
+  paint-order: stroke;
+  stroke: var(--color-surface);
+  stroke-width: 4px;
+  stroke-linejoin: round;
+}
+
+.peta-skala__penggaris line {
+  stroke: var(--color-warning-strong);
+  stroke-width: 2;
+}
+
+.peta-skala__penggaris .peta-skala__penggaris-dasar {
+  stroke-width: 3;
+}
+
+.peta-skala__ukur {
+  font-family: var(--font-mono);
+  font-size: 16px;
+  font-weight: 700;
+  fill: var(--color-warning-strong);
+  paint-order: stroke;
+  stroke: var(--color-surface);
+  stroke-width: 5px;
+  stroke-linejoin: round;
+}
+
+.peta-skala__legenda {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2) var(--space-4);
+  font-size: 0.88rem;
+}
+
+.peta-skala__skala {
+  padding: 2px var(--space-3);
+  border-radius: 999px;
+  background: var(--color-ink);
+  color: var(--color-surface);
+  font-family: var(--font-mono);
+  font-weight: 700;
+}
+
+.peta-skala__petak-info {
+  color: var(--color-ink-muted);
+}
+
+.peta-skala__tombol,
+.banding-skala__tombol {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.peta-skala__aksi,
+.banding-skala__aksi {
+  min-height: 44px;
+}
+
+.peta-skala__status,
+.banding-skala__status,
+.denah-skala__status {
+  margin: 0;
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-md);
+  background: var(--color-primary-soft);
+  line-height: 1.7;
+}
+
+.batang-skala {
+  display: block;
+  width: 220px;
+  max-width: 100%;
+  height: auto;
+}
+
+.batang-skala__ruas {
+  fill: var(--color-ink);
+  stroke: var(--color-ink);
+  stroke-width: 1;
+}
+
+.batang-skala__ruas--terang {
+  fill: var(--color-surface);
+}
+
+.batang-skala__teks {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  fill: var(--color-ink);
+}
+
+.banding-skala__info {
+  margin: 0;
+}
+
+.banding-skala__kanvas {
+  max-width: 420px;
+}
+
+.banding-skala__kertas {
+  fill: var(--color-surface);
+  stroke: var(--color-border-strong);
+  stroke-width: 2;
+  stroke-dasharray: 6 4;
+}
+
+.banding-skala__gambar {
+  fill: var(--color-success-soft);
+  stroke: var(--color-success);
+  stroke-width: 2;
+}
+
+.banding-skala__gambar.is-luber {
+  fill: var(--color-error-soft);
+  stroke: var(--color-error);
+}
+
+.denah-skala__kontrol {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+}
+
+.denah-skala__ruang {
+  fill: #fbf8f1;
+  stroke: var(--color-ink);
+  stroke-width: 3;
+}
+
+.denah-skala__benda {
+  fill: var(--color-blue-soft);
+  stroke: var(--color-blue);
+  stroke-width: 2;
+}
+
+.denah-skala.is-pas .denah-skala__benda {
+  fill: var(--color-success-soft);
+  stroke: var(--color-success);
+}
+
+.denah-skala.is-pas .denah-skala__status {
+  background: var(--color-success-soft);
+}
+
+.denah-skala__label {
+  display: inline-block;
+  margin-right: var(--space-1);
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--color-primary-strong);
+}
+
+@media (max-width: 480px) {
+  .peta-skala__aksi,
+  .banding-skala__aksi {
+    flex: 1 1 calc(50% - var(--space-2));
+  }
+
+  /* Label peta tetap terbaca: kanvas digulir di dalam panel. */
+  .peta-skala__kanvas svg {
+    min-width: 460px;
+  }
+}

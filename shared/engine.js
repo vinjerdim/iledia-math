@@ -214,6 +214,11 @@
        besaran bersatuan berbeda, diagnosa tanpa konversi/salah faktor,
        membagi menurut rasio, suku hilang bersatuan, isian & langkah
        rasio bersama, Lab Samakan Satuan)
+   69. Skala pada peta & denah (jarak sebenarnya ↔ jarak pada peta,
+       menentukan skala 1 : n, diagnosa tanpa konversi/salah faktor/
+       operasi terbalik/satu cm saja/skala terbalik, opsi berpengecoh,
+       langkah isian lewat buildLangkahRasio, Lab Peta berpenggaris,
+       batang skala, Pembanding Skala, Lab Denah)
    ============================================================ */
 
 /* ============================================================
@@ -42194,10 +42199,12 @@ function isianTakTerbacaRasio(kode) {
 
 /*
  * Memeriksa langkah { cek } dan menyimpan hasil ke st (makeCekStep).
- * Isian tak terbaca tidak mengubah st.
+ * step.periksa (opsional) menggantikan periksaSoalRasioSatuan, mis.
+ * periksaSoalSkala (seksi 69). Isian tak terbaca tidak mengubah st.
  */
 function periksaLangkahRasio(st, step, input) {
-  var r = periksaSoalRasioSatuan(input, { cek: step.cek });
+  var periksa = step.periksa || periksaSoalRasioSatuan;
+  var r = periksa(input, { cek: step.cek });
   if (isianTakTerbacaRasio(r.kode)) return r;
   st.input = String(input || '').trim();
   st.kode = r.kode;
@@ -42209,11 +42216,13 @@ function periksaLangkahRasio(st, step, input) {
 
 /*
  * Satu langkah isian rasio/angka berdiagnosa.
- *   step  { label (HTML), cek, hints, temuan (HTML), satuan, placeholder }
+ *   step  { label (HTML), cek, hints, temuan (HTML), satuan, placeholder,
+ *           angka, periksa } — angka (opsional) memaksa isian berupa satu
+ *           bilangan; bila tidak ada, ditentukan dari jenis cek
  *   num   nomor langkah opsional
  */
 function buildLangkahRasio(id, st, step, num) {
-  var angka = jenisAngkaRasio(step.cek.jenis);
+  var angka = typeof step.angka === 'boolean' ? step.angka : jenisAngkaRasio(step.cek.jenis);
   var head =
     '<p class="dl-step__label">' +
     (num ? '<span class="dl-step__num">' + num + '</span>' : '') +
@@ -42451,6 +42460,1129 @@ function bindLabSamakanSatuan(root, id, st, cfg, onChange) {
   wrap.querySelectorAll('[data-ke]').forEach(function (btn) {
     btn.addEventListener('click', function () {
       if (pilihSatuanLab(st, cfg, btn.dataset.ke)) onChange();
+    });
+  });
+}
+
+/* ============================================================
+   69. SKALA PADA PETA & DENAH
+   Dipakai modul skala untuk menentukan jarak sebenarnya dan jarak pada
+   peta atau denah dalam masalah kontekstual (fase-d/mpi-3.3, Problem
+   Based Learning). Memakai ulang seksi 68 (SATUAN_RASIO,
+   konversiSatuanRasio, faktaKonversiRasio, parseAngkaRasio,
+   fmtAngkaRasio, hasilAngkaRasio, diagnosaKonversiRasio, langkah isian
+   buildLangkahRasio / bindLangkahRasio), seksi 67 (fmtRasio,
+   parseIsianRasio, rasioSetara, sederhanakanRasio) dan seksi 66
+   (buildFinStepper, bindFinStepper). Isinya:
+     • jarakSebenarnyaSkala, jarakPetaSkala, penyebutSkala — hitungan
+       eksak, termasuk desimal; fmtSkalaPeta ("1 : 25.000"),
+       parseIsianSkala, satuanBacaSkala;
+     • diagnosa miskonsepsi: diagnosaJarakSebenarnya (tanpa konversi,
+       salah faktor, satu cm saja, dibagi), diagnosaJarakPeta (tanpa
+       konversi, salah faktor, dikali), diagnosaSkalaPeta (belum 1 : n,
+       terbalik, tanpa konversi, salah faktor) + PESAN_SKALA;
+     • periksaSoalSkala / jawabSoalSkala / satuanSoalSkala untuk cek
+       berjenis 'asli', 'peta', 'skala', dan 'konversi' (seksi 68);
+     • opsiSoalSkala — opsi pilihan ganda berpengecoh (urutan wajar;
+       app.js yang mengacak);
+     • siapkanLangkahSkala — langkah { cek } siap untuk
+       buildLangkahRasio (pemeriksa skala + jenis isian);
+     • Lab Peta berpenggaris: panjangJalanPeta, panjangRutePeta,
+       ensurePetaSkalaState, pilihJalanPeta, buildPetaSkala /
+       bindPetaSkala (juga mode statis dengan rute disorot);
+     • buildBatangSkala — skala garis/batang;
+     • Pembanding Skala: ukuranGambarSkala, ensurePembandingState,
+       pilihSkalaBanding, semuaSkalaDicoba, buildPembandingSkala /
+       bindPembandingSkala;
+     • Lab Denah: ensureDenahSkalaState, ubahDenahSkala, denahSkalaPas,
+       buildDenahSkala / bindDenahSkala.
+   Gaya .peta-skala*, .batang-skala*, .banding-skala*, .denah-skala* ada
+   di shared/base.css.
+   ============================================================ */
+
+/* ---------- Hitungan skala ---------- */
+
+/* Jarak sebenarnya = jarak peta × penyebut, dinyatakan dalam satHasil. */
+function jarakSebenarnyaSkala(jPeta, satPeta, penyebut, satHasil) {
+  return konversiSatuanRasio(rapiRasio(jPeta * penyebut), satPeta, satHasil || satPeta);
+}
+
+/* Jarak pada peta = jarak sebenarnya (dalam satHasil) : penyebut. */
+function jarakPetaSkala(jAsli, satAsli, penyebut, satHasil) {
+  return rapiRasio(konversiSatuanRasio(jAsli, satAsli, satHasil) / penyebut);
+}
+
+/* Penyebut skala 1 : n dari pasangan jarak peta dan jarak sebenarnya. */
+function penyebutSkala(jPeta, satPeta, jAsli, satAsli) {
+  return rapiRasio(konversiSatuanRasio(jAsli, satAsli, satPeta) / jPeta);
+}
+
+function fmtSkalaPeta(penyebut) {
+  return '1 : ' + fmtAngkaRasio(penyebut);
+}
+
+/* Isian skala "1 : 25.000" → { a, b, kode } (lihat parseIsianRasio). */
+function parseIsianSkala(str) {
+  return parseIsianRasio(str);
+}
+
+/* Satuan yang paling enak dibaca untuk n cm (1 cm pada peta mewakili n cm). */
+function satuanBacaSkala(n) {
+  if (n < 100) return 'cm';
+  if (n < 100000) return 'm';
+  return 'km';
+}
+
+/* ---------- Diagnosa ---------- */
+
+var PESAN_SKALA = {
+  kosong: 'Isi jawabanmu lebih dulu.',
+  format: 'Tulis skala dengan bentuk 1 : n, mis. 1 : 25.000.',
+  nol: 'Suku skala tidak boleh nol.',
+  benarAsli: 'Tepat! Jarak pada peta dikali penyebut skala, lalu satuannya diubah.',
+  benarPeta: 'Tepat! Jarak sebenarnya diubah ke satuan peta, lalu dibagi penyebut skala.',
+  benarSkala:
+    'Tepat! Satuannya disamakan, lalu jarak peta : jarak sebenarnya disederhanakan menjadi 1 : n.',
+  satuCm:
+    'Itu jarak sebenarnya untuk 1 cm saja. Kalikan dengan panjang yang terukur pada peta atau denah.',
+  dibagi:
+    'Jarak sebenarnya jauh lebih panjang daripada jarak pada peta, jadi jarak peta harus DIKALI penyebut skala, bukan dibagi.',
+  dikali:
+    'Jarak pada peta jauh lebih pendek daripada jarak sebenarnya, jadi jarak sebenarnya harus DIBAGI penyebut skala, bukan dikali.',
+  belumSatu:
+    'Rasionya sudah setara, tetapi skala ditulis dengan suku pertama 1. Bagi kedua suku dengan suku pertama.',
+  terbalik:
+    'Sukunya tertukar. Skala ditulis jarak pada peta : jarak sebenarnya, jadi bentuknya 1 : n.',
+  tanpaKonversiSkala:
+    'Satuannya belum disamakan. Ubah jarak sebenarnya ke satuan jarak peta (cm) sebelum membandingkan.',
+  salahFaktorSkala:
+    'Satuannya sudah diubah, tetapi faktor konversinya keliru. Ingat: 1 km = 1.000 m = 100.000 cm dan 1 m = 100 cm.',
+};
+
+function samaSkala(v, x) {
+  return Math.abs(v - x) <= 1e-9 * Math.max(1, Math.abs(x));
+}
+
+/* Pengali konversi yang keliru: pangkat 10 lain selain f. */
+function faktorKeliruSkala(f) {
+  return [10, 100, 1000, 10000, 100000, 1000000].filter(function (x) {
+    return x !== f;
+  });
+}
+
+/* Faktor pengali besar (≥ 1) antara dua satuan, mis. km ↔ cm → 100.000. */
+function faktorBesarSkala(satA, satB) {
+  var f = faktorSatuanRasio(satA, satB);
+  return f >= 1 ? f : faktorSatuanRasio(satB, satA);
+}
+
+/*
+ * Ubah nilai dari satuan `dari` ke `ke` memakai faktor besar `w`
+ * (arah kali/bagi mengikuti urutan satuan).
+ */
+function ubahDenganFaktor(nilai, dari, ke, w) {
+  var naik = satuanRasio(dari).nilai >= satuanRasio(ke).nilai;
+  return rapiRasio(naik ? nilai * w : nilai / w);
+}
+
+/* Diagnosa c = { jPeta, satPeta, penyebut, satJawab } — jarak sebenarnya. */
+function diagnosaJarakSebenarnya(isian, c) {
+  var p = parseAngkaRasio(isian);
+  var baca = cekBacaAngkaRasio(p);
+  if (baca) return baca;
+  var v = p.nilai;
+  var dalamPeta = rapiRasio(c.jPeta * c.penyebut);
+  var beda = c.satPeta !== c.satJawab;
+  var fakta = beda ? faktaKonversiRasio(c.satPeta, c.satJawab) : '';
+  if (samaSkala(v, jarakSebenarnyaSkala(c.jPeta, c.satPeta, c.penyebut, c.satJawab))) {
+    return hasilAngkaRasio('benar', PESAN_SKALA.benarAsli);
+  }
+  if (beda && samaSkala(v, dalamPeta)) {
+    return hasilAngkaRasio(
+      'tanpaKonversi',
+      'Hasil kalinya masih dalam ' +
+        c.satPeta +
+        '. Yang ditanya dalam ' +
+        c.satJawab +
+        ' — ingat ' +
+        fakta +
+        '.'
+    );
+  }
+  if (c.jPeta !== 1 && samaSkala(v, jarakSebenarnyaSkala(1, c.satPeta, c.penyebut, c.satJawab))) {
+    return hasilAngkaRasio('satuCm', PESAN_SKALA.satuCm);
+  }
+  if (beda) {
+    var benarW = faktorBesarSkala(c.satPeta, c.satJawab);
+    var keliru = faktorKeliruSkala(benarW).some(function (w) {
+      return samaSkala(v, ubahDenganFaktor(dalamPeta, c.satPeta, c.satJawab, w));
+    });
+    if (keliru) {
+      return hasilAngkaRasio('salahFaktor', 'Faktor konversinya keliru. Ingat: ' + fakta + '.');
+    }
+  }
+  var bagi = [rapiRasio(c.jPeta / c.penyebut), rapiRasio(c.penyebut / c.jPeta)];
+  var dibagi = bagi.some(function (x) {
+    return samaSkala(v, x) || samaSkala(v, konversiSatuanRasio(x, c.satPeta, c.satJawab));
+  });
+  if (dibagi) return hasilAngkaRasio('dibagi', PESAN_SKALA.dibagi);
+  return hasilAngkaRasio(
+    'salah',
+    'Belum tepat. Kalikan jarak pada peta dengan penyebut skala, lalu ubah ke ' + c.satJawab + '.'
+  );
+}
+
+/* Diagnosa c = { jAsli, satAsli, penyebut, satJawab } — jarak pada peta. */
+function diagnosaJarakPeta(isian, c) {
+  var p = parseAngkaRasio(isian);
+  var baca = cekBacaAngkaRasio(p);
+  if (baca) return baca;
+  var v = p.nilai;
+  var beda = c.satAsli !== c.satJawab;
+  var fakta = beda ? faktaKonversiRasio(c.satAsli, c.satJawab) : '';
+  var asliK = konversiSatuanRasio(c.jAsli, c.satAsli, c.satJawab);
+  if (samaSkala(v, jarakPetaSkala(c.jAsli, c.satAsli, c.penyebut, c.satJawab))) {
+    return hasilAngkaRasio('benar', PESAN_SKALA.benarPeta);
+  }
+  if (beda && samaSkala(v, rapiRasio(c.jAsli / c.penyebut))) {
+    return hasilAngkaRasio(
+      'tanpaKonversi',
+      'Jarak sebenarnya masih dalam ' +
+        c.satAsli +
+        '. Ubah dulu ke ' +
+        c.satJawab +
+        ' (' +
+        fakta +
+        '), baru dibagi penyebut skala.'
+    );
+  }
+  if (
+    samaSkala(v, rapiRasio(asliK * c.penyebut)) ||
+    samaSkala(v, rapiRasio(c.jAsli * c.penyebut))
+  ) {
+    return hasilAngkaRasio('dikali', PESAN_SKALA.dikali);
+  }
+  if (beda) {
+    var benarW = faktorBesarSkala(c.satAsli, c.satJawab);
+    var keliru = faktorKeliruSkala(benarW).some(function (w) {
+      return samaSkala(
+        v,
+        rapiRasio(ubahDenganFaktor(c.jAsli, c.satAsli, c.satJawab, w) / c.penyebut)
+      );
+    });
+    if (keliru) {
+      return hasilAngkaRasio('salahFaktor', 'Faktor konversinya keliru. Ingat: ' + fakta + '.');
+    }
+  }
+  return hasilAngkaRasio(
+    'salah',
+    'Belum tepat. Ubah jarak sebenarnya ke ' + c.satJawab + ', lalu bagi dengan penyebut skala.'
+  );
+}
+
+function hasilSkala(kode, pesan) {
+  return { kode: kode, benar: kode === 'benar', pesan: pesan };
+}
+
+/* Pengecoh skala { a, b, kode } untuk c = { jPeta, satPeta, jAsli, satAsli }. */
+function pengecohSkalaPeta(c) {
+  var n = penyebutSkala(c.jPeta, c.satPeta, c.jAsli, c.satAsli);
+  var out = [{ a: n, b: 1, kode: 'terbalik' }];
+  if (c.satPeta !== c.satAsli) {
+    var tanpa = sukuBulatRasio(c.jPeta, c.jAsli);
+    out.push({ a: tanpa.a, b: tanpa.b, kode: 'tanpaKonversi' });
+    var benarW = faktorBesarSkala(c.satAsli, c.satPeta);
+    faktorKeliruSkala(benarW).forEach(function (w) {
+      var s = sukuBulatRasio(c.jPeta, ubahDenganFaktor(c.jAsli, c.satAsli, c.satPeta, w));
+      out.push({ a: s.a, b: s.b, kode: 'salahFaktor' });
+    });
+  }
+  return out;
+}
+
+/* Diagnosa c = { jPeta, satPeta, jAsli, satAsli } — menentukan skala 1 : n. */
+function diagnosaSkalaPeta(isian, c) {
+  var p = parseIsianSkala(isian);
+  if (p.kode !== 'ok') return hasilSkala(p.kode, PESAN_SKALA[p.kode]);
+  var n = penyebutSkala(c.jPeta, c.satPeta, c.jAsli, c.satAsli);
+  if (rasioSetara(p.a, p.b, 1, n)) {
+    return p.a === 1
+      ? hasilSkala('benar', PESAN_SKALA.benarSkala)
+      : hasilSkala('belumSatu', PESAN_SKALA.belumSatu);
+  }
+  var pengecoh = pengecohSkalaPeta(c);
+  for (var i = 0; i < pengecoh.length; i++) {
+    var g = pengecoh[i];
+    if (rasioSetara(p.a, p.b, g.a, g.b)) {
+      var pesan = PESAN_SKALA[g.kode] || PESAN_SKALA[g.kode + 'Skala'];
+      return hasilSkala(g.kode, pesan);
+    }
+  }
+  return hasilSkala(
+    'salah',
+    'Belum tepat. Ubah jarak sebenarnya ke ' +
+      c.satPeta +
+      ', tulis jarak peta : jarak sebenarnya, lalu sederhanakan menjadi 1 : n.'
+  );
+}
+
+/* ---------- Pemeriksa soal ---------- */
+
+/* Jenis cek yang jawabannya berupa satu bilangan (bukan skala). */
+function jenisAngkaSkala(jenis) {
+  return ['asli', 'peta', 'konversi'].indexOf(jenis) !== -1;
+}
+
+/* Memeriksa isian soal s = { cek } → { kode, benar, pesan }. */
+function periksaSoalSkala(isian, s) {
+  var c = s.cek;
+  if (c.jenis === 'asli') return diagnosaJarakSebenarnya(isian, c);
+  if (c.jenis === 'peta') return diagnosaJarakPeta(isian, c);
+  if (c.jenis === 'skala') return diagnosaSkalaPeta(isian, c);
+  return periksaSoalRasioSatuan(isian, s);
+}
+
+/* Nilai baku soal berjawaban bilangan. */
+function nilaiSoalSkala(c) {
+  if (c.jenis === 'asli') return jarakSebenarnyaSkala(c.jPeta, c.satPeta, c.penyebut, c.satJawab);
+  if (c.jenis === 'peta') return jarakPetaSkala(c.jAsli, c.satAsli, c.penyebut, c.satJawab);
+  return konversiSatuanRasio(c.nilai, c.dari, c.ke);
+}
+
+/* Jawaban baku soal (teks). */
+function jawabSoalSkala(s) {
+  var c = s.cek;
+  if (c.jenis === 'skala') {
+    return fmtSkalaPeta(penyebutSkala(c.jPeta, c.satPeta, c.jAsli, c.satAsli));
+  }
+  if (jenisAngkaSkala(c.jenis)) return fmtAngkaRasio(nilaiSoalSkala(c));
+  return jawabSoalRasioSatuan(s);
+}
+
+/* Satuan jawaban soal ('' untuk skala). */
+function satuanSoalSkala(s) {
+  var c = s.cek;
+  if (c.jenis === 'asli' || c.jenis === 'peta') return c.satJawab;
+  if (c.jenis === 'konversi') return c.ke;
+  return '';
+}
+
+/* Langkah { cek } siap dipakai buildLangkahRasio / bindLangkahRasio. */
+function siapkanLangkahSkala(step) {
+  return Object.assign({}, step, {
+    periksa: periksaSoalSkala,
+    angka: jenisAngkaSkala(step.cek.jenis),
+  });
+}
+
+/* ---------- Opsi pilihan ganda ---------- */
+
+/* Nilai yang layak tampil sebagai opsi (tidak terlalu kecil/panjang). */
+function layakOpsiSkala(x) {
+  return x >= 0.001 && x < 1e12 && rapiRasio(x * 1000) % 1 === 0;
+}
+
+/* Mendahulukan kemunculan pertama setiap kode agar pengecoh beragam. */
+function ragamkanCalonSkala(calon) {
+  var awal = [];
+  var sisa = [];
+  var ada = {};
+  calon.forEach(function (g) {
+    if (ada[g.kode]) sisa.push(g);
+    else {
+      ada[g.kode] = true;
+      awal.push(g);
+    }
+  });
+  return awal.concat(sisa);
+}
+
+/* Calon pengecoh bilangan { nilai, kode } untuk cek 'asli' / 'peta'. */
+function calonAngkaSkala(c) {
+  var calon = [];
+  if (c.jenis === 'asli') {
+    var dalamPeta = rapiRasio(c.jPeta * c.penyebut);
+    if (c.satPeta !== c.satJawab) calon.push({ nilai: dalamPeta, kode: 'tanpaKonversi' });
+    if (c.jPeta !== 1) {
+      calon.push({
+        nilai: jarakSebenarnyaSkala(1, c.satPeta, c.penyebut, c.satJawab),
+        kode: 'satuCm',
+      });
+    }
+    if (c.satPeta !== c.satJawab) {
+      faktorKeliruSkala(faktorBesarSkala(c.satPeta, c.satJawab)).forEach(function (w) {
+        calon.push({
+          nilai: ubahDenganFaktor(dalamPeta, c.satPeta, c.satJawab, w),
+          kode: 'salahFaktor',
+        });
+      });
+    }
+  } else {
+    var asliK = konversiSatuanRasio(c.jAsli, c.satAsli, c.satJawab);
+    if (c.satAsli !== c.satJawab) {
+      faktorKeliruSkala(faktorBesarSkala(c.satAsli, c.satJawab)).forEach(function (w) {
+        calon.push({
+          nilai: rapiRasio(ubahDenganFaktor(c.jAsli, c.satAsli, c.satJawab, w) / c.penyebut),
+          kode: 'salahFaktor',
+        });
+      });
+    }
+    calon.push({ nilai: rapiRasio(asliK * c.penyebut), kode: 'dikali' });
+    if (c.satAsli !== c.satJawab) {
+      calon.push({ nilai: rapiRasio(c.jAsli / c.penyebut), kode: 'tanpaKonversi' });
+    }
+  }
+  return calon;
+}
+
+var UMPAN_OPSI_SKALA = {
+  tanpaKonversi:
+    'Hasilnya belum diubah ke satuan yang ditanya. Samakan satuannya dengan faktor konversi yang tepat.',
+  satuCm: PESAN_SKALA.satuCm,
+  salahFaktor: PESAN_SKALA.salahFaktorSkala,
+  dikali: PESAN_SKALA.dikali,
+  terbalik: PESAN_SKALA.terbalik,
+};
+
+/*
+ * Opsi pilihan ganda soal skala: kunci (id 'baku') lalu pengecoh
+ * berdiagnosa — label unik, minimal 4 opsi. Urutan wajar; acak di app.
+ */
+function opsiSoalSkala(s) {
+  var c = s.cek;
+  var out = [];
+  var dipakai = {};
+  var tambah = function (id, label, umpan) {
+    if (dipakai[label]) return;
+    dipakai[label] = true;
+    out.push({ id: id, label: label, umpan: umpan });
+  };
+  var kodeKe = {};
+  var idUnik = function (kode) {
+    kodeKe[kode] = (kodeKe[kode] || 0) + 1;
+    return kodeKe[kode] === 1 ? kode : kode + kodeKe[kode];
+  };
+
+  if (c.jenis === 'skala') {
+    var n = penyebutSkala(c.jPeta, c.satPeta, c.jAsli, c.satAsli);
+    tambah('baku', fmtSkalaPeta(n), PESAN_SKALA.benarSkala);
+    pengecohSkalaPeta(c).forEach(function (g) {
+      if (out.length >= 4) return;
+      var sd = sederhanakanRasio(g.a, g.b);
+      if (rasioSetara(sd.a, sd.b, 1, n)) return;
+      var label = sd.a === 1 ? fmtSkalaPeta(sd.b) : fmtRasio(sd.a, sd.b);
+      if (!dipakai[label]) tambah(idUnik(g.kode), label, UMPAN_OPSI_SKALA[g.kode]);
+    });
+    [10, 0.1, 100].forEach(function (k) {
+      var m = rapiRasio(n * k);
+      if (out.length < 4 && m >= 1 && m % 1 === 0) {
+        var label = fmtSkalaPeta(m);
+        if (!dipakai[label]) tambah(idUnik('salahFaktor'), label, UMPAN_OPSI_SKALA.salahFaktor);
+      }
+    });
+    return out;
+  }
+
+  var sat = ' ' + satuanSoalSkala(s);
+  var baku = nilaiSoalSkala(c);
+  tambah(
+    'baku',
+    fmtAngkaRasio(baku) + sat,
+    PESAN_SKALA[c.jenis === 'peta' ? 'benarPeta' : 'benarAsli']
+  );
+  ragamkanCalonSkala(calonAngkaSkala(c)).forEach(function (g) {
+    if (out.length >= 4 || !layakOpsiSkala(g.nilai) || samaSkala(g.nilai, baku)) return;
+    var label = fmtAngkaRasio(g.nilai) + sat;
+    if (!dipakai[label]) tambah(idUnik(g.kode), label, UMPAN_OPSI_SKALA[g.kode]);
+  });
+  [10, 0.1, 100, 0.01].forEach(function (k) {
+    var x = rapiRasio(baku * k);
+    if (out.length < 4 && layakOpsiSkala(x)) {
+      var label = fmtAngkaRasio(x) + sat;
+      if (!dipakai[label]) tambah(idUnik('salahFaktor'), label, UMPAN_OPSI_SKALA.salahFaktor);
+    }
+  });
+  return out;
+}
+
+/* ---------- UI: batang skala ---------- */
+
+/*
+ * Skala garis/batang: `ruas` kotak selebar 1 cm berselang-seling dengan
+ * label jarak sebenarnya di setiap batas ruas.
+ *   opts.ruas   banyak ruas (default 4)
+ *   opts.px     piksel per cm (default 40)
+ */
+function buildBatangSkala(penyebut, opts) {
+  opts = opts || {};
+  var ruas = opts.ruas || 4;
+  var px = opts.px || 40;
+  var sat = satuanBacaSkala(penyebut);
+  var pad = 14;
+  var W = ruas * px + pad * 2 + 30;
+  var H = 46;
+  var kotak = '';
+  var label = '';
+  for (var i = 0; i <= ruas; i++) {
+    var x = pad + i * px;
+    if (i < ruas) {
+      kotak +=
+        '<rect x="' +
+        x +
+        '" y="8" width="' +
+        px +
+        '" height="10" class="batang-skala__ruas' +
+        (i % 2 ? ' batang-skala__ruas--terang' : '') +
+        '"/>';
+    }
+    var nilai = fmtAngkaRasio(konversiSatuanRasio(i * penyebut, 'cm', sat));
+    label +=
+      '<text x="' +
+      x +
+      '" y="36" text-anchor="' +
+      (i === ruas ? 'start' : 'middle') +
+      '" class="batang-skala__teks"' +
+      (i === ruas ? ' dx="-6"' : '') +
+      '>' +
+      (i === ruas ? nilai + ' ' + sat : nilai) +
+      '</text>';
+  }
+  var aria =
+    'Batang skala: 1 cm mewakili ' +
+    fmtAngkaRasio(konversiSatuanRasio(penyebut, 'cm', sat)) +
+    ' ' +
+    sat;
+  return (
+    '<svg class="batang-skala" viewBox="0 0 ' +
+    W +
+    ' ' +
+    H +
+    '" role="img" aria-label="' +
+    esc(aria) +
+    '">' +
+    kotak +
+    label +
+    '</svg>'
+  );
+}
+
+/* ---------- UI: Lab Peta berpenggaris ---------- */
+
+function tempatPetaById(cfg, id) {
+  for (var i = 0; i < cfg.tempat.length; i++) if (cfg.tempat[i].id === id) return cfg.tempat[i];
+  return null;
+}
+
+function jalanPetaById(cfg, id) {
+  for (var i = 0; i < cfg.jalan.length; i++) if (cfg.jalan[i].id === id) return cfg.jalan[i];
+  return null;
+}
+
+/* Panjang jalan (garis lurus antartempat) pada peta, cm satu desimal. */
+function panjangJalanPeta(cfg, jalanId) {
+  var j = jalanPetaById(cfg, jalanId);
+  if (!j) throw new Error('Jalan tidak dikenal: ' + jalanId);
+  var a = tempatPetaById(cfg, j.dari);
+  var b = tempatPetaById(cfg, j.ke);
+  return Math.round(Math.sqrt(Math.pow(a.x - b.x, 2) + Math.pow(a.y - b.y, 2)) * 10) / 10;
+}
+
+function panjangRutePeta(cfg, jalanIds) {
+  return rapiRasio(
+    jalanIds.reduce(function (s, id) {
+      return s + panjangJalanPeta(cfg, id);
+    }, 0)
+  );
+}
+
+function namaJalanPeta(cfg, j) {
+  return tempatPetaById(cfg, j.dari).nama + ' – ' + tempatPetaById(cfg, j.ke).nama;
+}
+
+/* State lab { jalan, diukur }. State rusak → disetel ulang. */
+function ensurePetaSkalaState(st, cfg) {
+  if (st.jalan !== null && !jalanPetaById(cfg, st.jalan)) st.jalan = null;
+  if (st.jalan === undefined) st.jalan = null;
+  if (!st.diukur || typeof st.diukur !== 'object' || Array.isArray(st.diukur)) st.diukur = {};
+  return st;
+}
+
+function pilihJalanPeta(st, cfg, jalanId) {
+  if (!jalanPetaById(cfg, jalanId)) return false;
+  st.jalan = jalanId;
+  st.diukur[jalanId] = true;
+  return true;
+}
+
+/* Penggaris di sepanjang jalan: garis dasar, tanda tiap 1 cm, label panjang. */
+function penggarisPetaSkala(a, b, panjang, px, pad) {
+  var x1 = pad + a.x * px;
+  var y1 = pad + a.y * px;
+  var x2 = pad + b.x * px;
+  var y2 = pad + b.y * px;
+  var dx = (x2 - x1) / (panjang * px);
+  var dy = (y2 - y1) / (panjang * px);
+  var nx = -dy;
+  var ny = dx;
+  var tanda = '';
+  for (var i = 0; i <= Math.floor(panjang); i++) {
+    var tx = x1 + dx * i * px;
+    var ty = y1 + dy * i * px;
+    tanda +=
+      '<line x1="' +
+      rapiRasio(tx) +
+      '" y1="' +
+      rapiRasio(ty) +
+      '" x2="' +
+      rapiRasio(tx + nx * 9) +
+      '" y2="' +
+      rapiRasio(ty + ny * 9) +
+      '"/>';
+  }
+  var mx = (x1 + x2) / 2 + nx * 22;
+  var my = (y1 + y2) / 2 + ny * 22;
+  return (
+    '<g class="peta-skala__penggaris">' +
+    '<line x1="' +
+    x1 +
+    '" y1="' +
+    y1 +
+    '" x2="' +
+    x2 +
+    '" y2="' +
+    y2 +
+    '" class="peta-skala__penggaris-dasar"/>' +
+    tanda +
+    '<text x="' +
+    rapiRasio(mx) +
+    '" y="' +
+    rapiRasio(my) +
+    '" text-anchor="middle" class="peta-skala__ukur">' +
+    esc(fmtAngkaRasio(panjang)) +
+    ' cm</text>' +
+    '</g>'
+  );
+}
+
+/*
+ * Lab Peta: peta berpetak 1 cm dengan tempat & jalan. Murid memilih
+ * jalan untuk diukur; penggaris muncul di sepanjang jalan beserta
+ * panjangnya dalam cm (jarak sebenarnya dihitung murid sendiri).
+ *   cfg  { penyebut, lebar, tinggi (cm), tempat: [{ id, nama, ikon, x, y }],
+ *          jalan: [{ id, dari, ke }] }
+ *   st   { jalan, diukur } — null untuk mode statis
+ *   opts.sorot  [id jalan] yang disorot (mis. rute pada poster)
+ */
+function buildPetaSkala(id, st, cfg, opts) {
+  opts = opts || {};
+  var interaktif = !!st;
+  var aktif = st ? st.jalan : null;
+  var sorot = opts.sorot || [];
+  var px = 40;
+  var pad = 20;
+  var W = cfg.lebar * px + pad * 2;
+  var H = cfg.tinggi * px + pad * 2;
+
+  var petak = '';
+  for (var gx = 0; gx <= cfg.lebar; gx++) {
+    petak +=
+      '<line x1="' +
+      (pad + gx * px) +
+      '" y1="' +
+      pad +
+      '" x2="' +
+      (pad + gx * px) +
+      '" y2="' +
+      (H - pad) +
+      '"/>';
+  }
+  for (var gy = 0; gy <= cfg.tinggi; gy++) {
+    petak +=
+      '<line x1="' +
+      pad +
+      '" y1="' +
+      (pad + gy * px) +
+      '" x2="' +
+      (W - pad) +
+      '" y2="' +
+      (pad + gy * px) +
+      '"/>';
+  }
+
+  var jalan = cfg.jalan
+    .map(function (j) {
+      var a = tempatPetaById(cfg, j.dari);
+      var b = tempatPetaById(cfg, j.ke);
+      var cls = 'peta-skala__jalan';
+      if (j.id === aktif) cls += ' is-aktif';
+      if (sorot.indexOf(j.id) !== -1) cls += ' is-sorot';
+      return (
+        '<line class="' +
+        cls +
+        '" x1="' +
+        (pad + a.x * px) +
+        '" y1="' +
+        (pad + a.y * px) +
+        '" x2="' +
+        (pad + b.x * px) +
+        '" y2="' +
+        (pad + b.y * px) +
+        '"/>'
+      );
+    })
+    .join('');
+
+  var tempat = cfg.tempat
+    .map(function (t) {
+      var x = pad + t.x * px;
+      var y = pad + t.y * px;
+      var bawah = t.y * px < 40;
+      return (
+        '<g class="peta-skala__tempat">' +
+        '<circle cx="' +
+        x +
+        '" cy="' +
+        y +
+        '" r="15"/>' +
+        '<text x="' +
+        x +
+        '" y="' +
+        (y + 6) +
+        '" text-anchor="middle" class="peta-skala__ikon">' +
+        t.ikon +
+        '</text>' +
+        '<text x="' +
+        x +
+        '" y="' +
+        (bawah ? y + 32 : y - 21) +
+        '" text-anchor="middle" class="peta-skala__nama">' +
+        esc(t.nama) +
+        '</text>' +
+        '</g>'
+      );
+    })
+    .join('');
+
+  var penggaris = '';
+  if (aktif) {
+    var ja = jalanPetaById(cfg, aktif);
+    penggaris = penggarisPetaSkala(
+      tempatPetaById(cfg, ja.dari),
+      tempatPetaById(cfg, ja.ke),
+      panjangJalanPeta(cfg, aktif),
+      px,
+      pad
+    );
+  }
+
+  var aria =
+    'Peta berpetak 1 cm dengan skala ' +
+    fmtSkalaPeta(cfg.penyebut) +
+    '. Tempat: ' +
+    cfg.tempat
+      .map(function (t) {
+        return t.nama;
+      })
+      .join(', ') +
+    '.';
+
+  var tombol = interaktif
+    ? '<div class="peta-skala__tombol" role="group" aria-label="Pilih jalan yang diukur">' +
+      cfg.jalan
+        .map(function (j) {
+          var on = j.id === aktif;
+          return (
+            '<button type="button" id="' +
+            esc(id + '-' + j.id) +
+            '" class="btn ' +
+            (on ? 'btn--primary' : 'btn--outline-primary') +
+            ' btn--small peta-skala__aksi" data-jalan="' +
+            esc(j.id) +
+            '" aria-pressed="' +
+            (on ? 'true' : 'false') +
+            '">📏 ' +
+            esc(namaJalanPeta(cfg, j)) +
+            (st.diukur[j.id] && !on ? ' ✓' : '') +
+            '</button>'
+          );
+        })
+        .join('') +
+      '</div>' +
+      '<p class="peta-skala__status" role="status">' +
+      (aktif
+        ? 'Panjang jalan <strong>' +
+          esc(namaJalanPeta(cfg, jalanPetaById(cfg, aktif))) +
+          '</strong> di peta: <strong>' +
+          esc(fmtAngkaRasio(panjangJalanPeta(cfg, aktif))) +
+          ' cm</strong>.'
+        : 'Pilih satu jalan untuk menempelkan penggaris.') +
+      '</p>'
+    : '';
+
+  return (
+    '<div class="peta-skala"' +
+    (interaktif ? ' data-peta-skala="' + esc(id) + '"' : '') +
+    '>' +
+    '<div class="peta-skala__kanvas">' +
+    '<svg viewBox="0 0 ' +
+    W +
+    ' ' +
+    H +
+    '" role="img" aria-label="' +
+    esc(aria) +
+    '">' +
+    '<rect x="' +
+    pad +
+    '" y="' +
+    pad +
+    '" width="' +
+    (W - pad * 2) +
+    '" height="' +
+    (H - pad * 2) +
+    '" class="peta-skala__latar"/>' +
+    '<g class="peta-skala__petak">' +
+    petak +
+    '</g>' +
+    jalan +
+    penggaris +
+    tempat +
+    '</svg>' +
+    '</div>' +
+    '<div class="peta-skala__legenda">' +
+    '<span class="peta-skala__skala">Skala ' +
+    esc(fmtSkalaPeta(cfg.penyebut)) +
+    '</span>' +
+    '<span class="peta-skala__petak-info">1 petak = 1 cm × 1 cm</span>' +
+    buildBatangSkala(cfg.penyebut, { ruas: 4 }) +
+    '</div>' +
+    tombol +
+    '</div>'
+  );
+}
+
+function bindPetaSkala(root, id, st, cfg, onChange) {
+  var wrap = root.querySelector('[data-peta-skala="' + id + '"]');
+  if (!wrap) return;
+  wrap.querySelectorAll('[data-jalan]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      if (pilihJalanPeta(st, cfg, btn.dataset.jalan)) onChange();
+    });
+  });
+}
+
+/* ---------- UI: Pembanding Skala ---------- */
+
+/* Ukuran gambar benda cfg { panjang, lebar, satuan, kertas } pada skala 1 : n. */
+function ukuranGambarSkala(cfg, n) {
+  var p = jarakPetaSkala(cfg.panjang, cfg.satuan, n, 'cm');
+  var l = jarakPetaSkala(cfg.lebar, cfg.satuan, n, 'cm');
+  return { p: p, l: l, muat: p <= cfg.kertas.p && l <= cfg.kertas.l };
+}
+
+/* State { penyebut, dicoba }. Penyebut di luar pilihan → null. */
+function ensurePembandingState(st, cfg) {
+  if (cfg.pilihan.indexOf(st.penyebut) === -1) st.penyebut = null;
+  if (!st.dicoba || typeof st.dicoba !== 'object' || Array.isArray(st.dicoba)) st.dicoba = {};
+  return st;
+}
+
+function pilihSkalaBanding(st, cfg, n) {
+  if (cfg.pilihan.indexOf(n) === -1) return false;
+  st.penyebut = n;
+  st.dicoba[n] = true;
+  return true;
+}
+
+function semuaSkalaDicoba(st, cfg) {
+  return cfg.pilihan.every(function (n) {
+    return !!st.dicoba[n];
+  });
+}
+
+/*
+ * Pembanding Skala: benda yang sama digambar pada kertas dengan skala
+ * pilihan murid. Makin besar penyebut, makin kecil gambarnya.
+ *   cfg  { nama, panjang, lebar, satuan, kertas: { p, l } (cm), pilihan: [n] }
+ */
+function buildPembandingSkala(id, st, cfg) {
+  var px = 20;
+  var pad = 10;
+  var W = cfg.kertas.p * px + pad * 2;
+  var H = cfg.kertas.l * px + pad * 2;
+  var tombol =
+    '<div class="banding-skala__tombol" role="group" aria-label="Pilih skala gambar">' +
+    cfg.pilihan
+      .map(function (n) {
+        var on = st.penyebut === n;
+        return (
+          '<button type="button" id="' +
+          esc(id + '-' + n) +
+          '" class="btn ' +
+          (on ? 'btn--primary' : 'btn--outline-primary') +
+          ' banding-skala__aksi" data-penyebut="' +
+          n +
+          '" aria-pressed="' +
+          (on ? 'true' : 'false') +
+          '">' +
+          esc(fmtSkalaPeta(n)) +
+          (st.dicoba[n] && !on ? ' ✓' : '') +
+          '</button>'
+        );
+      })
+      .join('') +
+    '</div>';
+
+  var gambar = '';
+  var status;
+  if (st.penyebut) {
+    var u = ukuranGambarSkala(cfg, st.penyebut);
+    var gw = Math.min(u.p, cfg.kertas.p + 0.5) * px;
+    var gh = Math.min(u.l, cfg.kertas.l + 0.5) * px;
+    gambar =
+      '<rect x="' +
+      pad +
+      '" y="' +
+      pad +
+      '" width="' +
+      rapiRasio(gw) +
+      '" height="' +
+      rapiRasio(gh) +
+      '" class="banding-skala__gambar' +
+      (u.muat ? '' : ' is-luber') +
+      '"/>';
+    status =
+      'Pada skala <strong>' +
+      esc(fmtSkalaPeta(st.penyebut)) +
+      '</strong>, gambar ' +
+      esc(cfg.nama.toLowerCase()) +
+      ': <strong>' +
+      esc(fmtAngkaRasio(u.p) + ' cm × ' + fmtAngkaRasio(u.l) + ' cm') +
+      '</strong> — ' +
+      (u.muat ? '✅ muat di kertas.' : '⚠️ tidak muat di kertas!');
+  } else {
+    status = 'Pilih salah satu skala untuk menggambar ' + esc(cfg.nama.toLowerCase()) + '.';
+  }
+
+  return (
+    '<div class="banding-skala" data-banding-skala="' +
+    esc(id) +
+    '">' +
+    '<p class="banding-skala__info">' +
+    esc(cfg.nama) +
+    ' sebenarnya: <strong>' +
+    esc(
+      fmtAngkaRasio(cfg.panjang) +
+        ' ' +
+        cfg.satuan +
+        ' × ' +
+        fmtAngkaRasio(cfg.lebar) +
+        ' ' +
+        cfg.satuan
+    ) +
+    '</strong>. Kertas gambar: ' +
+    esc(fmtAngkaRasio(cfg.kertas.p) + ' cm × ' + fmtAngkaRasio(cfg.kertas.l) + ' cm') +
+    '.</p>' +
+    tombol +
+    '<div class="banding-skala__kanvas">' +
+    '<svg viewBox="0 0 ' +
+    W +
+    ' ' +
+    H +
+    '" role="img" aria-label="' +
+    esc('Kertas ' + cfg.kertas.p + ' cm × ' + cfg.kertas.l + ' cm dengan gambar benda') +
+    '">' +
+    '<rect x="' +
+    pad +
+    '" y="' +
+    pad +
+    '" width="' +
+    (W - pad * 2) +
+    '" height="' +
+    (H - pad * 2) +
+    '" class="banding-skala__kertas"/>' +
+    gambar +
+    '</svg>' +
+    '</div>' +
+    '<p class="banding-skala__status" role="status">' +
+    status +
+    '</p>' +
+    '</div>'
+  );
+}
+
+function bindPembandingSkala(root, id, st, cfg, onChange) {
+  var wrap = root.querySelector('[data-banding-skala="' + id + '"]');
+  if (!wrap) return;
+  wrap.querySelectorAll('[data-penyebut]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      if (pilihSkalaBanding(st, cfg, Number(btn.dataset.penyebut))) onChange();
+    });
+  });
+}
+
+/* ---------- UI: Lab Denah ---------- */
+
+/* Ukuran ruang pada denah (cm) — batas maksimum stepper. */
+function ruangDenahSkala(cfg) {
+  return {
+    p: jarakPetaSkala(cfg.ruang.p, 'm', cfg.penyebut, 'cm'),
+    l: jarakPetaSkala(cfg.ruang.l, 'm', cfg.penyebut, 'cm'),
+  };
+}
+
+function nilaiDenahValid(v, langkah, maks) {
+  return (
+    typeof v === 'number' &&
+    isFinite(v) &&
+    v >= langkah &&
+    v <= maks &&
+    rapiRasio(v / langkah) % 1 === 0
+  );
+}
+
+/* State { p, l } ukuran benda pada denah (cm). State rusak → cfg.awal. */
+function ensureDenahSkalaState(st, cfg) {
+  var r = ruangDenahSkala(cfg);
+  if (!nilaiDenahValid(st.p, cfg.langkah, r.p) || !nilaiDenahValid(st.l, cfg.langkah, r.l)) {
+    st.p = cfg.awal.p;
+    st.l = cfg.awal.l;
+  }
+  return st;
+}
+
+/* Mengubah dimensi 'p' | 'l' satu langkah; false bila keluar batas. */
+function ubahDenahSkala(st, cfg, dim, arah) {
+  var maks = ruangDenahSkala(cfg)[dim];
+  var baru = rapiRasio(st[dim] + arah * cfg.langkah);
+  if (baru < cfg.langkah || baru > maks) return false;
+  st[dim] = baru;
+  return true;
+}
+
+function denahSkalaPas(st, cfg) {
+  return (
+    samaSkala(jarakSebenarnyaSkala(st.p, 'cm', cfg.penyebut, 'm'), cfg.target.p) &&
+    samaSkala(jarakSebenarnyaSkala(st.l, 'cm', cfg.penyebut, 'm'), cfg.target.l)
+  );
+}
+
+/*
+ * Lab Denah: denah ruang berpetak 1 cm; murid mengatur panjang & lebar
+ * benda pada denah dengan stepper dan membaca ukuran sebenarnya.
+ *   cfg  { penyebut, ruang: { nama, p, l } (m), target: { nama, p, l } (m),
+ *          langkah (cm), awal: { p, l } (cm) }
+ */
+function buildDenahSkala(id, st, cfg) {
+  var r = ruangDenahSkala(cfg);
+  var px = 36;
+  var pad = 14;
+  var W = r.p * px + pad * 2;
+  var H = r.l * px + pad * 2;
+  var asliP = jarakSebenarnyaSkala(st.p, 'cm', cfg.penyebut, 'm');
+  var asliL = jarakSebenarnyaSkala(st.l, 'cm', cfg.penyebut, 'm');
+  var pas = denahSkalaPas(st, cfg);
+  var petak = '';
+  for (var gx = 0; gx <= r.p; gx++) {
+    petak +=
+      '<line x1="' +
+      (pad + gx * px) +
+      '" y1="' +
+      pad +
+      '" x2="' +
+      (pad + gx * px) +
+      '" y2="' +
+      (H - pad) +
+      '"/>';
+  }
+  for (var gy = 0; gy <= r.l; gy++) {
+    petak +=
+      '<line x1="' +
+      pad +
+      '" y1="' +
+      (pad + gy * px) +
+      '" x2="' +
+      (W - pad) +
+      '" y2="' +
+      (pad + gy * px) +
+      '"/>';
+  }
+  var teksDenah = fmtAngkaRasio(st.p) + ' cm × ' + fmtAngkaRasio(st.l) + ' cm';
+  var teksAsli = fmtAngkaRasio(asliP) + ' m × ' + fmtAngkaRasio(asliL) + ' m';
+  return (
+    '<div class="denah-skala' +
+    (pas ? ' is-pas' : '') +
+    '" data-denah-skala="' +
+    esc(id) +
+    '">' +
+    '<div class="denah-skala__kontrol">' +
+    buildFinStepper(id + 'P', 'Panjang di denah', fmtAngkaRasio(st.p) + ' cm', {
+      minDis: st.p <= cfg.langkah,
+      maxDis: st.p >= r.p,
+      langkah: fmtAngkaRasio(cfg.langkah) + ' cm',
+    }) +
+    buildFinStepper(id + 'L', 'Lebar di denah', fmtAngkaRasio(st.l) + ' cm', {
+      minDis: st.l <= cfg.langkah,
+      maxDis: st.l >= r.l,
+      langkah: fmtAngkaRasio(cfg.langkah) + ' cm',
+    }) +
+    '</div>' +
+    '<div class="denah-skala__kanvas">' +
+    '<svg viewBox="0 0 ' +
+    W +
+    ' ' +
+    H +
+    '" role="img" aria-label="' +
+    esc(
+      'Denah ' +
+        cfg.ruang.nama +
+        ' skala ' +
+        fmtSkalaPeta(cfg.penyebut) +
+        ', ' +
+        cfg.target.nama +
+        ' digambar ' +
+        teksDenah
+    ) +
+    '">' +
+    '<rect x="' +
+    pad +
+    '" y="' +
+    pad +
+    '" width="' +
+    (W - pad * 2) +
+    '" height="' +
+    (H - pad * 2) +
+    '" class="denah-skala__ruang"/>' +
+    '<g class="denah-skala__petak">' +
+    petak +
+    '</g>' +
+    '<rect x="' +
+    pad +
+    '" y="' +
+    pad +
+    '" width="' +
+    rapiRasio(st.p * px) +
+    '" height="' +
+    rapiRasio(st.l * px) +
+    '" class="denah-skala__benda"/>' +
+    '</svg>' +
+    '</div>' +
+    '<p class="denah-skala__status" role="status">' +
+    '<span class="denah-skala__label">Di denah</span> ' +
+    esc(teksDenah) +
+    ' <span aria-hidden="true">→</span> ' +
+    '<span class="denah-skala__label">Sebenarnya</span> <strong>' +
+    esc(teksAsli) +
+    '</strong>' +
+    (pas ? ' — ✅ pas dengan ukuran ' + esc(cfg.target.nama) + '!' : '') +
+    '</p>' +
+    '</div>'
+  );
+}
+
+function bindDenahSkala(root, id, st, cfg, onChange) {
+  ['p', 'l'].forEach(function (dim) {
+    bindFinStepper(root, id + dim.toUpperCase(), function (arah) {
+      if (ubahDenahSkala(st, cfg, dim, arah)) onChange();
     });
   });
 }

@@ -1,0 +1,164 @@
+/* =========================================================================
+   fase-d/mpi-3.3/styles.css
+   Skala pada Peta & Denah — Fase D
+
+   Hanya memuat gaya yang KHAS modul ini. Seluruh dasar design system
+   (panel, tombol, kotak umpan balik, pilihan ganda, pemilahan, urut-ketuk,
+   pertanyaan penuntun, perbandingan dugaan .dugaan-row, kartu ringkasan,
+   poster .info-poster, navigasi tahap, modal), langkah isian berdiagnosa
+   (.dl-step, .rasio-input), dan alat skala bersama (.peta-skala*,
+   .batang-skala*, .banding-skala*, .denah-skala*, .fin-stepper) berasal
+   dari shared/base.css.
+   ========================================================================= */
+
+/* -------------------------------------------------------------------------
+   Label konteks
+   ------------------------------------------------------------------------- */
+
+.sk-konteks {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: 2px var(--space-2);
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.sk-konteks--peta {
+  background: var(--color-success-soft);
+  color: var(--color-success-strong);
+}
+
+.sk-konteks--denah {
+  background: var(--color-blue-soft);
+  color: var(--color-blue-strong);
+}
+
+.sk-konteks--model {
+  background: var(--color-orange-soft);
+  color: var(--color-orange-strong);
+}
+
+/* -------------------------------------------------------------------------
+   Tahap 1 — catatan kelompok
+   ------------------------------------------------------------------------- */
+
+.sk-catatan {
+  margin: 0;
+  padding-left: var(--space-5);
+}
+
+.sk-catatan li + li {
+  margin-top: var(--space-1);
+}
+
+/* -------------------------------------------------------------------------
+   Tahap 3–5 — misi lab
+   ------------------------------------------------------------------------- */
+
+.sk-misi {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin: 0 0 var(--space-3);
+  padding: 0;
+  list-style: none;
+}
+
+.sk-misi li {
+  padding: var(--space-1) var(--space-3);
+  border: 1px dashed var(--color-border-strong);
+  border-radius: 999px;
+  font-size: 0.88rem;
+}
+
+.sk-misi li.is-ok {
+  border-style: solid;
+  border-color: var(--color-success);
+  background: var(--color-success-soft);
+  color: var(--color-success-strong);
+  font-weight: 700;
+}
+
+/* -------------------------------------------------------------------------
+   Tahap 6 — daftar rute & poster
+   ------------------------------------------------------------------------- */
+
+.sk-rute {
+  margin: 0 0 var(--space-3);
+  padding-left: var(--space-5);
+}
+
+.sk-rute li + li {
+  margin-top: var(--space-1);
+}
+
+.sk-rute__catatan {
+  font-size: 0.85rem;
+  color: var(--color-ink-muted);
+}
+
+.sk-dua {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-4);
+  align-items: start;
+  margin-bottom: var(--space-4);
+}
+
+@media (min-width: 860px) {
+  .sk-dua {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  }
+}
+
+.sk-dua > .panel {
+  margin: 0;
+}
+
+/* -------------------------------------------------------------------------
+   Tahap 7 — hipotesis
+   ------------------------------------------------------------------------- */
+
+.sk-hipotesis {
+  margin-top: var(--space-4);
+  padding: var(--space-3) var(--space-4);
+  border: 1px dashed var(--color-border-strong);
+  border-radius: var(--radius-md);
+}
+
+.sk-hipotesis__label {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--color-ink-muted);
+}
+
+.sk-hipotesis p {
+  margin: var(--space-1) 0 var(--space-2);
+}
+
+/* -------------------------------------------------------------------------
+   Selesai — kartu rumus
+   ------------------------------------------------------------------------- */
+
+.sk-contoh-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: var(--space-3);
+  margin: var(--space-4) 0;
+}
+
+.sk-contoh-grid .formula-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  text-align: center;
+}
+
+.sk-contoh-grid__teks {
+  font-family: var(--font-mono);
+  font-size: 1rem;
+  overflow-wrap: anywhere;
+}

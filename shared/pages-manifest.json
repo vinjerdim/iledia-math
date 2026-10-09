@@ -119,6 +119,14 @@
     "stageCount": 8,
     "extraBody": "partials/reset-modal.html"
   },
+  "fase-d/mpi-3.3": {
+    "title": "Skala pada Peta & Denah — Matematika Fase D",
+    "description": "Media pembelajaran interaktif berbasis Problem Based Learning untuk menggunakan skala dalam menentukan jarak sebenarnya dan jarak pada peta atau denah dalam masalah kontekstual: merencanakan rute jalan kaki study tour di Desa Wisata dengan Lab Peta berpenggaris (peta 1 : 25.000), Pembanding Skala, Lab Denah aula 1 : 200, langkah isian berdiagnosa miskonsepsi (tanpa konversi satuan, operasi terbalik, skala terbalik), Papan Rencana Jelajah, detektif solusi kelompok lain, dan uji terap acak.",
+    "kicker": "Matematika — Fase D (SMP)",
+    "h1": "Skala pada Peta & Denah",
+    "stageCount": 10,
+    "extraBody": "partials/reset-modal.html"
+  },
   "fase-f/mpi-1.1": {
     "title": "Konsep Barisan Aritmetika & Beda — Matematika Fase F",
     "description": "Media pembelajaran interaktif berbasis Inquiry Learning untuk mengidentifikasi dan menjelaskan konsep barisan aritmetika serta menentukan beda dari suatu barisan bilangan.",
