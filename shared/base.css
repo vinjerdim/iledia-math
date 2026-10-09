@@ -13946,3 +13946,253 @@ button.akar-tile:disabled {
     transition: none;
   }
 }
+
+/* =========================================================================
+   67. Rasio & rasio ekuivalen (engine.js seksi 67, fase-d/mpi-3.1): gelas
+   campuran berwarna (.gelas-rasio), ikon benda (.ikon-rasio), diagram pita
+   (.pita-rasio), tabel rasio (.tabel-rasio), bukti ekuivalen (.cek-setara),
+   dan lab racik (.pencampur).
+   ========================================================================= */
+
+.gelas-rasio {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-1);
+  padding: var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  text-align: center;
+}
+
+.gelas-rasio__judul {
+  font-weight: 700;
+  font-size: 0.9rem;
+}
+
+.gelas-rasio__svg {
+  width: 72px;
+  height: 90px;
+  color: var(--color-ink);
+}
+
+.gelas-rasio__ket {
+  margin: 0;
+  font-weight: 700;
+  font-size: 0.92rem;
+}
+
+.gelas-rasio__meter {
+  width: 100%;
+  max-width: 160px;
+  height: 10px;
+  border-radius: 999px;
+  background: var(--color-bg-grid);
+  overflow: hidden;
+}
+
+.gelas-rasio__meter span {
+  display: block;
+  height: 100%;
+}
+
+.gelas-rasio__kadar {
+  margin: 0;
+  font-size: 0.8rem;
+  color: var(--color-ink-muted);
+}
+
+.ikon-rasio {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin: var(--space-3) 0;
+}
+
+.ikon-rasio__baris {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.ikon-rasio__isi {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px;
+  font-size: 1.6rem;
+  line-height: 1.2;
+}
+
+.ikon-rasio__label {
+  font-size: 0.85rem;
+  color: var(--color-ink-muted);
+}
+
+.pita-rasio {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin: var(--space-3) 0;
+}
+
+.pita-rasio__baris {
+  display: grid;
+  grid-template-columns: 52px 1fr auto;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.pita-rasio__nama {
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+.pita-rasio__isi {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.pita-rasio__grup {
+  display: inline-flex;
+  padding: 2px;
+  border: 2px dashed transparent;
+  border-radius: var(--radius-sm);
+}
+
+.pita-rasio--grup .pita-rasio__grup {
+  border-color: var(--color-border-strong);
+}
+
+.pita-rasio__sel {
+  width: 22px;
+  height: 22px;
+  border: 1px solid var(--color-surface);
+  border-radius: 3px;
+}
+
+.pita-rasio__baris--a .pita-rasio__sel {
+  background: #b0174a;
+}
+
+.pita-rasio__baris--b .pita-rasio__sel {
+  background: #8cc4e8;
+}
+
+.pita-rasio__n {
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.tabel-rasio caption {
+  caption-side: top;
+  text-align: left;
+  font-weight: 700;
+  padding-bottom: var(--space-2);
+}
+
+.tabel-rasio .is-setara td:last-child {
+  color: var(--color-success-strong);
+  font-weight: 700;
+}
+
+.tabel-rasio .is-beda td:last-child {
+  color: var(--color-error-strong);
+  font-weight: 700;
+}
+
+.cek-setara {
+  padding: var(--space-3);
+  border-radius: var(--radius-md);
+  border-left: 4px solid var(--color-border-strong);
+  background: var(--color-bg);
+  font-size: 0.9rem;
+}
+
+.cek-setara.is-setara {
+  border-left-color: var(--color-success);
+}
+
+.cek-setara.is-beda {
+  border-left-color: var(--color-error);
+}
+
+.cek-setara__baris {
+  margin: 0 0 var(--space-1);
+}
+
+.cek-setara__label {
+  display: inline-block;
+  min-width: 11em;
+  font-weight: 700;
+  color: var(--color-ink-muted);
+}
+
+.cek-setara__vonis {
+  margin: 0;
+  font-weight: 700;
+}
+
+.pencampur {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  margin-top: var(--space-3);
+}
+
+.pencampur__gelas {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-3);
+}
+
+.pencampur__vonis {
+  margin: 0;
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-md);
+  font-weight: 700;
+}
+
+.pencampur__vonis--sama {
+  background: var(--color-success-soft);
+  color: var(--color-success-strong);
+}
+
+.pencampur__vonis--lebihPekat,
+.pencampur__vonis--lebihEncer {
+  background: var(--color-warning-soft);
+  color: var(--color-warning-strong);
+}
+
+.pencampur__tombol {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.pencampur__aksi {
+  min-height: 44px;
+}
+
+@media (max-width: 480px) {
+  .cek-setara__label {
+    display: block;
+    min-width: 0;
+  }
+
+  .pita-rasio__sel {
+    width: 16px;
+    height: 16px;
+  }
+
+  .pencampur__gelas {
+    gap: var(--space-2);
+  }
+
+  .pencampur__aksi {
+    flex: 1 1 calc(50% - var(--space-2));
+  }
+}
