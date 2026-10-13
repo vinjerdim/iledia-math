@@ -48401,9 +48401,13 @@ function takTerbacaUnsur(kode) {
   return kode === 'kosong' || kode === 'format';
 }
 
-/* Memeriksa langkah { cek } dan menyimpan hasil ke st (makeCekStep). */
-function periksaLangkahUnsur(st, step, input) {
-  var r = periksaSoalUnsur(input, { cek: step.cek });
+/*
+ * Memeriksa langkah { cek } dan menyimpan hasil ke st (makeCekStep).
+ * periksa opsional: pemeriksa (isian, soal) lain, mis. periksaSoalKalimat
+ * (seksi 75); bawaannya periksaSoalUnsur.
+ */
+function periksaLangkahUnsur(st, step, input, periksa) {
+  var r = (periksa || periksaSoalUnsur)(input, { cek: step.cek });
   if (takTerbacaUnsur(r.kode)) return r;
   st.input = String(input || '').trim();
   st.kode = r.kode;
@@ -48423,8 +48427,10 @@ function tampilIsianUnsur(input) {
 /*
  * Satu langkah isian unsur berdiagnosa.
  *   step { label (HTML), cek, hints (HTML), temuan (HTML), placeholder }
+ *   tampil opsional: penulis ulang isian yang sudah benar (bawaan
+ *   tampilIsianUnsur).
  */
-function buildLangkahUnsur(id, st, step, num) {
+function buildLangkahUnsur(id, st, step, num, tampil) {
   var head =
     '<p class="dl-step__label">' +
     (num ? '<span class="dl-step__num">' + num + '</span>' : '') +
@@ -48435,7 +48441,7 @@ function buildLangkahUnsur(id, st, step, num) {
       '<div class="dl-step dl-step--done">' +
       head +
       '<p class="dl-step__answer">✓ ' +
-      esc(tampilIsianUnsur(st.input)) +
+      esc((tampil || tampilIsianUnsur)(st.input)) +
       '</p>' +
       (step.temuan ? buildFeedbackBox('success', '💡', step.temuan) : '') +
       '</div>'
@@ -48480,11 +48486,11 @@ function buildLangkahUnsur(id, st, step, num) {
   );
 }
 
-function bindLangkahUnsur(id, st, step, save, rerender) {
+function bindLangkahUnsur(id, st, step, save, rerender, periksa) {
   var inp = document.getElementById(id + 'Input');
   var btn = document.getElementById(id + 'Check');
   var kirim = function () {
-    var r = periksaLangkahUnsur(st, step, inp.value);
+    var r = periksaLangkahUnsur(st, step, inp.value, periksa);
     if (takTerbacaUnsur(r.kode)) {
       showNotice(r.pesan);
       return;
@@ -48508,6 +48514,1265 @@ function bindLangkahUnsur(id, st, step, save, rerender) {
       st.hintLevel = Math.min(st.hintLevel + 1, (step.hints || []).length);
       save();
       rerender();
+    });
+  }
+}
+
+/* ============================================================
+   75. KALIMAT TERBUKA, PERSAMAAN & PLSV
+   Pernyataan (kalimat yang sudah pasti benar/salah), kalimat terbuka
+   (memuat variabel), persamaan (kalimat terbuka bertanda "="), dan
+   persamaan linear satu variabel (PLSV: tepat satu variabel berpangkat
+   satu), beserta arti penyelesaian sebagai nilai pengganti yang membuat
+   kalimat benar (substitusi). Model konkretnya neraca: kotak berbobot
+   x kg dan beban 1 kg; neraca seimbang ⇔ kalimat "=" bernilai benar.
+   Dipakai fase-d/mpi-6.1. Gaya .kalimat-*, .neraca-*, .lab-neraca* ada
+   di shared/base.css.
+
+   Kalimat ditulis sebagai teks, mis. '2x + 3 = 11', '15 − 6 = 8',
+   'x² = 9', 'x + 3 > 7', atau '4x − 1' (bentuk aljabar tanpa relasi).
+
+   Notasi cek soal (lihat nilaiSoalKalimat):
+     { kalimat, minta: 'jenis' }        → id OPSI_JENIS_KALIMAT
+     { kalimat, minta: 'kebenaran' }    → 'benar' | 'salah' | 'terbuka'
+     { kalimat, minta: 'penyelesaian' } → bilangan (kalimat berupa PLSV)
+     { kalimat, minta: 'kalimat' }      → menulis kalimat dari cerita
+   ============================================================ */
+
+/* ---------- Membaca & menulis ---------- */
+
+var RELASI_KALIMAT = '=≠<>≤≥';
+
+/* Satu ruas → [{ koef, variabel, pangkat, teks? }] atau null. */
+function parseRuasMtk(s) {
+  if (!s) return null;
+  var re = /([+-]?)((?:\d+\*)*\d+)?(\*?)([a-z])?(?:\^([23]))?/g;
+  var out = [];
+  var pos = 0;
+  while (pos < s.length) {
+    re.lastIndex = pos;
+    var m = re.exec(s);
+    if (!m || m.index !== pos || !m[0] || (!m[2] && !m[4])) return null;
+    if ((m[3] && !(m[2] && m[4])) || (m[5] && !m[4]) || (!m[1] && pos > 0)) return null;
+    var angka = m[2] ? m[2].split('*') : ['1'];
+    var koef = angka.reduce(function (a, b) {
+      return a * parseInt(b, 10);
+    }, 1);
+    var suku = {
+      koef: m[1] === '-' ? -koef : koef,
+      variabel: m[4] || '',
+      pangkat: m[4] ? (m[5] ? parseInt(m[5], 10) : 1) : 0,
+    };
+    if (angka.length > 1) suku.teks = angka.join(' × ');
+    out.push(suku);
+    pos = re.lastIndex;
+  }
+  return out;
+}
+
+/*
+ * Membaca kalimat matematika → { kiri, rel, kanan } atau null.
+ * rel null (dan kanan null) berarti bentuk aljabar tanpa relasi.
+ * Relasi: = ≠ < > ≤ ≥ (juga <=, >=, !=); paling banyak satu relasi.
+ */
+function parseKalimatMtk(str) {
+  var s = String(str === null || str === undefined ? '' : str)
+    .replace(/[−–—]/g, '-')
+    .replace(/<=|=</g, '≤')
+    .replace(/>=|=>/g, '≥')
+    .replace(/!=|<>/g, '≠')
+    .replace(/[×·]/g, '*')
+    .replace(/²/g, '^2')
+    .replace(/³/g, '^3')
+    .replace(/\s*([*^])\s*/g, '$1')
+    .toLowerCase()
+    .trim();
+  if (!s || /[a-z0-9]\s+[a-z0-9]/.test(s)) return null;
+  s = s.replace(/\s+/g, '');
+  var idx = [];
+  for (var i = 0; i < s.length; i++) {
+    if (RELASI_KALIMAT.indexOf(s.charAt(i)) !== -1) idx.push(i);
+  }
+  if (idx.length > 1) return null;
+  if (!idx.length) {
+    var ruas = parseRuasMtk(s);
+    return ruas ? { kiri: ruas, rel: null, kanan: null } : null;
+  }
+  var kiri = parseRuasMtk(s.slice(0, idx[0]));
+  var kanan = parseRuasMtk(s.slice(idx[0] + 1));
+  if (!kiri || !kanan) return null;
+  return { kiri: kiri, rel: s.charAt(idx[0]), kanan: kanan };
+}
+
+function formatSukuKalimat(t, awal) {
+  var neg = t.koef < 0;
+  var tanda = awal && neg ? '−' : '';
+  if (t.teks) return tanda + t.teks;
+  var abs = Math.abs(t.koef);
+  if (!t.variabel) return tanda + formatAngkaAljabar(abs);
+  var pangkat = t.pangkat === 2 ? '²' : t.pangkat === 3 ? '³' : '';
+  return tanda + (abs === 1 ? '' : formatAngkaAljabar(abs)) + t.variabel + pangkat;
+}
+
+function formatRuasKalimat(list) {
+  if (!list.length) return '0';
+  return list
+    .map(function (t, i) {
+      if (i === 0) return formatSukuKalimat(t, true);
+      return (t.koef < 0 ? ' − ' : ' + ') + formatSukuKalimat(t, false);
+    })
+    .join('');
+}
+
+function formatKalimatMtk(p) {
+  return formatRuasKalimat(p.kiri) + (p.rel ? ' ' + p.rel + ' ' + formatRuasKalimat(p.kanan) : '');
+}
+
+/* Menulis ulang kalimat dengan gaya baku; tak terbaca → apa adanya. */
+function rapikanKalimatMtk(str) {
+  var p = parseKalimatMtk(str);
+  return p ? formatKalimatMtk(p) : String(str);
+}
+
+/* ---------- Ciri & jenis ---------- */
+
+function semuaSukuKalimat(p) {
+  return p.kiri.concat(p.kanan || []);
+}
+
+/* { rel, variabel (urut), pangkat (tertinggi; 0 = tanpa variabel) } atau null. */
+function ciriKalimatMtk(str) {
+  var p = parseKalimatMtk(str);
+  if (!p) return null;
+  var vars = [];
+  var pangkat = 0;
+  semuaSukuKalimat(p).forEach(function (t) {
+    if (!t.variabel) return;
+    if (vars.indexOf(t.variabel) === -1) vars.push(t.variabel);
+    pangkat = Math.max(pangkat, t.pangkat);
+  });
+  return { rel: p.rel, variabel: vars.sort(), pangkat: pangkat };
+}
+
+/* Koefisien & konstanta tiap ruas kalimat berpangkat satu (a·x + b ⋯ c·x + d). */
+function bagianLinearKalimat(p) {
+  var jumlah = function (list, berVar) {
+    return list.reduce(function (acc, t) {
+      return acc + (!!t.variabel === berVar ? t.koef : 0);
+    }, 0);
+  };
+  return {
+    a: jumlah(p.kiri, true),
+    b: jumlah(p.kiri, false),
+    c: jumlah(p.kanan || [], true),
+    d: jumlah(p.kanan || [], false),
+  };
+}
+
+/*
+ * Jenis paling khusus sebuah kalimat:
+ *   'bentuk'         tanpa relasi (belum kalimat)
+ *   'pernyataan'     tanpa variabel (sudah pasti benar/salah)
+ *   'kalimatTerbuka' bervariabel dengan relasi selain "="
+ *   'persamaan'      bertanda "=", tetapi bukan PLSV
+ *   'plsv'           tepat satu variabel berpangkat satu dengan "="
+ * null bila tak terbaca.
+ */
+function jenisKalimatMtk(str) {
+  var p = parseKalimatMtk(str);
+  if (!p) return null;
+  var c = ciriKalimatMtk(str);
+  if (!p.rel) return 'bentuk';
+  if (!c.variabel.length) return 'pernyataan';
+  if (p.rel !== '=') return 'kalimatTerbuka';
+  var L = bagianLinearKalimat(p);
+  if (c.variabel.length === 1 && c.pangkat === 1 && L.a - L.c !== 0) return 'plsv';
+  return 'persamaan';
+}
+
+/* ---------- Nilai kebenaran & substitusi ---------- */
+
+function nilaiRuasKalimat(list, nilai) {
+  return list.reduce(function (acc, t) {
+    if (!t.variabel) return acc + t.koef;
+    var v = typeof nilai === 'number' ? nilai : nilai && nilai[t.variabel];
+    return acc + t.koef * Math.pow(v, t.pangkat);
+  }, 0);
+}
+
+function bandingRelasi(a, rel, b) {
+  var sama = Math.abs(a - b) < 1e-9;
+  switch (rel) {
+    case '=':
+      return sama;
+    case '≠':
+      return !sama;
+    case '<':
+      return a < b && !sama;
+    case '>':
+      return a > b && !sama;
+    case '≤':
+      return a < b || sama;
+    case '≥':
+      return a > b || sama;
+  }
+  return null;
+}
+
+/* Nilai kedua ruas setelah variabel diganti `nilai` (bilangan atau { huruf: nilai }). */
+function ruasKalimatMtk(str, nilai) {
+  var p = parseKalimatMtk(str);
+  if (!p || !p.rel) return null;
+  return { kiri: nilaiRuasKalimat(p.kiri, nilai), kanan: nilaiRuasKalimat(p.kanan, nilai) };
+}
+
+/* true/false setelah substitusi; null bila bukan kalimat. */
+function nilaiKalimatMtk(str, nilai) {
+  var p = parseKalimatMtk(str);
+  var r = ruasKalimatMtk(str, nilai);
+  if (!r || isNaN(r.kiri) || isNaN(r.kanan)) return null;
+  return bandingRelasi(r.kiri, p.rel, r.kanan);
+}
+
+/* 'benar' | 'salah' (pernyataan), 'terbuka' (bervariabel), null (bukan kalimat). */
+function kebenaranKalimatMtk(str) {
+  var j = jenisKalimatMtk(str);
+  if (!j || j === 'bentuk') return null;
+  if (j !== 'pernyataan') return 'terbuka';
+  return nilaiKalimatMtk(str, 0) ? 'benar' : 'salah';
+}
+
+/* Penyelesaian PLSV ax + b = cx + d → x = (d − b) / (a − c); null bila bukan PLSV. */
+function penyelesaianPlsv(str) {
+  if (jenisKalimatMtk(str) !== 'plsv') return null;
+  var L = bagianLinearKalimat(parseKalimatMtk(str));
+  return (L.d - L.b) / (L.a - L.c);
+}
+
+/*
+ * Kelompok kalimat menurut skema pemilahan:
+ *   'kebenaran' → 'benar' | 'salah' | 'terbuka'
+ *   'persamaan' → 'persamaan' | 'kalimatTerbuka' | 'pernyataan' | 'bentuk'
+ *   'plsv'      → 'plsv' | 'duaVariabel' | 'pangkatDua' | 'bukanPersamaan'
+ *   lainnya     → jenisKalimatMtk
+ */
+function kelompokKalimatMtk(str, skema) {
+  var j = jenisKalimatMtk(str);
+  if (skema === 'kebenaran') return kebenaranKalimatMtk(str);
+  if (skema === 'persamaan') return j === 'plsv' ? 'persamaan' : j;
+  if (skema === 'plsv') {
+    if (j === 'plsv') return 'plsv';
+    if (j !== 'persamaan') return 'bukanPersamaan';
+    var c = ciriKalimatMtk(str);
+    if (c.variabel.length > 1) return 'duaVariabel';
+    if (c.pangkat > 1) return 'pangkatDua';
+    return 'persamaan';
+  }
+  return j;
+}
+
+/* ---------- Soal ---------- */
+
+var OPSI_JENIS_KALIMAT = [
+  { id: 'pernyataan', label: 'Pernyataan (sudah pasti benar atau salah)' },
+  { id: 'kalimatTerbuka', label: 'Kalimat terbuka, tetapi bukan persamaan' },
+  { id: 'persamaan', label: 'Persamaan, tetapi bukan PLSV' },
+  { id: 'plsv', label: 'Persamaan linear satu variabel (PLSV)' },
+  { id: 'bentuk', label: 'Belum kalimat — hanya bentuk aljabar' },
+];
+
+var OPSI_KEBENARAN_KALIMAT = [
+  { id: 'benar', label: 'Pernyataan yang benar' },
+  { id: 'salah', label: 'Pernyataan yang salah' },
+  { id: 'terbuka', label: 'Kalimat terbuka — benar/salahnya belum dapat ditentukan' },
+];
+
+function nilaiSoalKalimat(c) {
+  switch (c.minta) {
+    case 'jenis':
+      return jenisKalimatMtk(c.kalimat);
+    case 'kebenaran':
+      return kebenaranKalimatMtk(c.kalimat);
+    case 'penyelesaian':
+      return penyelesaianPlsv(c.kalimat);
+    case 'kalimat':
+      return rapikanKalimatMtk(c.kalimat);
+  }
+  return null;
+}
+
+/* Jawaban baku sebagai teks (bilangan bertanda / kalimat / id jenis). */
+function jawabSoalKalimat(s) {
+  var v = nilaiSoalKalimat(s.cek);
+  return typeof v === 'number' ? formatAngkaAljabar(v) : v;
+}
+
+function opsiPilihanKalimat(minta) {
+  if (minta === 'jenis') return OPSI_JENIS_KALIMAT;
+  if (minta === 'kebenaran') return OPSI_KEBENARAN_KALIMAT;
+  return null;
+}
+
+/* Label jawaban baku seperti tampil pada pilihan ganda. */
+function labelJawabKalimat(s) {
+  var opsi = opsiPilihanKalimat(s.cek.minta);
+  var v = jawabSoalKalimat(s);
+  if (!opsi) return v;
+  return opsi.filter(function (o) {
+    return o.id === v;
+  })[0].label;
+}
+
+/* ---------- Diagnosa isian ---------- */
+
+var PESAN_KALIMAT = {
+  benar: 'Tepat!',
+  kosong: 'Isi jawabanmu lebih dulu.',
+  format: 'Jawabanmu belum terbaca. Tulis satu bilangan, mis. 4 atau x = 4.',
+  formatKalimat: 'Kalimatmu belum terbaca. Tulis seperti 2x + 3 = 11 (tanpa tanda kurung).',
+  hurufLain: 'Gunakan huruf variabel yang dipakai pada soal.',
+  tandaHilang:
+    'Perhatikan tandanya! Tanda + dan − menentukan apakah suatu bilangan ditambahkan atau dikurangkan.',
+  ruasKanan:
+    'Itu bilangan pada ruas yang tidak memuat variabel. Penyelesaian adalah nilai variabel yang membuat ruas kiri SAMA dengan ruas kanan.',
+  operasiTerbalik:
+    'Sepertinya bilangan yang ditambahkan malah ikut dijumlahkan (atau yang dikurangkan malah dikurangkan lagi). Pikirkan: bilangan berapa yang jika ditambah/dikurang menghasilkan ruas kanan?',
+  belumBagi:
+    'Hampir! Nilai itu adalah nilai beberapa variabel sekaligus. Ingat, 2x artinya 2 × x, jadi satu x baru sebagian dari nilai itu.',
+  bukanPenyelesaian: 'Nilai itu belum membuat kedua ruas sama.',
+  tanpaSamaDengan:
+    'Itu baru bentuk aljabar (satu ruas). Persamaan memerlukan tanda = yang menghubungkan dua ruas yang nilainya sama — seperti neraca seimbang.',
+  pertidaksamaan:
+    'Kedua ruas pada cerita ini sama besar (seimbang), jadi relasinya "=", bukan <, >, atau ≠.',
+  langsungJawab:
+    'Itu penyelesaiannya, bukan kalimat yang memodelkan cerita. Tulis kalimat matematika yang menggambarkan isi ceritanya.',
+  tukarKoefKonst:
+    'Bilangan pengali variabel (koefisien) dan bilangan yang berdiri sendiri (konstanta) tertukar. Baca lagi: mana yang menyatakan "banyak benda", mana yang tambahan tetap?',
+  salah:
+    'Belum tepat. Baca lagi ceritanya bagian demi bagian, lalu cocokkan dengan kedua ruas kalimatmu.',
+  tanpaVariabel:
+    'Kalimat ini tidak memuat variabel, jadi benar-salahnya sudah pasti. Kalimat seperti ini adalah pernyataan — meskipun nilainya salah.',
+  adaVariabel:
+    'Kalimat ini memuat variabel, jadi benar-salahnya masih bergantung pada nilai pengganti variabelnya. Itu kalimat terbuka, bukan pernyataan.',
+  tanpaRelasi:
+    'Tidak ada tanda =, <, >, atau ≠, jadi ini belum kalimat — hanya bentuk aljabar yang belum dapat dinilai benar atau salah.',
+  adaRelasi:
+    'Ada tanda hubung (=, <, >, atau ≠) di antara dua ruas, jadi ini kalimat matematika, bukan sekadar bentuk aljabar.',
+  bukanSamaDengan:
+    'Persamaan harus memakai tanda "=". Kalimat terbuka dengan tanda <, >, atau ≠ bukan persamaan.',
+  duaVariabel:
+    'Persamaan ini memuat lebih dari satu variabel, jadi bukan persamaan linear SATU variabel.',
+  pangkatDua: 'Variabelnya berpangkat dua. Persamaan LINEAR hanya memuat variabel berpangkat satu.',
+  sudahPlsv:
+    'Periksa ketiga ciri PLSV: ada tanda =, tepat satu variabel, dan variabelnya berpangkat satu. Kalimat ini memenuhi semuanya, jadi ia PLSV.',
+  adaSamaDengan: 'Kalimat terbuka ini memakai tanda "=", jadi ia juga persamaan.',
+  salahJenis:
+    'Belum tepat. Periksa berurutan: adakah tanda hubung? adakah variabel? apakah tandanya "="? berapa banyak variabel dan pangkatnya?',
+  terbukaDinilai:
+    'Kalimat ini memuat variabel. Benar atau salahnya bergantung pada nilai pengganti variabel, jadi belum dapat ditentukan — itu kalimat terbuka.',
+  hitungUlang: 'Hitung ulang kedua ruasnya.',
+};
+
+function hasilKalimat(kode, pesan) {
+  return { kode: kode, benar: kode === 'benar', pesan: pesan || PESAN_KALIMAT[kode] };
+}
+
+/* Kalimat cek substitusi: "Cek: jika x = 6, ruas kiri = 9 dan ruas kanan = 7 — …". */
+function teksSubstitusiKalimat(str, huruf, v) {
+  var r = ruasKalimatMtk(str, v);
+  var sama = Math.abs(r.kiri - r.kanan) < 1e-9;
+  return (
+    'Cek: jika ' +
+    huruf +
+    ' = ' +
+    formatAngkaAljabar(v) +
+    ', ruas kiri = ' +
+    formatAngkaAljabar(r.kiri) +
+    ' dan ruas kanan = ' +
+    formatAngkaAljabar(r.kanan) +
+    (sama ? ' — sama.' : ' — tidak sama, jadi kalimatnya bernilai salah.')
+  );
+}
+
+/* Calon penyelesaian keliru [{ kode, nilai }] untuk PLSV (urut prioritas). */
+function calonPenyelesaianKeliru(str) {
+  var sol = penyelesaianPlsv(str);
+  var L = bagianLinearKalimat(parseKalimatMtk(str));
+  var out = [];
+  var tambah = function (kode, n) {
+    if (Math.floor(n) === n && n !== sol) out.push({ kode: kode, nilai: n });
+  };
+  tambah('tandaHilang', -sol);
+  /* variabel hanya di satu ruas: a·x + b = d */
+  var satuRuas = L.a === 0 || L.c === 0;
+  if (satuRuas) {
+    var a = L.c === 0 ? L.a : L.c;
+    var b = L.c === 0 ? L.b : L.d;
+    var d = L.c === 0 ? L.d : L.b;
+    tambah('ruasKanan', d);
+    tambah('operasiTerbalik', (d + b) / a);
+    tambah('operasiTerbalik', d + b);
+    if (a !== 1) tambah('belumBagi', d - b);
+  }
+  [1, -1, 2, -2].forEach(function (k) {
+    tambah('bukanPenyelesaian', sol + k);
+  });
+  return out;
+}
+
+/* Isian "4", "−3", atau "x = 4" → { nilai } atau { hasil } bila tak terbaca. */
+function bacaPenyelesaianKalimat(isian, huruf) {
+  var s = String(isian === null || isian === undefined ? '' : isian).trim();
+  var m = /^([a-zA-Z])\s*=\s*(.*)$/.exec(s);
+  if (m) {
+    if (m[1].toLowerCase() !== huruf) return { hasil: hasilKalimat('hurufLain') };
+    s = m[2];
+  }
+  var b = parseBilAljabar(s);
+  if (b.kode === 'kosong') return { hasil: hasilKalimat(m ? 'format' : 'kosong') };
+  if (b.kode !== 'ok') return { hasil: hasilKalimat('format') };
+  return { nilai: b.nilai };
+}
+
+function diagnosaPenyelesaianKalimat(isian, c) {
+  var huruf = ciriKalimatMtk(c.kalimat).variabel[0];
+  var r = bacaPenyelesaianKalimat(isian, huruf);
+  if (r.hasil) return r.hasil;
+  var sol = penyelesaianPlsv(c.kalimat);
+  if (Math.abs(r.nilai - sol) < 1e-9) return hasilKalimat('benar');
+  var g = calonPenyelesaianKeliru(c.kalimat).filter(function (x) {
+    return x.nilai === r.nilai;
+  })[0];
+  var kode = g ? g.kode : 'bukanPenyelesaian';
+  return hasilKalimat(
+    kode,
+    PESAN_KALIMAT[kode] + ' ' + teksSubstitusiKalimat(c.kalimat, huruf, r.nilai)
+  );
+}
+
+/* Ruas → peta "huruf^pangkat" / "#" → koefisien (suku nol dibuang). */
+function petaRuasKalimat(list, mutlak) {
+  var m = {};
+  list.forEach(function (t) {
+    var k = t.variabel ? t.variabel + '^' + t.pangkat : '#';
+    m[k] = (m[k] || 0) + t.koef;
+  });
+  Object.keys(m).forEach(function (k) {
+    if (m[k] === 0) delete m[k];
+    else if (mutlak) m[k] = Math.abs(m[k]);
+  });
+  return m;
+}
+
+function samaPetaKalimat(a, b) {
+  var ka = Object.keys(a).sort();
+  var kb = Object.keys(b).sort();
+  return (
+    ka.join() === kb.join() &&
+    ka.every(function (k) {
+      return a[k] === b[k];
+    })
+  );
+}
+
+/* Dua kalimat "=" sama, urutan suku & ruas boleh dibalik. */
+function samaPersamaanKalimat(p, q, mutlak) {
+  var r = function (list) {
+    return petaRuasKalimat(list, mutlak);
+  };
+  return (
+    (samaPetaKalimat(r(p.kiri), r(q.kiri)) && samaPetaKalimat(r(p.kanan), r(q.kanan))) ||
+    (samaPetaKalimat(r(p.kiri), r(q.kanan)) && samaPetaKalimat(r(p.kanan), r(q.kiri)))
+  );
+}
+
+/* Ruas a·x + b dengan koefisien & konstanta ditukar (b·x + a); null bila tak cocok. */
+function tukarRuasKalimat(list) {
+  var v = list.filter(function (t) {
+    return t.variabel && t.pangkat === 1;
+  });
+  var k = list.filter(function (t) {
+    return !t.variabel;
+  });
+  if (v.length !== 1 || k.length !== 1 || list.length !== 2) return null;
+  if (Math.abs(v[0].koef) === 1 || k[0].koef <= 0 || v[0].koef === k[0].koef) return null;
+  return [
+    { koef: k[0].koef, variabel: v[0].variabel, pangkat: 1 },
+    { koef: v[0].koef, variabel: '', pangkat: 0 },
+  ];
+}
+
+/* Varian kalimat kunci dengan koefisien & konstanta tertukar di salah satu ruas. */
+function variasiTukarKalimat(p) {
+  var out = [];
+  var tk = tukarRuasKalimat(p.kiri);
+  if (tk) out.push({ kiri: tk, rel: '=', kanan: p.kanan });
+  var tn = tukarRuasKalimat(p.kanan);
+  if (tn) out.push({ kiri: p.kiri, rel: '=', kanan: tn });
+  return out;
+}
+
+/* "huruf = bilangan" (atau sebaliknya) → bilangannya; selain itu null. */
+function nilaiLangsungKalimat(p) {
+  var tunggal = function (a, b) {
+    if (a.length !== 1 || b.length !== 1) return null;
+    if (a[0].variabel && a[0].koef === 1 && a[0].pangkat === 1 && !b[0].variabel) {
+      return b[0].koef;
+    }
+    return null;
+  };
+  var v = tunggal(p.kiri, p.kanan);
+  return v === null ? tunggal(p.kanan, p.kiri) : v;
+}
+
+function diagnosaTulisKalimat(isian, c) {
+  if (!String(isian === null || isian === undefined ? '' : isian).trim()) {
+    return hasilKalimat('kosong');
+  }
+  var kunci = parseKalimatMtk(c.kalimat);
+  var p = parseKalimatMtk(isian);
+  if (!p) return hasilKalimat('format', PESAN_KALIMAT.formatKalimat);
+  if (!p.rel) return hasilKalimat('tanpaSamaDengan');
+  if (p.rel !== '=') return hasilKalimat('pertidaksamaan');
+  if (samaPersamaanKalimat(p, kunci)) return hasilKalimat('benar');
+  var sol = penyelesaianPlsv(c.kalimat);
+  if (sol !== null && nilaiLangsungKalimat(p) === sol && nilaiLangsungKalimat(kunci) === null) {
+    return hasilKalimat('langsungJawab');
+  }
+  var vp = ciriKalimatMtk(isian).variabel;
+  var vk = ciriKalimatMtk(c.kalimat).variabel;
+  if (vp.join() !== vk.join()) {
+    return hasilKalimat(
+      vp.length === vk.length ? 'hurufLain' : 'salah',
+      vp.length === vk.length
+        ? PESAN_KALIMAT.hurufLain + ' Di sini variabelnya ' + vk.join(', ') + '.'
+        : null
+    );
+  }
+  if (samaPersamaanKalimat(p, kunci, true)) return hasilKalimat('tandaHilang');
+  var tukar = variasiTukarKalimat(kunci).some(function (q) {
+    return samaPersamaanKalimat(p, q);
+  });
+  return hasilKalimat(tukar ? 'tukarKoefKonst' : 'salah');
+}
+
+function diagnosaJenisKalimat(isian, c) {
+  if (!isian) return hasilKalimat('kosong');
+  var baku = jenisKalimatMtk(c.kalimat);
+  if (isian === baku) return hasilKalimat('benar');
+  if (baku === 'pernyataan')
+    return hasilKalimat(isian === 'bentuk' ? 'adaRelasi' : 'tanpaVariabel');
+  if (baku === 'bentuk') return hasilKalimat('tanpaRelasi');
+  if (isian === 'pernyataan') return hasilKalimat('adaVariabel');
+  if (isian === 'bentuk') return hasilKalimat('adaRelasi');
+  if (baku === 'kalimatTerbuka') return hasilKalimat('bukanSamaDengan');
+  if (isian === 'kalimatTerbuka') return hasilKalimat('adaSamaDengan');
+  if (baku === 'persamaan' && isian === 'plsv') {
+    var k = kelompokKalimatMtk(c.kalimat, 'plsv');
+    return hasilKalimat(k === 'duaVariabel' || k === 'pangkatDua' ? k : 'salahJenis');
+  }
+  if (baku === 'plsv' && isian === 'persamaan') return hasilKalimat('sudahPlsv');
+  return hasilKalimat('salahJenis');
+}
+
+function diagnosaKebenaranKalimat(isian, c) {
+  if (!isian) return hasilKalimat('kosong');
+  var baku = kebenaranKalimatMtk(c.kalimat);
+  if (isian === baku) return hasilKalimat('benar');
+  if (baku === 'terbuka') return hasilKalimat('terbukaDinilai');
+  if (isian === 'terbuka') return hasilKalimat('tanpaVariabel');
+  var r = ruasKalimatMtk(c.kalimat, 0);
+  return hasilKalimat(
+    'hitungUlang',
+    PESAN_KALIMAT.hitungUlang +
+      ' Ruas kiri = ' +
+      formatAngkaAljabar(r.kiri) +
+      ', ruas kanan = ' +
+      formatAngkaAljabar(r.kanan) +
+      '.'
+  );
+}
+
+/* Memeriksa isian soal s = { cek } → { kode, benar, pesan }. */
+function periksaSoalKalimat(isian, s) {
+  var c = s.cek;
+  switch (c.minta) {
+    case 'penyelesaian':
+      return diagnosaPenyelesaianKalimat(isian, c);
+    case 'kalimat':
+      return diagnosaTulisKalimat(isian, c);
+    case 'jenis':
+      return diagnosaJenisKalimat(isian, c);
+    case 'kebenaran':
+      return diagnosaKebenaranKalimat(isian, c);
+  }
+  return hasilKalimat('salah');
+}
+
+/* Teks isian yang dirapikan untuk langkah yang sudah benar. */
+function tampilIsianKalimat(input) {
+  var s = String(input || '').trim();
+  var p = parseKalimatMtk(s);
+  if (p && p.rel) return formatKalimatMtk(p);
+  var b = parseBilAljabar(s);
+  return b.kode === 'ok' ? formatAngkaAljabar(b.nilai) : s;
+}
+
+/* ---------- Opsi pilihan ganda ---------- */
+
+/* Calon kalimat keliru [{ kode, label }] untuk soal menulis kalimat. */
+function calonKalimatKeliru(c) {
+  var p = parseKalimatMtk(c.kalimat);
+  var out = [];
+  var sol = penyelesaianPlsv(c.kalimat);
+  var huruf = ciriKalimatMtk(c.kalimat).variabel[0];
+  if (sol !== null)
+    out.push({ kode: 'langsungJawab', label: huruf + ' = ' + formatAngkaAljabar(sol) });
+  var berVar = function (list) {
+    return list.some(function (t) {
+      return !!t.variabel;
+    });
+  };
+  out.push({
+    kode: 'tanpaSamaDengan',
+    label: formatRuasKalimat(berVar(p.kiri) ? p.kiri : p.kanan),
+  });
+  /* tanda konstanta pada ruas bervariabel dibalik; tanpa konstanta → tanda variabel */
+  var balik = function (list) {
+    if (!berVar(list)) return list;
+    var adaKonst = list.some(function (t) {
+      return !t.variabel;
+    });
+    return list.map(function (t) {
+      var ubah = adaKonst ? !t.variabel : !!t.variabel;
+      return Object.assign({}, t, { koef: ubah ? -t.koef : t.koef });
+    });
+  };
+  out.push({
+    kode: 'tandaHilang',
+    label: formatKalimatMtk({ kiri: balik(p.kiri), rel: '=', kanan: balik(p.kanan) }),
+  });
+  variasiTukarKalimat(p).forEach(function (q) {
+    out.push({ kode: 'tukarKoefKonst', label: formatKalimatMtk(q) });
+  });
+  out.push({ kode: 'pertidaksamaan', label: formatKalimatMtk(Object.assign({}, p, { rel: '>' })) });
+  return out;
+}
+
+/* Opsi { id, label, umpan } untuk soal pilihan; opsi pertama id 'baku'. */
+function opsiSoalKalimat(s) {
+  var c = s.cek;
+  var pilihan = opsiPilihanKalimat(c.minta);
+  if (pilihan) {
+    var baku = nilaiSoalKalimat(c);
+    return pilihan
+      .filter(function (o) {
+        return o.id === baku;
+      })
+      .concat(
+        pilihan.filter(function (o) {
+          return o.id !== baku;
+        })
+      )
+      .map(function (o, i) {
+        return {
+          id: i === 0 ? 'baku' : o.id,
+          label: o.label,
+          umpan: periksaSoalKalimat(o.id, s).pesan,
+        };
+      });
+  }
+  var calon =
+    c.minta === 'penyelesaian'
+      ? calonPenyelesaianKeliru(c.kalimat).map(function (g) {
+          return { kode: g.kode, label: formatAngkaAljabar(g.nilai) };
+        })
+      : calonKalimatKeliru(c);
+  var out = [{ id: 'baku', label: jawabSoalKalimat(s), umpan: PESAN_KALIMAT.benar }];
+  var label = {};
+  var idPakai = {};
+  label[out[0].label] = true;
+  calon.forEach(function (g) {
+    if (out.length >= 4 || label[g.label]) return;
+    label[g.label] = true;
+    var id = g.kode;
+    for (var i = 2; idPakai[id]; i++) id = g.kode + i;
+    idPakai[id] = true;
+    out.push({ id: id, label: g.label, umpan: periksaSoalKalimat(g.label, s).pesan });
+  });
+  return out;
+}
+
+/* ---------- UI: kalimat berwarna ---------- */
+
+/*
+ * Kalimat dengan variabel (.kalimat-var), bilangan (.kalimat-bil), relasi
+ * (.kalimat-rel), dan operasi (.kalimat-op) ditandai. Kalimat yang
+ * terbaca ditulis ulang dengan gaya baku lebih dulu.
+ */
+function buildKalimatWarna(str) {
+  var p = parseKalimatMtk(str);
+  var s = p ? formatKalimatMtk(p) : String(str === null || str === undefined ? '' : str);
+  var re =
+    /(\d+(?:[.,]\d+)*)|([a-zA-Z])|(\^[23]|[²³])|(<=|>=|!=|[=≠<>≤≥])|([+\-−×*·])|(\s+)|([\s\S])/g;
+  var span = function (c, t) {
+    return '<span class="' + c + '">' + esc(t) + '</span>';
+  };
+  var html = s.replace(re, function (m, bil, huruf, pangkat, rel, op, spasi) {
+    if (bil) return span('kalimat-bil', bil);
+    if (huruf) return span('kalimat-var', huruf);
+    if (pangkat)
+      return '<sup>' + (pangkat.indexOf('3') !== -1 || pangkat === '³' ? 3 : 2) + '</sup>';
+    if (rel) return span('kalimat-rel', rel);
+    if (op) return span('kalimat-op', op === '-' ? '−' : op === '*' || op === '·' ? '×' : op);
+    if (spasi) return ' ';
+    return esc(m);
+  });
+  return '<span class="kalimat">' + html + '</span>';
+}
+
+/* ---------- Neraca ---------- */
+
+/* Kalimat "=" dari isi dua piring neraca ({ x, lepas }), mis. '2x + 1 = 9'. */
+function kalimatDariNeraca(kiri, kanan, huruf) {
+  var h = huruf || 'x';
+  var ubah = function (m) {
+    var o = { lepas: m.lepas || 0 };
+    o[h] = m.x || 0;
+    return bentukDariModel(o, [h]);
+  };
+  return ubah(kiri) + ' = ' + ubah(kanan);
+}
+
+function beratRuasNeraca(m, x) {
+  return (m.x || 0) * x + (m.lepas || 0);
+}
+
+/* 'seimbang' | 'kiriBerat' | 'kananBerat' bila kotak bernilai x. */
+function arahNeraca(kiri, kanan, x) {
+  var d = beratRuasNeraca(kiri, x) - beratRuasNeraca(kanan, x);
+  if (d === 0) return 'seimbang';
+  return d > 0 ? 'kiriBerat' : 'kananBerat';
+}
+
+var LABEL_ARAH_NERACA = {
+  seimbang: 'seimbang',
+  kiriBerat: 'kiri lebih berat',
+  kananBerat: 'kanan lebih berat',
+};
+
+function deskripsiPiringNeraca(m, huruf) {
+  var bag = [];
+  if (m.x) bag.push(m.x + ' kotak ' + huruf);
+  if (m.lepas) bag.push(m.lepas + ' beban 1 kg');
+  return bag.length ? bag.join(' dan ') : 'kosong';
+}
+
+/* Benda di atas piring berpusat di (cx, alas): kotak lebih dulu, lalu beban. */
+function bendaPiringNeraca(m, cx, alas, huruf) {
+  var benda = [];
+  for (var i = 0; i < (m.x || 0); i++) benda.push('kotak');
+  for (var j = 0; j < (m.lepas || 0); j++) benda.push('beban');
+  var perBaris = 5;
+  return benda
+    .map(function (b, i) {
+      var baris = Math.floor(i / perBaris);
+      var isiBaris = Math.min(perBaris, benda.length - baris * perBaris);
+      var kolom = i % perBaris;
+      var x = cx - (isiBaris * 20) / 2 + kolom * 20 + 10;
+      var bawah = alas - baris * 22;
+      if (b === 'kotak') {
+        return (
+          '<rect class="neraca-kotak" x="' +
+          (x - 9) +
+          '" y="' +
+          (bawah - 20) +
+          '" width="18" height="20" rx="3"/>' +
+          '<text class="neraca-kotak__teks" x="' +
+          x +
+          '" y="' +
+          (bawah - 6) +
+          '" text-anchor="middle">' +
+          esc(huruf) +
+          '</text>'
+        );
+      }
+      return (
+        '<rect class="neraca-beban" x="' +
+        (x - 8) +
+        '" y="' +
+        (bawah - 15) +
+        '" width="16" height="15" rx="2"/>' +
+        '<text class="neraca-beban__teks" x="' +
+        x +
+        '" y="' +
+        (bawah - 4) +
+        '" text-anchor="middle">1</text>'
+      );
+    })
+    .join('');
+}
+
+/*
+ * Neraca SVG. x = nilai kotak (bilangan) → kemiringan mengikuti berat;
+ * x null → digambar seimbang (keadaan pada cerita).
+ *   opts.huruf  huruf pada kotak (bawaan 'x')
+ */
+function buildNeraca(kiri, kanan, x, opts) {
+  opts = opts || {};
+  var huruf = opts.huruf || 'x';
+  var arah = typeof x === 'number' ? arahNeraca(kiri, kanan, x) : 'seimbang';
+  var sudut = arah === 'kiriBerat' ? 9 : arah === 'kananBerat' ? -9 : 0;
+  var rad = (sudut * Math.PI) / 180;
+  var px = 170;
+  var py = 58;
+  var L = 108;
+  var dx = Math.round(L * Math.cos(rad) * 10) / 10;
+  var dy = Math.round(L * Math.sin(rad) * 10) / 10;
+  var ujung = [
+    { x: px - dx, y: py + dy, m: kiri },
+    { x: px + dx, y: py - dy, m: kanan },
+  ];
+  var label =
+    'Neraca. Piring kiri: ' +
+    deskripsiPiringNeraca(kiri, huruf) +
+    '. Piring kanan: ' +
+    deskripsiPiringNeraca(kanan, huruf) +
+    '. ' +
+    (typeof x === 'number' ? 'Dengan ' + huruf + ' = ' + x + ', neraca ' : 'Neraca ') +
+    LABEL_ARAH_NERACA[arah] +
+    '.';
+  return (
+    '<svg class="neraca-svg is-' +
+    arah +
+    '" viewBox="0 0 340 230" role="img" aria-label="' +
+    esc(label) +
+    '">' +
+    '<rect class="neraca-alas" x="115" y="212" width="110" height="10" rx="4"/>' +
+    '<path class="neraca-tiang" d="M170 ' +
+    py +
+    ' L156 212 L184 212 Z"/>' +
+    '<line class="neraca-lengan" x1="' +
+    ujung[0].x +
+    '" y1="' +
+    ujung[0].y +
+    '" x2="' +
+    ujung[1].x +
+    '" y2="' +
+    ujung[1].y +
+    '"/>' +
+    '<circle class="neraca-poros" cx="' +
+    px +
+    '" cy="' +
+    py +
+    '" r="6"/>' +
+    ujung
+      .map(function (u) {
+        var alas = u.y + 78;
+        return (
+          '<line class="neraca-tali" x1="' +
+          u.x +
+          '" y1="' +
+          u.y +
+          '" x2="' +
+          (u.x - 48) +
+          '" y2="' +
+          alas +
+          '"/>' +
+          '<line class="neraca-tali" x1="' +
+          u.x +
+          '" y1="' +
+          u.y +
+          '" x2="' +
+          (u.x + 48) +
+          '" y2="' +
+          alas +
+          '"/>' +
+          '<path class="neraca-piring" d="M' +
+          (u.x - 54) +
+          ' ' +
+          alas +
+          ' Q' +
+          u.x +
+          ' ' +
+          (alas + 14) +
+          ' ' +
+          (u.x + 54) +
+          ' ' +
+          alas +
+          ' Z"/>' +
+          bendaPiringNeraca(u.m, u.x, alas, huruf)
+        );
+      })
+      .join('') +
+    '</svg>'
+  );
+}
+
+/* ---------- Lab Neraca ---------- */
+
+function catatNolLabNeraca() {
+  return {
+    input: '',
+    kode: null,
+    pesan: '',
+    attempts: 0,
+    done: false,
+    kalimat: '',
+    uji: [],
+    seimbang: false,
+    kodeUji: null,
+    pesanUji: '',
+  };
+}
+
+function situasiLabNeraca(cfg, id) {
+  return cfg.situasi.filter(function (s) {
+    return s.id === id;
+  })[0];
+}
+
+function kalimatSituasiNeraca(cfg, s) {
+  return kalimatDariNeraca(s.kiri, s.kanan, cfg.huruf);
+}
+
+function solusiSituasiNeraca(cfg, s) {
+  return penyelesaianPlsv(kalimatSituasiNeraca(cfg, s));
+}
+
+function ensureLabNeraca(st, cfg) {
+  var kunci = cfg.situasi
+    .map(function (s) {
+      return s.id;
+    })
+    .join(',');
+  if (st.kunci !== kunci || !st.catat || typeof st.catat !== 'object') {
+    st.kunci = kunci;
+    st.catat = {};
+  }
+  cfg.situasi.forEach(function (s) {
+    var c = st.catat[s.id];
+    if (!c || typeof c !== 'object' || !Array.isArray(c.uji)) st.catat[s.id] = catatNolLabNeraca();
+  });
+  var s = situasiLabNeraca(cfg, st.aktif);
+  if (!s) {
+    st.aktif = cfg.situasi[0].id;
+    s = cfg.situasi[0];
+  }
+  if (typeof st.x !== 'number' || st.x !== Math.floor(st.x) || st.x < 0 || st.x > cfg.batas) {
+    st.x = 0;
+  }
+  if (st.catat[st.aktif].seimbang) st.x = solusiSituasiNeraca(cfg, s);
+  return st;
+}
+
+/* Mengubah nilai kotak; hanya setelah kalimat ditulis & sebelum seimbang. */
+function ubahLabNeraca(st, cfg, arah) {
+  var c = st.catat[st.aktif];
+  if (!c.done || c.seimbang) return false;
+  var baru = Math.max(0, Math.min(cfg.batas, st.x + arah));
+  if (baru === st.x) return false;
+  st.x = baru;
+  c.kodeUji = null;
+  return true;
+}
+
+function pilihSituasiLabNeraca(st, cfg, id) {
+  var s = situasiLabNeraca(cfg, id);
+  if (!s || st.aktif === id) return false;
+  st.aktif = id;
+  st.x = st.catat[id].seimbang ? solusiSituasiNeraca(cfg, s) : 0;
+  return true;
+}
+
+/* Menulis kalimat matematika untuk neraca aktif (isian berdiagnosa). */
+function tulisKalimatLabNeraca(st, cfg, isian) {
+  var c = st.catat[st.aktif];
+  var kal = kalimatSituasiNeraca(cfg, situasiLabNeraca(cfg, st.aktif));
+  var r = periksaSoalKalimat(isian, { cek: { kalimat: kal, minta: 'kalimat' } });
+  if (r.kode === 'kosong' || r.kode === 'format') return r;
+  c.input = String(isian).trim();
+  c.kode = r.kode;
+  c.pesan = r.pesan;
+  c.attempts += 1;
+  if (r.benar) {
+    c.done = true;
+    c.kalimat = rapikanKalimatMtk(kal);
+  }
+  return r;
+}
+
+var PESAN_LAB_NERACA = {
+  belumKalimat: 'Tulis dulu kalimat matematika untuk neraca ini.',
+};
+
+function pesanUjiNeraca(cfg, s, x, arah) {
+  var kal = kalimatSituasiNeraca(cfg, s);
+  var h = cfg.huruf;
+  var kiri = beratRuasNeraca(s.kiri, x);
+  var kanan = beratRuasNeraca(s.kanan, x);
+  var ruas = 'ruas kiri = ' + kiri + ' dan ruas kanan = ' + kanan;
+  if (arah === 'seimbang') {
+    return (
+      'Neraca seimbang! Dengan ' +
+      h +
+      ' = ' +
+      x +
+      ', ' +
+      ruas +
+      '. Kalimat ' +
+      rapikanKalimatMtk(kal) +
+      ' menjadi pernyataan yang BENAR.'
+    );
+  }
+  /* kemiringan berubah searah (a − c): kiri berat & a > c → x perlu lebih kecil */
+  var L = bagianLinearKalimat(parseKalimatMtk(kal));
+  var lebihKecil = (arah === 'kiriBerat') === L.a - L.c > 0;
+  return (
+    (arah === 'kiriBerat' ? 'Piring kiri lebih berat' : 'Piring kanan lebih berat') +
+    ': dengan ' +
+    h +
+    ' = ' +
+    x +
+    ', ' +
+    ruas +
+    '. Kalimat ' +
+    rapikanKalimatMtk(kal) +
+    ' menjadi pernyataan yang SALAH. Coba nilai ' +
+    h +
+    ' yang lebih ' +
+    (lebihKecil ? 'kecil' : 'besar') +
+    '.'
+  );
+}
+
+/* Menguji nilai kotak sekarang; setiap nilai baru dicatat sekali. */
+function ujiLabNeraca(st, cfg) {
+  var c = st.catat[st.aktif];
+  if (!c.done) {
+    return { kode: 'belumKalimat', benar: false, pesan: PESAN_LAB_NERACA.belumKalimat };
+  }
+  var s = situasiLabNeraca(cfg, st.aktif);
+  var arah = arahNeraca(s.kiri, s.kanan, st.x);
+  var benar = arah === 'seimbang';
+  var pernah = c.uji.some(function (u) {
+    return u.x === st.x;
+  });
+  if (!pernah && !c.seimbang) c.uji.push({ x: st.x, benar: benar });
+  if (benar) c.seimbang = true;
+  c.kodeUji = arah;
+  c.pesanUji = pesanUjiNeraca(cfg, s, st.x, arah);
+  return { kode: arah, benar: benar, pesan: c.pesanUji };
+}
+
+function labNeracaLengkap(st, cfg) {
+  return cfg.situasi.every(function (s) {
+    var c = st.catat[s.id];
+    return c && c.done && c.seimbang;
+  });
+}
+
+function buildTabelLabNeraca(st, cfg) {
+  var h = esc(cfg.huruf);
+  return (
+    '<table class="data-table lab-neraca__tabel">' +
+    '<caption>Tabel pengamatan</caption>' +
+    '<thead><tr><th scope="col">Neraca</th><th scope="col">Kalimat matematika</th>' +
+    '<th scope="col">Nilai ' +
+    h +
+    ' yang dicoba</th><th scope="col">Nilai ' +
+    h +
+    ' yang membuat seimbang</th></tr></thead><tbody>' +
+    cfg.situasi
+      .map(function (s) {
+        var c = st.catat[s.id];
+        var uji = c.uji.length
+          ? c.uji
+              .map(function (u) {
+                return (
+                  '<span class="lab-neraca__uji ' +
+                  (u.benar ? 'is-benar' : 'is-salah') +
+                  '">' +
+                  u.x +
+                  (u.benar ? ' ✓ benar' : ' ✗ salah') +
+                  '</span>'
+                );
+              })
+              .join(' ')
+          : '…';
+        return (
+          '<tr' +
+          (s.id === st.aktif ? ' class="is-aktif"' : '') +
+          '><th scope="row">' +
+          esc(s.judul) +
+          '</th><td>' +
+          (c.done ? buildKalimatWarna(c.kalimat) : '…') +
+          '</td><td>' +
+          uji +
+          '</td><td>' +
+          (c.seimbang ? h + ' = ' + solusiSituasiNeraca(cfg, s) : '…') +
+          '</td></tr>'
+        );
+      })
+      .join('') +
+    '</tbody></table>'
+  );
+}
+
+function buildIsianLabNeraca(id, c, huruf) {
+  var salah = c.attempts > 0 && c.kode && c.kode !== 'benar';
+  return (
+    '<div class="field-group lab-neraca__tulis">' +
+    '<label for="' +
+    id +
+    'KalimatInput">Tulis kalimat matematika untuk neraca seimbang ini (kotak = ' +
+    esc(huruf) +
+    ')</label>' +
+    '<div class="dl-input-row">' +
+    '<input type="text" class="input-text' +
+    (salah ? ' has-error' : '') +
+    '" id="' +
+    id +
+    'KalimatInput" autocomplete="off" autocapitalize="off" spellcheck="false" value="' +
+    esc(c.input || '') +
+    '" placeholder="mis. 2' +
+    esc(huruf) +
+    ' + 1 = 7">' +
+    '<button type="button" class="btn btn--primary" id="' +
+    id +
+    'Kalimat">Catat</button>' +
+    '</div>' +
+    '<p class="dl-caption">Ruas kiri = isi piring kiri, ruas kanan = isi piring kanan. Neraca seimbang ditulis dengan tanda =.</p>' +
+    (salah
+      ? buildFeedbackBox('error', '✗', '<strong>' + esc(c.input) + '</strong> — ' + esc(c.pesan))
+      : '') +
+    '</div>'
+  );
+}
+
+/* Lab Neraca: pilih neraca → tulis kalimat "=" → uji nilai kotak sampai seimbang. */
+function buildLabNeraca(id, st, cfg) {
+  var s = situasiLabNeraca(cfg, st.aktif);
+  var c = st.catat[st.aktif];
+  var h = cfg.huruf;
+  var tab = cfg.situasi
+    .map(function (x, i) {
+      var cx = st.catat[x.id];
+      var selesai = cx.done && cx.seimbang;
+      return (
+        '<button type="button" class="lab-neraca__tab-btn' +
+        (x.id === st.aktif ? ' is-aktif' : '') +
+        (selesai ? ' is-selesai' : '') +
+        '" data-situasi="' +
+        esc(x.id) +
+        '" aria-pressed="' +
+        (x.id === st.aktif) +
+        '">' +
+        (selesai ? '✓ ' : '') +
+        'Neraca ' +
+        (i + 1) +
+        '</button>'
+      );
+    })
+    .join('');
+  var keterangan = c.done
+    ? 'Kotak ' +
+      esc(h) +
+      ' diganti ' +
+      st.x +
+      ' kg → neraca <strong>' +
+      LABEL_ARAH_NERACA[arahNeraca(s.kiri, s.kanan, st.x)] +
+      '</strong>'
+    : 'Pada cerita, neraca ini <strong>seimbang</strong>.';
+  var kontrol = '';
+  if (c.done) {
+    kontrol =
+      '<div class="lab-neraca__kontrol">' +
+      '<p class="lab-neraca__kalimat">Kalimatmu: ' +
+      buildKalimatWarna(c.kalimat) +
+      '</p>' +
+      buildFinStepper(id + 'Nilai', 'Nilai ' + h + ' (kg)', String(st.x), {
+        minDis: c.seimbang || st.x <= 0,
+        maxDis: c.seimbang || st.x >= cfg.batas,
+      }) +
+      (c.seimbang
+        ? ''
+        : '<div class="btn-group"><button type="button" class="btn btn--primary" id="' +
+          id +
+          'Uji">Uji nilai ' +
+          esc(h) +
+          ' = ' +
+          st.x +
+          '</button></div>') +
+      (c.kodeUji
+        ? buildFeedbackBox(
+            c.kodeUji === 'seimbang' ? 'success' : 'warning',
+            c.kodeUji === 'seimbang' ? '⚖️' : '↕️',
+            esc(c.pesanUji)
+          )
+        : '') +
+      '</div>';
+  }
+  return (
+    '<div class="lab-neraca" id="' +
+    id +
+    '">' +
+    '<div class="lab-neraca__tab" role="group" aria-label="Pilih neraca">' +
+    tab +
+    '</div>' +
+    '<div class="lab-neraca__cerita"><strong>' +
+    esc(s.judul) +
+    '</strong><p>' +
+    esc(s.cerita) +
+    '</p></div>' +
+    '<div class="lab-neraca__isi">' +
+    '<figure class="lab-neraca__gambar">' +
+    buildNeraca(s.kiri, s.kanan, c.done ? st.x : null, { huruf: h }) +
+    '<figcaption>' +
+    keterangan +
+    '</figcaption>' +
+    '</figure>' +
+    (c.done ? kontrol : buildIsianLabNeraca(id, c, h)) +
+    '</div>' +
+    '<div class="lab-neraca__tabel-wrap">' +
+    buildTabelLabNeraca(st, cfg) +
+    '</div>' +
+    '</div>'
+  );
+}
+
+function bindLabNeraca(root, id, st, cfg, onChange) {
+  root.querySelectorAll('#' + id + ' [data-situasi]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      if (pilihSituasiLabNeraca(st, cfg, btn.dataset.situasi)) onChange();
+    });
+  });
+  bindFinStepper(root, id + 'Nilai', function (arah) {
+    if (ubahLabNeraca(st, cfg, arah)) onChange();
+  });
+  var uji = root.querySelector('#' + id + 'Uji');
+  if (uji) {
+    uji.addEventListener('click', function () {
+      ujiLabNeraca(st, cfg);
+      onChange();
+    });
+  }
+  var btn = root.querySelector('#' + id + 'Kalimat');
+  var inp = root.querySelector('#' + id + 'KalimatInput');
+  if (btn && inp) {
+    var kirim = function () {
+      var r = tulisKalimatLabNeraca(st, cfg, inp.value);
+      if (r.kode === 'kosong' || r.kode === 'format') {
+        showNotice(r.pesan);
+        return;
+      }
+      onChange();
+      var lagi = document.getElementById(id + 'KalimatInput');
+      if (lagi && !r.benar) lagi.focus();
+    };
+    btn.addEventListener('click', kirim);
+    inp.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter') kirim();
     });
   }
 }
