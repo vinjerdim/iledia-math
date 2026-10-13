@@ -15058,3 +15058,318 @@ button.akar-tile:disabled {
     grid-template-columns: minmax(0, 1fr);
   }
 }
+
+/* -------------------------------------------------------------------------
+   Asesmen diagnostik (engine seksi 72, fase-d/mpi-23.1)
+   Daftar butir prasyarat bernomor dan profil kesiapan per indikator.
+   Status indikator ditandai ikon (✓ / !) + warna, tidak warna saja.
+   ------------------------------------------------------------------------- */
+
+.diag-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.diag-item {
+  margin: 0;
+  padding: var(--space-4);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+}
+
+.diag-item__visual {
+  margin: var(--space-2) 0 var(--space-3);
+  overflow-x: auto;
+}
+
+.diag-ringkas {
+  padding: var(--space-4);
+  border: 2px solid var(--color-border-strong);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+}
+
+.diag-ringkas--siap {
+  border-color: var(--color-success);
+}
+
+.diag-ringkas--sebagian {
+  border-color: var(--color-warning);
+}
+
+.diag-ringkas--perlu {
+  border-color: var(--color-orange);
+}
+
+.diag-ringkas__judul {
+  margin-top: 0;
+}
+
+.diag-ringkas__skor {
+  font-size: 1.02rem;
+}
+
+.diag-profil {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.diag-profil__item {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+  margin: 0;
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-md);
+}
+
+.diag-profil__item--kuat {
+  background: var(--color-success-soft);
+}
+
+.diag-profil__item--perlu {
+  background: var(--color-warning-soft);
+}
+
+.diag-profil__status {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  font-weight: 700;
+  color: #fff;
+}
+
+.diag-profil__item--kuat .diag-profil__status {
+  background: var(--color-success);
+}
+
+.diag-profil__item--perlu .diag-profil__status {
+  background: var(--color-warning);
+}
+
+.diag-profil__saran {
+  display: block;
+  font-size: 0.88rem;
+  color: var(--color-warning-strong);
+}
+
+/* -------------------------------------------------------------------------
+   Keliling & luas bangun datar (engine seksi 73, fase-d/mpi-23.1)
+   Gambar bangun berkisi, petak & ruas satuan, garis tinggi & diagonal,
+   potong-susun, dan Lab Bangun. Bagian hasil potongan ditandai warna
+   oranye + pola garis putus-putus, sehingga tidak bergantung warna saja.
+   ------------------------------------------------------------------------- */
+
+.bangun-svg {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  margin: 0 auto;
+  overflow: visible;
+}
+
+.bangun-kisi {
+  stroke: var(--color-bg-grid);
+  stroke-width: 1;
+}
+
+.bangun-bidang {
+  fill: var(--color-blue-soft);
+  fill-opacity: 0.85;
+  stroke: none;
+}
+
+.bangun-tepi {
+  fill: none;
+  stroke: var(--color-blue);
+  stroke-width: 2.5;
+  stroke-linejoin: round;
+}
+
+.bangun-petak {
+  stroke: var(--color-blue);
+  stroke-width: 1;
+  stroke-opacity: 0.55;
+}
+
+.bangun-ruas {
+  stroke: var(--color-blue-strong);
+  stroke-width: 2;
+}
+
+.bangun-potong {
+  fill: var(--color-orange-soft);
+  stroke: var(--color-orange);
+  stroke-width: 2.5;
+  stroke-dasharray: 6 3;
+  stroke-linejoin: round;
+}
+
+.bangun-salinan {
+  fill: var(--color-purple-soft);
+  stroke: var(--color-purple);
+  stroke-width: 2.5;
+  stroke-dasharray: 6 3;
+  stroke-linejoin: round;
+}
+
+.bangun-luar {
+  fill: var(--color-orange-soft);
+  fill-opacity: 0.6;
+  stroke: var(--color-orange);
+  stroke-width: 1.5;
+  stroke-dasharray: 4 3;
+}
+
+.bangun-hasil {
+  fill: none;
+  stroke: var(--color-success-strong);
+  stroke-width: 3;
+  stroke-linejoin: round;
+}
+
+.bangun-tinggi,
+.bangun-diagonal,
+.bangun-garis-potong {
+  stroke: var(--color-ink);
+  stroke-width: 1.5;
+  stroke-dasharray: 5 4;
+}
+
+.bangun-garis-potong {
+  stroke: var(--color-orange-strong);
+  stroke-width: 2.5;
+}
+
+.bangun-siku {
+  fill: none;
+  stroke: var(--color-ink);
+  stroke-width: 1.2;
+}
+
+.bangun-teks {
+  font-family: var(--font-body);
+  font-size: 12px;
+  font-weight: 700;
+  fill: var(--color-ink);
+  paint-order: stroke;
+  stroke: var(--color-surface);
+  stroke-width: 3px;
+  stroke-linejoin: round;
+}
+
+.bangun-teks--tinggi,
+.bangun-teks--diagonal {
+  fill: var(--color-purple-strong);
+}
+
+/* Lab Bangun */
+
+.lab-bangun {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.lab-bangun__tab {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.lab-bangun__isi {
+  display: grid;
+  grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+  gap: var(--space-4);
+  align-items: start;
+}
+
+.lab-bangun__kiri,
+.lab-bangun__kanan {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  min-width: 0;
+}
+
+.lab-bangun__gambar {
+  margin: 0;
+  padding: var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  overflow-x: auto;
+}
+
+.lab-bangun__gambar figcaption {
+  margin-top: var(--space-2);
+  font-size: 0.85rem;
+  color: var(--color-ink-muted);
+  text-align: center;
+}
+
+.lab-bangun__form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.lab-bangun__isian label {
+  display: block;
+  margin-bottom: var(--space-1);
+  font-weight: 700;
+}
+
+.lab-bangun__isian .dl-num-input {
+  width: 7em;
+}
+
+.lab-bangun__isian .feedback-box {
+  margin-top: var(--space-2);
+}
+
+.lab-bangun__catat {
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+.lab-bangun__tabel {
+  width: 100%;
+  font-variant-numeric: tabular-nums;
+}
+
+.lab-bangun__tabel caption {
+  margin-bottom: var(--space-1);
+  font-size: 0.85rem;
+  font-weight: 700;
+  text-align: left;
+}
+
+.lab-bangun__tabel td,
+.lab-bangun__tabel th {
+  text-align: center;
+}
+
+.lab-bangun__kosong {
+  color: var(--color-ink-muted);
+  font-style: italic;
+}
+
+@media (max-width: 720px) {
+  .lab-bangun__isi {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
