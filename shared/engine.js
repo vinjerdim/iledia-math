@@ -224,6 +224,12 @@
    71. Pola susunan benda (batang korek api, ubin, kursi: banyak benda
        tiap tahap, tambahan, jenis keteraturan, isian berdiagnosa, opsi
        berpengecoh, gambar susunan SVG, Lab Susun)
+   72. Asesmen diagnostik (butir prasyarat sekali-jawab berpembahasan,
+       opsi teracak tersimpan, profil kesiapan per indikator & saran)
+   73. Keliling & luas bangun datar (segitiga, persegi, persegi panjang,
+       jajargenjang, trapesium, belah ketupat, layang-layang: titik
+       sudut, sisi, keliling, luas, isian berdiagnosa miskonsepsi, opsi
+       berpengecoh, gambar SVG berkisi, potong-susun, Lab Bangun)
    ============================================================ */
 
 /* ============================================================
@@ -45280,6 +45286,1734 @@ function bindLabSusun(root, id, st, cfg, onChange) {
       onChange();
       if (r.takTerbaca) showNotice('Tulis banyak benda berupa bilangan bulat, mis. 7.');
       else if (r.kosong) showNotice('Masih ada tahap yang belum kamu catat.');
+    });
+  }
+}
+
+/* ============================================================
+   72. ASESMEN DIAGNOSTIK
+   Komponen bersama untuk tahap asesmen diagnostik di awal
+   pembelajaran (dipakai pertama kali oleh fase-d/mpi-23.1).
+   Setiap butir pilihan ganda dijawab SEKALI, langsung diberi
+   pembahasan, lalu hasilnya diringkas per indikator prasyarat
+   menjadi profil kesiapan murid beserta saran tindak lanjut.
+
+     item      { id, indikator, tanya, opsi: [{ id, label }], correct,
+                 pembahasan }  — tanya/label/pembahasan berupa HTML
+                 (pemanggil sudah meng-escape teks DATA)
+     indikator [{ id, label, saran }]
+
+   Urutan opsi tiap butir DIACAK sekali (ensureShuffledOrder) lalu
+   disimpan di state, sehingga stabil lintas render tetapi berbeda
+   untuk setiap murid dan setiap Reset.
+   Gaya .diag-* ada di shared/base.css.
+   ============================================================ */
+
+/* state[key] = { <idButir>: { chosen, correct, optionOrder } } */
+function ensureDiagnostikStates(state, key, items) {
+  var map = state[key] && typeof state[key] === 'object' ? state[key] : {};
+  var next = {};
+  items.forEach(function (it) {
+    var st = map[it.id];
+    if (!st || typeof st !== 'object') st = { chosen: null, correct: false, optionOrder: null };
+    if (st.chosen && optionIds(it.opsi).indexOf(st.chosen) === -1) {
+      st.chosen = null;
+      st.correct = false;
+    }
+    ensureShuffledOrder(st, 'optionOrder', it.opsi);
+    next[it.id] = st;
+  });
+  state[key] = next;
+  return next;
+}
+
+/* Mencatat pilihan butir; false bila sudah dijawab atau opsi tidak dikenal. */
+function pilihDiagnostik(st, item, optId) {
+  if (!st || st.chosen) return false;
+  if (optionIds(item.opsi).indexOf(optId) === -1) return false;
+  st.chosen = optId;
+  st.correct = optId === item.correct;
+  return true;
+}
+
+function diagnostikSelesai(items, states) {
+  return items.every(function (it) {
+    return !!(states[it.id] && states[it.id].chosen);
+  });
+}
+
+/*
+ * Ringkasan hasil: { benar, total, persen, level, indikator: [{ id,
+ * label, saran, benar, total, kuat }] }. level 'siap' (≥ 80%),
+ * 'sebagian' (≥ 50%), atau 'perlu'.
+ */
+function ringkasDiagnostik(items, states, indikator) {
+  var benar = items.filter(function (it) {
+    return states[it.id] && states[it.id].correct;
+  }).length;
+  var total = items.length;
+  var persen = total ? Math.round((benar / total) * 100) : 0;
+  var level = 'perlu';
+  if (persen >= 80) level = 'siap';
+  else if (persen >= 50) level = 'sebagian';
+  return {
+    benar: benar,
+    total: total,
+    persen: persen,
+    level: level,
+    indikator: indikator.map(function (ind) {
+      var milik = items.filter(function (it) {
+        return it.indikator === ind.id;
+      });
+      var b = milik.filter(function (it) {
+        return states[it.id] && states[it.id].correct;
+      }).length;
+      return {
+        id: ind.id,
+        label: ind.label,
+        saran: ind.saran,
+        benar: b,
+        total: milik.length,
+        kuat: b === milik.length,
+      };
+    }),
+  };
+}
+
+/*
+ * Daftar butir diagnostik bernomor.
+ *   opts.visual  function(item) → HTML gambar di bawah pertanyaan
+ */
+function buildAsesmenDiagnostik(items, states, opts) {
+  opts = opts || {};
+  return (
+    '<ol class="diag-list">' +
+    items
+      .map(function (it, i) {
+        var st = states[it.id];
+        var visual = opts.visual ? opts.visual(it) : '';
+        return (
+          '<li class="diag-item">' +
+          '<p class="exercise-label"><span class="dl-step__num">' +
+          (i + 1) +
+          '</span>' +
+          it.tanya +
+          '</p>' +
+          (visual ? '<div class="diag-item__visual">' + visual + '</div>' : '') +
+          buildChoiceGroup(it.opsi, st.optionOrder, {
+            chosen: st.chosen,
+            correctId: it.correct,
+            grade: true,
+            locked: true,
+            group: it.id,
+            attr: 'data-diag-opt',
+          }) +
+          (st.chosen
+            ? '<div style="margin-top:var(--space-2);">' +
+              buildFeedbackBox(
+                st.correct ? 'success' : 'info',
+                st.correct ? '✓' : '📘',
+                (st.correct ? '<strong>Tepat.</strong> ' : '<strong>Mari ingat lagi:</strong> ') +
+                  it.pembahasan
+              ) +
+              '</div>'
+            : '') +
+          '</li>'
+        );
+      })
+      .join('') +
+    '</ol>'
+  );
+}
+
+/* Memasang event buildAsesmenDiagnostik di dalam `root`. */
+function bindAsesmenDiagnostik(root, items, states, save, rerender) {
+  var byId = {};
+  items.forEach(function (it) {
+    byId[it.id] = it;
+  });
+  root.querySelectorAll('[data-diag-opt]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var it = byId[btn.dataset.group];
+      if (!it) return;
+      if (pilihDiagnostik(states[it.id], it, btn.dataset.diagOpt)) {
+        save();
+        rerender();
+      }
+    });
+  });
+}
+
+/*
+ * Ringkasan profil kesiapan.
+ *   opts.pesan  { siap, sebagian, perlu } — kalimat untuk tiap level
+ *   opts.judul  judul ringkasan (default 'Profil kesiapanmu')
+ */
+function buildRingkasDiagnostik(r, opts) {
+  opts = opts || {};
+  var pesan = (opts.pesan || {})[r.level] || '';
+  var ikon = { siap: '🚀', sebagian: '🧭', perlu: '🧱' }[r.level];
+  return (
+    '<div class="diag-ringkas diag-ringkas--' +
+    r.level +
+    '">' +
+    '<h3 class="diag-ringkas__judul">' +
+    esc(opts.judul || 'Profil kesiapanmu') +
+    '</h3>' +
+    '<p class="diag-ringkas__skor"><span aria-hidden="true">' +
+    ikon +
+    '</span> <strong>' +
+    r.benar +
+    '</strong> dari <strong>' +
+    r.total +
+    '</strong> butir tepat. ' +
+    esc(pesan) +
+    '</p>' +
+    '<ul class="diag-profil">' +
+    r.indikator
+      .map(function (ind) {
+        return (
+          '<li class="diag-profil__item diag-profil__item--' +
+          (ind.kuat ? 'kuat' : 'perlu') +
+          '">' +
+          '<span class="diag-profil__status" aria-hidden="true">' +
+          (ind.kuat ? '✓' : '!') +
+          '</span>' +
+          '<span class="diag-profil__isi"><strong>' +
+          esc(ind.label) +
+          '</strong> — ' +
+          ind.benar +
+          '/' +
+          ind.total +
+          (ind.kuat ? ' <span class="sr-only">(sudah kuat)</span>' : '') +
+          (!ind.kuat && ind.saran
+            ? '<span class="diag-profil__saran">' + esc(ind.saran) + '</span>'
+            : '') +
+          '</span>' +
+          '</li>'
+        );
+      })
+      .join('') +
+    '</ul>' +
+    '</div>'
+  );
+}
+
+/* ============================================================
+   73. KELILING & LUAS BANGUN DATAR
+   Dipakai fase-d/mpi-23.1 (Discovery Learning): menentukan keliling
+   dan luas segitiga, persegi, persegi panjang, jajargenjang,
+   trapesium, belah ketupat, dan layang-layang melalui eksplorasi —
+   menghitung petak & ruas satuan, lalu memotong-menyusun bangun
+   menjadi persegi panjang / jajargenjang. Memakai ulang
+   parseAngkaRasio & fmtAngkaRasio (seksi 68), buildFinStepper
+   (seksi 66), dan langkah isian buildLangkahRasio (seksi 68) lewat
+   siapkanLangkahBangun.
+
+   Ukuran setiap bangun (satuan panjang bebas):
+     persegi        { s }
+     persegiPanjang { p, l }
+     segitiga       { a, t, g }    g = jarak mendatar titik puncak
+                                     dari ujung kiri alas (0 ≤ g ≤ a)
+     jajargenjang   { a, t, g }    g = geseran sisi atas ke kanan
+     trapesium      { a, b, t, g } a = sisi sejajar bawah, b = atas
+     belahKetupat   { d1, d2 }     d1 mendatar, d2 tegak
+     layangLayang   { d1, d2, y }  y = jarak titik puncak atas ke d1
+   g dan y boleh dihilangkan — lengkapiUkuranBangun mengisinya.
+
+   Notasi cek soal:
+     { jenis, ukuran, minta: 'keliling' | 'luas' }
+     { jenis, ukuran, minta: 'ukuran', cari, dari: 'luas'|'keliling' }
+                     → ukuran[cari] bila luas/keliling diketahui
+     { jenis, minta: 'rumus' } → id rumus luas (RUMUS_LUAS)
+   Gaya .bangun-* dan .lab-bangun* ada di shared/base.css.
+   ============================================================ */
+
+/* ---------- Rumus luas ---------- */
+
+var RUMUS_LUAS = {
+  panjangKaliLebar: {
+    label: 'L = p × l',
+    umpan: 'Rumus p × l milik persegi panjang: banyak petak = panjang × lebar.',
+  },
+  sisiKaliSisi: {
+    label: 'L = s × s',
+    umpan: 'Rumus s × s hanya untuk persegi, yang keempat sisinya sama dan sudutnya siku-siku.',
+  },
+  alasTinggi: {
+    label: 'L = a × t',
+    umpan: 'Rumus a × t milik jajargenjang — potong lalu geser, ia menjadi persegi panjang utuh.',
+  },
+  setengahAlasTinggi: {
+    label: 'L = ½ × a × t',
+    umpan: 'Rumus ½ × a × t milik segitiga: dua segitiga yang sama membentuk satu jajargenjang.',
+  },
+  setengahJumlahSejajar: {
+    label: 'L = ½ × (a + b) × t',
+    umpan:
+      'Rumus ½ × (a + b) × t milik trapesium: dua trapesium yang sama membentuk jajargenjang beralas a + b.',
+  },
+  setengahDiagonal: {
+    label: 'L = ½ × d₁ × d₂',
+    umpan:
+      'Rumus ½ × d₁ × d₂ memakai diagonal — milik bangun yang tepat setengah dari persegi panjang d₁ × d₂.',
+  },
+};
+
+var URUTAN_RUMUS_LUAS = [
+  'panjangKaliLebar',
+  'sisiKaliSisi',
+  'alasTinggi',
+  'setengahAlasTinggi',
+  'setengahJumlahSejajar',
+  'setengahDiagonal',
+];
+
+/* ---------- Spesifikasi bangun ---------- */
+
+/*
+ * ukuran        kunci ukuran utama (diatur stepper & disebut di soal)
+ * namaUkuran    nama tiap kunci (termasuk g/y bila ada)
+ * simbolSisi    simbol tiap sisi menurut urutan titikBangun
+ * labelSisi     sisi yang diberi label secara bawaan
+ * setengah      true → luasnya setengah dari bangun hasil susunan
+ * pengecohRumus rumus lain yang paling mirip (urutan prioritas)
+ */
+var BANGUN_DATAR = {
+  segitiga: {
+    nama: 'Segitiga',
+    ikon: '🔺',
+    ukuran: ['a', 't'],
+    namaUkuran: { a: 'Alas (a)', t: 'Tinggi (t)', g: 'Geser puncak' },
+    simbolSisi: ['a', 'b', 'c'],
+    labelSisi: [0, 1, 2],
+    rumusKeliling: 'K = a + b + c (jumlah ketiga sisi)',
+    rumusLuas: 'setengahAlasTinggi',
+    setengah: true,
+    pengecohRumus: ['alasTinggi', 'setengahDiagonal', 'panjangKaliLebar'],
+  },
+  persegi: {
+    nama: 'Persegi',
+    ikon: '🟥',
+    ukuran: ['s'],
+    namaUkuran: { s: 'Sisi (s)' },
+    simbolSisi: ['s', 's', 's', 's'],
+    labelSisi: [0, 1],
+    rumusKeliling: 'K = 4 × s',
+    rumusLuas: 'sisiKaliSisi',
+    setengah: false,
+    pengecohRumus: ['panjangKaliLebar', 'setengahDiagonal', 'alasTinggi'],
+  },
+  persegiPanjang: {
+    nama: 'Persegi panjang',
+    ikon: '▭',
+    ukuran: ['p', 'l'],
+    namaUkuran: { p: 'Panjang (p)', l: 'Lebar (l)' },
+    simbolSisi: ['p', 'l', 'p', 'l'],
+    labelSisi: [0, 1],
+    rumusKeliling: 'K = 2 × (p + l)',
+    rumusLuas: 'panjangKaliLebar',
+    setengah: false,
+    pengecohRumus: ['sisiKaliSisi', 'alasTinggi', 'setengahAlasTinggi'],
+  },
+  jajargenjang: {
+    nama: 'Jajargenjang',
+    ikon: '▱',
+    ukuran: ['a', 't'],
+    namaUkuran: { a: 'Alas (a)', t: 'Tinggi (t)', g: 'Geser sisi atas' },
+    simbolSisi: ['a', 'b', 'a', 'b'],
+    labelSisi: [0, 1],
+    rumusKeliling: 'K = 2 × (a + b), b = sisi miring',
+    rumusLuas: 'alasTinggi',
+    setengah: false,
+    pengecohRumus: ['setengahAlasTinggi', 'panjangKaliLebar', 'setengahJumlahSejajar'],
+  },
+  trapesium: {
+    nama: 'Trapesium',
+    ikon: '⏢',
+    ukuran: ['a', 'b', 't'],
+    namaUkuran: {
+      a: 'Sisi sejajar bawah (a)',
+      b: 'Sisi sejajar atas (b)',
+      t: 'Tinggi (t)',
+      g: 'Geser',
+    },
+    simbolSisi: ['a', 'c', 'b', 'd'],
+    labelSisi: [0, 1, 2, 3],
+    rumusKeliling: 'K = a + b + c + d (jumlah keempat sisi)',
+    rumusLuas: 'setengahJumlahSejajar',
+    setengah: true,
+    pengecohRumus: ['setengahAlasTinggi', 'alasTinggi', 'setengahDiagonal'],
+  },
+  belahKetupat: {
+    nama: 'Belah ketupat',
+    ikon: '🔷',
+    ukuran: ['d1', 'd2'],
+    namaUkuran: { d1: 'Diagonal d₁', d2: 'Diagonal d₂' },
+    simbolSisi: ['s', 's', 's', 's'],
+    labelSisi: [0],
+    rumusKeliling: 'K = 4 × s',
+    rumusLuas: 'setengahDiagonal',
+    setengah: true,
+    pengecohRumus: ['sisiKaliSisi', 'setengahAlasTinggi', 'alasTinggi'],
+  },
+  layangLayang: {
+    nama: 'Layang-layang',
+    ikon: '🪁',
+    ukuran: ['d1', 'd2'],
+    namaUkuran: { d1: 'Diagonal d₁', d2: 'Diagonal d₂', y: 'Letak d₁' },
+    simbolSisi: ['b', 'a', 'a', 'b'],
+    labelSisi: [0, 1],
+    rumusKeliling: 'K = 2 × (a + b), a & b = dua pasang sisi',
+    rumusLuas: 'setengahDiagonal',
+    setengah: true,
+    pengecohRumus: ['setengahAlasTinggi', 'panjangKaliLebar', 'sisiKaliSisi'],
+  },
+};
+
+/* ---------- Geometri dasar ---------- */
+
+function rapiBangun(x) {
+  return Math.round(x * 100) / 100;
+}
+
+/* 12 → "12", 17.5 → "17,5", 4.4721 → "4,47". */
+function fmtBangun(n) {
+  return fmtAngkaRasio(rapiBangun(n));
+}
+
+function angkaPositifBangun(v) {
+  return typeof v === 'number' && isFinite(v) && v > 0;
+}
+
+/* Salinan ukuran dengan g / y terisi dan dibatasi agar bangunnya sah. */
+function lengkapiUkuranBangun(jenis, u) {
+  var out = Object.assign({}, u || {});
+  var punya = function (k) {
+    return typeof out[k] === 'number' && isFinite(out[k]);
+  };
+  if (jenis === 'segitiga') {
+    out.g = punya('g') ? Math.max(0, Math.min(out.g, out.a)) : Math.floor(out.a / 2);
+  } else if (jenis === 'jajargenjang') {
+    out.g = Math.max(0, Math.min(punya('g') ? out.g : 2, out.a));
+  } else if (jenis === 'trapesium') {
+    out.g = punya('g') ? Math.max(0, out.g) : Math.max(0, Math.floor((out.a - out.b) / 2));
+  } else if (jenis === 'layangLayang') {
+    if (out.d2 < 2) out.y = out.d2 / 2;
+    else out.y = Math.max(1, Math.min(punya('y') ? out.y : Math.floor(out.d2 / 3), out.d2 - 1));
+  }
+  return out;
+}
+
+function ukuranValidBangun(jenis, u) {
+  var B = BANGUN_DATAR[jenis];
+  if (!B || !u) return false;
+  return B.ukuran.every(function (k) {
+    return angkaPositifBangun(u[k]);
+  });
+}
+
+/* Titik sudut [x, y] (y ke atas) berlawanan arah jarum jam; null bila tidak sah. */
+function titikBangun(jenis, u) {
+  if (!ukuranValidBangun(jenis, u)) return null;
+  u = lengkapiUkuranBangun(jenis, u);
+  switch (jenis) {
+    case 'persegi':
+      return [
+        [0, 0],
+        [u.s, 0],
+        [u.s, u.s],
+        [0, u.s],
+      ];
+    case 'persegiPanjang':
+      return [
+        [0, 0],
+        [u.p, 0],
+        [u.p, u.l],
+        [0, u.l],
+      ];
+    case 'segitiga':
+      return [
+        [0, 0],
+        [u.a, 0],
+        [u.g, u.t],
+      ];
+    case 'jajargenjang':
+      return [
+        [0, 0],
+        [u.a, 0],
+        [u.a + u.g, u.t],
+        [u.g, u.t],
+      ];
+    case 'trapesium':
+      return [
+        [0, 0],
+        [u.a, 0],
+        [u.g + u.b, u.t],
+        [u.g, u.t],
+      ];
+    case 'belahKetupat':
+      return [
+        [u.d1 / 2, 0],
+        [u.d1, u.d2 / 2],
+        [u.d1 / 2, u.d2],
+        [0, u.d2 / 2],
+      ];
+    default:
+      /* layangLayang: puncak bawah, kanan, puncak atas, kiri */
+      return [
+        [u.d1 / 2, 0],
+        [u.d1, u.d2 - u.y],
+        [u.d1 / 2, u.d2],
+        [0, u.d2 - u.y],
+      ];
+  }
+}
+
+function jarakBangun(p, q) {
+  return Math.sqrt((p[0] - q[0]) * (p[0] - q[0]) + (p[1] - q[1]) * (p[1] - q[1]));
+}
+
+/* Panjang setiap sisi (dibulatkan 2 desimal) menurut urutan titik. */
+function sisiBangun(jenis, u) {
+  var t = titikBangun(jenis, u);
+  if (!t) return null;
+  return t.map(function (p, i) {
+    return rapiBangun(jarakBangun(p, t[(i + 1) % t.length]));
+  });
+}
+
+function kelilingBangun(jenis, u) {
+  var t = titikBangun(jenis, u);
+  if (!t) return NaN;
+  var k = 0;
+  t.forEach(function (p, i) {
+    k += jarakBangun(p, t[(i + 1) % t.length]);
+  });
+  return rapiBangun(k);
+}
+
+function luasBangun(jenis, u) {
+  if (!ukuranValidBangun(jenis, u)) return NaN;
+  switch (jenis) {
+    case 'persegi':
+      return u.s * u.s;
+    case 'persegiPanjang':
+      return u.p * u.l;
+    case 'segitiga':
+      return (u.a * u.t) / 2;
+    case 'jajargenjang':
+      return u.a * u.t;
+    case 'trapesium':
+      return ((u.a + u.b) * u.t) / 2;
+    default:
+      return (u.d1 * u.d2) / 2;
+  }
+}
+
+/* ---------- Soal & pemeriksa ---------- */
+
+var PESAN_BANGUN = {
+  benar: 'Tepat!',
+  kosong: 'Isi jawabanmu lebih dulu.',
+  format: 'Tulis satu bilangan, mis. 24 atau 17,5 (desimal memakai koma).',
+  tertukarKeliling:
+    'Itu KELILING bangun ini. Luas adalah banyak petak satuan yang menutupi daerah di dalam bangun, bukan panjang tepinya.',
+  tertukarLuas:
+    'Itu LUAS bangun ini. Keliling adalah panjang seluruh tepi (jumlah semua sisi) yang mengelilingi bangun.',
+  tambahBukanKali:
+    'Kamu menjumlahkan panjang dan lebar. Luas adalah banyak petak: ada l baris yang masing-masing berisi p petak, jadi p × l.',
+  kaliDua: 'Luas persegi = s × s (sisi dikali sisi), bukan s × 2.',
+  lupaSetengah:
+    'Kamu belum mengalikan dengan ½. Ingat hasil potong-susun: bangun ini hanya SETENGAH dari bangun yang terbentuk.',
+  sisiMiring:
+    'Kamu memakai sisi miring. Luas memakai TINGGI, yaitu jarak tegak lurus dari alas ke sisi atas atau titik puncak.',
+  tambahSetengah:
+    'Jajargenjang tidak dikali ½. Setelah dipotong dan digeser, ia menjadi satu persegi panjang utuh: L = a × t.',
+  satuSisiSejajar:
+    'Trapesium punya DUA sisi sejajar. Jumlahkan keduanya dulu (a + b), baru dikali tinggi dan ½.',
+  sisiKaliSisi:
+    'Bangun ini bukan persegi, jadi luasnya tidak sama dengan sisi × sisi. Pakai kedua diagonalnya: ½ × d₁ × d₂.',
+  kelilingSetengah:
+    'Kamu baru menjumlahkan sebagian sisinya. Keliling = jumlah SEMUA sisi — telusuri tepinya sampai kembali ke titik awal.',
+  tinggiBukanSisi:
+    'Kamu memakai tinggi sebagai sisi. Tinggi berada di dalam bangun, bukan di tepinya — keliling memakai sisi miring.',
+  diagonalBukanSisi:
+    'Diagonal berada di dalam bangun, bukan di tepinya. Keliling memakai panjang sisi-sisinya.',
+  kurangBukanBagi:
+    'Kamu mengurangkan. Luas diperoleh dari perkalian, jadi ukuran yang dicari = luas : ukuran yang diketahui.',
+  lupaKaliDua:
+    'Luas bangun ini memakai ½. Kalikan dulu luasnya dengan 2, baru dibagi ukuran yang diketahui.',
+  bagiDuaBukanAkar:
+    'Luas persegi = s × s, jadi cari bilangan yang jika dikalikan dirinya sendiri hasilnya sama dengan luas — bukan luas : 2.',
+  lupaBagiDua:
+    'Hasil keliling dikurangi dua sisi yang diketahui masih berisi DUA sisi yang dicari. Bagi lagi dengan 2.',
+  kurangSekali:
+    'Keliling memuat setiap ukuran dua kali (p + l + p + l). Kurangi kedua sisi yang diketahui, lalu bagi 2.',
+  bagiDuaBukanEmpat:
+    'Persegi dan belah ketupat punya EMPAT sisi sama panjang. Bagi kelilingnya dengan 4.',
+  satuan:
+    'Bilangannya tepat, tetapi satuannya keliru. Keliling diukur dengan satuan panjang (cm, m), luas dengan satuan persegi (cm², m²).',
+  salah: 'Belum tepat. Periksa lagi ukuran yang dipakai dan rumus bangunnya.',
+  salahRumus:
+    'Belum tepat. Ingat kembali bangun apa yang terbentuk saat bangun ini dipotong-susun.',
+};
+
+function hasilBangun(kode) {
+  return { kode: kode, benar: kode === 'benar', pesan: PESAN_BANGUN[kode] };
+}
+
+function rumusSoalBangun(c) {
+  return BANGUN_DATAR[c.jenis].rumusLuas;
+}
+
+/* Luas atau keliling yang diketahui pada soal minta 'ukuran'. */
+function diketahuiSoalBangun(c) {
+  return c.dari === 'keliling' ? kelilingBangun(c.jenis, c.ukuran) : luasBangun(c.jenis, c.ukuran);
+}
+
+/* Nilai baku cek c (bilangan; id rumus untuk minta 'rumus'). */
+function nilaiSoalBangun(c) {
+  if (c.minta === 'rumus') return rumusSoalBangun(c);
+  if (c.minta === 'ukuran') return c.ukuran[c.cari];
+  if (c.minta === 'keliling') return kelilingBangun(c.jenis, c.ukuran);
+  return luasBangun(c.jenis, c.ukuran);
+}
+
+/* Jawaban keliru yang lazim untuk soal luas. */
+function calonLuasBangun(j, u, out) {
+  var sisi = sisiBangun(j, u);
+  if (j === 'persegiPanjang') out('tambahBukanKali', u.p + u.l);
+  if (j === 'persegi') out('kaliDua', 2 * u.s);
+  if (j === 'segitiga') {
+    out('lupaSetengah', u.a * u.t);
+    out('sisiMiring', (u.a * sisi[2]) / 2);
+    out('sisiMiring', (u.a * sisi[1]) / 2);
+  }
+  if (j === 'jajargenjang') {
+    out('sisiMiring', u.a * sisi[1]);
+    out('tambahSetengah', (u.a * u.t) / 2);
+  }
+  if (j === 'trapesium') {
+    out('lupaSetengah', (u.a + u.b) * u.t);
+    out('satuSisiSejajar', u.a * u.t);
+    out('satuSisiSejajar', u.b * u.t);
+  }
+  if (j === 'belahKetupat' || j === 'layangLayang') {
+    out('lupaSetengah', u.d1 * u.d2);
+    out('sisiKaliSisi', sisi[0] * sisi[1]);
+  }
+  out('tertukarKeliling', kelilingBangun(j, u));
+}
+
+/* Jawaban keliru yang lazim untuk soal keliling. */
+function calonKelilingBangun(j, u, out) {
+  var sisi = sisiBangun(j, u);
+  if (j === 'persegiPanjang') out('kelilingSetengah', u.p + u.l);
+  if (j === 'persegi' || j === 'belahKetupat') out('kelilingSetengah', 2 * sisi[0]);
+  if (j === 'segitiga') {
+    out('tinggiBukanSisi', sisi[0] + sisi[1] + u.t);
+    out('tinggiBukanSisi', sisi[0] + u.t + sisi[2]);
+  }
+  if (j === 'jajargenjang') {
+    out('tinggiBukanSisi', 2 * (u.a + u.t));
+    out('kelilingSetengah', u.a + sisi[1]);
+  }
+  if (j === 'trapesium') {
+    out('tinggiBukanSisi', u.a + u.b + 2 * u.t);
+    out('kelilingSetengah', u.a + u.b);
+  }
+  if (j === 'belahKetupat' || j === 'layangLayang') {
+    out('diagonalBukanSisi', 2 * (u.d1 + u.d2));
+    out('diagonalBukanSisi', u.d1 + u.d2);
+  }
+  if (j === 'layangLayang') out('kelilingSetengah', sisi[0] + sisi[1]);
+  out('tertukarLuas', luasBangun(j, u));
+}
+
+/* Jawaban keliru yang lazim untuk soal mencari ukuran. */
+function calonUkuranBangun(c, out) {
+  var j = c.jenis;
+  var u = c.ukuran;
+  var nilai = u[c.cari];
+  var tahu = diketahuiSoalBangun(c);
+  var lain = BANGUN_DATAR[j].ukuran.filter(function (k) {
+    return k !== c.cari;
+  });
+  if (c.dari === 'luas') {
+    if (BANGUN_DATAR[j].setengah) out('lupaKaliDua', nilai / 2);
+    if (j === 'trapesium' && c.cari === 't') out('satuSisiSejajar', (2 * tahu) / u.a);
+    if (j === 'persegiPanjang' || j === 'jajargenjang') out('kurangBukanBagi', tahu - u[lain[0]]);
+    if (j === 'persegi') out('bagiDuaBukanAkar', tahu / 2);
+  } else {
+    if (j === 'persegiPanjang') {
+      out('lupaBagiDua', nilai * 2);
+      out('kurangSekali', tahu - u[lain[0]]);
+    }
+    if (j === 'persegi' || j === 'belahKetupat') out('bagiDuaBukanEmpat', tahu / 2);
+  }
+}
+
+/* [{ kode, nilai }] jawaban keliru, urut menurut prioritas diagnosa. */
+function calonKeliruBangun(c) {
+  var out = [];
+  var baku = nilaiSoalBangun(c);
+  var catat = function (kode, nilai) {
+    if (!angkaPositifBangun(nilai)) return;
+    nilai = rapiBangun(nilai);
+    if (samaAngkaRasio(nilai, baku)) return;
+    var ada = out.some(function (x) {
+      return samaAngkaRasio(x.nilai, nilai);
+    });
+    if (!ada) out.push({ kode: kode, nilai: nilai });
+  };
+  var u = lengkapiUkuranBangun(c.jenis, c.ukuran);
+  if (c.minta === 'luas') calonLuasBangun(c.jenis, u, catat);
+  else if (c.minta === 'keliling') calonKelilingBangun(c.jenis, u, catat);
+  else if (c.minta === 'ukuran') calonUkuranBangun(Object.assign({}, c, { ukuran: u }), catat);
+  return out;
+}
+
+/* Memeriksa isian soal s = { cek } → { kode, benar, pesan }. */
+function periksaSoalBangun(isian, s) {
+  var c = s.cek;
+  if (c.minta === 'rumus') {
+    return hasilBangun(String(isian) === rumusSoalBangun(c) ? 'benar' : 'salahRumus');
+  }
+  var p = parseAngkaRasio(isian);
+  if (p.kode !== 'ok') return hasilBangun(p.kode);
+  var baku = nilaiSoalBangun(c);
+  if (samaAngkaRasio(rapiBangun(p.nilai), rapiBangun(baku))) return hasilBangun('benar');
+  var calon = calonKeliruBangun(c);
+  for (var i = 0; i < calon.length; i++) {
+    if (samaAngkaRasio(calon[i].nilai, rapiBangun(p.nilai))) return hasilBangun(calon[i].kode);
+  }
+  return hasilBangun('salah');
+}
+
+/* Jawaban baku: teks bilangan ("17,5", "1.600") atau id rumus. */
+function jawabSoalBangun(s) {
+  var c = s.cek;
+  if (c.minta === 'rumus') return rumusSoalBangun(c);
+  return fmtBangun(nilaiSoalBangun(c));
+}
+
+/* Satuan jawaban: cm → cm² untuk luas; 'satuan' → 'petak' untuk luas. */
+function satuanJawabBangun(minta, satuan) {
+  if (!satuan) return '';
+  if (minta !== 'luas') return satuan;
+  return satuan === 'satuan' ? 'petak' : satuan + '²';
+}
+
+/* Langkah { cek } siap untuk buildLangkahRasio (seksi 68). */
+function siapkanLangkahBangun(step) {
+  return Object.assign({}, step, { periksa: periksaSoalBangun, angka: true });
+}
+
+/* ---------- Opsi pilihan ganda ---------- */
+
+/*
+ * Opsi soal: kunci (id 'baku') lalu pengecoh berdiagnosa — dua
+ * miskonsepsi teratas, satu pengecoh satuan (luas ↔ keliling), lalu
+ * pengisi. Label unik, minimal 4 opsi. Urutan wajar; acak di app.
+ */
+function opsiSoalBangun(s) {
+  var c = s.cek;
+  if (c.minta === 'rumus') {
+    var kunci = rumusSoalBangun(c);
+    var pengecoh = BANGUN_DATAR[c.jenis].pengecohRumus.concat(URUTAN_RUMUS_LUAS);
+    var out0 = [{ id: 'baku', label: RUMUS_LUAS[kunci].label, umpan: PESAN_BANGUN.benar }];
+    pengecoh.forEach(function (k) {
+      if (out0.length >= 4 || k === kunci) return;
+      if (
+        out0.some(function (o) {
+          return o.id === k;
+        })
+      ) {
+        return;
+      }
+      out0.push({ id: k, label: RUMUS_LUAS[k].label, umpan: RUMUS_LUAS[k].umpan });
+    });
+    return out0;
+  }
+  var out = [];
+  var dipakai = {};
+  var satuan = satuanJawabBangun(c.minta, s.satuan);
+  var tambah = function (id, nilai, umpan, sat) {
+    if (!angkaPositifBangun(nilai) || out.length >= 4) return;
+    var label = fmtBangun(nilai) + (sat ? ' ' + sat : '');
+    if (dipakai[label]) return;
+    dipakai[label] = true;
+    /* Dua pengecoh berkode sama tetap ber-id unik: diagonalBukanSisi, diagonalBukanSisi2. */
+    var uid = id;
+    var sudahAda = function (o) {
+      return o.id === uid;
+    };
+    for (var n = 2; out.some(sudahAda); n++) uid = id + n;
+    out.push({ id: uid, label: label, umpan: umpan });
+  };
+  var baku = nilaiSoalBangun(c);
+  tambah('baku', baku, PESAN_BANGUN.benar, satuan);
+  calonKeliruBangun(c)
+    .slice(0, 2)
+    .forEach(function (g) {
+      tambah(g.kode, g.nilai, PESAN_BANGUN[g.kode], satuan);
+    });
+  if (s.satuan && c.minta !== 'ukuran') {
+    tambah(
+      'satuan',
+      baku,
+      PESAN_BANGUN.satuan,
+      satuanJawabBangun(c.minta === 'luas' ? 'keliling' : 'luas', s.satuan)
+    );
+  }
+  calonKeliruBangun(c)
+    .slice(2)
+    .forEach(function (g) {
+      tambah(g.kode, g.nilai, PESAN_BANGUN[g.kode], satuan);
+    });
+  [baku * 2, baku + 4, baku + 2, baku + 1, baku + 10].forEach(function (x, i) {
+    tambah('salah' + (i + 1), x, PESAN_BANGUN.salah, satuan);
+  });
+  return out;
+}
+
+/* ---------- UI: gambar bangun (SVG) ---------- */
+
+var urutanClipBangun = 0;
+
+function kotakBatasBangun(daftar) {
+  var b = { x0: Infinity, y0: Infinity, x1: -Infinity, y1: -Infinity };
+  daftar.forEach(function (pts) {
+    pts.forEach(function (p) {
+      b.x0 = Math.min(b.x0, p[0]);
+      b.y0 = Math.min(b.y0, p[1]);
+      b.x1 = Math.max(b.x1, p[0]);
+      b.y1 = Math.max(b.y1, p[1]);
+    });
+  });
+  return b;
+}
+
+/* Pemeta koordinat satuan (y ke atas) → piksel SVG (y ke bawah). */
+function kanvasBangun(batas, skala, pad) {
+  var r = function (v) {
+    return Math.round(v * 10) / 10;
+  };
+  return {
+    w: Math.ceil((batas.x1 - batas.x0) * skala + 2 * pad),
+    h: Math.ceil((batas.y1 - batas.y0) * skala + 2 * pad),
+    x: function (x) {
+      return r(pad + (x - batas.x0) * skala);
+    },
+    y: function (y) {
+      return r(pad + (batas.y1 - y) * skala);
+    },
+  };
+}
+
+function poinBangun(K, pts) {
+  return pts
+    .map(function (p) {
+      return K.x(p[0]) + ',' + K.y(p[1]);
+    })
+    .join(' ');
+}
+
+function poligonBangun(K, pts, cls) {
+  return '<polygon class="' + cls + '" points="' + poinBangun(K, pts) + '"/>';
+}
+
+function garisBangun(K, p, q, cls) {
+  return (
+    '<line class="' +
+    cls +
+    '" x1="' +
+    K.x(p[0]) +
+    '" y1="' +
+    K.y(p[1]) +
+    '" x2="' +
+    K.x(q[0]) +
+    '" y2="' +
+    K.y(q[1]) +
+    '"/>'
+  );
+}
+
+function teksBangun(x, y, isi, cls) {
+  return (
+    '<text class="' +
+    (cls || 'bangun-teks') +
+    '" x="' +
+    Math.round(x) +
+    '" y="' +
+    Math.round(y) +
+    '" text-anchor="middle" dominant-baseline="middle">' +
+    esc(isi) +
+    '</text>'
+  );
+}
+
+/* Kisi satuan di seluruh kanvas (garis tipis). */
+function kisiBangun(K, batas) {
+  var html = '';
+  for (var x = Math.ceil(batas.x0); x <= batas.x1; x++) {
+    html += garisBangun(K, [x, batas.y0], [x, batas.y1], 'bangun-kisi');
+  }
+  for (var y = Math.ceil(batas.y0); y <= batas.y1; y++) {
+    html += garisBangun(K, [batas.x0, y], [batas.x1, y], 'bangun-kisi');
+  }
+  return html;
+}
+
+/* Petak satuan di dalam bangun: kisi dipotong (clipPath) oleh poligon. */
+function petakDalamBangun(K, batas, pts) {
+  urutanClipBangun += 1;
+  var id = 'bangunClip' + urutanClipBangun;
+  var kisi = '';
+  for (var x = Math.ceil(batas.x0); x <= batas.x1; x++) {
+    kisi += garisBangun(K, [x, batas.y0], [x, batas.y1], 'bangun-petak');
+  }
+  for (var y = Math.ceil(batas.y0); y <= batas.y1; y++) {
+    kisi += garisBangun(K, [batas.x0, y], [batas.x1, y], 'bangun-petak');
+  }
+  return (
+    '<clipPath id="' +
+    id +
+    '"><polygon points="' +
+    poinBangun(K, pts) +
+    '"/></clipPath>' +
+    '<g clip-path="url(#' +
+    id +
+    ')">' +
+    kisi +
+    '</g>'
+  );
+}
+
+/* Garis-garis pendek pada setiap satuan panjang di tepi bangun. */
+function ruasKelilingBangun(K, pts) {
+  var html = '';
+  pts.forEach(function (p, i) {
+    var q = pts[(i + 1) % pts.length];
+    var pj = jarakBangun(p, q);
+    var n = Math.round(pj);
+    if (Math.abs(pj - n) > 1e-9 || n < 2) return;
+    var nx = -(q[1] - p[1]) / pj;
+    var ny = (q[0] - p[0]) / pj;
+    for (var k = 1; k < n; k++) {
+      var cx = p[0] + ((q[0] - p[0]) * k) / n;
+      var cy = p[1] + ((q[1] - p[1]) * k) / n;
+      var d = 0.18;
+      html += garisBangun(K, [cx - nx * d, cy - ny * d], [cx + nx * d, cy + ny * d], 'bangun-ruas');
+    }
+  });
+  return html;
+}
+
+/* Label di titik tengah sisi i, digeser keluar dari pusat bangun. */
+function labelSisiBangun(K, pts, i, isi) {
+  var p = pts[i];
+  var q = pts[(i + 1) % pts.length];
+  var cx = 0;
+  var cy = 0;
+  pts.forEach(function (t) {
+    cx += t[0] / pts.length;
+    cy += t[1] / pts.length;
+  });
+  var mx = (p[0] + q[0]) / 2;
+  var my = (p[1] + q[1]) / 2;
+  var px = K.x(mx);
+  var py = K.y(my);
+  var vx = px - K.x(cx);
+  var vy = py - K.y(cy);
+  var pj = Math.sqrt(vx * vx + vy * vy) || 1;
+  return teksBangun(px + (vx / pj) * 15, py + (vy / pj) * 13, isi, 'bangun-teks bangun-teks--sisi');
+}
+
+/* Tanda siku-siku kecil di titik p dengan arah a (sepanjang alas) dan b (ke atas). */
+function sikuBangun(K, p, a, b) {
+  var s = 0.35;
+  var p1 = [p[0] + a[0] * s, p[1] + a[1] * s];
+  var p2 = [p1[0] + b[0] * s, p1[1] + b[1] * s];
+  var p3 = [p[0] + b[0] * s, p[1] + b[1] * s];
+  return (
+    '<polyline class="bangun-siku" points="' +
+    K.x(p1[0]) +
+    ',' +
+    K.y(p1[1]) +
+    ' ' +
+    K.x(p2[0]) +
+    ',' +
+    K.y(p2[1]) +
+    ' ' +
+    K.x(p3[0]) +
+    ',' +
+    K.y(p3[1]) +
+    '"/>'
+  );
+}
+
+function teksUkuranBangun(simbol, nilai, opts) {
+  if (opts.simbol) return simbol;
+  return simbol + ' = ' + fmtBangun(nilai) + (opts.satuan ? ' ' + opts.satuan : '');
+}
+
+/* Garis tinggi (putus-putus) dari titik (g, t) ke alas, dengan label. */
+function tinggiBangun(K, u, opts) {
+  var atas = [u.g, u.t];
+  var kaki = [u.g, 0];
+  var x = K.x(u.g);
+  var dx = 20;
+  return (
+    garisBangun(K, atas, kaki, 'bangun-tinggi') +
+    sikuBangun(K, kaki, [u.g < 0.6 ? 1 : -1, 0], [0, 1]) +
+    teksBangun(
+      x + dx,
+      (K.y(u.t) + K.y(0)) / 2,
+      teksUkuranBangun('t', u.t, opts),
+      'bangun-teks bangun-teks--tinggi'
+    )
+  );
+}
+
+/* Kedua diagonal (putus-putus) belah ketupat / layang-layang, dengan label. */
+function diagonalBangun(K, pts, u, opts) {
+  var tengah = [pts[0][0], pts[1][1]];
+  return (
+    garisBangun(K, pts[3], pts[1], 'bangun-diagonal') +
+    garisBangun(K, pts[0], pts[2], 'bangun-diagonal') +
+    sikuBangun(K, tengah, [1, 0], [0, 1]) +
+    teksBangun(
+      (K.x(pts[3][0]) + K.x(tengah[0])) / 2,
+      K.y(tengah[1]) - 9,
+      teksUkuranBangun('d₁', u.d1, opts),
+      'bangun-teks bangun-teks--diagonal'
+    ) +
+    teksBangun(
+      K.x(tengah[0]) + 22,
+      (K.y(pts[2][1]) + K.y(tengah[1])) / 2,
+      teksUkuranBangun('d₂', u.d2, opts),
+      'bangun-teks bangun-teks--diagonal'
+    )
+  );
+}
+
+function svgBangun(K, isi, label, kelas) {
+  return (
+    '<svg class="bangun-svg' +
+    (kelas ? ' ' + kelas : '') +
+    '" viewBox="0 0 ' +
+    K.w +
+    ' ' +
+    K.h +
+    '" width="' +
+    K.w +
+    '" height="' +
+    K.h +
+    '" role="img" aria-label="' +
+    esc(label) +
+    '">' +
+    isi +
+    '</svg>'
+  );
+}
+
+/* Kalimat pembaca layar: nama bangun + ukuran utamanya. */
+function deskripsiBangun(jenis, u, satuan) {
+  var B = BANGUN_DATAR[jenis];
+  var sat = satuan ? ' ' + satuan : '';
+  return (
+    B.nama +
+    ' dengan ' +
+    B.ukuran
+      .map(function (k) {
+        return (
+          B.namaUkuran[k].replace(/\s*\(.*\)$/, '').toLowerCase() + ' ' + fmtBangun(u[k]) + sat
+        );
+      })
+      .join(', ')
+  );
+}
+
+/*
+ * Gambar bangun pada kisi satuan.
+ *   opts.skala   piksel per satuan (default 24)
+ *   opts.grid    false → tanpa kisi latar (default ada)
+ *   opts.petak   true → petak satuan di dalam bangun
+ *   opts.ruas    true → tanda setiap satuan panjang di tepi bangun
+ *   opts.label   { sisi: true | [indeks], tinggi, diagonal }
+ *   opts.simbol  true → label berupa simbol (a, t, d₁ …), bukan nilai
+ *   opts.satuan  satuan panjang untuk label & deskripsi (mis. 'm')
+ *   opts.kelas   kelas tambahan pada <svg>
+ *   opts.aria    teks pembaca layar pengganti
+ */
+function buildBangunSVG(jenis, u, opts) {
+  opts = opts || {};
+  var pts = titikBangun(jenis, u);
+  if (!pts) return '';
+  var B = BANGUN_DATAR[jenis];
+  var lu = lengkapiUkuranBangun(jenis, u);
+  var label = opts.label || {};
+  var batas = kotakBatasBangun([pts]);
+  var K = kanvasBangun(batas, opts.skala || 24, 30);
+  var isi = opts.grid === false ? '' : kisiBangun(K, batas);
+  isi += poligonBangun(K, pts, 'bangun-bidang');
+  if (opts.petak) isi += petakDalamBangun(K, batas, pts);
+  isi += poligonBangun(K, pts, 'bangun-tepi');
+  if (opts.ruas) isi += ruasKelilingBangun(K, pts);
+  if (label.tinggi && (jenis === 'segitiga' || jenis === 'jajargenjang' || jenis === 'trapesium')) {
+    isi += tinggiBangun(K, lu, opts);
+  }
+  if (label.diagonal && (jenis === 'belahKetupat' || jenis === 'layangLayang')) {
+    isi += diagonalBangun(K, pts, lu, opts);
+  }
+  if (label.sisi) {
+    var sisi = sisiBangun(jenis, u);
+    var indeks = Array.isArray(label.sisi) ? label.sisi : B.labelSisi;
+    indeks.forEach(function (i) {
+      var teks = opts.simbol
+        ? B.simbolSisi[i]
+        : fmtBangun(sisi[i]) + (opts.satuan ? ' ' + opts.satuan : '');
+      isi += labelSisiBangun(K, pts, i, teks);
+    });
+  }
+  return svgBangun(K, isi, opts.aria || deskripsiBangun(jenis, u, opts.satuan), opts.kelas);
+}
+
+/* ---------- UI: gambar potong-susun ---------- */
+
+function geserTitikBangun(pts, dx) {
+  return pts.map(function (p) {
+    return [p[0] + dx, p[1]];
+  });
+}
+
+/* Salinan bangun diputar 180° terhadap titik m: P' = 2m − P. */
+function putarTitikBangun(pts, m) {
+  return pts.map(function (p) {
+    return [2 * m[0] - p[0], 2 * m[1] - p[1]];
+  });
+}
+
+/*
+ * Bagian-bagian gambar potong-susun tiap fase:
+ *   { fase: [[{ pts, cls }]], hasil: pts bangun hasil, garis: [[p, q]] }
+ * jajargenjang  potong segitiga kiri sepanjang tinggi → geser ke kanan
+ * segitiga      salinan diputar 180° → disatukan menjadi jajargenjang
+ * trapesium     salinan diputar 180° → jajargenjang beralas a + b
+ * belah ketupat / layang-layang  diagonal → persegi panjang d₁ × d₂
+ */
+function rencanaPotongBangun(jenis, u) {
+  var pts = titikBangun(jenis, u);
+  u = lengkapiUkuranBangun(jenis, u);
+  if (jenis === 'jajargenjang') {
+    var segi = [
+      [0, 0],
+      [u.g, 0],
+      [u.g, u.t],
+    ];
+    var sisa = [
+      [u.g, 0],
+      [u.a, 0],
+      [u.a + u.g, u.t],
+      [u.g, u.t],
+    ];
+    return {
+      fase: [
+        [{ pts: pts, cls: 'bangun-bidang' }],
+        [
+          { pts: sisa, cls: 'bangun-bidang' },
+          { pts: segi, cls: 'bangun-potong' },
+        ],
+        [
+          { pts: sisa, cls: 'bangun-bidang' },
+          { pts: geserTitikBangun(segi, u.a), cls: 'bangun-potong' },
+        ],
+      ],
+      hasil: [
+        [u.g, 0],
+        [u.a + u.g, 0],
+        [u.a + u.g, u.t],
+        [u.g, u.t],
+      ],
+    };
+  }
+  if (jenis === 'segitiga' || jenis === 'trapesium') {
+    var m = [(pts[1][0] + pts[2][0]) / 2, (pts[1][1] + pts[2][1]) / 2];
+    var salinan = putarTitikBangun(pts, m);
+    var b1 = kotakBatasBangun([pts]);
+    var b2 = kotakBatasBangun([salinan]);
+    var alas = jenis === 'segitiga' ? u.a : u.a + u.b;
+    return {
+      fase: [
+        [{ pts: pts, cls: 'bangun-bidang' }],
+        [
+          { pts: pts, cls: 'bangun-bidang' },
+          { pts: geserTitikBangun(salinan, b1.x1 + 1 - b2.x0), cls: 'bangun-salinan' },
+        ],
+        [
+          { pts: pts, cls: 'bangun-bidang' },
+          { pts: salinan, cls: 'bangun-salinan' },
+        ],
+      ],
+      hasil: [
+        [0, 0],
+        [alas, 0],
+        [alas + u.g, u.t],
+        [u.g, u.t],
+      ],
+    };
+  }
+  if (jenis === 'belahKetupat' || jenis === 'layangLayang') {
+    var kotak = [
+      [0, 0],
+      [u.d1, 0],
+      [u.d1, u.d2],
+      [0, u.d2],
+    ];
+    return {
+      fase: [
+        [{ pts: pts, cls: 'bangun-bidang' }],
+        [{ pts: pts, cls: 'bangun-bidang' }],
+        [
+          { pts: kotak, cls: 'bangun-luar' },
+          { pts: pts, cls: 'bangun-bidang' },
+        ],
+      ],
+      hasil: kotak,
+      diagonal: [1, 2],
+    };
+  }
+  return null;
+}
+
+/*
+ * Gambar potong-susun bangun pada fase 0 (semula), 1 (dipotong /
+ * digandakan / diberi diagonal), atau 2 (disusun menjadi bangun hasil).
+ * Kanvas memakai batas semua fase agar gambar tidak melompat.
+ *   opts.skala, opts.satuan seperti buildBangunSVG
+ */
+function buildPotongSusunSVG(jenis, u, fase, opts) {
+  opts = opts || {};
+  var rencana = ukuranValidBangun(jenis, u) ? rencanaPotongBangun(jenis, u) : null;
+  if (!rencana) return '';
+  var lu = lengkapiUkuranBangun(jenis, u);
+  var f = Math.max(0, Math.min(2, fase || 0));
+  var semua = [];
+  rencana.fase.forEach(function (bagian) {
+    bagian.forEach(function (b) {
+      semua.push(b.pts);
+    });
+  });
+  semua.push(rencana.hasil);
+  var batas = kotakBatasBangun(semua);
+  var K = kanvasBangun(batas, opts.skala || 24, 30);
+  var isi = kisiBangun(K, batas);
+  rencana.fase[f].forEach(function (b) {
+    isi += poligonBangun(K, b.pts, b.cls);
+  });
+  var pts = titikBangun(jenis, u);
+  if (rencana.diagonal) {
+    if (f >= 1) isi += diagonalBangun(K, pts, lu, opts);
+  } else if (f === 0) {
+    isi += tinggiBangun(K, lu, opts);
+  } else if (f === 1 && jenis === 'jajargenjang') {
+    isi += garisBangun(K, [lu.g, lu.t], [lu.g, 0], 'bangun-garis-potong');
+  }
+  if (f === 2) {
+    isi += poligonBangun(K, rencana.hasil, 'bangun-hasil');
+    var h = rencana.hasil;
+    isi += labelSisiBangun(
+      K,
+      h,
+      0,
+      (jenis === 'jajargenjang' ? 'p = ' : 'alas = ') + fmtBangun(jarakBangun(h[0], h[1]))
+    );
+    if (rencana.diagonal) {
+      isi += labelSisiBangun(K, h, 1, 'l = ' + fmtBangun(lu.d2));
+    } else {
+      isi += teksBangun(
+        K.x(kotakBatasBangun([h]).x1) + 28,
+        (K.y(lu.t) + K.y(0)) / 2,
+        (jenis === 'jajargenjang' ? 'l = ' : 't = ') + fmtBangun(lu.t),
+        'bangun-teks bangun-teks--tinggi'
+      );
+    }
+  }
+  var teksFase = FASE_POTONG_BANGUN[jenis][f];
+  return svgBangun(K, isi, deskripsiBangun(jenis, u, opts.satuan) + '. ' + teksFase, opts.kelas);
+}
+
+/* Keterangan tiap fase potong-susun. */
+var FASE_POTONG_BANGUN = {
+  jajargenjang: [
+    'Jajargenjang semula, dengan garis tinggi.',
+    'Potong segitiga di sisi kiri sepanjang garis tinggi.',
+    'Geser potongan itu ke sisi kanan — terbentuk persegi panjang.',
+  ],
+  segitiga: [
+    'Segitiga semula, dengan garis tinggi.',
+    'Buat salinan segitiga yang sama, lalu putar setengah putaran.',
+    'Satukan kedua segitiga — terbentuk jajargenjang.',
+  ],
+  trapesium: [
+    'Trapesium semula, dengan garis tinggi.',
+    'Buat salinan trapesium yang sama, lalu putar setengah putaran.',
+    'Satukan kedua trapesium — terbentuk jajargenjang dengan alas a + b.',
+  ],
+  belahKetupat: [
+    'Belah ketupat semula.',
+    'Gambar kedua diagonalnya — bangun terbagi menjadi 4 segitiga siku-siku.',
+    'Buat persegi panjang d₁ × d₂ di sekelilingnya — 4 segitiga di luar sama dengan 4 segitiga di dalam.',
+  ],
+  layangLayang: [
+    'Layang-layang semula.',
+    'Gambar kedua diagonalnya — bangun terbagi menjadi 4 segitiga siku-siku.',
+    'Buat persegi panjang d₁ × d₂ di sekelilingnya — setiap segitiga di dalam punya kembaran di luar.',
+  ],
+};
+
+/* Kalimat hasil susunan pada fase 2 (tanpa membocorkan luas bangun). */
+function hasilPotongBangun(jenis, u) {
+  u = lengkapiUkuranBangun(jenis, u);
+  var f = fmtBangun;
+  if (jenis === 'jajargenjang') {
+    return (
+      'Terbentuk persegi panjang dengan panjang = alas = ' +
+      f(u.a) +
+      ' dan lebar = tinggi = ' +
+      f(u.t) +
+      '. Tidak ada petak yang hilang atau bertambah.'
+    );
+  }
+  if (jenis === 'segitiga') {
+    return (
+      'Dua segitiga yang sama membentuk jajargenjang dengan alas ' +
+      f(u.a) +
+      ' dan tinggi ' +
+      f(u.t) +
+      '. Segitigamu hanya SATU dari dua bagian itu.'
+    );
+  }
+  if (jenis === 'trapesium') {
+    return (
+      'Dua trapesium yang sama membentuk jajargenjang dengan alas a + b = ' +
+      f(u.a) +
+      ' + ' +
+      f(u.b) +
+      ' = ' +
+      f(u.a + u.b) +
+      ' dan tinggi ' +
+      f(u.t) +
+      '. Trapesiummu hanya SATU dari dua bagian itu.'
+    );
+  }
+  return (
+    'Persegi panjang di sekelilingnya berukuran d₁ × d₂ = ' +
+    f(u.d1) +
+    ' × ' +
+    f(u.d2) +
+    '. ' +
+    BANGUN_DATAR[jenis].nama +
+    ' menempati tepat setengah bagiannya.'
+  );
+}
+
+/* ---------- UI: Lab Bangun ---------- */
+
+/*
+ * cfg = { mode: 'petak' | 'potong', jenisList, ukuran: { <jenis>:
+ *         { <kunci>: { min, max, awal } } }, minta: ['keliling', 'luas'],
+ *         minCatat }
+ * State { kunci, jenis, ukuran: { <jenis>: {..} }, fase, petak, ruas,
+ *         isian: { <minta>: '' }, hasil: { <minta>: {kode, pesan} },
+ *         catat: { <jenis>: [{ ukuran, nilai: { <minta>: n } }] } }
+ * mode 'petak'  murid mengatur ukuran, menyalakan petak & ruas satuan,
+ *               lalu menghitung dan mencatat keliling & luas.
+ * mode 'potong' murid memotong-menyusun bangun (fase 0 → 2); isian
+ *               luas baru muncul setelah bangun selesai disusun.
+ */
+function ensureLabBangun(st, cfg) {
+  var kunci = [cfg.mode, cfg.jenisList.join(','), cfg.minta.join(','), cfg.minCatat].join('|');
+  var rusak =
+    !st.catat ||
+    typeof st.catat !== 'object' ||
+    !st.ukuran ||
+    typeof st.ukuran !== 'object' ||
+    cfg.jenisList.indexOf(st.jenis) === -1;
+  if (st.kunci !== kunci || rusak) {
+    st.kunci = kunci;
+    st.jenis = cfg.jenisList[0];
+    st.ukuran = {};
+    st.catat = {};
+    cfg.jenisList.forEach(function (j) {
+      st.ukuran[j] = {};
+      Object.keys(cfg.ukuran[j]).forEach(function (k) {
+        st.ukuran[j][k] = cfg.ukuran[j][k].awal;
+      });
+      st.catat[j] = [];
+    });
+    st.fase = 0;
+    st.petak = false;
+    st.ruas = false;
+  }
+  if (!st.isian || typeof st.isian !== 'object') st.isian = {};
+  if (!st.hasil || typeof st.hasil !== 'object') st.hasil = {};
+  cfg.minta.forEach(function (m) {
+    if (typeof st.isian[m] !== 'string') st.isian[m] = '';
+  });
+  if (typeof st.fase !== 'number' || st.fase < 0 || st.fase > 2) st.fase = 0;
+  return st;
+}
+
+/* Ukuran lengkap bangun yang sedang tampil di lab. */
+function ukuranLabBangun(st) {
+  return lengkapiUkuranBangun(st.jenis, st.ukuran[st.jenis]);
+}
+
+function bersihkanIsianLabBangun(st, cfg) {
+  cfg.minta.forEach(function (m) {
+    st.isian[m] = '';
+  });
+  st.hasil = {};
+}
+
+function pilihJenisLabBangun(st, cfg, jenis) {
+  if (cfg.jenisList.indexOf(jenis) === -1 || st.jenis === jenis) return false;
+  st.jenis = jenis;
+  st.fase = 0;
+  bersihkanIsianLabBangun(st, cfg);
+  return true;
+}
+
+function ubahUkuranLabBangun(st, cfg, kunci, arah) {
+  var batas = cfg.ukuran[st.jenis][kunci];
+  if (!batas) return false;
+  var v = st.ukuran[st.jenis][kunci] + arah;
+  if (v < batas.min || v > batas.max) return false;
+  st.ukuran[st.jenis][kunci] = v;
+  st.fase = 0;
+  bersihkanIsianLabBangun(st, cfg);
+  return true;
+}
+
+function ubahFaseLabBangun(st, cfg, arah) {
+  var f = st.fase + arah;
+  if (cfg.mode !== 'potong' || f < 0 || f > 2) return false;
+  st.fase = f;
+  return true;
+}
+
+function samaUkuranBangun(u, v) {
+  return Object.keys(u).every(function (k) {
+    return u[k] === v[k];
+  });
+}
+
+/*
+ * Memeriksa isian lab → { status }: 'fase' (bangun belum disusun),
+ * 'kosong', 'format', 'salah', 'sudah' (ukuran ini sudah dicatat),
+ * atau 'catat' (benar & dicatat). Hasil per isian disimpan di st.hasil.
+ */
+function periksaLabBangun(st, cfg) {
+  if (cfg.mode === 'potong' && st.fase < 2) return { status: 'fase' };
+  var u = ukuranLabBangun(st);
+  var hasil = {};
+  var status = 'catat';
+  cfg.minta.forEach(function (m) {
+    var r = periksaSoalBangun(st.isian[m], { cek: { jenis: st.jenis, ukuran: u, minta: m } });
+    hasil[m] = r;
+    if (r.kode === 'kosong') status = 'kosong';
+    else if (r.kode === 'format' && status !== 'kosong') status = 'format';
+    else if (!r.benar && status === 'catat') status = 'salah';
+  });
+  if (status === 'kosong' || status === 'format') return { status: status };
+  st.hasil = hasil;
+  if (status === 'salah') return { status: status };
+  var catat = st.catat[st.jenis];
+  var ada = catat.some(function (c) {
+    return samaUkuranBangun(c.ukuran, u);
+  });
+  if (ada) return { status: 'sudah' };
+  var nilai = {};
+  cfg.minta.forEach(function (m) {
+    nilai[m] = nilaiSoalBangun({ jenis: st.jenis, ukuran: u, minta: m });
+  });
+  catat.push({ ukuran: u, nilai: nilai });
+  bersihkanIsianLabBangun(st, cfg);
+  return { status: 'catat' };
+}
+
+function labBangunJenisLengkap(st, cfg, jenis) {
+  return st.catat[jenis].length >= cfg.minCatat;
+}
+
+function labBangunLengkap(st, cfg) {
+  return cfg.jenisList.every(function (j) {
+    return labBangunJenisLengkap(st, cfg, j);
+  });
+}
+
+var NAMA_MINTA_BANGUN = { keliling: 'Keliling', luas: 'Luas' };
+
+function buildTabLabBangun(st, cfg) {
+  if (cfg.jenisList.length < 2) return '';
+  return (
+    '<div class="lab-bangun__tab" role="group" aria-label="Pilih bangun">' +
+    cfg.jenisList
+      .map(function (j) {
+        var B = BANGUN_DATAR[j];
+        var selesai = labBangunJenisLengkap(st, cfg, j);
+        return (
+          '<button type="button" class="lab-susun__tab-btn' +
+          (j === st.jenis ? ' is-aktif' : '') +
+          (selesai ? ' is-selesai' : '') +
+          '" data-bangun-jenis="' +
+          j +
+          '" aria-pressed="' +
+          (j === st.jenis ? 'true' : 'false') +
+          '"><span aria-hidden="true">' +
+          B.ikon +
+          '</span> ' +
+          esc(B.nama) +
+          (selesai ? ' <span aria-label="selesai">✓</span>' : '') +
+          '</button>'
+        );
+      })
+      .join('') +
+    '</div>'
+  );
+}
+
+function buildKontrolLabBangun(id, st, cfg) {
+  var u = st.ukuran[st.jenis];
+  var batas = cfg.ukuran[st.jenis];
+  var stepper = Object.keys(batas)
+    .map(function (k) {
+      return buildFinStepper(id + 'U' + k, BANGUN_DATAR[st.jenis].namaUkuran[k], String(u[k]), {
+        minDis: u[k] <= batas[k].min,
+        maxDis: u[k] >= batas[k].max,
+      });
+    })
+    .join('');
+  var tombol =
+    cfg.mode === 'petak'
+      ? '<label class="lab-susun__sorot"><input type="checkbox" id="' +
+        id +
+        'Petak"' +
+        (st.petak ? ' checked' : '') +
+        '> Tampilkan petak satuan</label>' +
+        '<label class="lab-susun__sorot"><input type="checkbox" id="' +
+        id +
+        'Ruas"' +
+        (st.ruas ? ' checked' : '') +
+        '> Tandai satuan panjang di tepi</label>'
+      : buildFinStepper(id + 'Fase', 'Langkah', st.fase + 1 + ' dari 3', {
+          minDis: st.fase <= 0,
+          maxDis: st.fase >= 2,
+        });
+  return '<div class="lab-susun__kontrol">' + stepper + tombol + '</div>';
+}
+
+function buildGambarLabBangun(st, cfg) {
+  var u = ukuranLabBangun(st);
+  if (cfg.mode === 'petak') {
+    return (
+      '<figure class="lab-bangun__gambar">' +
+      buildBangunSVG(st.jenis, u, {
+        petak: st.petak,
+        ruas: st.ruas,
+        label: { sisi: true },
+        satuan: 'satuan',
+      }) +
+      '<figcaption>1 petak = 1 satuan luas; 1 ruas kisi = 1 satuan panjang.</figcaption>' +
+      '</figure>'
+    );
+  }
+  return (
+    '<figure class="lab-bangun__gambar">' +
+    buildPotongSusunSVG(st.jenis, u, st.fase) +
+    '<figcaption><strong>Langkah ' +
+    (st.fase + 1) +
+    ':</strong> ' +
+    esc(FASE_POTONG_BANGUN[st.jenis][st.fase]) +
+    '</figcaption>' +
+    '</figure>' +
+    (st.fase === 2 ? buildFeedbackBox('info', '🧩', esc(hasilPotongBangun(st.jenis, u))) : '')
+  );
+}
+
+function buildIsianLabBangun(id, st, cfg) {
+  if (cfg.mode === 'potong' && st.fase < 2) {
+    return (
+      '<p class="dl-caption">Lanjutkan sampai langkah 3 untuk menghitung luas ' +
+      esc(BANGUN_DATAR[st.jenis].nama.toLowerCase()) +
+      ' ini.</p>'
+    );
+  }
+  var satuan = 'satuan';
+  var baris = cfg.minta
+    .map(function (m) {
+      var r = st.hasil[m];
+      var salah = r && !r.benar;
+      var label =
+        NAMA_MINTA_BANGUN[m] +
+        (cfg.mode === 'potong' ? ' ' + BANGUN_DATAR[st.jenis].nama.toLowerCase() : '');
+      return (
+        '<div class="lab-bangun__isian">' +
+        '<label for="' +
+        id +
+        'In' +
+        m +
+        '">' +
+        esc(label) +
+        '</label>' +
+        '<div class="dl-input-row">' +
+        buildDlNumInput(id + 'In' + m, st.isian[m], {
+          desimal: true,
+          error: salah,
+          placeholder: '?',
+        }) +
+        '<span class="bbk-satuan">' +
+        esc(satuanJawabBangun(m, satuan)) +
+        '</span>' +
+        '</div>' +
+        (salah ? buildFeedbackBox('error', '✗', esc(r.pesan)) : '') +
+        '</div>'
+      );
+    })
+    .join('');
+  return (
+    '<div class="lab-bangun__form">' +
+    baris +
+    '<div class="btn-group"><button type="button" class="btn btn--primary" id="' +
+    id +
+    'Check">Periksa &amp; catat</button></div>' +
+    '</div>'
+  );
+}
+
+function buildTabelLabBangun(st, cfg) {
+  var B = BANGUN_DATAR[st.jenis];
+  var kunci = Object.keys(cfg.ukuran[st.jenis]);
+  var catat = st.catat[st.jenis];
+  return (
+    '<div class="lab-bangun__catat">' +
+    '<table class="data-table lab-bangun__tabel">' +
+    '<caption>Catatan percobaan: ' +
+    esc(B.nama) +
+    ' (minimal ' +
+    cfg.minCatat +
+    ' ukuran)</caption>' +
+    '<thead><tr>' +
+    kunci
+      .map(function (k) {
+        return '<th scope="col">' + esc(B.namaUkuran[k]) + '</th>';
+      })
+      .join('') +
+    cfg.minta
+      .map(function (m) {
+        return '<th scope="col">' + NAMA_MINTA_BANGUN[m] + '</th>';
+      })
+      .join('') +
+    '</tr></thead><tbody>' +
+    (catat.length
+      ? catat
+          .map(function (c) {
+            return (
+              '<tr>' +
+              kunci
+                .map(function (k) {
+                  return '<td>' + fmtBangun(c.ukuran[k]) + '</td>';
+                })
+                .join('') +
+              cfg.minta
+                .map(function (m) {
+                  return '<td><strong>' + fmtBangun(c.nilai[m]) + '</strong></td>';
+                })
+                .join('') +
+              '</tr>'
+            );
+          })
+          .join('')
+      : '<tr><td colspan="' +
+        (kunci.length + cfg.minta.length) +
+        '" class="lab-bangun__kosong">Belum ada catatan.</td></tr>') +
+    '</tbody></table>' +
+    '</div>'
+  );
+}
+
+function buildLabBangun(id, st, cfg) {
+  return (
+    '<div class="lab-bangun lab-bangun--' +
+    cfg.mode +
+    '" id="' +
+    id +
+    '">' +
+    buildTabLabBangun(st, cfg) +
+    buildKontrolLabBangun(id, st, cfg) +
+    '<div class="lab-bangun__isi">' +
+    '<div class="lab-bangun__kiri">' +
+    buildGambarLabBangun(st, cfg) +
+    '</div>' +
+    '<div class="lab-bangun__kanan">' +
+    buildIsianLabBangun(id, st, cfg) +
+    buildTabelLabBangun(st, cfg) +
+    '</div>' +
+    '</div>' +
+    '</div>'
+  );
+}
+
+/*
+ * Memasang event Lab Bangun. Isian disimpan saat diketik (tanpa render
+ * ulang); onChange dipanggil setelah pilih bangun, ubah ukuran/fase,
+ * petak/ruas, atau Periksa.
+ */
+function bindLabBangun(root, id, st, cfg, onChange) {
+  root.querySelectorAll('[data-bangun-jenis]').forEach(function (tab) {
+    tab.addEventListener('click', function () {
+      if (pilihJenisLabBangun(st, cfg, tab.dataset.bangunJenis)) onChange();
+    });
+  });
+  Object.keys(cfg.ukuran[st.jenis]).forEach(function (k) {
+    bindFinStepper(root, id + 'U' + k, function (arah) {
+      if (ubahUkuranLabBangun(st, cfg, k, arah)) onChange();
+    });
+  });
+  bindFinStepper(root, id + 'Fase', function (arah) {
+    if (ubahFaseLabBangun(st, cfg, arah)) onChange();
+  });
+  ['petak', 'ruas'].forEach(function (k) {
+    var cb = root.querySelector('#' + id + (k === 'petak' ? 'Petak' : 'Ruas'));
+    if (!cb) return;
+    cb.addEventListener('change', function () {
+      st[k] = cb.checked;
+      onChange();
+    });
+  });
+  var btn = root.querySelector('#' + id + 'Check');
+  cfg.minta.forEach(function (m) {
+    var inp = root.querySelector('#' + id + 'In' + m);
+    if (!inp) return;
+    inp.addEventListener('input', function () {
+      st.isian[m] = inp.value;
+    });
+    inp.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter' && btn) btn.click();
+    });
+  });
+  if (btn) {
+    btn.addEventListener('click', function () {
+      var r = periksaLabBangun(st, cfg);
+      if (r.status === 'kosong') showNotice('Isi semua kotak jawaban lebih dulu.');
+      else if (r.status === 'format') showNotice(PESAN_BANGUN.format);
+      else if (r.status === 'sudah')
+        showNotice('Ukuran ini sudah dicatat. Ubah ukurannya lalu coba lagi.');
+      else if (r.status === 'catat') showNotice('Tercatat! Coba ukuran lain.');
+      onChange();
     });
   }
 }

@@ -1,0 +1,167 @@
+/* =========================================================================
+   fase-d/mpi-23.1/styles.css
+   Keliling & Luas Bangun Datar — Fase D
+
+   Hanya memuat gaya yang KHAS modul ini. Seluruh dasar design system
+   (panel, tombol, kotak umpan balik, pilihan ganda, pemilahan, pertanyaan
+   penuntun .quiz-item--guided, tabel .data-table, kartu rumus
+   .formula-card, perbandingan dugaan .dugaan-row, kartu ringkasan,
+   navigasi tahap, modal) serta komponen bersama asesmen diagnostik
+   (.diag-*) dan bangun datar (.bangun-svg, .bangun-*, .lab-bangun*)
+   berasal dari shared/base.css.
+   ========================================================================= */
+
+/* -------------------------------------------------------------------------
+   Label konteks soal
+   ------------------------------------------------------------------------- */
+
+.bd-konteks {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: 2px var(--space-2);
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.bd-konteks--taman {
+  background: var(--color-success-soft);
+  color: var(--color-success-strong);
+}
+
+.bd-konteks--rumah {
+  background: var(--color-orange-soft);
+  color: var(--color-orange-strong);
+}
+
+.bd-konteks--sekolah {
+  background: var(--color-blue-soft);
+  color: var(--color-blue-strong);
+}
+
+.bd-konteks--kerajinan {
+  background: var(--color-purple-soft);
+  color: var(--color-purple-strong);
+}
+
+.bd-konteks--olahraga {
+  background: var(--color-warning-soft);
+  color: var(--color-warning-strong);
+}
+
+/* -------------------------------------------------------------------------
+   Stimulasi — denah petak taman
+   ------------------------------------------------------------------------- */
+
+.bd-denah {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+  gap: var(--space-3);
+  margin-top: var(--space-4);
+}
+
+.bd-petak {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  height: 100%;
+  min-width: 0;
+  margin: 0;
+  padding: var(--space-3);
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+}
+
+.bd-petak figcaption {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-top: var(--space-2);
+  font-size: 0.9rem;
+  text-align: center;
+}
+
+.bd-petak figcaption span {
+  font-size: 0.82rem;
+  color: var(--color-ink-muted);
+}
+
+/* -------------------------------------------------------------------------
+   Lab — tips menghitung
+   ------------------------------------------------------------------------- */
+
+.bd-tips {
+  margin-bottom: var(--space-3);
+}
+
+.bd-tips summary {
+  display: flex;
+  align-items: center;
+  min-height: 44px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.bd-tips ul {
+  margin: var(--space-2) 0 0;
+  padding-left: var(--space-5);
+}
+
+/* -------------------------------------------------------------------------
+   Kartu rumus (olah data & selesai)
+   ------------------------------------------------------------------------- */
+
+.bd-rumus-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: var(--space-3);
+  margin: var(--space-3) 0;
+}
+
+.bd-rumus {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 0;
+  text-align: center;
+}
+
+.bd-rumus__baris {
+  font-variant-numeric: tabular-nums;
+}
+
+strong.bd-rumus__baris {
+  font-size: 1.05rem;
+  color: var(--color-primary-strong);
+}
+
+/* -------------------------------------------------------------------------
+   Uji terap — gambar soal
+   ------------------------------------------------------------------------- */
+
+.bd-soal-gambar {
+  margin: var(--space-3) 0;
+  overflow-x: auto;
+}
+
+/* -------------------------------------------------------------------------
+   Verifikasi — kotak hipotesis
+   ------------------------------------------------------------------------- */
+
+.bd-hipotesis {
+  margin-top: var(--space-4);
+  padding: var(--space-3) var(--space-4);
+  border: 1px dashed var(--color-border-strong);
+  border-radius: var(--radius-md);
+}
+
+.bd-hipotesis__label {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--color-ink-muted);
+}
