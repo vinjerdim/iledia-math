@@ -235,6 +235,15 @@
        bentuk aljabar, jenis bagian, isian berdiagnosa miskonsepsi, opsi
        berpengecoh, bentuk berwarna, gambar model SVG, Lab Kantong,
        Ketuk Unsur, langkah isian unsur)
+   75. Kalimat terbuka, persamaan & PLSV (pernyataan, kalimat terbuka,
+       persamaan, PLSV, nilai kebenaran & substitusi, penyelesaian,
+       isian berdiagnosa, opsi berpengecoh, kalimat berwarna, neraca SVG,
+       Lab Neraca)
+   76. Pertidaksamaan linear satu variabel (frasa batasan → tanda,
+       PLSV vs PtLSV, penyelesaian bulat & bentuk penyelesaian, isian
+       berdiagnosa miskonsepsi tanda terbalik / batas termasuk / "="
+       untuk batasan / satu nilai saja, opsi berpengecoh, garis bilangan
+       SVG, Lab Batas)
    ============================================================ */
 
 /* ============================================================
@@ -49762,6 +49771,1133 @@ function bindLabNeraca(root, id, st, cfg, onChange) {
   if (btn && inp) {
     var kirim = function () {
       var r = tulisKalimatLabNeraca(st, cfg, inp.value);
+      if (r.kode === 'kosong' || r.kode === 'format') {
+        showNotice(r.pesan);
+        return;
+      }
+      onChange();
+      var lagi = document.getElementById(id + 'KalimatInput');
+      if (lagi && !r.benar) lagi.focus();
+    };
+    btn.addEventListener('click', kirim);
+    inp.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter') kirim();
+    });
+  }
+}
+
+/* ============================================================
+   76. PERTIDAKSAMAAN LINEAR SATU VARIABEL (PtLSV)
+   Pertidaksamaan linear satu variabel: kalimat terbuka yang memuat
+   tepat satu variabel berpangkat satu dengan tanda <, >, ≤, atau ≥.
+   Berbeda dengan PLSV (tanda "=", tepat SATU penyelesaian), PtLSV
+   memodelkan BATASAN nilai ("paling banyak", "minimal", "kurang dari",
+   "lebih dari") sehingga penyelesaiannya BANYAK. Model konkretnya
+   neraca seksi 75: piring kiri = barang, piring kanan = beban batas;
+   garis bilangan memperlihatkan nilai-nilai yang memenuhi.
+   Dipakai fase-d/mpi-7.1. Gaya .garis-batas*, .lab-batas* ada di
+   shared/base.css. Kalimat dibaca dengan parseKalimatMtk (seksi 75).
+
+   Notasi cek soal (lihat nilaiSoalBatas):
+     { kalimat, minta: 'kalimat' }            → menulis kalimat dari cerita
+     { kalimat, minta: 'jenisBatas' }         → 'plsv' | 'ptlsv' | 'bukanKeduanya'
+     { frasa, minta: 'tanda' }                → id OPSI_TANDA_BATAS
+     { kalimat, nilai, minta: 'memenuhi' }    → 'ya' | 'tidak'
+     { kalimat, semesta, minta: 'himpunan' }  → bilangan bulat dalam semesta
+                                                [min, max] yang memenuhi
+     { kalimat, semesta, minta: 'banyak' }    → banyaknya bilangan itu
+   ============================================================ */
+
+/* ---------- Frasa batasan & tanda ---------- */
+
+var ID_RELASI = {
+  '=': 'sama',
+  '<': 'kurang',
+  '>': 'lebih',
+  '≤': 'kurangSama',
+  '≥': 'lebihSama',
+  '≠': 'tidakSama',
+};
+
+var OPSI_TANDA_BATAS = [
+  { id: 'kurangSama', rel: '≤', label: '≤ (kurang dari atau sama dengan)' },
+  { id: 'lebihSama', rel: '≥', label: '≥ (lebih dari atau sama dengan)' },
+  { id: 'kurang', rel: '<', label: '< (kurang dari)' },
+  { id: 'lebih', rel: '>', label: '> (lebih dari)' },
+  { id: 'sama', rel: '=', label: '= (sama dengan)' },
+];
+
+/* Frasa sehari-hari → tanda. Frasa terpanjang dicocokkan lebih dulu. */
+var FRASA_BATAS = [
+  { frasa: 'kurang dari atau sama dengan', rel: '≤' },
+  { frasa: 'lebih dari atau sama dengan', rel: '≥' },
+  { frasa: 'paling banyak', rel: '≤' },
+  { frasa: 'tidak lebih dari', rel: '≤' },
+  { frasa: 'tidak melebihi', rel: '≤' },
+  { frasa: 'maksimal', rel: '≤' },
+  { frasa: 'maksimum', rel: '≤' },
+  { frasa: 'paling tinggi', rel: '≤' },
+  { frasa: 'paling lama', rel: '≤' },
+  { frasa: 'sebanyak-banyaknya', rel: '≤' },
+  { frasa: 'paling sedikit', rel: '≥' },
+  { frasa: 'tidak kurang dari', rel: '≥' },
+  { frasa: 'sekurang-kurangnya', rel: '≥' },
+  { frasa: 'minimal', rel: '≥' },
+  { frasa: 'minimum', rel: '≥' },
+  { frasa: 'paling rendah', rel: '≥' },
+  { frasa: 'kurang dari', rel: '<' },
+  { frasa: 'di bawah', rel: '<' },
+  { frasa: 'belum mencapai', rel: '<' },
+  { frasa: 'lebih dari', rel: '>' },
+  { frasa: 'di atas', rel: '>' },
+  { frasa: 'melebihi', rel: '>' },
+  { frasa: 'sama dengan', rel: '=' },
+  { frasa: 'tepat', rel: '=' },
+];
+
+function relasiDariFrasa(teks) {
+  var s = String(teks === null || teks === undefined ? '' : teks).toLowerCase();
+  var urut = FRASA_BATAS.slice().sort(function (a, b) {
+    return b.frasa.length - a.frasa.length;
+  });
+  for (var i = 0; i < urut.length; i++) {
+    if (s.indexOf(urut[i].frasa) !== -1) return urut[i].rel;
+  }
+  return null;
+}
+
+function idRelasiFrasa(teks) {
+  return ID_RELASI[relasiDariFrasa(teks)] || null;
+}
+
+function relasiDariId(id) {
+  var o = OPSI_TANDA_BATAS.filter(function (x) {
+    return x.id === id;
+  })[0];
+  return o ? o.rel : null;
+}
+
+/* Tanda setelah kedua ruas ditukar (7 ≥ x ⇔ x ≤ 7). */
+function balikRelasi(rel) {
+  return { '<': '>', '>': '<', '≤': '≥', '≥': '≤' }[rel] || rel;
+}
+
+function relasiKetat(rel) {
+  return rel === '<' || rel === '>';
+}
+
+/* Arah sama, batas termasuk ⇄ tidak termasuk (≤ ⇄ <, ≥ ⇄ >). */
+function lawanKetatRelasi(rel) {
+  return { '<': '≤', '≤': '<', '>': '≥', '≥': '>' }[rel] || rel;
+}
+
+/* −1 untuk < dan ≤, 1 untuk > dan ≥, 0 lainnya. */
+function arahRelasi(rel) {
+  if (rel === '<' || rel === '≤') return -1;
+  if (rel === '>' || rel === '≥') return 1;
+  return 0;
+}
+
+/* ---------- Jenis kalimat ---------- */
+
+/*
+ * 'plsv' | 'ptlsv' | 'lainnya' (kalimat terbuka lain: dua variabel,
+ * pangkat dua, "≠", atau variabel saling meniadakan) | 'pernyataan' |
+ * 'bentuk'; null bila tak terbaca.
+ */
+function jenisKalimatBatas(str) {
+  var j = jenisKalimatMtk(str);
+  if (!j) return null;
+  if (j === 'plsv' || j === 'pernyataan' || j === 'bentuk') return j;
+  if (j === 'persamaan') return 'lainnya';
+  var p = parseKalimatMtk(str);
+  var c = ciriKalimatMtk(str);
+  var L = bagianLinearKalimat(p);
+  if (p.rel !== '≠' && c.variabel.length === 1 && c.pangkat === 1 && L.a - L.c !== 0) {
+    return 'ptlsv';
+  }
+  return 'lainnya';
+}
+
+/*
+ * Kelompok kalimat menurut skema pemilahan:
+ *   'persamaanAtau' → 'plsv' | 'ptlsv' | 'bukanKeduanya'
+ *   'ptlsv'         → 'ptlsv' | 'plsv' | 'duaVariabel' | 'pangkatDua' | 'bukanKeduanya'
+ *   lainnya         → jenisKalimatBatas
+ */
+function kelompokKalimatBatas(str, skema) {
+  var j = jenisKalimatBatas(str);
+  if (skema === 'persamaanAtau') return j === 'plsv' || j === 'ptlsv' ? j : 'bukanKeduanya';
+  if (skema === 'ptlsv') {
+    if (j === 'plsv' || j === 'ptlsv') return j;
+    var c = ciriKalimatMtk(str);
+    if (c && c.variabel.length > 1) return 'duaVariabel';
+    if (c && c.pangkat > 1) return 'pangkatDua';
+    return 'bukanKeduanya';
+  }
+  return j;
+}
+
+/* ---------- Penyelesaian ---------- */
+
+/* Bilangan bulat min..max yang membuat kalimat (satu variabel) benar. */
+function penyelesaianBulatKalimat(str, min, max) {
+  var out = [];
+  for (var v = min; v <= max; v++) {
+    if (nilaiKalimatMtk(str, v) === true) out.push(v);
+  }
+  return out;
+}
+
+/*
+ * Bentuk penyelesaian PLSV / PtLSV: { huruf, rel, batas } dengan
+ * variabel di ruas kiri, mis. x + 3 ≤ 7 → { 'x', '≤', 4 }. Bila
+ * koefisien variabel negatif setelah dipindah ruas, tanda dibalik.
+ */
+function bentukPenyelesaianBatas(str) {
+  var j = jenisKalimatBatas(str);
+  if (j !== 'plsv' && j !== 'ptlsv') return null;
+  var p = parseKalimatMtk(str);
+  var L = bagianLinearKalimat(p);
+  var k = L.a - L.c;
+  var rel = k < 0 ? balikRelasi(p.rel) : p.rel;
+  return { huruf: ciriKalimatMtk(str).variabel[0], rel: rel, batas: (L.d - L.b) / k };
+}
+
+function teksPenyelesaianBatas(str) {
+  var b = bentukPenyelesaianBatas(str);
+  return b ? b.huruf + ' ' + b.rel + ' ' + formatAngkaAljabar(b.batas) : null;
+}
+
+function formatHimpunanBulat(list) {
+  if (!list.length) return '{ }';
+  return (
+    '{' +
+    list
+      .map(function (v) {
+        return formatAngkaAljabar(v);
+      })
+      .join(', ') +
+    '}'
+  );
+}
+
+/* "1, 2, 3", "{1,2,3}", atau "1 2 3" → { nilai: [urut, unik] } atau { hasil }. */
+function bacaDaftarBilangan(isian) {
+  var s = String(isian === null || isian === undefined ? '' : isian)
+    .replace(/[−–—]/g, '-')
+    .trim();
+  if (!s) return { hasil: hasilBatas('kosong') };
+  var inti = s.replace(/^\{/, '').replace(/\}$/, '').trim();
+  if (!inti) return s === inti ? { hasil: hasilBatas('kosong') } : { nilai: [] };
+  var bagian = inti.split(/[\s,;]+/).filter(Boolean);
+  var nilai = [];
+  for (var i = 0; i < bagian.length; i++) {
+    if (!/^-?\d+$/.test(bagian[i]))
+      return { hasil: hasilBatas('format', PESAN_BATAS.formatDaftar) };
+    var n = parseInt(bagian[i], 10);
+    if (nilai.indexOf(n) === -1) nilai.push(n);
+  }
+  return {
+    nilai: nilai.sort(function (a, b) {
+      return a - b;
+    }),
+  };
+}
+
+function samaDaftar(a, b) {
+  return a.length === b.length && a.join() === b.join();
+}
+
+/* Kalimat yang sama dengan tanda lain, mis. x + 3 ≤ 7 → x + 3 < 7. */
+function gantiRelasiKalimat(str, rel) {
+  var p = parseKalimatMtk(str);
+  return formatKalimatMtk({ kiri: p.kiri, rel: rel, kanan: p.kanan });
+}
+
+/* ---------- Soal ---------- */
+
+var OPSI_JENIS_BATAS = [
+  { id: 'plsv', label: 'PLSV — persamaan linear satu variabel' },
+  { id: 'ptlsv', label: 'PtLSV — pertidaksamaan linear satu variabel' },
+  { id: 'bukanKeduanya', label: 'Bukan PLSV maupun PtLSV' },
+];
+
+var OPSI_MEMENUHI_BATAS = [
+  { id: 'ya', label: 'Memenuhi' },
+  { id: 'tidak', label: 'Tidak memenuhi' },
+];
+
+function nilaiSoalBatas(c) {
+  switch (c.minta) {
+    case 'kalimat':
+      return rapikanKalimatMtk(c.kalimat);
+    case 'jenisBatas':
+      return kelompokKalimatBatas(c.kalimat, 'persamaanAtau');
+    case 'tanda':
+      return idRelasiFrasa(c.frasa);
+    case 'memenuhi':
+      return nilaiKalimatMtk(c.kalimat, c.nilai) ? 'ya' : 'tidak';
+    case 'himpunan':
+      return penyelesaianBulatKalimat(c.kalimat, c.semesta[0], c.semesta[1]);
+    case 'banyak':
+      return penyelesaianBulatKalimat(c.kalimat, c.semesta[0], c.semesta[1]).length;
+  }
+  return null;
+}
+
+/* Jawaban baku sebagai teks (kalimat / himpunan / bilangan / id pilihan). */
+function jawabSoalBatas(s) {
+  var v = nilaiSoalBatas(s.cek);
+  if (Array.isArray(v)) return formatHimpunanBulat(v);
+  return typeof v === 'number' ? formatAngkaAljabar(v) : v;
+}
+
+function opsiPilihanBatas(minta) {
+  if (minta === 'jenisBatas') return OPSI_JENIS_BATAS;
+  if (minta === 'tanda') return OPSI_TANDA_BATAS;
+  if (minta === 'memenuhi') return OPSI_MEMENUHI_BATAS;
+  return null;
+}
+
+/* Label jawaban baku seperti tampil pada pilihan ganda. */
+function labelJawabBatas(s) {
+  var opsi = opsiPilihanBatas(s.cek.minta);
+  var v = jawabSoalBatas(s);
+  if (!opsi) return v;
+  return opsi.filter(function (o) {
+    return o.id === v;
+  })[0].label;
+}
+
+/* ---------- Diagnosa isian ---------- */
+
+var PESAN_BATAS = {
+  benar: 'Tepat!',
+  kosong: 'Isi jawabanmu lebih dulu.',
+  format: 'Jawabanmu belum terbaca. Tulis satu bilangan, mis. 4.',
+  formatKalimat: 'Kalimatmu belum terbaca. Tulis seperti x + 3 ≤ 7 (boleh mengetik <= atau >=).',
+  formatDaftar: 'Daftarmu belum terbaca. Tulis bilangan dipisah koma, mis. 1, 2, 3.',
+  tanpaRelasi: 'Itu baru satu ruas. Bandingkan dengan batasnya memakai tanda =, <, >, ≤, atau ≥.',
+  pakaiSamaDengan:
+    'Cerita ini menyebut batasan, bukan nilai yang tepat sama. Tanda "=" hanya cocok untuk kata "tepat" atau "sama dengan". Pakai <, >, ≤, atau ≥.',
+  bukanBatas:
+    'Cerita ini menyebut nilai yang TEPAT sama, jadi kedua ruas sama besar. Pakai tanda "=", bukan tanda pertidaksamaan.',
+  tandaTerbalik:
+    'Arah tandanya terbalik. "Paling banyak" / "kurang dari" berarti ruas yang memuat variabel lebih KECIL dari batas (≤ atau <); "minimal" / "lebih dari" berarti lebih BESAR (≥ atau >).',
+  batasTermasuk:
+    'Hampir! Nilai batasnya sendiri juga boleh ("paling banyak", "minimal", "tidak lebih dari" termasuk batasnya). Pakai ≤ atau ≥, bukan < atau >.',
+  batasTidakTermasuk:
+    'Hampir! Nilai batasnya sendiri tidak boleh ("kurang dari", "lebih dari" tidak termasuk batasnya). Pakai < atau >, bukan ≤ atau ≥.',
+  tidakSama:
+    'Tanda ≠ hanya berarti "tidak sama". Batasan seperti "paling banyak" atau "minimal" memakai <, >, ≤, atau ≥.',
+  langsungJawab:
+    'Itu sudah bentuk penyelesaiannya. Tulis dulu kalimat yang memodelkan cerita apa adanya: ruas kiri sesuai cerita, ruas kanan = batasnya.',
+  satuNilai:
+    'Itu baru satu nilai, yaitu nilai batasnya. Pertidaksamaan biasanya dipenuhi BANYAK nilai — ujilah nilai-nilai lain juga.',
+  bukanSamaDengan:
+    'Kalimat ini memakai tanda <, >, ≤, atau ≥, bukan "=". Jadi ia pertidaksamaan (PtLSV), bukan persamaan.',
+  adaSamaDengan: 'Kalimat ini memakai tanda "=", jadi ia persamaan (PLSV), bukan pertidaksamaan.',
+  sudahLinear:
+    'Periksa cirinya: tepat satu variabel, berpangkat satu, dan bertanda =, <, >, ≤, atau ≥. Kalimat ini memenuhi semuanya.',
+  duaVariabel:
+    'Kalimat ini memuat lebih dari satu variabel, jadi bukan kalimat linear SATU variabel.',
+  pangkatDua: 'Variabelnya berpangkat dua. Kalimat LINEAR hanya memuat variabel berpangkat satu.',
+  tanpaVariabel:
+    'Kalimat ini tidak memuat variabel, jadi benar-salahnya sudah pasti. Ia pernyataan, bukan PLSV atau PtLSV.',
+  tanpaRelasiJenis:
+    'Tidak ada tanda hubung sama sekali, jadi ini baru bentuk aljabar, bukan PLSV atau PtLSV.',
+  salah:
+    'Belum tepat. Baca lagi ceritanya: apa yang dibandingkan (ruas kiri), apa batasnya (ruas kanan), dan kata batasan apa yang dipakai?',
+  salahJenis: 'Belum tepat. Periksa tandanya, banyak variabelnya, dan pangkat variabelnya.',
+};
+
+function hasilBatas(kode, pesan) {
+  return { kode: kode, benar: kode === 'benar', pesan: pesan || PESAN_BATAS[kode] };
+}
+
+/* "Cek: jika x = 5, ruas kiri = 8 dan ruas kanan = 7; 8 ≤ 7 salah, jadi …". */
+function teksSubstitusiBatas(str, v) {
+  var p = parseKalimatMtk(str);
+  var huruf = ciriKalimatMtk(str).variabel[0];
+  var r = ruasKalimatMtk(str, v);
+  var benar = bandingRelasi(r.kiri, p.rel, r.kanan);
+  return (
+    'Cek: jika ' +
+    huruf +
+    ' = ' +
+    formatAngkaAljabar(v) +
+    ', ruas kiri = ' +
+    formatAngkaAljabar(r.kiri) +
+    ' dan ruas kanan = ' +
+    formatAngkaAljabar(r.kanan) +
+    '; ' +
+    formatAngkaAljabar(r.kiri) +
+    ' ' +
+    p.rel +
+    ' ' +
+    formatAngkaAljabar(r.kanan) +
+    (benar ? ' benar, jadi ' : ' salah, jadi ') +
+    huruf +
+    ' = ' +
+    formatAngkaAljabar(v) +
+    (benar ? ' memenuhi.' : ' tidak memenuhi.')
+  );
+}
+
+/* Kode miskonsepsi bila tanda isian `rel` keliru terhadap tanda baku `baku`. */
+function kodeSalahRelasi(rel, baku) {
+  if (rel === baku) return 'benar';
+  if (baku === '=') return 'bukanBatas';
+  if (rel === '=') return 'pakaiSamaDengan';
+  if (rel === '≠') return 'tidakSama';
+  if (arahRelasi(rel) !== arahRelasi(baku)) return 'tandaTerbalik';
+  return relasiKetat(baku) ? 'batasTidakTermasuk' : 'batasTermasuk';
+}
+
+/* Ruas sama (urutan suku bebas): 0 = posisi sama, 1 = ditukar, −1 = berbeda. */
+function posisiRuasBatas(p, q) {
+  var r = function (list) {
+    return petaRuasKalimat(list);
+  };
+  if (samaPetaKalimat(r(p.kiri), r(q.kiri)) && samaPetaKalimat(r(p.kanan), r(q.kanan))) return 0;
+  if (samaPetaKalimat(r(p.kiri), r(q.kanan)) && samaPetaKalimat(r(p.kanan), r(q.kiri))) return 1;
+  return -1;
+}
+
+function diagnosaTulisBatas(isian, c) {
+  if (!String(isian === null || isian === undefined ? '' : isian).trim()) {
+    return hasilBatas('kosong');
+  }
+  var kunci = parseKalimatMtk(c.kalimat);
+  var p = parseKalimatMtk(isian);
+  if (!p) return hasilBatas('format', PESAN_BATAS.formatKalimat);
+  if (!p.rel) return hasilBatas('tanpaRelasi');
+  var pos = posisiRuasBatas(p, kunci);
+  if (pos !== -1) {
+    var rel = pos === 1 ? balikRelasi(p.rel) : p.rel;
+    return hasilBatas(kodeSalahRelasi(rel, kunci.rel));
+  }
+  /* ruas berbeda → diagnosa ruas memakai versi "=" (seksi 75) */
+  var sama = function (q) {
+    return formatKalimatMtk({ kiri: q.kiri, rel: '=', kanan: q.kanan });
+  };
+  var r = diagnosaTulisKalimat(sama(p), { kalimat: sama(kunci) });
+  if (r.kode === 'langsungJawab') {
+    var b = bentukPenyelesaianBatas(c.kalimat);
+    if (b && b.rel !== '=') return hasilBatas('langsungJawab');
+  }
+  if (r.kode === 'hurufLain') return hasilBatas('hurufLain', r.pesan);
+  if (r.kode === 'tandaHilang' || r.kode === 'tukarKoefKonst') return hasilBatas(r.kode, r.pesan);
+  return hasilBatas(r.kode === 'langsungJawab' ? 'langsungJawab' : 'salah');
+}
+
+/* Calon tanda keliru → kode, untuk himpunan/banyak penyelesaian. */
+function variasiRelasiBatas(rel) {
+  var out = [];
+  if (rel === '=') return out;
+  out.push({ kode: kodeSalahRelasi(lawanKetatRelasi(rel), rel), rel: lawanKetatRelasi(rel) });
+  out.push({ kode: 'tandaTerbalik', rel: balikRelasi(rel) });
+  out.push({ kode: 'tandaTerbalik', rel: lawanKetatRelasi(balikRelasi(rel)) });
+  return out;
+}
+
+function diagnosaHimpunanBatas(isian, c) {
+  var r = bacaDaftarBilangan(isian);
+  if (r.hasil) return r.hasil;
+  var baku = nilaiSoalBatas(c);
+  if (samaDaftar(r.nilai, baku)) return hasilBatas('benar');
+  var bak = parseKalimatMtk(c.kalimat).rel;
+  var hp = function (rel) {
+    return penyelesaianBulatKalimat(gantiRelasiKalimat(c.kalimat, rel), c.semesta[0], c.semesta[1]);
+  };
+  if (bak !== '=' && r.nilai.length === 1 && samaDaftar(r.nilai, hp('='))) {
+    return hasilBatas('satuNilai');
+  }
+  var g = variasiRelasiBatas(bak).filter(function (x) {
+    return samaDaftar(r.nilai, hp(x.rel));
+  })[0];
+  if (g) return hasilBatas(g.kode);
+  var lebih = r.nilai.filter(function (v) {
+    return baku.indexOf(v) === -1;
+  });
+  var kurang = baku.filter(function (v) {
+    return r.nilai.indexOf(v) === -1;
+  });
+  var v = lebih.length ? lebih[0] : kurang[0];
+  return hasilBatas(
+    'salah',
+    PESAN_BATAS.salah.split('.')[0] + '. ' + teksSubstitusiBatas(c.kalimat, v)
+  );
+}
+
+function diagnosaBanyakBatas(isian, c) {
+  var b = parseBilAljabar(isian);
+  if (b.kode === 'kosong') return hasilBatas('kosong');
+  if (b.kode !== 'ok') return hasilBatas('format');
+  var baku = nilaiSoalBatas(c);
+  if (b.nilai === baku) return hasilBatas('benar');
+  var bak = parseKalimatMtk(c.kalimat).rel;
+  var banyak = function (rel) {
+    return penyelesaianBulatKalimat(gantiRelasiKalimat(c.kalimat, rel), c.semesta[0], c.semesta[1])
+      .length;
+  };
+  if (bak !== '=' && b.nilai === 1) return hasilBatas('satuNilai');
+  var g = variasiRelasiBatas(bak).filter(function (x) {
+    return banyak(x.rel) === b.nilai;
+  })[0];
+  return hasilBatas(
+    g ? g.kode : 'salah',
+    g
+      ? null
+      : 'Belum tepat. Ujilah setiap bilangan bulat dari ' +
+          c.semesta[0] +
+          ' sampai ' +
+          c.semesta[1] +
+          ' satu per satu, lalu hitung yang memenuhi.'
+  );
+}
+
+function diagnosaJenisBatas(isian, c) {
+  if (!isian) return hasilBatas('kosong');
+  var baku = kelompokKalimatBatas(c.kalimat, 'persamaanAtau');
+  if (isian === baku) return hasilBatas('benar');
+  if (baku === 'ptlsv') return hasilBatas(isian === 'plsv' ? 'bukanSamaDengan' : 'sudahLinear');
+  if (baku === 'plsv') return hasilBatas(isian === 'ptlsv' ? 'adaSamaDengan' : 'sudahLinear');
+  var j = jenisKalimatBatas(c.kalimat);
+  if (j === 'pernyataan') return hasilBatas('tanpaVariabel');
+  if (j === 'bentuk') return hasilBatas('tanpaRelasiJenis');
+  var k = kelompokKalimatBatas(c.kalimat, 'ptlsv');
+  if (k === 'duaVariabel' || k === 'pangkatDua') return hasilBatas(k);
+  if (parseKalimatMtk(c.kalimat).rel === '≠') return hasilBatas('tidakSama');
+  return hasilBatas('salahJenis');
+}
+
+function diagnosaTandaBatas(isian, c) {
+  if (!isian) return hasilBatas('kosong');
+  var rel = relasiDariId(isian);
+  if (!rel) return hasilBatas('salah');
+  return hasilBatas(kodeSalahRelasi(rel, relasiDariFrasa(c.frasa)));
+}
+
+function diagnosaMemenuhiBatas(isian, c) {
+  if (!isian) return hasilBatas('kosong');
+  var t = teksSubstitusiBatas(c.kalimat, c.nilai);
+  if (isian === nilaiSoalBatas(c)) return hasilBatas('benar', 'Tepat! ' + t);
+  return hasilBatas('salah', 'Belum tepat. ' + t);
+}
+
+/* Memeriksa isian soal s = { cek } → { kode, benar, pesan }. */
+function periksaSoalBatas(isian, s) {
+  var c = s.cek;
+  switch (c.minta) {
+    case 'kalimat':
+      return diagnosaTulisBatas(isian, c);
+    case 'himpunan':
+      return diagnosaHimpunanBatas(isian, c);
+    case 'banyak':
+      return diagnosaBanyakBatas(isian, c);
+    case 'jenisBatas':
+      return diagnosaJenisBatas(isian, c);
+    case 'tanda':
+      return diagnosaTandaBatas(isian, c);
+    case 'memenuhi':
+      return diagnosaMemenuhiBatas(isian, c);
+  }
+  return hasilBatas('salah');
+}
+
+/* Teks isian yang dirapikan untuk langkah yang sudah benar. */
+function tampilIsianBatas(input) {
+  var s = String(input || '').trim();
+  var p = parseKalimatMtk(s);
+  if (p && p.rel) return formatKalimatMtk(p);
+  var d = bacaDaftarBilangan(s);
+  if (d.nilai && (d.nilai.length > 1 || /[{,]/.test(s))) return formatHimpunanBulat(d.nilai);
+  var b = parseBilAljabar(s);
+  return b.kode === 'ok' ? formatAngkaAljabar(b.nilai) : s;
+}
+
+/* ---------- Opsi pilihan ganda ---------- */
+
+/* Calon jawaban keliru [{ kode, label }] untuk soal menulis kalimat / himpunan. */
+function calonKeliruBatas(c) {
+  var rel = parseKalimatMtk(c.kalimat).rel;
+  var out = [];
+  if (c.minta === 'himpunan') {
+    var hp = function (r) {
+      return penyelesaianBulatKalimat(gantiRelasiKalimat(c.kalimat, r), c.semesta[0], c.semesta[1]);
+    };
+    if (rel !== '=') out.push({ kode: 'satuNilai', nilai: hp('=') });
+    variasiRelasiBatas(rel).forEach(function (g) {
+      out.push({ kode: g.kode, nilai: hp(g.rel) });
+    });
+    return out
+      .filter(function (g) {
+        return g.nilai.length > 0;
+      })
+      .map(function (g) {
+        return { kode: g.kode, label: formatHimpunanBulat(g.nilai) };
+      });
+  }
+  var ganti = function (r) {
+    return gantiRelasiKalimat(c.kalimat, r);
+  };
+  if (rel === '=') {
+    out.push({ kode: 'bukanBatas', label: ganti('≤') });
+    out.push({ kode: 'bukanBatas', label: ganti('<') });
+  } else {
+    out.push({ kode: 'tandaTerbalik', label: ganti(balikRelasi(rel)) });
+    out.push({ kode: 'pakaiSamaDengan', label: ganti('=') });
+    out.push({
+      kode: kodeSalahRelasi(lawanKetatRelasi(rel), rel),
+      label: ganti(lawanKetatRelasi(rel)),
+    });
+  }
+  calonKalimatKeliru({ kalimat: gantiRelasiKalimat(c.kalimat, '=') }).forEach(function (g) {
+    if (g.kode !== 'tandaHilang' && g.kode !== 'tukarKoefKonst') return;
+    var q = parseKalimatMtk(g.label);
+    out.push({ kode: g.kode, label: formatKalimatMtk({ kiri: q.kiri, rel: rel, kanan: q.kanan }) });
+  });
+  return out;
+}
+
+/* Opsi { id, label, umpan } untuk soal pilihan; opsi pertama id 'baku'. */
+function opsiSoalBatas(s) {
+  var c = s.cek;
+  var pilihan = opsiPilihanBatas(c.minta);
+  if (pilihan) {
+    var baku = nilaiSoalBatas(c);
+    return pilihan
+      .filter(function (o) {
+        return o.id === baku;
+      })
+      .concat(
+        pilihan.filter(function (o) {
+          return o.id !== baku;
+        })
+      )
+      .map(function (o, i) {
+        return {
+          id: i === 0 ? 'baku' : o.id,
+          label: o.label,
+          umpan: periksaSoalBatas(o.id, s).pesan,
+        };
+      });
+  }
+  var out = [{ id: 'baku', label: jawabSoalBatas(s), umpan: PESAN_BATAS.benar }];
+  var label = {};
+  var idPakai = {};
+  label[out[0].label] = true;
+  calonKeliruBatas(c).forEach(function (g) {
+    if (out.length >= 4 || label[g.label]) return;
+    label[g.label] = true;
+    var id = g.kode;
+    for (var i = 2; idPakai[id]; i++) id = g.kode + i;
+    idPakai[id] = true;
+    out.push({ id: id, label: g.label, umpan: periksaSoalBatas(g.label, s).pesan });
+  });
+  return out;
+}
+
+/* ---------- UI: garis bilangan ---------- */
+
+/*
+ * Garis bilangan SVG bilangan bulat min..max.
+ *   opts.uji      [{ x, benar }] → titik ✓ memenuhi / ✗ tidak memenuhi
+ *   opts.kalimat  PLSV / PtLSV → bulatan penuh (batas termasuk) atau
+ *                 kosong (tidak termasuk) beserta sinar arah penyelesaian
+ */
+function buildGarisBatas(opts) {
+  var min = opts.min;
+  var max = opts.max;
+  var kiri = 28;
+  var kanan = 332;
+  var y = 44;
+  var px = function (v) {
+    return Math.round((kiri + ((v - min) * (kanan - kiri)) / Math.max(1, max - min)) * 10) / 10;
+  };
+  var label = ['Garis bilangan ' + min + ' sampai ' + max + '.'];
+  var isi =
+    '<line class="garis-batas__garis" x1="10" y1="' +
+    y +
+    '" x2="350" y2="' +
+    y +
+    '"/>' +
+    '<path class="garis-batas__panah" d="M350 ' +
+    y +
+    ' l-8 -5 v10 Z"/>' +
+    '<path class="garis-batas__panah" d="M10 ' +
+    y +
+    ' l8 -5 v10 Z"/>';
+  for (var v = min; v <= max; v++) {
+    isi +=
+      '<line class="garis-batas__tick" x1="' +
+      px(v) +
+      '" y1="' +
+      (y - 5) +
+      '" x2="' +
+      px(v) +
+      '" y2="' +
+      (y + 5) +
+      '"/>' +
+      '<text class="garis-batas__label" x="' +
+      px(v) +
+      '" y="' +
+      (y + 22) +
+      '" text-anchor="middle">' +
+      formatAngkaAljabar(v) +
+      '</text>';
+  }
+  var b = opts.kalimat ? bentukPenyelesaianBatas(opts.kalimat) : null;
+  if (b) {
+    var bx = px(Math.max(min, Math.min(max, b.batas)));
+    var arah = arahRelasi(b.rel);
+    if (arah) {
+      var ujung = arah < 0 ? 12 : 348;
+      isi +=
+        '<line class="garis-batas__sinar" x1="' +
+        bx +
+        '" y1="' +
+        y +
+        '" x2="' +
+        ujung +
+        '" y2="' +
+        y +
+        '"/>' +
+        '<path class="garis-batas__sinar-ujung" d="M' +
+        (arah < 0 ? ujung - 4 : ujung + 4) +
+        ' ' +
+        y +
+        ' l' +
+        (arah < 0 ? 10 : -10) +
+        ' -7 v14 Z"/>';
+    }
+    var penuh = !relasiKetat(b.rel);
+    isi +=
+      '<circle class="garis-batas__batas ' +
+      (penuh ? 'is-penuh' : 'is-kosong') +
+      '" cx="' +
+      bx +
+      '" cy="' +
+      y +
+      '" r="7"/>';
+    label.push(
+      'Penyelesaian ' +
+        b.huruf +
+        ' ' +
+        b.rel +
+        ' ' +
+        formatAngkaAljabar(b.batas) +
+        ': bulatan ' +
+        (penuh ? 'penuh' : 'kosong') +
+        ' di ' +
+        formatAngkaAljabar(b.batas) +
+        (arah ? ', diarsir ke ' + (arah < 0 ? 'kiri' : 'kanan') : '') +
+        '.'
+    );
+  }
+  (opts.uji || []).forEach(function (u) {
+    var ux = px(u.x);
+    isi +=
+      '<g class="garis-batas__uji ' +
+      (u.benar ? 'is-ya' : 'is-tidak') +
+      '">' +
+      '<circle cx="' +
+      ux +
+      '" cy="' +
+      y +
+      '" r="6"/>' +
+      '<text x="' +
+      ux +
+      '" y="' +
+      (y - 12) +
+      '" text-anchor="middle">' +
+      (u.benar ? '✓' : '✗') +
+      '</text></g>';
+    label.push(formatAngkaAljabar(u.x) + (u.benar ? ' memenuhi.' : ' tidak memenuhi.'));
+  });
+  return (
+    '<svg class="garis-batas" viewBox="0 0 360 76" role="img" aria-label="' +
+    esc(label.join(' ')) +
+    '">' +
+    isi +
+    '</svg>'
+  );
+}
+
+/* ---------- Lab Batas ---------- */
+
+/*
+ * cfg { huruf, min, max, minUji, situasi: [{ id, judul, cerita, frasa,
+ * kiri: { x, lepas }, kanan: { lepas }, rel }] }. Piring kiri = barang,
+ * piring kanan = beban batas; kalimat situasi = isi kiri REL isi kanan.
+ */
+function kalimatSituasiBatas(cfg, s) {
+  return gantiRelasiKalimat(kalimatDariNeraca(s.kiri, s.kanan, cfg.huruf), s.rel);
+}
+
+function situasiLabBatas(cfg, id) {
+  return cfg.situasi.filter(function (s) {
+    return s.id === id;
+  })[0];
+}
+
+function catatNolLabBatas() {
+  return {
+    input: '',
+    kode: null,
+    pesan: '',
+    attempts: 0,
+    done: false,
+    kalimat: '',
+    uji: [],
+    kodeUji: null,
+    pesanUji: '',
+  };
+}
+
+function ensureLabBatas(st, cfg) {
+  var kunci = cfg.situasi
+    .map(function (s) {
+      return s.id;
+    })
+    .join(',');
+  if (st.kunci !== kunci || !st.catat || typeof st.catat !== 'object') {
+    st.kunci = kunci;
+    st.catat = {};
+  }
+  cfg.situasi.forEach(function (s) {
+    var c = st.catat[s.id];
+    if (!c || typeof c !== 'object' || !Array.isArray(c.uji)) st.catat[s.id] = catatNolLabBatas();
+  });
+  if (!situasiLabBatas(cfg, st.aktif)) st.aktif = cfg.situasi[0].id;
+  if (typeof st.x !== 'number' || st.x !== Math.floor(st.x) || st.x < cfg.min || st.x > cfg.max) {
+    st.x = cfg.min;
+  }
+  return st;
+}
+
+function situasiBatasLengkap(st, cfg, id) {
+  var c = st.catat[id];
+  return !!(c && c.done && c.uji.length === cfg.max - cfg.min + 1);
+}
+
+function labBatasLengkap(st, cfg) {
+  return cfg.situasi.every(function (s) {
+    return situasiBatasLengkap(st, cfg, s.id);
+  });
+}
+
+/* Mengubah nilai x; hanya setelah kalimat ditulis. */
+function ubahLabBatas(st, cfg, arah) {
+  var c = st.catat[st.aktif];
+  if (!c.done) return false;
+  var baru = Math.max(cfg.min, Math.min(cfg.max, st.x + arah));
+  if (baru === st.x) return false;
+  st.x = baru;
+  c.kodeUji = null;
+  return true;
+}
+
+function pilihSituasiLabBatas(st, cfg, id) {
+  if (!situasiLabBatas(cfg, id) || st.aktif === id) return false;
+  st.aktif = id;
+  st.x = cfg.min;
+  return true;
+}
+
+/* Menulis kalimat matematika untuk situasi aktif (isian berdiagnosa). */
+function tulisKalimatLabBatas(st, cfg, isian) {
+  var c = st.catat[st.aktif];
+  var kal = kalimatSituasiBatas(cfg, situasiLabBatas(cfg, st.aktif));
+  var r = periksaSoalBatas(isian, { cek: { kalimat: kal, minta: 'kalimat' } });
+  if (r.kode === 'kosong' || r.kode === 'format') return r;
+  c.input = String(isian).trim();
+  c.kode = r.kode;
+  c.pesan = r.pesan;
+  c.attempts += 1;
+  if (r.benar) {
+    c.done = true;
+    c.kalimat = rapikanKalimatMtk(kal);
+  }
+  return r;
+}
+
+var PESAN_LAB_BATAS = {
+  belumKalimat: 'Tulis dulu kalimat matematika untuk situasi ini.',
+};
+
+function catatUjiBatas(c, x, benar) {
+  if (
+    c.uji.some(function (u) {
+      return u.x === x;
+    })
+  ) {
+    return;
+  }
+  c.uji.push({ x: x, benar: benar });
+  c.uji.sort(function (a, b) {
+    return a.x - b.x;
+  });
+}
+
+/* Menguji nilai x sekarang; setiap nilai dicatat sekali. */
+function ujiLabBatas(st, cfg) {
+  var c = st.catat[st.aktif];
+  if (!c.done) {
+    return { kode: 'belumKalimat', benar: false, pesan: PESAN_LAB_BATAS.belumKalimat };
+  }
+  var s = situasiLabBatas(cfg, st.aktif);
+  var kal = kalimatSituasiBatas(cfg, s);
+  var benar = nilaiKalimatMtk(kal, st.x) === true;
+  catatUjiBatas(c, st.x, benar);
+  var arah = arahNeraca(s.kiri, s.kanan, st.x);
+  c.kodeUji = benar ? 'ya' : 'tidak';
+  c.pesanUji = 'Neraca ' + LABEL_ARAH_NERACA[arah] + '. ' + teksSubstitusiBatas(kal, st.x);
+  return { kode: c.kodeUji, benar: benar, pesan: c.pesanUji };
+}
+
+/* Setelah minimal cfg.minUji uji sendiri, sisa nilai dapat diuji sekaligus. */
+function ujiSemuaLabBatas(st, cfg) {
+  var c = st.catat[st.aktif];
+  if (!c.done || c.uji.length < (cfg.minUji || 0)) return false;
+  var kal = kalimatSituasiBatas(cfg, situasiLabBatas(cfg, st.aktif));
+  for (var v = cfg.min; v <= cfg.max; v++) catatUjiBatas(c, v, nilaiKalimatMtk(kal, v) === true);
+  c.kodeUji = 'semua';
+  c.pesanUji =
+    'Semua bilangan bulat ' +
+    cfg.min +
+    '–' +
+    cfg.max +
+    ' sudah diuji. Yang memenuhi: ' +
+    formatHimpunanBulat(penyelesaianBulatKalimat(kal, cfg.min, cfg.max)) +
+    '.';
+  return true;
+}
+
+function buildTabelLabBatas(st, cfg) {
+  var h = esc(cfg.huruf);
+  return (
+    '<table class="data-table lab-batas__tabel">' +
+    '<caption>Tabel pengamatan (' +
+    h +
+    ' bilangan bulat ' +
+    cfg.min +
+    '–' +
+    cfg.max +
+    ')</caption>' +
+    '<thead><tr><th scope="col">Situasi</th><th scope="col">Kalimat matematika</th>' +
+    '<th scope="col">Nilai ' +
+    h +
+    ' yang memenuhi</th><th scope="col">Banyaknya</th></tr></thead><tbody>' +
+    cfg.situasi
+      .map(function (s) {
+        var c = st.catat[s.id];
+        var lengkap = situasiBatasLengkap(st, cfg, s.id);
+        var ya = c.uji
+          .filter(function (u) {
+            return u.benar;
+          })
+          .map(function (u) {
+            return u.x;
+          });
+        var isi = lengkap
+          ? formatHimpunanBulat(ya)
+          : c.uji.length
+          ? c.uji
+              .map(function (u) {
+                return (
+                  '<span class="lab-neraca__uji ' +
+                  (u.benar ? 'is-benar' : 'is-salah') +
+                  '">' +
+                  u.x +
+                  (u.benar ? ' ✓' : ' ✗') +
+                  '</span>'
+                );
+              })
+              .join(' ')
+          : '…';
+        return (
+          '<tr' +
+          (s.id === st.aktif ? ' class="is-aktif"' : '') +
+          '><th scope="row">' +
+          esc(s.judul) +
+          ' <span class="lab-batas__frasa">“' +
+          esc(s.frasa) +
+          '”</span></th><td>' +
+          (c.done ? buildKalimatWarna(c.kalimat) : '…') +
+          '</td><td>' +
+          isi +
+          '</td><td>' +
+          (lengkap ? (ya.length === 1 ? '1 (satu nilai)' : ya.length + ' nilai') : '…') +
+          '</td></tr>'
+        );
+      })
+      .join('') +
+    '</tbody></table>'
+  );
+}
+
+function buildIsianLabBatas(id, c, huruf) {
+  var salah = c.attempts > 0 && c.kode && c.kode !== 'benar';
+  return (
+    '<div class="field-group lab-neraca__tulis">' +
+    '<label for="' +
+    id +
+    'KalimatInput">Tulis kalimat matematika untuk situasi ini (kotak = ' +
+    esc(huruf) +
+    ')</label>' +
+    '<div class="dl-input-row">' +
+    '<input type="text" class="input-text' +
+    (salah ? ' has-error' : '') +
+    '" id="' +
+    id +
+    'KalimatInput" autocomplete="off" autocapitalize="off" spellcheck="false" value="' +
+    esc(c.input || '') +
+    '" placeholder="mis. 2' +
+    esc(huruf) +
+    ' + 1 ≤ 9">' +
+    '<button type="button" class="btn btn--primary" id="' +
+    id +
+    'Kalimat">Catat</button>' +
+    '</div>' +
+    '<p class="dl-caption">Ruas kiri = isi piring kiri, ruas kanan = batasnya. Ketik &lt;= untuk ≤ dan &gt;= untuk ≥.</p>' +
+    (salah
+      ? buildFeedbackBox('error', '✗', '<strong>' + esc(c.input) + '</strong> — ' + esc(c.pesan))
+      : '') +
+    '</div>'
+  );
+}
+
+/* Lab Batas: pilih situasi → tulis kalimat → uji nilai x satu per satu → uji sisanya. */
+function buildLabBatas(id, st, cfg) {
+  var s = situasiLabBatas(cfg, st.aktif);
+  var c = st.catat[st.aktif];
+  var h = cfg.huruf;
+  var lengkap = situasiBatasLengkap(st, cfg, s.id);
+  var tab = cfg.situasi
+    .map(function (x, i) {
+      var selesai = situasiBatasLengkap(st, cfg, x.id);
+      return (
+        '<button type="button" class="lab-neraca__tab-btn' +
+        (x.id === st.aktif ? ' is-aktif' : '') +
+        (selesai ? ' is-selesai' : '') +
+        '" data-situasi="' +
+        esc(x.id) +
+        '" aria-pressed="' +
+        (x.id === st.aktif) +
+        '">' +
+        (selesai ? '✓ ' : '') +
+        'Situasi ' +
+        (i + 1) +
+        '</button>'
+      );
+    })
+    .join('');
+  var kontrol = '';
+  if (c.done) {
+    var bolehSemua = !lengkap && c.uji.length >= (cfg.minUji || 0);
+    kontrol =
+      '<div class="lab-neraca__kontrol">' +
+      '<p class="lab-neraca__kalimat">Kalimatmu: ' +
+      buildKalimatWarna(c.kalimat) +
+      '</p>' +
+      buildFinStepper(id + 'Nilai', 'Nilai ' + h + ' (kg)', String(st.x), {
+        minDis: st.x <= cfg.min,
+        maxDis: st.x >= cfg.max,
+      }) +
+      '<div class="btn-group">' +
+      '<button type="button" class="btn btn--primary" id="' +
+      id +
+      'Uji">Uji ' +
+      esc(h) +
+      ' = ' +
+      st.x +
+      '</button>' +
+      (bolehSemua
+        ? '<button type="button" class="btn btn--outline-primary" id="' +
+          id +
+          'UjiSemua">Uji semua nilai lainnya</button>'
+        : '') +
+      '</div>' +
+      (!lengkap && !bolehSemua
+        ? '<p class="dl-caption">Uji sendiri minimal ' +
+          cfg.minUji +
+          ' nilai berbeda, lalu tombol "Uji semua nilai lainnya" muncul.</p>'
+        : '') +
+      (c.kodeUji
+        ? buildFeedbackBox(
+            c.kodeUji === 'tidak' ? 'warning' : 'success',
+            c.kodeUji === 'tidak' ? '✗' : '✓',
+            esc(c.pesanUji)
+          )
+        : '') +
+      '</div>';
+  }
+  return (
+    '<div class="lab-neraca lab-batas" id="' +
+    id +
+    '">' +
+    '<div class="lab-neraca__tab" role="group" aria-label="Pilih situasi">' +
+    tab +
+    '</div>' +
+    '<div class="lab-neraca__cerita"><strong>' +
+    esc(s.judul) +
+    '</strong><p>' +
+    esc(s.cerita) +
+    '</p></div>' +
+    '<div class="lab-neraca__isi">' +
+    '<figure class="lab-neraca__gambar">' +
+    buildNeraca(s.kiri, s.kanan, st.x, { huruf: h }) +
+    '<figcaption>Kotak ' +
+    esc(h) +
+    ' = ' +
+    st.x +
+    ' kg → neraca <strong>' +
+    LABEL_ARAH_NERACA[arahNeraca(s.kiri, s.kanan, st.x)] +
+    '</strong></figcaption>' +
+    '</figure>' +
+    (c.done ? kontrol : buildIsianLabBatas(id, c, h)) +
+    '</div>' +
+    '<figure class="lab-batas__garis">' +
+    buildGarisBatas({ min: cfg.min, max: cfg.max, uji: c.uji }) +
+    '<figcaption>✓ = memenuhi · ✗ = tidak memenuhi</figcaption>' +
+    '</figure>' +
+    '<div class="lab-neraca__tabel-wrap">' +
+    buildTabelLabBatas(st, cfg) +
+    '</div>' +
+    '</div>'
+  );
+}
+
+function bindLabBatas(root, id, st, cfg, onChange) {
+  root.querySelectorAll('#' + id + ' [data-situasi]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      if (pilihSituasiLabBatas(st, cfg, btn.dataset.situasi)) onChange();
+    });
+  });
+  bindFinStepper(root, id + 'Nilai', function (arah) {
+    if (ubahLabBatas(st, cfg, arah)) onChange();
+  });
+  var uji = root.querySelector('#' + id + 'Uji');
+  if (uji) {
+    uji.addEventListener('click', function () {
+      ujiLabBatas(st, cfg);
+      onChange();
+    });
+  }
+  var semua = root.querySelector('#' + id + 'UjiSemua');
+  if (semua) {
+    semua.addEventListener('click', function () {
+      if (ujiSemuaLabBatas(st, cfg)) onChange();
+    });
+  }
+  var btn = root.querySelector('#' + id + 'Kalimat');
+  var inp = root.querySelector('#' + id + 'KalimatInput');
+  if (btn && inp) {
+    var kirim = function () {
+      var r = tulisKalimatLabBatas(st, cfg, inp.value);
       if (r.kode === 'kosong' || r.kode === 'format') {
         showNotice(r.pesan);
         return;
