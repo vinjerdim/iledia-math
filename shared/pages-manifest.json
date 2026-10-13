@@ -151,6 +151,14 @@
     "stageCount": 11,
     "extraBody": "partials/reset-modal.html"
   },
+  "fase-d/mpi-6.1": {
+    "title": "Kalimat Terbuka, Persamaan & Persamaan Linear Satu Variabel — Matematika Fase D",
+    "description": "Media pembelajaran interaktif berbasis Discovery Learning untuk menjelaskan konsep kalimat terbuka, persamaan, dan persamaan linear satu variabel (PLSV) melalui eksplorasi keseimbangan dan contoh sehari-hari: Lab Neraca warung Bu Sari (kotak x kg dan beban 1 kg; neraca seimbang = tanda \"=\"), uji substitusi nilai x, pemilahan pernyataan, kalimat terbuka, persamaan, dan PLSV, isian berdiagnosa miskonsepsi, serta uji terap acak.",
+    "kicker": "Matematika — Fase D (SMP)",
+    "h1": "Kalimat Terbuka, Persamaan & Persamaan Linear Satu Variabel",
+    "stageCount": 11,
+    "extraBody": "partials/reset-modal.html"
+  },
   "fase-d/mpi-23.1": {
     "title": "Keliling & Luas Bangun Datar — Matematika Fase D",
     "description": "Media pembelajaran interaktif berbasis Discovery Learning, diawali asesmen diagnostik, untuk menentukan keliling dan luas segitiga, persegi, persegi panjang, jajargenjang, trapesium, belah ketupat, dan layang-layang melalui eksplorasi dalam Proyek Taman Sekolah Kelas VII: Lab Petak untuk menghitung petak dan ruas satuan, Lab Potong-Susun untuk mengubah bangun menjadi persegi panjang atau jajargenjang, pemilahan rumus luas, serta uji terap acak berdiagnosa miskonsepsi.",
