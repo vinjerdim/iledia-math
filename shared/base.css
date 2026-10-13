@@ -15935,3 +15935,109 @@ button.akar-tile:disabled {
     grid-template-columns: minmax(0, 1fr);
   }
 }
+
+/* =========================================================================
+   Pertidaksamaan linear satu variabel (engine seksi 76)
+   Garis bilangan (.garis-batas*) dan Lab Batas (.lab-batas*). Titik uji
+   dibedakan dengan bentuk (bulat penuh ✓ / bulat kosong ✗) selain warna.
+   Lab Batas memakai ulang tata letak .lab-neraca* (seksi 75).
+   ========================================================================= */
+
+.garis-batas {
+  display: block;
+  width: 100%;
+  max-width: 520px;
+  height: auto;
+  margin: 0 auto;
+}
+
+.garis-batas__garis,
+.garis-batas__tick {
+  stroke: var(--color-ink);
+  stroke-width: 2;
+}
+
+.garis-batas__panah {
+  fill: var(--color-ink);
+}
+
+.garis-batas__label {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 700;
+  fill: var(--color-ink);
+}
+
+.garis-batas__sinar {
+  stroke: var(--color-blue-strong);
+  stroke-width: 6;
+  stroke-linecap: round;
+  opacity: 0.85;
+}
+
+.garis-batas__sinar-ujung {
+  fill: var(--color-blue-strong);
+}
+
+.garis-batas__batas {
+  stroke: var(--color-blue-strong);
+  stroke-width: 3;
+}
+
+.garis-batas__batas.is-penuh {
+  fill: var(--color-blue-strong);
+}
+
+.garis-batas__batas.is-kosong {
+  fill: var(--color-surface);
+}
+
+.garis-batas__uji circle {
+  stroke-width: 2.5;
+}
+
+.garis-batas__uji text {
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.garis-batas__uji.is-ya circle {
+  fill: var(--color-success);
+  stroke: var(--color-success-strong);
+}
+
+.garis-batas__uji.is-ya text {
+  fill: var(--color-success-strong);
+}
+
+.garis-batas__uji.is-tidak circle {
+  fill: var(--color-surface);
+  stroke: var(--color-error-strong);
+}
+
+.garis-batas__uji.is-tidak text {
+  fill: var(--color-error-strong);
+}
+
+.lab-batas__garis {
+  margin: 0;
+  padding: var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-bg);
+}
+
+.lab-batas__garis figcaption {
+  margin-top: var(--space-1);
+  font-size: 0.85rem;
+  color: var(--color-ink-muted);
+  text-align: center;
+}
+
+.lab-batas__frasa {
+  display: inline-block;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--color-orange-strong);
+  white-space: nowrap;
+}
