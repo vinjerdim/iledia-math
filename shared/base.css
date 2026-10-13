@@ -15373,3 +15373,323 @@ button.akar-tile:disabled {
     grid-template-columns: minmax(0, 1fr);
   }
 }
+
+/* =========================================================================
+   Unsur bentuk aljabar (engine seksi 74)
+   Bentuk aljabar berwarna (.aljabar-*), model kantong & kelereng
+   (.kantong-svg), Lab Kantong (.lab-kantong*), dan Ketuk Unsur
+   (.ketuk-unsur*). Warna unsur selalu disertai garis bawah berbeda
+   sehingga tidak hanya bergantung pada warna.
+   ========================================================================= */
+
+.aljabar-bentuk {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0 0.3em;
+  font-family: var(--font-mono);
+  font-weight: 700;
+}
+
+.aljabar-suku {
+  white-space: nowrap;
+}
+
+.aljabar-var {
+  color: var(--color-blue-strong);
+  text-decoration: underline solid 2px;
+  text-underline-offset: 3px;
+}
+
+.aljabar-koef {
+  color: var(--color-orange-strong);
+  text-decoration: underline dotted 2px;
+  text-underline-offset: 3px;
+}
+
+.aljabar-konst {
+  color: var(--color-purple-strong);
+  text-decoration: underline double 2px;
+  text-underline-offset: 3px;
+}
+
+.aljabar-op {
+  color: var(--color-ink-muted);
+}
+
+/* Bentuk polos: dipakai sebelum murid menemukan nama unsurnya. */
+.aljabar-bentuk--polos .aljabar-var,
+.aljabar-bentuk--polos .aljabar-koef,
+.aljabar-bentuk--polos .aljabar-konst {
+  color: inherit;
+  text-decoration: none;
+}
+
+.aljabar-legenda {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-4);
+  margin: var(--space-3) 0;
+  padding: 0;
+  list-style: none;
+  font-size: 0.88rem;
+  font-weight: 700;
+}
+
+/* Model kantong & kelereng */
+
+.kantong-svg {
+  display: block;
+  width: 100%;
+  max-width: 520px;
+  height: auto;
+  max-height: 120px;
+}
+
+.kantong-aljabar__badan {
+  fill: var(--color-blue-soft);
+  stroke: var(--color-blue);
+  stroke-width: 2;
+}
+
+.kantong-aljabar[data-huruf='y'] .kantong-aljabar__badan {
+  fill: var(--color-success-soft);
+  stroke: var(--color-success);
+}
+
+.kantong-aljabar__tali {
+  fill: none;
+  stroke: var(--color-ink-muted);
+  stroke-width: 2;
+}
+
+.kantong-aljabar__huruf {
+  font-family: var(--font-mono);
+  font-size: 16px;
+  font-weight: 700;
+  fill: var(--color-ink);
+}
+
+.kantong-aljabar.is-kurang .kantong-aljabar__badan {
+  fill: var(--color-error-soft);
+  stroke: var(--color-error);
+  stroke-dasharray: 4 3;
+}
+
+.kantong-aljabar.is-kurang .kantong-aljabar__huruf {
+  fill: var(--color-error-strong);
+}
+
+.kelereng-aljabar circle {
+  fill: var(--color-purple-soft);
+  stroke: var(--color-purple);
+  stroke-width: 2;
+}
+
+.kelereng-aljabar.is-kurang circle {
+  fill: var(--color-error-soft);
+  stroke: var(--color-error);
+  stroke-dasharray: 3 2;
+}
+
+.kelereng-aljabar__tanda {
+  font-family: var(--font-mono);
+  font-size: 14px;
+  font-weight: 700;
+  fill: var(--color-error-strong);
+}
+
+.kantong-aljabar-kosong {
+  font-size: 13px;
+  fill: var(--color-ink-muted);
+}
+
+/* Lab Kantong */
+
+.lab-kantong {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.lab-kantong__tab {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.lab-kantong__tab-btn {
+  min-height: 44px;
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--color-border-strong);
+  border-radius: 999px;
+  background: var(--color-surface);
+  color: var(--color-ink);
+  font: inherit;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.lab-kantong__tab-btn:hover {
+  border-color: var(--color-primary);
+}
+
+.lab-kantong__tab-btn:focus-visible {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+.lab-kantong__tab-btn.is-aktif {
+  border-color: var(--color-primary);
+  background: var(--color-primary-soft);
+  color: var(--color-primary-strong);
+}
+
+.lab-kantong__tab-btn.is-selesai {
+  border-style: dashed;
+}
+
+.lab-kantong__cerita {
+  padding: var(--space-3);
+  border-left: 4px solid var(--color-primary);
+  border-radius: var(--radius-sm);
+  background: var(--color-primary-soft);
+}
+
+.lab-kantong__cerita p {
+  margin: var(--space-1) 0 0;
+}
+
+.lab-kantong__isi {
+  display: grid;
+  grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+  gap: var(--space-4);
+  align-items: start;
+}
+
+.lab-kantong__gambar,
+.aljabar-figur {
+  margin: 0;
+  padding: var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-bg);
+}
+
+.lab-kantong__gambar figcaption,
+.aljabar-figur figcaption {
+  margin-top: var(--space-2);
+  font-size: 0.9rem;
+  color: var(--color-ink-muted);
+}
+
+.lab-kantong__kontrol {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--space-3) var(--space-4);
+}
+
+.lab-kantong__kontrol .dl-caption {
+  flex-basis: 100%;
+  margin: 0;
+  text-align: center;
+}
+
+.lab-kantong__tulis .input-text {
+  max-width: 220px;
+}
+
+.lab-kantong__tabel-wrap {
+  overflow-x: auto;
+}
+
+.lab-kantong__tabel {
+  width: 100%;
+}
+
+.lab-kantong__tabel caption {
+  font-size: 0.85rem;
+  font-weight: 700;
+  text-align: left;
+  margin-bottom: var(--space-1);
+}
+
+.lab-kantong__tabel tr.is-aktif th {
+  color: var(--color-primary-strong);
+}
+
+/* Ketuk Unsur */
+
+.ketuk-unsur {
+  margin-bottom: var(--space-4);
+  padding: var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+}
+
+.ketuk-unsur__label {
+  margin: 0 0 var(--space-2);
+  font-weight: 700;
+}
+
+.ketuk-unsur__bentuk {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  margin-bottom: var(--space-3);
+  font-family: var(--font-mono);
+  font-size: 1.25rem;
+  font-weight: 700;
+}
+
+.ketuk-unsur__op {
+  color: var(--color-ink-muted);
+}
+
+.ketuk-unsur__token {
+  min-width: 44px;
+  min-height: 44px;
+  padding: var(--space-1) var(--space-2);
+  border: 2px solid var(--color-border-strong);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  color: var(--color-ink);
+  font: inherit;
+  cursor: pointer;
+}
+
+.ketuk-unsur__token:hover:not(:disabled) {
+  border-color: var(--color-primary);
+}
+
+.ketuk-unsur__token:focus-visible {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+.ketuk-unsur__token.is-dipilih {
+  border-color: var(--color-primary);
+  background: var(--color-primary-soft);
+  color: var(--color-primary-strong);
+  box-shadow: inset 0 -3px 0 var(--color-primary);
+}
+
+.ketuk-unsur__token.is-benar {
+  border-color: var(--color-success);
+  background: var(--color-success-soft);
+  color: var(--color-success-strong);
+}
+
+.ketuk-unsur__token:disabled {
+  cursor: default;
+}
+
+@media (max-width: 720px) {
+  .lab-kantong__isi {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

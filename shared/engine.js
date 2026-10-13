@@ -230,6 +230,11 @@
        jajargenjang, trapesium, belah ketupat, layang-layang: titik
        sudut, sisi, keliling, luas, isian berdiagnosa miskonsepsi, opsi
        berpengecoh, gambar SVG berkisi, potong-susun, Lab Bangun)
+   74. Unsur bentuk aljabar (membaca & merapikan bentuk aljabar,
+       variabel, koefisien, konstanta, suku, model kantong & kelereng ⇄
+       bentuk aljabar, jenis bagian, isian berdiagnosa miskonsepsi, opsi
+       berpengecoh, bentuk berwarna, gambar model SVG, Lab Kantong,
+       Ketuk Unsur, langkah isian unsur)
    ============================================================ */
 
 /* ============================================================
@@ -47014,6 +47019,1495 @@ function bindLabBangun(root, id, st, cfg, onChange) {
         showNotice('Ukuran ini sudah dicatat. Ubah ukurannya lalu coba lagi.');
       else if (r.status === 'catat') showNotice('Tercatat! Coba ukuran lain.');
       onChange();
+    });
+  }
+}
+
+/* ============================================================
+   74. UNSUR BENTUK ALJABAR
+   Variabel, konstanta, koefisien, dan suku pada bentuk aljabar
+   linear berhuruf tunggal (mis. 3x + 2y − 5, −p + 4, 3k + 2j + 2.000)
+   yang dikenali dari situasi sehari-hari dan model konkret kantong &
+   kelereng: kantong berisi kelereng yang banyaknya belum diketahui =
+   variabel, banyak kantong = koefisien, kelereng lepas = konstanta,
+   kantong/kelereng merah ("dikurangi") = tanda negatif.
+   Dipakai fase-d/mpi-5.1. Gaya .aljabar-*, .kantong-*, .lab-kantong*,
+   .ketuk-unsur* ada di shared/base.css.
+
+   Notasi cek soal (lihat nilaiSoalUnsur):
+     { bentuk, minta: 'koefisien', variabel } → bilangan bertanda
+     { bentuk, minta: 'konstanta' }           → bilangan bertanda
+     { bentuk, minta: 'banyakSuku' }          → bilangan
+     { bentuk, minta: 'variabel' }            → daftar huruf
+     { bentuk, minta: 'suku', ke }            → teks suku ke-ke (bertanda)
+     { model, minta: 'bentuk' }               → teks bentuk aljabar
+     { bentuk, minta: 'jenis', bagian }       → id jenis unsur
+   ============================================================ */
+
+/* ---------- Membaca & menulis ---------- */
+
+/* "−5", "+4", "2.000", "1,5" → { kode: 'ok' | 'kosong' | 'format', nilai }. */
+function parseBilAljabar(str) {
+  var s = String(str === null || str === undefined ? '' : str)
+    .trim()
+    .replace(/[−–—]/g, '-')
+    .replace(/\s+/g, '');
+  if (!s) return { kode: 'kosong', nilai: null };
+  var m = /^([+-]?)(\d+|\d{1,3}(?:\.\d{3})+)(?:,(\d+))?$/.exec(s);
+  if (!m) return { kode: 'format', nilai: null };
+  var bulat = parseInt(m[2].replace(/\./g, ''), 10);
+  var nilai = m[3] ? parseFloat(bulat + '.' + m[3]) : bulat;
+  return { kode: 'ok', nilai: m[1] === '-' ? -nilai : nilai };
+}
+
+/*
+ * Membaca bentuk aljabar → [{ koef, variabel, tersirat }] atau null bila
+ * tidak terbaca. Setiap suku: tanda opsional, bilangan opsional (tidak
+ * ada → koefisien tersirat 1/−1), lalu paling banyak satu huruf.
+ */
+function parseBentukAljabar(str) {
+  var s = String(str === null || str === undefined ? '' : str)
+    .replace(/[−–—]/g, '-')
+    .replace(/\s*[×·*]\s*/g, '')
+    .toLowerCase()
+    .trim();
+  if (!s || /[a-z0-9]\s+[a-z0-9]/.test(s)) return null;
+  s = s.replace(/\s+/g, '');
+  var re = /([+-]?)(\d{1,3}(?:\.\d{3})+|\d+)?(?:,(\d+))?([a-z])?/g;
+  var out = [];
+  var pos = 0;
+  while (pos < s.length) {
+    re.lastIndex = pos;
+    var m = re.exec(s);
+    if (!m || m.index !== pos || !m[0] || (!m[2] && !m[4]) || (m[3] && !m[2])) return null;
+    if (!m[1] && pos > 0) return null;
+    var angka = m[2] ? parseInt(m[2].replace(/\./g, ''), 10) : 1;
+    if (m[3]) angka = parseFloat(angka + '.' + m[3]);
+    out.push({
+      koef: m[1] === '-' ? -angka : angka,
+      variabel: m[4] || '',
+      tersirat: !m[2],
+    });
+    pos = re.lastIndex;
+  }
+  return out;
+}
+
+/* Bilangan bertanda dengan minus tipografis & pemisah ribuan. */
+function formatAngkaAljabar(n) {
+  if (Math.floor(n) === n) return formatNumber(n, '−');
+  return (n < 0 ? '−' : '') + formatDesimal(Math.abs(n), 3);
+}
+
+/* Teks satu suku; awal = true → tanda negatif ditulis menempel. */
+function formatSukuAljabar(s, awal) {
+  var k = awal ? s.koef : Math.abs(s.koef);
+  if (!s.variabel) return formatAngkaAljabar(k);
+  if (k === 1) return s.variabel;
+  if (k === -1) return '−' + s.variabel;
+  return formatAngkaAljabar(k) + s.variabel;
+}
+
+function formatBentukAljabar(list) {
+  if (!list.length) return '0';
+  return list
+    .map(function (s, i) {
+      if (i === 0) return formatSukuAljabar(s, true);
+      return (s.koef < 0 ? ' − ' : ' + ') + formatSukuAljabar(s, false);
+    })
+    .join('');
+}
+
+/* Menulis ulang bentuk dengan gaya baku; tak terbaca → apa adanya. */
+function rapikanBentukAljabar(str) {
+  var p = parseBentukAljabar(str);
+  return p ? formatBentukAljabar(p) : String(str);
+}
+
+/* ---------- Unsur ---------- */
+
+/* { variabel, koefisien, konstanta, suku, banyakSuku } atau null. */
+function unsurBentuk(str) {
+  var p = parseBentukAljabar(str);
+  if (!p) return null;
+  var variabel = [];
+  var koefisien = [];
+  var konstanta = [];
+  p.forEach(function (s) {
+    if (s.variabel) {
+      if (variabel.indexOf(s.variabel) === -1) variabel.push(s.variabel);
+      koefisien.push({ variabel: s.variabel, koef: s.koef });
+    } else {
+      konstanta.push(s.koef);
+    }
+  });
+  return {
+    variabel: variabel,
+    koefisien: koefisien,
+    konstanta: konstanta,
+    suku: p.map(function (s) {
+      return formatSukuAljabar(s, true);
+    }),
+    banyakSuku: p.length,
+  };
+}
+
+function koefisienDari(str, v) {
+  var U = unsurBentuk(str);
+  if (!U) return null;
+  for (var i = 0; i < U.koefisien.length; i++) {
+    if (U.koefisien[i].variabel === v) return U.koefisien[i].koef;
+  }
+  return null;
+}
+
+function konstantaDari(str) {
+  var U = unsurBentuk(str);
+  return U && U.konstanta.length ? U.konstanta[0] : null;
+}
+
+function kunciSukuAljabar(s) {
+  return s.variabel + ':' + s.koef;
+}
+
+/* Multiset kunci suku terurut, untuk perbandingan tanpa memandang urutan. */
+function kumpulanSukuAljabar(list, mutlak) {
+  return list
+    .map(function (s) {
+      return kunciSukuAljabar({ variabel: s.variabel, koef: mutlak ? Math.abs(s.koef) : s.koef });
+    })
+    .sort();
+}
+
+function samaKumpulanAljabar(a, b, mutlak) {
+  return kumpulanSukuAljabar(a, mutlak).join('|') === kumpulanSukuAljabar(b, mutlak).join('|');
+}
+
+/* Dua bentuk sama bila suku-sukunya sama (urutan boleh berbeda). */
+function samaBentukAljabar(a, b) {
+  var p = parseBentukAljabar(a);
+  var q = parseBentukAljabar(b);
+  return !!(p && q && samaKumpulanAljabar(p, q));
+}
+
+/* ---------- Model kantong & kelereng ---------- */
+
+function hurufModelAljabar(model, huruf) {
+  return (
+    huruf ||
+    Object.keys(model)
+      .filter(function (k) {
+        return k !== 'lepas';
+      })
+      .sort()
+  );
+}
+
+/* Suku-suku model { x: 3, y: −1, lepas: 2 } (urut huruf, lalu konstanta). */
+function sukuDariModel(model, huruf) {
+  var out = [];
+  hurufModelAljabar(model, huruf).forEach(function (h) {
+    if (model[h]) out.push({ koef: model[h], variabel: h, tersirat: false });
+  });
+  if (model.lepas) out.push({ koef: model.lepas, variabel: '', tersirat: false });
+  return out;
+}
+
+function bentukDariModel(model, huruf) {
+  return formatBentukAljabar(sukuDariModel(model, huruf));
+}
+
+/* Bentuk aljabar → model { <huruf>: koef, lepas }; null bila tak terbaca. */
+function modelDariBentuk(str) {
+  var p = parseBentukAljabar(str);
+  if (!p) return null;
+  var model = {};
+  p.forEach(function (s) {
+    var k = s.variabel || 'lepas';
+    model[k] = (model[k] || 0) + s.koef;
+  });
+  return model;
+}
+
+/*
+ * Jenis sebuah bagian bentuk aljabar: 'variabel' | 'koefisien' |
+ * 'konstanta' | 'suku'; null bila bukan bagiannya atau ambigu
+ * (bilangan yang sama muncul sebagai koefisien dan konstanta).
+ */
+function jenisBagianAljabar(str, bagian) {
+  var p = parseBentukAljabar(str);
+  if (!p) return null;
+  var b = String(bagian).trim().toLowerCase();
+  if (/^[a-z]$/.test(b)) {
+    return p.some(function (s) {
+      return s.variabel === b;
+    })
+      ? 'variabel'
+      : null;
+  }
+  var n = parseBilAljabar(b);
+  if (n.kode === 'ok') {
+    var abs = Math.abs(n.nilai);
+    var koef = p.some(function (s) {
+      return s.variabel && !s.tersirat && Math.abs(s.koef) === abs;
+    });
+    var konst = p.some(function (s) {
+      return !s.variabel && (s.koef === n.nilai || (b.charAt(0) !== '-' && s.koef === -abs));
+    });
+    if (koef && konst) return null;
+    if (koef) return 'koefisien';
+    return konst ? 'konstanta' : null;
+  }
+  var q = parseBentukAljabar(b);
+  if (q && q.length === 1 && q[0].variabel) {
+    return p.some(function (s) {
+      return s.variabel === q[0].variabel && Math.abs(s.koef) === Math.abs(q[0].koef);
+    })
+      ? 'suku'
+      : null;
+  }
+  return null;
+}
+
+/* ---------- Kunci jawaban ---------- */
+
+function bentukSoalUnsur(c) {
+  return c.model ? bentukDariModel(c.model) : rapikanBentukAljabar(c.bentuk);
+}
+
+/* Nilai baku cek c (bilangan, daftar huruf, teks, atau id jenis). */
+function nilaiSoalUnsur(c) {
+  var U = unsurBentuk(bentukSoalUnsur(c));
+  switch (c.minta) {
+    case 'koefisien':
+      return koefisienDari(c.bentuk, c.variabel);
+    case 'konstanta':
+      return U.konstanta[0];
+    case 'banyakSuku':
+      return U.banyakSuku;
+    case 'variabel':
+      return U.variabel.slice().sort();
+    case 'suku':
+      return U.suku[c.ke - 1];
+    case 'bentuk':
+      return bentukDariModel(c.model);
+    case 'jenis':
+      return jenisBagianAljabar(c.bentuk, c.bagian);
+  }
+  return null;
+}
+
+/* Jawaban baku soal s = { cek } sebagai teks tampilan. */
+function jawabSoalUnsur(s) {
+  var v = nilaiSoalUnsur(s.cek);
+  if (typeof v === 'number') return formatAngkaAljabar(v);
+  if (Array.isArray(v)) return v.join(', ');
+  return v;
+}
+
+/* ---------- Diagnosa isian ---------- */
+
+var PESAN_UNSUR = {
+  benar: 'Tepat!',
+  kosong: 'Isi jawabanmu lebih dulu.',
+  format:
+    'Jawabanmu belum terbaca. Tulis satu bilangan (mis. −3) atau bentuk aljabar (mis. 2x + 5).',
+  formatBil: 'Tulis satu bilangan, mis. 3 atau −3. Tanda negatif ikut ditulis.',
+  formatBulat: 'Banyak suku selalu bilangan bulat. Tulis satu bilangan, mis. 3.',
+  formatVariabel: 'Tulis huruf-hurufnya saja, dipisah koma, mis. a, b.',
+  tandaHilang:
+    'Hampir! Perhatikan tanda di depannya. Tanda − di depan suatu suku ikut menjadi milik suku itu, jadi koefisien atau konstantanya bernilai negatif.',
+  tersiratNol:
+    'Variabel yang ditulis tanpa angka di depannya tetap punya koefisien: x artinya 1 × x (dan −x artinya −1 × x), bukan 0.',
+  tukarKonstanta:
+    'Itu konstanta — bilangan yang berdiri sendiri tanpa variabel. Koefisien adalah bilangan yang menempel di depan variabel.',
+  tukarKoefisien:
+    'Itu koefisien — bilangan yang menempel di depan variabel. Konstanta adalah suku yang hanya berupa bilangan, tanpa variabel.',
+  variabelLain: 'Itu koefisien variabel lain. Cari suku yang memuat variabel yang ditanyakan.',
+  denganVariabel:
+    'Koefisien hanya bilangannya saja, tanpa huruf. Tulis bilangan yang menempel di depan variabel.',
+  konstantaBukanSuku:
+    'Konstanta juga sebuah suku! Hitung semua bagian yang dipisahkan tanda + atau −, termasuk bilangan yang berdiri sendiri.',
+  pisahAngkaHuruf:
+    'Koefisien dan variabelnya membentuk SATU suku (mis. 4x adalah satu suku). Suku dipisahkan oleh tanda + atau −.',
+  kurangVariabel: 'Masih ada variabel yang terlewat. Periksa setiap suku yang memuat huruf.',
+  lebihVariabel: 'Ada huruf yang tidak muncul pada bentuk aljabar ini. Tulis hanya huruf yang ada.',
+  angkaBukanVariabel:
+    'Itu bilangan. Variabel adalah huruf yang mewakili nilai yang belum diketahui atau dapat berubah.',
+  denganKoefisien: 'Variabel hanya hurufnya saja. Bilangan di depannya adalah koefisien.',
+  tanpaVariabel:
+    'Itu baru koefisiennya. Suku memuat koefisien BESERTA variabelnya (beserta tandanya).',
+  sukuLain: 'Itu suku yang lain. Hitung suku dari kiri: suku pertama, kedua, ketiga, ….',
+  tanpaKonstanta:
+    'Kelereng lepas belum ditulis. Kelereng lepas adalah konstanta, dan konstanta juga suku pada bentuk aljabar.',
+  tukarKantongLepas:
+    'Banyak kantong dan banyak kelereng lepas tertukar. Banyak kantong menjadi koefisien variabel; kelereng lepas menjadi konstanta.',
+  kurangSuku: 'Masih ada kantong yang belum ditulis. Setiap jenis kantong menjadi satu suku.',
+  namaBenda:
+    'Huruf pada bentuk aljabar bukan singkatan nama benda. Huruf itu mewakili sebuah BILANGAN yang belum diketahui (mis. banyak kelereng dalam kantong atau harga satu barang).',
+  salahJenis:
+    'Belum tepat. Ingat: huruf = variabel, bilangan di depan huruf = koefisien, bilangan yang berdiri sendiri = konstanta, dan bagian yang dipisahkan + / − = suku.',
+  salah: 'Belum tepat. Baca lagi bentuk aljabarnya suku demi suku, beserta tandanya.',
+};
+
+function hasilUnsur(kode, pesan) {
+  return { kode: kode, benar: kode === 'benar', pesan: pesan || PESAN_UNSUR[kode] };
+}
+
+/* Isian bilangan → hasil tak terbaca (kosong/format/denganVariabel) atau null. */
+function bacaBilUnsur(isian, pesanFormat) {
+  var b = parseBilAljabar(isian);
+  if (b.kode === 'kosong') return { hasil: hasilUnsur('kosong') };
+  if (b.kode === 'ok') return { nilai: b.nilai };
+  var q = parseBentukAljabar(isian);
+  if (q && q.length === 1 && q[0].variabel) return { hasil: hasilUnsur('denganVariabel') };
+  return { hasil: hasilUnsur('format', pesanFormat || PESAN_UNSUR.formatBil) };
+}
+
+function diagnosaKoefisienUnsur(isian, c) {
+  var r = bacaBilUnsur(isian);
+  if (r.hasil) return r.hasil;
+  var p = parseBentukAljabar(c.bentuk);
+  var baku = koefisienDari(c.bentuk, c.variabel);
+  var x = r.nilai;
+  if (x === baku) return hasilUnsur('benar');
+  if (x === -baku) return hasilUnsur('tandaHilang');
+  if (x === 0 && Math.abs(baku) === 1) return hasilUnsur('tersiratNol');
+  var adaKonst = p.some(function (s) {
+    return !s.variabel && Math.abs(s.koef) === Math.abs(x);
+  });
+  if (adaKonst) return hasilUnsur('tukarKonstanta');
+  var adaLain = p.some(function (s) {
+    return s.variabel && s.variabel !== c.variabel && Math.abs(s.koef) === Math.abs(x);
+  });
+  return hasilUnsur(adaLain ? 'variabelLain' : 'salah');
+}
+
+function diagnosaKonstantaUnsur(isian, c) {
+  var r = bacaBilUnsur(isian);
+  if (r.hasil) return r.hasil;
+  var p = parseBentukAljabar(c.bentuk);
+  var baku = nilaiSoalUnsur(c);
+  if (r.nilai === baku) return hasilUnsur('benar');
+  if (r.nilai === -baku) return hasilUnsur('tandaHilang');
+  var adaKoef = p.some(function (s) {
+    return s.variabel && Math.abs(s.koef) === Math.abs(r.nilai);
+  });
+  return hasilUnsur(adaKoef ? 'tukarKoefisien' : 'salah');
+}
+
+/* Banyak "bagian" bila angka dan huruf dihitung terpisah: 4x + 3y − 2 → 5. */
+function hitungPisahAljabar(p) {
+  return p.reduce(function (n, s) {
+    return n + (s.variabel && !s.tersirat ? 2 : 1);
+  }, 0);
+}
+
+function diagnosaBanyakSukuUnsur(isian, c) {
+  var r = bacaBilUnsur(isian, PESAN_UNSUR.formatBulat);
+  if (r.hasil) return r.hasil;
+  if (Math.floor(r.nilai) !== r.nilai || r.nilai < 0) {
+    return hasilUnsur('format', PESAN_UNSUR.formatBulat);
+  }
+  var p = parseBentukAljabar(c.bentuk);
+  var U = unsurBentuk(c.bentuk);
+  if (r.nilai === U.banyakSuku) return hasilUnsur('benar');
+  if (U.konstanta.length && r.nilai === U.banyakSuku - U.konstanta.length) {
+    return hasilUnsur('konstantaBukanSuku');
+  }
+  if (r.nilai === hitungPisahAljabar(p)) return hasilUnsur('pisahAngkaHuruf');
+  return hasilUnsur('salah');
+}
+
+/* "m, n" / "n dan m" / "m n" → daftar token huruf kecil. */
+function tokenDaftarAljabar(isian) {
+  return String(isian)
+    .toLowerCase()
+    .replace(/[−–—]/g, '-')
+    .split(/\s*(?:[,;/&]|\s+dan\s+|\s+)\s*/)
+    .filter(function (t) {
+      return t;
+    });
+}
+
+function diagnosaVariabelUnsur(isian, c) {
+  var tok = tokenDaftarAljabar(isian);
+  if (!tok.length) return hasilUnsur('kosong');
+  var baku = nilaiSoalUnsur(c);
+  var angka = tok.every(function (t) {
+    return parseBilAljabar(t).kode === 'ok';
+  });
+  if (angka) return hasilUnsur('angkaBukanVariabel');
+  var adaKoef = tok.some(function (t) {
+    return /\d/.test(t) && /[a-z]/.test(t);
+  });
+  if (adaKoef) return hasilUnsur('denganKoefisien');
+  if (
+    !tok.every(function (t) {
+      return /^[a-z]$/.test(t);
+    })
+  ) {
+    return hasilUnsur('format', PESAN_UNSUR.formatVariabel);
+  }
+  var unik = tok.filter(function (t, i) {
+    return tok.indexOf(t) === i;
+  });
+  var lebih = unik.some(function (t) {
+    return baku.indexOf(t) === -1;
+  });
+  if (lebih) return hasilUnsur('lebihVariabel');
+  return hasilUnsur(unik.length === baku.length ? 'benar' : 'kurangVariabel');
+}
+
+function diagnosaSukuUnsur(isian, c) {
+  if (!String(isian || '').trim()) return hasilUnsur('kosong');
+  var q = parseBentukAljabar(isian);
+  if (!q || q.length !== 1) return hasilUnsur('format');
+  var p = parseBentukAljabar(c.bentuk);
+  var t = p[c.ke - 1];
+  var x = q[0];
+  if (x.variabel === t.variabel && x.koef === t.koef) return hasilUnsur('benar');
+  if (x.variabel === t.variabel && x.koef === -t.koef) return hasilUnsur('tandaHilang');
+  if (t.variabel && !x.variabel && Math.abs(x.koef) === Math.abs(t.koef)) {
+    return hasilUnsur('tanpaVariabel');
+  }
+  var lain = p.some(function (s, i) {
+    return i !== c.ke - 1 && s.variabel === x.variabel && Math.abs(s.koef) === Math.abs(x.koef);
+  });
+  return hasilUnsur(lain ? 'sukuLain' : 'salah');
+}
+
+/* Kumpulan suku bila kantong pertama dan kelereng lepas bertukar. */
+function sukuTukarModel(model) {
+  var h = hurufModelAljabar(model).filter(function (k) {
+    return model[k];
+  });
+  if (!h.length || !model.lepas || model[h[0]] === model.lepas) return null;
+  var m = Object.assign({}, model);
+  m[h[0]] = model.lepas;
+  m.lepas = model[h[0]];
+  return sukuDariModel(m);
+}
+
+function diagnosaBentukUnsur(isian, c) {
+  if (!String(isian || '').trim()) return hasilUnsur('kosong');
+  var q = parseBentukAljabar(isian);
+  if (!q) return hasilUnsur('format');
+  var t = sukuDariModel(c.model);
+  if (samaKumpulanAljabar(q, t)) return hasilUnsur('benar');
+  if (samaKumpulanAljabar(q, t, true)) return hasilUnsur('tandaHilang');
+  var tanpaK = t.filter(function (s) {
+    return s.variabel;
+  });
+  if (tanpaK.length < t.length && samaKumpulanAljabar(q, tanpaK)) {
+    return hasilUnsur('tanpaKonstanta');
+  }
+  var tukar = sukuTukarModel(c.model);
+  if (tukar && samaKumpulanAljabar(q, tukar)) return hasilUnsur('tukarKantongLepas');
+  var kunciT = kumpulanSukuAljabar(t);
+  var bagian =
+    q.length < t.length &&
+    kumpulanSukuAljabar(q).every(function (k) {
+      return kunciT.indexOf(k) !== -1;
+    });
+  return hasilUnsur(bagian ? 'kurangSuku' : 'salah');
+}
+
+function diagnosaJenisUnsur(isian, c) {
+  if (!isian) return hasilUnsur('kosong');
+  if (isian === nilaiSoalUnsur(c)) return hasilUnsur('benar');
+  return hasilUnsur(isian === 'namaBenda' ? 'namaBenda' : 'salahJenis');
+}
+
+/* Memeriksa isian soal s = { cek } → { kode, benar, pesan }. */
+function periksaSoalUnsur(isian, s) {
+  var c = s.cek;
+  switch (c.minta) {
+    case 'koefisien':
+      return diagnosaKoefisienUnsur(isian, c);
+    case 'konstanta':
+      return diagnosaKonstantaUnsur(isian, c);
+    case 'banyakSuku':
+      return diagnosaBanyakSukuUnsur(isian, c);
+    case 'variabel':
+      return diagnosaVariabelUnsur(isian, c);
+    case 'suku':
+      return diagnosaSukuUnsur(isian, c);
+    case 'bentuk':
+      return diagnosaBentukUnsur(isian, c);
+    case 'jenis':
+      return diagnosaJenisUnsur(isian, c);
+  }
+  return hasilUnsur('salah');
+}
+
+/* ---------- Opsi pilihan ganda ---------- */
+
+var OPSI_JENIS_UNSUR = [
+  { id: 'variabel', label: 'variabel' },
+  { id: 'koefisien', label: 'koefisien' },
+  { id: 'konstanta', label: 'konstanta' },
+  { id: 'suku', label: 'suku' },
+  { id: 'namaBenda', label: 'singkatan nama benda' },
+];
+
+/* Calon jawaban keliru { kode, label } untuk cek c (urut prioritas). */
+function calonKeliruUnsur(c) {
+  var p = parseBentukAljabar(bentukSoalUnsur(c));
+  var out = [];
+  var bil = function (kode, n) {
+    out.push({ kode: kode, label: formatAngkaAljabar(n) });
+  };
+  var baku = nilaiSoalUnsur(c);
+  if (c.minta === 'koefisien') {
+    bil('tandaHilang', -baku);
+    if (Math.abs(baku) === 1) bil('tersiratNol', 0);
+    p.forEach(function (s) {
+      if (!s.variabel) bil('tukarKonstanta', Math.abs(s.koef));
+      else if (s.variabel !== c.variabel) bil('variabelLain', Math.abs(s.koef));
+    });
+    [baku + 1, baku - 1, 2 * baku].forEach(function (n) {
+      bil('salah', n);
+    });
+  } else if (c.minta === 'konstanta') {
+    bil('tandaHilang', -baku);
+    p.forEach(function (s) {
+      if (s.variabel) bil('tukarKoefisien', Math.abs(s.koef));
+    });
+    [baku + 1, baku - 1, 0].forEach(function (n) {
+      bil('salah', n);
+    });
+  } else if (c.minta === 'banyakSuku') {
+    var konst = unsurBentuk(bentukSoalUnsur(c)).konstanta.length;
+    if (konst) bil('konstantaBukanSuku', baku - konst);
+    bil('pisahAngkaHuruf', hitungPisahAljabar(p));
+    [baku + 1, baku - 1, baku + 2].forEach(function (n) {
+      if (n > 0) bil('salah', n);
+    });
+  } else if (c.minta === 'variabel') {
+    var angka = p
+      .filter(function (s) {
+        return !s.variabel || !s.tersirat;
+      })
+      .map(function (s) {
+        return formatAngkaAljabar(Math.abs(s.koef));
+      });
+    if (angka.length) out.push({ kode: 'angkaBukanVariabel', label: angka.join(', ') });
+    out.push({
+      kode: 'denganKoefisien',
+      label: p
+        .filter(function (s) {
+          return s.variabel;
+        })
+        .map(function (s) {
+          return formatSukuAljabar(s, false);
+        })
+        .join(', '),
+    });
+    baku.forEach(function (v) {
+      if (baku.length > 1) out.push({ kode: 'kurangVariabel', label: v });
+    });
+  } else if (c.minta === 'suku') {
+    var t = p[c.ke - 1];
+    out.push({
+      kode: 'tandaHilang',
+      label: formatSukuAljabar({ koef: -t.koef, variabel: t.variabel }, true),
+    });
+    if (t.variabel) bil('tanpaVariabel', t.koef);
+    p.forEach(function (s, i) {
+      if (i !== c.ke - 1) out.push({ kode: 'sukuLain', label: formatSukuAljabar(s, true) });
+    });
+  } else if (c.minta === 'bentuk') {
+    var t2 = sukuDariModel(c.model);
+    var bentuk = function (kode, list) {
+      if (list && list.length) out.push({ kode: kode, label: formatBentukAljabar(list) });
+    };
+    bentuk(
+      'tandaHilang',
+      t2.map(function (s) {
+        return { koef: Math.abs(s.koef), variabel: s.variabel };
+      })
+    );
+    var vs = t2.filter(function (s) {
+      return s.variabel;
+    });
+    if (vs.length < t2.length) bentuk('tanpaKonstanta', vs);
+    bentuk('tukarKantongLepas', sukuTukarModel(c.model));
+    if (vs.length > 1) {
+      bentuk(
+        'kurangSuku',
+        t2.filter(function (s, i) {
+          return i !== 1;
+        })
+      );
+    }
+    bentuk(
+      'salah',
+      t2.map(function (s) {
+        return { koef: s.variabel ? 1 : s.koef, variabel: s.variabel };
+      })
+    );
+  }
+  return out;
+}
+
+/*
+ * Opsi pilihan ganda soal unsur: kunci (id 'baku') lalu pengecoh
+ * berdiagnosa — label & id unik, minimal 4 opsi. Urutan wajar; acak di app.
+ */
+function opsiSoalUnsur(s) {
+  var c = s.cek;
+  var baku = nilaiSoalUnsur(c);
+  if (c.minta === 'jenis') {
+    return [
+      OPSI_JENIS_UNSUR.filter(function (o) {
+        return o.id === baku;
+      })[0],
+    ]
+      .concat(
+        OPSI_JENIS_UNSUR.filter(function (o) {
+          return o.id !== baku && !(baku === 'konstanta' && o.id === 'suku');
+        })
+      )
+      .map(function (o, i) {
+        return {
+          id: i === 0 ? 'baku' : o.id,
+          label: o.label,
+          umpan:
+            i === 0
+              ? PESAN_UNSUR.benar
+              : PESAN_UNSUR[o.id === 'namaBenda' ? 'namaBenda' : 'salahJenis'],
+        };
+      });
+  }
+  var out = [{ id: 'baku', label: jawabSoalUnsur(s), umpan: PESAN_UNSUR.benar }];
+  var label = {};
+  var idPakai = {};
+  label[out[0].label] = true;
+  calonKeliruUnsur(c).forEach(function (g) {
+    if (out.length >= 4 || label[g.label]) return;
+    label[g.label] = true;
+    var id = g.kode;
+    for (var i = 2; idPakai[id]; i++) id = g.kode + i;
+    idPakai[id] = true;
+    out.push({ id: id, label: g.label, umpan: PESAN_UNSUR[g.kode] });
+  });
+  return out;
+}
+
+/* ---------- UI: bentuk aljabar berwarna ---------- */
+
+/*
+ * Bentuk aljabar dengan setiap unsur dibungkus span bergaya:
+ * .aljabar-suku (satu suku), .aljabar-koef, .aljabar-var, .aljabar-konst,
+ * .aljabar-op. Teks tak terbaca dirender apa adanya (di-escape).
+ */
+function buildBentukWarna(str, opts) {
+  opts = opts || {};
+  var p = parseBentukAljabar(str);
+  var cls = 'aljabar-bentuk' + (opts.polos ? ' aljabar-bentuk--polos' : '');
+  if (!p) return '<span class="' + cls + '">' + esc(str) + '</span>';
+  var span = function (c, t) {
+    return '<span class="' + c + '">' + t + '</span>';
+  };
+  return (
+    '<span class="' +
+    cls +
+    '">' +
+    p
+      .map(function (s, i) {
+        var neg = s.koef < 0;
+        var op =
+          i === 0 ? (neg ? span('aljabar-op', '−') : '') : span('aljabar-op', neg ? '−' : '+');
+        var abs = Math.abs(s.koef);
+        var isi = s.variabel
+          ? (abs === 1 ? '' : span('aljabar-koef', esc(formatAngkaAljabar(abs)))) +
+            span('aljabar-var', esc(s.variabel))
+          : span('aljabar-konst', esc(formatAngkaAljabar(abs)));
+        return op + '<span class="aljabar-suku">' + isi + '</span>';
+      })
+      .join('') +
+    '</span>'
+  );
+}
+
+/* ---------- UI: model kantong & kelereng (SVG) ---------- */
+
+function deskripsiModelAljabar(model, huruf) {
+  var bag = [];
+  hurufModelAljabar(model, huruf).forEach(function (h) {
+    var n = model[h] || 0;
+    if (n > 0) bag.push(n + ' kantong ' + h);
+    if (n < 0) bag.push(-n + ' kantong ' + h + ' yang dikurangkan');
+  });
+  var l = model.lepas || 0;
+  if (l > 0) bag.push(l + ' kelereng lepas');
+  if (l < 0) bag.push(-l + ' kelereng lepas yang dikurangkan');
+  return bag.length ? 'Model: ' + bag.join(', ') : 'Model kosong';
+}
+
+function kantongSvgAljabar(x, y, h, kurang) {
+  return (
+    '<g class="kantong-aljabar' +
+    (kurang ? ' is-kurang' : '') +
+    '" data-huruf="' +
+    esc(h) +
+    '" transform="translate(' +
+    x +
+    ' ' +
+    y +
+    ')">' +
+    '<path class="kantong-aljabar__badan" d="M8 14 Q2 40 8 54 Q22 60 36 54 Q42 40 36 14 Z"/>' +
+    '<path class="kantong-aljabar__tali" d="M10 14 Q22 4 34 14"/>' +
+    '<text x="22" y="42" text-anchor="middle" class="kantong-aljabar__huruf">' +
+    (kurang ? '−' : '') +
+    esc(h) +
+    '</text>' +
+    '</g>'
+  );
+}
+
+function kelerengSvgAljabar(cx, cy, kurang) {
+  return (
+    '<g class="kelereng-aljabar' +
+    (kurang ? ' is-kurang' : '') +
+    '"><circle cx="' +
+    cx +
+    '" cy="' +
+    cy +
+    '" r="9"/>' +
+    (kurang
+      ? '<text x="' +
+        cx +
+        '" y="' +
+        (cy + 4) +
+        '" text-anchor="middle" class="kelereng-aljabar__tanda">−</text>'
+      : '') +
+    '</g>'
+  );
+}
+
+/*
+ * Gambar model: deretan kantong per huruf (kantong merah bertanda − bila
+ * koefisien negatif) lalu kelereng lepas (merah bertanda − bila negatif).
+ *   opts.huruf  urutan huruf; default huruf model terurut
+ */
+function buildModelKantong(model, opts) {
+  opts = opts || {};
+  var huruf = hurufModelAljabar(model, opts.huruf);
+  var isi = '';
+  var x = 8;
+  var lebarK = 46;
+  huruf.forEach(function (h) {
+    var n = model[h] || 0;
+    for (var i = 0; i < Math.abs(n); i++) {
+      isi += kantongSvgAljabar(x, 6, h, n < 0);
+      x += lebarK;
+    }
+    if (n) x += 14;
+  });
+  var l = model.lepas || 0;
+  var kolom = Math.ceil(Math.abs(l) / 2);
+  for (var j = 0; j < Math.abs(l); j++) {
+    var kol = Math.floor(j / 2);
+    isi += kelerengSvgAljabar(x + 12 + kol * 22, j % 2 === 0 ? 24 : 48, l < 0);
+  }
+  x += kolom * 22 + (kolom ? 16 : 0);
+  var label = deskripsiModelAljabar(model, huruf);
+  if (!isi) {
+    isi =
+      '<text x="90" y="40" text-anchor="middle" class="kantong-aljabar-kosong">Model masih kosong</text>';
+    x = 180;
+  }
+  return (
+    '<svg class="kantong-svg" viewBox="0 0 ' +
+    Math.max(x, 60) +
+    ' 68" role="img" aria-label="' +
+    esc(label) +
+    '" preserveAspectRatio="xMinYMid meet">' +
+    isi +
+    '</svg>'
+  );
+}
+
+/* ---------- Lab Kantong ---------- */
+
+/*
+ * cfg = { huruf: ['x','y'], batas, batasLepas,
+ *         situasi: [{ id, judul, cerita, model }] }
+ * st  = { kunci, aktif, model: { <huruf>, lepas },
+ *         catat: { <id>: { cocok, kodeModel, input, done, kode, pesan,
+ *                          attempts, bentuk } } }
+ */
+function modelNolLabKantong(cfg) {
+  var m = {};
+  cfg.huruf.forEach(function (h) {
+    m[h] = 0;
+  });
+  m.lepas = 0;
+  return m;
+}
+
+function catatNolLabKantong() {
+  return {
+    cocok: false,
+    kodeModel: null,
+    input: '',
+    done: false,
+    kode: null,
+    pesan: '',
+    attempts: 0,
+    bentuk: '',
+  };
+}
+
+function situasiLabKantong(cfg, id) {
+  return cfg.situasi.filter(function (s) {
+    return s.id === id;
+  })[0];
+}
+
+function modelSituasiLabKantong(cfg, s) {
+  var m = modelNolLabKantong(cfg);
+  Object.keys(s.model).forEach(function (k) {
+    m[k] = s.model[k];
+  });
+  return m;
+}
+
+function ensureLabKantong(st, cfg) {
+  var kunci =
+    cfg.huruf.join('') +
+    '|' +
+    cfg.situasi
+      .map(function (s) {
+        return s.id;
+      })
+      .join(',');
+  if (st.kunci !== kunci || !st.catat || typeof st.catat !== 'object') {
+    st.kunci = kunci;
+    st.catat = {};
+  }
+  cfg.situasi.forEach(function (s) {
+    var c = st.catat[s.id];
+    if (!c || typeof c !== 'object') st.catat[s.id] = catatNolLabKantong();
+  });
+  if (!situasiLabKantong(cfg, st.aktif)) st.aktif = cfg.situasi[0].id;
+  var m = st.model;
+  var valid =
+    m &&
+    typeof m === 'object' &&
+    cfg.huruf.concat(['lepas']).every(function (k) {
+      return typeof m[k] === 'number';
+    });
+  if (!valid) st.model = modelNolLabKantong(cfg);
+  if (st.catat[st.aktif].cocok) {
+    st.model = modelSituasiLabKantong(cfg, situasiLabKantong(cfg, st.aktif));
+  }
+  return st;
+}
+
+/* Mengubah banyak kantong huruf `k` (atau kelereng 'lepas'); false bila tak berubah. */
+function ubahLabKantong(st, cfg, k, arah) {
+  if (st.catat[st.aktif].cocok) return false;
+  var maks = k === 'lepas' ? cfg.batasLepas : cfg.batas;
+  var lama = st.model[k] || 0;
+  var baru = Math.max(-maks, Math.min(maks, lama + arah));
+  if (baru === lama) return false;
+  st.model[k] = baru;
+  st.catat[st.aktif].kodeModel = null;
+  return true;
+}
+
+function pilihSituasiLabKantong(st, cfg, id) {
+  var s = situasiLabKantong(cfg, id);
+  if (!s || st.aktif === id) return false;
+  st.aktif = id;
+  st.model = st.catat[id].cocok ? modelSituasiLabKantong(cfg, s) : modelNolLabKantong(cfg);
+  return true;
+}
+
+var PESAN_MODEL_KANTONG = {
+  benar: 'Modelmu cocok dengan ceritanya!',
+  tandaKantong:
+    'Banyak kantongnya sudah pas, tetapi ada kantong yang seharusnya "dikurangkan" (atau sebaliknya). Periksa kata kunci seperti "diambil", "dikurangi", atau "dipotong".',
+  tandaLepas:
+    'Kantongnya sudah pas, tetapi kelereng lepasnya seharusnya kebalikannya (ditambah ↔ dikurangkan). Baca lagi ceritanya.',
+  tukarKantongLepas:
+    'Banyak kantong dan kelereng lepas tertukar. Benda yang isinya belum diketahui menjadi kantong; benda yang banyaknya sudah pasti menjadi kelereng lepas.',
+  kurangKantong: 'Kantongnya masih kurang. Hitung lagi benda yang isinya belum diketahui.',
+  lebihKantong: 'Kantongnya terlalu banyak. Hitung lagi benda yang isinya belum diketahui.',
+  lepasBeda: 'Kantongnya sudah pas. Sekarang periksa banyak kelereng lepas pada cerita.',
+};
+
+function diagnosaModelKantong(m, t, huruf) {
+  var sama = function (k) {
+    return (m[k] || 0) === (t[k] || 0);
+  };
+  var hurufSama = huruf.every(sama);
+  if (hurufSama && sama('lepas')) return 'benar';
+  var absSama = huruf.every(function (h) {
+    return Math.abs(m[h] || 0) === Math.abs(t[h] || 0);
+  });
+  if (absSama && !hurufSama && sama('lepas')) return 'tandaKantong';
+  if (hurufSama && (m.lepas || 0) === -(t.lepas || 0)) return 'tandaLepas';
+  var tukar = sukuTukarModel(t);
+  if (tukar && samaKumpulanAljabar(sukuDariModel(m, huruf), tukar)) return 'tukarKantongLepas';
+  var kurang = huruf.some(function (h) {
+    return Math.abs(m[h] || 0) < Math.abs(t[h] || 0);
+  });
+  if (kurang) return 'kurangKantong';
+  if (!hurufSama) return 'lebihKantong';
+  return 'lepasBeda';
+}
+
+/* Mencocokkan model murid dengan situasi aktif → { kode, benar, pesan }. */
+function cocokkanLabKantong(st, cfg) {
+  var c = st.catat[st.aktif];
+  var s = situasiLabKantong(cfg, st.aktif);
+  var kode = c.cocok ? 'benar' : diagnosaModelKantong(st.model, s.model, cfg.huruf);
+  c.kodeModel = kode;
+  if (kode === 'benar') c.cocok = true;
+  return { kode: kode, benar: kode === 'benar', pesan: PESAN_MODEL_KANTONG[kode] };
+}
+
+/* Mencatat bentuk aljabar situasi aktif (isian berdiagnosa). */
+function catatLabKantong(st, cfg, isian) {
+  var c = st.catat[st.aktif];
+  var s = situasiLabKantong(cfg, st.aktif);
+  var r = periksaSoalUnsur(isian, { cek: { model: s.model, minta: 'bentuk' } });
+  if (r.kode === 'kosong' || r.kode === 'format') return r;
+  c.input = String(isian).trim();
+  c.kode = r.kode;
+  c.pesan = r.pesan;
+  c.attempts += 1;
+  if (r.benar) {
+    c.done = true;
+    c.bentuk = bentukDariModel(s.model, cfg.huruf);
+  }
+  return r;
+}
+
+function labKantongLengkap(st, cfg) {
+  return cfg.situasi.every(function (s) {
+    return st.catat[s.id] && st.catat[s.id].done;
+  });
+}
+
+function buildTabelLabKantong(st, cfg) {
+  return (
+    '<table class="data-table lab-kantong__tabel">' +
+    '<caption>Tabel pengamatan</caption>' +
+    '<thead><tr><th scope="col">Situasi</th>' +
+    cfg.huruf
+      .map(function (h) {
+        return '<th scope="col">Kantong ' + esc(h) + '</th>';
+      })
+      .join('') +
+    '<th scope="col">Kelereng lepas</th><th scope="col">Bentuk aljabar</th></tr></thead><tbody>' +
+    cfg.situasi
+      .map(function (s) {
+        var c = st.catat[s.id];
+        var m = modelSituasiLabKantong(cfg, s);
+        var isi = function (v) {
+          return c.done ? esc(formatAngkaAljabar(v)) : '…';
+        };
+        return (
+          '<tr' +
+          (s.id === st.aktif ? ' class="is-aktif"' : '') +
+          '><th scope="row">' +
+          esc(s.judul) +
+          '</th>' +
+          cfg.huruf
+            .map(function (h) {
+              return '<td>' + isi(m[h]) + '</td>';
+            })
+            .join('') +
+          '<td>' +
+          isi(m.lepas) +
+          '</td><td>' +
+          (c.done ? buildBentukWarna(c.bentuk) : '…') +
+          '</td></tr>'
+        );
+      })
+      .join('') +
+    '</tbody></table>'
+  );
+}
+
+function buildIsianLabKantong(id, c) {
+  if (c.done) {
+    return buildFeedbackBox(
+      'success',
+      '✓',
+      '<strong>Tercatat:</strong> ' + buildBentukWarna(c.bentuk)
+    );
+  }
+  var salah = c.attempts > 0 && c.kode && c.kode !== 'benar';
+  return (
+    '<div class="field-group lab-kantong__tulis">' +
+    '<label for="' +
+    id +
+    'TulisInput">Tulis bentuk aljabar untuk modelmu</label>' +
+    '<div class="dl-input-row">' +
+    '<input type="text" class="input-text' +
+    (salah ? ' has-error' : '') +
+    '" id="' +
+    id +
+    'TulisInput" autocomplete="off" autocapitalize="off" spellcheck="false" value="' +
+    esc(c.input || '') +
+    '" placeholder="mis. 2x + 3">' +
+    '<button type="button" class="btn btn--primary" id="' +
+    id +
+    'Tulis">Catat</button>' +
+    '</div>' +
+    '<p class="dl-caption">Tanda − boleh diketik sebagai tanda minus biasa (-).</p>' +
+    (salah
+      ? buildFeedbackBox('error', '✗', '<strong>' + esc(c.input) + '</strong> — ' + esc(c.pesan))
+      : '') +
+    '</div>'
+  );
+}
+
+/* Lab Kantong: pilih situasi → susun model → cocokkan → tulis bentuk aljabar. */
+function buildLabKantong(id, st, cfg) {
+  var s = situasiLabKantong(cfg, st.aktif);
+  var c = st.catat[st.aktif];
+  var tab = cfg.situasi
+    .map(function (x, i) {
+      var cx = st.catat[x.id];
+      return (
+        '<button type="button" class="lab-kantong__tab-btn' +
+        (x.id === st.aktif ? ' is-aktif' : '') +
+        (cx.done ? ' is-selesai' : '') +
+        '" data-situasi="' +
+        esc(x.id) +
+        '" aria-pressed="' +
+        (x.id === st.aktif) +
+        '">' +
+        (cx.done ? '✓ ' : '') +
+        'Situasi ' +
+        (i + 1) +
+        '</button>'
+      );
+    })
+    .join('');
+  var stepper = function (k, label, maks) {
+    var v = st.model[k];
+    var teks = v === 0 ? '0' : (v < 0 ? '−' : '+') + Math.abs(v);
+    return buildFinStepper(id + 'K' + k, label, teks, {
+      minDis: c.cocok || v <= -maks,
+      maxDis: c.cocok || v >= maks,
+    });
+  };
+  var umpanModel = '';
+  if (c.kodeModel) {
+    umpanModel = buildFeedbackBox(
+      c.kodeModel === 'benar' ? 'success' : 'error',
+      c.kodeModel === 'benar' ? '✓' : '✗',
+      esc(PESAN_MODEL_KANTONG[c.kodeModel])
+    );
+  }
+  return (
+    '<div class="lab-kantong" id="' +
+    id +
+    '">' +
+    '<div class="lab-kantong__tab" role="group" aria-label="Pilih situasi">' +
+    tab +
+    '</div>' +
+    '<div class="lab-kantong__cerita"><strong>' +
+    esc(s.judul) +
+    '</strong><p>' +
+    esc(s.cerita) +
+    '</p></div>' +
+    '<div class="lab-kantong__isi">' +
+    '<figure class="lab-kantong__gambar">' +
+    buildModelKantong(st.model, { huruf: cfg.huruf }) +
+    '<figcaption>Bentuk modelmu: ' +
+    buildBentukWarna(bentukDariModel(st.model, cfg.huruf)) +
+    '</figcaption>' +
+    '</figure>' +
+    '<div class="lab-kantong__kontrol">' +
+    cfg.huruf
+      .map(function (h) {
+        return stepper(h, 'Kantong ' + h, cfg.batas);
+      })
+      .join('') +
+    stepper('lepas', 'Kelereng lepas', cfg.batasLepas) +
+    '<p class="dl-caption">Nilai negatif = kantong/kelereng merah yang <em>dikurangkan</em>.</p>' +
+    '</div>' +
+    '</div>' +
+    (c.cocok
+      ? ''
+      : '<div class="btn-group"><button type="button" class="btn btn--primary" id="' +
+        id +
+        'Cocok">Cocokkan dengan cerita</button></div>') +
+    umpanModel +
+    (c.cocok ? buildIsianLabKantong(id, c) : '') +
+    '<div class="lab-kantong__tabel-wrap">' +
+    buildTabelLabKantong(st, cfg) +
+    '</div>' +
+    '</div>'
+  );
+}
+
+function bindLabKantong(root, id, st, cfg, onChange) {
+  root.querySelectorAll('#' + id + ' [data-situasi]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      if (pilihSituasiLabKantong(st, cfg, btn.dataset.situasi)) onChange();
+    });
+  });
+  cfg.huruf.concat(['lepas']).forEach(function (k) {
+    bindFinStepper(root, id + 'K' + k, function (arah) {
+      if (ubahLabKantong(st, cfg, k, arah)) onChange();
+    });
+  });
+  var cocok = root.querySelector('#' + id + 'Cocok');
+  if (cocok) {
+    cocok.addEventListener('click', function () {
+      cocokkanLabKantong(st, cfg);
+      onChange();
+    });
+  }
+  var btn = root.querySelector('#' + id + 'Tulis');
+  var inp = root.querySelector('#' + id + 'TulisInput');
+  if (btn && inp) {
+    var kirim = function () {
+      var r = catatLabKantong(st, cfg, inp.value);
+      if (r.kode === 'kosong' || r.kode === 'format') {
+        showNotice(r.pesan);
+        return;
+      }
+      onChange();
+      var lagi = document.getElementById(id + 'TulisInput');
+      if (lagi && !r.benar) lagi.focus();
+    };
+    btn.addEventListener('click', kirim);
+    inp.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter') kirim();
+    });
+  }
+}
+
+/* ---------- Ketuk Unsur ---------- */
+
+/*
+ * Token bentuk aljabar untuk mode 'variabel' | 'konstanta' | 'suku':
+ * [{ id, teks, jenis: 'koef'|'var'|'konst'|'suku'|'op', bisa, target }].
+ * Koefisien tersirat (x, −x) tidak punya token koefisien.
+ */
+function tokenKetukUnsur(str, mode) {
+  var p = parseBentukAljabar(str) || [];
+  var out = [];
+  p.forEach(function (s, i) {
+    var neg = s.koef < 0;
+    if (i > 0 || neg) {
+      out.push({ id: 'o' + i, teks: neg ? '−' : '+', jenis: 'op', bisa: false, target: false });
+    }
+    if (mode === 'suku') {
+      out.push({
+        id: 's' + i,
+        teks: formatSukuAljabar(s, false),
+        jenis: 'suku',
+        bisa: true,
+        target: true,
+      });
+      return;
+    }
+    var abs = Math.abs(s.koef);
+    if (!s.variabel) {
+      out.push({
+        id: 's' + i + 'k',
+        teks: formatAngkaAljabar(abs),
+        jenis: 'konst',
+        bisa: true,
+        target: mode === 'konstanta',
+      });
+      return;
+    }
+    if (abs !== 1 || !s.tersirat) {
+      out.push({
+        id: 's' + i + 'k',
+        teks: formatAngkaAljabar(abs),
+        jenis: 'koef',
+        bisa: true,
+        target: false,
+      });
+    }
+    out.push({
+      id: 's' + i + 'v',
+      teks: s.variabel,
+      jenis: 'var',
+      bisa: true,
+      target: mode === 'variabel',
+    });
+  });
+  return out;
+}
+
+var PESAN_KETUK_UNSUR = {
+  benar: 'Tepat! Semua yang kamu tandai benar dan tidak ada yang terlewat.',
+  kosong: 'Ketuk dulu bagian yang ingin kamu tandai.',
+  koefisienBukan:
+    'Ada koefisien yang ikut kamu tandai. Koefisien adalah bilangan yang menempel di depan variabel — bukan variabel, bukan konstanta.',
+  variabelBukan: 'Ada variabel (huruf) yang ikut kamu tandai. Konstanta tidak memuat huruf.',
+  konstantaBukan:
+    'Ada konstanta yang ikut kamu tandai. Konstanta berupa bilangan yang berdiri sendiri, bukan huruf.',
+  kurang: 'Yang kamu tandai benar, tetapi masih ada yang terlewat. Periksa setiap suku.',
+};
+
+/* Memeriksa token yang dipilih → { kode, benar, pesan }. */
+function periksaKetukUnsur(str, mode, pilih) {
+  var hasil = function (kode) {
+    return { kode: kode, benar: kode === 'benar', pesan: PESAN_KETUK_UNSUR[kode] };
+  };
+  if (!pilih || !pilih.length) return hasil('kosong');
+  var tok = tokenKetukUnsur(str, mode);
+  var byId = {};
+  tok.forEach(function (t) {
+    byId[t.id] = t;
+  });
+  var salah = pilih
+    .map(function (id) {
+      return byId[id];
+    })
+    .filter(function (t) {
+      return t && !t.target;
+    });
+  var urut = { koef: 'koefisienBukan', var: 'variabelBukan', konst: 'konstantaBukan' };
+  for (var k in urut) {
+    if (
+      salah.some(function (t) {
+        return t.jenis === k;
+      })
+    ) {
+      return hasil(urut[k]);
+    }
+  }
+  var kurang = tok.some(function (t) {
+    return t.target && pilih.indexOf(t.id) === -1;
+  });
+  return hasil(kurang ? 'kurang' : 'benar');
+}
+
+function ensureKetukUnsur(st, key) {
+  var v = st[key];
+  if (!v || typeof v !== 'object' || !Array.isArray(v.pilih)) {
+    st[key] = { pilih: [], attempts: 0, done: false, kode: null };
+  }
+  return st[key];
+}
+
+function toggleKetukUnsur(kst, id) {
+  if (kst.done) return false;
+  var i = kst.pilih.indexOf(id);
+  if (i === -1) kst.pilih.push(id);
+  else kst.pilih.splice(i, 1);
+  kst.kode = null;
+  return true;
+}
+
+var LABEL_KETUK_UNSUR = {
+  variabel: 'Ketuk semua VARIABEL',
+  konstanta: 'Ketuk semua KONSTANTA',
+  suku: 'Ketuk setiap SUKU',
+};
+
+/* Bentuk aljabar dengan token yang bisa diketuk (toggle) lalu diperiksa. */
+function buildKetukUnsur(id, str, mode, kst) {
+  var tok = tokenKetukUnsur(str, mode);
+  var umpan = '';
+  if (kst.kode) {
+    umpan = buildFeedbackBox(
+      kst.kode === 'benar' ? 'success' : 'error',
+      kst.kode === 'benar' ? '✓' : '✗',
+      esc(PESAN_KETUK_UNSUR[kst.kode])
+    );
+  }
+  return (
+    '<div class="ketuk-unsur' +
+    (kst.done ? ' is-selesai' : '') +
+    '" id="' +
+    id +
+    '">' +
+    '<p class="ketuk-unsur__label">' +
+    esc(LABEL_KETUK_UNSUR[mode]) +
+    ' pada bentuk ini:</p>' +
+    '<div class="ketuk-unsur__bentuk" role="group" aria-label="' +
+    esc(LABEL_KETUK_UNSUR[mode] + ' pada ' + rapikanBentukAljabar(str)) +
+    '">' +
+    tok
+      .map(function (t) {
+        if (!t.bisa)
+          return '<span class="ketuk-unsur__op" aria-hidden="true">' + esc(t.teks) + '</span>';
+        var on = kst.pilih.indexOf(t.id) !== -1;
+        var cls = 'ketuk-unsur__token ketuk-unsur__token--' + t.jenis + (on ? ' is-dipilih' : '');
+        if (kst.done && t.target) cls += ' is-benar';
+        return (
+          '<button type="button" class="' +
+          cls +
+          '" data-ketuk="' +
+          t.id +
+          '" aria-pressed="' +
+          on +
+          '"' +
+          (kst.done ? ' disabled' : '') +
+          '>' +
+          esc(t.teks) +
+          '</button>'
+        );
+      })
+      .join('') +
+    '</div>' +
+    (kst.done
+      ? ''
+      : '<div class="btn-group"><button type="button" class="btn btn--primary btn--small" id="' +
+        id +
+        'Cek">Periksa</button></div>') +
+    umpan +
+    '</div>'
+  );
+}
+
+function bindKetukUnsur(root, id, str, mode, kst, save, rerender) {
+  root.querySelectorAll('#' + id + ' [data-ketuk]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      if (toggleKetukUnsur(kst, btn.dataset.ketuk)) {
+        save();
+        rerender();
+      }
+    });
+  });
+  var cek = root.querySelector('#' + id + 'Cek');
+  if (cek) {
+    cek.addEventListener('click', function () {
+      var r = periksaKetukUnsur(str, mode, kst.pilih);
+      if (r.kode === 'kosong') {
+        showNotice(r.pesan);
+        return;
+      }
+      kst.attempts += 1;
+      kst.kode = r.kode;
+      kst.done = r.benar;
+      save();
+      rerender();
+    });
+  }
+}
+
+/* ---------- Langkah isian unsur ---------- */
+
+function takTerbacaUnsur(kode) {
+  return kode === 'kosong' || kode === 'format';
+}
+
+/* Memeriksa langkah { cek } dan menyimpan hasil ke st (makeCekStep). */
+function periksaLangkahUnsur(st, step, input) {
+  var r = periksaSoalUnsur(input, { cek: step.cek });
+  if (takTerbacaUnsur(r.kode)) return r;
+  st.input = String(input || '').trim();
+  st.kode = r.kode;
+  st.pesan = r.pesan;
+  st.attempts += 1;
+  st.done = r.benar;
+  return r;
+}
+
+/* Teks isian yang dirapikan (bilangan → minus tipografis, bentuk → baku). */
+function tampilIsianUnsur(input) {
+  var b = parseBilAljabar(input);
+  if (b.kode === 'ok') return formatAngkaAljabar(b.nilai);
+  return rapikanBentukAljabar(input);
+}
+
+/*
+ * Satu langkah isian unsur berdiagnosa.
+ *   step { label (HTML), cek, hints (HTML), temuan (HTML), placeholder }
+ */
+function buildLangkahUnsur(id, st, step, num) {
+  var head =
+    '<p class="dl-step__label">' +
+    (num ? '<span class="dl-step__num">' + num + '</span>' : '') +
+    step.label +
+    '</p>';
+  if (st.done) {
+    return (
+      '<div class="dl-step dl-step--done">' +
+      head +
+      '<p class="dl-step__answer">✓ ' +
+      esc(tampilIsianUnsur(st.input)) +
+      '</p>' +
+      (step.temuan ? buildFeedbackBox('success', '💡', step.temuan) : '') +
+      '</div>'
+    );
+  }
+  var salah = st.attempts > 0 && !!st.kode && st.kode !== 'benar';
+  return (
+    '<div class="dl-step">' +
+    head +
+    '<div class="dl-input-row">' +
+    '<input type="text" class="input-text dl-num-input' +
+    (salah ? ' has-error' : '') +
+    '" id="' +
+    id +
+    'Input" autocomplete="off" autocapitalize="off" spellcheck="false" value="' +
+    esc(st.input || '') +
+    '" placeholder="' +
+    esc(step.placeholder || 'mis. −3') +
+    '" aria-label="' +
+    esc(String(step.label).replace(/<[^>]*>/g, '')) +
+    '">' +
+    '<button type="button" class="btn btn--primary" id="' +
+    id +
+    'Check">Periksa</button>' +
+    '</div>' +
+    (step.hints && step.hints.length
+      ? '<div class="btn-group" style="margin-top:var(--space-2);">' +
+        buildHintToggle(id + 'Hint', step.hints, st.hintLevel) +
+        '</div>'
+      : '') +
+    (salah
+      ? '<div style="margin-top:var(--space-3);">' +
+        buildFeedbackBox(
+          'error',
+          '✗',
+          '<strong>' + esc(st.input) + '</strong> — ' + esc(st.pesan)
+        ) +
+        '</div>'
+      : '') +
+    buildHintStack(step.hints, st.hintLevel) +
+    '</div>'
+  );
+}
+
+function bindLangkahUnsur(id, st, step, save, rerender) {
+  var inp = document.getElementById(id + 'Input');
+  var btn = document.getElementById(id + 'Check');
+  var kirim = function () {
+    var r = periksaLangkahUnsur(st, step, inp.value);
+    if (takTerbacaUnsur(r.kode)) {
+      showNotice(r.pesan);
+      return;
+    }
+    save();
+    rerender();
+    if (!st.done) {
+      var lagi = document.getElementById(id + 'Input');
+      if (lagi) lagi.focus();
+    }
+  };
+  if (btn && inp) {
+    btn.addEventListener('click', kirim);
+    inp.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter') kirim();
+    });
+  }
+  var hint = document.getElementById(id + 'Hint');
+  if (hint) {
+    hint.addEventListener('click', function () {
+      st.hintLevel = Math.min(st.hintLevel + 1, (step.hints || []).length);
+      save();
+      rerender();
     });
   }
 }
