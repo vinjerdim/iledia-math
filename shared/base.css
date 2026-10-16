@@ -16217,3 +16217,233 @@ button.akar-tile:disabled {
 .lab-sudut__kosong {
   margin: 0;
 }
+
+/* =========================================================================
+   78. Bangun ruang: unsur & bidang penyusun (engine.js seksi 78,
+   fase-d/mpi-9.1): model tabung & kerucut (.bgr-svg, .bgr-edge,
+   .bgr-semu, .bgr-hit-garis, .psm-face--selimut), gambar bidang penyusun
+   (.bgr-bidang*), Lab Amati Benda (.bgr-lab*, .bgr-benda*, .bgr-isian*,
+   .bgr-bongkar), dan tabel pengamatan (.bgr-tabel*).
+   Warna mengikuti seksi 31: alas/tutup oranye, sisi tegak biru, sisi
+   lengkung (selimut) hijau, unsur yang ditandai ungu.
+   ========================================================================= */
+
+.psm-face--selimut {
+  fill: var(--color-success-soft);
+}
+
+.bgr-edge {
+  fill: none;
+}
+
+.bgr-semu {
+  stroke: var(--color-ink);
+  stroke-width: 1.6;
+  stroke-linecap: round;
+}
+
+.bgr-hit-garis {
+  fill: none;
+  pointer-events: stroke;
+}
+
+/* ---- Bidang penyusun ---- */
+
+.bgr-bidang-wrap {
+  padding: var(--space-3);
+  border: 2px dashed var(--color-border-strong);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+}
+
+.bgr-bidang-svg {
+  display: block;
+  width: 100%;
+  max-width: 420px;
+  height: auto;
+  margin: 0 auto;
+}
+
+.bgr-bidang > :first-child {
+  stroke-width: 2;
+  stroke-linejoin: round;
+}
+
+.bgr-bidang--alas > :first-child {
+  fill: var(--color-orange-soft);
+  stroke: var(--color-orange);
+}
+
+.bgr-bidang--tegak > :first-child {
+  fill: var(--color-blue-soft);
+  stroke: var(--color-blue);
+}
+
+.bgr-bidang--selimut > :first-child {
+  fill: var(--color-success-soft);
+  stroke: var(--color-success);
+}
+
+.bgr-bidang__label {
+  font-family: var(--font-display);
+  font-size: 12px;
+  font-weight: 600;
+  fill: var(--color-ink);
+  text-anchor: middle;
+}
+
+/* ---- Lab Amati Benda ---- */
+
+.bgr-lab {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.bgr-benda-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(112px, 1fr));
+  gap: var(--space-2);
+}
+
+.bgr-benda {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  min-height: 88px;
+  padding: var(--space-2);
+  border: 2px solid var(--color-border-strong);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  color: var(--color-ink);
+  font: inherit;
+  cursor: pointer;
+  text-align: center;
+}
+
+.bgr-benda:hover {
+  border-color: var(--color-primary);
+}
+
+.bgr-benda:focus-visible {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+.bgr-benda.is-active {
+  border-color: var(--color-primary);
+  background: var(--color-primary-soft);
+}
+
+.bgr-benda.is-done {
+  border-color: var(--color-success);
+}
+
+.bgr-benda__ikon {
+  font-size: 1.8rem;
+  line-height: 1.1;
+}
+
+.bgr-benda__nama {
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.bgr-benda__cek {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--color-success-strong);
+}
+
+.bgr-benda__teks {
+  margin: 0;
+  text-align: center;
+  font-size: 0.9rem;
+  color: var(--color-ink-muted);
+}
+
+.bgr-lab__kerja {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: var(--space-4);
+  align-items: start;
+}
+
+.bgr-lab__catat {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  min-width: 0;
+}
+
+.bgr-isian {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+}
+
+.bgr-isian__judul {
+  margin: 0;
+  font-weight: 700;
+}
+
+.bgr-isian__grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-3);
+}
+
+.bgr-isian__sel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.bgr-isian__sel label {
+  font-size: 0.88rem;
+  font-weight: 600;
+}
+
+.bgr-isian__sel .input-text {
+  max-width: 120px;
+}
+
+.bgr-bongkar {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+/* ---- Tabel pengamatan ---- */
+
+.bgr-tabel td,
+.bgr-tabel th {
+  white-space: normal;
+}
+
+.bgr-tabel__angka {
+  text-align: center;
+  font-family: var(--font-mono);
+  font-weight: 700;
+}
+
+.bgr-tabel__kosong {
+  text-align: center;
+  color: var(--color-ink-muted);
+}
+
+@media (max-width: 720px) {
+  .bgr-lab__kerja {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .bgr-benda-grid {
+    grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
+  }
+}
