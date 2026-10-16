@@ -250,6 +250,12 @@
        miskonsepsi tertukar pelurus–penyiku, mengira sama besar, salah
        skala busur & salah relasi pada bentuk aljabar, opsi berpengecoh,
        gambar dua garis SVG + busur derajat virtual, Lab Sudut)
+   78. Bangun ruang: unsur & bidang penyusun prisma, tabung, limas,
+       kerucut (sisi datar/lengkung, rusuk lurus/lengkung, titik sudut
+       vs titik puncak, bidang penyusun, pola unsur segi-n, isian
+       berdiagnosa miskonsepsi, opsi berpengecoh, model 3D tabung &
+       kerucut yang bisa diketuk, gambar bidang penyusun, Lab Amati
+       Benda)
    ============================================================ */
 
 /* ============================================================
@@ -52002,4 +52008,1460 @@ function bindLabSudut(root, id, st, cfg, onChange) {
       if (r.ok) onChange();
     });
   }
+}
+
+/* ============================================================
+   78. BANGUN RUANG: UNSUR & BIDANG PENYUSUN (PRISMA, TABUNG, LIMAS,
+       KERUCUT)
+   Dipakai fase-d/mpi-9.1. Memakai ulang seksi 31 (modelPrisma,
+   buildPrismSVG, proyeksi & visibilitas) dan seksi 56 (modelLimas).
+
+   Unsur yang diamati: sisi datar, sisi lengkung, rusuk, dan titik sudut.
+   Konvensi buku siswa: rusuk adalah pertemuan dua sisi (boleh lurus atau
+   lengkung); titik sudut adalah titik pertemuan tiga rusuk atau lebih.
+   Maka tabung: 2 sisi datar + 1 sisi lengkung, 2 rusuk lengkung, tanpa
+   titik sudut; kerucut: 1 sisi datar + 1 sisi lengkung, 1 rusuk lengkung,
+   tanpa titik sudut, dengan 1 TITIK PUNCAK (tidak ada rusuk yang bertemu
+   di sana). Puncak limas tetap titik sudut karena rusuk-rusuk tegaknya
+   bertemu di sana.
+
+   Bidang penyusun: prisma = 2 segi-n + n persegi panjang; limas = 1 segi-n
+   + n segitiga; tabung = 2 lingkaran + selimut (persegi panjang bila
+   dibuka); kerucut = 1 lingkaran + selimut (juring lingkaran bila dibuka).
+
+   Notasi cek soal (nilaiSoalRuang):
+     { minta: 'unsur', jenis, n, kolom }        kolom: sisiDatar |
+                                                sisiLengkung | sisi | rusuk |
+                                                titikSudut → bilangan
+     { minta: 'banyakBidang', jenis, n, bentuk } bentuk: nama bidang, mis.
+                                                'persegi panjang',
+                                                'segitiga', 'lingkaran',
+                                                'segilima' → bilangan
+     { minta: 'n', jenis, kolom, nilai }        prisma/limas: banyak sisi
+                                                alas dari banyak unsurnya
+     { minta: 'bangun', jenis, n }              → nama bangun (pilihan)
+     { minta: 'bidang', jenis, n }              → teks bidang penyusun
+
+   Komponen UI: gambar model tabung & kerucut yang bisa diketuk (atribut
+   data-psm-kind/data-psm-id sama dengan buildPrismSVG; garis tepi gambar
+   tabung/kerucut berjenis 'semu' — bukan rusuk), gambar bidang penyusun
+   ("bongkar"), dan Lab Amati Benda (pilih benda konkret → putar model →
+   tandai unsur → isi tabel berdiagnosa → bongkar & pilih bidang
+   penyusun). Gaya .bgr-* ada di shared/base.css.
+   ============================================================ */
+
+var BGR_JENIS = ['prisma', 'tabung', 'limas', 'kerucut'];
+
+var BGR_KOLOM = [
+  { id: 'sisiDatar', label: 'Sisi datar' },
+  { id: 'sisiLengkung', label: 'Sisi lengkung' },
+  { id: 'rusuk', label: 'Rusuk' },
+  { id: 'titikSudut', label: 'Titik sudut' },
+];
+
+var BGR_NAMA_KOLOM = {
+  sisiDatar: 'sisi datar',
+  sisiLengkung: 'sisi lengkung',
+  sisi: 'sisi',
+  rusuk: 'rusuk',
+  titikSudut: 'titik sudut',
+};
+
+function namaBangunRuang(jenis, n) {
+  if (jenis === 'prisma') return namaPrisma(n);
+  if (jenis === 'limas') return namaLimas(n);
+  return jenis;
+}
+
+function punyaSisiLengkung(jenis) {
+  return jenis === 'tabung' || jenis === 'kerucut';
+}
+
+/* 'duaAlas': prisma & tabung (alas dan tutup kongruen, sejajar);
+   'satuAlas': limas & kerucut (satu alas dan satu puncak). */
+function kelompokAlas(jenis) {
+  return jenis === 'prisma' || jenis === 'tabung' ? 'duaAlas' : 'satuAlas';
+}
+
+function unsurBangunRuang(jenis, n) {
+  if (jenis === 'prisma') {
+    var p = unsurPrisma(n);
+    return {
+      sisiDatar: p.sisi,
+      sisiLengkung: 0,
+      sisi: p.sisi,
+      rusuk: p.rusuk,
+      titikSudut: p.titik,
+      titikPuncak: 0,
+      banyakAlas: 2,
+      bentukAlas: namaSegiN(n),
+    };
+  }
+  if (jenis === 'limas') {
+    var l = unsurLimas(n);
+    return {
+      sisiDatar: l.sisi,
+      sisiLengkung: 0,
+      sisi: l.sisi,
+      rusuk: l.rusuk,
+      titikSudut: l.titik,
+      titikPuncak: 1,
+      banyakAlas: 1,
+      bentukAlas: namaSegiN(n),
+    };
+  }
+  if (jenis === 'tabung') {
+    return {
+      sisiDatar: 2,
+      sisiLengkung: 1,
+      sisi: 3,
+      rusuk: 2,
+      titikSudut: 0,
+      titikPuncak: 0,
+      banyakAlas: 2,
+      bentukAlas: 'lingkaran',
+    };
+  }
+  return {
+    sisiDatar: 1,
+    sisiLengkung: 1,
+    sisi: 2,
+    rusuk: 1,
+    titikSudut: 0,
+    titikPuncak: 1,
+    banyakAlas: 1,
+    bentukAlas: 'lingkaran',
+  };
+}
+
+/* Banyak unsur prisma/limas segi-n berbentuk a × n + b. */
+function rumusUnsurBangun(jenis, kolom) {
+  var R = {
+    prisma: { titikSudut: [2, 0], rusuk: [3, 0], sisi: [1, 2], sisiDatar: [1, 2] },
+    limas: { titikSudut: [1, 1], rusuk: [2, 0], sisi: [1, 1], sisiDatar: [1, 1] },
+  };
+  var r = R[jenis] && R[jenis][kolom];
+  return r ? { a: r[0], b: r[1] } : null;
+}
+
+/* [{ bentuk, nama, banyak, peran, lengkung }] — bentuk = nama bidangnya. */
+function bidangPenyusun(jenis, n) {
+  if (jenis === 'prisma') {
+    return [
+      { bentuk: namaSegiN(n), nama: namaSegiN(n), banyak: 2, peran: 'alas dan tutup' },
+      { bentuk: 'persegi panjang', nama: 'persegi panjang', banyak: n, peran: 'sisi tegak' },
+    ];
+  }
+  if (jenis === 'limas') {
+    return [
+      { bentuk: namaSegiN(n), nama: namaSegiN(n), banyak: 1, peran: 'alas' },
+      { bentuk: 'segitiga', nama: 'segitiga', banyak: n, peran: 'sisi tegak' },
+    ];
+  }
+  if (jenis === 'tabung') {
+    return [
+      { bentuk: 'lingkaran', nama: 'lingkaran', banyak: 2, peran: 'alas dan tutup' },
+      {
+        bentuk: 'persegi panjang',
+        nama: 'persegi panjang',
+        banyak: 1,
+        peran: 'selimut (sisi lengkung) bila dibuka',
+        lengkung: true,
+      },
+    ];
+  }
+  return [
+    { bentuk: 'lingkaran', nama: 'lingkaran', banyak: 1, peran: 'alas' },
+    {
+      bentuk: 'juring lingkaran',
+      nama: 'juring lingkaran',
+      banyak: 1,
+      peran: 'selimut (sisi lengkung) bila dibuka',
+      lengkung: true,
+    },
+  ];
+}
+
+function teksBidangPenyusun(jenis, n) {
+  return bidangPenyusun(jenis, n)
+    .map(function (b) {
+      return b.banyak + ' ' + b.nama + (b.lengkung ? ' (selimut)' : '');
+    })
+    .join(' + ');
+}
+
+function banyakBidangBentuk(jenis, n, bentuk) {
+  return bidangPenyusun(jenis, n).reduce(function (a, b) {
+    return a + (b.bentuk === bentuk ? b.banyak : 0);
+  }, 0);
+}
+
+/* ---------- Diagnosa isian unsur ---------- */
+
+var BGR_PESAN = {
+  benar: 'Tepat!',
+  salah: 'Belum tepat. Putar modelnya, tandai unsurnya satu per satu, lalu hitung lagi.',
+  kosong: 'Isi jawabanmu terlebih dahulu.',
+  format: 'Tulis banyaknya dengan bilangan cacah, mis. 0 atau 6.',
+  'prisma-titik-satu-alas':
+    'Itu baru titik sudut pada satu alas. Putar prismanya: tutupnya juga punya titik sudut sebanyak itu.',
+  'prisma-rusuk-lupa-tegak':
+    'Kamu sudah menghitung rusuk alas dan rusuk tutup. Masih ada rusuk tegak yang menghubungkan keduanya.',
+  'prisma-rusuk-satu-alas':
+    'Itu baru rusuk pada satu alas. Hitung juga rusuk tutup dan rusuk tegak.',
+  'prisma-sisi-lupa-alas':
+    'Itu baru sisi tegaknya. Sisi alas dan sisi tutup juga termasuk sisi prisma.',
+  'prisma-sisi-lupa-satu': 'Hampir! Masih ada satu sisi yang terlewat: sisi alas atau sisi tutup.',
+  'limas-titik-lupa-puncak':
+    'Kamu baru menghitung titik sudut pada alas. Titik puncak limas juga titik sudut karena rusuk-rusuk tegaknya bertemu di sana.',
+  'limas-rusuk-satu-kelompok':
+    'Itu baru satu kelompok rusuk. Hitung rusuk alas DAN rusuk tegak yang menuju puncak.',
+  'limas-sisi-lupa-alas': 'Itu baru sisi tegaknya. Sisi alas juga termasuk sisi limas.',
+  'limas-seperti-prisma':
+    'Itu banyak unsur prisma. Limas hanya punya SATU alas dan tidak punya tutup; sisi tegaknya bertemu di satu puncak.',
+  'datar-semua':
+    'Prisma dan limas tidak punya sisi lengkung: semua sisinya bidang datar. Isi 0 untuk sisi lengkung.',
+  'tabung-satu-alas':
+    'Putar tabungnya ke bawah: selain tutup di atas, ada juga alas di bawah. Keduanya sisi datar.',
+  'lengkung-sebagai-datar':
+    'Selimutnya melengkung, jadi bukan sisi datar. Hitung selimut sebagai sisi lengkung.',
+  'lupa-lengkung':
+    'Selimut yang melengkung juga termasuk sisi. Jangan lupa menghitung sisi lengkungnya.',
+  'selimut-ganda':
+    'Selimut melingkar menjadi SATU bidang lengkung yang utuh, walaupun gambarnya terlihat punya depan dan belakang.',
+  'rusuk-lengkung':
+    'Rusuk tidak harus lurus. Pertemuan sisi datar dan sisi lengkung membentuk rusuk yang melengkung.',
+  'garis-gambar':
+    'Garis tegak di tepi gambar hanyalah batas penglihatan (garis pelukis), bukan rusuk. Putar modelnya: garis itu ikut berpindah! Rusuk hanya ada di tempat dua sisi bertemu.',
+  'tabung-satu-rusuk': 'Tabung punya dua lingkaran pertemuan sisi: di alas dan di tutup.',
+  'tanpa-titik-sudut':
+    'Rusuk lengkung tidak punya ujung, dan tidak ada tiga rusuk yang bertemu. Jadi bangun ini tidak punya titik sudut. Isi 0.',
+  'kerucut-puncak':
+    'Puncak kerucut disebut TITIK PUNCAK, bukan titik sudut, karena tidak ada rusuk yang bertemu di sana. Banyak titik sudut kerucut 0.',
+  'kerucut-tanpa-alas':
+    'Putar kerucutnya ke bawah: alasnya berupa lingkaran datar. Itu satu sisi datar.',
+  'kerucut-seperti-tabung':
+    'Itu banyak sisi tabung. Kerucut hanya punya satu alas lingkaran dan satu selimut.',
+  'n-rumus-tertukar':
+    'Kamu memakai pola bangun yang lain. Periksa lagi: pola prisma dan pola limas berbeda.',
+  'n-nilai-langsung':
+    'Itu banyak unsurnya, bukan banyak sisi alasnya. Pakai pola unsur untuk mencari n.',
+  'bidang-semua-sisi':
+    'Itu banyak SEMUA sisinya. Yang ditanyakan hanya bidang yang berbentuk seperti itu.',
+  'bidang-satu-alas': 'Bangun ini punya dua alas yang kongruen: alas dan tutup. Hitung keduanya.',
+  'bangun-prisma':
+    'Prisma mempunyai dua alas segi-n yang kongruen dan sejajar, sisi tegaknya persegi panjang, dan semua sisinya datar.',
+  'bangun-tabung':
+    'Tabung mempunyai dua alas berbentuk lingkaran yang kongruen dan sejajar, dihubungkan oleh selimut yang melengkung.',
+  'bangun-limas':
+    'Limas mempunyai satu alas segi-n dan sisi tegak berbentuk segitiga yang bertemu di titik puncak.',
+  'bangun-kerucut':
+    'Kerucut mempunyai satu alas lingkaran dan selimut lengkung yang meruncing ke titik puncak.',
+};
+
+function hasilRuang(kode, pesan) {
+  return { benar: kode === 'benar', kode: kode, pesan: pesan || BGR_PESAN[kode] };
+}
+
+/* Calon jawaban keliru { kode, nilai } untuk cek bernilai bilangan. */
+function calonKeliruRuang(c) {
+  var out = [];
+  var tambah = function (nilai, kode) {
+    out.push({ nilai: nilai, kode: kode });
+  };
+  if (c.minta === 'unsur') {
+    var n = c.n;
+    var k = c.kolom;
+    var datar = k === 'sisi' || k === 'sisiDatar';
+    if (c.jenis === 'prisma') {
+      if (k === 'titikSudut') tambah(n, 'prisma-titik-satu-alas');
+      if (k === 'rusuk') {
+        tambah(2 * n, 'prisma-rusuk-lupa-tegak');
+        tambah(n, 'prisma-rusuk-satu-alas');
+      }
+      if (datar) {
+        tambah(n, 'prisma-sisi-lupa-alas');
+        tambah(n + 1, 'prisma-sisi-lupa-satu');
+      }
+    } else if (c.jenis === 'limas') {
+      if (k === 'titikSudut') {
+        tambah(n, 'limas-titik-lupa-puncak');
+        tambah(2 * n, 'limas-seperti-prisma');
+      }
+      if (k === 'rusuk') {
+        tambah(n, 'limas-rusuk-satu-kelompok');
+        tambah(3 * n, 'limas-seperti-prisma');
+      }
+      if (datar) {
+        tambah(n, 'limas-sisi-lupa-alas');
+        tambah(n + 2, 'limas-seperti-prisma');
+      }
+    } else if (c.jenis === 'tabung') {
+      if (k === 'sisiDatar') {
+        tambah(1, 'tabung-satu-alas');
+        tambah(3, 'lengkung-sebagai-datar');
+      }
+      if (k === 'sisiLengkung') {
+        tambah(0, 'lupa-lengkung');
+        tambah(2, 'selimut-ganda');
+      }
+      if (k === 'sisi') {
+        tambah(2, 'lupa-lengkung');
+        tambah(4, 'selimut-ganda');
+      }
+      if (k === 'rusuk') {
+        tambah(0, 'rusuk-lengkung');
+        tambah(1, 'tabung-satu-rusuk');
+        tambah(4, 'garis-gambar');
+      }
+    } else {
+      if (k === 'sisiDatar') {
+        tambah(2, 'lengkung-sebagai-datar');
+        tambah(0, 'kerucut-tanpa-alas');
+      }
+      if (k === 'sisiLengkung') {
+        tambah(0, 'lupa-lengkung');
+        tambah(2, 'selimut-ganda');
+      }
+      if (k === 'sisi') {
+        tambah(1, 'lupa-lengkung');
+        tambah(3, 'kerucut-seperti-tabung');
+      }
+      if (k === 'rusuk') {
+        tambah(0, 'rusuk-lengkung');
+        tambah(2, 'garis-gambar');
+        tambah(3, 'garis-gambar');
+      }
+      if (k === 'titikSudut') tambah(1, 'kerucut-puncak');
+    }
+  } else if (c.minta === 'banyakBidang') {
+    tambah(unsurBangunRuang(c.jenis, c.n).sisi, 'bidang-semua-sisi');
+    var b = bidangPenyusun(c.jenis, c.n).filter(function (x) {
+      return x.bentuk === c.bentuk;
+    })[0];
+    if (b && b.banyak === 2) tambah(1, 'bidang-satu-alas');
+  } else if (c.minta === 'n') {
+    var lain = rumusUnsurBangun(c.jenis === 'prisma' ? 'limas' : 'prisma', c.kolom);
+    if (lain) {
+      var m = (c.nilai - lain.b) / lain.a;
+      if (Number.isInteger(m) && m > 0) tambah(m, 'n-rumus-tertukar');
+    }
+    tambah(c.nilai, 'n-nilai-langsung');
+  }
+  return out;
+}
+
+function nilaiSoalRuang(c) {
+  if (c.minta === 'unsur') return unsurBangunRuang(c.jenis, c.n)[c.kolom];
+  if (c.minta === 'banyakBidang') return banyakBidangBentuk(c.jenis, c.n, c.bentuk);
+  if (c.minta === 'n') {
+    var r = rumusUnsurBangun(c.jenis, c.kolom);
+    return (c.nilai - r.b) / r.a;
+  }
+  if (c.minta === 'bangun') return c.jenis;
+  return teksBidangPenyusun(c.jenis, c.n);
+}
+
+/* Diagnosa satu kolom tabel unsur → { kode, pesan }. */
+function diagnosaUnsurBangun(jenis, n, kolom, nilai) {
+  var r = diagnosaNilaiRuang({ minta: 'unsur', jenis: jenis, n: n, kolom: kolom }, nilai);
+  return { kode: r.kode, pesan: r.pesan };
+}
+
+function diagnosaNilaiRuang(c, v) {
+  var baku = nilaiSoalRuang(c);
+  if (v === baku) return hasilRuang('benar');
+  var cocok = calonKeliruRuang(c).filter(function (g) {
+    return g.nilai === v;
+  })[0];
+  if (cocok) return hasilRuang(cocok.kode);
+  if (c.minta === 'unsur' && baku === 0 && v > 0) {
+    if (c.kolom === 'sisiLengkung') return hasilRuang('datar-semua');
+    if (c.kolom === 'titikSudut') return hasilRuang('tanpa-titik-sudut');
+  }
+  return hasilRuang('salah');
+}
+
+function periksaSoalRuang(isian, s) {
+  var c = s.cek;
+  var p = parseInputInt(String(isian === null || isian === undefined ? '' : isian));
+  if (p.error === 'empty') return hasilRuang('kosong');
+  if (p.error || p.value < 0) return hasilRuang('format');
+  return diagnosaNilaiRuang(c, p.value);
+}
+
+function labelSoalRuang(jenis, n) {
+  return psmKapital(namaBangunRuang(jenis, punyaSisiLengkung(jenis) ? null : n || 4)).replace(
+    / null$/,
+    ''
+  );
+}
+
+function jawabSoalRuang(s) {
+  var c = s.cek;
+  if (c.minta === 'bangun') return c.n ? labelSoalRuang(c.jenis, c.n) : psmKapital(c.jenis);
+  return String(nilaiSoalRuang(c));
+}
+
+var BGR_URUT_PENGECOH = {
+  prisma: ['limas', 'tabung', 'kerucut'],
+  limas: ['prisma', 'kerucut', 'tabung'],
+  tabung: ['kerucut', 'prisma', 'limas'],
+  kerucut: ['tabung', 'limas', 'prisma'],
+};
+
+/* Opsi { id, label, umpan } soal pilihan; opsi pertama id 'baku'. */
+function opsiSoalRuang(s) {
+  var c = s.cek;
+  var out = [{ id: 'baku', label: jawabSoalRuang(s), umpan: BGR_PESAN.benar }];
+  if (c.minta === 'bangun' || c.minta === 'bidang') {
+    var n = c.n || 4;
+    BGR_URUT_PENGECOH[c.jenis].forEach(function (j) {
+      var label =
+        c.minta === 'bangun'
+          ? c.n
+            ? labelSoalRuang(j, n)
+            : psmKapital(j)
+          : teksBidangPenyusun(j, n);
+      out.push({
+        id: (c.minta === 'bangun' ? 'bangun-' : 'bidang-') + j,
+        label: label,
+        umpan:
+          (c.minta === 'bidang' ? 'Itu bidang penyusun ' + namaBangunRuang(j, n) + '. ' : '') +
+          BGR_PESAN['bangun-' + j],
+      });
+    });
+    return out;
+  }
+  var baku = nilaiSoalRuang(c);
+  var dipakai = [baku];
+  var tambah = function (kode, nilai) {
+    if (out.length >= 4 || nilai < 0 || dipakai.indexOf(nilai) !== -1) return;
+    dipakai.push(nilai);
+    var id = kode;
+    for (var i = 2; optionIds(out).indexOf(id) !== -1; i++) id = kode + i;
+    out.push({ id: id, label: String(nilai), umpan: periksaSoalRuang(String(nilai), s).pesan });
+  };
+  calonKeliruRuang(c).forEach(function (g) {
+    tambah(g.kode, g.nilai);
+  });
+  [1, -1, 2, -2, 3, 4].forEach(function (d) {
+    var v = baku + d;
+    tambah(diagnosaNilaiRuang(c, v).kode, v);
+  });
+  return out;
+}
+
+/* ---------- Model 3D tabung & kerucut ---------- */
+
+/* { jenis, r, tinggi, titik, rusuk, sisi, pusat } — sumbu z ke atas. */
+function modelLengkung(jenis, opts) {
+  opts = opts || {};
+  var r = opts.r || 1;
+  var h = opts.tinggi || (jenis === 'kerucut' ? 1.7 : 1.5);
+  var model = { jenis: jenis, r: r, tinggi: h, titik: [], rusuk: [], pusat: [0, 0, h / 2] };
+  if (jenis === 'tabung') {
+    model.rusuk = [
+      { id: 'r0', jenis: 'lengkung', nama: 'rusuk alas', z: 0, sisi: ['alas', 'selimut'] },
+      { id: 'r1', jenis: 'lengkung', nama: 'rusuk tutup', z: h, sisi: ['atas', 'selimut'] },
+    ];
+    model.sisi = [
+      { id: 'alas', jenis: 'alas', nama: 'sisi alas (lingkaran)', lengkung: false },
+      { id: 'atas', jenis: 'atas', nama: 'sisi tutup (lingkaran)', lengkung: false },
+      { id: 'selimut', jenis: 'selimut', nama: 'selimut tabung', lengkung: true },
+    ];
+  } else {
+    model.titik = [{ id: 'puncak', jenis: 'puncak', nama: 'T', pos: [0, 0, h] }];
+    model.rusuk = [
+      { id: 'r0', jenis: 'lengkung', nama: 'rusuk alas', z: 0, sisi: ['alas', 'selimut'] },
+    ];
+    model.sisi = [
+      { id: 'alas', jenis: 'alas', nama: 'sisi alas (lingkaran)', lengkung: false },
+      { id: 'selimut', jenis: 'selimut', nama: 'selimut kerucut', lengkung: true },
+    ];
+  }
+  return model;
+}
+
+function bgrLabelUnsur(kind, obj, jenis) {
+  if (kind === 'semu') {
+    return 'Garis tepi gambar (garis pelukis) — BUKAN rusuk: tidak ada dua sisi yang bertemu di sini. Putar modelnya, garis ini ikut berpindah.';
+  }
+  if (kind === 'titik') {
+    return (
+      'Titik puncak ' +
+      obj.nama +
+      ' — bukan titik sudut, karena tidak ada rusuk yang bertemu di sini'
+    );
+  }
+  if (kind === 'rusuk') {
+    return (
+      psmKapital(obj.nama) +
+      ' (rusuk lengkung: pertemuan ' +
+      (obj.sisi[0] === 'alas' ? 'sisi alas' : 'sisi tutup') +
+      ' dan selimut ' +
+      jenis +
+      ')'
+    );
+  }
+  return psmKapital(obj.nama) + (obj.lengkung ? ' (sisi lengkung)' : ' (sisi datar)');
+}
+
+/* Selubung cembung (monotone chain) titik 2D { x, y }. */
+function bgrSelubung(pts) {
+  var p = pts.slice().sort(function (a, b) {
+    return a.x - b.x || a.y - b.y;
+  });
+  if (p.length < 3) return p;
+  var cross = function (o, a, b) {
+    return (a.x - o.x) * (b.y - o.y) - (a.y - o.y) * (b.x - o.x);
+  };
+  var bawah = [];
+  var atas = [];
+  p.forEach(function (q) {
+    while (bawah.length >= 2 && cross(bawah[bawah.length - 2], bawah[bawah.length - 1], q) <= 0) {
+      bawah.pop();
+    }
+    bawah.push(q);
+  });
+  for (var i = p.length - 1; i >= 0; i--) {
+    var q = p[i];
+    while (atas.length >= 2 && cross(atas[atas.length - 2], atas[atas.length - 1], q) <= 0) {
+      atas.pop();
+    }
+    atas.push(q);
+  }
+  bawah.pop();
+  atas.pop();
+  return bawah.concat(atas);
+}
+
+/*
+ * Gambar SVG tabung/kerucut (modelLengkung) dari sudut pandang `view`.
+ * Opsi sama dengan buildPrismSVG: skala, mode ('titik' | 'rusuk' |
+ * 'sisi'), terpilih, label, aria, kelas. Pada mode 'rusuk', garis tepi
+ * gambar ikut bisa diketuk dengan data-psm-kind="semu".
+ */
+function buildLengkungSVG(model, view, opts) {
+  opts = opts || {};
+  var sk = opts.skala || 70;
+  var mode = opts.mode || null;
+  var pilih = opts.terpilih || {};
+  var N = 48;
+  var r = model.r;
+  var h = model.tinggi;
+  var kerucut = model.jenis === 'kerucut';
+  var v = psmArahPengamat(view);
+
+  function proj(p) {
+    var q = proyeksiPrisma(psmSub(p, model.pusat), view);
+    return { x: q.x * sk, y: q.y * sk };
+  }
+  function sudut(i) {
+    return (2 * Math.PI * i) / N;
+  }
+  function normalSelimut(a) {
+    return kerucut ? [h * Math.cos(a), h * Math.sin(a), r] : [Math.cos(a), Math.sin(a), 0];
+  }
+  function selimutTampak(a) {
+    return psmDot(normalSelimut(a), v) > 1e-9;
+  }
+  var capTampak = { atas: v[2] > 1e-9, alas: v[2] < -1e-9 };
+  var adaSelimutTampak = false;
+  for (var s = 0; s < N; s++) if (selimutTampak(sudut(s))) adaSelimutTampak = true;
+  var tampakSisi = { alas: capTampak.alas, atas: capTampak.atas, selimut: adaSelimutTampak };
+
+  var lingkar = {};
+  model.rusuk.forEach(function (e) {
+    var pts = [];
+    for (var i = 0; i < N; i++) {
+      var a = sudut(i);
+      pts.push(proj([r * Math.cos(a), r * Math.sin(a), e.z]));
+    }
+    lingkar[e.id] = pts;
+  });
+  var semua = [];
+  Object.keys(lingkar).forEach(function (id) {
+    semua = semua.concat(lingkar[id]);
+  });
+  var puncak = kerucut ? proj([0, 0, h]) : null;
+  if (puncak) semua.push(puncak);
+  var batas = 0;
+  semua.forEach(function (p) {
+    batas = Math.max(batas, Math.abs(p.x), Math.abs(p.y));
+  });
+  var half = batas + (opts.label === false ? 8 : 24);
+
+  function hitAttr(kind, obj) {
+    return (
+      ' data-psm-kind="' +
+      kind +
+      '" data-psm-id="' +
+      obj.id +
+      '" tabindex="0" role="button" aria-pressed="' +
+      (pilih[kind] && pilih[kind][obj.id] ? 'true' : 'false') +
+      '" aria-label="' +
+      esc(bgrLabelUnsur(kind, obj, model.jenis)) +
+      '"'
+    );
+  }
+  function polyPts(list) {
+    return psmPoints(list);
+  }
+
+  /* Sisi: sisi datar yang tersembunyi → selimut (selubung) → sisi datar tampak. */
+  var sisiById = {};
+  model.sisi.forEach(function (x) {
+    sisiById[x.id] = x;
+  });
+  function sisiHTML(id, pts) {
+    var x = sisiById[id];
+    var depan = tampakSisi[id];
+    var hit = mode === 'sisi' && depan;
+    return (
+      '<polygon class="psm-face psm-face--' +
+      x.jenis +
+      (depan ? ' is-front' : ' is-back') +
+      (pilih.sisi && pilih.sisi[id] ? ' is-sorot' : '') +
+      (hit ? ' psm-hit-face' : '') +
+      '" points="' +
+      polyPts(pts) +
+      '"' +
+      (hit ? hitAttr('sisi', x) : '') +
+      '/>'
+    );
+  }
+  var tutup = { alas: lingkar.r0, atas: kerucut ? null : lingkar.r1 };
+  var faces = '';
+  ['alas', 'atas'].forEach(function (id) {
+    if (tutup[id] && !tampakSisi[id]) faces += sisiHTML(id, tutup[id]);
+  });
+  faces += sisiHTML('selimut', bgrSelubung(semua));
+  ['alas', 'atas'].forEach(function (id) {
+    if (tutup[id] && tampakSisi[id]) faces += sisiHTML(id, tutup[id]);
+  });
+
+  /* Rusuk lengkung: ruas tampak garis penuh, ruas tersembunyi putus-putus. */
+  var rusukHTML = '';
+  var rusukHit = '';
+  model.rusuk.forEach(function (e) {
+    var pts = lingkar[e.id];
+    var cap = e.z === 0 ? 'alas' : 'atas';
+    var tampak = [];
+    var samar = [];
+    for (var i = 0; i < N; i++) {
+      var j = (i + 1) % N;
+      var am = (sudut(i) + sudut(i) + (2 * Math.PI) / N) / 2;
+      var seg =
+        'M' +
+        psmFmt(pts[i].x) +
+        ' ' +
+        psmFmt(pts[i].y) +
+        'L' +
+        psmFmt(pts[j].x) +
+        ' ' +
+        psmFmt(pts[j].y);
+      if (capTampak[cap] || selimutTampak(am)) tampak.push(seg);
+      else samar.push(seg);
+    }
+    var sor = pilih.rusuk && pilih.rusuk[e.id] ? ' is-sorot' : '';
+    if (samar.length) {
+      rusukHTML +=
+        '<path class="psm-edge bgr-edge is-hidden' + sor + '" d="' + samar.join('') + '"/>';
+    }
+    if (tampak.length) {
+      rusukHTML += '<path class="psm-edge bgr-edge' + sor + '" d="' + tampak.join('') + '"/>';
+    }
+    if (mode === 'rusuk') {
+      rusukHit +=
+        '<polygon class="psm-hit psm-hit--rusuk bgr-hit-garis" points="' +
+        polyPts(pts) +
+        '"' +
+        hitAttr('rusuk', e) +
+        '/>';
+    }
+  });
+
+  /* Garis tepi gambar (garis pelukis) di batas selimut yang tampak. */
+  var semuHTML = '';
+  var vxy = Math.sqrt(v[0] * v[0] + v[1] * v[1]);
+  var phi = Math.atan2(v[1], v[0]);
+  var tepi = [];
+  if (vxy > 1e-9) {
+    if (!kerucut) {
+      tepi = [phi + Math.PI / 2, phi - Math.PI / 2];
+    } else {
+      var cosD = (-r * v[2]) / (h * vxy);
+      if (Math.abs(cosD) <= 1) {
+        var d = Math.acos(cosD);
+        tepi = [phi + d, phi - d];
+      }
+    }
+  }
+  tepi.forEach(function (a, i) {
+    var bawah = proj([r * Math.cos(a), r * Math.sin(a), 0]);
+    var atasP = kerucut ? puncak : proj([r * Math.cos(a), r * Math.sin(a), h]);
+    var garis =
+      '" x1="' +
+      psmFmt(bawah.x) +
+      '" y1="' +
+      psmFmt(bawah.y) +
+      '" x2="' +
+      psmFmt(atasP.x) +
+      '" y2="' +
+      psmFmt(atasP.y) +
+      '"';
+    semuHTML += '<line class="bgr-semu' + garis + '/>';
+    if (mode === 'rusuk') {
+      rusukHit +=
+        '<line class="psm-hit psm-hit--rusuk' + garis + hitAttr('semu', { id: 's' + i }) + '/>';
+    }
+  });
+
+  var titikHTML = '';
+  var titikHit = '';
+  model.titik.forEach(function (t) {
+    var p = puncak;
+    var sor = pilih.titik && pilih.titik[t.id];
+    titikHTML +=
+      '<circle class="psm-vertex' +
+      (adaSelimutTampak ? '' : ' is-hidden') +
+      (sor ? ' is-sorot' : '') +
+      '" cx="' +
+      psmFmt(p.x) +
+      '" cy="' +
+      psmFmt(p.y) +
+      '" r="' +
+      (sor ? 6 : 3.5) +
+      '"/>';
+    if (opts.label !== false) {
+      titikHTML +=
+        '<text class="psm-label" x="' +
+        psmFmt(p.x) +
+        '" y="' +
+        psmFmt(p.y - 14) +
+        '">' +
+        esc(t.nama) +
+        '</text>';
+    }
+    if (mode === 'titik') {
+      titikHit +=
+        '<circle class="psm-hit psm-hit--titik" cx="' +
+        psmFmt(p.x) +
+        '" cy="' +
+        psmFmt(p.y) +
+        '" r="13"' +
+        hitAttr('titik', t) +
+        '/>';
+    }
+  });
+
+  return (
+    '<svg class="psm-svg bgr-svg' +
+    (opts.kelas ? ' ' + opts.kelas : '') +
+    (mode ? ' psm-svg--' + mode : '') +
+    '" viewBox="' +
+    psmFmt(-half) +
+    ' ' +
+    psmFmt(-half) +
+    ' ' +
+    psmFmt(2 * half) +
+    ' ' +
+    psmFmt(2 * half) +
+    '" xmlns="http://www.w3.org/2000/svg" role="group" aria-label="' +
+    esc(opts.aria || model.jenis) +
+    '">' +
+    faces +
+    rusukHTML +
+    semuHTML +
+    titikHTML +
+    rusukHit +
+    titikHit +
+    '</svg>'
+  );
+}
+
+/* Model 3D bangun ruang apa pun. */
+function modelBangunRuang(jenis, n) {
+  if (jenis === 'prisma') return modelPrisma(n, { r: 1, tinggi: 1.5 });
+  if (jenis === 'limas') return modelLimas(n, { r: 1, tinggi: 1.5 });
+  return modelLengkung(jenis);
+}
+
+/* Gambar SVG bangun ruang (prisma/limas lewat buildPrismSVG). */
+function buildRuangSVG(jenis, n, view, opts) {
+  opts = Object.assign({}, opts || {});
+  if (!opts.aria) opts.aria = psmKapital(namaBangunRuang(jenis, n));
+  var model = modelBangunRuang(jenis, n);
+  if (jenis === 'prisma' || jenis === 'limas') return buildPrismSVG(model, view, opts);
+  return buildLengkungSVG(model, view, opts);
+}
+
+/* Teks info unsur yang diketuk pada model mana pun. */
+function infoUnsurBangun(jenis, n, kind, id) {
+  if (kind === 'semu') return bgrLabelUnsur('semu');
+  var model = modelBangunRuang(jenis, n);
+  var list = kind === 'titik' ? model.titik : kind === 'rusuk' ? model.rusuk : model.sisi;
+  var obj = list.filter(function (x) {
+    return x.id === id;
+  })[0];
+  if (!obj) return '';
+  return punyaSisiLengkung(jenis)
+    ? bgrLabelUnsur(kind, obj, jenis)
+    : psmLabelUnsur(kind, obj).replace('sisi atas', 'sisi tutup');
+}
+
+/* ---------- Gambar bidang penyusun ("bongkar") ---------- */
+
+function bgrSegiN(n, cx, cy, rr) {
+  var awal = -Math.PI / 2 - (n % 2 ? 0 : Math.PI / n);
+  var pts = [];
+  for (var i = 0; i < n; i++) {
+    var a = awal + (2 * Math.PI * i) / n;
+    pts.push({ x: cx + rr * Math.cos(a), y: cy + rr * Math.sin(a) });
+  }
+  return pts;
+}
+
+/*
+ * Bidang penyusun bangun ruang digambar terpisah satu per satu (bukan
+ * jaring-jaring): setiap sisi = satu <g class="bgr-bidang …">.
+ *   opts.aria  teks aksesibel
+ */
+function buildBidangPenyusunSVG(jenis, n, opts) {
+  opts = opts || {};
+  var C = 84;
+  var G = 14;
+  var kolom = 4;
+  var keping = [];
+  bidangPenyusun(jenis, n).forEach(function (b) {
+    for (var i = 0; i < b.banyak; i++) {
+      var lebar = b.lengkung && jenis === 'tabung' ? 2 : 1;
+      keping.push({ b: b, lebar: lebar });
+    }
+  });
+  var x = 0;
+  var y = 0;
+  var maxX = 0;
+  var html = '';
+  keping.forEach(function (k) {
+    if (x + k.lebar > kolom) {
+      x = 0;
+      y += 1;
+    }
+    var px = x * (C + G);
+    var py = y * (C + G + 18);
+    var w = k.lebar * C + (k.lebar - 1) * G;
+    var cx = px + w / 2;
+    var cy = py + C / 2;
+    var kelas = k.b.lengkung
+      ? 'bgr-bidang--selimut'
+      : /alas/.test(k.b.peran)
+      ? 'bgr-bidang--alas'
+      : 'bgr-bidang--tegak';
+    var bentuk;
+    if (k.b.bentuk === 'lingkaran') {
+      bentuk = '<circle cx="' + psmFmt(cx) + '" cy="' + psmFmt(cy) + '" r="' + C * 0.42 + '"/>';
+    } else if (k.b.bentuk === 'juring lingkaran') {
+      var R = C * 0.62;
+      var sudutJ = (2 * Math.PI) / 1.97;
+      var a0 = Math.PI / 2 - sudutJ / 2;
+      var a1 = Math.PI / 2 + sudutJ / 2;
+      var oy = py + 6;
+      bentuk =
+        '<path d="M' +
+        psmFmt(cx) +
+        ' ' +
+        psmFmt(oy) +
+        'L' +
+        psmFmt(cx + R * Math.cos(a0)) +
+        ' ' +
+        psmFmt(oy + R * Math.sin(a0)) +
+        'A' +
+        R +
+        ' ' +
+        R +
+        ' 0 1 1 ' +
+        psmFmt(cx + R * Math.cos(a1)) +
+        ' ' +
+        psmFmt(oy + R * Math.sin(a1)) +
+        'Z"/>';
+    } else if (k.b.bentuk === 'persegi panjang') {
+      var pw = k.b.lengkung ? w : C * 0.56;
+      var ph = k.b.lengkung ? C * 0.6 : C * 0.86;
+      bentuk =
+        '<rect x="' +
+        psmFmt(cx - pw / 2) +
+        '" y="' +
+        psmFmt(cy - ph / 2) +
+        '" width="' +
+        psmFmt(pw) +
+        '" height="' +
+        psmFmt(ph) +
+        '"/>';
+    } else if (k.b.bentuk === 'segitiga' && /tegak/.test(k.b.peran)) {
+      bentuk =
+        '<polygon points="' +
+        psmPoints([
+          { x: cx, y: py + 4 },
+          { x: cx + C * 0.32, y: py + C - 4 },
+          { x: cx - C * 0.32, y: py + C - 4 },
+        ]) +
+        '"/>';
+    } else {
+      bentuk = '<polygon points="' + psmPoints(bgrSegiN(n, cx, cy, C * 0.44)) + '"/>';
+    }
+    html +=
+      '<g class="bgr-bidang ' +
+      kelas +
+      '">' +
+      bentuk +
+      '<text class="bgr-bidang__label" x="' +
+      psmFmt(cx) +
+      '" y="' +
+      psmFmt(py + C + 14) +
+      '">' +
+      esc(k.b.nama) +
+      '</text></g>';
+    x += k.lebar;
+    maxX = Math.max(maxX, px + w);
+  });
+  var tinggi = (y + 1) * (C + G + 18);
+  return (
+    '<svg class="bgr-bidang-svg" viewBox="-4 -4 ' +
+    psmFmt(maxX + 8) +
+    ' ' +
+    psmFmt(tinggi + 4) +
+    '" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="' +
+    esc(
+      opts.aria ||
+        'Bidang penyusun ' + namaBangunRuang(jenis, n) + ': ' + teksBidangPenyusun(jenis, n)
+    ) +
+    '">' +
+    html +
+    '</svg>'
+  );
+}
+
+/* ---------- Lab Amati Benda: state & logika ---------- */
+
+var BGR_MODES = [
+  { id: 'sisi', label: 'Sisi', ikon: '▰' },
+  { id: 'rusuk', label: 'Rusuk', ikon: '╱' },
+  { id: 'titik', label: 'Titik sudut/puncak', ikon: '●' },
+];
+
+/*
+ * cfg = { benda: [{ id, nama, ikon, jenis, n, teks }], minBenda }
+ * st  = { benda, azimut, elevasi, mode, terpilih: {sisi, rusuk, titik},
+ *         info: { kind, id } | null, isian: {<benda>: {<kolom>: teks}},
+ *         hasil: {<benda>: {<kolom>: kode}}, dibongkar: {<benda>: true},
+ *         bidangPilih: {<benda>: idOpsi}, bidangOrder: {<benda>: [id…]},
+ *         percobaan, salah }
+ * Urutan opsi bidang penyusun tiap benda diacak SEKALI di sini.
+ */
+function ensureLabAmati(state, key, cfg) {
+  var st = state[key] && typeof state[key] === 'object' ? state[key] : {};
+  var ids = optionIds(cfg.benda);
+  if (ids.indexOf(st.benda) === -1) st.benda = ids[0];
+  if (typeof st.azimut !== 'number') st.azimut = -25;
+  if (typeof st.elevasi !== 'number') st.elevasi = 25;
+  if (optionIds(BGR_MODES).indexOf(st.mode) === -1) st.mode = 'sisi';
+  if (!st.terpilih || typeof st.terpilih !== 'object') st.terpilih = {};
+  BGR_MODES.forEach(function (m) {
+    if (!st.terpilih[m.id] || typeof st.terpilih[m.id] !== 'object') st.terpilih[m.id] = {};
+  });
+  if (st.info && typeof st.info !== 'object') st.info = null;
+  ['isian', 'hasil', 'dibongkar', 'bidangPilih', 'bidangOrder'].forEach(function (k) {
+    if (!st[k] || typeof st[k] !== 'object' || Array.isArray(st[k])) st[k] = {};
+  });
+  cfg.benda.forEach(function (b) {
+    if (!st.isian[b.id] || typeof st.isian[b.id] !== 'object') st.isian[b.id] = {};
+    if (!st.hasil[b.id] || typeof st.hasil[b.id] !== 'object') st.hasil[b.id] = {};
+    BGR_KOLOM.forEach(function (k) {
+      if (typeof st.isian[b.id][k.id] !== 'string') st.isian[b.id][k.id] = '';
+    });
+    ensureShuffledOrder(st.bidangOrder, b.id, opsiBidangBenda(b));
+  });
+  if (typeof st.percobaan !== 'number') st.percobaan = 0;
+  if (typeof st.salah !== 'number') st.salah = 0;
+  state[key] = st;
+  return st;
+}
+
+function opsiBidangBenda(b) {
+  return opsiSoalRuang({ cek: { minta: 'bidang', jenis: b.jenis, n: b.n } });
+}
+
+function bendaAmatiById(cfg, id) {
+  return cfg.benda.filter(function (b) {
+    return b.id === id;
+  })[0];
+}
+
+function isianAmatiBenar(st, id) {
+  return BGR_KOLOM.every(function (k) {
+    return st.hasil[id] && st.hasil[id][k.id] === 'benar';
+  });
+}
+
+function bendaAmatiSelesai(st, id) {
+  return isianAmatiBenar(st, id) && st.bidangPilih[id] === 'baku';
+}
+
+/* Memeriksa isian tabel benda aktif → { kode: 'kosong'|'format'|'ok', semuaBenar }. */
+function periksaIsianAmati(st, cfg) {
+  var b = bendaAmatiById(cfg, st.benda);
+  var nilai = {};
+  var kode = 'ok';
+  BGR_KOLOM.forEach(function (k) {
+    var p = parseInputInt(st.isian[b.id][k.id]);
+    if (p.error === 'empty') kode = 'kosong';
+    else if ((p.error || p.value < 0) && kode !== 'kosong') kode = 'format';
+    nilai[k.id] = p.value;
+  });
+  if (kode !== 'ok') return { kode: kode, semuaBenar: false };
+  BGR_KOLOM.forEach(function (k) {
+    st.hasil[b.id][k.id] = diagnosaUnsurBangun(b.jenis, b.n, k.id, nilai[k.id]).kode;
+  });
+  var semua = isianAmatiBenar(st, b.id);
+  st.percobaan += 1;
+  if (!semua) st.salah += 1;
+  return { kode: 'ok', semuaBenar: semua };
+}
+
+/* Memilih bidang penyusun benda aktif; true bila tepat. */
+function pilihBidangAmati(st, cfg, optId) {
+  var b = bendaAmatiById(cfg, st.benda);
+  if (!isianAmatiBenar(st, b.id) || st.bidangPilih[b.id] === 'baku') return false;
+  if (optionIds(opsiBidangBenda(b)).indexOf(optId) === -1) return false;
+  st.bidangPilih[b.id] = optId;
+  return optId === 'baku';
+}
+
+function bendaAmatiTercatat(st, cfg) {
+  return cfg.benda.filter(function (b) {
+    return bendaAmatiSelesai(st, b.id);
+  });
+}
+
+/* Lengkap: minimal cfg.minBenda benda tercatat dan keempat bangun terwakili. */
+function labAmatiLengkap(st, cfg) {
+  var catat = bendaAmatiTercatat(st, cfg);
+  return (
+    catat.length >= (cfg.minBenda || BGR_JENIS.length) &&
+    BGR_JENIS.every(function (j) {
+      return catat.some(function (b) {
+        return b.jenis === j;
+      });
+    })
+  );
+}
+
+/* Tabel pengamatan berisi benda yang sudah tercatat. */
+function buildTabelAmati(st, cfg, opts) {
+  opts = opts || {};
+  var catat = bendaAmatiTercatat(st, cfg);
+  var body = catat.length
+    ? catat
+        .map(function (b) {
+          var u = unsurBangunRuang(b.jenis, b.n);
+          return (
+            '<tr><th scope="row"><span aria-hidden="true">' +
+            b.ikon +
+            '</span> ' +
+            esc(b.nama) +
+            '</th><td>' +
+            esc(psmKapital(namaBangunRuang(b.jenis, b.n))) +
+            '</td>' +
+            BGR_KOLOM.map(function (k) {
+              return '<td class="bgr-tabel__angka">' + u[k.id] + '</td>';
+            }).join('') +
+            '<td>' +
+            esc(teksBidangPenyusun(b.jenis, b.n)) +
+            '</td></tr>'
+          );
+        })
+        .join('')
+    : '<tr><td colspan="7" class="bgr-tabel__kosong">Belum ada benda yang tercatat.</td></tr>';
+  return (
+    '<div class="psm-table-wrap bgr-tabel-wrap">' +
+    '<table class="psm-table bgr-tabel">' +
+    '<caption>' +
+    esc(opts.caption || 'Tabel pengamatan benda') +
+    '</caption>' +
+    '<thead><tr><th scope="col">Benda</th><th scope="col">Bangun ruang</th>' +
+    BGR_KOLOM.map(function (k) {
+      return '<th scope="col">' + esc(k.label) + '</th>';
+    }).join('') +
+    '<th scope="col">Bidang penyusun</th></tr></thead><tbody>' +
+    body +
+    '</tbody></table></div>'
+  );
+}
+
+/* ---------- Lab Amati Benda: UI ---------- */
+
+function bgrInfoAmati(st, b) {
+  if (!st.info) {
+    return 'Ketuk sebuah unsur pada model untuk menandainya. Geser "Putar" dan "Miringkan" untuk melihat bagian belakang dan bawah.';
+  }
+  var teks = infoUnsurBangun(b.jenis, b.n, st.info.kind, st.info.id);
+  if (st.info.kind === 'semu') return teks;
+  return teks + (st.terpilih[st.info.kind][st.info.id] ? ' — ditandai' : ' — tanda dihapus');
+}
+
+function bgrStageAmati(st, b) {
+  return buildRuangSVG(b.jenis, b.n, st, {
+    mode: st.mode,
+    terpilih: st.terpilih,
+    skala: 80,
+    aria: 'Model ' + namaBangunRuang(b.jenis, b.n) + ' dari ' + b.nama,
+  });
+}
+
+function bgrCounterAmati(st) {
+  return BGR_MODES.map(function (m) {
+    return (
+      '<span class="psm-count' +
+      (st.mode === m.id ? ' is-active' : '') +
+      '"><span aria-hidden="true">' +
+      m.ikon +
+      '</span> ' +
+      m.label +
+      ' ditandai: <strong>' +
+      Object.keys(st.terpilih[m.id]).length +
+      '</strong></span>'
+    );
+  }).join('');
+}
+
+function bgrIsianAmati(id, st, b) {
+  var benar = isianAmatiBenar(st, b.id);
+  var pesan = [];
+  var sel = BGR_KOLOM.map(function (k) {
+    var kode = st.hasil[b.id][k.id];
+    var ok = kode === 'benar';
+    if (kode && !ok) pesan.push(k.label + ': ' + BGR_PESAN[kode]);
+    return (
+      '<div class="bgr-isian__sel">' +
+      '<label for="' +
+      id +
+      '-' +
+      k.id +
+      '">' +
+      esc(k.label) +
+      '</label>' +
+      '<input type="text" inputmode="numeric" autocomplete="off" class="input-text' +
+      (ok ? ' is-correct' : kode ? ' has-error' : '') +
+      '" id="' +
+      id +
+      '-' +
+      k.id +
+      '" data-bgr-isian="' +
+      k.id +
+      '" value="' +
+      esc(st.isian[b.id][k.id]) +
+      '"' +
+      (benar ? ' disabled' : '') +
+      '>' +
+      '</div>'
+    );
+  }).join('');
+  return (
+    '<div class="bgr-isian">' +
+    '<p class="bgr-isian__judul">✏️ Catat hasil pengamatan ' +
+    esc(b.nama) +
+    ':</p>' +
+    '<div class="bgr-isian__grid">' +
+    sel +
+    '</div>' +
+    (benar
+      ? ''
+      : '<div class="btn-group"><button type="button" class="btn btn--primary" id="' +
+        id +
+        'Periksa">Periksa Isian</button></div>' +
+        (pesan.length
+          ? buildFeedbackBox(
+              'error',
+              '✗',
+              '<ul class="psm-diagnosa">' +
+                pesan
+                  .map(function (p) {
+                    return '<li>' + esc(p) + '</li>';
+                  })
+                  .join('') +
+                '</ul>'
+            )
+          : '')) +
+    '</div>'
+  );
+}
+
+function bgrBongkarAmati(id, st, b) {
+  if (!isianAmatiBenar(st, b.id)) return '';
+  var dibongkar = !!st.dibongkar[b.id];
+  var pilih = st.bidangPilih[b.id] || null;
+  var benar = pilih === 'baku';
+  var opsi = opsiBidangBenda(b);
+  var umpan = {};
+  opsi.forEach(function (o) {
+    umpan[o.id] = esc(o.umpan);
+  });
+  return (
+    '<div class="bgr-bongkar">' +
+    buildFeedbackBox('success', '✓', '<strong>Banyak unsurnya tepat.</strong>') +
+    (dibongkar
+      ? '<p class="bgr-isian__judul">🔧 ' +
+        esc(b.nama) +
+        ' dibongkar menjadi bidang-bidang penyusunnya:</p>' +
+        '<div class="bgr-bidang-wrap">' +
+        buildBidangPenyusunSVG(b.jenis, b.n) +
+        '</div>' +
+        '<p class="exercise-label">Jadi, bidang penyusun ' +
+        esc(b.nama) +
+        ' adalah …</p>' +
+        buildChoiceGroup(
+          opsi.map(function (o) {
+            return { id: o.id, label: esc(o.label) };
+          }),
+          st.bidangOrder[b.id],
+          {
+            chosen: pilih,
+            correctId: benar ? 'baku' : null,
+            grade: true,
+            locked: benar,
+            attr: 'data-bgr-bidang',
+          }
+        ) +
+        buildGuidedChoiceFeedback(pilih, benar, umpan) +
+        (benar
+          ? buildFeedbackBox(
+              'info',
+              '📋',
+              esc(b.nama) + ' sudah tercatat di tabel pengamatan. Pilih benda lain di atas.'
+            )
+          : '')
+      : '<div class="btn-group"><button type="button" class="btn btn--outline-primary" id="' +
+        id +
+        'Bongkar">🔧 Bongkar menjadi bidang-bidang penyusun</button></div>') +
+    '</div>'
+  );
+}
+
+/* Lab Amati Benda lengkap; pasangkan dengan bindLabAmati. */
+function buildLabAmati(id, st, cfg) {
+  var b = bendaAmatiById(cfg, st.benda);
+  var pilihBenda =
+    '<div class="bgr-benda-grid" role="group" aria-label="Pilih benda yang diamati">' +
+    cfg.benda
+      .map(function (x) {
+        var aktif = x.id === b.id;
+        var selesai = bendaAmatiSelesai(st, x.id);
+        return (
+          '<button type="button" class="bgr-benda' +
+          (aktif ? ' is-active' : '') +
+          (selesai ? ' is-done' : '') +
+          '" data-bgr-benda="' +
+          x.id +
+          '" aria-pressed="' +
+          (aktif ? 'true' : 'false') +
+          '"><span class="bgr-benda__ikon" aria-hidden="true">' +
+          x.ikon +
+          '</span><span class="bgr-benda__nama">' +
+          esc(x.nama) +
+          '</span>' +
+          (selesai ? '<span class="bgr-benda__cek">✓ tercatat</span>' : '') +
+          '</button>'
+        );
+      })
+      .join('') +
+    '</div>';
+  return (
+    '<div class="bgr-lab" id="' +
+    id +
+    '">' +
+    pilihBenda +
+    '<div class="bgr-lab__kerja">' +
+    '<div class="psm-explorer">' +
+    '<p class="psm-explorer__nama"><span aria-hidden="true">' +
+    b.ikon +
+    '</span> <strong>' +
+    esc(b.nama) +
+    '</strong> → model ' +
+    esc(namaBangunRuang(b.jenis, b.n)) +
+    '</p>' +
+    (b.teks ? '<p class="bgr-benda__teks">' + esc(b.teks) + '</p>' : '') +
+    '<div class="psm-toolbar" role="group" aria-label="Unsur yang ditandai">' +
+    BGR_MODES.map(function (m) {
+      return (
+        '<button type="button" class="psm-tool-btn psm-tool-btn--mode' +
+        (st.mode === m.id ? ' is-active' : '') +
+        '" data-bgr-mode="' +
+        m.id +
+        '" aria-pressed="' +
+        (st.mode === m.id ? 'true' : 'false') +
+        '"><span aria-hidden="true">' +
+        m.ikon +
+        '</span> Tandai ' +
+        m.label.toLowerCase() +
+        '</button>'
+      );
+    }).join('') +
+    '</div>' +
+    '<div class="psm-stage" data-bgr-stage>' +
+    bgrStageAmati(st, b) +
+    '</div>' +
+    '<div class="psm-rotate">' +
+    '<label class="psm-range"><span>↻ Putar</span><input type="range" min="-180" max="180" step="5" value="' +
+    st.azimut +
+    '" data-bgr-range="azimut" aria-label="Putar model"></label>' +
+    '<label class="psm-range"><span>⤢ Miringkan</span><input type="range" min="-60" max="80" step="5" value="' +
+    st.elevasi +
+    '" data-bgr-range="elevasi" aria-label="Miringkan model"></label>' +
+    '</div>' +
+    '<p class="psm-info" data-bgr-info aria-live="polite">' +
+    esc(bgrInfoAmati(st, b)) +
+    '</p>' +
+    '<div class="psm-counter" data-bgr-counter>' +
+    bgrCounterAmati(st) +
+    '</div>' +
+    '<div class="btn-group"><button type="button" class="btn btn--ghost btn--small" data-bgr-clear>Hapus semua tanda</button></div>' +
+    '</div>' +
+    '<div class="bgr-lab__catat">' +
+    bgrIsianAmati(id, st, b) +
+    bgrBongkarAmati(id, st, b) +
+    '</div>' +
+    '</div>' +
+    '</div>'
+  );
+}
+
+/*
+ * onChange(fokusSelektor) → simpan & render ulang tahap; onSave() → hanya
+ * simpan (dipakai saat memutar, menandai unsur, dan mengetik isian agar
+ * fokus & posisi slider tidak hilang).
+ */
+function bindLabAmati(root, id, st, cfg, onChange, onSave) {
+  var el = root.querySelector('#' + id);
+  if (!el) return;
+  var b = bendaAmatiById(cfg, st.benda);
+
+  function perbaruiGambar() {
+    el.querySelector('[data-bgr-stage]').innerHTML = bgrStageAmati(st, b);
+    el.querySelector('[data-bgr-info]').textContent = bgrInfoAmati(st, b);
+    el.querySelector('[data-bgr-counter]').innerHTML = bgrCounterAmati(st);
+    pasangHit();
+  }
+
+  function ketuk(kind, uid) {
+    if (kind !== 'semu') {
+      var map = st.terpilih[kind];
+      if (map[uid]) delete map[uid];
+      else map[uid] = true;
+    }
+    st.info = { kind: kind, id: uid };
+    perbaruiGambar();
+    var f = el.querySelector('[data-psm-kind="' + kind + '"][data-psm-id="' + uid + '"]');
+    if (f) f.focus();
+    onSave();
+  }
+
+  function pasangHit() {
+    el.querySelectorAll('[data-psm-kind]').forEach(function (h) {
+      var jalan = function () {
+        ketuk(h.getAttribute('data-psm-kind'), h.getAttribute('data-psm-id'));
+      };
+      h.addEventListener('click', jalan);
+      h.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          jalan();
+        }
+      });
+    });
+  }
+  pasangHit();
+
+  function kosongkanTanda() {
+    BGR_MODES.forEach(function (m) {
+      st.terpilih[m.id] = {};
+    });
+    st.info = null;
+  }
+
+  el.querySelectorAll('[data-bgr-benda]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var bid = btn.getAttribute('data-bgr-benda');
+      if (bid === st.benda) return;
+      st.benda = bid;
+      kosongkanTanda();
+      onChange('#' + id + ' [data-bgr-benda="' + bid + '"]');
+    });
+  });
+
+  el.querySelectorAll('[data-bgr-mode]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      st.mode = btn.getAttribute('data-bgr-mode');
+      st.info = null;
+      onChange('#' + id + ' [data-bgr-mode="' + st.mode + '"]');
+    });
+  });
+
+  el.querySelectorAll('[data-bgr-range]').forEach(function (inp) {
+    inp.addEventListener('input', function () {
+      st[inp.getAttribute('data-bgr-range')] = parseInt(inp.value, 10);
+      perbaruiGambar();
+    });
+    inp.addEventListener('change', onSave);
+  });
+
+  var clear = el.querySelector('[data-bgr-clear]');
+  if (clear) {
+    clear.addEventListener('click', function () {
+      kosongkanTanda();
+      perbaruiGambar();
+      onSave();
+    });
+  }
+
+  var periksa = function () {
+    var r = periksaIsianAmati(st, cfg);
+    if (r.kode === 'kosong') {
+      showNotice('Lengkapi keempat kotak isian lebih dulu. Tulis 0 bila unsurnya tidak ada.');
+      return;
+    }
+    if (r.kode === 'format') {
+      showNotice(BGR_PESAN.format);
+      return;
+    }
+    onChange(r.semuaBenar ? '#' + id + 'Bongkar' : '#' + id + 'Periksa');
+  };
+  el.querySelectorAll('[data-bgr-isian]').forEach(function (inp) {
+    inp.addEventListener('input', function () {
+      st.isian[b.id][inp.getAttribute('data-bgr-isian')] = inp.value;
+      onSave();
+    });
+    inp.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter') periksa();
+    });
+  });
+  var btnPeriksa = el.querySelector('#' + id + 'Periksa');
+  if (btnPeriksa) btnPeriksa.addEventListener('click', periksa);
+
+  var bongkar = el.querySelector('#' + id + 'Bongkar');
+  if (bongkar) {
+    bongkar.addEventListener('click', function () {
+      st.dibongkar[b.id] = true;
+      onChange('#' + id + ' [data-bgr-bidang]');
+    });
+  }
+
+  el.querySelectorAll('[data-bgr-bidang]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      if (st.bidangPilih[b.id] === 'baku') return;
+      pilihBidangAmati(st, cfg, btn.getAttribute('data-bgr-bidang'));
+      onChange();
+    });
+  });
 }

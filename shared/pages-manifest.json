@@ -175,6 +175,14 @@
     "stageCount": 11,
     "extraBody": "partials/reset-modal.html"
   },
+  "fase-d/mpi-9.1": {
+    "title": "Unsur & Bidang Penyusun Bangun Ruang — Matematika Fase D",
+    "description": "Media pembelajaran interaktif berbasis Discovery Learning untuk mengidentifikasi unsur-unsur dan bidang penyusun prisma, tabung, limas, dan kerucut melalui pengamatan benda konkret di lingkungan sekitar: Lab Amati Benda (memutar model 3D kotak susu, kaleng, tumpeng, piramida, dan benda lain, menandai sisi datar, sisi lengkung, rusuk, titik sudut dan titik puncak, lalu membongkarnya menjadi bidang penyusun), tabel pengamatan berdiagnosa, pemilahan, pola unsur prisma dan limas segi-n, prediksi lalu pembuktian pada benda acak, serta uji terap acak.",
+    "kicker": "Matematika — Fase D (SMP)",
+    "h1": "Unsur & Bidang Penyusun Bangun Ruang",
+    "stageCount": 11,
+    "extraBody": "partials/reset-modal.html"
+  },
   "fase-d/mpi-23.1": {
     "title": "Keliling & Luas Bangun Datar — Matematika Fase D",
     "description": "Media pembelajaran interaktif berbasis Discovery Learning, diawali asesmen diagnostik, untuk menentukan keliling dan luas segitiga, persegi, persegi panjang, jajargenjang, trapesium, belah ketupat, dan layang-layang melalui eksplorasi dalam Proyek Taman Sekolah Kelas VII: Lab Petak untuk menghitung petak dan ruas satuan, Lab Potong-Susun untuk mengubah bangun menjadi persegi panjang atau jajargenjang, pemilahan rumus luas, serta uji terap acak berdiagnosa miskonsepsi.",
