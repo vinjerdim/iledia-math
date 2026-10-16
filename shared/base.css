@@ -16041,3 +16041,179 @@ button.akar-tile:disabled {
   color: var(--color-orange-strong);
   white-space: nowrap;
 }
+
+/* =========================================================================
+   Hubungan antar sudut (engine seksi 77)
+   Gambar dua garis berpotongan (.dua-garis*) dan Lab Sudut (.lab-sudut*).
+   Setiap sudut berwarna sendiri (dg-w1…4 untuk busur, dg-t1…4 untuk
+   label) dan juga diberi nomor, sehingga tidak bergantung pada warna.
+   Lab Sudut memakai ulang tata letak .lab-neraca* (seksi 75).
+   ========================================================================= */
+
+.dua-garis {
+  display: block;
+  width: 100%;
+  max-width: 420px;
+  height: auto;
+  margin: 0 auto;
+}
+
+.dua-garis__garis,
+.dua-garis__sinar {
+  stroke: var(--color-ink);
+  stroke-width: 3;
+  stroke-linecap: round;
+}
+
+.dua-garis__sinar {
+  stroke: var(--color-purple-strong);
+}
+
+.dua-garis__siku {
+  fill: none;
+  stroke: var(--color-ink);
+  stroke-width: 1.5;
+}
+
+.dua-garis__pusat {
+  fill: var(--color-ink);
+}
+
+.dua-garis__huruf {
+  font-family: var(--font-display);
+  font-size: 15px;
+  font-weight: 700;
+  fill: var(--color-ink);
+}
+
+.dua-garis__busur-sudut {
+  fill: none;
+  stroke-width: 3;
+}
+
+.dua-garis__busur-sudut.is-sorot {
+  stroke-width: 7;
+}
+
+.dua-garis__busur-sudut.is-aktif {
+  stroke-dasharray: 4 3;
+}
+
+.dua-garis__label-sudut {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.dg-w1 {
+  stroke: var(--color-blue);
+}
+.dg-w2 {
+  stroke: var(--color-orange);
+}
+.dg-w3 {
+  stroke: var(--color-purple);
+}
+.dg-w4 {
+  stroke: var(--color-success);
+}
+.dg-t1 {
+  fill: var(--color-blue-strong);
+}
+.dg-t2 {
+  fill: var(--color-orange-strong);
+}
+.dg-t3 {
+  fill: var(--color-purple-strong);
+}
+.dg-t4 {
+  fill: var(--color-success-strong);
+}
+
+.dua-garis__juring {
+  fill: transparent;
+  cursor: pointer;
+}
+
+.dua-garis__juring:hover {
+  fill: rgba(37, 99, 235, 0.08);
+}
+
+.dua-garis__busur-badan {
+  fill: rgba(253, 243, 208, 0.82);
+  stroke: var(--color-warning);
+  stroke-width: 1.5;
+}
+
+.dua-garis__busur-tick {
+  stroke: var(--color-warning-strong);
+  stroke-width: 1;
+}
+
+.dua-garis__busur-angka {
+  font-family: var(--font-mono);
+  font-size: 8.5px;
+  font-weight: 700;
+  fill: var(--color-blue-strong);
+}
+
+.dua-garis__busur-angka-luar {
+  font-family: var(--font-mono);
+  font-size: 7px;
+  fill: var(--color-ink-muted);
+}
+
+.dua-garis__pegangan {
+  fill: var(--color-orange);
+  stroke: var(--color-surface);
+  stroke-width: 3;
+  cursor: grab;
+}
+
+.dua-garis__pegangan:focus-visible {
+  outline: none;
+  stroke: var(--color-focus);
+  stroke-width: 4;
+}
+
+.lab-sudut__gambar svg {
+  touch-action: none;
+}
+
+.lab-sudut__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.lab-sudut__nama {
+  font-size: 0.8rem;
+  color: var(--color-ink-muted);
+}
+
+.lab-sudut__baca {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  border: 1px solid var(--color-warning);
+  border-radius: var(--radius-md);
+  background: var(--color-warning-soft);
+}
+
+.lab-sudut__baca label {
+  font-weight: 700;
+}
+
+.lab-sudut__baca .input-text {
+  max-width: 120px;
+}
+
+.lab-sudut__satuan {
+  align-self: center;
+  font-weight: 700;
+}
+
+.lab-sudut__kosong {
+  margin: 0;
+}

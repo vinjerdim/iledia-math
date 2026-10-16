@@ -244,6 +244,12 @@
        berdiagnosa miskonsepsi tanda terbalik / batas termasuk / "="
        untuk batasan / satu nilai saja, opsi berpengecoh, garis bilangan
        SVG, Lab Batas)
+   77. Hubungan antar sudut (besar keempat sudut pada dua garis
+       berpotongan & sudut siku-siku yang dibagi sinar, jenis pasangan
+       berpelurus/berpenyiku/bertolak belakang, isian sudut berdiagnosa
+       miskonsepsi tertukar pelurus–penyiku, mengira sama besar, salah
+       skala busur & salah relasi pada bentuk aljabar, opsi berpengecoh,
+       gambar dua garis SVG + busur derajat virtual, Lab Sudut)
    ============================================================ */
 
 /* ============================================================
@@ -50909,6 +50915,1091 @@ function bindLabBatas(root, id, st, cfg, onChange) {
     btn.addEventListener('click', kirim);
     inp.addEventListener('keydown', function (e) {
       if (e.key === 'Enter') kirim();
+    });
+  }
+}
+
+/* ============================================================
+   77. HUBUNGAN ANTAR SUDUT (BERPELURUS, BERPENYIKU, BERTOLAK BELAKANG)
+   Dua garis AB dan CD berpotongan di O. Garis AB mendatar; garis CD
+   diputar sehingga ∠BOC = t. Keempat sudut diberi nomor berlawanan
+   arah jarum jam mulai dari kanan atas:
+     ∠1 = ∠BOC = t,  ∠2 = ∠COA = 180° − t,
+     ∠3 = ∠AOD = t,  ∠4 = ∠DOB = 180° − t.
+   Sudut bersebelahan (∠1 & ∠2, …) berpelurus — jumlahnya 180° karena
+   bersama-sama membentuk garis lurus; sudut berhadapan (∠1 & ∠3,
+   ∠2 & ∠4) bertolak belakang — sama besar karena keduanya pelurus dari
+   sudut yang sama. Mode 'siku': AB ⊥ CD dan sinar OE membagi ∠BOC
+   (siku-siku) menjadi ∠1 = ∠BOE = t dan ∠2 = ∠EOC = 90° − t yang
+   berpenyiku. Dipakai fase-d/mpi-8.1. Gaya .dua-garis*, .lab-sudut*
+   ada di shared/base.css.
+
+   Notasi cek soal (lihat nilaiSoalSudut):
+     { minta: 'jumlah', sudut: [a, b] }               → a + b
+     { minta: 'pelurus', sudut: a }                   → 180 − a
+     { minta: 'penyiku', sudut: a }                   → 90 − a
+     { minta: 'tolakBelakang', sudut: a }             → a
+     { minta: 'bacaBusur', nilai }                    → nilai (skala dalam)
+     { minta: 'cari', diketahui: { k, nilai }, ditanya } → ∠(ditanya + 1)
+                                                         pada dua garis
+     { minta: 'jenis', mode, pasangan: [i, j] }       → id OPSI_JENIS_SUDUT
+     { minta: 'jenis', sudut: [a, b] }                → id OPSI_JENIS_SUDUT
+     { minta: 'aljabar', relasi, a: [p, q], b: [r, s], tanya }
+                     → dua sudut (px + q)° dan (rx + s)° yang
+                       berhubungan `relasi`; tanya 'x' | 'sudut' (besar
+                       sudut pertama)
+   Indeks sudut k mulai 0 (∠1).
+   ============================================================ */
+
+/* ---------- Besar sudut ---------- */
+
+function sudutDuaGaris(t) {
+  return [t, 180 - t, t, 180 - t];
+}
+
+function sudutSikuSinar(t) {
+  return [t, 90 - t];
+}
+
+function besarSudutLab(mode, t) {
+  return mode === 'siku' ? sudutSikuSinar(t) : sudutDuaGaris(t);
+}
+
+function pelurusDari(a) {
+  return 180 - a;
+}
+
+function penyikuDari(a) {
+  return 90 - a;
+}
+
+/* Arah sinar (derajat, berlawanan jarum jam dari OB) tiap mode. */
+function arahSinarSudut(mode, t) {
+  if (mode === 'siku') return [0, t, 90, 180, 270];
+  return [0, t, 180, 180 + t];
+}
+
+/* Nama titik ujung sinar, sejajar arahSinarSudut. */
+function hurufSinarSudut(mode) {
+  return mode === 'siku' ? ['B', 'E', 'C', 'A', 'D'] : ['B', 'C', 'A', 'D'];
+}
+
+/* Nama sudut ke-k dengan tiga huruf, mis. ∠BOC. */
+function namaSudutLab(mode, k) {
+  var h = hurufSinarSudut(mode);
+  return '∠' + h[k] + 'O' + h[(k + 1) % h.length];
+}
+
+function banyakSudutLab(mode) {
+  return mode === 'siku' ? 2 : 4;
+}
+
+/* ---------- Jenis pasangan ---------- */
+
+var OPSI_JENIS_SUDUT = [
+  { id: 'berpelurus', label: 'Berpelurus (jumlahnya 180°)' },
+  { id: 'berpenyiku', label: 'Berpenyiku (jumlahnya 90°)' },
+  { id: 'bertolakBelakang', label: 'Bertolak belakang (sama besar)' },
+  { id: 'bukanKeduanya', label: 'Bukan pasangan istimewa' },
+];
+
+function jenisPasanganSudut(mode, i, j) {
+  if (i === j) return null;
+  if (mode === 'siku') return 'berpenyiku';
+  return Math.abs(i - j) === 2 ? 'bertolakBelakang' : 'berpelurus';
+}
+
+function jenisPasanganNilai(a, b) {
+  if (a + b === 90) return 'berpenyiku';
+  if (a + b === 180) return 'berpelurus';
+  return 'bukanKeduanya';
+}
+
+/* ---------- Membaca isian ---------- */
+
+/* '130', '130°', '130 derajat', 'x = 30', '22,5' → { kode: 'ok', nilai }. */
+function parseSudutIsian(str) {
+  var s = String(str == null ? '' : str).trim();
+  if (!s) return { kode: 'kosong' };
+  s = s
+    .replace(/−/g, '-')
+    .replace(/^[a-z]\s*=\s*/i, '')
+    .replace(/\s*(°|derajat|o)$/i, '')
+    .replace(',', '.');
+  if (!/^-?\d+(\.\d+)?$/.test(s)) return { kode: 'format' };
+  return { kode: 'ok', nilai: parseFloat(s) };
+}
+
+/* ---------- Kunci jawaban ---------- */
+
+function nilaiSudutAljabar(c, x) {
+  return c.a[0] * x + c.a[1];
+}
+
+/* Nilai x dari dua bentuk (px + q) dan (rx + s) menurut relasi; null bila tak tentu. */
+function xSudutAljabar(c, relasi) {
+  var p = c.a[0];
+  var q = c.a[1];
+  var r = c.b[0];
+  var s = c.b[1];
+  var koef;
+  var konst;
+  if (relasi === 'bertolakBelakang') {
+    koef = p - r;
+    konst = s - q;
+  } else {
+    koef = p + r;
+    konst = (relasi === 'berpenyiku' ? 90 : 180) - q - s;
+  }
+  return koef === 0 ? null : konst / koef;
+}
+
+function nilaiSoalSudut(c) {
+  switch (c.minta) {
+    case 'jumlah':
+      return c.sudut[0] + c.sudut[1];
+    case 'pelurus':
+      return pelurusDari(c.sudut);
+    case 'penyiku':
+      return penyikuDari(c.sudut);
+    case 'tolakBelakang':
+      return c.sudut;
+    case 'bacaBusur':
+      return c.nilai;
+    case 'cari':
+      return jenisPasanganSudut('potong', c.diketahui.k, c.ditanya) === 'bertolakBelakang'
+        ? c.diketahui.nilai
+        : pelurusDari(c.diketahui.nilai);
+    case 'jenis':
+      return c.pasangan
+        ? jenisPasanganSudut(c.mode, c.pasangan[0], c.pasangan[1])
+        : jenisPasanganNilai(c.sudut[0], c.sudut[1]);
+    case 'aljabar': {
+      var x = xSudutAljabar(c, c.relasi);
+      return c.tanya === 'x' ? x : nilaiSudutAljabar(c, x);
+    }
+  }
+  return null;
+}
+
+function labelJenisSudut(id) {
+  var o = OPSI_JENIS_SUDUT.filter(function (x) {
+    return x.id === id;
+  })[0];
+  return o ? o.label : id;
+}
+
+function teksAngkaSudut(v) {
+  return formatDesimal(v, 2);
+}
+
+/* Teks satu nilai jawaban soal c: '115°', 'x = 30', atau label jenis. */
+function teksNilaiSoalSudut(c, v) {
+  if (c.minta === 'jenis') return labelJenisSudut(v);
+  if (c.minta === 'aljabar' && c.tanya === 'x') return 'x = ' + teksAngkaSudut(v);
+  return teksAngkaSudut(v) + '°';
+}
+
+function jawabSoalSudut(s) {
+  return teksNilaiSoalSudut(s.cek, nilaiSoalSudut(s.cek));
+}
+
+/* ---------- Diagnosa ---------- */
+
+var PESAN_SUDUT = {
+  benar: 'Tepat!',
+  kosong: 'Isi jawabanmu terlebih dahulu.',
+  format: 'Tulis besar sudut dengan angka saja, mis. 130 atau 130°.',
+  tertukarPenyiku:
+    'Itu penyikunya (jumlahnya 90°). Sudut yang ditanyakan bersebelahan pada garis lurus, jadi jumlah keduanya 180°.',
+  tertukarPelurus:
+    'Itu pelurusnya (jumlahnya 180°). Sudut berpenyiku bersama-sama membentuk sudut siku-siku, jadi jumlahnya 90°.',
+  kiraSamaBesar:
+    'Sudut yang bersebelahan tidak selalu sama besar. Ingat: jumlah pasangan ini tetap (180° untuk berpelurus, 90° untuk berpenyiku).',
+  kiraPelurus:
+    'Itu pelurusnya. Sudut yang ditanyakan berhadapan (bertolak belakang), jadi besarnya SAMA dengan sudut yang diketahui.',
+  kelilingPenuh:
+    'Kamu mengurangkan dari 360° (satu putaran penuh). Pasangan sudut pada satu garis lurus berjumlah 180°.',
+  selisih: 'Itu selisih kedua sudut. Yang diminta jumlahnya: tambahkan kedua besar sudut.',
+  skalaTerbalik:
+    'Kamu membaca skala busur yang salah. Mulailah dari 0° pada lengan pertama sudut, lalu baca skala yang sama sampai lengan kedua.',
+  bukanSudut: 'Besar sudut pada dua garis berpotongan selalu lebih dari 0° dan kurang dari 180°.',
+  sudutBukanX:
+    'Itu besar sudutnya. Yang ditanyakan nilai x: selesaikan persamaannya, jangan substitusikan dulu.',
+  xBukanSudut:
+    'Itu nilai x. Substitusikan x ke dalam bentuk sudutnya untuk memperoleh besar sudut.',
+  relasiSalah:
+    'Persamaannya memakai hubungan yang keliru. Periksa jenis pasangan sudutnya: bertolak belakang → sama besar; berpelurus → jumlahnya 180°; berpenyiku → jumlahnya 90°.',
+  salah: 'Belum tepat. Periksa kembali jenis pasangan sudutnya, lalu hitung lagi.',
+};
+
+/* Umpan untuk pilihan jenis yang keliru, menurut jenis yang dipilih. */
+var UMPAN_JENIS_SUDUT = {
+  berpelurus:
+    'Sudut berpelurus bersebelahan pada satu garis lurus sehingga jumlahnya 180°. Periksa letak atau jumlah kedua sudut itu.',
+  berpenyiku:
+    'Sudut berpenyiku bersama-sama membentuk sudut siku-siku sehingga jumlahnya 90°. Periksa jumlah kedua sudut itu.',
+  bertolakBelakang:
+    'Sudut bertolak belakang saling berhadapan pada titik potong dua garis dan besarnya sama. Periksa letak kedua sudut itu.',
+  bukanKeduanya: 'Pasangan ini istimewa. Periksa letaknya atau jumlah kedua besar sudutnya.',
+};
+
+function hasilSudut(kode, pesan) {
+  return { kode: kode, benar: kode === 'benar', pesan: pesan || PESAN_SUDUT[kode] };
+}
+
+function samaSudut(a, b) {
+  return typeof b === 'number' && isFinite(b) && Math.abs(a - b) < 0.0001;
+}
+
+/* Calon jawaban keliru [{ kode, nilai }] menurut miskonsepsi khas. */
+function calonKeliruSudut(c) {
+  var a;
+  switch (c.minta) {
+    case 'pelurus':
+      a = c.sudut;
+      return [
+        { kode: 'tertukarPenyiku', nilai: 90 - a },
+        { kode: 'kiraSamaBesar', nilai: a },
+        { kode: 'kelilingPenuh', nilai: 360 - a },
+      ];
+    case 'penyiku':
+      a = c.sudut;
+      return [
+        { kode: 'tertukarPelurus', nilai: 180 - a },
+        { kode: 'kiraSamaBesar', nilai: a },
+      ];
+    case 'tolakBelakang':
+      a = c.sudut;
+      return [
+        { kode: 'kiraPelurus', nilai: 180 - a },
+        { kode: 'tertukarPenyiku', nilai: 90 - a },
+        { kode: 'kelilingPenuh', nilai: 360 - a },
+      ];
+    case 'cari':
+      return calonKeliruSudut({
+        minta:
+          jenisPasanganSudut('potong', c.diketahui.k, c.ditanya) === 'bertolakBelakang'
+            ? 'tolakBelakang'
+            : 'pelurus',
+        sudut: c.diketahui.nilai,
+      });
+    case 'jumlah':
+      return [{ kode: 'selisih', nilai: Math.abs(c.sudut[0] - c.sudut[1]) }];
+    case 'bacaBusur':
+      return [{ kode: 'skalaTerbalik', nilai: 180 - c.nilai }];
+    case 'aljabar':
+      return calonKeliruAljabarSudut(c);
+  }
+  return [];
+}
+
+function calonKeliruAljabarSudut(c) {
+  var x = xSudutAljabar(c, c.relasi);
+  var out = [];
+  if (c.tanya === 'x') out.push({ kode: 'sudutBukanX', nilai: nilaiSudutAljabar(c, x) });
+  else out.push({ kode: 'xBukanSudut', nilai: x });
+  ['bertolakBelakang', 'berpelurus', 'berpenyiku'].forEach(function (r) {
+    if (r === c.relasi) return;
+    var xs = xSudutAljabar(c, r);
+    if (xs === null || xs !== Math.round(xs)) return;
+    out.push({ kode: 'relasiSalah', nilai: c.tanya === 'x' ? xs : nilaiSudutAljabar(c, xs) });
+  });
+  return out;
+}
+
+/* Memeriksa isian soal s = { cek } → { kode, benar, pesan }. */
+function periksaSoalSudut(isian, s) {
+  var c = s.cek;
+  if (c.minta === 'jenis') {
+    if (!isian) return hasilSudut('kosong');
+    if (isian === nilaiSoalSudut(c)) return hasilSudut('benar');
+    return hasilSudut('salah', UMPAN_JENIS_SUDUT[isian] || PESAN_SUDUT.salah);
+  }
+  var p = parseSudutIsian(isian);
+  if (p.kode !== 'ok') return hasilSudut(p.kode);
+  var v = p.nilai;
+  if (samaSudut(v, nilaiSoalSudut(c))) return hasilSudut('benar');
+  var cocok = calonKeliruSudut(c).filter(function (g) {
+    return samaSudut(v, g.nilai);
+  })[0];
+  if (cocok) return hasilSudut(cocok.kode);
+  var bolehLuar = c.minta === 'jumlah' || (c.minta === 'aljabar' && c.tanya === 'x');
+  if (!bolehLuar && (v <= 0 || v >= 360)) return hasilSudut('bukanSudut');
+  return hasilSudut('salah');
+}
+
+/* ---------- Opsi pilihan ganda ---------- */
+
+/* Opsi { id, label, umpan } untuk soal pilihan; opsi pertama id 'baku'. */
+function opsiSoalSudut(s) {
+  var c = s.cek;
+  var baku = nilaiSoalSudut(c);
+  if (c.minta === 'jenis') {
+    return [{ id: 'baku', label: labelJenisSudut(baku), umpan: PESAN_SUDUT.benar }].concat(
+      OPSI_JENIS_SUDUT.filter(function (o) {
+        return o.id !== baku;
+      }).map(function (o) {
+        return { id: o.id, label: o.label, umpan: periksaSoalSudut(o.id, s).pesan };
+      })
+    );
+  }
+  var out = [{ id: 'baku', label: teksNilaiSoalSudut(c, baku), umpan: PESAN_SUDUT.benar }];
+  var dipakai = [baku];
+  var tambah = function (kode, nilai) {
+    if (out.length >= 4) return;
+    var luar = !(c.minta === 'aljabar' && c.tanya === 'x') && (nilai <= 0 || nilai >= 360);
+    var ada = dipakai.some(function (d) {
+      return samaSudut(d, nilai);
+    });
+    if (luar || ada || typeof nilai !== 'number' || !isFinite(nilai)) return;
+    dipakai.push(nilai);
+    var id = kode;
+    for (var i = 2; optionIds(out).indexOf(id) !== -1; i++) id = kode + i;
+    var label = teksNilaiSoalSudut(c, nilai);
+    out.push({ id: id, label: label, umpan: periksaSoalSudut(label, s).pesan });
+  };
+  calonKeliruSudut(c).forEach(function (g) {
+    tambah(g.kode, g.nilai);
+  });
+  var geser = c.minta === 'aljabar' && c.tanya === 'x' ? [5, -5, 10, -10] : [10, -10, 20, -20];
+  geser.forEach(function (d) {
+    tambah('salah', baku + d);
+  });
+  return out;
+}
+
+/* Kelipatan `langkah` acak dalam [min, max], bukan salah satu `kecuali`. */
+function pilihSudutAcak(min, max, langkah, kecuali) {
+  var calon = [];
+  for (var v = Math.ceil(min / langkah) * langkah; v <= max; v += langkah) {
+    if ((kecuali || []).indexOf(v) === -1) calon.push(v);
+  }
+  return calon[Math.floor(Math.random() * calon.length)];
+}
+
+/* ---------- Lab Sudut: state ---------- */
+
+/*
+ * cfg = { potong: { min, max, langkah, awal, minPosisi },
+ *         siku:   { min, max, langkah, awal, minPosisi } }
+ * st  = { mode, t: { potong, siku }, aktif, baca: { k: nilai },
+ *         isian, kode, pesan, baris: { potong: [{ t, sudut }], siku: [...] },
+ *         percobaan, salah }
+ */
+var MODE_LAB_SUDUT = ['potong', 'siku'];
+
+function sudutLabValid(v, c) {
+  return typeof v === 'number' && v >= c.min && v <= c.max && v % c.langkah === 0;
+}
+
+function ensureLabSudut(st, cfg) {
+  if (MODE_LAB_SUDUT.indexOf(st.mode) === -1) st.mode = 'potong';
+  if (!st.t || typeof st.t !== 'object') st.t = {};
+  if (!st.baris || typeof st.baris !== 'object') st.baris = {};
+  MODE_LAB_SUDUT.forEach(function (m) {
+    if (!sudutLabValid(st.t[m], cfg[m])) st.t[m] = cfg[m].awal;
+    if (!Array.isArray(st.baris[m])) st.baris[m] = [];
+  });
+  if (!st.baca || typeof st.baca !== 'object') st.baca = {};
+  if (typeof st.aktif !== 'number' || st.aktif < 0 || st.aktif >= banyakSudutLab(st.mode)) {
+    st.aktif = null;
+  }
+  if (typeof st.isian !== 'string') st.isian = '';
+  if (typeof st.percobaan !== 'number') st.percobaan = 0;
+  if (typeof st.salah !== 'number') st.salah = 0;
+  if (st.kode === undefined) st.kode = null;
+  if (typeof st.pesan !== 'string') st.pesan = '';
+  return st;
+}
+
+function kosongkanBacaLabSudut(st) {
+  st.baca = {};
+  st.aktif = null;
+  st.isian = '';
+  st.kode = null;
+  st.pesan = '';
+}
+
+function modeLabSudut(st, cfg, mode) {
+  if (MODE_LAB_SUDUT.indexOf(mode) === -1 || st.mode === mode) return false;
+  st.mode = mode;
+  kosongkanBacaLabSudut(st);
+  return true;
+}
+
+function setelLabSudut(st, cfg, v) {
+  var c = cfg[st.mode];
+  v = Math.max(c.min, Math.min(c.max, Math.round(v / c.langkah) * c.langkah));
+  if (v === st.t[st.mode]) return false;
+  st.t[st.mode] = v;
+  kosongkanBacaLabSudut(st);
+  return true;
+}
+
+/* Stepper: arah ±1 langkah. */
+function ubahLabSudut(st, cfg, arah) {
+  return setelLabSudut(st, cfg, st.t[st.mode] + arah * cfg[st.mode].langkah);
+}
+
+/* Seret: arah sinar (derajat dari OB, berlawanan jarum jam). */
+function aturLabSudut(st, cfg, deg) {
+  var d = ((deg % 360) + 360) % 360;
+  if (st.mode === 'potong') d = d % 180;
+  else if (d > 180) d = d > 315 ? 0 : 90;
+  return setelLabSudut(st, cfg, d);
+}
+
+function pilihUkurLabSudut(st, cfg, k) {
+  if (typeof k !== 'number' || k < 0 || k >= banyakSudutLab(st.mode)) return false;
+  st.aktif = k;
+  st.isian = '';
+  st.kode = null;
+  st.pesan = '';
+  return true;
+}
+
+function posisiLabSudutTerukur(st) {
+  for (var k = 0; k < banyakSudutLab(st.mode); k++) {
+    if (typeof st.baca[k] !== 'number') return false;
+  }
+  return true;
+}
+
+/* Sudut berikutnya (melingkar dari k) yang belum dibaca; null bila semua sudah. */
+function sudutBelumDibaca(st, k) {
+  var n = banyakSudutLab(st.mode);
+  for (var i = 1; i <= n; i++) {
+    var j = (k + i) % n;
+    if (typeof st.baca[j] !== 'number') return j;
+  }
+  return null;
+}
+
+function bacaBusurLabSudut(st, cfg, isian) {
+  var k = st.aktif;
+  if (k === null) return hasilSudut('kosong');
+  var nilai = besarSudutLab(st.mode, st.t[st.mode])[k];
+  var r = periksaSoalSudut(isian, { cek: { minta: 'bacaBusur', nilai: nilai } });
+  if (r.kode === 'kosong' || r.kode === 'format') return r;
+  st.percobaan += 1;
+  if (r.benar) {
+    st.baca[k] = nilai;
+    st.aktif = sudutBelumDibaca(st, k);
+    st.isian = '';
+    st.kode = null;
+    st.pesan = '';
+  } else {
+    st.salah += 1;
+    st.isian = String(isian).trim();
+    st.kode = r.kode;
+    st.pesan = r.pesan;
+  }
+  return r;
+}
+
+function catatLabSudut(st) {
+  if (!posisiLabSudutTerukur(st)) return { ok: false, kode: 'belum' };
+  var t = st.t[st.mode];
+  var rows = st.baris[st.mode];
+  var ada = rows.some(function (r) {
+    return r.t === t;
+  });
+  if (ada) return { ok: false, kode: 'sudahAda' };
+  rows.push({ t: t, sudut: besarSudutLab(st.mode, t) });
+  kosongkanBacaLabSudut(st);
+  return { ok: true, kode: 'ok' };
+}
+
+function labSudutModeLengkap(st, cfg, mode) {
+  return st.baris[mode].length >= cfg[mode].minPosisi;
+}
+
+function labSudutLengkap(st, cfg) {
+  return MODE_LAB_SUDUT.every(function (m) {
+    return labSudutModeLengkap(st, cfg, m);
+  });
+}
+
+/* ---------- UI: gambar dua garis berpotongan ---------- */
+
+var DG_PUSAT = { x: 160, y: 145 };
+
+function titikDG(deg, r) {
+  var rad = (deg * Math.PI) / 180;
+  return {
+    x: Math.round((DG_PUSAT.x + r * Math.cos(rad)) * 10) / 10,
+    y: Math.round((DG_PUSAT.y - r * Math.sin(rad)) * 10) / 10,
+  };
+}
+
+function xyDG(p) {
+  return p.x + ' ' + p.y;
+}
+
+/* Busur lingkaran dari arah a0 ke a1 (berlawanan jarum jam). */
+function pathBusurDG(a0, a1, r, juring) {
+  var p0 = titikDG(a0, r);
+  var p1 = titikDG(a1, r);
+  var besar = a1 - a0 > 180 ? 1 : 0;
+  var busur = 'A ' + r + ' ' + r + ' 0 ' + besar + ' 0 ' + xyDG(p1);
+  if (juring) return 'M ' + xyDG(DG_PUSAT) + ' L ' + xyDG(p0) + ' ' + busur + ' Z';
+  return 'M ' + xyDG(p0) + ' ' + busur;
+}
+
+/* Rentang arah [a0, a1] sudut ke-k. */
+function rentangSudutDG(mode, t, k) {
+  var arah = arahSinarSudut(mode, t);
+  var a0 = arah[k];
+  var a1 = k + 1 < arah.length ? arah[k + 1] : 360;
+  return [a0, a1];
+}
+
+/*
+ * Busur derajat virtual pada sudut ke-k: 0° di lengan pertama. Badan
+ * busur digambar di bawah garis (agar garis tetap terlihat), skalanya di
+ * atas garis. Mengembalikan { badan, skala }.
+ */
+var DG_R_BUSUR = 104;
+
+function buildBusurUkurDG(mode, t, k) {
+  var a0 = rentangSudutDG(mode, t, k)[0];
+  var R = DG_R_BUSUR;
+  /* Angka 0 dan 180 digeser sedikit ke dalam agar tidak menumpuk pada garis. */
+  var posAngka = function (d) {
+    return a0 + Math.min(176, Math.max(4, d));
+  };
+  var badan =
+    '<path class="dua-garis__busur-badan" aria-hidden="true" d="' +
+    pathBusurDG(a0, a0 + 180, R, true) +
+    '"/>';
+  var out = '<g class="dua-garis__busur-ukur" aria-hidden="true">';
+  for (var d = 0; d <= 180; d += 5) {
+    var pjg = d % 10 === 0 ? 10 : 5;
+    var p0 = titikDG(a0 + d, R);
+    var p1 = titikDG(a0 + d, R - pjg);
+    out +=
+      '<line class="dua-garis__busur-tick" x1="' +
+      p0.x +
+      '" y1="' +
+      p0.y +
+      '" x2="' +
+      p1.x +
+      '" y2="' +
+      p1.y +
+      '"/>';
+    if (d % 10 === 0) {
+      var q = titikDG(posAngka(d), R - 18);
+      out +=
+        '<text class="dua-garis__busur-angka" x="' +
+        q.x +
+        '" y="' +
+        q.y +
+        '" text-anchor="middle" dominant-baseline="middle">' +
+        d +
+        '</text>';
+    }
+    if (d % 30 === 0) {
+      var u = titikDG(posAngka(d), R - 31);
+      out +=
+        '<text class="dua-garis__busur-angka-luar" x="' +
+        u.x +
+        '" y="' +
+        u.y +
+        '" text-anchor="middle" dominant-baseline="middle">' +
+        (180 - d) +
+        '</text>';
+    }
+  }
+  return { badan: badan, skala: out + '</g>' };
+}
+
+/*
+ * Gambar SVG dua garis berpotongan (mode 'potong') atau dua garis tegak
+ * lurus + sinar OE (mode 'siku').
+ *   opts.t        ∠1 (derajat)
+ *   opts.label    [teks | null] per sudut (mis. '50°', '?'); bawaan nomor ∠k
+ *   opts.sorot    [k] sudut yang disorot
+ *   opts.busur    k → busur derajat virtual pada sudut itu
+ *   opts.pegangan true → pegangan seret (role slider) di ujung C / E
+ *   opts.ketuk    true → juring sudut dapat diketuk (data-ketuk-sudut)
+ *   opts.judul    teks aksesibel tambahan
+ */
+function buildDuaGarisSVG(opts) {
+  var mode = opts.mode === 'siku' ? 'siku' : 'potong';
+  var t = opts.t;
+  var n = banyakSudutLab(mode);
+  var arah = arahSinarSudut(mode, t);
+  var huruf = hurufSinarSudut(mode);
+  var sorot = opts.sorot || [];
+  var L = 115;
+  var garis = '';
+  if (mode === 'siku') {
+    garis +=
+      buildGarisDG(0, 180, L) +
+      buildGarisDG(90, 270, L) +
+      '<line class="dua-garis__sinar" x1="' +
+      DG_PUSAT.x +
+      '" y1="' +
+      DG_PUSAT.y +
+      '" x2="' +
+      titikDG(t, L).x +
+      '" y2="' +
+      titikDG(t, L).y +
+      '"/>';
+    var s1 = titikDG(90, 12);
+    var s2 = titikDG(135, 12 * Math.SQRT2);
+    var s3 = titikDG(180, 12);
+    garis +=
+      '<path class="dua-garis__siku" d="M ' +
+      xyDG(s1) +
+      ' L ' +
+      xyDG(s2) +
+      ' L ' +
+      xyDG(s3) +
+      '"/>';
+  } else {
+    garis += buildGarisDG(0, 180, L) + buildGarisDG(t, 180 + t, L);
+  }
+
+  var juring = '';
+  var busur = '';
+  var label = '';
+  for (var k = 0; k < n; k++) {
+    var r = rentangSudutDG(mode, t, k);
+    var mid = (r[0] + r[1]) / 2;
+    var teks = opts.label && k in opts.label ? opts.label[k] : '∠' + (k + 1);
+    var aktif = opts.busur === k;
+    busur +=
+      '<path class="dua-garis__busur-sudut dg-w' +
+      (k + 1) +
+      (sorot.indexOf(k) !== -1 ? ' is-sorot' : '') +
+      (aktif ? ' is-aktif' : '') +
+      '" d="' +
+      pathBusurDG(r[0], r[1], 24 + (k % 2) * 6, false) +
+      '"/>';
+    if (teks !== null && teks !== undefined) {
+      var rl = r[1] - r[0] < 40 ? 64 : 50;
+      var pl = titikDG(mid, rl);
+      label +=
+        '<text class="dua-garis__label-sudut dg-t' +
+        (k + 1) +
+        '" x="' +
+        pl.x +
+        '" y="' +
+        pl.y +
+        '" text-anchor="middle" dominant-baseline="middle">' +
+        esc(teks) +
+        '</text>';
+    }
+    if (opts.ketuk) {
+      juring +=
+        '<path class="dua-garis__juring" data-ketuk-sudut="' +
+        k +
+        '" d="' +
+        pathBusurDG(r[0], r[1], 80, true) +
+        '"><title>Ukur ' +
+        esc(namaSudutLab(mode, k)) +
+        ' (∠' +
+        (k + 1) +
+        ')</title></path>';
+    }
+  }
+
+  var titik = huruf
+    .map(function (h, i) {
+      var p = titikDG(arah[i], L + 18);
+      return (
+        '<text class="dua-garis__huruf" x="' +
+        p.x +
+        '" y="' +
+        p.y +
+        '" text-anchor="middle" dominant-baseline="middle">' +
+        h +
+        '</text>'
+      );
+    })
+    .join('');
+  /* Huruf O di garis bagi sudut terbesar, agar tidak menimpa garis. */
+  var kBesar = 0;
+  var besar = besarSudutLab(mode, t);
+  for (var j = 1; j < n; j++) if (besar[j] > besar[kBesar]) kBesar = j;
+  var rb = rentangSudutDG(mode, t, kBesar);
+  var pO = titikDG(mode === 'siku' ? 225 : (rb[0] + rb[1]) / 2, 15);
+  titik +=
+    '<circle class="dua-garis__pusat" cx="' +
+    DG_PUSAT.x +
+    '" cy="' +
+    DG_PUSAT.y +
+    '" r="3.5"/>' +
+    '<text class="dua-garis__huruf" x="' +
+    pO.x +
+    '" y="' +
+    pO.y +
+    '" text-anchor="middle" dominant-baseline="middle">O</text>';
+
+  var pegangan = '';
+  if (opts.pegangan) {
+    var c = titikDG(t, L - 3);
+    var namaP = mode === 'siku' ? 'sinar OE' : 'garis CD';
+    pegangan =
+      '<circle class="dua-garis__pegangan" cx="' +
+      c.x +
+      '" cy="' +
+      c.y +
+      '" r="12" tabindex="0" role="slider" aria-label="Putar ' +
+      namaP +
+      '" aria-valuemin="0" aria-valuemax="' +
+      (mode === 'siku' ? 90 : 180) +
+      '" aria-valuenow="' +
+      t +
+      '" aria-valuetext="∠1 = ' +
+      t +
+      '°" data-pegangan-sudut="1"/>';
+  }
+
+  var desk =
+    (mode === 'siku'
+      ? 'Garis AB tegak lurus garis CD di titik O, sinar OE membagi sudut siku-siku BOC.'
+      : 'Garis AB dan garis CD berpotongan di titik O.') +
+    ' ' +
+    daftarSudutDG(mode, opts.label) +
+    '.' +
+    (opts.judul ? ' ' + opts.judul : '');
+
+  var ukur = typeof opts.busur === 'number' ? buildBusurUkurDG(mode, t, opts.busur) : null;
+
+  return (
+    '<svg class="dua-garis" viewBox="0 0 320 290" role="img" aria-label="' +
+    esc(desk) +
+    '">' +
+    juring +
+    (ukur ? ukur.badan : '') +
+    garis +
+    busur +
+    (ukur ? ukur.skala : '') +
+    label +
+    titik +
+    pegangan +
+    '</svg>'
+  );
+}
+
+/* Teks aksesibel: ∠1 = ∠BOC (50°), ∠2 = ∠COA (?), … */
+function daftarSudutDG(mode, label) {
+  var out = [];
+  for (var i = 0; i < banyakSudutLab(mode); i++) {
+    var tl = label && i in label ? label[i] : null;
+    out.push('∠' + (i + 1) + ' = ' + namaSudutLab(mode, i) + (tl ? ' (' + tl + ')' : ''));
+  }
+  return out.join(', ');
+}
+
+function buildGarisDG(a0, a1, L) {
+  var p = titikDG(a0, L);
+  var q = titikDG(a1, L);
+  return (
+    '<line class="dua-garis__garis" x1="' +
+    p.x +
+    '" y1="' +
+    p.y +
+    '" x2="' +
+    q.x +
+    '" y2="' +
+    q.y +
+    '"/>'
+  );
+}
+
+/* ---------- UI: tabel pengamatan & Lab Sudut ---------- */
+
+function buildTabelLabSudut(st, cfg, mode) {
+  var rows = st.baris[mode];
+  var n = banyakSudutLab(mode);
+  var judul =
+    mode === 'siku'
+      ? 'Tabel pengamatan B — garis tegak lurus + sinar'
+      : 'Tabel pengamatan A — dua garis berpotongan';
+  if (!rows.length) {
+    return (
+      '<p class="dl-caption lab-sudut__kosong"><strong>' +
+      judul +
+      '</strong>: Belum ada posisi yang dicatat.</p>'
+    );
+  }
+  var kepala = '';
+  for (var k = 0; k < n; k++) kepala += '<th scope="col">∠' + (k + 1) + '</th>';
+  return (
+    '<table class="data-table lab-sudut__tabel"><caption>' +
+    judul +
+    '</caption><thead><tr><th scope="col">Posisi</th>' +
+    kepala +
+    '</tr></thead><tbody>' +
+    rows
+      .map(function (r, i) {
+        return (
+          '<tr><th scope="row">' +
+          (i + 1) +
+          '</th>' +
+          r.sudut
+            .map(function (v) {
+              return '<td>' + formatSudut(v) + '</td>';
+            })
+            .join('') +
+          '</tr>'
+        );
+      })
+      .join('') +
+    '</tbody></table>'
+  );
+}
+
+/*
+ * Lab Sudut: pilih mode, putar garis CD / sinar OE (seret pegangan atau
+ * stepper), ketuk sudut untuk memasang busur, baca besarnya, lalu catat
+ * posisi ke tabel pengamatan. Pasang event dengan bindLabSudut().
+ */
+function buildLabSudut(id, st, cfg) {
+  var mode = st.mode;
+  var c = cfg[mode];
+  var t = st.t[mode];
+  var n = banyakSudutLab(mode);
+  var tab = MODE_LAB_SUDUT.map(function (m) {
+    var selesai = labSudutModeLengkap(st, cfg, m);
+    return (
+      '<button type="button" class="lab-neraca__tab-btn' +
+      (m === mode ? ' is-aktif' : '') +
+      (selesai ? ' is-selesai' : '') +
+      '" data-mode-sudut="' +
+      m +
+      '" aria-pressed="' +
+      (m === mode) +
+      '">' +
+      (selesai ? '✓ ' : '') +
+      (m === 'siku' ? 'B. Garis tegak lurus + sinar' : 'A. Dua garis berpotongan') +
+      '</button>'
+    );
+  }).join('');
+
+  var label = [];
+  for (var k = 0; k < n; k++) {
+    label.push(typeof st.baca[k] === 'number' ? formatSudut(st.baca[k]) : '∠' + (k + 1));
+  }
+  var chip = label
+    .map(function (teks, i) {
+      var sudah = typeof st.baca[i] === 'number';
+      return (
+        '<button type="button" class="kgr-chip lab-sudut__chip' +
+        (sudah ? ' is-done' : '') +
+        (st.aktif === i ? ' is-last' : '') +
+        '" data-ukur-sudut="' +
+        i +
+        '" aria-pressed="' +
+        (st.aktif === i) +
+        '">' +
+        '∠' +
+        (i + 1) +
+        ' <span class="lab-sudut__nama">' +
+        esc(namaSudutLab(mode, i)) +
+        '</span>' +
+        (sudah ? ' = <strong>' + formatSudut(st.baca[i]) + '</strong>' : '') +
+        '</button>'
+      );
+    })
+    .join('');
+
+  var baca = '';
+  if (st.aktif !== null) {
+    var salah = !!st.kode && st.kode !== 'benar';
+    baca =
+      '<div class="lab-sudut__baca">' +
+      '<label for="' +
+      id +
+      'BacaInput">Baca busur: besar ∠' +
+      (st.aktif + 1) +
+      ' (' +
+      esc(namaSudutLab(mode, st.aktif)) +
+      ') =</label>' +
+      '<div class="dl-input-row">' +
+      '<input type="text" inputmode="decimal" class="input-text dl-num-input' +
+      (salah ? ' has-error' : '') +
+      '" id="' +
+      id +
+      'BacaInput" autocomplete="off" value="' +
+      esc(st.isian) +
+      '" placeholder="mis. 40">' +
+      '<span class="lab-sudut__satuan">°</span>' +
+      '<button type="button" class="btn btn--primary" id="' +
+      id +
+      'Baca">Periksa</button>' +
+      '</div>' +
+      (salah
+        ? buildFeedbackBox(
+            'error',
+            '✗',
+            '<strong>' + esc(st.isian) + '°</strong> — ' + esc(st.pesan)
+          )
+        : '') +
+      '</div>';
+  }
+
+  var terukur = posisiLabSudutTerukur(st);
+  var status = terukur
+    ? buildFeedbackBox(
+        'success',
+        '✓',
+        'Semua sudut pada posisi ini sudah diukur. Catat ke tabel, lalu putar ' +
+          (mode === 'siku' ? 'sinar OE' : 'garis CD') +
+          ' ke posisi lain.'
+      )
+    : st.aktif === null
+    ? '<p class="dl-caption">👆 Ketuk sebuah sudut (pada gambar atau tombolnya) untuk memasang busur.</p>'
+    : '';
+
+  return (
+    '<div class="lab-neraca lab-sudut" id="' +
+    id +
+    '">' +
+    '<div class="lab-neraca__tab" role="group" aria-label="Pilih susunan garis">' +
+    tab +
+    '</div>' +
+    '<div class="lab-neraca__isi">' +
+    '<figure class="lab-neraca__gambar lab-sudut__gambar" id="' +
+    id +
+    'Gambar">' +
+    buildDuaGarisSVG({
+      mode: mode,
+      t: t,
+      label: label,
+      busur: st.aktif === null ? undefined : st.aktif,
+      pegangan: true,
+      ketuk: true,
+    }) +
+    '<figcaption>Seret bulatan oranye untuk memutar ' +
+    (mode === 'siku' ? 'sinar OE' : 'garis CD') +
+    '.</figcaption>' +
+    '</figure>' +
+    '<div class="lab-neraca__kontrol">' +
+    buildFinStepper(id + 'Putar', 'Putar ∠1', formatSudut(t), {
+      minDis: t <= c.min,
+      maxDis: t >= c.max,
+      langkah: c.langkah + '°',
+    }) +
+    '<div class="lab-sudut__chips" role="group" aria-label="Pilih sudut yang diukur">' +
+    chip +
+    '</div>' +
+    baca +
+    status +
+    (terukur
+      ? '<button type="button" class="btn btn--primary" id="' +
+        id +
+        'Catat">📋 Catat posisi ini ke tabel</button>'
+      : '') +
+    '<p class="dl-caption">Tercatat ' +
+    st.baris[mode].length +
+    ' posisi · minimal ' +
+    c.minPosisi +
+    ' posisi berbeda.</p>' +
+    '</div>' +
+    '</div>' +
+    '<div class="lab-neraca__tabel-wrap">' +
+    buildTabelLabSudut(st, cfg, mode) +
+    '</div>' +
+    '</div>'
+  );
+}
+
+/* Arah (derajat) titik layar terhadap pusat O pada SVG. */
+function arahPointerDG(svg, e) {
+  var b = svg.getBoundingClientRect();
+  var vb = svg.viewBox.baseVal;
+  var x = ((e.clientX - b.left) / b.width) * vb.width;
+  var y = ((e.clientY - b.top) / b.height) * vb.height;
+  return (Math.atan2(DG_PUSAT.y - y, x - DG_PUSAT.x) * 180) / Math.PI;
+}
+
+/*
+ * onChange(fokus) dipanggil setelah state berubah; `fokus` (opsional)
+ * selektor CSS elemen yang sebaiknya difokuskan ulang setelah render.
+ */
+function bindLabSudut(root, id, st, cfg, onChange) {
+  var lab = root.querySelector('#' + id);
+  if (!lab) return;
+  lab.querySelectorAll('[data-mode-sudut]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      if (modeLabSudut(st, cfg, btn.dataset.modeSudut)) onChange();
+    });
+  });
+  bindFinStepper(lab, id + 'Putar', function (arah) {
+    if (ubahLabSudut(st, cfg, arah)) onChange();
+  });
+  var ukur = function (k) {
+    if (pilihUkurLabSudut(st, cfg, k)) onChange('#' + id + 'BacaInput');
+  };
+  lab.querySelectorAll('[data-ukur-sudut]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      ukur(parseInt(btn.dataset.ukurSudut, 10));
+    });
+  });
+  lab.querySelectorAll('[data-ketuk-sudut]').forEach(function (el) {
+    el.addEventListener('click', function () {
+      ukur(parseInt(el.getAttribute('data-ketuk-sudut'), 10));
+    });
+  });
+
+  var pegangan = lab.querySelector('[data-pegangan-sudut]');
+  if (pegangan) {
+    pegangan.addEventListener('keydown', function (e) {
+      var arah = { ArrowUp: 1, ArrowRight: 1, ArrowDown: -1, ArrowLeft: -1 }[e.key];
+      if (!arah) return;
+      e.preventDefault();
+      if (ubahLabSudut(st, cfg, arah)) onChange('#' + id + ' [data-pegangan-sudut]');
+    });
+    pegangan.addEventListener('pointerdown', function (e) {
+      e.preventDefault();
+      var gerak = function (ev) {
+        var svg = document.querySelector('#' + id + 'Gambar svg');
+        if (svg && aturLabSudut(st, cfg, arahPointerDG(svg, ev))) onChange();
+      };
+      var lepas = function () {
+        window.removeEventListener('pointermove', gerak);
+        window.removeEventListener('pointerup', lepas);
+        window.removeEventListener('pointercancel', lepas);
+      };
+      window.addEventListener('pointermove', gerak);
+      window.addEventListener('pointerup', lepas);
+      window.addEventListener('pointercancel', lepas);
+    });
+  }
+
+  var inp = lab.querySelector('#' + id + 'BacaInput');
+  var btn = lab.querySelector('#' + id + 'Baca');
+  if (inp && btn) {
+    var kirim = function () {
+      var r = bacaBusurLabSudut(st, cfg, inp.value);
+      if (r.kode === 'kosong' || r.kode === 'format') {
+        showNotice(r.pesan);
+        return;
+      }
+      onChange('#' + id + (st.aktif === null ? 'Catat' : 'BacaInput'));
+    };
+    btn.addEventListener('click', kirim);
+    inp.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter') kirim();
+    });
+  }
+
+  var catat = lab.querySelector('#' + id + 'Catat');
+  if (catat) {
+    catat.addEventListener('click', function () {
+      var r = catatLabSudut(st, cfg);
+      if (r.kode === 'sudahAda') {
+        showNotice(
+          'Posisi ∠1 = ' + st.t[st.mode] + '° sudah dicatat. Putar ke posisi lain lalu ukur lagi.'
+        );
+        return;
+      }
+      if (r.ok) onChange();
     });
   }
 }
