@@ -167,6 +167,14 @@
     "stageCount": 11,
     "extraBody": "partials/reset-modal.html"
   },
+  "fase-d/mpi-8.1": {
+    "title": "Hubungan Antar Sudut — Matematika Fase D",
+    "description": "Media pembelajaran interaktif berbasis Discovery Learning untuk menemukan hubungan sudut berpelurus, berpenyiku, dan bertolak belakang melalui pengukuran dan pengamatan pada dua garis yang berpotongan: Lab Sudut (memutar garis dan membaca busur derajat virtual pada dua garis berpotongan serta garis tegak lurus yang dibagi sinar), tabel pengamatan, pemilahan pasangan sudut, prediksi lalu pembuktian pada posisi acak, isian berdiagnosa miskonsepsi, serta uji terap acak.",
+    "kicker": "Matematika — Fase D (SMP)",
+    "h1": "Hubungan Antar Sudut",
+    "stageCount": 11,
+    "extraBody": "partials/reset-modal.html"
+  },
   "fase-d/mpi-23.1": {
     "title": "Keliling & Luas Bangun Datar — Matematika Fase D",
     "description": "Media pembelajaran interaktif berbasis Discovery Learning, diawali asesmen diagnostik, untuk menentukan keliling dan luas segitiga, persegi, persegi panjang, jajargenjang, trapesium, belah ketupat, dan layang-layang melalui eksplorasi dalam Proyek Taman Sekolah Kelas VII: Lab Petak untuk menghitung petak dan ruas satuan, Lab Potong-Susun untuk mengubah bangun menjadi persegi panjang atau jajargenjang, pemilahan rumus luas, serta uji terap acak berdiagnosa miskonsepsi.",
