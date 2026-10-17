@@ -55125,3 +55125,870 @@ function bindLabSkala(root, id, st, cfg, onChange) {
     });
   });
 }
+
+/* ============================================================
+   80. MERUMUSKAN PERTANYAAN STATISTIK
+   Dipakai fase-d/mpi-10.1. Pertanyaan STATISTIK adalah pertanyaan yang
+   dijawab dengan mengumpulkan data dari suatu kelompok dan
+   mengantisipasi jawaban yang beragam. Sebuah pertanyaan dinilai dari
+   tiga ciri (objek `ciri`):
+     { jelas:   apa yang dicatat jelas dan dapat dicatat sebagai data,
+       banyak:  ditanyakan kepada kelompok (banyak orang/benda), bukan
+                satu orang,
+       beragam: jawabannya dapat berbeda-beda (bukan satu fakta pasti) }
+   klasifikasiPertanyaan memeriksa ciri dengan urutan jelas → banyak →
+   beragam dan mengembalikan alasan pertama yang gagal (PST_ALASAN).
+
+   Notasi soal uji terap (nilaiSoalStatistik / opsiSoalStatistik):
+     { minta: 'pilihStatistik' | 'perbaiki', pilihan: [{ id, teks, ciri }] }
+                                       → id satu-satunya pertanyaan statistik
+     { minta: 'alasan', ciri }         → id PST_ALASAN (atau 'statistik')
+     { minta: 'jenisData', jenis }     → 'kategorik' | 'numerik'
+     { minta: 'cara', cara }           → 'survei' | 'pengukuran' | 'pengamatan'
+
+   Komponen UI: Lab Tanya Kelas (kartu pertanyaan → jawaban murid virtual
+   disimulasikan dengan seed tersimpan → catat seragam/beragam), Lab
+   Rakit Pertanyaan (keping kata tanya + yang dicatat + kelompok →
+   periksa berdiagnosa → tentukan jenis data & cara mengumpulkan →
+   simpan), dan penanda ciri pertanyaan. Gaya .pst-* ada di
+   shared/base.css. Semua daftar pilihan diacak sekali saat state
+   disiapkan (ensureShuffledOrder) lalu urutannya disimpan.
+   ============================================================ */
+
+var PST_ALASAN = [
+  {
+    id: 'satuJawaban',
+    label: 'Jawabannya hanya satu dan pasti, jadi tidak perlu mengumpulkan data',
+    pesan:
+      'Pertanyaan ini hanya punya satu jawaban yang sama bagi semua orang. Cukup dicari sekali (misalnya dari jadwal atau papan pengumuman), tidak perlu mengumpulkan data dari banyak orang.',
+    bukan:
+      'Jika ditanyakan ke banyak orang, jawabannya bisa berbeda-beda — jadi jawabannya tidak hanya satu.',
+  },
+  {
+    id: 'satuOrang',
+    label: 'Hanya menanyakan satu orang atau satu benda',
+    pesan:
+      'Pertanyaan ini hanya tentang satu orang atau satu benda, sehingga datanya hanya satu. Pertanyaan statistik ditanyakan kepada suatu kelompok.',
+    bukan: 'Pertanyaan ini sudah ditujukan kepada suatu kelompok, bukan satu orang saja.',
+  },
+  {
+    id: 'tidakJelas',
+    label: 'Yang ditanyakan tidak jelas sehingga tidak dapat dicatat sebagai data',
+    pesan:
+      'Kata seperti "keren", "hebat", atau "rajin" tidak jelas ukurannya, sehingga jawabannya sulit dicatat dan dibandingkan. Tentukan dengan jelas apa yang dicatat.',
+    bukan: 'Yang ditanyakan sudah jelas dan jawabannya dapat dicatat sebagai data.',
+  },
+];
+
+var PST_JENIS_DATA = [
+  {
+    id: 'kategorik',
+    label: 'Data kategorik — jawabannya berupa kelompok atau nama',
+    umpan:
+      'Jawaban pertanyaan ini berupa bilangan hasil menghitung atau mengukur, jadi datanya numerik, bukan kategorik.',
+  },
+  {
+    id: 'numerik',
+    label: 'Data numerik — jawabannya berupa bilangan hasil menghitung atau mengukur',
+    umpan:
+      'Jawaban pertanyaan ini berupa kelompok atau nama (misalnya jenis, warna, atau merek), jadi datanya kategorik.',
+  },
+];
+
+var PST_CARA = [
+  {
+    id: 'survei',
+    label: 'Survei — bertanya langsung atau memakai angket',
+    umpan:
+      'Data ini tidak cukup ditanyakan; kamu perlu mengukurnya dengan alat atau mengamatinya langsung.',
+  },
+  {
+    id: 'pengukuran',
+    label: 'Pengukuran — memakai alat ukur (meteran, timbangan, stopwatch)',
+    umpan:
+      'Data ini tidak memerlukan alat ukur. Jawabannya didapat dengan bertanya atau mengamati.',
+  },
+  {
+    id: 'pengamatan',
+    label: 'Pengamatan — melihat langsung lalu mencatat (turus)',
+    umpan:
+      'Data ini sulit diperoleh hanya dengan melihat. Pikirkan: perlu bertanya atau perlu alat ukur?',
+  },
+];
+
+/* Pilihan catatan Lab Tanya Kelas. */
+var PST_CATAT = [
+  { id: 'beragam', label: 'Beragam — ada beberapa jawaban yang berbeda' },
+  { id: 'seragam', label: 'Seragam — hanya ada satu jawaban' },
+];
+
+var PST_SLOT_RAKIT = ['tanya', 'variabel', 'kelompok'];
+
+function alasanById(id) {
+  for (var i = 0; i < PST_ALASAN.length; i++) if (PST_ALASAN[i].id === id) return PST_ALASAN[i];
+  return null;
+}
+
+function cariById_(list, id) {
+  for (var i = 0; i < (list || []).length; i++) if (list[i].id === id) return list[i];
+  return null;
+}
+
+/* { statistik, alasan } dari ciri { jelas, banyak, beragam }. */
+function klasifikasiPertanyaan(ciri) {
+  if (!ciri) return { statistik: false, alasan: 'tidakJelas' };
+  if (!ciri.jelas) return { statistik: false, alasan: 'tidakJelas' };
+  if (!ciri.banyak) return { statistik: false, alasan: 'satuOrang' };
+  if (!ciri.beragam) return { statistik: false, alasan: 'satuJawaban' };
+  return { statistik: true, alasan: null };
+}
+
+/* Pembangkit acak berseed (mulberry32) agar simulasi dapat diulang. */
+function pstRng(seed) {
+  var a = (Number(seed) || 0) >>> 0;
+  return function () {
+    a = (a + 0x6d2b79f5) >>> 0;
+    var t = a;
+    t = Math.imul(t ^ (t >>> 15), t | 1);
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+/*
+ * Jawaban `n` responden virtual untuk pertanyaan q:
+ *   q.jawab = { tetap: nilai } | { kategori: [{ label, bobot }] } | { rentang: [min, max] }
+ * Pertanyaan tentang satu orang (ciri.banyak false) hanya punya satu responden.
+ */
+function simulasiJawabanKelas(q, n, seed) {
+  var rng = pstRng(seed);
+  var J = q.jawab || {};
+  var banyak = q.ciri && q.ciri.banyak === false ? 1 : n;
+  var total = 0;
+  (J.kategori || []).forEach(function (k) {
+    total += k.bobot || 1;
+  });
+  var out = [];
+  for (var i = 0; i < banyak; i++) {
+    if (J.tetap !== undefined) {
+      out.push(J.tetap);
+    } else if (J.kategori) {
+      var r = rng() * total;
+      var pilih = J.kategori[J.kategori.length - 1].label;
+      for (var k = 0; k < J.kategori.length; k++) {
+        r -= J.kategori[k].bobot || 1;
+        if (r < 0) {
+          pilih = J.kategori[k].label;
+          break;
+        }
+      }
+      out.push(pilih);
+    } else if (J.rentang) {
+      var lo = J.rentang[0];
+      var hi = J.rentang[1];
+      out.push(lo + Math.floor(rng() * (hi - lo + 1)));
+    }
+  }
+  return out;
+}
+
+/* [{ nilai, banyak }] terurut dari yang paling sering (seri: nilai naik). */
+function ringkasJawaban(list) {
+  var hitung = {};
+  var urut = [];
+  list.forEach(function (v) {
+    var key = typeof v + ':' + v;
+    if (!hitung[key]) {
+      hitung[key] = { nilai: v, banyak: 0 };
+      urut.push(hitung[key]);
+    }
+    hitung[key].banyak++;
+  });
+  return urut
+    .map(function (o, i) {
+      return { o: o, i: i };
+    })
+    .sort(function (a, b) {
+      if (b.o.banyak !== a.o.banyak) return b.o.banyak - a.o.banyak;
+      if (typeof a.o.nilai === 'number' && typeof b.o.nilai === 'number') {
+        return a.o.nilai - b.o.nilai;
+      }
+      return a.i - b.i;
+    })
+    .map(function (x) {
+      return x.o;
+    });
+}
+
+function ragamJawaban(list) {
+  return ringkasJawaban(list || []).length;
+}
+
+/* Kunci catatan Lab Tanya: 'beragam' hanya bila ciri banyak & beragam. */
+function kunciCatatTanya(q) {
+  var c = q.ciri || {};
+  return c.banyak !== false && c.beragam !== false ? 'beragam' : 'seragam';
+}
+
+/* --- Perakitan pertanyaan -------------------------------------------- */
+
+function kepingRakit(pilih, cfg) {
+  return {
+    tanya: cariById_(cfg.kataTanya, pilih.tanya),
+    variabel: cariById_(cfg.variabel, pilih.variabel),
+    kelompok: cariById_(cfg.kelompok, pilih.kelompok),
+  };
+}
+
+function teksRakitPertanyaan(pilih, cfg) {
+  var k = kepingRakit(pilih || {}, cfg);
+  return (
+    (k.tanya ? k.tanya.label : '…') +
+    ' ' +
+    (k.variabel ? k.variabel.frasa : '…') +
+    ' ' +
+    (k.kelompok ? k.kelompok.frasa : '…') +
+    '?'
+  );
+}
+
+var PST_PESAN_RAKIT = {
+  belumLengkap: 'Pilih satu keping dari setiap baris: kata tanya, yang dicatat, dan kelompok.',
+  tanyaTakCocok:
+    'Kata tanyanya belum cocok. Gunakan "Berapa" untuk jawaban berupa bilangan dan "Apa" untuk jawaban berupa kelompok atau nama.',
+  tidakJelas:
+    'Yang dicatat belum jelas. Kata seperti "kehebatan" atau "keseruan" tidak punya ukuran yang sama bagi semua orang, sehingga jawabannya sulit dicatat sebagai data.',
+  satuOrang:
+    'Pertanyaan ini hanya ditujukan kepada satu orang, sehingga datanya hanya satu. Pilih kelompok yang beranggotakan banyak orang.',
+  benar:
+    'Pertanyaan statistik! Jelas apa yang dicatat, ditanyakan kepada suatu kelompok, dan jawabannya dapat beragam.',
+};
+
+function pesanRakitPertanyaan(kode) {
+  return PST_PESAN_RAKIT[kode] || '';
+}
+
+/*
+ * Memeriksa rakitan { tanya, variabel, kelompok } (id keping cfg):
+ *   variabel { id, frasa, tanya: 'apa'|'berapa', jenis, cara, jelas }
+ *   kelompok { id, frasa, banyak }
+ * → { lengkap, benar, kode, pesan, teks, jenisData, cara }
+ */
+function periksaRakitPertanyaan(pilih, cfg) {
+  var k = kepingRakit(pilih || {}, cfg);
+  var hasil = {
+    lengkap: !!(k.tanya && k.variabel && k.kelompok),
+    benar: false,
+    kode: 'benar',
+    teks: teksRakitPertanyaan(pilih, cfg),
+    jenisData: null,
+    cara: null,
+  };
+  if (!hasil.lengkap) hasil.kode = 'belumLengkap';
+  else if (k.variabel.jelas === false) hasil.kode = 'tidakJelas';
+  else if (k.variabel.tanya !== k.tanya.id) hasil.kode = 'tanyaTakCocok';
+  else if (!k.kelompok.banyak) hasil.kode = 'satuOrang';
+  else {
+    hasil.benar = true;
+    hasil.jenisData = k.variabel.jenis;
+    hasil.cara = k.variabel.cara;
+  }
+  hasil.pesan = pesanRakitPertanyaan(hasil.kode);
+  return hasil;
+}
+
+/* --- Soal uji terap --------------------------------------------------- */
+
+function nilaiSoalStatistik(s) {
+  if (s.minta === 'pilihStatistik' || s.minta === 'perbaiki') {
+    var stat = (s.pilihan || []).filter(function (p) {
+      return klasifikasiPertanyaan(p.ciri).statistik;
+    });
+    return stat.length ? stat[0].id : null;
+  }
+  if (s.minta === 'alasan') return klasifikasiPertanyaan(s.ciri).alasan || 'statistik';
+  if (s.minta === 'jenisData') return s.jenis;
+  if (s.minta === 'cara') return s.cara;
+  return null;
+}
+
+/* Opsi { id, label, umpan } (urutan DATA; app.js mengacaknya). */
+function opsiSoalStatistik(s) {
+  if (s.minta === 'pilihStatistik' || s.minta === 'perbaiki') {
+    return s.pilihan.map(function (p) {
+      var k = klasifikasiPertanyaan(p.ciri);
+      return {
+        id: p.id,
+        label: p.teks,
+        umpan: k.statistik
+          ? 'Ini pertanyaan statistik: jelas, ditanyakan kepada kelompok, dan jawabannya beragam.'
+          : alasanById(k.alasan).pesan,
+      };
+    });
+  }
+  if (s.minta === 'alasan') {
+    return PST_ALASAN.map(function (a) {
+      return { id: a.id, label: a.label, umpan: a.bukan };
+    }).concat([
+      {
+        id: 'statistik',
+        label: 'Tidak ada yang salah — ini sudah pertanyaan statistik',
+        umpan:
+          'Periksa lagi tiga cirinya: apakah yang dicatat jelas, apakah ditanyakan kepada kelompok, dan apakah jawabannya dapat beragam?',
+      },
+    ]);
+  }
+  if (s.minta === 'jenisData') {
+    return PST_JENIS_DATA.map(function (j) {
+      return { id: j.id, label: j.label, umpan: j.umpan };
+    }).concat([
+      {
+        id: 'bukanData',
+        label: 'Bukan data, karena jawabannya berbeda-beda',
+        umpan:
+          'Justru karena jawabannya berbeda-beda, jawaban itu perlu dikumpulkan dan dicatat sebagai data.',
+      },
+    ]);
+  }
+  if (s.minta === 'cara') {
+    return PST_CARA.map(function (c) {
+      return { id: c.id, label: c.label, umpan: c.umpan };
+    }).concat([
+      {
+        id: 'satuOrang',
+        label: 'Cukup bertanya kepada satu orang yang paling tahu',
+        umpan:
+          'Satu orang hanya memberi satu jawaban. Pertanyaan statistik dijawab dengan data dari seluruh kelompok.',
+      },
+    ]);
+  }
+  return [];
+}
+
+/* --- Penanda ciri pertanyaan ----------------------------------------- */
+
+function buildCiriPertanyaan(ciri) {
+  var c = ciri || {};
+  var daftar = [
+    { ok: !!c.jelas, teks: 'Yang dicatat jelas' },
+    { ok: !!c.banyak, teks: 'Ditanyakan kepada kelompok' },
+    { ok: !!c.beragam, teks: 'Jawabannya dapat beragam' },
+  ];
+  return (
+    '<ul class="pst-ciri" aria-label="Ciri pertanyaan statistik">' +
+    daftar
+      .map(function (d) {
+        return (
+          '<li class="pst-ciri__item pst-ciri__item--' +
+          (d.ok ? 'ya' : 'tidak') +
+          '"><span aria-hidden="true">' +
+          (d.ok ? '✓' : '✗') +
+          '</span> ' +
+          esc(d.teks) +
+          '<span class="sr-only">' +
+          (d.ok ? ': ya' : ': tidak') +
+          '</span></li>'
+        );
+      })
+      .join('') +
+    '</ul>'
+  );
+}
+
+/* --- Lab Tanya Kelas -------------------------------------------------- */
+
+function ensureLabTanya(state, key, cfg) {
+  var st = state[key] && typeof state[key] === 'object' ? state[key] : {};
+  ['seeds', 'catat', 'catatOrders'].forEach(function (k) {
+    if (!st[k] || typeof st[k] !== 'object' || Array.isArray(st[k])) st[k] = {};
+  });
+  if (!cariById_(cfg.pertanyaan, st.aktif)) st.aktif = null;
+  cfg.pertanyaan.forEach(function (q) {
+    ensureShuffledOrder(st.catatOrders, q.id, PST_CATAT);
+  });
+  state[key] = st;
+  return st;
+}
+
+function tanyaKelas(st, cfg, qid, seed) {
+  if (!cariById_(cfg.pertanyaan, qid)) return;
+  if (typeof st.seeds[qid] !== 'number') st.seeds[qid] = seed;
+  st.aktif = qid;
+}
+
+function jawabanLabTanya(st, cfg, qid) {
+  var q = cariById_(cfg.pertanyaan, qid);
+  if (!q || typeof st.seeds[qid] !== 'number') return [];
+  return simulasiJawabanKelas(q, cfg.responden, st.seeds[qid]);
+}
+
+/* Mencatat seragam/beragam; true bila sesuai kunci. */
+function catatLabTanya(st, cfg, qid, val) {
+  var q = cariById_(cfg.pertanyaan, qid);
+  if (!q || typeof st.seeds[qid] !== 'number') return false;
+  if (st.catat[qid] === kunciCatatTanya(q)) return true;
+  st.catat[qid] = val;
+  return val === kunciCatatTanya(q);
+}
+
+function labTanyaSelesai(st, cfg) {
+  return cfg.pertanyaan.every(function (q) {
+    return st.catat[q.id] === kunciCatatTanya(q);
+  });
+}
+
+function teksNilaiJawaban(v, q) {
+  if (typeof v !== 'number') return String(v);
+  var satuan = q.jawab && q.jawab.satuan;
+  return formatNumber(v) + (satuan ? ' ' + satuan : '');
+}
+
+var PST_AVATAR = ['🧑', '👧', '👦', '🧒', '👩', '🧕'];
+
+function buildLabTanya(id, st, cfg) {
+  var q = cariById_(cfg.pertanyaan, st.aktif);
+  var tercatat = cfg.pertanyaan.filter(function (p) {
+    return st.catat[p.id] === kunciCatatTanya(p);
+  }).length;
+
+  var kartu =
+    '<div class="pst-kartu-grid">' +
+    cfg.pertanyaan
+      .map(function (p) {
+        var sudah = typeof st.seeds[p.id] === 'number';
+        var ok = st.catat[p.id] === kunciCatatTanya(p);
+        return (
+          '<button type="button" class="pst-kartu' +
+          (p.id === st.aktif ? ' is-aktif' : '') +
+          (ok ? ' is-tercatat' : '') +
+          '" data-pst-tanya="' +
+          esc(p.id) +
+          '" aria-pressed="' +
+          (p.id === st.aktif ? 'true' : 'false') +
+          '">' +
+          '<span class="pst-kartu__ikon" aria-hidden="true">' +
+          (p.ikon || '❓') +
+          '</span>' +
+          '<span class="pst-kartu__teks">' +
+          esc(p.teks) +
+          '</span>' +
+          '<span class="pst-kartu__status">' +
+          (ok ? '✓ Tercatat' : sudah ? 'Sudah ditanyakan' : 'Tanyakan ke kelas') +
+          '</span>' +
+          '</button>'
+        );
+      })
+      .join('') +
+    '</div>';
+
+  var detail = '';
+  if (q) {
+    var jawab = jawabanLabTanya(st, cfg, q.id);
+    var ringkas = ringkasJawaban(jawab);
+    var kunci = kunciCatatTanya(q);
+    var catat = st.catat[q.id] || null;
+    var benar = catat === kunci;
+    var umpan = '';
+    if (catat) {
+      if (benar) {
+        umpan =
+          kunci === 'beragam'
+            ? '<strong>Tepat.</strong> Ada ' +
+              ringkas.length +
+              ' jawaban berbeda, jadi pertanyaan ini perlu dijawab dengan mengumpulkan data dari kelompok.'
+            : q.ciri && q.ciri.banyak === false
+            ? '<strong>Tepat.</strong> Hanya satu orang yang bisa menjawab, jadi datanya hanya satu.'
+            : '<strong>Tepat.</strong> Semua menjawab sama. Jawabannya cukup dicari sekali, tidak perlu mengumpulkan data.';
+      } else {
+        umpan =
+          'Lihat lagi ringkasan jawabannya: ada <strong>' +
+          ringkas.length +
+          '</strong> jawaban berbeda dari ' +
+          jawab.length +
+          ' orang.';
+      }
+    }
+    detail =
+      '<div class="pst-lab__detail">' +
+      '<p class="pst-lab__tanya">“' +
+      esc(q.teks) +
+      '”</p>' +
+      '<p class="dl-caption">Ditanyakan kepada <strong>' +
+      jawab.length +
+      '</strong> ' +
+      (jawab.length === 1 ? 'orang saja' : 'murid') +
+      '.</p>' +
+      '<ul class="pst-responden" aria-label="Jawaban setiap orang">' +
+      jawab
+        .map(function (v, i) {
+          return (
+            '<li class="pst-responden__item"><span aria-hidden="true">' +
+            PST_AVATAR[i % PST_AVATAR.length] +
+            '</span><span>' +
+            esc(teksNilaiJawaban(v, q)) +
+            '</span></li>'
+          );
+        })
+        .join('') +
+      '</ul>' +
+      '<div class="pst-ringkas" aria-label="Ringkasan jawaban">' +
+      ringkas
+        .map(function (r) {
+          return (
+            '<span class="pst-ringkas__chip">' +
+            esc(teksNilaiJawaban(r.nilai, q)) +
+            ' <strong>× ' +
+            r.banyak +
+            '</strong></span>'
+          );
+        })
+        .join('') +
+      '</div>' +
+      '<p class="pst-lab__info">Banyak jawaban berbeda: <strong>' +
+      ringkas.length +
+      '</strong></p>' +
+      '<p class="exercise-label">Catat: jawaban pertanyaan ini …</p>' +
+      buildChoiceGroup(PST_CATAT, st.catatOrders[q.id], {
+        chosen: catat,
+        correctId: benar ? kunci : null,
+        grade: true,
+        locked: benar,
+        group: q.id,
+        attr: 'data-pst-catat',
+      }) +
+      (catat
+        ? '<div style="margin-top:var(--space-2);">' +
+          buildFeedbackBox(benar ? 'success' : 'warning', benar ? '✓' : '💭', umpan) +
+          '</div>'
+        : '') +
+      '</div>';
+  } else {
+    detail = buildFeedbackBox(
+      'info',
+      '👆',
+      'Ketuk salah satu kartu untuk menanyakannya kepada ' + cfg.responden + ' murid virtual.'
+    );
+  }
+
+  return (
+    '<div class="pst-lab" id="' +
+    esc(id) +
+    '">' +
+    kartu +
+    detail +
+    '<p class="dl-caption pst-lab__progres">Tercatat ' +
+    tercatat +
+    ' dari ' +
+    cfg.pertanyaan.length +
+    ' kartu.</p>' +
+    '</div>'
+  );
+}
+
+function bindLabTanya(root, id, st, cfg, onChange) {
+  var el = root.querySelector('#' + id);
+  if (!el) return;
+  el.querySelectorAll('[data-pst-tanya]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var qid = btn.getAttribute('data-pst-tanya');
+      tanyaKelas(st, cfg, qid, 1 + Math.floor(Math.random() * 1e9));
+      onChange('#' + id + ' [data-pst-tanya="' + qid + '"]');
+    });
+  });
+  el.querySelectorAll('[data-pst-catat]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var qid = btn.getAttribute('data-group');
+      var v = btn.getAttribute('data-pst-catat');
+      catatLabTanya(st, cfg, qid, v);
+      onChange('#' + id + ' [data-pst-catat="' + v + '"]');
+    });
+  });
+}
+
+/* --- Lab Rakit Pertanyaan --------------------------------------------- */
+
+var PST_JUDUL_SLOT = {
+  tanya: '1. Kata tanya',
+  variabel: '2. Apa yang dicatat?',
+  kelompok: '3. Ditanyakan kepada siapa?',
+};
+
+var PST_SUMBER_SLOT = { tanya: 'kataTanya', variabel: 'variabel', kelompok: 'kelompok' };
+
+function ensureLabRakit(state, key, cfg) {
+  var st = state[key] && typeof state[key] === 'object' ? state[key] : {};
+  if (!st.pilih || typeof st.pilih !== 'object' || Array.isArray(st.pilih)) st.pilih = {};
+  if (!st.orders || typeof st.orders !== 'object' || Array.isArray(st.orders)) st.orders = {};
+  if (!Array.isArray(st.simpan)) st.simpan = [];
+  if (st.hasil === undefined) st.hasil = null;
+  if (st.jenis === undefined) st.jenis = null;
+  if (st.cara === undefined) st.cara = null;
+  PST_SLOT_RAKIT.forEach(function (slot) {
+    ensureShuffledOrder(st.orders, slot, cfg[PST_SUMBER_SLOT[slot]]);
+  });
+  ensureShuffledOrder(st, 'jenisOrder', PST_JENIS_DATA);
+  ensureShuffledOrder(st, 'caraOrder', PST_CARA);
+  state[key] = st;
+  return st;
+}
+
+function pilihKepingRakit(st, slot, id) {
+  if (PST_SLOT_RAKIT.indexOf(slot) === -1) return;
+  st.pilih[slot] = id;
+  st.hasil = null;
+  st.jenis = null;
+  st.cara = null;
+}
+
+function periksaLabRakit(st, cfg) {
+  st.hasil = periksaRakitPertanyaan(st.pilih, cfg);
+  st.jenis = null;
+  st.cara = null;
+  return st.hasil;
+}
+
+/* kind 'jenis' | 'cara'; true bila sesuai hasil periksa. */
+function jawabCiriRakit(st, cfg, kind, id) {
+  if (!st.hasil || !st.hasil.benar) return false;
+  var kunci = kind === 'jenis' ? st.hasil.jenisData : st.hasil.cara;
+  if (st[kind] === kunci) return true;
+  st[kind] = id;
+  return id === kunci;
+}
+
+function rakitSiapSimpan(st) {
+  return !!(
+    st.hasil &&
+    st.hasil.benar &&
+    st.jenis === st.hasil.jenisData &&
+    st.cara === st.hasil.cara
+  );
+}
+
+function simpanRakit(st, cfg) {
+  if (!rakitSiapSimpan(st)) return false;
+  var teks = st.hasil.teks;
+  var ada = st.simpan.some(function (s) {
+    return s.teks === teks;
+  });
+  if (ada) return false;
+  st.simpan.push({ teks: teks, jenis: st.hasil.jenisData, cara: st.hasil.cara });
+  st.pilih = {};
+  st.hasil = null;
+  st.jenis = null;
+  st.cara = null;
+  return true;
+}
+
+function labRakitSelesai(st, cfg) {
+  var jenis = {};
+  st.simpan.forEach(function (s) {
+    jenis[s.jenis] = true;
+  });
+  return st.simpan.length >= (cfg.minSimpan || 2) && !!jenis.kategorik && !!jenis.numerik;
+}
+
+function labelCiri_(list, id) {
+  var o = cariById_(list, id);
+  return o ? o.label.split(' — ')[0] : '';
+}
+
+function buildCiriRakit_(st, kind, list, order, kunci, judul) {
+  var dipilih = st[kind];
+  var benar = dipilih === kunci;
+  var umpan = '';
+  if (dipilih && !benar) {
+    var o = cariById_(list, dipilih);
+    umpan = o ? esc(o.umpan) : '';
+  }
+  return (
+    '<p class="exercise-label">' +
+    esc(judul) +
+    '</p>' +
+    buildChoiceGroup(
+      list.map(function (o) {
+        return { id: o.id, label: esc(o.label) };
+      }),
+      order,
+      {
+        chosen: dipilih,
+        correctId: benar ? kunci : null,
+        grade: true,
+        locked: benar,
+        attr: 'data-pst-' + kind,
+      }
+    ) +
+    (umpan
+      ? '<div style="margin-top:var(--space-2);">' +
+        buildFeedbackBox('warning', '💭', umpan) +
+        '</div>'
+      : '')
+  );
+}
+
+function buildLabRakit(id, st, cfg) {
+  var hasil = st.hasil;
+  var lengkap = PST_SLOT_RAKIT.every(function (s) {
+    return !!st.pilih[s];
+  });
+  var slots = PST_SLOT_RAKIT.map(function (slot) {
+    var list = cfg[PST_SUMBER_SLOT[slot]];
+    return (
+      '<div class="pst-rakit__slot" role="group" aria-label="' +
+      esc(PST_JUDUL_SLOT[slot]) +
+      '">' +
+      '<span class="pst-rakit__judul">' +
+      esc(PST_JUDUL_SLOT[slot]) +
+      '</span>' +
+      '<div class="pst-keping-grid">' +
+      orderByIds(list, st.orders[slot])
+        .map(function (o) {
+          var on = st.pilih[slot] === o.id;
+          return (
+            '<button type="button" class="pst-keping pst-keping--' +
+            slot +
+            (on ? ' is-dipilih' : '') +
+            '" data-pst-keping="' +
+            slot +
+            '" data-pst-id="' +
+            esc(o.id) +
+            '" aria-pressed="' +
+            (on ? 'true' : 'false') +
+            '">' +
+            esc(slot === 'tanya' ? o.label : o.frasa) +
+            '</button>'
+          );
+        })
+        .join('') +
+      '</div>' +
+      '</div>'
+    );
+  }).join('');
+
+  var periksa = '';
+  if (hasil) {
+    periksa =
+      '<div style="margin-top:var(--space-3);">' +
+      buildFeedbackBox(
+        hasil.benar ? 'success' : 'error',
+        hasil.benar ? '✓' : '✗',
+        esc(hasil.pesan)
+      ) +
+      '</div>';
+    if (hasil.benar) {
+      periksa +=
+        '<div class="pst-rakit__ciri">' +
+        buildCiriRakit_(
+          st,
+          'jenis',
+          PST_JENIS_DATA,
+          st.jenisOrder,
+          hasil.jenisData,
+          'Jenis data dari jawabannya:'
+        ) +
+        (st.jenis === hasil.jenisData
+          ? buildCiriRakit_(
+              st,
+              'cara',
+              PST_CARA,
+              st.caraOrder,
+              hasil.cara,
+              'Cara paling tepat untuk mengumpulkan datanya:'
+            )
+          : '') +
+        '</div>' +
+        (rakitSiapSimpan(st)
+          ? '<div class="btn-group btn-group--end"><button type="button" class="btn btn--primary" data-pst-simpan>💾 Simpan ke daftar</button></div>'
+          : '');
+    }
+  }
+
+  var jenis = {};
+  st.simpan.forEach(function (s) {
+    jenis[s.jenis] = true;
+  });
+
+  return (
+    '<div class="pst-rakit" id="' +
+    esc(id) +
+    '">' +
+    '<p class="pst-rakit__kalimat" aria-live="polite">' +
+    esc(teksRakitPertanyaan(st.pilih, cfg)) +
+    '</p>' +
+    slots +
+    '<div class="btn-group btn-group--end">' +
+    '<button type="button" class="btn btn--outline-primary" data-pst-periksa' +
+    (lengkap ? '' : ' disabled') +
+    '>Periksa pertanyaan</button>' +
+    '</div>' +
+    periksa +
+    '<div class="pst-rakit__daftar-wrap">' +
+    '<span class="pst-rakit__judul">📋 Daftar pertanyaan statistikmu (' +
+    st.simpan.length +
+    ')</span>' +
+    (st.simpan.length
+      ? '<ol class="pst-rakit__daftar">' +
+        st.simpan
+          .map(function (s) {
+            return (
+              '<li><span>' +
+              esc(s.teks) +
+              '</span> <span class="pst-tag pst-tag--' +
+              esc(s.jenis) +
+              '">' +
+              esc(labelCiri_(PST_JENIS_DATA, s.jenis)) +
+              '</span> <span class="pst-tag">' +
+              esc(labelCiri_(PST_CARA, s.cara)) +
+              '</span></li>'
+            );
+          })
+          .join('') +
+        '</ol>'
+      : '<p class="dl-caption">Belum ada. Rakit, periksa, lalu simpan pertanyaanmu.</p>') +
+    '<p class="dl-caption">Target: minimal ' +
+    (cfg.minSimpan || 2) +
+    ' pertanyaan, ada yang berdata kategorik ' +
+    (jenis.kategorik ? '✓' : '○') +
+    ' dan numerik ' +
+    (jenis.numerik ? '✓' : '○') +
+    '.</p>' +
+    '</div>' +
+    '</div>'
+  );
+}
+
+function bindLabRakit(root, id, st, cfg, onChange) {
+  var el = root.querySelector('#' + id);
+  if (!el) return;
+  el.querySelectorAll('[data-pst-keping]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var slot = btn.getAttribute('data-pst-keping');
+      var kid = btn.getAttribute('data-pst-id');
+      pilihKepingRakit(st, slot, kid);
+      onChange('#' + id + ' [data-pst-keping="' + slot + '"][data-pst-id="' + kid + '"]');
+    });
+  });
+  var periksa = el.querySelector('[data-pst-periksa]');
+  if (periksa) {
+    periksa.addEventListener('click', function () {
+      periksaLabRakit(st, cfg);
+      onChange('#' + id + ' [data-pst-periksa]');
+    });
+  }
+  ['jenis', 'cara'].forEach(function (kind) {
+    el.querySelectorAll('[data-pst-' + kind + ']').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var v = btn.getAttribute('data-pst-' + kind);
+        jawabCiriRakit(st, cfg, kind, v);
+        onChange('#' + id + ' [data-pst-' + kind + '="' + v + '"]');
+      });
+    });
+  });
+  var simpan = el.querySelector('[data-pst-simpan]');
+  if (simpan) {
+    simpan.addEventListener('click', function () {
+      simpanRakit(st, cfg);
+      onChange('#' + id + ' [data-pst-periksa]');
+    });
+  }
+}

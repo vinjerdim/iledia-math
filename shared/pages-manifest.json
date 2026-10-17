@@ -183,6 +183,14 @@
     "stageCount": 11,
     "extraBody": "partials/reset-modal.html"
   },
+  "fase-d/mpi-10.1": {
+    "title": "Merumuskan Pertanyaan Statistik tentang Diri & Lingkungan Sekolah — Matematika Fase D",
+    "description": "Media pembelajaran interaktif berbasis Inquiry Learning untuk merumuskan pertanyaan statistik yang dapat dijawab dengan data tentang diri dan lingkungan sekolah: Kotak Usul OSIS, Lab Tanya Kelas (menanyakan kartu pertanyaan kepada 32 murid virtual lalu mencatat jawaban seragam atau beragam), Lab Pilah (memilah pertanyaan statistik dengan bukti tiga ciri), Lab Rakit Pertanyaan (merakit kata tanya, yang dicatat, dan kelompok berdiagnosa, menentukan jenis data dan cara mengumpulkan), memperbaiki pertanyaan kabur, menguji hipotesis, serta uji terap acak.",
+    "kicker": "Matematika — Fase D (SMP)",
+    "h1": "Merumuskan Pertanyaan Statistik",
+    "stageCount": 11,
+    "extraBody": "partials/reset-modal.html"
+  },
   "fase-d/mpi-11.1": {
     "title": "Menyajikan Data Kategorik dalam Tabel Frekuensi & Diagram Batang — Matematika Fase D",
     "description": "Media pembelajaran interaktif berbasis Discovery Learning untuk menyajikan data kategorik dalam bentuk tabel frekuensi dan diagram batang dengan skala yang tepat pada situasi kehidupan sehari-hari: survei jajanan kantin, Lab Turus (menurus kartu jawaban acak lalu menyusun tabel frekuensi berdiagnosa), Lab Skala (mencoba langkah skala dan sumbu yang tidak dimulai dari 0), Lab Diagram Batang (memilih langkah skala, melengkapi judul dan nama sumbu, mengatur tinggi batang), pemilahan data kategorik dan skala tepat, prediksi lalu pembuktian pada data acak, kritik diagram menyesatkan, serta uji terap acak.",
