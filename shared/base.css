@@ -16447,3 +16447,344 @@ button.akar-tile:disabled {
     grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
   }
 }
+
+/* =========================================================================
+   79. Penyajian data kategorik: tabel frekuensi & diagram batang
+   (engine.js seksi 79, fase-d/mpi-10.1): turus (.dtk-turus*), tabel
+   frekuensi (.dtk-tabel*), diagram batang SVG (.dtk-diagram, .dtk-bar*,
+   .dtk-grid, .dtk-ytick, .dtk-xtick, .dtk-judul, .dtk-label-sumbu,
+   .dtk-kolom), Lab Turus (.dtk-kartu-aktif*, .dtk-baris-btn, .dtk-isian),
+   Lab Skala (.dtk-lab-skala*), dan Lab Diagram Batang (.dtk-lab*,
+   .dtk-stepper*).
+   ========================================================================= */
+
+.dtk-turus {
+  display: inline-block;
+  vertical-align: middle;
+}
+
+.dtk-turus__garis,
+.dtk-turus__miring {
+  stroke: var(--color-ink);
+  stroke-width: 2.2;
+  stroke-linecap: round;
+}
+
+.dtk-turus__miring {
+  stroke: var(--color-orange);
+}
+
+.dtk-turus--nol {
+  color: var(--color-ink-muted);
+}
+
+/* ---- Tabel frekuensi ---- */
+
+.dtk-tabel td,
+.dtk-tabel th {
+  white-space: normal;
+}
+
+.dtk-tabel__turus {
+  min-width: 90px;
+  text-align: left;
+}
+
+.dtk-tabel .dtk-tabel__turus {
+  text-align: left;
+}
+
+.dtk-tabel__angka {
+  font-family: var(--font-mono);
+  font-weight: 700;
+}
+
+.dtk-tabel tfoot th,
+.dtk-tabel tfoot td {
+  background: var(--color-bg-grid);
+  font-weight: 700;
+}
+
+.dtk-tabel tr.is-sorot th,
+.dtk-tabel tr.is-sorot td {
+  background: var(--color-warning-soft);
+}
+
+.dtk-isian {
+  width: 4.5em;
+  min-height: 40px;
+  text-align: center;
+}
+
+/* ---- Diagram batang ---- */
+
+.dtk-diagram-wrap {
+  width: 100%;
+  max-width: 620px;
+  margin: 0 auto;
+}
+
+.dtk-diagram {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+}
+
+.dtk-grid {
+  stroke: var(--color-border);
+  stroke-width: 1;
+}
+
+.dtk-sumbu {
+  stroke: var(--color-ink);
+  stroke-width: 2;
+}
+
+.dtk-ytick,
+.dtk-xtick,
+.dtk-bar__nilai {
+  fill: var(--color-ink-muted);
+  font-family: var(--font-mono);
+  font-size: 12px;
+}
+
+.dtk-ytick {
+  text-anchor: end;
+}
+
+.dtk-xtick,
+.dtk-bar__nilai {
+  text-anchor: middle;
+}
+
+.dtk-xtick {
+  fill: var(--color-ink);
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.dtk-bar__nilai {
+  fill: var(--color-ink);
+  font-weight: 700;
+}
+
+.dtk-judul {
+  fill: var(--color-ink);
+  font-family: var(--font-display);
+  font-size: 16px;
+  font-weight: 700;
+  text-anchor: middle;
+}
+
+.dtk-label-sumbu {
+  fill: var(--color-ink-muted);
+  font-size: 13px;
+  font-weight: 600;
+  text-anchor: middle;
+}
+
+.dtk-judul.is-samar,
+.dtk-label-sumbu.is-samar {
+  fill: var(--color-border-strong);
+  font-style: italic;
+}
+
+.dtk-bar {
+  fill: var(--color-blue);
+  stroke: var(--color-blue-strong);
+  stroke-width: 1;
+}
+
+.dtk-bar.is-sorot {
+  fill: var(--color-orange);
+  stroke: var(--color-orange-strong);
+}
+
+.dtk-xtick.is-sorot {
+  fill: var(--color-orange-strong);
+}
+
+.dtk-kolom {
+  fill: transparent;
+  cursor: pointer;
+}
+
+.dtk-kolom:hover {
+  fill: var(--color-primary-soft);
+}
+
+/* ---- Lab Turus & Lab Diagram Batang ---- */
+
+.dtk-lab {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.dtk-lab__progres {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  font-size: 0.88rem;
+  font-weight: 600;
+}
+
+.dtk-lab__meter {
+  flex: 1;
+  height: 8px;
+  border-radius: 999px;
+  background: var(--color-bg-grid);
+  overflow: hidden;
+}
+
+.dtk-lab__meter > span {
+  display: block;
+  height: 100%;
+  background: var(--color-success);
+}
+
+.dtk-kartu-aktif {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-1);
+  max-width: 280px;
+  margin: 0 auto;
+  padding: var(--space-4);
+  border: 2px solid var(--color-primary);
+  border-radius: var(--radius-md);
+  background: var(--color-primary-soft);
+  text-align: center;
+}
+
+.dtk-kartu-aktif__no {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--color-ink-muted);
+}
+
+.dtk-kartu-aktif__isi {
+  font-size: 1.4rem;
+}
+
+.dtk-baris-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  width: 100%;
+  min-height: 44px;
+  padding: var(--space-2);
+  border: 2px solid var(--color-border-strong);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  color: var(--color-ink);
+  font: inherit;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+}
+
+.dtk-baris-btn:hover {
+  border-color: var(--color-primary);
+  background: var(--color-primary-soft);
+}
+
+.dtk-baris-btn:focus-visible,
+.dtk-kolom:focus-visible {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+.dtk-pesan {
+  margin: 0;
+  padding-left: var(--space-4);
+}
+
+.dtk-lab__bagian {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.dtk-lab__judul {
+  margin: 0;
+}
+
+.dtk-stepper-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: var(--space-2);
+}
+
+.dtk-stepper {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  padding: var(--space-2);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+}
+
+.dtk-stepper.is-benar {
+  border-color: var(--color-success);
+  background: var(--color-success-soft);
+}
+
+.dtk-stepper.is-salah {
+  border-color: var(--color-error);
+  background: var(--color-error-soft);
+}
+
+.dtk-stepper__nama {
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.dtk-stepper__tombol {
+  display: inline-flex;
+  gap: var(--space-1);
+}
+
+.dtk-stepper__tombol .btn {
+  min-width: 40px;
+  min-height: 40px;
+  font-size: 1.1rem;
+}
+
+.dtk-lab-skala__kontrol {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.dtk-lab-skala__baris {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.dtk-lab-skala__baris .btn-group {
+  flex-wrap: wrap;
+  margin: 0;
+}
+
+.dtk-lab-skala__label {
+  min-width: 7.5em;
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+.dtk-lab-skala__info {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: 0.88rem;
+  font-weight: 700;
+  text-align: center;
+}

@@ -183,6 +183,14 @@
     "stageCount": 11,
     "extraBody": "partials/reset-modal.html"
   },
+  "fase-d/mpi-10.1": {
+    "title": "Menyajikan Data Kategorik dalam Tabel Frekuensi & Diagram Batang — Matematika Fase D",
+    "description": "Media pembelajaran interaktif berbasis Discovery Learning untuk menyajikan data kategorik dalam bentuk tabel frekuensi dan diagram batang dengan skala yang tepat pada situasi kehidupan sehari-hari: survei jajanan kantin, Lab Turus (menurus kartu jawaban acak lalu menyusun tabel frekuensi berdiagnosa), Lab Skala (mencoba langkah skala dan sumbu yang tidak dimulai dari 0), Lab Diagram Batang (memilih langkah skala, melengkapi judul dan nama sumbu, mengatur tinggi batang), pemilahan data kategorik dan skala tepat, prediksi lalu pembuktian pada data acak, kritik diagram menyesatkan, serta uji terap acak.",
+    "kicker": "Matematika — Fase D (SMP)",
+    "h1": "Menyajikan Data Kategorik: Tabel Frekuensi & Diagram Batang",
+    "stageCount": 11,
+    "extraBody": "partials/reset-modal.html"
+  },
   "fase-d/mpi-23.1": {
     "title": "Keliling & Luas Bangun Datar — Matematika Fase D",
     "description": "Media pembelajaran interaktif berbasis Discovery Learning, diawali asesmen diagnostik, untuk menentukan keliling dan luas segitiga, persegi, persegi panjang, jajargenjang, trapesium, belah ketupat, dan layang-layang melalui eksplorasi dalam Proyek Taman Sekolah Kelas VII: Lab Petak untuk menghitung petak dan ruas satuan, Lab Potong-Susun untuk mengubah bangun menjadi persegi panjang atau jajargenjang, pemilahan rumus luas, serta uji terap acak berdiagnosa miskonsepsi.",
