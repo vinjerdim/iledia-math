@@ -1,0 +1,228 @@
+/* =========================================================================
+   fase-d/mpi-13.1/styles.css
+   Perkalian & Pembagian Bilangan Berpangkat pada Bentuk Aljabar —
+   Fase D (SMP Kelas VIII), Discovery Learning
+
+   Hanya memuat gaya yang KHAS modul ini (pita aturan & petak mading
+   pada stimulasi, kamus pangkat yang dapat dilipat, pemisah antartabel
+   pola dan antarlangkah ubin, navigasi & kotak soal uji terap, daftar
+   langkah pembahasan). Dasar design system — panel, tombol, umpan
+   balik, pilihan ganda, petunjuk, langkah isian, pemilahan, tabel
+   pangkat, tabel pola eksponen, ubin faktor (termasuk ubin bentuk
+   aljabar seksi 81), lab uji sifat, isian monomial, kartu rumus,
+   perbandingan dugaan, kartu ringkasan, navigasi tahap, modal — berasal
+   dari shared/base.css.
+   ========================================================================= */
+
+/* Pita aturan pada cerita stimulasi */
+.kbp-rule {
+  display: flex;
+  gap: var(--space-2);
+  align-items: flex-start;
+  padding: var(--space-2) var(--space-3);
+  border-left: 4px solid var(--color-purple);
+  border-radius: var(--radius-sm);
+  background: var(--color-purple-soft);
+  color: var(--color-purple-strong);
+  font-weight: 600;
+}
+
+/* Petak mading: persegi panjang berlabel panjang & lebar */
+.kbp-petak {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin: var(--space-4) auto 0;
+  max-width: 360px;
+  font-family: var(--font-mono);
+  font-weight: 700;
+}
+
+.kbp-petak__panjang {
+  margin-bottom: var(--space-1);
+  color: var(--color-blue-strong);
+}
+
+.kbp-petak__isi {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 140px;
+  padding: var(--space-3) var(--space-7) var(--space-3) var(--space-3);
+  border: 3px solid var(--color-blue);
+  border-radius: var(--radius-sm);
+  background: var(--color-blue-soft);
+}
+
+.kbp-petak__luas {
+  color: var(--color-ink);
+  text-align: center;
+}
+
+.kbp-petak__lebar {
+  position: absolute;
+  right: var(--space-1);
+  top: 50%;
+  transform: translateY(-50%);
+  writing-mode: vertical-rl;
+  color: var(--color-orange-strong);
+}
+
+/* Kamus pangkat (dapat dilipat) di atas tabel pola */
+.kbp-kamus {
+  margin-bottom: var(--space-4);
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-bg);
+}
+
+.kbp-kamus summary {
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.kbp-kamus__grid {
+  display: grid;
+  gap: var(--space-2);
+  margin-top: var(--space-2);
+}
+
+.kbp-kamus__grid > * {
+  min-width: 0;
+}
+
+/* Setiap tabel pola dipisah garis putus-putus */
+.kbp-pola + .kbp-pola,
+.kbp-kamus + .kbp-pola {
+  margin-top: var(--space-4);
+  padding-top: var(--space-4);
+  border-top: 1px dashed var(--color-border);
+}
+
+.kbp-pola__judul {
+  margin: 0 0 var(--space-1);
+}
+
+.kbp-olah-grid {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.kbp-olah-grid > * {
+  min-width: 0;
+}
+
+/* Langkah isian berubin: beri jarak antarlangkah */
+.kbp-step + .kbp-step {
+  margin-top: var(--space-4);
+  padding-top: var(--space-4);
+  border-top: 1px dashed var(--color-border);
+}
+
+.kbp-diagnosa {
+  margin: var(--space-3) 0;
+  display: grid;
+  gap: var(--space-2);
+}
+
+.kbp-formula-grid {
+  max-width: 900px;
+}
+
+/* Uji terap: navigasi soal, kotak soal, pembahasan */
+.kbp-dots {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-bottom: var(--space-4);
+}
+
+.kbp-dot {
+  width: 44px;
+  height: 44px;
+  border: 2px solid var(--color-border-strong);
+  border-radius: 50%;
+  background: var(--color-surface);
+  color: var(--color-ink);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.kbp-dot--done {
+  border-color: var(--color-success);
+  background: var(--color-success-soft);
+  color: var(--color-success-strong);
+}
+
+.kbp-dot--aktif {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px var(--color-primary-soft);
+}
+
+.kbp-dot:focus-visible {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+.kbp-kasus {
+  margin-top: 0;
+  font-weight: 700;
+  color: var(--color-ink-muted);
+}
+
+.kbp-cerita {
+  margin: 0 0 var(--space-2);
+}
+
+.kbp-soal {
+  display: flex;
+  justify-content: center;
+  margin: var(--space-3) 0 var(--space-5);
+  padding: var(--space-4);
+  border-radius: var(--radius-md);
+  background: var(--color-blue-soft);
+  color: var(--color-blue-strong);
+  overflow-x: auto;
+}
+
+.kbp-soal .mono-expr {
+  font-size: 1.4rem;
+  color: var(--color-blue-strong);
+}
+
+.kbp-mono {
+  font-family: var(--font-mono);
+}
+
+.kbp-bahas {
+  margin-top: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  border: 1px dashed var(--color-border-strong);
+  border-radius: var(--radius-md);
+  background: var(--color-bg);
+}
+
+.kbp-bahas__judul {
+  margin: 0 0 var(--space-1);
+  font-weight: 700;
+}
+
+.kbp-langkah {
+  margin: 0;
+  padding-left: var(--space-5);
+  font-family: var(--font-mono);
+  overflow-wrap: anywhere;
+}
+
+.kbp-langkah li + li {
+  margin-top: var(--space-1);
+}
+
+@media (max-width: 480px) {
+  .kbp-soal .mono-expr {
+    font-size: 1.15rem;
+  }
+}
