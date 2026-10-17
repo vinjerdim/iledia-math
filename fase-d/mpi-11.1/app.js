@@ -64,7 +64,7 @@ var STAGES = DATA.tahap.map(function (t) {
 var STAGE_LABELS = DATA.tahap.map(function (t) {
   return t.label;
 });
-var STORAGE_KEY = 'mpi-d-10-1-data-kategorik-v1';
+var STORAGE_KEY = 'mpi-d-11-1-data-kategorik-v1';
 var OLAH_STAGES = ['olahTabel', 'olahSkala', 'olahBatang'];
 var KANTIN = DATA.kantin;
 var LAB_TURUS = {

@@ -78,7 +78,7 @@
    diacak; opsi pilihan ganda uji terap dibangun engine (opsiSoalData)
    lalu diacak.
 
-   Konsistensi kunci jawaban diuji tests/mpi-10.1-data.test.js terhadap
+   Konsistensi kunci jawaban diuji tests/mpi-11.1-data.test.js terhadap
    engine seksi 79.
    ============================================================ */
 

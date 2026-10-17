@@ -1,7 +1,7 @@
 'use strict';
 
 /*
- * Tes konsistensi konten fase-d/mpi-10.1/data.js (Menyajikan data
+ * Tes konsistensi konten fase-d/mpi-11.1/data.js (Menyajikan data
  * kategorik dalam tabel frekuensi & diagram batang, Discovery Learning):
  * setiap kunci sama dengan engine seksi 79 (hitungFrekuensi,
  * skalaDisarankan, diagnosaSkala, nilaiSkalaSumbu, nilaiSoalData,
@@ -16,9 +16,9 @@ const fs = require('node:fs');
 const path = require('node:path');
 const { loadEngine, ROOT } = require('./load-engine');
 
-const E = loadEngine(['fase-d/mpi-10.1/data.js']);
+const E = loadEngine(['fase-d/mpi-11.1/data.js']);
 const D = E.DATA;
-const APP = fs.readFileSync(path.join(ROOT, 'fase-d', 'mpi-10.1', 'app.js'), 'utf8');
+const APP = fs.readFileSync(path.join(ROOT, 'fase-d', 'mpi-11.1', 'app.js'), 'utf8');
 const OLAH = ['olahTabel', 'olahSkala', 'olahBatang'];
 
 function ids(list) {
@@ -68,7 +68,7 @@ test('sebelas tahap Discovery Learning: konten lengkap & sama dengan manifest', 
   const manifest = JSON.parse(
     fs.readFileSync(path.join(ROOT, 'shared', 'pages-manifest.json'), 'utf8')
   );
-  const m = manifest['fase-d/mpi-10.1'];
+  const m = manifest['fase-d/mpi-11.1'];
   assert.ok(m, 'entri manifest ada');
   assert.equal(m.stageCount, D.tahap.length);
   assert.match(m.description, /Discovery Learning/);
@@ -94,18 +94,18 @@ test('sebelas tahap Discovery Learning: konten lengkap & sama dengan manifest', 
   Object.entries(sintaks).forEach(([id, n]) => {
     assert.equal(D[id].syntax, 'Discovery Learning · Sintaks ' + n, id);
   });
-  const html = fs.readFileSync(path.join(ROOT, 'fase-d', 'mpi-10.1', 'index.html'), 'utf8');
+  const html = fs.readFileSync(path.join(ROOT, 'fase-d', 'mpi-11.1', 'index.html'), 'utf8');
   assert.match(html, /<title>\s*Menyajikan Data Kategorik/);
   assert.match(html, /0 dari 11 tahap selesai/);
 });
 
-test('index.html root: card Materi 10.1 di Kelas VII › Topik 10', () => {
+test('index.html root: card Materi 11.1 di Kelas VII › Topik 11', () => {
   const idx = fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8');
-  const card = idx.match(/<a\s+href="fase-d\/mpi-10\.1\/index\.html"[\s\S]*?<\/a>/);
+  const card = idx.match(/<a\s+href="fase-d\/mpi-11\.1\/index\.html"[\s\S]*?<\/a>/);
   assert.ok(card, 'card ada');
   assert.match(card[0], /data-kelas="VII"/);
-  assert.match(card[0], /data-topik="10"/);
-  assert.match(card[0], /Materi 10\.1/);
+  assert.match(card[0], /data-topik="11"/);
+  assert.match(card[0], /Materi 11\.1/);
   assert.match(card[0], /Discovery Learning/);
 });
 
@@ -311,7 +311,7 @@ test('app.js: pilihan selalu dirender dengan urutan acak tersimpan', () => {
   assert.match(APP, /ensureLabTurus\(/);
   assert.match(APP, /ensureLabBatang\(/);
   assert.match(APP, /opsiSoalData\(/);
-  assert.match(APP, /STORAGE_KEY = 'mpi-d-10-1-/);
+  assert.match(APP, /STORAGE_KEY = 'mpi-d-11-1-/);
   /* Setiap buildChoiceGroup memakai urutan dari State, bukan urutan DATA. */
   const panggilan = APP.match(/buildChoiceGroup\([^,]+,\s*[^,)]+/g) || [];
   assert.ok(panggilan.length >= 2);

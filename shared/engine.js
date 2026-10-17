@@ -53474,7 +53474,7 @@ function bindLabAmati(root, id, st, cfg, onChange, onSave) {
 
 /* ============================================================
    79. PENYAJIAN DATA KATEGORIK: TABEL FREKUENSI & DIAGRAM BATANG
-   Dipakai fase-d/mpi-10.1. Data kategorik berupa kelompok/nama
+   Dipakai fase-d/mpi-11.1. Data kategorik berupa kelompok/nama
    (jajanan kesukaan, moda transportasi, golongan darah), bukan hasil
    mengukur. Datanya disajikan dalam tabel frekuensi (kategori, turus,
    frekuensi, jumlah) lalu diagram batang tegak.
