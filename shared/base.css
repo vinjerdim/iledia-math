@@ -16788,3 +16788,268 @@ button.akar-tile:disabled {
   font-weight: 700;
   text-align: center;
 }
+
+/* =========================================================================
+   80. Merumuskan pertanyaan statistik
+   (engine.js seksi 80, fase-d/mpi-10.1): penanda ciri (.pst-ciri*), Lab
+   Tanya Kelas (.pst-kartu*, .pst-responden*, .pst-ringkas*, .pst-lab*),
+   dan Lab Rakit Pertanyaan (.pst-rakit*, .pst-keping*, .pst-tag*).
+   ========================================================================= */
+
+.pst-ciri {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin: var(--space-2) 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.pst-ciri__item {
+  padding: 2px var(--space-2);
+  border-radius: 999px;
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.pst-ciri__item--ya {
+  background: var(--color-success-soft);
+  color: var(--color-success-strong);
+}
+
+.pst-ciri__item--tidak {
+  background: var(--color-error-soft);
+  color: var(--color-error-strong);
+}
+
+.pst-lab {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.pst-kartu-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 200px), 1fr));
+  gap: var(--space-3);
+}
+
+.pst-kartu {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-2);
+  min-height: 44px;
+  padding: var(--space-3) var(--space-4);
+  border: 2px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  color: var(--color-ink);
+  font-family: var(--font-body);
+  font-size: 0.92rem;
+  text-align: left;
+  cursor: pointer;
+}
+
+.pst-kartu:hover {
+  border-color: var(--color-primary);
+}
+
+.pst-kartu:focus-visible,
+.pst-keping:focus-visible {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+.pst-kartu.is-aktif {
+  border-color: var(--color-primary);
+  background: var(--color-primary-soft);
+}
+
+.pst-kartu.is-tercatat {
+  border-color: var(--color-success);
+}
+
+.pst-kartu__ikon {
+  font-size: 1.6rem;
+  line-height: 1;
+}
+
+.pst-kartu__teks {
+  font-weight: 700;
+}
+
+.pst-kartu__status {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--color-ink-muted);
+}
+
+.pst-kartu.is-tercatat .pst-kartu__status {
+  color: var(--color-success-strong);
+}
+
+.pst-lab__detail {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-4);
+  border: 1px dashed var(--color-border-strong);
+  border-radius: var(--radius-md);
+}
+
+.pst-lab__tanya {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+
+.pst-lab__info,
+.pst-lab__progres {
+  margin: 0;
+}
+
+.pst-responden {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(84px, 1fr));
+  gap: var(--space-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.pst-responden__item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: var(--space-1);
+  border-radius: var(--radius-sm);
+  background: var(--color-bg);
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-align: center;
+  overflow-wrap: anywhere;
+}
+
+.pst-responden__item > span:first-child {
+  font-size: 1.2rem;
+}
+
+.pst-ringkas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.pst-ringkas__chip {
+  padding: 2px var(--space-3);
+  border-radius: 999px;
+  background: var(--color-blue-soft);
+  color: var(--color-blue-strong);
+  font-size: 0.85rem;
+}
+
+.pst-rakit {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.pst-rakit__kalimat {
+  margin: 0;
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-md);
+  background: var(--color-primary-soft);
+  color: var(--color-primary-strong);
+  font-family: var(--font-display);
+  font-size: 1.15rem;
+  font-weight: 700;
+  text-align: center;
+}
+
+.pst-rakit__slot {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.pst-rakit__judul {
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+.pst-keping-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.pst-keping {
+  min-height: 44px;
+  padding: var(--space-2) var(--space-3);
+  border: 2px solid var(--color-border);
+  border-radius: 999px;
+  background: var(--color-surface);
+  color: var(--color-ink);
+  font-family: var(--font-body);
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.pst-keping--tanya.is-dipilih {
+  border-color: var(--color-purple);
+  background: var(--color-purple-soft);
+  color: var(--color-purple-strong);
+}
+
+.pst-keping--variabel.is-dipilih {
+  border-color: var(--color-orange);
+  background: var(--color-orange-soft);
+  color: var(--color-orange-strong);
+}
+
+.pst-keping--kelompok.is-dipilih {
+  border-color: var(--color-blue);
+  background: var(--color-blue-soft);
+  color: var(--color-blue-strong);
+}
+
+.pst-rakit__ciri {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.pst-rakit__daftar-wrap {
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--color-border);
+}
+
+.pst-rakit__daftar {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin: var(--space-2) 0;
+  padding-left: var(--space-5);
+}
+
+.pst-tag {
+  display: inline-block;
+  padding: 0 var(--space-2);
+  border-radius: 999px;
+  background: var(--color-bg-grid);
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.pst-tag--kategorik {
+  background: var(--color-orange-soft);
+  color: var(--color-orange-strong);
+}
+
+.pst-tag--numerik {
+  background: var(--color-blue-soft);
+  color: var(--color-blue-strong);
+}
