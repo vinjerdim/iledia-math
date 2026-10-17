@@ -256,6 +256,12 @@
        berdiagnosa miskonsepsi, opsi berpengecoh, model 3D tabung &
        kerucut yang bisa diketuk, gambar bidang penyusun, Lab Amati
        Benda)
+   79. Penyajian data kategorik: tabel frekuensi & diagram batang
+       (frekuensi & turus, skala sumbu tegak tepat: langkah rapi, 5–10
+       garis bantu, puncak sumbu; isian berdiagnosa miskonsepsi turus,
+       jumlah, puncak, baca batang & selisih; opsi berpengecoh skala,
+       kategori terbanyak & cacat diagram; diagram batang SVG termasuk
+       diagram menyesatkan; Lab Turus, Lab Skala, Lab Diagram Batang)
    ============================================================ */
 
 /* ============================================================
@@ -53462,6 +53468,1660 @@ function bindLabAmati(root, id, st, cfg, onChange, onSave) {
       if (st.bidangPilih[b.id] === 'baku') return;
       pilihBidangAmati(st, cfg, btn.getAttribute('data-bgr-bidang'));
       onChange();
+    });
+  });
+}
+
+/* ============================================================
+   79. PENYAJIAN DATA KATEGORIK: TABEL FREKUENSI & DIAGRAM BATANG
+   Dipakai fase-d/mpi-11.1. Data kategorik berupa kelompok/nama
+   (jajanan kesukaan, moda transportasi, golongan darah), bukan hasil
+   mengukur. Datanya disajikan dalam tabel frekuensi (kategori, turus,
+   frekuensi, jumlah) lalu diagram batang tegak.
+
+   Skala sumbu tegak dianggap TEPAT bila (a) dimulai dari 0, (b) jarak
+   (interval) antargaris bantu sama, dan (c) langkahnya bilangan rapi
+   (1, 2, 5, 10, 20, 25, 50, …) sehingga sumbu cukup memuat 5–10 garis
+   bantu di atas 0. Untuk data kecil (frekuensi terbesar < 5) langkah
+   rapi terkecil yang muat (skalaDisarankan) tetap tepat. Puncak sumbu =
+   banyak garis bantu × langkah ≥ frekuensi terbesar.
+
+   Notasi cek soal (nilaiSoalData):
+     { minta: 'frekuensi', data, kategori, kat } → banyak data berkategori kat
+     { minta: 'total', frek, kategori }          → jumlah semua frekuensi
+     { minta: 'turus', n }                        → frekuensi dari turus n
+     { minta: 'puncak', max, langkah }            → angka teratas sumbu tegak
+     { minta: 'garis', max, langkah }             → banyak garis bantu di atas 0
+     { minta: 'baca', frek, kategori, langkah, kat }      → frekuensi kat
+                                                    dibaca dari diagram
+     { minta: 'selisih', frek, kategori, langkah, a, b } → |fa − fb|
+     { minta: 'skala', max }                      → langkah skala (isian
+                                                    menerima setiap langkah
+                                                    tepat; pilihan memakai
+                                                    skalaDisarankan)
+     { minta: 'terbanyak', frek, kategori }       → id kategori (pilihan)
+     { minta: 'cacat', frek, kategori, cacat }    → id DTK_CACAT (pilihan)
+
+   Komponen UI: gambar turus (SVG), tabel frekuensi, diagram batang SVG
+   (termasuk diagram berskala menyesatkan untuk dikritisi), Lab Turus
+   (kartu data acak → ketuk baris tabel → isi frekuensi berdiagnosa), Lab
+   Skala (menjelajah langkah skala & sumbu yang tidak dimulai dari 0), dan
+   Lab Diagram Batang (pilih langkah skala → lengkapi judul & label sumbu
+   → atur tinggi batang → periksa berdiagnosa). Gaya .dtk-* ada di
+   shared/base.css.
+   ============================================================ */
+
+var DTK_LANGKAH_RAPI = [1, 2, 5, 10, 20, 25, 50, 100, 200, 250, 500, 1000, 2000, 2500, 5000];
+var DTK_GARIS_MIN = 5;
+var DTK_GARIS_MAX = 10;
+
+/* Langkah yang "tidak rapi" untuk pengecoh, diurutkan dari yang paling umum. */
+var DTK_LANGKAH_TAK_RAPI = [3, 7, 9, 6, 4, 13, 17, 35, 45, 70, 90, 130, 170, 350, 450];
+
+var DTK_CACAT = [
+  {
+    id: 'mulaiBukanNol',
+    label: 'Sumbu tegak tidak dimulai dari 0',
+    pesan:
+      'Sumbu tegaknya tidak dimulai dari 0, sehingga batang yang pendek tampak jauh lebih pendek daripada seharusnya. Tinggi batang menjadi tidak sebanding dengan frekuensinya.',
+    bukan: 'Lihat angka paling bawah pada sumbu tegak: angkanya sudah 0.',
+  },
+  {
+    id: 'intervalTakSama',
+    label: 'Jarak angka pada sumbu tegak tidak sama',
+    pesan:
+      'Angka pada sumbu tegak melompat tidak sama (mis. 0, 1, 2, 5, 10), padahal jarak garisnya sama. Tinggi batang menjadi menipu.',
+    bukan: 'Periksa selisih dua angka berurutan pada sumbu tegak: selisihnya sudah selalu sama.',
+  },
+  {
+    id: 'lebarBeda',
+    label: 'Lebar batang tidak sama',
+    pesan:
+      'Batang yang lebih lebar tampak lebih besar walaupun frekuensinya kecil. Semua batang harus sama lebar dan berjarak sama.',
+    bukan: 'Bandingkan lebar setiap batang: lebarnya sudah sama.',
+  },
+  {
+    id: 'tanpaJudul',
+    label: 'Tidak ada judul dan nama sumbu',
+    pesan:
+      'Tanpa judul dan nama sumbu, pembaca tidak tahu data apa yang disajikan dan apa arti angka pada sumbu tegak.',
+    bukan: 'Diagram ini sudah punya judul dan nama sumbu. Cari kesalahan lain.',
+  },
+];
+
+var DTK_PESAN = {
+  benar: 'Tepat!',
+  salah: 'Belum tepat. Hitung atau baca lagi dengan teliti.',
+  kosong: 'Isi jawabanmu terlebih dahulu.',
+  format: 'Tulis jawabanmu dengan bilangan cacah, mis. 0 atau 12.',
+  'frekuensi-semua-data':
+    'Itu banyak SEMUA data. Yang ditanyakan hanya data pada satu kategori: turuskan data satu per satu, lalu hitung turus kategori itu.',
+  'total-banyak-kategori':
+    'Itu banyak kategorinya (banyak baris). Jumlah frekuensi adalah hasil penjumlahan semua frekuensi, sama dengan banyak data.',
+  'total-terbesar':
+    'Itu baru frekuensi terbesar. Jumlahkan frekuensi SEMUA kategori untuk mendapat banyak data.',
+  'turus-lupa-miring':
+    'Garis miring pada setiap kelompok turus juga dihitung. Satu kelompok turus = 4 garis tegak + 1 garis miring = 5.',
+  'turus-kelompok-satu':
+    'Setiap kelompok turus bernilai 5, bukan 1. Hitung: banyak kelompok × 5, lalu tambah garis sisanya.',
+  'puncak-nilai-maks':
+    'Angka pada sumbu tegak harus kelipatan langkah skala. Pilih kelipatan langkah terkecil yang tidak kurang dari frekuensi terbesar.',
+  'puncak-banyak-garis':
+    'Itu banyak garis bantunya. Angka teratas sumbu = banyak garis bantu × langkah skala.',
+  'garis-puncak':
+    'Itu angka teratas sumbu tegak. Banyak garis bantu = angka teratas : langkah skala.',
+  'garis-nilai-maks':
+    'Itu frekuensi terbesar. Hitung berapa kali langkah skala diperlukan agar sumbu tegak mencapai frekuensi terbesar.',
+  'baca-kotak':
+    'Kamu menghitung banyak kotak (jarak garis), bukan membaca angka skala. Bila langkahnya lebih dari 1, setiap kotak bernilai sebesar langkah skala.',
+  'baca-garis-terdekat':
+    'Ujung batang tidak tepat pada garis bantu. Nilainya berada DI ANTARA dua garis bantu, misalnya tepat di tengahnya.',
+  'baca-tertukar':
+    'Itu frekuensi kategori lain. Telusuri ujung batang yang ditanyakan secara mendatar ke sumbu tegak.',
+  'selisih-dijumlah':
+    'Kamu menjumlahkan kedua frekuensi. Selisih berarti frekuensi yang besar dikurangi yang kecil.',
+  'selisih-satu-nilai':
+    'Itu frekuensi salah satu batang. Selisih adalah hasil pengurangan kedua frekuensi.',
+  'skala-tidak-rapi':
+    'Langkah seperti itu menyulitkan membaca nilai di antara garis bantu. Pakai langkah rapi: 1, 2, 5, 10, 20, 25, 50, dan seterusnya.',
+  'skala-terlalu-rapat':
+    'Dengan langkah sekecil itu, sumbu tegak memerlukan lebih dari 10 garis bantu. Diagram menjadi terlalu tinggi dan garisnya berdesakan. Pilih langkah yang lebih besar.',
+  'skala-terlalu-renggang':
+    'Dengan langkah sebesar itu, garis bantunya terlalu sedikit (kurang dari 5). Batang menjadi pendek dan sulit dibaca. Pilih langkah yang lebih kecil.',
+  'turus-salah-baris': 'Baca lagi isi kartunya, lalu ketuk baris kategori yang sesuai.',
+  'batang-kosong': 'Batang ini belum dibuat. Naikkan batangnya sampai setinggi frekuensinya.',
+  'batang-kotak':
+    'Kamu menyamakan banyak kotak dengan frekuensi. Baca ANGKA pada sumbu tegak: setiap kotak bernilai sebesar langkah skala.',
+  'batang-tertukar':
+    'Tinggi itu milik kategori lain. Lihat lagi frekuensi kategori ini pada tabel.',
+  'batang-dekat':
+    'Hampir! Ujung batang belum tepat. Bila frekuensinya di antara dua garis bantu, letakkan ujungnya di antara kedua garis itu.',
+  'batang-salah':
+    'Tinggi batang belum sama dengan frekuensinya. Bandingkan dengan tabel frekuensi.',
+};
+
+function hasilData(kode, pesan) {
+  return { benar: kode === 'benar', kode: kode, pesan: pesan || DTK_PESAN[kode] };
+}
+
+function idKategoriData(d) {
+  return d && typeof d === 'object' ? d.nilai : d;
+}
+
+/* Frekuensi tiap kategori { id: banyak }; data boleh id atau { nilai }. */
+function hitungFrekuensi(data, kategori) {
+  var frek = {};
+  kategori.forEach(function (k) {
+    frek[k.id] = 0;
+  });
+  data.forEach(function (d) {
+    var id = idKategoriData(d);
+    if (Object.prototype.hasOwnProperty.call(frek, id)) frek[id] += 1;
+  });
+  return frek;
+}
+
+function totalFrekuensi(frek) {
+  return Object.keys(frek || {}).reduce(function (a, k) {
+    return a + (frek[k] || 0);
+  }, 0);
+}
+
+function kategoriEkstrem(frek, kategori, banding) {
+  var nilai = kategori.map(function (k) {
+    return frek[k.id] || 0;
+  });
+  var target = banding.apply(null, nilai);
+  return kategori
+    .filter(function (k) {
+      return (frek[k.id] || 0) === target;
+    })
+    .map(function (k) {
+      return k.id;
+    });
+}
+
+function kategoriTerbanyak(frek, kategori) {
+  return kategoriEkstrem(frek, kategori, Math.max);
+}
+
+function kategoriTersedikit(frek, kategori) {
+  return kategoriEkstrem(frek, kategori, Math.min);
+}
+
+function frekuensiTerbesar(frek) {
+  return Object.keys(frek || {}).reduce(function (a, k) {
+    return Math.max(a, frek[k] || 0);
+  }, 0);
+}
+
+function labelKategori(kategori, id) {
+  var k = kategori.filter(function (x) {
+    return x.id === id;
+  })[0];
+  return k ? k.label : String(id);
+}
+
+/* ---------- Turus ---------- */
+
+function turusGrup(n) {
+  return { lima: Math.floor(n / 5), sisa: n % 5 };
+}
+
+/* Turus SVG: setiap lima = empat garis tegak dicoret satu garis miring. */
+function buildTurus(n) {
+  if (!n) {
+    return '<span class="dtk-turus dtk-turus--nol" role="img" aria-label="tidak ada turus">–</span>';
+  }
+  var g = turusGrup(n);
+  var H = 24;
+  var pitch = 6;
+  var grupW = 34;
+  var x0 = 4;
+  var isi = '';
+  var garis = function (x) {
+    return (
+      '<line class="dtk-turus__garis" x1="' + x + '" y1="3" x2="' + x + '" y2="' + (H - 3) + '"/>'
+    );
+  };
+  for (var i = 0; i < g.lima; i++) {
+    var gx = x0 + i * grupW;
+    for (var j = 0; j < 4; j++) isi += garis(gx + j * pitch);
+    isi +=
+      '<line class="dtk-turus__miring" x1="' +
+      (gx - 3) +
+      '" y1="' +
+      (H - 6) +
+      '" x2="' +
+      (gx + 3 * pitch + 3) +
+      '" y2="6"/>';
+  }
+  var sx = x0 + g.lima * grupW;
+  for (var s = 0; s < g.sisa; s++) isi += garis(sx + s * pitch);
+  var W = sx + Math.max(0, g.sisa - 1) * pitch + (g.sisa ? 6 : -4);
+  return (
+    '<svg class="dtk-turus" viewBox="0 0 ' +
+    W +
+    ' ' +
+    H +
+    '" width="' +
+    W +
+    '" height="' +
+    H +
+    '" role="img" aria-label="turus ' +
+    n +
+    '">' +
+    isi +
+    '</svg>'
+  );
+}
+
+/* ---------- Skala sumbu tegak ---------- */
+
+function langkahRapi(l) {
+  return DTK_LANGKAH_RAPI.indexOf(l) !== -1;
+}
+
+function banyakGarisSkala(max, langkah) {
+  return Math.max(1, Math.ceil(max / langkah));
+}
+
+function puncakSumbu(max, langkah) {
+  return banyakGarisSkala(max, langkah) * langkah;
+}
+
+/* Langkah rapi terkecil yang memuat frekuensi terbesar dalam ≤ 10 garis. */
+function skalaDisarankan(max) {
+  for (var i = 0; i < DTK_LANGKAH_RAPI.length; i++) {
+    if (banyakGarisSkala(max, DTK_LANGKAH_RAPI[i]) <= DTK_GARIS_MAX) return DTK_LANGKAH_RAPI[i];
+  }
+  return DTK_LANGKAH_RAPI[DTK_LANGKAH_RAPI.length - 1];
+}
+
+function diagnosaSkala(max, langkah) {
+  if (!langkahRapi(langkah)) return hasilData('skala-tidak-rapi');
+  var garis = banyakGarisSkala(max, langkah);
+  if (garis > DTK_GARIS_MAX) return hasilData('skala-terlalu-rapat');
+  if (garis < DTK_GARIS_MIN && langkah !== skalaDisarankan(max)) {
+    return hasilData('skala-terlalu-renggang');
+  }
+  return hasilData('benar');
+}
+
+function skalaTepat(max, langkah) {
+  return diagnosaSkala(max, langkah).benar;
+}
+
+function langkahSkalaTepat(max) {
+  return DTK_LANGKAH_RAPI.filter(function (l) {
+    return skalaTepat(max, l);
+  });
+}
+
+/* Sumbu tegak { max, langkah, mulai, intervalSama } → 'tepat' | 'tidak'. */
+function nilaiSkalaSumbu(c) {
+  var mulai = c.mulai || 0;
+  if (mulai !== 0 || c.intervalSama === false) return 'tidak';
+  return skalaTepat(c.max, c.langkah) ? 'tepat' : 'tidak';
+}
+
+function teksSkala(max, langkah) {
+  var p = puncakSumbu(max, langkah);
+  var angka = [0, langkah];
+  if (2 * langkah < p) angka.push(2 * langkah);
+  return (
+    'Langkah ' +
+    formatNumber(langkah) +
+    ': ' +
+    angka.map(formatNumber).join(', ') +
+    (p > angka[angka.length - 1] ? ', …, ' + formatNumber(p) : '')
+  );
+}
+
+/* ---------- Soal: kunci, diagnosa, opsi ---------- */
+
+function nilaiSoalData(c) {
+  if (c.minta === 'frekuensi') return hitungFrekuensi(c.data, c.kategori)[c.kat];
+  if (c.minta === 'total') return totalFrekuensi(c.frek);
+  if (c.minta === 'turus') return c.n;
+  if (c.minta === 'puncak') return puncakSumbu(c.max, c.langkah);
+  if (c.minta === 'garis') return banyakGarisSkala(c.max, c.langkah);
+  if (c.minta === 'baca') return c.frek[c.kat];
+  if (c.minta === 'selisih') return Math.abs(c.frek[c.a] - c.frek[c.b]);
+  if (c.minta === 'skala') return skalaDisarankan(c.max);
+  if (c.minta === 'terbanyak') return kategoriTerbanyak(c.frek, c.kategori)[0];
+  return c.cacat;
+}
+
+/* Calon jawaban keliru { nilai, kode } (tidak pernah sama dengan kunci). */
+function calonKeliruData(c) {
+  var out = [];
+  var baku = nilaiSoalData(c);
+  var tambah = function (nilai, kode) {
+    var ada = out.some(function (g) {
+      return g.nilai === nilai;
+    });
+    if (nilai !== baku && !ada && Number.isInteger(nilai) && nilai >= 0) {
+      out.push({ nilai: nilai, kode: kode });
+    }
+  };
+  var lain = function (frek, kecuali) {
+    Object.keys(frek).forEach(function (k) {
+      if (kecuali.indexOf(k) === -1) tambah(frek[k], 'baca-tertukar');
+    });
+  };
+  if (c.minta === 'frekuensi') {
+    tambah(c.data.length, 'frekuensi-semua-data');
+  } else if (c.minta === 'total') {
+    tambah(c.kategori.length, 'total-banyak-kategori');
+    tambah(frekuensiTerbesar(c.frek), 'total-terbesar');
+  } else if (c.minta === 'turus') {
+    var g = turusGrup(c.n);
+    if (g.lima > 0) {
+      tambah(c.n - g.lima, 'turus-lupa-miring');
+      tambah(g.lima + g.sisa, 'turus-kelompok-satu');
+    }
+  } else if (c.minta === 'puncak') {
+    tambah(c.max, 'puncak-nilai-maks');
+    tambah(banyakGarisSkala(c.max, c.langkah), 'puncak-banyak-garis');
+  } else if (c.minta === 'garis') {
+    tambah(puncakSumbu(c.max, c.langkah), 'garis-puncak');
+    tambah(c.max, 'garis-nilai-maks');
+  } else if (c.minta === 'baca') {
+    var f = c.frek[c.kat];
+    var l = c.langkah || 1;
+    if (l > 1) tambah(f / l, 'baca-kotak');
+    if (f % l !== 0) {
+      tambah(Math.floor(f / l) * l, 'baca-garis-terdekat');
+      tambah(Math.ceil(f / l) * l, 'baca-garis-terdekat');
+    }
+    lain(c.frek, [c.kat]);
+  } else if (c.minta === 'selisih') {
+    var fa = c.frek[c.a];
+    var fb = c.frek[c.b];
+    tambah(fa + fb, 'selisih-dijumlah');
+    tambah(fa, 'selisih-satu-nilai');
+    tambah(fb, 'selisih-satu-nilai');
+    if ((c.langkah || 1) > 1) tambah(Math.abs(fa - fb) / c.langkah, 'baca-kotak');
+  }
+  return out;
+}
+
+function diagnosaNilaiData(c, v) {
+  if (c.minta === 'skala') return diagnosaSkala(c.max, v);
+  if (v === nilaiSoalData(c)) return hasilData('benar');
+  var cocok = calonKeliruData(c).filter(function (g) {
+    return g.nilai === v;
+  })[0];
+  return hasilData(cocok ? cocok.kode : 'salah');
+}
+
+function periksaSoalData(isian, s) {
+  var p = parseInputInt(String(isian === null || isian === undefined ? '' : isian));
+  if (p.error === 'empty') return hasilData('kosong');
+  if (p.error || p.value < 0) return hasilData('format');
+  return diagnosaNilaiData(s.cek, p.value);
+}
+
+function cacatById(id) {
+  return DTK_CACAT.filter(function (c) {
+    return c.id === id;
+  })[0];
+}
+
+function jawabSoalData(s) {
+  var c = s.cek;
+  if (c.minta === 'terbanyak') return labelKategori(c.kategori, nilaiSoalData(c));
+  if (c.minta === 'cacat') return cacatById(c.cacat).label;
+  return formatNumber(nilaiSoalData(c));
+}
+
+/* Pengecoh langkah skala: terlalu rapat, terlalu renggang, tidak rapi. */
+function pengecohSkala(max) {
+  var baku = skalaDisarankan(max);
+  var out = [];
+  var rapat = DTK_LANGKAH_RAPI.filter(function (l) {
+    return l < baku;
+  });
+  if (rapat.length) out.push(rapat[rapat.length - 1]);
+  DTK_LANGKAH_RAPI.forEach(function (l) {
+    if (l > baku && !skalaTepat(max, l) && out.length < 3) out.push(l);
+  });
+  var takRapi =
+    DTK_LANGKAH_TAK_RAPI.filter(function (l) {
+      var g = banyakGarisSkala(max, l);
+      return g >= DTK_GARIS_MIN && g <= DTK_GARIS_MAX;
+    })[0] ||
+    DTK_LANGKAH_TAK_RAPI.filter(function (l) {
+      return l < max;
+    })[0] ||
+    3;
+  return out.slice(0, 2).concat([takRapi]);
+}
+
+/* Opsi { id, label, umpan } soal pilihan; opsi pertama id 'baku'. */
+function opsiSoalData(s) {
+  var c = s.cek;
+  if (c.minta === 'skala') {
+    var baku = skalaDisarankan(c.max);
+    return [baku].concat(pengecohSkala(c.max)).map(function (l, i) {
+      return {
+        id: i === 0 ? 'baku' : 'l' + l,
+        nilai: l,
+        label: teksSkala(c.max, l),
+        umpan: diagnosaSkala(c.max, l).pesan,
+      };
+    });
+  }
+  if (c.minta === 'terbanyak') {
+    var top = nilaiSoalData(c);
+    var bawah = kategoriTersedikit(c.frek, c.kategori);
+    var urut = [top].concat(
+      c.kategori
+        .map(function (k) {
+          return k.id;
+        })
+        .filter(function (id) {
+          return id !== top;
+        })
+    );
+    return urut.map(function (id) {
+      var label = labelKategori(c.kategori, id);
+      var umpan = DTK_PESAN.benar;
+      if (id !== top) {
+        umpan =
+          bawah.indexOf(id) !== -1
+            ? 'Batang ' + label + ' justru batang terpendek (frekuensi terkecil).'
+            : 'Batang ' +
+              label +
+              ' bukan yang tertinggi. Bandingkan ujung setiap batang dengan garis bantu.';
+      }
+      return { id: id === top ? 'baku' : 'k-' + id, label: label, umpan: umpan };
+    });
+  }
+  var urutCacat = [cacatById(c.cacat)].concat(
+    DTK_CACAT.filter(function (x) {
+      return x.id !== c.cacat;
+    })
+  );
+  return urutCacat.map(function (x, i) {
+    return { id: i === 0 ? 'baku' : x.id, label: x.label, umpan: i === 0 ? x.pesan : x.bukan };
+  });
+}
+
+/* Diagnosa tinggi batang buatan murid (nilai pada sumbu tegak). */
+function diagnosaBatang(frek, katId, tinggi, langkah) {
+  var f = frek[katId];
+  if (tinggi === f) return hasilData('benar');
+  if (!tinggi) return hasilData('batang-kosong');
+  if (langkah > 1 && (tinggi === f * langkah || tinggi * langkah === f)) {
+    return hasilData('batang-kotak');
+  }
+  var lain = Object.keys(frek).some(function (k) {
+    return k !== katId && frek[k] === tinggi;
+  });
+  if (lain) return hasilData('batang-tertukar');
+  if (Math.abs(tinggi - f) < Math.max(2, langkah)) return hasilData('batang-dekat');
+  return hasilData('batang-salah');
+}
+
+/* ---------- Tabel frekuensi ---------- */
+
+/*
+ * Tabel frekuensi (kategori, turus opsional, frekuensi, jumlah).
+ *   opts.turus         true → kolom turus
+ *   opts.caption       judul tabel
+ *   opts.judulKategori judul kolom kategori (default 'Kategori')
+ *   opts.sorot         id kategori yang disorot
+ *   opts.jumlah        false → baris jumlah tidak ditampilkan (soal)
+ */
+function buildTabelFrekuensi(kategori, frek, opts) {
+  opts = opts || {};
+  var baris = kategori
+    .map(function (k) {
+      return (
+        '<tr' +
+        (opts.sorot === k.id ? ' class="is-sorot"' : '') +
+        '><th scope="row">' +
+        (k.ikon ? '<span aria-hidden="true">' + k.ikon + '</span> ' : '') +
+        esc(k.label) +
+        '</th>' +
+        (opts.turus
+          ? '<td class="dtk-tabel__turus">' + buildTurus(frek[k.id] || 0) + '</td>'
+          : '') +
+        '<td class="dtk-tabel__angka">' +
+        formatNumber(frek[k.id] || 0) +
+        '</td></tr>'
+      );
+    })
+    .join('');
+  return (
+    '<div class="psm-table-wrap dtk-tabel-wrap"><table class="psm-table dtk-tabel">' +
+    (opts.caption ? '<caption>' + esc(opts.caption) + '</caption>' : '') +
+    '<thead><tr><th scope="col">' +
+    esc(opts.judulKategori || 'Kategori') +
+    '</th>' +
+    (opts.turus ? '<th scope="col">Turus</th>' : '') +
+    '<th scope="col">Frekuensi</th></tr></thead>' +
+    '<tbody>' +
+    baris +
+    '</tbody>' +
+    (opts.jumlah === false
+      ? ''
+      : '<tfoot><tr><th scope="row">Jumlah</th>' +
+        (opts.turus ? '<td></td>' : '') +
+        '<td class="dtk-tabel__angka">' +
+        formatNumber(totalFrekuensi(frek)) +
+        '</td></tr></tfoot>') +
+    '</table></div>'
+  );
+}
+
+/* ---------- Diagram batang SVG ---------- */
+
+var DTK_LEBAR_BEDA = [1, 1.6, 0.55, 1.3, 0.8, 1.45];
+
+/* Angka sumbu tegak berjarak tidak sama: 0, l, 2l, 5l, 10l, 20l, … */
+function tickTakSama(max, langkah) {
+  var pola = [0, 1, 2, 5, 10, 20, 50, 100];
+  var out = [];
+  for (var i = 0; i < pola.length; i++) {
+    out.push(pola[i] * langkah);
+    if (pola[i] * langkah >= max) break;
+  }
+  return out;
+}
+
+/*
+ * Diagram batang tegak.
+ *   opts.langkah    langkah skala (default skalaDisarankan)
+ *   opts.judul, opts.labelX, opts.labelY  teks judul & nama sumbu
+ *   opts.samar      { judul, labelX, labelY } → teks ditampilkan samar
+ *                   (bagian yang belum dilengkapi di Lab Diagram)
+ *   opts.cacat      id DTK_CACAT → diagram sengaja berskala/berbentuk keliru
+ *   opts.mulai      angka terbawah sumbu untuk cacat 'mulaiBukanNol'
+ *   opts.tinggi     { id: nilai } pengganti frekuensi (batang buatan murid)
+ *   opts.puncak     angka teratas sumbu (default puncakSumbu)
+ *   opts.interaktif id lab → kolom yang bisa diketuk (data-dtk-kolom)
+ *   opts.sorot      id kategori yang disorot
+ *   opts.nilai      true → tulis frekuensi di atas batang
+ *   opts.caption    teks aksesibel
+ */
+function buildDiagramBatangSVG(kategori, frek, opts) {
+  opts = opts || {};
+  var cacat = opts.cacat || null;
+  var nilaiDari = opts.tinggi || frek;
+  var maxF = frekuensiTerbesar(frek);
+  var langkah = opts.langkah || skalaDisarankan(maxF);
+  var tanpaTeks = cacat === 'tanpaJudul';
+  var judul = tanpaTeks ? '' : opts.judul || '';
+  var W = 560;
+  var H = judul ? 340 : 310;
+  var padL = opts.labelY && !tanpaTeks ? 70 : 52;
+  var padR = 16;
+  var padT = judul ? 46 : 18;
+  var padB = opts.labelX && !tanpaTeks ? 62 : 40;
+  var plotW = W - padL - padR;
+  var plotH = H - padT - padB;
+  var bawah = padT + plotH;
+  var ticks = [];
+  var yOf;
+
+  if (cacat === 'intervalTakSama') {
+    ticks = tickTakSama(maxF, langkah);
+    var seg = plotH / (ticks.length - 1);
+    yOf = function (v) {
+      for (var i = 1; i < ticks.length; i++) {
+        if (v <= ticks[i]) {
+          var f = (v - ticks[i - 1]) / (ticks[i] - ticks[i - 1]);
+          return bawah - (i - 1 + f) * seg;
+        }
+      }
+      return padT;
+    };
+  } else {
+    var puncak = opts.puncak || puncakSumbu(maxF, langkah);
+    var mulai = 0;
+    if (cacat === 'mulaiBukanNol') {
+      var minF = Math.min.apply(
+        null,
+        kategori.map(function (k) {
+          return frek[k.id] || 0;
+        })
+      );
+      mulai = opts.mulai || Math.max(langkah, Math.floor((minF * 0.7) / langkah) * langkah);
+    }
+    /* Sumbu yang bermula di atas 0 tetap harus menjangkau frekuensi terbesar. */
+    if (mulai) puncak = mulai + banyakGarisSkala(maxF - mulai, langkah) * langkah;
+    for (var t = mulai; t <= puncak; t += langkah) ticks.push(t);
+    yOf = function (v) {
+      var r = (Math.max(v, mulai) - mulai) / (puncak - mulai);
+      return bawah - Math.min(1, r) * plotH;
+    };
+  }
+
+  var jarakTick = plotH / Math.max(1, ticks.length - 1);
+  var tiap = Math.max(1, Math.ceil(13 / jarakTick));
+  var grid = ticks
+    .map(function (v, i) {
+      var y = yOf(v);
+      return (
+        '<line class="dtk-grid' +
+        (i === 0 ? ' dtk-grid--dasar' : '') +
+        '" x1="' +
+        padL +
+        '" x2="' +
+        (W - padR) +
+        '" y1="' +
+        y +
+        '" y2="' +
+        y +
+        '"/>' +
+        (i % tiap === 0 || i === ticks.length - 1
+          ? '<text class="dtk-ytick" x="' +
+            (padL - 8) +
+            '" y="' +
+            (y + 4) +
+            '">' +
+            formatNumber(v) +
+            '</text>'
+          : '')
+      );
+    })
+    .join('');
+
+  var n = kategori.length;
+  var slot = plotW / n;
+  var dasarW = Math.min(64, slot * 0.6);
+  var bars = '';
+  kategori.forEach(function (k, i) {
+    var v = nilaiDari[k.id] || 0;
+    var bw = cacat === 'lebarBeda' ? dasarW * DTK_LEBAR_BEDA[i % DTK_LEBAR_BEDA.length] : dasarW;
+    bw = Math.min(bw, slot * 0.92);
+    var cx = padL + i * slot + slot / 2;
+    var y = yOf(v);
+    var h = Math.max(0, bawah - y);
+    var sorot = opts.sorot === k.id;
+    if (opts.interaktif) {
+      bars +=
+        '<rect class="dtk-kolom" data-dtk-kolom="' +
+        esc(k.id) +
+        '" x="' +
+        (padL + i * slot) +
+        '" y="' +
+        padT +
+        '" width="' +
+        slot +
+        '" height="' +
+        plotH +
+        '"/>';
+    }
+    bars +=
+      '<rect class="dtk-bar dtk-bar--' +
+      (i % 6) +
+      (sorot ? ' is-sorot' : '') +
+      '" x="' +
+      (cx - bw / 2).toFixed(1) +
+      '" y="' +
+      y.toFixed(1) +
+      '" width="' +
+      bw.toFixed(1) +
+      '" height="' +
+      h.toFixed(1) +
+      '"><title>' +
+      esc(k.label + ': ' + formatNumber(v)) +
+      '</title></rect>';
+    if (opts.nilai && v > 0) {
+      bars +=
+        '<text class="dtk-bar__nilai" x="' +
+        cx +
+        '" y="' +
+        (y - 6).toFixed(1) +
+        '">' +
+        formatNumber(v) +
+        '</text>';
+    }
+    bars +=
+      '<text class="dtk-xtick' +
+      (sorot ? ' is-sorot' : '') +
+      '" x="' +
+      cx +
+      '" y="' +
+      (bawah + 18) +
+      '">' +
+      esc(k.label) +
+      '</text>';
+  });
+
+  var samar = opts.samar || {};
+  var teks = '';
+  if (judul) {
+    teks +=
+      '<text class="dtk-judul' +
+      (samar.judul ? ' is-samar' : '') +
+      '" x="' +
+      W / 2 +
+      '" y="26">' +
+      esc(judul) +
+      '</text>';
+  }
+  if (opts.labelX && !tanpaTeks) {
+    teks +=
+      '<text class="dtk-label-sumbu' +
+      (samar.labelX ? ' is-samar' : '') +
+      '" x="' +
+      (padL + plotW / 2) +
+      '" y="' +
+      (H - 10) +
+      '">' +
+      esc(opts.labelX) +
+      '</text>';
+  }
+  if (opts.labelY && !tanpaTeks) {
+    var ly = padT + plotH / 2;
+    teks +=
+      '<text class="dtk-label-sumbu' +
+      (samar.labelY ? ' is-samar' : '') +
+      '" x="16" y="' +
+      ly +
+      '" transform="rotate(-90 16 ' +
+      ly +
+      ')">' +
+      esc(opts.labelY) +
+      '</text>';
+  }
+
+  var caption =
+    opts.caption ||
+    'Diagram batang' +
+      (judul ? ' ' + judul : '') +
+      ': ' +
+      kategori
+        .map(function (k) {
+          return k.label + ' ' + formatNumber(nilaiDari[k.id] || 0);
+        })
+        .join(', ');
+
+  return (
+    '<svg class="dtk-diagram" viewBox="0 0 ' +
+    W +
+    ' ' +
+    H +
+    '" role="img" aria-label="' +
+    esc(caption) +
+    '"' +
+    (opts.interaktif
+      ? ' id="' +
+        esc(opts.interaktif) +
+        'Svg" data-dtk-plot="' +
+        [padT, plotH, H, opts.puncak || puncakSumbu(maxF, langkah)].join(',') +
+        '"'
+      : '') +
+    '>' +
+    teks +
+    grid +
+    '<line class="dtk-sumbu" x1="' +
+    padL +
+    '" x2="' +
+    padL +
+    '" y1="' +
+    padT +
+    '" y2="' +
+    bawah +
+    '"/>' +
+    bars +
+    '<line class="dtk-sumbu" x1="' +
+    padL +
+    '" x2="' +
+    (W - padR) +
+    '" y1="' +
+    bawah +
+    '" y2="' +
+    bawah +
+    '"/>' +
+    '</svg>'
+  );
+}
+
+/* ---------- Lab Turus ---------- */
+
+function permutasiCocok(order, ids) {
+  return (
+    Array.isArray(order) &&
+    order.length === ids.length &&
+    ids.every(function (id) {
+      return order.indexOf(id) !== -1;
+    })
+  );
+}
+
+function petaObjek(st, k) {
+  if (!st[k] || typeof st[k] !== 'object' || Array.isArray(st[k])) st[k] = {};
+  return st[k];
+}
+
+/*
+ * State Lab Turus. Urutan kartu data dan urutan baris kategori diacak
+ * SEKALI lalu disimpan (st.urut, st.katOrder).
+ *   cfg { data: [{id, nama, nilai}], kategori: [{id, label, ikon}],
+ *         percepatSetelah, judulKategori }
+ */
+function ensureLabTurus(state, key, cfg) {
+  var st = state[key] && typeof state[key] === 'object' ? state[key] : {};
+  var dataIds = optionIds(cfg.data);
+  if (!permutasiCocok(st.urut, dataIds)) {
+    st.urut = shuffleArray(dataIds);
+    st.idx = 0;
+    st.turus = {};
+  }
+  ensureShuffledOrder(st, 'katOrder', cfg.kategori);
+  if (typeof st.idx !== 'number' || st.idx < 0 || st.idx > dataIds.length) st.idx = 0;
+  var turus = petaObjek(st, 'turus');
+  /* Turus selalu dihitung ulang dari kartu yang sudah diproses. */
+  var hitung = hitungFrekuensi(
+    st.urut.slice(0, st.idx).map(function (id) {
+      return dataTurusById(cfg, id);
+    }),
+    cfg.kategori
+  );
+  Object.keys(hitung).forEach(function (k) {
+    turus[k] = hitung[k];
+  });
+  var isian = petaObjek(st, 'isian');
+  petaObjek(st, 'hasil');
+  cfg.kategori
+    .map(function (k) {
+      return k.id;
+    })
+    .concat(['total'])
+    .forEach(function (k) {
+      if (typeof isian[k] !== 'string') isian[k] = '';
+    });
+  if (st.umpan && typeof st.umpan !== 'object') st.umpan = null;
+  if (st.umpan === undefined) st.umpan = null;
+  ['percobaan', 'salah', 'salahTurus'].forEach(function (k) {
+    if (typeof st[k] !== 'number') st[k] = 0;
+  });
+  st.dipercepat = !!st.dipercepat;
+  state[key] = st;
+  return st;
+}
+
+function dataTurusById(cfg, id) {
+  return cfg.data.filter(function (d) {
+    return d.id === id;
+  })[0];
+}
+
+function labTurusKartu(st, cfg) {
+  return st.idx < st.urut.length ? dataTurusById(cfg, st.urut[st.idx]) : null;
+}
+
+function labTurusTertally(st, cfg) {
+  return st.idx >= cfg.data.length;
+}
+
+/* Murid mengetuk baris katId untuk kartu aktif → { benar }. */
+function turuskanKartu(st, cfg, katId) {
+  var kartu = labTurusKartu(st, cfg);
+  if (!kartu) return { benar: false };
+  if (kartu.nilai !== katId) {
+    st.salahTurus += 1;
+    st.umpan = { kode: 'turus-salah-baris', kartu: kartu.id, pilih: katId };
+    return { benar: false };
+  }
+  st.turus[katId] = (st.turus[katId] || 0) + 1;
+  st.idx += 1;
+  st.umpan = null;
+  return { benar: true };
+}
+
+/* Menuruskan sisa kartu sekaligus setelah murid menuruskan cukup banyak. */
+function percepatTurus(st, cfg) {
+  if (st.idx < (cfg.percepatSetelah || 0) || labTurusTertally(st, cfg)) return false;
+  while (!labTurusTertally(st, cfg)) turuskanKartu(st, cfg, labTurusKartu(st, cfg).nilai);
+  st.dipercepat = true;
+  return true;
+}
+
+function frekuensiLabTurus(st, cfg) {
+  var out = {};
+  cfg.kategori.forEach(function (k) {
+    out[k.id] = st.turus[k.id] || 0;
+  });
+  return out;
+}
+
+/* Memeriksa isian frekuensi & jumlah → { kode: 'kosong'|'format'|'ok', semuaBenar }. */
+function periksaIsianTurus(st, cfg) {
+  var kunci = cfg.kategori
+    .map(function (k) {
+      return k.id;
+    })
+    .concat(['total']);
+  var nilai = {};
+  var kode = 'ok';
+  kunci.forEach(function (k) {
+    var p = parseInputInt(st.isian[k]);
+    if (p.error === 'empty') kode = 'kosong';
+    else if ((p.error || p.value < 0) && kode !== 'kosong') kode = 'format';
+    nilai[k] = p.value;
+  });
+  if (kode !== 'ok') return { kode: kode, semuaBenar: false };
+  var frek = frekuensiLabTurus(st, cfg);
+  var semua = true;
+  cfg.kategori.forEach(function (k) {
+    var r = diagnosaNilaiData({ minta: 'turus', n: frek[k.id] }, nilai[k.id]);
+    st.hasil[k.id] = r.kode;
+    if (!r.benar) semua = false;
+  });
+  var rt = diagnosaNilaiData({ minta: 'total', frek: frek, kategori: cfg.kategori }, nilai.total);
+  st.hasil.total = rt.kode;
+  if (!rt.benar) semua = false;
+  st.percobaan += 1;
+  if (!semua) st.salah += 1;
+  return { kode: 'ok', semuaBenar: semua };
+}
+
+function labTurusLengkap(st, cfg) {
+  if (!labTurusTertally(st, cfg)) return false;
+  return cfg.kategori
+    .map(function (k) {
+      return k.id;
+    })
+    .concat(['total'])
+    .every(function (k) {
+      return st.hasil[k] === 'benar';
+    });
+}
+
+function buildIsianTurus(id, st, k, label) {
+  if (st.hasil[k] === 'benar') {
+    return '<strong class="dtk-tabel__angka">' + esc(st.isian[k]) + '</strong>';
+  }
+  var salah = !!st.hasil[k] && st.hasil[k] !== 'benar';
+  return (
+    '<input type="text" inputmode="numeric" class="input-text dtk-isian' +
+    (salah ? ' has-error' : '') +
+    '" data-dtk-isian="' +
+    esc(k) +
+    '" id="' +
+    id +
+    'Isian-' +
+    esc(k) +
+    '" value="' +
+    esc(st.isian[k]) +
+    '" autocomplete="off" aria-label="' +
+    esc(label) +
+    '">'
+  );
+}
+
+function buildLabTurus(id, st, cfg) {
+  var tallied = labTurusTertally(st, cfg);
+  var lengkap = labTurusLengkap(st, cfg);
+  var kategori = orderByIds(cfg.kategori, st.katOrder);
+  var kartu = labTurusKartu(st, cfg);
+  var atas = '';
+  if (!tallied) {
+    var isi = kategori.filter(function (k) {
+      return k.id === kartu.nilai;
+    })[0];
+    atas =
+      '<div class="dtk-kartu-aktif" aria-live="polite">' +
+      '<span class="dtk-kartu-aktif__no">Kartu ' +
+      (st.idx + 1) +
+      ' dari ' +
+      cfg.data.length +
+      '</span>' +
+      '<span class="dtk-kartu-aktif__nama">' +
+      esc(kartu.nama) +
+      ' memilih</span>' +
+      '<strong class="dtk-kartu-aktif__isi"><span aria-hidden="true">' +
+      (isi.ikon || '') +
+      '</span> ' +
+      esc(isi.label) +
+      '</strong>' +
+      '</div>' +
+      '<p class="dl-caption">Ketuk baris yang sesuai dengan isi kartu untuk menambah satu turus.</p>' +
+      (st.umpan
+        ? buildFeedbackBox(
+            'error',
+            '✗',
+            'Kartu ini berisi <strong>' +
+              esc(isi.label) +
+              '</strong>, bukan ' +
+              esc(labelKategori(cfg.kategori, st.umpan.pilih)) +
+              '. ' +
+              esc(DTK_PESAN['turus-salah-baris'])
+          )
+        : '') +
+      (st.idx >= (cfg.percepatSetelah || Infinity)
+        ? '<div class="btn-group"><button type="button" class="btn btn--ghost btn--small" data-dtk-percepat="1" id="' +
+          id +
+          'Percepat">⏩ Turuskan sisa ' +
+          (cfg.data.length - st.idx) +
+          ' kartu sekaligus</button></div>'
+        : '');
+  }
+
+  var baris = kategori
+    .map(function (k) {
+      var nama = (k.ikon ? '<span aria-hidden="true">' + k.ikon + '</span> ' : '') + esc(k.label);
+      return (
+        '<tr><th scope="row">' +
+        (tallied
+          ? nama
+          : '<button type="button" class="dtk-baris-btn" data-dtk-turus="' +
+            esc(k.id) +
+            '">' +
+            nama +
+            '</button>') +
+        '</th><td class="dtk-tabel__turus">' +
+        buildTurus(st.turus[k.id] || 0) +
+        '</td><td class="dtk-tabel__angka">' +
+        (tallied ? buildIsianTurus(id, st, k.id, 'Frekuensi ' + k.label) : '') +
+        '</td></tr>'
+      );
+    })
+    .join('');
+
+  var tabel =
+    '<div class="psm-table-wrap dtk-tabel-wrap"><table class="psm-table dtk-tabel dtk-tabel--lab">' +
+    '<caption>' +
+    esc(cfg.caption || 'Tabel frekuensi') +
+    '</caption>' +
+    '<thead><tr><th scope="col">' +
+    esc(cfg.judulKategori || 'Kategori') +
+    '</th><th scope="col">Turus</th><th scope="col">Frekuensi</th></tr></thead>' +
+    '<tbody>' +
+    baris +
+    '</tbody>' +
+    '<tfoot><tr><th scope="row">Jumlah</th><td></td><td class="dtk-tabel__angka">' +
+    (tallied ? buildIsianTurus(id, st, 'total', 'Jumlah frekuensi') : '') +
+    '</td></tr></tfoot></table></div>';
+
+  var bawah = '';
+  if (tallied && !lengkap) {
+    var pesan = cfg.kategori
+      .map(function (k) {
+        return { k: k.id, label: k.label };
+      })
+      .concat([{ k: 'total', label: 'Jumlah' }])
+      .filter(function (x) {
+        return st.hasil[x.k] && st.hasil[x.k] !== 'benar';
+      })
+      .map(function (x) {
+        return (
+          '<li><strong>' + esc(x.label) + ':</strong> ' + esc(DTK_PESAN[st.hasil[x.k]]) + '</li>'
+        );
+      });
+    bawah =
+      '<p class="dl-caption">Semua kartu sudah diturus. Hitung turus setiap baris, tulis frekuensinya, lalu jumlahkan.</p>' +
+      (pesan.length
+        ? buildFeedbackBox('error', '✗', '<ul class="dtk-pesan">' + pesan.join('') + '</ul>')
+        : '') +
+      '<div class="btn-group btn-group--end"><button type="button" class="btn btn--primary" id="' +
+      id +
+      'Periksa">Periksa Frekuensi</button></div>';
+  }
+  if (lengkap) {
+    bawah = buildFeedbackBox(
+      'success',
+      '✓',
+      'Tabel frekuensi lengkap: jumlah frekuensi ' +
+        formatNumber(totalFrekuensi(frekuensiLabTurus(st, cfg))) +
+        ' sama dengan banyak kartu data.'
+    );
+  }
+
+  return (
+    '<div class="dtk-lab" id="' +
+    id +
+    '">' +
+    '<div class="dtk-lab__progres">' +
+    '<span>Kartu diturus: ' +
+    st.idx +
+    ' / ' +
+    cfg.data.length +
+    '</span>' +
+    '<span class="dtk-lab__meter" aria-hidden="true"><span style="width:' +
+    Math.round((st.idx / cfg.data.length) * 100) +
+    '%"></span></span>' +
+    '</div>' +
+    atas +
+    tabel +
+    bawah +
+    '</div>'
+  );
+}
+
+/* onChange(fokus) dipanggil setelah state berubah (simpan + render ulang). */
+function bindLabTurus(root, id, st, cfg, onChange, onSave) {
+  var el = root.querySelector('#' + id);
+  if (!el) return;
+  el.querySelectorAll('[data-dtk-turus]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var k = btn.getAttribute('data-dtk-turus');
+      turuskanKartu(st, cfg, k);
+      onChange(
+        labTurusTertally(st, cfg)
+          ? '#' + id + ' [data-dtk-isian]'
+          : '#' + id + ' [data-dtk-turus="' + k + '"]'
+      );
+    });
+  });
+  var cepat = el.querySelector('[data-dtk-percepat]');
+  if (cepat) {
+    cepat.addEventListener('click', function () {
+      percepatTurus(st, cfg);
+      onChange('#' + id + ' [data-dtk-isian]');
+    });
+  }
+  var periksa = function () {
+    var r = periksaIsianTurus(st, cfg);
+    if (r.kode === 'kosong') {
+      showNotice('Isi semua frekuensi dan jumlahnya lebih dulu.');
+      return;
+    }
+    if (r.kode === 'format') {
+      showNotice(DTK_PESAN.format);
+      return;
+    }
+    onChange(r.semuaBenar ? null : '#' + id + ' .dtk-isian.has-error');
+  };
+  el.querySelectorAll('[data-dtk-isian]').forEach(function (inp) {
+    inp.addEventListener('input', function () {
+      st.isian[inp.getAttribute('data-dtk-isian')] = inp.value;
+      onSave();
+    });
+    inp.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter') periksa();
+    });
+  });
+  var btn = el.querySelector('#' + id + 'Periksa');
+  if (btn) btn.addEventListener('click', periksa);
+}
+
+/* ---------- Lab Diagram Batang ---------- */
+
+function opsiSkalaLab(cfg) {
+  var max = frekuensiTerbesar(cfg.frek);
+  return cfg.langkahOpsi.map(function (l) {
+    return { id: 'l' + l, nilai: l, label: esc(teksSkala(max, l)) };
+  });
+}
+
+/*
+ * State Lab Diagram Batang.
+ *   cfg { kategori (urutan tampil), frek, langkahOpsi: [bilangan],
+ *         kelengkapan: [{ id: 'judul'|'labelX'|'labelY', tanya, opsi,
+ *         correct }], labelX/labelY/judul bawaan opsional }
+ */
+function ensureLabBatang(state, key, cfg) {
+  var st = state[key] && typeof state[key] === 'object' ? state[key] : {};
+  var max = frekuensiTerbesar(cfg.frek);
+  ensureShuffledOrder(st, 'langkahOrder', opsiSkalaLab(cfg));
+  if (cfg.langkahOpsi.indexOf(st.langkah) === -1 || !skalaTepat(max, st.langkah)) {
+    st.langkah = null;
+  }
+  if (typeof st.skalaPilih !== 'number') st.skalaPilih = null;
+  var kelOrders = petaObjek(st, 'kelOrders');
+  var kelPilih = petaObjek(st, 'kelPilih');
+  (cfg.kelengkapan || []).forEach(function (q) {
+    ensureShuffledOrder(kelOrders, q.id, q.opsi);
+    if (kelPilih[q.id] && optionIds(q.opsi).indexOf(kelPilih[q.id]) === -1) {
+      delete kelPilih[q.id];
+    }
+  });
+  var tinggi = petaObjek(st, 'tinggi');
+  var hasil = petaObjek(st, 'hasil');
+  var puncak = st.langkah ? puncakSumbu(max, st.langkah) : 0;
+  cfg.kategori.forEach(function (k) {
+    var t = tinggi[k.id];
+    if (typeof t !== 'number' || !Number.isInteger(t) || t < 0 || t > puncak) tinggi[k.id] = 0;
+    if (hasil[k.id] === undefined) hasil[k.id] = null;
+  });
+  ['percobaan', 'salah', 'salahSkala', 'salahKel'].forEach(function (k) {
+    if (typeof st[k] !== 'number') st[k] = 0;
+  });
+  state[key] = st;
+  return st;
+}
+
+function pilihSkalaLab(st, cfg, langkah) {
+  if (st.langkah) return hasilData('benar');
+  var r = diagnosaSkala(frekuensiTerbesar(cfg.frek), langkah);
+  st.skalaPilih = langkah;
+  if (r.benar) st.langkah = langkah;
+  else st.salahSkala += 1;
+  return r;
+}
+
+function kelengkapanBenar(st, q) {
+  return st.kelPilih[q.id] === q.correct;
+}
+
+function pilihKelengkapanLab(st, cfg, qid, optId) {
+  var q = (cfg.kelengkapan || []).filter(function (x) {
+    return x.id === qid;
+  })[0];
+  if (!q) return false;
+  if (kelengkapanBenar(st, q)) return true;
+  st.kelPilih[qid] = optId;
+  var benar = optId === q.correct;
+  if (!benar) st.salahKel += 1;
+  return benar;
+}
+
+function aturTinggiLab(st, cfg, katId, nilai) {
+  if (!st.langkah) return;
+  var puncak = puncakSumbu(frekuensiTerbesar(cfg.frek), st.langkah);
+  var v = Math.round(nilai);
+  st.tinggi[katId] = Math.max(0, Math.min(puncak, isNaN(v) ? 0 : v));
+  st.hasil[katId] = null;
+}
+
+function periksaBatangLab(st, cfg) {
+  if (!st.langkah) return { semuaBenar: false };
+  var semua = true;
+  cfg.kategori.forEach(function (k) {
+    var r = diagnosaBatang(cfg.frek, k.id, st.tinggi[k.id], st.langkah);
+    st.hasil[k.id] = r.kode;
+    if (!r.benar) semua = false;
+  });
+  st.percobaan += 1;
+  if (!semua) st.salah += 1;
+  return { semuaBenar: semua };
+}
+
+function batangLabBenar(st, cfg) {
+  return cfg.kategori.every(function (k) {
+    return st.hasil[k.id] === 'benar';
+  });
+}
+
+function labBatangSelesai(st, cfg) {
+  return (
+    !!st.langkah &&
+    (cfg.kelengkapan || []).every(function (q) {
+      return kelengkapanBenar(st, q);
+    }) &&
+    batangLabBenar(st, cfg)
+  );
+}
+
+/* Teks judul/label untuk diagram lab: label baku bila sudah dipilih tepat. */
+function teksKelengkapanLab(st, cfg, qid, cadangan) {
+  var q = (cfg.kelengkapan || []).filter(function (x) {
+    return x.id === qid;
+  })[0];
+  if (!q) return { teks: cfg[qid] || '', samar: false };
+  if (kelengkapanBenar(st, q)) return { teks: findOptionLabel(q.opsi, q.correct), samar: false };
+  return { teks: cadangan, samar: true };
+}
+
+function buildLabBatang(id, st, cfg) {
+  var max = frekuensiTerbesar(cfg.frek);
+  var opsiSkala = opsiSkalaLab(cfg);
+  var selesai = labBatangSelesai(st, cfg);
+  var skalaHasil = st.skalaPilih !== null && !st.langkah ? diagnosaSkala(max, st.skalaPilih) : null;
+  var html =
+    '<div class="dtk-lab__bagian">' +
+    '<h4 class="dtk-lab__judul">1. Pilih langkah skala sumbu tegak</h4>' +
+    '<p class="dl-caption">Frekuensi terbesar: <strong>' +
+    formatNumber(max) +
+    '</strong>. Sumbu tegak dimulai dari 0 dan naik dengan langkah yang sama.</p>' +
+    buildChoiceGroup(opsiSkala, st.langkahOrder, {
+      chosen: st.langkah ? 'l' + st.langkah : st.skalaPilih !== null ? 'l' + st.skalaPilih : null,
+      correctId: st.langkah ? 'l' + st.langkah : null,
+      grade: true,
+      locked: !!st.langkah,
+      attr: 'data-dtk-skala',
+    }) +
+    (skalaHasil ? buildFeedbackBox('error', '✗', esc(skalaHasil.pesan)) : '') +
+    (st.langkah
+      ? buildFeedbackBox(
+          'success',
+          '✓',
+          'Skala tepat: ' +
+            banyakGarisSkala(max, st.langkah) +
+            ' garis bantu dari 0 sampai ' +
+            formatNumber(puncakSumbu(max, st.langkah)) +
+            '.'
+        )
+      : '') +
+    '</div>';
+
+  if (!st.langkah) return '<div class="dtk-lab" id="' + id + '">' + html + '</div>';
+
+  html +=
+    '<div class="dtk-lab__bagian">' +
+    '<h4 class="dtk-lab__judul">2. Lengkapi judul dan nama sumbu</h4>' +
+    (cfg.kelengkapan || [])
+      .map(function (q) {
+        var benar = kelengkapanBenar(st, q);
+        var dipilih = st.kelPilih[q.id] || null;
+        return (
+          '<div class="quiz-item">' +
+          '<p class="exercise-label">' +
+          esc(q.tanya) +
+          '</p>' +
+          buildChoiceGroup(
+            q.opsi.map(function (o) {
+              return { id: o.id, label: esc(o.label) };
+            }),
+            st.kelOrders[q.id],
+            {
+              chosen: dipilih,
+              correctId: benar ? q.correct : null,
+              grade: true,
+              locked: benar,
+              attr: 'data-dtk-kel',
+              group: q.id,
+            }
+          ) +
+          (dipilih && !benar && q.umpan && q.umpan[dipilih]
+            ? buildFeedbackBox('error', '✗', esc(q.umpan[dipilih]))
+            : '') +
+          '</div>'
+        );
+      })
+      .join('') +
+    '</div>';
+
+  var judul = teksKelengkapanLab(st, cfg, 'judul', 'Judul diagram?');
+  var lx = teksKelengkapanLab(st, cfg, 'labelX', 'Nama sumbu mendatar?');
+  var ly = teksKelengkapanLab(st, cfg, 'labelY', 'Nama sumbu tegak?');
+  var diagram = buildDiagramBatangSVG(cfg.kategori, cfg.frek, {
+    langkah: st.langkah,
+    tinggi: st.tinggi,
+    judul: judul.teks,
+    labelX: lx.teks,
+    labelY: ly.teks,
+    samar: { judul: judul.samar, labelX: lx.samar, labelY: ly.samar },
+    interaktif: selesai ? null : id,
+    caption:
+      'Diagram batang buatanmu: ' +
+      cfg.kategori
+        .map(function (k) {
+          return k.label + ' ' + formatNumber(st.tinggi[k.id]);
+        })
+        .join(', '),
+  });
+
+  var stepper = cfg.kategori
+    .map(function (k) {
+      var kode = st.hasil[k.id];
+      return (
+        '<div class="dtk-stepper' +
+        (kode === 'benar' ? ' is-benar' : kode ? ' is-salah' : '') +
+        '">' +
+        '<span class="dtk-stepper__nama">' +
+        (k.ikon ? '<span aria-hidden="true">' + k.ikon + '</span> ' : '') +
+        esc(k.label) +
+        (kode === 'benar' ? ' ✓' : '') +
+        '</span>' +
+        '<span class="dtk-stepper__tombol">' +
+        '<button type="button" class="btn btn--ghost btn--small" data-dtk-kurang="' +
+        esc(k.id) +
+        '" aria-label="Turunkan batang ' +
+        esc(k.label) +
+        '"' +
+        (selesai ? ' disabled' : '') +
+        '>−</button>' +
+        '<button type="button" class="btn btn--ghost btn--small" data-dtk-tambah="' +
+        esc(k.id) +
+        '" aria-label="Naikkan batang ' +
+        esc(k.label) +
+        '"' +
+        (selesai ? ' disabled' : '') +
+        '>+</button>' +
+        '</span>' +
+        '<span class="sr-only" aria-live="polite">Tinggi batang ' +
+        esc(k.label) +
+        ': ' +
+        st.tinggi[k.id] +
+        '</span>' +
+        '</div>'
+      );
+    })
+    .join('');
+
+  var pesan = cfg.kategori
+    .filter(function (k) {
+      return st.hasil[k.id] && st.hasil[k.id] !== 'benar';
+    })
+    .map(function (k) {
+      return (
+        '<li><strong>' + esc(k.label) + ':</strong> ' + esc(DTK_PESAN[st.hasil[k.id]]) + '</li>'
+      );
+    });
+
+  html +=
+    '<div class="dtk-lab__bagian">' +
+    '<h4 class="dtk-lab__judul">3. Atur tinggi setiap batang</h4>' +
+    '<p class="dl-caption">Ketuk kolom diagram setinggi frekuensinya, atau pakai tombol − dan +. Baca angka pada sumbu tegak!</p>' +
+    '<div class="dtk-diagram-wrap">' +
+    diagram +
+    '</div>' +
+    '<div class="dtk-stepper-grid">' +
+    stepper +
+    '</div>' +
+    (pesan.length
+      ? buildFeedbackBox('error', '✗', '<ul class="dtk-pesan">' + pesan.join('') + '</ul>')
+      : '') +
+    (selesai
+      ? ''
+      : '<div class="btn-group btn-group--end"><button type="button" class="btn btn--primary" id="' +
+        id +
+        'Periksa">Periksa Diagram</button></div>') +
+    '</div>';
+
+  return '<div class="dtk-lab" id="' + id + '">' + html + '</div>';
+}
+
+/* Nilai sumbu dari posisi ketuk pada kolom diagram (koordinat layar → SVG). */
+function nilaiDariKetuk(svg, clientY) {
+  var p = (svg.getAttribute('data-dtk-plot') || '').split(',').map(Number);
+  var rect = svg.getBoundingClientRect();
+  if (!rect.height) return 0;
+  var y = ((clientY - rect.top) / rect.height) * p[2];
+  return Math.round(((p[0] + p[1] - y) / p[1]) * p[3]);
+}
+
+function bindLabBatang(root, id, st, cfg, onChange) {
+  var el = root.querySelector('#' + id);
+  if (!el) return;
+  el.querySelectorAll('[data-dtk-skala]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      if (st.langkah) return;
+      var opsi = opsiSkalaLab(cfg).filter(function (o) {
+        return o.id === btn.getAttribute('data-dtk-skala');
+      })[0];
+      if (!opsi) return;
+      pilihSkalaLab(st, cfg, opsi.nilai);
+      onChange('#' + id + ' [data-dtk-skala="' + opsi.id + '"]');
+    });
+  });
+  el.querySelectorAll('[data-dtk-kel]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      pilihKelengkapanLab(st, cfg, btn.dataset.group, btn.getAttribute('data-dtk-kel'));
+      onChange();
+    });
+  });
+  var ubah = function (attr, beda) {
+    el.querySelectorAll('[' + attr + ']').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var k = btn.getAttribute(attr);
+        aturTinggiLab(st, cfg, k, st.tinggi[k] + beda);
+        onChange('#' + id + ' [' + attr + '="' + k + '"]');
+      });
+    });
+  };
+  ubah('data-dtk-tambah', 1);
+  ubah('data-dtk-kurang', -1);
+  var svg = el.querySelector('#' + id + 'Svg');
+  if (svg) {
+    svg.querySelectorAll('[data-dtk-kolom]').forEach(function (kol) {
+      kol.addEventListener('click', function (e) {
+        aturTinggiLab(st, cfg, kol.getAttribute('data-dtk-kolom'), nilaiDariKetuk(svg, e.clientY));
+        onChange();
+      });
+    });
+  }
+  var periksa = el.querySelector('#' + id + 'Periksa');
+  if (periksa) {
+    periksa.addEventListener('click', function () {
+      periksaBatangLab(st, cfg);
+      onChange('#' + id + 'Periksa');
+    });
+  }
+}
+
+/* ---------- Lab Skala (penjelajah langkah skala, tidak dinilai) ---------- */
+
+/*
+ * State Lab Skala: murid mencoba beberapa langkah skala dan sumbu yang
+ * tidak dimulai dari 0 pada data yang sama, lalu mengamati akibatnya.
+ *   cfg { kategori, frek, langkahOpsi, mulaiLain, minCoba, judul,
+ *         labelX, labelY }
+ */
+function ensureLabSkala(state, key, cfg) {
+  var st = state[key] && typeof state[key] === 'object' ? state[key] : {};
+  if (cfg.langkahOpsi.indexOf(st.langkah) === -1) st.langkah = cfg.langkahOpsi[0];
+  if (typeof st.mulaiNol !== 'boolean') st.mulaiNol = true;
+  var dicoba = petaObjek(st, 'dicoba');
+  dicoba[st.langkah] = true;
+  st.lihatMulai = !!st.lihatMulai;
+  state[key] = st;
+  return st;
+}
+
+function cobaSkalaLab(st, cfg, langkah) {
+  if (cfg.langkahOpsi.indexOf(langkah) === -1) return;
+  st.langkah = langkah;
+  st.dicoba[langkah] = true;
+}
+
+function aturMulaiLab(st, mulaiNol) {
+  st.mulaiNol = !!mulaiNol;
+  if (!st.mulaiNol) st.lihatMulai = true;
+}
+
+function labSkalaCukup(st, cfg) {
+  return Object.keys(st.dicoba).length >= (cfg.minCoba || 3) && st.lihatMulai;
+}
+
+function buildLabSkala(id, st, cfg) {
+  var max = frekuensiTerbesar(cfg.frek);
+  var mulai = st.mulaiNol ? 0 : cfg.mulaiLain;
+  var puncak = mulai
+    ? mulai + banyakGarisSkala(max - mulai, st.langkah) * st.langkah
+    : puncakSumbu(max, st.langkah);
+  var garis = Math.round((puncak - mulai) / st.langkah);
+  var r = diagnosaSkala(max, st.langkah);
+  var vonis;
+  if (!st.mulaiNol) {
+    vonis = buildFeedbackBox('warning', '⚠️', esc(cacatById('mulaiBukanNol').pesan));
+  } else if (r.benar) {
+    vonis = buildFeedbackBox(
+      'success',
+      '✓',
+      'Skala tepat: dimulai dari 0, langkahnya rapi, dan cukup ' + garis + ' garis bantu.'
+    );
+  } else {
+    vonis = buildFeedbackBox('warning', '⚠️', esc(r.pesan));
+  }
+  var tombolLangkah = cfg.langkahOpsi
+    .map(function (l) {
+      var aktif = st.langkah === l;
+      return (
+        '<button type="button" class="btn btn--small ' +
+        (aktif ? 'btn--primary' : 'btn--ghost') +
+        '" data-dtk-coba="' +
+        l +
+        '" aria-pressed="' +
+        aktif +
+        '">' +
+        formatNumber(l) +
+        (st.dicoba[l] && !aktif ? ' ✓' : '') +
+        '</button>'
+      );
+    })
+    .join('');
+  var tombolMulai = [
+    { nol: true, label: 'Mulai dari 0' },
+    { nol: false, label: 'Mulai dari ' + formatNumber(cfg.mulaiLain) },
+  ]
+    .map(function (m) {
+      var aktif = st.mulaiNol === m.nol;
+      return (
+        '<button type="button" class="btn btn--small ' +
+        (aktif ? 'btn--primary' : 'btn--ghost') +
+        '" data-dtk-mulai="' +
+        (m.nol ? '0' : '1') +
+        '" aria-pressed="' +
+        aktif +
+        '">' +
+        esc(m.label) +
+        '</button>'
+      );
+    })
+    .join('');
+  return (
+    '<div class="dtk-lab" id="' +
+    id +
+    '">' +
+    '<div class="dtk-lab-skala__kontrol">' +
+    '<div class="dtk-lab-skala__baris"><span class="dtk-lab-skala__label">Langkah skala:</span>' +
+    '<span class="btn-group" role="group" aria-label="Langkah skala">' +
+    tombolLangkah +
+    '</span></div>' +
+    '<div class="dtk-lab-skala__baris"><span class="dtk-lab-skala__label">Sumbu tegak:</span>' +
+    '<span class="btn-group" role="group" aria-label="Angka terbawah sumbu tegak">' +
+    tombolMulai +
+    '</span></div>' +
+    '</div>' +
+    '<p class="dtk-lab-skala__info" aria-live="polite">Langkah ' +
+    formatNumber(st.langkah) +
+    ' · ' +
+    garis +
+    ' garis bantu · sumbu ' +
+    formatNumber(mulai) +
+    ' sampai ' +
+    formatNumber(puncak) +
+    '</p>' +
+    '<div class="dtk-diagram-wrap">' +
+    buildDiagramBatangSVG(cfg.kategori, cfg.frek, {
+      langkah: st.langkah,
+      cacat: st.mulaiNol ? null : 'mulaiBukanNol',
+      mulai: cfg.mulaiLain,
+      judul: cfg.judul,
+      labelX: cfg.labelX,
+      labelY: cfg.labelY,
+    }) +
+    '</div>' +
+    vonis +
+    '</div>'
+  );
+}
+
+function bindLabSkala(root, id, st, cfg, onChange) {
+  var el = root.querySelector('#' + id);
+  if (!el) return;
+  el.querySelectorAll('[data-dtk-coba]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var l = Number(btn.getAttribute('data-dtk-coba'));
+      cobaSkalaLab(st, cfg, l);
+      onChange('#' + id + ' [data-dtk-coba="' + l + '"]');
+    });
+  });
+  el.querySelectorAll('[data-dtk-mulai]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var v = btn.getAttribute('data-dtk-mulai');
+      aturMulaiLab(st, v === '0');
+      onChange('#' + id + ' [data-dtk-mulai="' + v + '"]');
     });
   });
 }
