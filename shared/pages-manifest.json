@@ -295,6 +295,14 @@
     "stageCount": 9,
     "extraBody": "partials/reset-modal.html"
   },
+  "fase-d/mpi-14.1": {
+    "title": "Relasi antara Dua Himpunan dalam Kehidupan Sehari-hari — Matematika Fase D",
+    "description": "Media pembelajaran interaktif berbasis Discovery Learning untuk menjelaskan konsep relasi sebagai hubungan antar-anggota dua himpunan melalui contoh kehidupan sehari-hari: Papan Ekskul Kelas VIII-B, kota dan makanan khas, serta bilangan, melalui diagram panah interaktif, tabel silang, chip pasangan berurutan berdiagnosa, Lab Aturan (himpunan sama, aturan berbeda), pemilahan miskonsepsi, dan uji terap kontekstual.",
+    "kicker": "Matematika — Fase D (SMP)",
+    "h1": "Relasi antara Dua Himpunan dalam Kehidupan Sehari-hari",
+    "stageCount": 9,
+    "extraBody": "partials/reset-modal.html"
+  },
   "fase-d/mpi-22.1": {
     "title": "Unsur-unsur & Jaring-jaring Prisma — Matematika Fase D",
     "description": "Media pembelajaran interaktif berbasis Discovery Learning untuk mengidentifikasi unsur-unsur prisma (titik sudut, rusuk, sisi, dan tinggi) serta jaring-jaring prisma melalui kegiatan memutar model 3D, melipat, dan merakit bentangan karton kemasan.",
