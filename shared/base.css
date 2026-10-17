@@ -17053,3 +17053,27 @@ button.akar-tile:disabled {
   background: var(--color-blue-soft);
   color: var(--color-blue-strong);
 }
+
+/* =========================================================================
+   81. Perkalian & pembagian bentuk aljabar berpangkat berbasis sama
+   (engine.js seksi 81, fase-d/mpi-13.1): ubin koefisien & variabel pada
+   ubin faktor bentuk aljabar (buildMonoFactorTiles). Melengkapi .fx-*.
+   ========================================================================= */
+
+.fx-tile--koef,
+.fx-group--b .fx-tile--koef {
+  background: var(--color-purple);
+}
+
+.fx-tile--var {
+  font-style: italic;
+}
+
+.fx-group--gabung {
+  border-color: var(--color-purple);
+  align-items: center;
+}
+
+.fx-group--gabung .fx-op {
+  font-size: 1rem;
+}

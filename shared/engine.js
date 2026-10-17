@@ -262,6 +262,11 @@
        jumlah, puncak, baca batang & selisih; opsi berpengecoh skala,
        kategori terbanyak & cacat diagram; diagram batang SVG termasuk
        diagram menyesatkan; Lab Turus, Lab Skala, Lab Diagram Batang)
+   80. Merumuskan pertanyaan statistik
+   81. Perkalian & pembagian bentuk aljabar berpangkat berbasis sama
+       (rincian koefisien & eksponen per variabel, langkah tertulis,
+       diagnosa miskonsepsi eksponen/koefisien, opsi berpengecoh, ubin
+       faktor bentuk aljabar)
    ============================================================ */
 
 /* ============================================================
@@ -55991,4 +55996,359 @@ function bindLabRakit(root, id, st, cfg, onChange) {
       onChange('#' + id + ' [data-pst-periksa]');
     });
   }
+}
+
+/* ============================================================
+   81. PERKALIAN & PEMBAGIAN BENTUK ALJABAR BERPANGKAT BERBASIS SAMA
+   Dipakai fase-d/mpi-13.1. Dibangun di atas seksi 27 (pecahan eksak,
+   superskrip, fxTile/fxGroup) dan seksi 39 (monomial, kaliMonomial,
+   bagiMonomial, diagnosaMonomial). Suku berbentuk { koef, pangkat }
+   seperti daun pohon ekspresi seksi 39.
+     • rincianKaliBagiMonomial — koefisien & eksponen tiap variabel
+       (m dari suku pertama, n dari suku kedua, k hasil);
+     • langkahKaliBagiMonomial — langkah penyelesaian tertulis
+       (koefisien → tiap variabel → hasil);
+     • diagnosaKaliBagiMonomial / pesanDiagnosaKaliBagi — miskonsepsi
+       khas: eksponen dikali (pada kali), eksponen dibagi atau
+       dijumlah (pada bagi), koefisien dijumlah/dikurang/dikali;
+       selain itu jatuh ke diagnosaMonomial;
+     • opsiKaliBagiMonomial — empat opsi berpengecoh bermakna (diacak
+       oleh app.js);
+     • buildMonoFactorTiles — ubin faktor bentuk aljabar: koefisien &
+       setiap faktor variabel; kali dapat dikelompokkan per variabel,
+       bagi sebagai pecahan dengan coretan pasangan faktor.
+   Gaya .fx-tile--koef, .fx-tile--var, .fx-group--gabung ada di
+   shared/base.css.
+   ============================================================ */
+
+function daftarVariabelSuku(a, b) {
+  var semua = Object.keys(a.pangkat || {}).concat(Object.keys(b.pangkat || {}));
+  return semua
+    .filter(function (v, i) {
+      return semua.indexOf(v) === i;
+    })
+    .sort();
+}
+
+function rincianKaliBagiMonomial(jenis, a, b) {
+  var kali = jenis === 'kali';
+  var ka = keFraksi(a.koef);
+  var kb = keFraksi(b.koef);
+  var vars = daftarVariabelSuku(a, b).map(function (v) {
+    var m = a.pangkat[v] || 0;
+    var n = b.pangkat[v] || 0;
+    return { v: v, m: m, n: n, k: kali ? m + n : m - n };
+  });
+  var pa = monomial(ka, a.pangkat);
+  var pb = monomial(kb, b.pangkat);
+  return {
+    jenis: jenis,
+    koef: { a: ka, b: kb, hasil: kali ? kaliPecahan(ka, kb) : bagiPecahan(ka, kb) },
+    vars: vars,
+    hasil: kali ? kaliMonomial(pa, pb) : bagiMonomial(pa, pb),
+  };
+}
+
+function langkahKaliBagiMonomial(jenis, a, b) {
+  var r = rincianKaliBagiMonomial(jenis, a, b);
+  var op = jenis === 'kali' ? ' × ' : ' : ';
+  var tanda = jenis === 'kali' ? '+' : '−';
+  var out = [
+    'Koefisien: ' +
+      formatPecahan(r.koef.a) +
+      op +
+      formatPecahan(r.koef.b) +
+      ' = ' +
+      formatPecahan(r.koef.hasil),
+  ];
+  r.vars.forEach(function (x) {
+    var p = {};
+    p[x.v] = x.m || x.n;
+    if (!x.m || !x.n) {
+      out.push('Variabel ' + x.v + ': ' + formatSuku(1, p) + ' (hanya ada di satu suku)');
+      return;
+    }
+    var hasil = {};
+    hasil[x.v] = x.k;
+    var pm = {};
+    pm[x.v] = x.m;
+    var pn = {};
+    pn[x.v] = x.n;
+    out.push(
+      'Variabel ' +
+        x.v +
+        ': ' +
+        formatSuku(1, pm) +
+        op +
+        formatSuku(1, pn) +
+        ' = ' +
+        x.v +
+        superskrip(x.m + tanda + x.n) +
+        ' = ' +
+        formatSuku(1, hasil, true) +
+        (x.k === 0 ? ' = 1' : '')
+    );
+  });
+  out.push('Hasil: ' + formatMonomial(r.hasil));
+  return out;
+}
+
+/*
+ * Peta eksponen pengecoh: variabel yang ada di kedua suku diolah
+ * dengan `f(m, n)`, variabel tunggal mengikuti kunci. null bila f
+ * menghasilkan bukan bilangan bulat.
+ */
+function pangkatPengecohKaliBagi(r, f) {
+  var out = {};
+  for (var i = 0; i < r.vars.length; i++) {
+    var x = r.vars[i];
+    var k = x.m && x.n ? f(x.m, x.n) : x.k;
+    if (!Number.isInteger(k)) return null;
+    out[x.v] = k;
+  }
+  return out;
+}
+
+function polaPengecohKaliBagi(r) {
+  var ka = r.koef.a;
+  var kb = r.koef.b;
+  var pola = { pangkat: {}, koef: {} };
+  if (r.jenis === 'kali') {
+    pola.pangkat.eksponenDikali = pangkatPengecohKaliBagi(r, function (m, n) {
+      return m * n;
+    });
+    pola.koef.koefDijumlah = tambahPecahan(ka, kb);
+  } else {
+    pola.pangkat.eksponenDibagi = pangkatPengecohKaliBagi(r, function (m, n) {
+      return m / n;
+    });
+    pola.pangkat.eksponenDijumlah = pangkatPengecohKaliBagi(r, function (m, n) {
+      return m + n;
+    });
+    pola.koef.koefDikurang = kurangPecahan(ka, kb);
+    pola.koef.koefDikali = kaliPecahan(ka, kb);
+  }
+  return pola;
+}
+
+/*
+ * Kode: 'benar' | 'eksponenDikali' | 'eksponenDibagi' |
+ * 'eksponenDijumlah' | 'koefDijumlah' | 'koefDikurang' | 'koefDikali'
+ * | kode diagnosaMonomial. Pola pengecoh yang kebetulan sama dengan
+ * kunci (mis. x² × x²: 2 + 2 = 2 × 2) dilewati.
+ */
+function diagnosaKaliBagiMonomial(jenis, a, b, jawab) {
+  if (!jawab) return 'lain';
+  var r = rincianKaliBagiMonomial(jenis, a, b);
+  var kunci = r.hasil;
+  if (samaMonomial(kunci, jawab)) return 'benar';
+  var pola = polaPengecohKaliBagi(r);
+  var satu = function (p) {
+    return monomial(1, p);
+  };
+  var kode;
+  for (kode in pola.pangkat) {
+    var p = pola.pangkat[kode];
+    if (
+      p &&
+      !samaMonomial(satu(p), satu(kunci.pangkat)) &&
+      samaMonomial(satu(p), satu(jawab.pangkat))
+    )
+      return kode;
+  }
+  if (samaMonomial(satu(kunci.pangkat), satu(jawab.pangkat))) {
+    for (kode in pola.koef) {
+      var k = pola.koef[kode];
+      if (!samaPecahan(k, kunci.koef) && samaPecahan(k, jawab.koef)) return kode;
+    }
+  }
+  return diagnosaMonomial(kunci, jawab);
+}
+
+function pesanDiagnosaKaliBagi(kode) {
+  var pesan = {
+    eksponenDikali:
+      'Eksponennya dikalikan. Hitung banyak faktornya: x² × x³ = (x · x) × (x · x · x) = 5 faktor x, jadi pada perkalian eksponen <strong>dijumlahkan</strong>: aᵐ × aⁿ = aᵐ⁺ⁿ.',
+    eksponenDibagi:
+      'Eksponennya dibagi. Coret pasangan faktor yang sama di atas dan di bawah: x⁶ : x² menyisakan 6 − 2 = 4 faktor x. Pada pembagian eksponen <strong>dikurangkan</strong>: aᵐ : aⁿ = aᵐ⁻ⁿ.',
+    eksponenDijumlah:
+      'Eksponennya dijumlahkan, padahal ini pembagian. Pembagian membuat faktor berkurang, jadi eksponen <strong>dikurangkan</strong>: aᵐ : aⁿ = aᵐ⁻ⁿ.',
+    koefDijumlah:
+      'Eksponennya sudah tepat. Koefisien adalah bilangan biasa yang ikut <strong>dikalikan</strong>, bukan dijumlahkan: 3x² × 4x⁵ → 3 × 4 = 12.',
+    koefDikurang:
+      'Eksponennya sudah tepat. Koefisien adalah bilangan biasa yang ikut <strong>dibagi</strong>, bukan dikurangi: 12a⁷ : 4a³ → 12 : 4 = 3.',
+    koefDikali:
+      'Eksponennya sudah tepat, tetapi koefisiennya dikalikan. Pada pembagian, koefisien juga <strong>dibagi</strong>: 12 : 4 = 3.',
+  };
+  return pesan[kode] || pesanDiagnosaMonomial(kode);
+}
+
+/*
+ * Empat opsi { id, label, monomial } dengan kunci sebagai 'o1' dan
+ * pengecoh dari pola miskonsepsi; bila pola kebetulan sama dengan kunci,
+ * diisi pengecoh cadangan (koefisien tak diolah, eksponen ±1).
+ * Kembalian { opsi, correct }. Urutan diacak oleh app.js.
+ */
+function opsiKaliBagiMonomial(jenis, a, b) {
+  var r = rincianKaliBagiMonomial(jenis, a, b);
+  var kunci = r.hasil;
+  var pola = polaPengecohKaliBagi(r);
+  var calon = [];
+  Object.keys(pola.pangkat).forEach(function (kp) {
+    if (pola.pangkat[kp]) calon.push(monomial(kunci.koef, pola.pangkat[kp]));
+  });
+  Object.keys(pola.koef).forEach(function (kk) {
+    calon.push(monomial(pola.koef[kk], kunci.pangkat));
+  });
+  if (jenis === 'kali' && pola.pangkat.eksponenDikali) {
+    calon.push(monomial(pola.koef.koefDijumlah, pola.pangkat.eksponenDikali));
+  }
+  var geser = function (d) {
+    var p = {};
+    r.vars.forEach(function (x) {
+      p[x.v] = Math.max(0, x.k + d);
+    });
+    return p;
+  };
+  calon.push(monomial(r.koef.a, kunci.pangkat), monomial(kunci.koef, geser(1)));
+  calon.push(monomial(kunci.koef, geser(-1)), monomial(kaliPecahan(kunci.koef, 2), kunci.pangkat));
+
+  var opsi = [kunci];
+  calon.forEach(function (m) {
+    var ada = opsi.some(function (o) {
+      return samaMonomial(o, m);
+    });
+    if (!ada && opsi.length < 4) opsi.push(m);
+  });
+  return {
+    opsi: opsi.map(function (m, i) {
+      return { id: 'o' + (i + 1), label: formatMonomial(m, { positif: true }), monomial: m };
+    }),
+    correct: 'o1',
+  };
+}
+
+/* Ubin satu suku: koefisien (bila ≠ 1) lalu faktor tiap variabel. */
+function ubinSuku(s, cls, coret) {
+  var koef = keFraksi(s.koef);
+  var out = [];
+  if (!(koef.num === 1 && koef.den === 1)) out.push(fxTile(formatPecahan(koef), 'fx-tile--koef'));
+  Object.keys(s.pangkat)
+    .sort()
+    .forEach(function (v) {
+      for (var i = 0; i < s.pangkat[v]; i++) {
+        var c = 'fx-tile--var' + (cls ? ' ' + cls : '');
+        if (coret && i < (coret[v] || 0)) c += ' fx-tile--coret';
+        out.push(fxTile(v, c));
+      }
+    });
+  return out;
+}
+
+/*
+ * spec { jenis: 'kali', a, b, kelompok }  a × b; kelompok true →
+ *        ubin disusun ulang: koefisien bersama, lalu tiap variabel
+ *      { jenis: 'bagi', a, b, coret }    a : b sebagai pecahan; coret
+ *        true → pasangan faktor variabel yang sama dicoret
+ * a, b berupa { koef, pangkat } dengan eksponen bulat positif kecil.
+ * opts.caption keterangan di bawah ubin.
+ */
+function buildMonoFactorTiles(spec, opts) {
+  opts = opts || {};
+  var a = spec.a;
+  var b = spec.b;
+  var r = rincianKaliBagiMonomial(spec.jenis, a, b);
+  var teksA = formatMonomial(monomial(a.koef, a.pangkat));
+  var teksB = formatMonomial(monomial(b.koef, b.pangkat));
+  var isi;
+  var aria;
+  if (spec.jenis === 'kali') {
+    if (spec.kelompok) {
+      var grup = [
+        fxGroup(
+          [
+            fxTile(formatPecahan(r.koef.a), 'fx-tile--koef'),
+            '<span class="fx-op">×</span>',
+            fxTile(formatPecahan(r.koef.b), 'fx-tile--koef'),
+          ],
+          'gabung'
+        ),
+      ];
+      r.vars.forEach(function (x) {
+        var t = [];
+        for (var i = 0; i < x.m; i++) t.push(fxTile(x.v, 'fx-tile--var'));
+        for (var j = 0; j < x.n; j++) t.push(fxTile(x.v, 'fx-tile--var fx-tile--b'));
+        grup.push(fxGroup(t, 'gabung'));
+      });
+      isi = grup.join('<span class="fx-op">·</span>');
+      aria =
+        teksA +
+        ' kali ' +
+        teksB +
+        ' disusun ulang: koefisien ' +
+        formatPecahan(r.koef.a) +
+        ' × ' +
+        formatPecahan(r.koef.b) +
+        r.vars
+          .map(function (x) {
+            return ', ' + x.k + ' faktor ' + x.v;
+          })
+          .join('');
+    } else {
+      isi =
+        fxGroup(ubinSuku(a, ''), 'a') +
+        '<span class="fx-op">×</span>' +
+        fxGroup(ubinSuku(b, 'fx-tile--b'), 'b');
+      aria = teksA + ' kali ' + teksB;
+    }
+  } else {
+    var coret = {};
+    if (spec.coret) {
+      r.vars.forEach(function (x) {
+        coret[x.v] = Math.min(x.m, x.n);
+      });
+    }
+    var baris = function (s, cls) {
+      var t = ubinSuku(s, cls, coret);
+      var sisa = t.filter(function (h) {
+        return h.indexOf('fx-tile--coret') === -1;
+      }).length;
+      if (spec.coret && sisa === 0) t.push('<span class="fx-one">1</span>');
+      return t;
+    };
+    isi =
+      '<span class="fx-frac">' +
+      '<span class="fx-frac__row">' +
+      fxGroup(baris(a, ''), 'a') +
+      '</span>' +
+      '<span class="fx-frac__bar" aria-hidden="true"></span>' +
+      '<span class="fx-frac__row">' +
+      fxGroup(baris(b, 'fx-tile--b'), 'b') +
+      '</span>' +
+      '</span>';
+    aria =
+      teksA +
+      ' dibagi ' +
+      teksB +
+      (spec.coret
+        ? r.vars
+            .filter(function (x) {
+              return coret[x.v] > 0;
+            })
+            .map(function (x) {
+              return ': ' + coret[x.v] + ' pasang faktor ' + x.v + ' dicoret';
+            })
+            .join('')
+        : '');
+  }
+  return (
+    '<figure class="fx-tiles" role="img" aria-label="' +
+    esc(aria) +
+    '">' +
+    '<div class="fx-tiles__body">' +
+    isi +
+    '</div>' +
+    (opts.caption ? '<figcaption class="dl-caption">' + opts.caption + '</figcaption>' : '') +
+    '</figure>'
+  );
 }

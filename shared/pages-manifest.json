@@ -287,6 +287,14 @@
     "stageCount": 10,
     "extraBody": "partials/reset-modal.html"
   },
+  "fase-d/mpi-13.1": {
+    "title": "Perkalian & Pembagian Bilangan Berpangkat pada Bentuk Aljabar — Matematika Fase D",
+    "description": "Media pembelajaran interaktif berbasis Discovery Learning untuk menerapkan sifat perkalian dan pembagian bilangan berpangkat berbasis sama dalam menyederhanakan bentuk aljabar berpangkat melalui petak Mading Sains, ubin faktor bentuk aljabar, tabel pola dengan kamus pangkat, lab uji sifat, pemilahan miskonsepsi, serta isian koefisien & eksponen berdiagnosa.",
+    "kicker": "Matematika — Fase D (SMP)",
+    "h1": "Perkalian & Pembagian Bilangan Berpangkat pada Bentuk Aljabar",
+    "stageCount": 9,
+    "extraBody": "partials/reset-modal.html"
+  },
   "fase-d/mpi-22.1": {
     "title": "Unsur-unsur & Jaring-jaring Prisma — Matematika Fase D",
     "description": "Media pembelajaran interaktif berbasis Discovery Learning untuk mengidentifikasi unsur-unsur prisma (titik sudut, rusuk, sisi, dan tinggi) serta jaring-jaring prisma melalui kegiatan memutar model 3D, melipat, dan merakit bentangan karton kemasan.",
