@@ -270,3 +270,34 @@ test('buildPairChips: chip mengikuti urutan acak & menandai hasil pemeriksaan', 
   assert.equal(count(tanpaTerlewat, 'rel-chip--terlewat'), 0);
   assert.equal(count(tanpaTerlewat, 'rel-chip--benar'), 1);
 });
+
+test('pesanDiagnosaRelasi: pesan ramah murid tanpa membocorkan pasangan yang kurang', () => {
+  const target = [
+    ['Nadia', 'Futsal'],
+    ['Raka', 'Voli'],
+    ['Raka', 'Renang'],
+  ];
+  assert.deepEqual(plain(E.pesanDiagnosaRelasi(E.diagnosaRelasi(target, target))), []);
+
+  const pesan = plain(
+    E.pesanDiagnosaRelasi(
+      E.diagnosaRelasi(target, [
+        ['Futsal', 'Nadia'],
+        ['Sinta', 'Renang'],
+      ])
+    )
+  );
+  assert.equal(pesan.length, 3);
+  assert.ok(pesan[0].includes('(Futsal, Nadia)') && pesan[0].includes('terbalik'));
+  assert.ok(pesan[1].includes('(Sinta, Renang)') && pesan[1].includes('tidak memenuhi'));
+  /* tiga pasangan target belum dibuat → hanya banyaknya yang disebut */
+  assert.ok(pesan[2].includes('3 pasangan'));
+  assert.ok(!pesan[2].includes('Voli'));
+
+  /* opsi namaRelasi menyebut aturan pada pesan "lebih" */
+  const p2 = plain(
+    E.pesanDiagnosaRelasi(E.diagnosaRelasi([[2, 4]], [[3, 4]]), { namaRelasi: 'faktor dari' })
+  );
+  assert.ok(p2[0].includes('“faktor dari”'));
+  assert.ok(p2[1].includes('1 pasangan'));
+});

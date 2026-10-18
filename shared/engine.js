@@ -7542,6 +7542,7 @@ function bindInterestDuel(root, id, st, opts, save, rerender) {
      • tabel           buildRelationTable (silang A × B, bisa
                        diisi) & buildRelationListTable (dua kolom)
      • pasangan        formatRelasiPasangan, buildPairChips
+     • umpan balik     diagnosaRelasi, pesanDiagnosaRelasi
    Fungsi murni (aturan, normalisasi, diagnosa, logika ketuk) diuji
    di tests/engine-relasi.test.js. Gaya .rel-* ada di shared/base.css.
    ============================================================ */
@@ -7699,6 +7700,49 @@ function diagnosaRelasi(target, jawab) {
     lebih: lebih,
     tepat: kurang.length + terbalik.length + lebih.length === 0,
   };
+}
+
+/*
+ * Pesan umpan balik dari hasil diagnosaRelasi(), urut: terbalik, lebih,
+ * kurang. Pasangan yang kurang hanya disebut banyaknya agar kunci tidak
+ * bocor. opts.namaRelasi menyebut aturan pada pesan "lebih".
+ * Mengembalikan array teks polos (escape saat dirender); [] bila tepat.
+ */
+function pesanDiagnosaRelasi(d, opts) {
+  opts = opts || {};
+  var pesan = [];
+  if (d.terbalik.length) {
+    pesan.push(
+      'Pasangan ' +
+        d.terbalik
+          .map(function (p) {
+            return formatPasangan(p[0], p[1]);
+          })
+          .join(', ') +
+        ' urutannya terbalik: anggota himpunan pertama (daerah asal) selalu ditulis di depan.'
+    );
+  }
+  if (d.lebih.length) {
+    pesan.push(
+      'Pasangan ' +
+        d.lebih
+          .map(function (p) {
+            return formatPasangan(p[0], p[1]);
+          })
+          .join(', ') +
+        ' tidak memenuhi aturan' +
+        (opts.namaRelasi ? ' “' + opts.namaRelasi + '”' : '') +
+        '. Baca lagi aturannya, lalu hapus.'
+    );
+  }
+  if (d.kurang.length) {
+    pesan.push(
+      'Masih ada ' +
+        d.kurang.length +
+        ' pasangan yang belum dibuat. Periksa lagi setiap anggota himpunan pertama satu per satu.'
+    );
+  }
+  return pesan;
 }
 
 /*
