@@ -303,6 +303,14 @@
     "stageCount": 9,
     "extraBody": "partials/reset-modal.html"
   },
+  "fase-d/mpi-15.1": {
+    "title": "Fungsi Linear & Non-linear dari Pola Perubahan Nilai — Matematika Fase D",
+    "description": "Media pembelajaran interaktif berbasis Discovery Learning untuk mengidentifikasi ciri fungsi linear dan non-linear berdasarkan pola perubahan nilai pada tabel dan situasi kontekstual: tarif parkir, luas spanduk, saldo kartu jajan, dan lipatan origami di Pasar Malam Sekolah, melalui tabel perubahan Δx–Δy berdiagnosa, grafik pola, Lab Pola Perubahan (y = mx + c, y = x², y = 2ˣ, y = 12/x, nilai x melompat), pemilahan jebakan miskonsepsi, dan uji terap kontekstual.",
+    "kicker": "Matematika — Fase D (SMP)",
+    "h1": "Fungsi Linear & Non-linear dari Pola Perubahan Nilai",
+    "stageCount": 9,
+    "extraBody": "partials/reset-modal.html"
+  },
   "fase-d/mpi-22.1": {
     "title": "Unsur-unsur & Jaring-jaring Prisma — Matematika Fase D",
     "description": "Media pembelajaran interaktif berbasis Discovery Learning untuk mengidentifikasi unsur-unsur prisma (titik sudut, rusuk, sisi, dan tinggi) serta jaring-jaring prisma melalui kegiatan memutar model 3D, melipat, dan merakit bentangan karton kemasan.",

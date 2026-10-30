@@ -17077,3 +17077,173 @@ button.akar-tile:disabled {
 .fx-group--gabung .fx-op {
   font-size: 1rem;
 }
+
+/* =========================================================================
+   82. Fungsi linear & non-linear dari pola perubahan nilai
+   (engine.js seksi 82, fase-d/mpi-15.1): tabel perubahan vertikal
+   (buildTabelPerubahan), grafik pola (buildGrafikPola), dan Lab Pola
+   Perubahan (buildLabPolaPerubahan). Grafik memakai .aso-plot.
+   ========================================================================= */
+
+.fn-tabel-wrap {
+  max-width: 100%;
+  overflow-x: auto;
+  margin: var(--space-3) 0;
+}
+
+.fn-tabel {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: var(--font-mono);
+  font-size: 0.95rem;
+  background: var(--color-surface);
+}
+
+.fn-tabel caption {
+  padding-bottom: var(--space-2);
+  font-family: var(--font-body);
+  font-size: 0.85rem;
+  color: var(--color-ink-muted);
+  text-align: left;
+}
+
+.fn-tabel th,
+.fn-tabel td {
+  padding: var(--space-2);
+  border: 1px solid var(--color-border);
+  text-align: center;
+  vertical-align: middle;
+}
+
+.fn-tabel thead th {
+  background: var(--color-blue-soft);
+  color: var(--color-blue-strong);
+  font-family: var(--font-body);
+  font-size: 0.85rem;
+}
+
+.fn-tabel tbody th {
+  background: var(--color-bg);
+}
+
+.fn-tabel__delta {
+  color: var(--color-orange-strong);
+}
+
+.fn-tabel thead .fn-tabel__delta {
+  background: var(--color-orange-soft);
+  color: var(--color-orange-strong);
+}
+
+.fn-tabel__laju {
+  font-weight: 700;
+  color: var(--color-purple-strong);
+}
+
+.fn-tabel thead .fn-tabel__laju {
+  background: var(--color-purple-soft);
+  color: var(--color-purple-strong);
+}
+
+.fn-tabel__input {
+  width: 100%;
+  min-width: 4.5rem;
+  max-width: 8rem;
+  text-align: center;
+}
+
+.fn-grafik__ruas {
+  fill: none;
+  stroke: var(--color-orange);
+  stroke-width: 2.5;
+  stroke-dasharray: 6 5;
+}
+
+.fn-lab {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.fn-lab__kontrol {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.fn-lab__jenis-grup,
+.fn-lab__pengatur-grup {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.fn-lab__jenis {
+  font-family: var(--font-mono);
+}
+
+.fn-lab__pengatur {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-1) var(--space-2);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+}
+
+.fn-lab__nama {
+  font-family: var(--font-mono);
+  font-style: italic;
+  font-weight: 700;
+}
+
+.fn-lab__nilai {
+  min-width: 2.5rem;
+  font-family: var(--font-mono);
+  font-weight: 700;
+  text-align: center;
+}
+
+.fn-lab__lompat {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: 0.95rem;
+  cursor: pointer;
+}
+
+.fn-lab__lompat input {
+  width: 1.2rem;
+  height: 1.2rem;
+}
+
+.fn-lab__aturan {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: 1.25rem;
+  font-weight: 700;
+  text-align: center;
+  color: var(--color-primary-strong);
+}
+
+.fn-lab__isi {
+  display: grid;
+  gap: var(--space-3);
+  align-items: start;
+}
+
+.fn-lab__isi .aso-plot {
+  margin: 0 auto;
+}
+
+@media (min-width: 760px) {
+  .fn-lab__isi {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr);
+  }
+}
+
+.fn-lab__temuan {
+  margin: 0;
+  padding: var(--space-3);
+  border-radius: var(--radius-md);
+  background: var(--color-primary-soft);
+}

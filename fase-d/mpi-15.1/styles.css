@@ -1,0 +1,191 @@
+/* =========================================================================
+   fase-d/mpi-15.1/styles.css
+   Fungsi Linear & Non-linear dari Pola Perubahan Nilai —
+   Fase D (SMP Kelas VIII), Discovery Learning
+
+   Hanya memuat gaya yang KHAS modul ini (kartu stimulasi, cerita
+   situasi, empat tabel + grafik berdampingan, daftar misi lab, navigasi
+   & pembahasan uji terap). Dasar design system — panel, tombol, umpan
+   balik, pilihan ganda, petunjuk, pemilahan, tabel perubahan & Lab Pola
+   Perubahan (.fn-*), grafik (.aso-plot), kartu istilah, perbandingan
+   dugaan, kartu ringkasan, navigasi tahap, modal — berasal dari
+   shared/base.css.
+   ========================================================================= */
+
+/* Stimulasi: dua kartu pola */
+.fnl-kartu-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: var(--space-3);
+  margin-top: var(--space-3);
+}
+
+.fnl-kartu {
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--color-border);
+  border-left: 4px solid var(--color-orange);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+}
+
+.fnl-kartu__ikon {
+  font-size: 1.8rem;
+}
+
+.fnl-kartu__judul {
+  margin: var(--space-1) 0;
+}
+
+.fnl-kartu__teks {
+  margin: 0;
+  font-family: var(--font-mono);
+  overflow-wrap: anywhere;
+}
+
+.fnl-cerita {
+  margin: 0 0 var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  border-left: 4px solid var(--color-blue);
+  border-radius: var(--radius-sm);
+  background: var(--color-blue-soft);
+}
+
+.fnl-diagnosa {
+  margin: var(--space-3) 0;
+  display: grid;
+  gap: var(--space-2);
+}
+
+/* Olah data: empat tabel + grafik berdampingan */
+.fnl-banding {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: var(--space-4);
+  align-items: start;
+}
+
+.fnl-banding > * {
+  min-width: 0;
+}
+
+.fnl-banding__item {
+  padding: var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-bg);
+}
+
+.fnl-banding__item h4 {
+  margin: 0 0 var(--space-2);
+}
+
+.fnl-istilah {
+  max-width: 900px;
+}
+
+/* Kartu istilah berisi kalimat, bukan rumus: huruf biasa, rata kiri */
+.fnl-istilah .formula-card {
+  font-family: var(--font-body);
+  font-size: 1rem;
+  font-weight: 500;
+  text-align: left;
+}
+
+/* Pembuktian: daftar misi lab */
+.fnl-misi {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.fnl-misi__item {
+  display: flex;
+  gap: var(--space-2);
+  align-items: flex-start;
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+}
+
+.fnl-misi__item--ok {
+  border-color: var(--color-success);
+  background: var(--color-success-soft);
+}
+
+.fnl-misi__tanda {
+  flex: none;
+  width: 1.4rem;
+  font-weight: 700;
+  text-align: center;
+  color: var(--color-ink-muted);
+}
+
+.fnl-misi__item--ok .fnl-misi__tanda {
+  color: var(--color-success-strong);
+}
+
+/* Uji terap: navigasi soal, pembahasan, isian rupiah */
+.fnl-dots {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-bottom: var(--space-4);
+}
+
+.fnl-dot {
+  width: 44px;
+  height: 44px;
+  border: 2px solid var(--color-border-strong);
+  border-radius: 50%;
+  background: var(--color-surface);
+  color: var(--color-ink);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.fnl-dot--done {
+  border-color: var(--color-success);
+  background: var(--color-success-soft);
+  color: var(--color-success-strong);
+}
+
+.fnl-dot--aktif {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px var(--color-primary-soft);
+}
+
+.fnl-dot:focus-visible {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+.fnl-kasus {
+  margin-top: 0;
+  font-weight: 700;
+  color: var(--color-ink-muted);
+}
+
+.fnl-rp {
+  align-self: center;
+  font-weight: 700;
+}
+
+.fnl-bahas {
+  margin-top: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  border: 1px dashed var(--color-border-strong);
+  border-radius: var(--radius-md);
+  background: var(--color-bg);
+}
+
+.fnl-bahas p {
+  margin: 0;
+}
+
+.fnl-bahas p.fnl-bahas__judul {
+  margin-bottom: var(--space-1);
+  font-weight: 700;
+}
