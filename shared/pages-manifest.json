@@ -327,6 +327,14 @@
     "stageCount": 10,
     "extraBody": "partials/reset-modal.html"
   },
+  "fase-d/mpi-18.1": {
+    "title": "Sisi & Sudut Bersesuaian, Kongruen vs Sebangun — Matematika Fase D",
+    "description": "Media pembelajaran interaktif berbasis Discovery Learning untuk mengidentifikasi sisi dan sudut yang bersesuaian pada dua bangun datar serta membedakan bangun yang kongruen dan sebangun pada contoh di lingkungan sekitar: Lab Jiplak & Ukur pada ubin trapesium (menjiplak, memutar, membalik, dan menempelkan jiplakan, lalu mengukur sisi dan sudut dengan penggaris dan busur virtual), memasangkan titik, sisi, dan sudut bersesuaian beserta notasinya, tabel perbandingan sisi dan sudut, pemilahan pasangan benda (ubin, bendera, foto, pintu, layang-layang, jendela), verifikasi pada pasangan benda acak, menyusun syarat kongruen dan sebangun, serta uji terap acak berdiagnosa miskonsepsi.",
+    "kicker": "Matematika — Fase D (SMP)",
+    "h1": "Sisi & Sudut Bersesuaian, Kongruen vs Sebangun",
+    "stageCount": 10,
+    "extraBody": "partials/reset-modal.html"
+  },
   "fase-d/mpi-22.1": {
     "title": "Unsur-unsur & Jaring-jaring Prisma — Matematika Fase D",
     "description": "Media pembelajaran interaktif berbasis Discovery Learning untuk mengidentifikasi unsur-unsur prisma (titik sudut, rusuk, sisi, dan tinggi) serta jaring-jaring prisma melalui kegiatan memutar model 3D, melipat, dan merakit bentangan karton kemasan.",

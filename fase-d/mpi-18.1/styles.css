@@ -1,0 +1,175 @@
+/* =========================================================================
+   fase-d/mpi-18.1/styles.css
+   Sisi & Sudut Bersesuaian, Kongruen vs Sebangun —
+   Fase D (SMP Kelas VIII), Discovery Learning
+
+   Hanya memuat gaya yang KHAS modul ini (kartu benda stimulasi, cerita,
+   kartu pasangan verifikasi, papan ukur berdampingan, rangkuman,
+   navigasi & pembahasan uji terap). Dasar design system — panel,
+   tombol, umpan balik, pilihan ganda, petunjuk, pemilahan, kertas
+   jiplak, papan ukur, gambar & tabel bangun bersesuaian (.kgr-*), kartu
+   istilah, perbandingan dugaan, kartu ringkasan, navigasi tahap, modal —
+   berasal dari shared/base.css.
+   ========================================================================= */
+
+/* Stimulasi: kartu pasangan benda */
+.kg-kartu-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: var(--space-3);
+  margin-top: var(--space-3);
+}
+
+.kg-kartu {
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--color-border);
+  border-left: 4px solid var(--color-orange);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+}
+
+.kg-kartu__ikon {
+  font-size: 1.8rem;
+}
+
+.kg-kartu__judul {
+  margin: var(--space-1) 0;
+}
+
+.kg-kartu__teks {
+  margin: 0;
+}
+
+.kg-cerita {
+  margin: 0 0 var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  border-left: 4px solid var(--color-blue);
+  border-radius: var(--radius-sm);
+  background: var(--color-blue-soft);
+}
+
+.kg-muted {
+  color: var(--color-ink-muted);
+}
+
+/* Kartu istilah berisi kalimat, bukan rumus: huruf biasa, rata kiri */
+.kg-istilah {
+  max-width: 900px;
+}
+
+.kg-istilah .formula-card {
+  font-family: var(--font-body);
+  font-size: 1rem;
+  font-weight: 500;
+  text-align: left;
+}
+
+/* Lab: dua papan ukur berdampingan */
+.kg-ukur-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: var(--space-4);
+  align-items: start;
+}
+
+/* Verifikasi: satu kartu per pasangan benda */
+.kg-pasangan {
+  margin-bottom: var(--space-4);
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+}
+
+.kg-pasangan__nama {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0 0 var(--space-2);
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+
+/* Generalisasi: dua contoh notasi */
+.kg-rangkum-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: var(--space-3);
+  margin-bottom: var(--space-3);
+}
+
+.kg-rangkum {
+  margin: 0;
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+}
+
+.kg-rangkum figcaption {
+  font-weight: 700;
+  text-align: center;
+}
+
+/* Uji terap: navigasi soal, satuan & pembahasan */
+.kg-dots {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-bottom: var(--space-4);
+}
+
+.kg-dot {
+  width: 44px;
+  height: 44px;
+  border: 2px solid var(--color-border-strong);
+  border-radius: 50%;
+  background: var(--color-surface);
+  color: var(--color-ink);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.kg-dot--done {
+  border-color: var(--color-success);
+  background: var(--color-success-soft);
+  color: var(--color-success-strong);
+}
+
+.kg-dot--aktif {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px var(--color-primary-soft);
+}
+
+.kg-dot:focus-visible {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+.kg-kasus {
+  margin-top: 0;
+  font-weight: 700;
+  color: var(--color-ink-muted);
+}
+
+.kg-satuan {
+  align-self: center;
+  font-weight: 700;
+}
+
+.kg-bahas {
+  margin-top: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  border: 1px dashed var(--color-border-strong);
+  border-radius: var(--radius-md);
+  background: var(--color-bg);
+}
+
+.kg-bahas p {
+  margin: 0;
+}
+
+.kg-bahas p.kg-bahas__judul {
+  margin-bottom: var(--space-1);
+  font-weight: 700;
+}
