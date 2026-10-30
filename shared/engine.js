@@ -267,6 +267,10 @@
        (rincian koefisien & eksponen per variabel, langkah tertulis,
        diagnosa miskonsepsi eksponen/koefisien, opsi berpengecoh, ubin
        faktor bentuk aljabar)
+   82. Fungsi linear & non-linear dari pola perubahan nilai (aturan
+       fungsi, laju perubahan Δy/Δx, jenis & arah pola, diagnosa
+       miskonsepsi klasifikasi, tabel perubahan isian, grafik pola,
+       Lab Pola Perubahan)
    ============================================================ */
 
 /* ============================================================
@@ -56395,4 +56399,613 @@ function buildMonoFactorTiles(spec, opts) {
     (opts.caption ? '<figcaption class="dl-caption">' + opts.caption + '</figcaption>' : '') +
     '</figure>'
   );
+}
+
+/* ============================================================
+   82. FUNGSI LINEAR & NON-LINEAR DARI POLA PERUBAHAN NILAI
+   Dipakai fase-d/mpi-15.1. Dibangun di atas seksi 32 (bulatkanSuku,
+   fmtSuku, diagnosaSelisih, pesanSelisih) dan diagram pencar seksi 33
+   (asoSumbuDari_, asoSkala_, asoKerangka_).
+
+   Aturan fungsi berbentuk:
+     { jenis: 'linear', m, c }        y = mx + c
+     { jenis: 'kuadrat', a?, c? }     y = ax² + c   (a default 1)
+     { jenis: 'eksponen', a?, r }     y = a · rˣ    (a default 1)
+     { jenis: 'kebalikan', k }        y = k/x
+   Sebuah tabel (xs, ys) disebut LINEAR bila laju perubahan Δy/Δx
+   antara setiap dua pasangan berurutan selalu sama — termasuk saat
+   nilainya turun (laju negatif), tetap (laju nol), atau jarak antar-x
+   tidak seragam.
+   ============================================================ */
+
+function nilaiAturanFungsi(aturan, x) {
+  var a = typeof aturan.a === 'number' ? aturan.a : 1;
+  var c = typeof aturan.c === 'number' ? aturan.c : 0;
+  switch (aturan.jenis) {
+    case 'linear':
+      return bulatkanSuku(aturan.m * x + c);
+    case 'kuadrat':
+      return bulatkanSuku(a * x * x + c);
+    case 'eksponen':
+      return bulatkanSuku(a * Math.pow(aturan.r, x));
+    case 'kebalikan':
+      return bulatkanSuku(aturan.k / x);
+    default:
+      throw new Error('Jenis aturan fungsi tidak dikenal: ' + aturan.jenis);
+  }
+}
+
+function tabelAturanFungsi(aturan, xs) {
+  return xs.map(function (x) {
+    return nilaiAturanFungsi(aturan, x);
+  });
+}
+
+/* [{ dx, dy, laju }] untuk setiap dua pasangan (x, y) berurutan. */
+function lajuPerubahan(xs, ys) {
+  var out = [];
+  for (var i = 1; i < xs.length; i++) {
+    var dx = bulatkanSuku(xs[i] - xs[i - 1]);
+    var dy = bulatkanSuku(ys[i] - ys[i - 1]);
+    out.push({ dx: dx, dy: dy, laju: bulatkanSuku(dy / dx) });
+  }
+  return out;
+}
+
+function dxSeragam(xs) {
+  for (var i = 2; i < xs.length; i++) {
+    if (!hampirSama(xs[i] - xs[i - 1], xs[1] - xs[0])) return false;
+  }
+  return true;
+}
+
+function jenisPolaFungsi(xs, ys) {
+  var l = lajuPerubahan(xs, ys);
+  for (var i = 1; i < l.length; i++) {
+    if (!hampirSama(l[i].laju, l[0].laju)) return 'nonlinear';
+  }
+  return 'linear';
+}
+
+function arahPolaFungsi(xs, ys) {
+  var naik = false;
+  var turun = false;
+  lajuPerubahan(xs, ys).forEach(function (p) {
+    if (p.dy > 0) naik = true;
+    if (p.dy < 0) turun = true;
+  });
+  if (naik && turun) return 'campuran';
+  if (naik) return 'naik';
+  return turun ? 'turun' : 'tetap';
+}
+
+/* Bilangan untuk teks aturan: minus tipografis, desimal berkoma. */
+function fnAngka_(n) {
+  return fmtSuku(n);
+}
+
+function teksAturanFungsi(aturan) {
+  switch (aturan.jenis) {
+    case 'linear': {
+      var m = aturan.m;
+      var c = aturan.c || 0;
+      var suku = '';
+      if (m === 1) suku = 'x';
+      else if (m === -1) suku = '−x';
+      else if (m !== 0) suku = fnAngka_(m) + 'x';
+      if (!suku) return 'y = ' + fnAngka_(c);
+      if (c === 0) return 'y = ' + suku;
+      return 'y = ' + suku + (c > 0 ? ' + ' : ' − ') + fnAngka_(Math.abs(c));
+    }
+    case 'kuadrat': {
+      var a = typeof aturan.a === 'number' ? aturan.a : 1;
+      var c2 = aturan.c || 0;
+      var depan = a === 1 ? 'x²' : fnAngka_(a) + 'x²';
+      if (!c2) return 'y = ' + depan;
+      return 'y = ' + depan + (c2 > 0 ? ' + ' : ' − ') + fnAngka_(Math.abs(c2));
+    }
+    case 'eksponen': {
+      var a3 = typeof aturan.a === 'number' ? aturan.a : 1;
+      return 'y = ' + (a3 === 1 ? '' : fnAngka_(a3) + ' × ') + fnAngka_(aturan.r) + 'ˣ';
+    }
+    case 'kebalikan':
+      return 'y = ' + fnAngka_(aturan.k) + '/x';
+    default:
+      return '';
+  }
+}
+
+/*
+ * Diagnosa klasifikasi murid (jawab: 'linear' | 'nonlinear') atas tabel:
+ *   'benar'
+ *   'naikDikiraLinear'      non-linear yang terus naik dikira linear
+ *   'turunDikiraLinear'     non-linear yang terus turun dikira linear
+ *   'salahLinear'           non-linear lain dikira linear
+ *   'abaikanDx'             linear dengan Δx tak seragam (Δy berbeda-beda)
+ *   'turunDikiraNonlinear'  linear turun dikira non-linear
+ *   'tetapDikiraNonlinear'  y konstan dikira bukan linear
+ *   'salahNonlinear'        linear lain dikira non-linear
+ */
+function diagnosaJenisFungsi(xs, ys, jawab) {
+  var jenis = jenisPolaFungsi(xs, ys);
+  if (jawab === jenis) return 'benar';
+  var arah = arahPolaFungsi(xs, ys);
+  if (jenis === 'nonlinear') {
+    if (arah === 'naik') return 'naikDikiraLinear';
+    if (arah === 'turun') return 'turunDikiraLinear';
+    return 'salahLinear';
+  }
+  var dySama = lajuPerubahan(xs, ys).every(function (p, i, arr) {
+    return hampirSama(p.dy, arr[0].dy);
+  });
+  if (!dySama) return 'abaikanDx';
+  if (arah === 'turun') return 'turunDikiraNonlinear';
+  if (arah === 'tetap') return 'tetapDikiraNonlinear';
+  return 'salahNonlinear';
+}
+
+function pesanDiagnosaJenisFungsi(kode) {
+  var PESAN = {
+    benar:
+      '<strong>Tepat.</strong> Kamu menilai dari laju perubahan Δy/Δx, bukan sekadar dari naik-turunnya nilai.',
+    naikDikiraLinear:
+      'Nilainya memang terus naik, tetapi <strong>naik terus belum tentu linear</strong>. Hitung Δy setiap langkah: apakah besarnya selalu sama, atau makin besar?',
+    turunDikiraLinear:
+      'Nilainya memang terus turun, tetapi besar penurunannya berubah-ubah. Fungsi linear turun dengan <strong>besar yang sama</strong> setiap langkah.',
+    salahLinear:
+      'Nilai y naik-turun tidak teratur, sehingga Δy/Δx berubah-ubah. Fungsi linear selalu punya laju perubahan yang tetap.',
+    abaikanDx:
+      'Δy-nya memang berbeda-beda, tetapi jarak antar-nilai x (Δx) juga tidak sama. Bandingkan <strong>Δy/Δx</strong> — hasilnya selalu sama, jadi fungsinya linear.',
+    turunDikiraNonlinear:
+      'Nilainya turun, tetapi turunnya <strong>selalu sama besar</strong> setiap langkah. Laju perubahan yang tetap boleh bernilai negatif, jadi fungsinya tetap linear.',
+    tetapDikiraNonlinear:
+      'Nilai y tidak berubah, artinya Δy selalu 0. Laju perubahan 0 juga laju yang tetap, sehingga fungsinya linear (grafiknya garis mendatar).',
+    salahNonlinear:
+      'Coba hitung lagi Δy/Δx untuk setiap pasangan berurutan. Bila hasilnya selalu sama, perubahannya tetap dan fungsinya linear.',
+  };
+  return PESAN[kode] || PESAN.salahNonlinear;
+}
+
+/* ---------- Tabel perubahan isian ---------- */
+
+/*
+ * State tabel perubahan: isian y (sel kosong) dan isian Δy per baris,
+ * keduanya disimpan sebagai teks mentah berindeks.
+ */
+function makeTabelPerubahanState() {
+  return {
+    y: {},
+    dy: {},
+    checked: false,
+    tepat: false,
+    revealed: false,
+    attempts: 0,
+    hintLevel: 0,
+  };
+}
+
+function ensureTabelPerubahanState(holder, key) {
+  var awal = makeTabelPerubahanState();
+  var st = holder[key] && typeof holder[key] === 'object' ? holder[key] : awal;
+  Object.keys(awal).forEach(function (k) {
+    if (typeof st[k] !== typeof awal[k]) st[k] = awal[k];
+  });
+  if (!st.y || Array.isArray(st.y)) st.y = {};
+  if (!st.dy || Array.isArray(st.dy)) st.dy = {};
+  holder[key] = st;
+  return st;
+}
+
+/* Isian bilangan bulat; pemisah ribuan (titik/koma) & minus '−' diterima. */
+function fnBacaIsian_(str) {
+  var p = parseInputInt(str === undefined || str === null ? '' : String(str), true);
+  return p.error ? null : p.value;
+}
+
+/*
+ * Memeriksa tabel. cfg = { xs, ys, kosong: [indeks y yang diisi] }.
+ * Δy ke-i adalah ys[i + 1] − ys[i] (dibandingkan dengan nilai sebenarnya,
+ * bukan isian y murid). Kembali { lengkap, tepat, salahY, salahDy }.
+ */
+function periksaTabelPerubahan(cfg, st) {
+  var lengkap = true;
+  var salahY = [];
+  var salahDy = [];
+  (cfg.kosong || []).forEach(function (i) {
+    var v = fnBacaIsian_(st.y[i]);
+    if (v === null) lengkap = false;
+    else if (!hampirSama(v, cfg.ys[i])) salahY.push(i);
+  });
+  for (var i = 0; i < cfg.xs.length - 1; i++) {
+    var v = fnBacaIsian_(st.dy[i]);
+    if (v === null) {
+      lengkap = false;
+      continue;
+    }
+    var kode = diagnosaSelisih(cfg.ys[i], cfg.ys[i + 1], v);
+    if (kode !== 'benar') salahDy.push({ i: i, kode: kode });
+  }
+  return {
+    lengkap: lengkap,
+    tepat: lengkap && !salahY.length && !salahDy.length,
+    salahY: salahY,
+    salahDy: salahDy,
+  };
+}
+
+function fnInput_(id, attr, idx, value, aria, error) {
+  return (
+    '<input type="text" class="input-text dl-num-input fn-tabel__input' +
+    (error ? ' has-error' : '') +
+    '" id="' +
+    id +
+    '" ' +
+    attr +
+    '="' +
+    idx +
+    '" inputmode="text" autocomplete="off" value="' +
+    esc(value || '') +
+    '" aria-label="' +
+    esc(aria) +
+    '" placeholder="…">'
+  );
+}
+
+/*
+ * Tabel perubahan vertikal (ramah layar ponsel): kolom x, y, Δx, Δy,
+ * dan (setelah selesai) Δy/Δx. Baris ke-i memuat perubahan dari baris
+ * i − 1 ke baris i.
+ *   cfg          { xs, ys, kosong, labelX, labelY }
+ *   st           makeTabelPerubahanState() (boleh null bila opts.statis)
+ *   opts.statis  true → tabel lengkap tanpa isian
+ *   opts.laju    false → sembunyikan kolom Δy/Δx pada tabel statis/selesai
+ *   opts.caption keterangan tabel
+ */
+function buildTabelPerubahan(id, cfg, st, opts) {
+  opts = opts || {};
+  var selesai = opts.statis || !!(st && (st.tepat || st.revealed));
+  var tampilLaju = selesai && opts.laju !== false;
+  var hasil = !selesai && st && st.checked ? periksaTabelPerubahan(cfg, st) : null;
+  var salahDy = {};
+  if (hasil) {
+    hasil.salahDy.forEach(function (s) {
+      salahDy[s.i] = true;
+    });
+  }
+  var laju = lajuPerubahan(cfg.xs, cfg.ys);
+  var kosong = cfg.kosong || [];
+
+  var head =
+    '<tr><th scope="col">' +
+    esc(cfg.labelX || 'x') +
+    '</th><th scope="col">' +
+    esc(cfg.labelY || 'y') +
+    '</th><th scope="col" class="fn-tabel__delta">Δx</th><th scope="col" class="fn-tabel__delta">Δy</th>' +
+    (tampilLaju ? '<th scope="col" class="fn-tabel__laju">Δy/Δx</th>' : '') +
+    '</tr>';
+
+  var rows = cfg.xs
+    .map(function (x, i) {
+      var yCell;
+      if (!selesai && kosong.indexOf(i) !== -1) {
+        yCell = fnInput_(
+          id + '-y-' + i,
+          'data-tp-y',
+          i,
+          st.y[i],
+          (cfg.labelY || 'y') + ' saat ' + (cfg.labelX || 'x') + ' = ' + fmtSuku(x),
+          hasil && hasil.salahY.indexOf(i) !== -1
+        );
+      } else {
+        yCell = fmtSuku(cfg.ys[i]);
+      }
+      var dxCell = '—';
+      var dyCell = '—';
+      var lajuCell = '—';
+      if (i > 0) {
+        var p = laju[i - 1];
+        dxCell = (p.dx > 0 ? '+' : '') + fmtSuku(p.dx);
+        if (selesai) dyCell = (p.dy > 0 ? '+' : '') + fmtSuku(p.dy);
+        else {
+          dyCell = fnInput_(
+            id + '-dy-' + (i - 1),
+            'data-tp-dy',
+            i - 1,
+            st.dy[i - 1],
+            'Δy dari ' + fmtSuku(cfg.xs[i - 1]) + ' ke ' + fmtSuku(x),
+            !!salahDy[i - 1]
+          );
+        }
+        lajuCell = fmtSuku(p.laju);
+      }
+      return (
+        '<tr><th scope="row">' +
+        fmtSuku(x) +
+        '</th><td>' +
+        yCell +
+        '</td><td class="fn-tabel__delta">' +
+        dxCell +
+        '</td><td class="fn-tabel__delta">' +
+        dyCell +
+        '</td>' +
+        (tampilLaju ? '<td class="fn-tabel__laju">' + lajuCell + '</td>' : '') +
+        '</tr>'
+      );
+    })
+    .join('');
+
+  return (
+    '<div class="fn-tabel-wrap"><table class="fn-tabel" id="' +
+    id +
+    '">' +
+    (opts.caption ? '<caption>' + esc(opts.caption) + '</caption>' : '') +
+    '<thead>' +
+    head +
+    '</thead><tbody>' +
+    rows +
+    '</tbody></table></div>'
+  );
+}
+
+/* Pesan diagnosa (HTML) untuk hasil periksaTabelPerubahan. */
+function pesanTabelPerubahan(cfg, hasil) {
+  var out = [];
+  if (hasil.salahY.length) {
+    out.push(
+      'Periksa lagi nilai ' +
+        esc(cfg.labelY || 'y') +
+        ' yang kamu isi (sel bertanda merah). Hitung dari cerita atau dari pola nilai sebelumnya.'
+    );
+  }
+  hasil.salahDy.forEach(function (s) {
+    out.push(
+      'Δy dari ' +
+        fmtSuku(cfg.xs[s.i]) +
+        ' ke ' +
+        fmtSuku(cfg.xs[s.i + 1]) +
+        ': ' +
+        pesanSelisih(s.kode, cfg.ys[s.i], cfg.ys[s.i + 1])
+    );
+  });
+  return out;
+}
+
+/* Isian disimpan langsung ke state saat diketik (tanpa render ulang). */
+function bindTabelPerubahan(root, id, st, save) {
+  var tabel = root.querySelector('#' + id);
+  if (!tabel) return;
+  tabel.querySelectorAll('[data-tp-y]').forEach(function (inp) {
+    inp.addEventListener('input', function () {
+      st.y[inp.dataset.tpY] = inp.value;
+      st.checked = false;
+      save();
+    });
+  });
+  tabel.querySelectorAll('[data-tp-dy]').forEach(function (inp) {
+    inp.addEventListener('input', function () {
+      st.dy[inp.dataset.tpDy] = inp.value;
+      st.checked = false;
+      save();
+    });
+  });
+}
+
+/* ---------- Grafik pola (titik + ruas penghubung) ---------- */
+
+/*
+ * Grafik titik (x, y) dengan ruas putus-putus antar-titik berurutan,
+ * agar murid melihat apakah titik-titiknya segaris atau melengkung.
+ *   opts.xLabel, opts.yLabel, opts.caption, opts.kecil
+ */
+function buildGrafikPola(xs, ys, opts) {
+  opts = opts || {};
+  var points = xs.map(function (x, i) {
+    return { x: x, y: ys[i] };
+  });
+  var ax = asoSumbuDari_(points, opts);
+  var s = asoSkala_(ax.x, ax.y);
+  var garis = points
+    .map(function (p) {
+      return s.x(p.x) + ',' + s.y(p.y);
+    })
+    .join(' ');
+  return (
+    '<svg class="aso-plot fn-grafik' +
+    (opts.kecil ? ' aso-plot--kecil' : '') +
+    '" viewBox="0 0 ' +
+    ASO_PLOT.W +
+    ' ' +
+    ASO_PLOT.H +
+    '" role="img" aria-label="' +
+    esc(opts.caption || 'Grafik titik') +
+    '">' +
+    asoKerangka_(ax.x, ax.y, s, opts) +
+    '<polyline class="fn-grafik__ruas" points="' +
+    garis +
+    '"/>' +
+    points
+      .map(function (p) {
+        return '<circle class="aso-dot" cx="' + s.x(p.x) + '" cy="' + s.y(p.y) + '" r="6"/>';
+      })
+      .join('') +
+    '</svg>'
+  );
+}
+
+/* ---------- Lab Pola Perubahan ---------- */
+
+var LAB_POLA_JENIS = ['linear', 'kuadrat', 'eksponen', 'kebalikan'];
+var LAB_POLA_LABEL = {
+  linear: 'y = mx + c',
+  kuadrat: 'y = x²',
+  eksponen: 'y = 2ˣ',
+  kebalikan: 'y = 12/x',
+};
+var LAB_POLA_BATAS = { m: [-3, 3], c: [-5, 5] };
+
+function makeLabPolaState() {
+  return {
+    jenis: 'linear',
+    m: 2,
+    c: 1,
+    lompat: false,
+    dicoba: { linear: true },
+    mDicoba: [2],
+    lompatDicoba: false,
+  };
+}
+
+function xsLabPola(st) {
+  return st.lompat ? [1, 2, 4, 5, 8] : [1, 2, 3, 4, 5];
+}
+
+function aturanLabPola(st) {
+  if (st.jenis === 'kuadrat') return { jenis: 'kuadrat' };
+  if (st.jenis === 'eksponen') return { jenis: 'eksponen', r: 2 };
+  if (st.jenis === 'kebalikan') return { jenis: 'kebalikan', k: 12 };
+  return { jenis: 'linear', m: st.m, c: st.c };
+}
+
+/* aksi: 'jenis' (nilai = jenis), 'm' | 'c' (nilai = ±1), 'lompat'. */
+function ubahLabPola(st, aksi, nilai) {
+  if (aksi === 'jenis') {
+    if (LAB_POLA_JENIS.indexOf(nilai) === -1) return st;
+    st.jenis = nilai;
+    st.dicoba[nilai] = true;
+  } else if (aksi === 'm' || aksi === 'c') {
+    var b = LAB_POLA_BATAS[aksi];
+    st[aksi] = Math.max(b[0], Math.min(b[1], st[aksi] + (nilai || 0)));
+    if (aksi === 'm' && st.mDicoba.indexOf(st.m) === -1) st.mDicoba.push(st.m);
+  } else if (aksi === 'lompat') {
+    st.lompat = !st.lompat;
+    if (st.lompat) st.lompatDicoba = true;
+  }
+  return st;
+}
+
+function labPolaSelesai(st) {
+  return (
+    LAB_POLA_JENIS.every(function (j) {
+      return !!st.dicoba[j];
+    }) &&
+    st.lompatDicoba &&
+    st.mDicoba.length >= 2
+  );
+}
+
+function buildLabPolaPerubahan(id, st, opts) {
+  opts = opts || {};
+  var aturan = aturanLabPola(st);
+  var xs = xsLabPola(st);
+  var ys = tabelAturanFungsi(aturan, xs);
+  var linear = jenisPolaFungsi(xs, ys) === 'linear';
+
+  var tombolJenis = LAB_POLA_JENIS.map(function (j) {
+    var aktif = st.jenis === j;
+    return (
+      '<button type="button" class="btn btn--small ' +
+      (aktif ? 'btn--primary' : 'btn--ghost') +
+      ' fn-lab__jenis" data-lab-jenis="' +
+      j +
+      '" aria-pressed="' +
+      aktif +
+      '">' +
+      esc(LAB_POLA_LABEL[j]) +
+      (st.dicoba[j] ? ' ✓' : '') +
+      '</button>'
+    );
+  }).join('');
+
+  function pengatur(k, label) {
+    var b = LAB_POLA_BATAS[k];
+    return (
+      '<div class="fn-lab__pengatur">' +
+      '<span class="fn-lab__nama">' +
+      label +
+      '</span>' +
+      '<button type="button" class="btn btn--ghost btn--small" data-lab-ubah="' +
+      k +
+      '" data-step="-1" aria-label="Kurangi ' +
+      k +
+      '"' +
+      (st[k] <= b[0] ? ' disabled' : '') +
+      '>−</button>' +
+      '<output class="fn-lab__nilai" aria-live="polite">' +
+      fmtSuku(st[k]) +
+      '</output>' +
+      '<button type="button" class="btn btn--ghost btn--small" data-lab-ubah="' +
+      k +
+      '" data-step="1" aria-label="Tambah ' +
+      k +
+      '"' +
+      (st[k] >= b[1] ? ' disabled' : '') +
+      '>+</button>' +
+      '</div>'
+    );
+  }
+
+  var temuan = linear
+    ? '📏 Laju perubahan Δy/Δx <strong>tetap</strong>, yaitu ' +
+      fmtSuku(lajuPerubahan(xs, ys)[0].laju) +
+      ', dan titik-titiknya segaris.'
+    : '〰️ Laju perubahan Δy/Δx <strong>berubah-ubah</strong>, dan titik-titiknya tidak segaris.';
+
+  return (
+    '<div class="fn-lab" id="' +
+    id +
+    '">' +
+    '<div class="fn-lab__kontrol">' +
+    '<div class="fn-lab__jenis-grup" role="group" aria-label="Pilih aturan">' +
+    tombolJenis +
+    '</div>' +
+    (st.jenis === 'linear'
+      ? '<div class="fn-lab__pengatur-grup">' + pengatur('m', 'm') + pengatur('c', 'c') + '</div>'
+      : '') +
+    '<label class="fn-lab__lompat"><input type="checkbox" data-lab-lompat' +
+    (st.lompat ? ' checked' : '') +
+    '> Nilai x melompat (1, 2, 4, 5, 8)</label>' +
+    '</div>' +
+    '<p class="fn-lab__aturan">' +
+    esc(teksAturanFungsi(aturan)) +
+    '</p>' +
+    '<div class="fn-lab__isi">' +
+    buildTabelPerubahan(id + '-tabel', { xs: xs, ys: ys, labelX: 'x', labelY: 'y' }, null, {
+      statis: true,
+    }) +
+    buildGrafikPola(xs, ys, {
+      xLabel: 'x',
+      yLabel: 'y',
+      caption: 'Grafik ' + teksAturanFungsi(aturan),
+    }) +
+    '</div>' +
+    '<p class="fn-lab__temuan" aria-live="polite">' +
+    temuan +
+    '</p>' +
+    (opts.checklist ? opts.checklist : '') +
+    '</div>'
+  );
+}
+
+function bindLabPolaPerubahan(root, id, st, onChange) {
+  var lab = root.querySelector('#' + id);
+  if (!lab) return;
+  lab.querySelectorAll('[data-lab-jenis]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      ubahLabPola(st, 'jenis', btn.dataset.labJenis);
+      onChange();
+    });
+  });
+  lab.querySelectorAll('[data-lab-ubah]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      ubahLabPola(st, btn.dataset.labUbah, parseInt(btn.dataset.step, 10));
+      onChange();
+    });
+  });
+  var cb = lab.querySelector('[data-lab-lompat]');
+  if (cb) {
+    cb.addEventListener('change', function () {
+      ubahLabPola(st, 'lompat');
+      onChange();
+    });
+  }
 }
