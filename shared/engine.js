@@ -278,6 +278,10 @@
    84. Unsur-unsur lingkaran (pusat, jari-jari, diameter, tali busur,
        busur, juring, tembereng; diagnosa miskonsepsi penamaan, soal
        jari-jari ↔ diameter, gambar lingkaran bernomor, Lab Lingkaran)
+   85. Sisi & sudut bersesuaian, kongruen vs sebangun (lanjutan seksi
+       26: kunci, opsi & diagnosa pemasangan titik/sisi/sudut, opsi
+       notasi, ringkasan & diagnosa klasifikasi, soal isian sebangun,
+       gambar pasangan bersorot)
    ============================================================ */
 
 /* ============================================================
@@ -58871,4 +58875,421 @@ function buildTabelPengamatanLkr(st, cfg) {
       .join('') +
     '</tbody></table></div>'
   );
+}
+
+/* ============================================================
+   85. SISI & SUDUT BERSESUAIAN, KONGRUEN VS SEBANGUN
+   Lanjutan seksi 26 (bangun = { id, nama, titik, pts }). Pemetaan
+   `map` berasal dari cariKorespondensi: map[i] = indeks titik bangun
+   kedua yang bersesuaian dengan titik i bangun pertama.
+     • bersesuaian korespondensiBangun, korespondensiTunggal,
+                   titik/sisi/sudutBersesuaian,
+                   indeksSisiBersesuaian, kunci & opsi pemasangan,
+                   diagnosaBersesuaian, pesanBersesuaian, opsiNotasi
+     • klasifikasi OPSI_KLASIFIKASI, ringkasKlasifikasi,
+                   diagnosaKlasifikasi, pesanKlasifikasi
+     • isian       nilaiSoalSebangun, diagnosaSoalSebangun,
+                   pesanSoalSebangun (panjang sisi & besar sudut)
+     • komponen    buildSorotBersesuaian
+   Fungsi murni diuji di tests/engine-kongruen-sebangun.test.js.
+   ============================================================ */
+
+function korespondensiBangun(p, q, opts) {
+  return cariKorespondensi(p.pts, q.pts, opts);
+}
+
+/*
+ * Banyaknya pemetaan titik p → q yang membuat kedua bangun sebangun.
+ * Bangun simetris (persegi panjang, layang-layang) punya lebih dari satu
+ * pemetaan, sehingga pasangan sisi/sudutnya tidak tunggal.
+ */
+function banyakKorespondensi(p, q) {
+  var n = p.pts.length;
+  if (q.pts.length !== n) return 0;
+  var hitung = 0;
+  [1, -1].forEach(function (d) {
+    for (var k = 0; k < n; k++) {
+      var map = [];
+      for (var i = 0; i < n; i++) map.push((((k + d * i) % n) + n) % n);
+      var rows = barisBersesuaian(p, q, map);
+      var skala = rows[0].rasio;
+      var cocok = rows.every(function (r) {
+        if (r.jenis === 'sudut') return Math.abs(r.nilaiP - r.nilaiQ) <= KGR_TOL_SUDUT;
+        return Math.abs(r.rasio - skala) <= KGR_TOL_SISI * skala;
+      });
+      if (cocok) hitung += 1;
+    }
+  });
+  return hitung;
+}
+
+function korespondensiTunggal(p, q) {
+  return banyakKorespondensi(p, q) === 1;
+}
+
+function titikBersesuaian(p, q, map, i) {
+  return q.titik[map[i]];
+}
+
+/* Indeks sisi bangun kedua (sisi j = titik j → j+1) yang bersesuaian dengan sisi i. */
+function indeksSisiBersesuaian(map, i) {
+  var n = map.length;
+  var a = map[i];
+  var b = map[(i + 1) % n];
+  return (a + 1) % n === b ? a : b;
+}
+
+/* Nama sisi bersesuaian ditulis menurut urutan titik bersesuaian (AB → LM). */
+function sisiBersesuaian(p, q, map, i) {
+  return q.titik[map[i]] + q.titik[map[(i + 1) % map.length]];
+}
+
+function sudutBersesuaian(p, q, map, i) {
+  return namaSudut(q.titik, map[i]);
+}
+
+function kunciTitikBersesuaian(map, i) {
+  return 't' + map[i];
+}
+
+function kunciSisiBersesuaian(map, i) {
+  return 's' + indeksSisiBersesuaian(map, i);
+}
+
+function kunciSudutBersesuaian(map, i) {
+  return 'a' + map[i];
+}
+
+function opsiTitikBersesuaian(q) {
+  return q.titik.map(function (t, j) {
+    return { id: 't' + j, label: t };
+  });
+}
+
+function opsiSisiBersesuaian(q) {
+  return q.titik.map(function (t, j) {
+    return { id: 's' + j, label: namaSisi(q.titik, j) };
+  });
+}
+
+function opsiSudutBersesuaian(q) {
+  return q.titik.map(function (t, j) {
+    return { id: 'a' + j, label: namaSudut(q.titik, j) };
+  });
+}
+
+function kunciBersesuaian(map, jenis, i) {
+  if (jenis === 'sisi') return kunciSisiBersesuaian(map, i);
+  if (jenis === 'sudut') return kunciSudutBersesuaian(map, i);
+  return kunciTitikBersesuaian(map, i);
+}
+
+function opsiBersesuaian(q, jenis) {
+  if (jenis === 'sisi') return opsiSisiBersesuaian(q);
+  if (jenis === 'sudut') return opsiSudutBersesuaian(q);
+  return opsiTitikBersesuaian(q);
+}
+
+/*
+ * Kode miskonsepsi saat memasangkan unsur bersesuaian:
+ *   'benar'
+ *   'urutHuruf'  memilih unsur pada urutan yang sama (huruf ke-i), bukan
+ *                yang menempel saat bangun diimpitkan
+ *   'ukuranSama' ukurannya sama tetapi letaknya tidak bersesuaian
+ *   'tetangga'   bersebelahan dengan unsur yang benar
+ *   'lain'
+ */
+function diagnosaBersesuaian(p, q, map, jenis, i, pilih) {
+  var kunci = kunciBersesuaian(map, jenis, i);
+  if (pilih === kunci) return 'benar';
+  var n = map.length;
+  var j = parseInt(String(pilih).slice(1), 10);
+  var k = parseInt(kunci.slice(1), 10);
+  if (j === i) return 'urutHuruf';
+  if (jenis !== 'titik') {
+    var ukur = jenis === 'sisi' ? sisiPoligon(q.pts) : sudutPoligon(q.pts);
+    var tol = jenis === 'sisi' ? 0.01 : KGR_TOL_SUDUT;
+    if (Math.abs(ukur[j] - ukur[k]) <= tol) return 'ukuranSama';
+  }
+  if ((j + 1) % n === k || (k + 1) % n === j) return 'tetangga';
+  return 'lain';
+}
+
+var PESAN_BERSESUAIAN = {
+  urutHuruf:
+    'Kamu memasangkan menurut urutan huruf. Urutan huruf belum tentu sama dengan letak! Impitkan kedua bangun (putar atau balik bila perlu), lalu lihat {unsur} mana yang saling menempel.',
+  ukuranSama:
+    'Ukurannya memang sama, tetapi letaknya tidak saling menempel saat kedua bangun diimpitkan. Mulailah dari titik sudut yang bersesuaian.',
+  tetangga:
+    'Hampir! Pilihanmu bersebelahan dengan {unsur} yang bersesuaian. Telusuri lagi titik sudut mana yang menempel pada titik sudut mana.',
+  lain: 'Belum tepat. Cari dulu pasangan titik sudutnya: titik yang menempel saat jiplakan diimpitkan adalah titik yang bersesuaian.',
+};
+
+function pesanBersesuaian(kode, jenis, nama) {
+  var unsur = jenis === 'sisi' ? 'sisi' : jenis === 'sudut' ? 'sudut' : 'titik sudut';
+  if (kode === 'benar') {
+    return (
+      'Tepat! ' +
+      (jenis === 'sisi' ? 'Sisi ' : jenis === 'sudut' ? 'Sudut ' : 'Titik ') +
+      nama +
+      ' menempel tepat saat kedua bangun diimpitkan, jadi ' +
+      unsur +
+      ' itu bersesuaian.'
+    );
+  }
+  return (PESAN_BERSESUAIAN[kode] || PESAN_BERSESUAIAN.lain).replace('{unsur}', unsur);
+}
+
+/*
+ * Opsi penulisan notasi (mis. 'ABCD ≅ LMNK'): kunci 'benar' + pengecoh
+ * 'urut' (huruf bangun kedua apa adanya), 'geser' (bergeser satu titik),
+ * 'balik' (urutan dibalik) — pengecoh yang kebetulan sama dilewati.
+ */
+function opsiNotasi(p, q, map, simbol) {
+  var n = map.length;
+  var geser = function (f) {
+    return map.map(function (_, i) {
+      return f(i);
+    });
+  };
+  var calon = [
+    {
+      id: 'urut',
+      map: geser(function (i) {
+        return i;
+      }),
+    },
+    {
+      id: 'geser',
+      map: geser(function (i) {
+        return map[(i + 1) % n];
+      }),
+    },
+    {
+      id: 'balik',
+      map: geser(function (i) {
+        return map[(n - i) % n];
+      }),
+    },
+    {
+      id: 'geserBalik',
+      map: geser(function (i) {
+        return map[(n - i + 1) % n];
+      }),
+    },
+    {
+      id: 'geserDua',
+      map: geser(function (i) {
+        return map[(i + 2) % n];
+      }),
+    },
+  ];
+  var out = [{ id: 'benar', label: notasiBersesuaian(p, q, map, simbol) }];
+  calon.forEach(function (c) {
+    if (out.length >= 4) return;
+    var label = notasiBersesuaian(p, q, c.map, simbol);
+    var ada = out.some(function (o) {
+      return o.label === label;
+    });
+    if (!ada) out.push({ id: c.id, label: label });
+  });
+  return out;
+}
+
+var PESAN_NOTASI = {
+  benar:
+    'Tepat! Pada penulisan notasi, huruf-huruf ditulis menurut pasangan titik bersesuaian: huruf pertama dengan huruf pertama, kedua dengan kedua, dan seterusnya.',
+  urut: 'Huruf bangun kedua ditulis menurut abjad, padahal titik-titiknya tidak menempel dengan urutan itu. Tulis menurut pasangan titik bersesuaian.',
+  geser:
+    'Urutannya bergeser satu titik. Periksa: titik pertama bangun pertama menempel dengan titik mana?',
+  balik:
+    'Arah kelilingnya terbalik. Setelah titik pertama, lanjutkan ke titik yang bersesuaian dengan titik kedua.',
+  geserBalik:
+    'Urutannya bergeser dan terbalik. Pasangkan satu per satu: titik pertama ↔ ?, titik kedua ↔ ?, dan seterusnya.',
+  geserDua: 'Urutannya bergeser dua titik. Pasangkan satu per satu menurut titik yang menempel.',
+};
+
+function pesanNotasi(id) {
+  return PESAN_NOTASI[id] || PESAN_NOTASI.geser;
+}
+
+/* ---------- Klasifikasi kongruen / sebangun ---------- */
+
+var OPSI_KLASIFIKASI = [
+  { id: 'kongruen', label: 'Kongruen' },
+  { id: 'sebangun', label: 'Sebangun, tetapi tidak kongruen' },
+  { id: 'tidak', label: 'Tidak kongruen dan tidak sebangun' },
+];
+
+/* Ada pemetaan yang membuat semua sudut bersesuaian sama besar (sisi diabaikan)? */
+function sudutBersesuaianSama(p, q) {
+  var n = p.length;
+  if (q.length !== n) return false;
+  var ap = sudutPoligon(p);
+  var aq = sudutPoligon(q);
+  var dirs = [1, -1];
+  for (var di = 0; di < 2; di++) {
+    for (var k = 0; k < n; k++) {
+      var cocok = true;
+      for (var i = 0; i < n && cocok; i++) {
+        var j = (((k + dirs[di] * i) % n) + n) % n;
+        cocok = Math.abs(ap[i] - aq[j]) <= KGR_TOL_SUDUT;
+      }
+      if (cocok) return true;
+    }
+  }
+  return false;
+}
+
+/* { jenis, sudutSama, skala (null bila tidak sebangun), luasSama, map } */
+function ringkasKlasifikasi(p, q) {
+  var k = korespondensiBangun(p, q);
+  var lp = Math.abs(luasBertanda(p.pts));
+  var lq = Math.abs(luasBertanda(q.pts));
+  return {
+    jenis: klasifikasiBangun(p.pts, q.pts),
+    sudutSama: k ? true : sudutBersesuaianSama(p.pts, q.pts),
+    skala: k ? k.skala : null,
+    luasSama: Math.abs(lp - lq) <= 0.01 * Math.max(lp, lq),
+    map: k ? k.map : null,
+  };
+}
+
+/*
+ * Kode miskonsepsi klasifikasi:
+ *   'kongruenKhusus' memilih sebangun untuk pasangan kongruen
+ *   'tertipuPosisi'  memilih "tidak" karena bangun diputar/dibalik
+ *   'abaikanUkuran'  memilih kongruen untuk pasangan yang beda ukuran
+ *   'luasSama'       memilih kongruen karena luasnya sama
+ *   'sudutSaja'      memilih sebangun karena sudutnya sama, sisi tidak sebanding
+ *   'miripSaja'      menganggap bentuk yang mirip sudah kongruen/sebangun
+ */
+function diagnosaKlasifikasi(p, q, pilih) {
+  var r = ringkasKlasifikasi(p, q);
+  if (pilih === r.jenis) return 'benar';
+  if (r.jenis === 'kongruen') return pilih === 'sebangun' ? 'kongruenKhusus' : 'tertipuPosisi';
+  if (r.jenis === 'sebangun') return pilih === 'kongruen' ? 'abaikanUkuran' : 'tertipuPosisi';
+  if (pilih === 'kongruen' && r.luasSama) return 'luasSama';
+  if (pilih === 'sebangun' && r.sudutSama) return 'sudutSaja';
+  return 'miripSaja';
+}
+
+function pesanKlasifikasi(kode, r) {
+  if (kode === 'benar') {
+    if (r.jenis === 'kongruen') {
+      return 'Tepat! Sisi-sisi bersesuaian sama panjang dan sudut-sudut bersesuaian sama besar, jadi kedua bangun kongruen.';
+    }
+    if (r.jenis === 'sebangun') {
+      return (
+        'Tepat! Sudut-sudut bersesuaian sama besar dan setiap sisi dikali ' +
+        formatDesimal(r.skala, 2) +
+        ', jadi kedua bangun sebangun dengan faktor skala ' +
+        formatDesimal(r.skala, 2) +
+        '.'
+      );
+    }
+    return 'Tepat! Tidak ada cara memasangkan titik-titiknya sehingga sudut bersesuaian sama besar dan sisi bersesuaian sebanding.';
+  }
+  var pesan = {
+    kongruenKhusus:
+      'Pasangan ini memang sebangun, tetapi lebih khusus lagi: faktor skalanya 1 (sisi bersesuaian sama panjang). Bangun seperti ini disebut kongruen.',
+    tertipuPosisi:
+      'Jangan tertipu posisi! Bangun yang diputar atau dibalik tetap sama bentuknya. Coba impitkan dan bandingkan sisi serta sudut yang bersesuaian.',
+    abaikanUkuran:
+      'Bentuknya memang sama, tetapi ukurannya berbeda: sisi-sisi bersesuaian tidak sama panjang. Bangun kongruen harus sama bentuk DAN sama ukuran.',
+    luasSama:
+      'Luas yang sama belum menjamin kongruen. Bandingkan sisi dan sudut yang bersesuaian: apakah semuanya sama?',
+    sudutSaja:
+      'Sudut-sudut bersesuaiannya memang sama besar, tetapi sisi-sisinya tidak dikali bilangan yang sama. Sebangun memerlukan KEDUA syarat.',
+    miripSaja:
+      'Sekilas mirip, tetapi coba bandingkan sudutnya: ada sudut bersesuaian yang tidak sama besar, jadi tidak sebangun apalagi kongruen.',
+  };
+  return pesan[kode] || pesan.miripSaja;
+}
+
+/* ---------- Soal isian pada bangun sebangun ---------- */
+
+/*
+ * cek = { minta: 'sisi', a, b, c }  sisi a pada bangun I bersesuaian
+ *       dengan sisi b pada bangun II; cari sisi bangun II yang
+ *       bersesuaian dengan sisi c bangun I (= c × b ÷ a)
+ * cek = { minta: 'sudut', nilai, k } besar sudut bersesuaian (tetap),
+ *       k = faktor skala (untuk diagnosa)
+ */
+function nilaiSoalSebangun(cek) {
+  if (cek.minta === 'sudut') return cek.nilai;
+  return bulatKgr((cek.c * cek.b) / cek.a);
+}
+
+function diagnosaSoalSebangun(cek, v) {
+  var sama = function (x) {
+    return Math.abs(v - x) <= 0.01;
+  };
+  if (sama(nilaiSoalSebangun(cek))) return 'benar';
+  if (cek.minta === 'sudut') {
+    if (cek.k && sama(cek.nilai * cek.k)) return 'sudutDiskala';
+    if (sama(180 - cek.nilai)) return 'pelurus';
+    return 'salah';
+  }
+  if (sama((cek.c * cek.a) / cek.b)) return 'skalaDibalik';
+  if (sama(cek.c + (cek.b - cek.a))) return 'selisih';
+  if (sama(cek.c)) return 'samaAsal';
+  return 'salah';
+}
+
+function pesanSoalSebangun(cek, kode) {
+  if (cek.minta === 'sudut') {
+    if (kode === 'sudutDiskala') {
+      return 'Saat bangun diperbesar, sisinya dikali faktor skala, tetapi besar sudutnya TIDAK berubah.';
+    }
+    if (kode === 'pelurus') {
+      return 'Kamu menghitung pelurusnya (180° dikurangi). Sudut-sudut bersesuaian pada bangun sebangun/kongruen sama besar.';
+    }
+    return 'Ingat: sudut-sudut yang bersesuaian sama besar. Cari dulu sudut mana yang bersesuaian.';
+  }
+  var k = formatDesimal(cek.b / cek.a, 2);
+  var pesan = {
+    skalaDibalik:
+      'Faktor skalanya terbalik. Bangun II ÷ bangun I = ' +
+      formatDesimal(cek.b, 2) +
+      ' : ' +
+      formatDesimal(cek.a, 2) +
+      ' = ' +
+      k +
+      ', lalu kalikan sisi bangun I dengan ' +
+      k +
+      '.',
+    selisih:
+      'Pada bangun sebangun, sisi-sisi DIKALI faktor skala yang sama, bukan DITAMBAH selisih yang sama.',
+    samaAsal:
+      'Ukurannya berubah karena bangunnya diperbesar/diperkecil. Kalikan dengan faktor skala ' +
+      k +
+      '.',
+    salah:
+      'Tentukan faktor skala dari pasangan sisi bersesuaian yang panjangnya diketahui (' +
+      formatDesimal(cek.b, 2) +
+      ' : ' +
+      formatDesimal(cek.a, 2) +
+      '), lalu kalikan.',
+  };
+  return pesan[kode] || pesan.salah;
+}
+
+/* ---------- Komponen gambar ---------- */
+
+/*
+ * Dua bangun berdampingan dengan sisi/sudut ke-i bangun pertama dan
+ * pasangannya pada bangun kedua disorot.
+ *   jenis  'sisi' | 'sudut'
+ *   opts   diteruskan ke buildShapePair (skala, p, q)
+ */
+function buildSorotBersesuaian(p, q, map, jenis, i, opts) {
+  opts = opts || {};
+  var kp = jenis === 'sisi' ? 's' + i : 'a' + i;
+  var kq = jenis === 'sisi' ? kunciSisiBersesuaian(map, i) : kunciSudutBersesuaian(map, i);
+  return buildShapePair(p, q, {
+    skala: opts.skala,
+    p: Object.assign({}, opts.p, { sorot: kp }),
+    q: Object.assign({}, opts.q, { sorot: kq }),
+  });
 }
