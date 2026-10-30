@@ -275,6 +275,9 @@
        penyelesaian, jenis kalimat dua variabel, diagnosa miskonsepsi
        unsur & pasangan, kartu unsur, tabel pasangan isian, bidang
        pasangan, Lab SPLDV)
+   84. Unsur-unsur lingkaran (pusat, jari-jari, diameter, tali busur,
+       busur, juring, tembereng; diagnosa miskonsepsi penamaan, soal
+       jari-jari ↔ diameter, gambar lingkaran bernomor, Lab Lingkaran)
    ============================================================ */
 
 /* ============================================================
@@ -58031,4 +58034,841 @@ function bindLabSpldv(root, id, st, cfg, onChange) {
       onChange();
     });
   });
+}
+
+/* ============================================================
+   84. UNSUR-UNSUR LINGKARAN
+   Dipakai fase-d/mpi-17.1. Dibangun di atas seksi 1 (hampirSama,
+   esc, showNotice) dan seksi 32 (bulatkanSuku, fmtSuku). Gaya .lkr-*
+   ada di shared/base.css.
+
+   Sebuah TITIK ditulis { sudut, jarak }: sudut dalam derajat diukur
+   berlawanan arah jarum jam dari arah kanan, jarak relatif terhadap
+   jari-jari (0 = titik pusat, 1 = pada lingkaran, default 1).
+   Sebuah UNSUR (elemen gambar) ditulis
+     { tipe: 'titik', sudut, jarak }
+     { tipe: 'ruas', u: titik, v: titik }
+     { tipe: 'busur', a0, a1 }                 busur dari a0 ke a1 (↺)
+     { tipe: 'daerah', batas, a0, a1 }         batas 'jariJari' → juring,
+                                               batas 'taliBusur' → tembereng
+   Jenis unsur selalu DIHITUNG dari geometrinya (jenisUnsurLingkaran),
+   sehingga kunci jawaban gambar tidak ditulis tangan.
+
+   Notasi cek soal isian (lihat nilaiSoalLingkaran):
+     { minta: 'diameter' | 'taliTerpanjang', r }  → 2r
+     { minta: 'jariJari' | 'jarakPusat', d }      → d : 2
+   ============================================================ */
+
+var UNSUR_LINGKARAN = [
+  { id: 'pusat', label: 'Titik pusat' },
+  { id: 'jariJari', label: 'Jari-jari' },
+  { id: 'diameter', label: 'Diameter' },
+  { id: 'taliBusur', label: 'Tali busur' },
+  { id: 'busur', label: 'Busur' },
+  { id: 'juring', label: 'Juring' },
+  { id: 'tembereng', label: 'Tembereng' },
+];
+
+function labelUnsurLingkaran(id) {
+  if (id === 'bukan') return 'Bukan unsur lingkaran';
+  for (var i = 0; i < UNSUR_LINGKARAN.length; i++) {
+    if (UNSUR_LINGKARAN[i].id === id) return UNSUR_LINGKARAN[i].label;
+  }
+  return '';
+}
+
+/* ---------- Sudut, titik & ruas ---------- */
+
+function normSudutLkr(a) {
+  return bulatkanSuku((((a % 360) + 360) % 360) % 360);
+}
+
+/* Besar putaran berlawanan jarum jam dari a0 ke a1, 0 ≤ hasil < 360. */
+function rentangSudutLkr(a0, a1) {
+  return normSudutLkr(a1 - a0);
+}
+
+function titikLkr_(t) {
+  return { sudut: normSudutLkr(t.sudut || 0), jarak: t.jarak === undefined ? 1 : t.jarak };
+}
+
+/* Koordinat satuan (jari-jari 1, sumbu-y ke atas). */
+function xyLkr_(t) {
+  var p = titikLkr_(t);
+  var rad = (p.sudut * Math.PI) / 180;
+  return { x: p.jarak * Math.cos(rad), y: p.jarak * Math.sin(rad) };
+}
+
+function jenisRuasLingkaran(u, v) {
+  var p = titikLkr_(u);
+  var q = titikLkr_(v);
+  var a = xyLkr_(p);
+  var b = xyLkr_(q);
+  if (hampirSama(a.x, b.x) && hampirSama(a.y, b.y)) return 'titik';
+  var padaP = hampirSama(p.jarak, 1);
+  var padaQ = hampirSama(q.jarak, 1);
+  if ((hampirSama(p.jarak, 0) && padaQ) || (hampirSama(q.jarak, 0) && padaP)) return 'jariJari';
+  if (padaP && padaQ) {
+    return hampirSama(rentangSudutLkr(p.sudut, q.sudut), 180) ? 'diameter' : 'taliBusur';
+  }
+  return 'bukan';
+}
+
+/* Apakah titik pusat terletak pada ruas uv? */
+function lewatPusatRuasLkr(u, v) {
+  var a = xyLkr_(u);
+  var b = xyLkr_(v);
+  if (!hampirSama(a.x * b.y - a.y * b.x, 0)) return false;
+  return a.x * b.x + a.y * b.y <= 0.0001;
+}
+
+/* Panjang ruas uv pada lingkaran berjari-jari r, dibulatkan 1 desimal. */
+function panjangRuasLingkaran(u, v, r) {
+  var a = xyLkr_(u);
+  var b = xyLkr_(v);
+  return Math.round(Math.sqrt(Math.pow(a.x - b.x, 2) + Math.pow(a.y - b.y, 2)) * r * 10) / 10;
+}
+
+/* ---------- Busur & daerah ---------- */
+
+function jenisBusurLingkaran(a0, a1) {
+  var s = rentangSudutLkr(a0, a1);
+  if (hampirSama(s, 180)) return 'setengah';
+  return s < 180 ? 'kecil' : 'besar';
+}
+
+/* Juring/tembereng; 'setengah' untuk setengah lingkaran (keduanya sekaligus). */
+function jenisDaerahLingkaran(d) {
+  if (hampirSama(rentangSudutLkr(d.a0, d.a1), 180)) return 'setengah';
+  return d.batas === 'jariJari' ? 'juring' : 'tembereng';
+}
+
+function jenisUnsurLingkaran(el) {
+  switch (el.tipe) {
+    case 'titik':
+      return hampirSama(titikLkr_(el).jarak, 0) ? 'pusat' : 'bukan';
+    case 'ruas':
+      return jenisRuasLingkaran(el.u, el.v);
+    case 'busur':
+      return 'busur';
+    case 'daerah':
+      return jenisDaerahLingkaran(el);
+    default:
+      throw new Error('Tipe unsur lingkaran tidak dikenal: ' + el.tipe);
+  }
+}
+
+/* ---------- Opsi & diagnosa penamaan ---------- */
+
+/* Pengecoh paling mirip untuk setiap unsur (urutan wajar; app mengacak). */
+var PENGECOH_LKR = {
+  pusat: ['jariJari', 'diameter', 'busur'],
+  jariJari: ['diameter', 'taliBusur', 'busur'],
+  diameter: ['jariJari', 'taliBusur', 'busur'],
+  taliBusur: ['diameter', 'busur', 'jariJari'],
+  busur: ['taliBusur', 'juring', 'tembereng'],
+  juring: ['tembereng', 'busur', 'jariJari'],
+  tembereng: ['juring', 'busur', 'taliBusur'],
+};
+
+function opsiUnsurLingkaran(kunci) {
+  return [kunci].concat(PENGECOH_LKR[kunci]).map(function (id) {
+    return { id: id, label: labelUnsurLingkaran(id) };
+  });
+}
+
+var CIRI_LKR = {
+  pusat:
+    'titik pusat adalah titik tengah lingkaran yang jaraknya sama ke setiap titik pada lingkaran',
+  jariJari:
+    'jari-jari adalah ruas garis yang menghubungkan titik pusat dengan sebuah titik pada lingkaran',
+  diameter: 'diameter adalah tali busur yang melewati titik pusat; panjangnya dua kali jari-jari',
+  taliBusur: 'tali busur adalah ruas garis lurus yang menghubungkan dua titik pada lingkaran',
+  busur: 'busur adalah garis lengkung yang merupakan bagian dari lingkaran',
+  juring: 'juring adalah daerah yang dibatasi oleh dua jari-jari dan sebuah busur',
+  tembereng: 'tembereng adalah daerah yang dibatasi oleh sebuah tali busur dan busurnya',
+};
+
+var GARIS_LKR = ['jariJari', 'diameter', 'taliBusur', 'busur'];
+var DAERAH_LKR = ['juring', 'tembereng'];
+
+function kapitalLkr_(s) {
+  return s.charAt(0).toUpperCase() + s.slice(1);
+}
+
+function diagnosaUnsurLingkaran(kunci, jawab) {
+  if (kunci === jawab) return 'benar';
+  var pas = function (a, b) {
+    return (kunci === a && jawab === b) || (kunci === b && jawab === a);
+  };
+  if (pas('jariJari', 'diameter')) return 'jariDiameter';
+  if (kunci === 'diameter' && jawab === 'taliBusur') return 'kurangKhusus';
+  if (kunci === 'taliBusur' && jawab === 'diameter') return 'taliBukanDiameter';
+  if (pas('busur', 'taliBusur')) return 'busurTali';
+  if (pas('juring', 'tembereng')) return 'juringTembereng';
+  var dk = DAERAH_LKR.indexOf(kunci) !== -1;
+  var dj = DAERAH_LKR.indexOf(jawab) !== -1;
+  if (dk !== dj && GARIS_LKR.indexOf(dk ? jawab : kunci) !== -1) return 'daerahGaris';
+  return 'lain';
+}
+
+function pesanUnsurLingkaran(kode, kunci, jawab) {
+  switch (kode) {
+    case 'benar':
+      return 'Tepat! ' + kapitalLkr_(CIRI_LKR[kunci]) + '.';
+    case 'jariDiameter':
+      return 'Jari-jari dan diameter sama-sama menyentuh titik pusat. Lihat ujungnya: jari-jari berawal DI titik pusat dan berakhir pada lingkaran, sedangkan diameter MELEWATI titik pusat dari satu sisi lingkaran ke sisi seberangnya.';
+    case 'kurangKhusus':
+      return 'Hampir! Ruas ini memang menghubungkan dua titik pada lingkaran, tetapi karena melewati titik pusat ia punya nama khusus — tali busur terpanjang. Apa namanya?';
+    case 'taliBukanDiameter':
+      return 'Ruas ini menghubungkan dua titik pada lingkaran, tetapi TIDAK melewati titik pusat. Jadi ia belum tentu diameter — cari nama umum ruas seperti ini.';
+    case 'busurTali':
+      return 'Perhatikan bentuknya: tali busur berupa ruas garis LURUS, sedangkan busur berupa garis LENGKUNG yang menjadi bagian dari lingkaran itu sendiri.';
+    case 'juringTembereng':
+      return 'Lihat batas daerahnya. Juring dibatasi dua jari-jari dan busur (lancip di titik pusat, seperti potongan pizza), sedangkan tembereng dibatasi sebuah tali busur dan busur (seperti irisan tepi semangka).';
+    case 'daerahGaris':
+      return DAERAH_LKR.indexOf(kunci) !== -1
+        ? 'Bagian yang ditandai berupa DAERAH yang diarsir, bukan garis. Pilih nama sebuah daerah pada lingkaran, lalu lihat apa yang membatasinya.'
+        : 'Bagian yang ditandai berupa GARIS, bukan daerah yang diarsir. Pilih nama sebuah garis pada lingkaran, lalu perhatikan lurus atau lengkungnya.';
+    default:
+      return (
+        'Belum tepat. Ingat, ' +
+        (CIRI_LKR[jawab] || 'periksa lagi ciri tiap unsur') +
+        '. Bandingkan dengan bagian yang ditandai.'
+      );
+  }
+}
+
+/* ---------- Soal isian jari-jari ↔ diameter ---------- */
+
+function kaliDuaLkr_(cek) {
+  return cek.minta === 'diameter' || cek.minta === 'taliTerpanjang';
+}
+
+function diketahuiLkr_(cek) {
+  return cek.r !== undefined ? cek.r : cek.d;
+}
+
+function nilaiSoalLingkaran(cek) {
+  if (kaliDuaLkr_(cek)) return bulatkanSuku(2 * cek.r);
+  if (cek.minta === 'jariJari' || cek.minta === 'jarakPusat') return bulatkanSuku(cek.d / 2);
+  throw new Error('Permintaan soal lingkaran tidak dikenal: ' + cek.minta);
+}
+
+function diagnosaSoalLingkaran(cek, nilai) {
+  if (hampirSama(nilai, nilaiSoalLingkaran(cek))) return 'benar';
+  var tahu = diketahuiLkr_(cek);
+  if (hampirSama(nilai, tahu)) return 'sama';
+  if (hampirSama(nilai, kaliDuaLkr_(cek) ? tahu / 2 : tahu * 2)) return 'terbalik';
+  return 'salah';
+}
+
+function pesanSoalLingkaran(cek, kode) {
+  var kali = kaliDuaLkr_(cek);
+  if (kode === 'sama') {
+    return (
+      'Kamu menuliskan ukuran yang sudah diketahui. ' +
+      (kali
+        ? 'Diameter tersusun dari dua jari-jari yang segaris, jadi panjangnya dua kali jari-jari.'
+        : 'Jari-jari hanya dari titik pusat ke tepi — separuh dari diameter.')
+    );
+  }
+  if (kode === 'terbalik') {
+    return kali
+      ? 'Kamu membagi dua. Diameter lebih panjang daripada jari-jari: d = 2 × r.'
+      : 'Kamu mengalikan dua. Jari-jari lebih pendek daripada diameter: r = d : 2.';
+  }
+  return 'Belum tepat. Ingat hubungan d = 2 × r dan r = d : 2, lalu hitung ulang.';
+}
+
+/* ---------- Gambar SVG ---------- */
+
+var LKR_SVG = { w: 260, cx: 130, cy: 130, R: 90 };
+
+function ptLkr_(t, R) {
+  var p = xyLkr_(t);
+  var rr = R === undefined ? LKR_SVG.R : R;
+  return {
+    x: Math.round((LKR_SVG.cx + rr * p.x) * 10) / 10,
+    y: Math.round((LKR_SVG.cy - rr * p.y) * 10) / 10,
+  };
+}
+
+function xyStrLkr_(p) {
+  return p.x + ' ' + p.y;
+}
+
+/* Lintasan busur ↺ dari a0 ke a1; `tutup` 'juring' | 'tembereng' membuat daerah. */
+function pathBusurLkr_(a0, a1, tutup) {
+  var R = LKR_SVG.R;
+  var p0 = ptLkr_({ sudut: a0 });
+  var p1 = ptLkr_({ sudut: a1 });
+  var besar = rentangSudutLkr(a0, a1) > 180 ? 1 : 0;
+  var busur = 'A ' + R + ' ' + R + ' 0 ' + besar + ' 0 ' + xyStrLkr_(p1);
+  if (tutup === 'juring') {
+    return 'M ' + LKR_SVG.cx + ' ' + LKR_SVG.cy + ' L ' + xyStrLkr_(p0) + ' ' + busur + ' Z';
+  }
+  return 'M ' + xyStrLkr_(p0) + ' ' + busur + (tutup ? ' Z' : '');
+}
+
+/* Sudut tengah busur a0 → a1 (↺). */
+function tengahSudutLkr_(a0, a1) {
+  return normSudutLkr(a0 + rentangSudutLkr(a0, a1) / 2);
+}
+
+/* Posisi tag nomor sebuah unsur. */
+function posTagLkr_(el) {
+  var R = LKR_SVG.R;
+  if (el.tipe === 'titik') {
+    var t = ptLkr_(el);
+    return { x: t.x - 16, y: t.y - 16 };
+  }
+  if (el.tipe === 'ruas') {
+    var a = ptLkr_(el.u);
+    var b = ptLkr_(el.v);
+    var dx = b.x - a.x;
+    var dy = b.y - a.y;
+    var len = Math.sqrt(dx * dx + dy * dy) || 1;
+    return {
+      x: Math.round(((a.x + b.x) / 2 - (dy / len) * 14) * 10) / 10,
+      y: Math.round(((a.y + b.y) / 2 + (dx / len) * 14) * 10) / 10,
+    };
+  }
+  var m = tengahSudutLkr_(el.a0, el.a1);
+  if (el.tipe === 'busur') return ptLkr_({ sudut: m }, R + 17);
+  if (jenisDaerahLingkaran(el) === 'juring') return ptLkr_({ sudut: m }, R * 0.55);
+  var half = (rentangSudutLkr(el.a0, el.a1) * Math.PI) / 360;
+  return ptLkr_({ sudut: m }, (R * (1 + Math.cos(half))) / 2);
+}
+
+function dekorLkr_(dekor) {
+  var R = LKR_SVG.R;
+  var cx = LKR_SVG.cx;
+  var cy = LKR_SVG.cy;
+  var out = '<circle class="lkr-dekor__isi" cx="' + cx + '" cy="' + cy + '" r="' + R + '"/>';
+  var i;
+  var p;
+  if (dekor === 'jam') {
+    for (i = 0; i < 12; i++) {
+      var p0 = ptLkr_({ sudut: i * 30 }, R * 0.86);
+      var p1 = ptLkr_({ sudut: i * 30 }, R * 0.97);
+      out +=
+        '<line class="lkr-dekor__garis" x1="' +
+        p0.x +
+        '" y1="' +
+        p0.y +
+        '" x2="' +
+        p1.x +
+        '" y2="' +
+        p1.y +
+        '"/>';
+    }
+  } else if (dekor === 'roda') {
+    out += '<circle class="lkr-dekor__ban" cx="' + cx + '" cy="' + cy + '" r="' + (R + 6) + '"/>';
+  } else if (dekor === 'pizza') {
+    [20, 95, 160, 230, 300, 345].forEach(function (s, k) {
+      p = ptLkr_({ sudut: s }, R * (k % 2 ? 0.45 : 0.72));
+      out += '<circle class="lkr-dekor__bulat" cx="' + p.x + '" cy="' + p.y + '" r="7"/>';
+    });
+  } else if (dekor === 'semangka') {
+    out +=
+      '<circle class="lkr-dekor__daging" cx="' + cx + '" cy="' + cy + '" r="' + R * 0.86 + '"/>';
+  } else if (dekor === 'bianglala') {
+    for (i = 0; i < 8; i++) {
+      p = ptLkr_({ sudut: i * 45 + 22.5 });
+      out +=
+        '<rect class="lkr-dekor__kabin" x="' +
+        (p.x - 7) +
+        '" y="' +
+        (p.y - 5) +
+        '" width="14" height="12" rx="3"/>';
+    }
+  } else if (dekor === 'tutup') {
+    out += '<circle class="lkr-dekor__garis" cx="' + cx + '" cy="' + cy + '" r="' + R * 0.8 + '"/>';
+  }
+  return '<g class="lkr-dekor lkr-dekor--' + esc(dekor) + '" aria-hidden="true">' + out + '</g>';
+}
+
+function svgUnsurLkr_(el) {
+  var cls = el.sorot ? ' lkr-sorot' : '';
+  if (el.tipe === 'ruas') {
+    var a = ptLkr_(el.u);
+    var b = ptLkr_(el.v);
+    return (
+      '<line class="lkr-ruas' +
+      cls +
+      '" x1="' +
+      a.x +
+      '" y1="' +
+      a.y +
+      '" x2="' +
+      b.x +
+      '" y2="' +
+      b.y +
+      '"/>'
+    );
+  }
+  if (el.tipe === 'busur') {
+    return '<path class="lkr-busur' + cls + '" d="' + pathBusurLkr_(el.a0, el.a1) + '"/>';
+  }
+  if (el.tipe === 'daerah') {
+    var jenis = el.batas === 'jariJari' ? 'juring' : 'tembereng';
+    return (
+      '<path class="lkr-daerah lkr-daerah--' +
+      jenis +
+      cls +
+      '" d="' +
+      pathBusurLkr_(el.a0, el.a1, jenis) +
+      '"/>'
+    );
+  }
+  var t = ptLkr_(el);
+  return '<circle class="lkr-titik' + cls + '" cx="' + t.x + '" cy="' + t.y + '" r="5"/>';
+}
+
+/*
+ * Gambar lingkaran beserta unsur-unsurnya.
+ *   elemen       [{ ...unsur, tag?, sorot? }] — tag = nomor/huruf penanda
+ *   opts.caption teks aksesibel (title + aria-label)
+ *   opts.dekor   'jam' | 'roda' | 'pizza' | 'semangka' | 'bianglala' |
+ *                'tutup' | 'kipas' — latar benda nyata
+ *   opts.pusat   false → titik pusat tidak digambar; 'titik' → titiknya saja
+ *                tanpa label O (default titik + label O)
+ *   opts.titik   [{ nama, sudut, jarak? }] — titik berlabel
+ *   opts.kecil   true → ukuran tampilan ringkas (kartu pemilahan)
+ */
+function buildGambarLingkaran(elemen, opts) {
+  opts = opts || {};
+  var W = LKR_SVG.w;
+  var daerah = elemen.filter(function (e) {
+    return e.tipe === 'daerah';
+  });
+  var garis = elemen.filter(function (e) {
+    return e.tipe !== 'daerah';
+  });
+  var caption = opts.caption || 'Lingkaran beserta unsur-unsurnya';
+  var titik = (opts.titik || [])
+    .map(function (t) {
+      var p = ptLkr_(t);
+      var lbl = ptLkr_({ sudut: t.sudut, jarak: (t.jarak === undefined ? 1 : t.jarak) + 0.17 });
+      return (
+        '<circle class="lkr-titik" cx="' +
+        p.x +
+        '" cy="' +
+        p.y +
+        '" r="4"/>' +
+        '<text class="lkr-nama" x="' +
+        lbl.x +
+        '" y="' +
+        (lbl.y + 5) +
+        '">' +
+        esc(t.nama) +
+        '</text>'
+      );
+    })
+    .join('');
+  var tags = elemen
+    .filter(function (e) {
+      return e.tag;
+    })
+    .map(function (e) {
+      var p = posTagLkr_(e);
+      return (
+        '<g class="lkr-tag' +
+        (e.sorot ? ' lkr-tag--sorot' : '') +
+        '"><circle cx="' +
+        p.x +
+        '" cy="' +
+        p.y +
+        '" r="11"/><text x="' +
+        p.x +
+        '" y="' +
+        (p.y + 5) +
+        '">' +
+        esc(e.tag) +
+        '</text></g>'
+      );
+    })
+    .join('');
+  return (
+    '<svg class="lkr-svg' +
+    (opts.kecil ? ' lkr-svg--kecil' : '') +
+    '" viewBox="0 0 ' +
+    W +
+    ' ' +
+    W +
+    '" role="img" aria-label="' +
+    esc(caption) +
+    '"><title>' +
+    esc(caption) +
+    '</title>' +
+    (opts.dekor ? dekorLkr_(opts.dekor) : '') +
+    daerah.map(svgUnsurLkr_).join('') +
+    '<circle class="lkr-lingkaran" cx="' +
+    LKR_SVG.cx +
+    '" cy="' +
+    LKR_SVG.cy +
+    '" r="' +
+    LKR_SVG.R +
+    '"/>' +
+    garis.map(svgUnsurLkr_).join('') +
+    (opts.pusat === false
+      ? ''
+      : '<circle class="lkr-pusat" cx="' + LKR_SVG.cx + '" cy="' + LKR_SVG.cy + '" r="4"/>') +
+    (opts.pusat === false || opts.pusat === 'titik'
+      ? ''
+      : '<text class="lkr-nama" x="' +
+        (LKR_SVG.cx + 8) +
+        '" y="' +
+        (LKR_SVG.cy + 17) +
+        '">O</text>') +
+    titik +
+    tags +
+    '</svg>'
+  );
+}
+
+/* ---------- Lab Lingkaran ---------- */
+
+var MODE_LKR = ['ruas', 'busur', 'daerah'];
+var UJUNG_LKR = ['pusat', 'lingkaran', 'dalam'];
+var BATAS_LKR = ['jariJari', 'taliBusur'];
+var LABEL_MODE_LKR = { ruas: 'Ruas garis', busur: 'Garis lengkung', daerah: 'Daerah' };
+var LABEL_UJUNG_LKR = {
+  pusat: 'titik pusat',
+  lingkaran: 'titik pada lingkaran',
+  dalam: 'titik di dalam lingkaran (bukan pusat)',
+};
+var LABEL_BATAS_LKR = { jariJari: 'dua jari-jari', taliBusur: 'satu tali busur' };
+
+function makeLabLingkaranState() {
+  return { mode: 'ruas', ujung: 'pusat', batas: 'jariJari', a: 30, b: 150, catatan: {} };
+}
+
+function ubahLabLingkaran(st, aksi, nilai) {
+  if (aksi === 'mode' && MODE_LKR.indexOf(nilai) !== -1) st.mode = nilai;
+  else if (aksi === 'ujung' && UJUNG_LKR.indexOf(nilai) !== -1) st.ujung = nilai;
+  else if (aksi === 'batas' && BATAS_LKR.indexOf(nilai) !== -1) st.batas = nilai;
+  else if ((aksi === 'a' || aksi === 'b') && Number.isFinite(nilai)) {
+    st[aksi] = normSudutLkr(st[aksi] + nilai);
+  }
+}
+
+function ujungALkr_(st) {
+  if (st.ujung === 'pusat') return { jarak: 0 };
+  return { sudut: st.a, jarak: st.ujung === 'dalam' ? 0.5 : 1 };
+}
+
+function elemenLabLingkaran(st) {
+  if (st.mode === 'busur') return { tipe: 'busur', a0: st.a, a1: st.b };
+  if (st.mode === 'daerah') return { tipe: 'daerah', batas: st.batas, a0: st.a, a1: st.b };
+  return { tipe: 'ruas', u: ujungALkr_(st), v: { sudut: st.b } };
+}
+
+/* Data pengamatan unsur yang sedang dibuat di lab. */
+function pengamatanLabLingkaran(st, cfg) {
+  var el = elemenLabLingkaran(st);
+  var jenis = jenisUnsurLingkaran(el);
+  if (el.tipe === 'ruas') {
+    return {
+      jenis: jenis,
+      bentuk: 'ruas',
+      ujung: st.ujung,
+      panjang: panjangRuasLingkaran(el.u, el.v, cfg.r),
+      lewatPusat: lewatPusatRuasLkr(el.u, el.v),
+    };
+  }
+  var sudut = rentangSudutLkr(st.a, st.b);
+  if (el.tipe === 'busur') {
+    return { jenis: jenis, bentuk: 'busur', ukuran: jenisBusurLingkaran(st.a, st.b), sudut: sudut };
+  }
+  return { jenis: jenis, bentuk: 'daerah', batas: st.batas, sudut: sudut };
+}
+
+/* Mencatat pengamatan ke tabel (satu baris per jenis); mengembalikan jenisnya. */
+function catatLabLingkaran(st, cfg) {
+  var p = pengamatanLabLingkaran(st, cfg);
+  if (p.jenis !== 'titik' && p.jenis !== 'setengah') st.catatan[p.jenis] = p;
+  return p.jenis;
+}
+
+function labLingkaranSelesai(st, cfg) {
+  return (cfg.wajib || []).every(function (k) {
+    return !!st.catatan[k];
+  });
+}
+
+function namaPengamatanLkr_(jenis) {
+  if (jenis === 'titik') return 'Kedua ujung berimpit — belum ada ruas';
+  if (jenis === 'setengah') return 'Setengah lingkaran (dibatasi diameter dan busur)';
+  return labelUnsurLingkaran(jenis);
+}
+
+function panjangLkr_(n, cfg) {
+  return fmtSuku(n) + (cfg.satuan ? ' ' + cfg.satuan : '');
+}
+
+/* Kolom "Bentuk" dan "Ujung / batas" sebuah pengamatan. */
+function uraianLkr_(p) {
+  if (p.bentuk === 'ruas') {
+    return {
+      bentuk: 'Ruas garis lurus',
+      batas: 'Dari ' + LABEL_UJUNG_LKR[p.ujung] + ' ke titik pada lingkaran',
+    };
+  }
+  if (p.bentuk === 'busur') {
+    var ukuran = { kecil: 'busur kecil', besar: 'busur besar', setengah: 'setengah lingkaran' };
+    return {
+      bentuk: 'Garis lengkung',
+      batas: 'Bagian lingkaran di antara dua titik (' + ukuran[p.ukuran] + ', ' + p.sudut + '°)',
+    };
+  }
+  return {
+    bentuk: 'Daerah',
+    batas: 'Dibatasi ' + LABEL_BATAS_LKR[p.batas] + ' dan satu busur (' + p.sudut + '°)',
+  };
+}
+
+function infoLabLkr_(p, cfg) {
+  var u = uraianLkr_(p);
+  var baris = ['Bentuk: ' + u.bentuk, u.batas];
+  if (p.bentuk === 'ruas') {
+    baris.push('Panjang: ' + panjangLkr_(p.panjang, cfg));
+    baris.push('Melewati titik pusat: ' + (p.lewatPusat ? 'ya' : 'tidak'));
+  }
+  return (
+    '<p class="lkr-lab__nama">' +
+    esc(namaPengamatanLkr_(p.jenis)) +
+    '</p><ul class="lkr-lab__sifat">' +
+    baris
+      .map(function (b) {
+        return '<li>' + esc(b) + '</li>';
+      })
+      .join('') +
+    '</ul>'
+  );
+}
+
+function tombolPilLkr_(attr, nilai, label, aktif) {
+  return (
+    '<button type="button" class="lkr-pil' +
+    (aktif ? ' lkr-pil--aktif' : '') +
+    '" ' +
+    attr +
+    '="' +
+    nilai +
+    '" aria-pressed="' +
+    (aktif ? 'true' : 'false') +
+    '">' +
+    esc(label) +
+    '</button>'
+  );
+}
+
+function grupPilLkr_(judul, attr, daftar, label, nilai) {
+  return (
+    '<div class="lkr-lab__grup" role="group" aria-label="' +
+    esc(judul) +
+    '"><span class="lkr-lab__judul">' +
+    esc(judul) +
+    '</span><div class="lkr-lab__pils">' +
+    daftar
+      .map(function (k) {
+        return tombolPilLkr_(attr, k, label[k], k === nilai);
+      })
+      .join('') +
+    '</div></div>'
+  );
+}
+
+function stepperLkr_(nama, key, st, langkah, mati) {
+  var tombol = function (arah) {
+    var lbl = (arah < 0 ? 'Putar mundur ' : 'Putar maju ') + langkah + '° titik ' + nama;
+    return (
+      '<button type="button" class="btn btn--ghost btn--small lkr-step" data-lkr-ubah="' +
+      key +
+      '" data-step="' +
+      arah * langkah +
+      '" aria-label="' +
+      lbl +
+      '"' +
+      (mati ? ' disabled' : '') +
+      '>' +
+      (arah < 0 ? '↻' : '↺') +
+      '</button>'
+    );
+  };
+  return (
+    '<div class="lkr-lab__stepper"><span class="lkr-lab__judul">Titik ' +
+    nama +
+    '</span>' +
+    tombol(-1) +
+    '<span class="lkr-lab__sudut">' +
+    (mati ? 'di pusat' : st[key] + '°') +
+    '</span>' +
+    tombol(1) +
+    '</div>'
+  );
+}
+
+function titikLabLkr_(st) {
+  var out = [];
+  if (st.mode !== 'ruas' || st.ujung !== 'pusat') {
+    out.push({
+      nama: 'A',
+      sudut: st.a,
+      jarak: st.mode === 'ruas' && st.ujung === 'dalam' ? 0.5 : 1,
+    });
+  }
+  out.push({ nama: 'B', sudut: st.b });
+  return out;
+}
+
+function buildMisiLkr_(st, cfg) {
+  if (!cfg.misi) return '';
+  return (
+    '<ul class="lkr-misi">' +
+    cfg.misi
+      .map(function (m) {
+        var ok = !!st.catatan[m.id];
+        return (
+          '<li class="lkr-misi__item' +
+          (ok ? ' lkr-misi__item--ok' : '') +
+          '"><span aria-hidden="true">' +
+          (ok ? '✓' : '○') +
+          '</span>' +
+          esc(m.teks) +
+          '<span class="sr-only">' +
+          (ok ? ' (selesai)' : ' (belum)') +
+          '</span></li>'
+        );
+      })
+      .join('') +
+    '</ul>'
+  );
+}
+
+/*
+ * Lab Lingkaran: membuat ruas, garis lengkung, atau daerah dengan
+ * memutar titik A dan B, lalu mencatat sifatnya ke tabel pengamatan.
+ *   cfg = { r, satuan, langkah, wajib: [jenis], misi: [{ id, teks }] }
+ */
+function buildLabLingkaran(id, st, cfg) {
+  var p = pengamatanLabLingkaran(st, cfg);
+  var el = elemenLabLingkaran(st);
+  el.sorot = true;
+  var langkah = cfg.langkah || 15;
+  return (
+    '<div class="lkr-lab" id="' +
+    id +
+    '">' +
+    '<div class="lkr-lab__gambar">' +
+    buildGambarLingkaran([el], {
+      titik: titikLabLkr_(st),
+      dekor: cfg.dekor,
+      caption: 'Lab Lingkaran: ' + namaPengamatanLkr_(p.jenis),
+    }) +
+    '</div>' +
+    '<div class="lkr-lab__panel">' +
+    grupPilLkr_('Yang dibuat', 'data-lkr-mode', MODE_LKR, LABEL_MODE_LKR, st.mode) +
+    (st.mode === 'ruas'
+      ? grupPilLkr_('Ujung A berada di', 'data-lkr-ujung', UJUNG_LKR, LABEL_UJUNG_LKR, st.ujung)
+      : '') +
+    (st.mode === 'daerah'
+      ? grupPilLkr_('Daerah dibatasi', 'data-lkr-batas', BATAS_LKR, LABEL_BATAS_LKR, st.batas)
+      : '') +
+    '<div class="lkr-lab__steppers">' +
+    stepperLkr_('A', 'a', st, langkah, st.mode === 'ruas' && st.ujung === 'pusat') +
+    stepperLkr_('B', 'b', st, langkah, false) +
+    '</div>' +
+    '<div class="lkr-lab__info" aria-live="polite">' +
+    infoLabLkr_(p, cfg) +
+    '</div>' +
+    '<button type="button" class="btn btn--primary" id="' +
+    id +
+    '-catat">📋 Catat ke tabel</button>' +
+    buildMisiLkr_(st, cfg) +
+    '</div>' +
+    '</div>'
+  );
+}
+
+function bindLabLingkaran(root, id, st, cfg, onChange) {
+  var lab = root.querySelector('#' + id);
+  if (!lab) return;
+  [
+    ['data-lkr-mode', 'mode', 'lkrMode'],
+    ['data-lkr-ujung', 'ujung', 'lkrUjung'],
+    ['data-lkr-batas', 'batas', 'lkrBatas'],
+  ].forEach(function (k) {
+    lab.querySelectorAll('[' + k[0] + ']').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        ubahLabLingkaran(st, k[1], btn.dataset[k[2]]);
+        onChange();
+      });
+    });
+  });
+  lab.querySelectorAll('[data-lkr-ubah]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      ubahLabLingkaran(st, btn.dataset.lkrUbah, parseInt(btn.dataset.step, 10));
+      onChange();
+    });
+  });
+  var catat = lab.querySelector('#' + id + '-catat');
+  if (catat) {
+    catat.addEventListener('click', function () {
+      var jenis = catatLabLingkaran(st, cfg);
+      if (jenis === 'titik') showNotice('Titik A dan B berimpit. Putar salah satunya dulu.');
+      else if (jenis === 'setengah') {
+        showNotice('Itu setengah lingkaran — juring sekaligus tembereng. Coba sudut lain.');
+      } else showNotice('Tercatat: ' + labelUnsurLingkaran(jenis) + '.');
+      onChange();
+    });
+  }
+}
+
+var URUTAN_CATATAN_LKR = [
+  'jariJari',
+  'diameter',
+  'taliBusur',
+  'bukan',
+  'busur',
+  'juring',
+  'tembereng',
+];
+
+/* Tabel pengamatan dari catatan Lab Lingkaran. */
+function buildTabelPengamatanLkr(st, cfg) {
+  var baris = URUTAN_CATATAN_LKR.filter(function (k) {
+    return !!st.catatan[k];
+  });
+  if (!baris.length) return '<p class="lkr-kosong">Belum ada pengamatan yang dicatat.</p>';
+  return (
+    '<div class="lkr-tabel-wrap"><table class="lkr-tabel">' +
+    '<caption class="sr-only">Tabel pengamatan Lab Lingkaran</caption>' +
+    '<thead><tr><th scope="col">Nama</th><th scope="col">Bentuk</th>' +
+    '<th scope="col">Ujung / batas</th><th scope="col">Panjang</th>' +
+    '<th scope="col">Melewati pusat?</th></tr></thead><tbody>' +
+    baris
+      .map(function (k) {
+        var p = st.catatan[k];
+        var u = uraianLkr_(p);
+        var ruas = p.bentuk === 'ruas';
+        return (
+          '<tr><th scope="row">' +
+          esc(labelUnsurLingkaran(k)) +
+          '</th><td>' +
+          esc(u.bentuk) +
+          '</td><td>' +
+          esc(u.batas) +
+          '</td><td>' +
+          (ruas ? esc(panjangLkr_(p.panjang, cfg)) : '—') +
+          '</td><td>' +
+          (ruas ? (p.lewatPusat ? 'ya' : 'tidak') : '—') +
+          '</td></tr>'
+        );
+      })
+      .join('') +
+    '</tbody></table></div>'
+  );
 }
