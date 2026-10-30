@@ -271,6 +271,10 @@
        fungsi, laju perubahan Δy/Δx, jenis & arah pola, diagnosa
        miskonsepsi klasifikasi, tabel perubahan isian, grafik pola,
        Lab Pola Perubahan)
+   83. PLDV & SPLDV (unsur, substitusi, pasangan nilai yang memenuhi,
+       penyelesaian, jenis kalimat dua variabel, diagnosa miskonsepsi
+       unsur & pasangan, kartu unsur, tabel pasangan isian, bidang
+       pasangan, Lab SPLDV)
    ============================================================ */
 
 /* ============================================================
@@ -57008,4 +57012,1023 @@ function bindLabPolaPerubahan(root, id, st, onChange) {
       onChange();
     });
   }
+}
+
+/* ============================================================
+   83. PLDV & SPLDV — UNSUR & PASANGAN NILAI YANG MEMENUHI
+   Dipakai fase-d/mpi-16.1. Dibangun di atas seksi 32 (bulatkanSuku,
+   fmtSuku), seksi 33 (asoSumbuDari_, asoSkala_, asoKerangka_), seksi 74
+   (parseBilAljabar), dan seksi 75 (parseKalimatMtk, ciriKalimatMtk).
+   Gaya .pldv-* ada di shared/base.css.
+
+   Sebuah PLDV ditulis { a, b, c, vx?, vy? } yang berarti
+     a·vx + b·vy = c      (vx default 'x', vy default 'y')
+   dan SPLDV ditulis sebagai larik dua PLDV [p1, p2] bervariabel sama.
+   Pasangan (x, y) MEMENUHI sebuah PLDV bila substitusinya membuat
+   ruas kiri sama dengan ruas kanan; pasangan yang memenuhi SPLDV
+   harus memenuhi KEDUA persamaan sekaligus.
+
+   Notasi cek soal isian (lihat nilaiSoalPldv):
+     { pers, minta: 'koefX' | 'koefY' | 'konstanta' } → unsur
+     { pers, minta: 'y', x } / { pers, minta: 'x', y } → pasangan
+     { sistem, minta: 'x' | 'y' }                      → penyelesaian
+   ============================================================ */
+
+/* ---------- Membaca & menulis ---------- */
+
+function varPldv_(p) {
+  return { x: p.vx || 'x', y: p.vy || 'y' };
+}
+
+/* Satu suku "ax" dalam bentuk baku; awal → tanda minus menempel. */
+function sukuPldv_(k, v, awal) {
+  var abs = Math.abs(k);
+  var badan = (abs === 1 ? '' : fmtSuku(abs)) + v;
+  if (awal) return (k < 0 ? '−' : '') + badan;
+  return (k < 0 ? ' − ' : ' + ') + badan;
+}
+
+function teksPldv(p) {
+  var v = varPldv_(p);
+  return sukuPldv_(p.a, v.x, true) + sukuPldv_(p.b, v.y, false) + ' = ' + fmtSuku(p.c);
+}
+
+function unsurPldv(p) {
+  var v = varPldv_(p);
+  return { variabel: [v.x, v.y], koefX: p.a, koefY: p.b, konstanta: p.c };
+}
+
+function ruasKiriPldv(p, x, y) {
+  return bulatkanSuku(p.a * x + p.b * y);
+}
+
+/* Nilai pengganti; bilangan negatif diberi kurung. */
+function nilaiSubst_(n) {
+  return n < 0 ? '(' + fmtSuku(n) + ')' : fmtSuku(n);
+}
+
+/* Satu suku substitusi: "3 × 4", atau "4" bila koefisiennya ±1. */
+function sukuSubst_(k, n, awal) {
+  var abs = Math.abs(k);
+  var badan = abs === 1 ? nilaiSubst_(n) : fmtSuku(abs) + ' × ' + nilaiSubst_(n);
+  if (awal) return (k < 0 ? '−' : '') + badan;
+  return (k < 0 ? ' − ' : ' + ') + badan;
+}
+
+/* "3 × 4 + 4 × 3 = 12 + 12 = 24" — langkah substitusi ruas kiri. */
+function teksSubstitusiPldv(p, x, y) {
+  var out = sukuSubst_(p.a, x, true) + sukuSubst_(p.b, y, false);
+  if (Math.abs(p.a) !== 1 || Math.abs(p.b) !== 1) {
+    var kali1 = bulatkanSuku(p.a * x);
+    var kali2 = bulatkanSuku(p.b * y);
+    out +=
+      ' = ' +
+      (kali1 < 0 ? '−' : '') +
+      fmtSuku(Math.abs(kali1)) +
+      (kali2 < 0 ? ' − ' : ' + ') +
+      fmtSuku(Math.abs(kali2));
+  }
+  return out + ' = ' + fmtSuku(ruasKiriPldv(p, x, y));
+}
+
+/* ---------- Memenuhi & penyelesaian ---------- */
+
+function memenuhiPldv(p, x, y) {
+  return hampirSama(ruasKiriPldv(p, x, y), p.c);
+}
+
+function memenuhiSpldv(sistem, x, y) {
+  var satu = memenuhiPldv(sistem[0], x, y);
+  var dua = memenuhiPldv(sistem[1], x, y);
+  return { satu: satu, dua: dua, keduanya: satu && dua };
+}
+
+/* y bila x diketahui (boleh pecahan); null bila b = 0. */
+function yDariXPldv(p, x) {
+  if (!p.b) return null;
+  return bulatkanSuku((p.c - p.a * x) / p.b);
+}
+
+function xDariYPldv(p, y) {
+  if (!p.a) return null;
+  return bulatkanSuku((p.c - p.b * y) / p.a);
+}
+
+/* Pasangan bilangan cacah (x = 0 … maks, y ≥ 0 bulat) yang memenuhi. */
+function pasanganBulatPldv(p, maks) {
+  var out = [];
+  for (var x = 0; x <= maks; x++) {
+    var y = yDariXPldv(p, x);
+    if (y !== null && Number.isInteger(y) && y >= 0) out.push({ x: x, y: y });
+  }
+  return out;
+}
+
+/* { jenis: 'tunggal', x, y } | { jenis: 'banyak' } | { jenis: 'tidakAda' }. */
+function penyelesaianSpldv(sistem) {
+  var p = sistem[0];
+  var q = sistem[1];
+  var det = p.a * q.b - q.a * p.b;
+  if (hampirSama(det, 0)) {
+    var sebanding = hampirSama(p.a * q.c - q.a * p.c, 0) && hampirSama(p.b * q.c - q.b * p.c, 0);
+    return { jenis: sebanding ? 'banyak' : 'tidakAda' };
+  }
+  return {
+    jenis: 'tunggal',
+    x: bulatkanSuku((p.c * q.b - q.c * p.b) / det),
+    y: bulatkanSuku((p.a * q.c - q.a * p.c) / det),
+  };
+}
+
+/* ---------- Jenis kalimat dua variabel ---------- */
+
+/*
+ * 'pldv'           "=" dengan tepat dua variabel berpangkat satu
+ * 'plsv'           "=" dengan satu variabel berpangkat satu
+ * 'bukanLinear'    ada variabel berpangkat > 1 atau perkalian variabel (xy)
+ * 'bukanPersamaan' bervariabel tetapi relasinya bukan "=" atau tanpa relasi
+ * 'lainnya'        tanpa variabel (pernyataan); null bila tak terbaca
+ */
+function jenisKalimatDuaVar(str) {
+  var s = String(str === null || str === undefined ? '' : str);
+  if (/[a-z]\s*[×·*]?\s*[a-z]/i.test(s)) return 'bukanLinear';
+  var c = ciriKalimatMtk(s);
+  if (!c) return null;
+  if (c.pangkat > 1) return 'bukanLinear';
+  if (!c.variabel.length) return 'lainnya';
+  if (c.rel !== '=') return 'bukanPersamaan';
+  if (c.variabel.length === 2) return 'pldv';
+  return c.variabel.length === 1 ? 'plsv' : 'bukanLinear';
+}
+
+/* Daftar kalimat → 'pldv' (satu PLDV) | 'spldv' (dua PLDV bervariabel sama) | 'bukan'. */
+function jenisSistemDuaVar(list) {
+  var semuaPldv = list.every(function (k) {
+    return jenisKalimatDuaVar(k) === 'pldv';
+  });
+  if (!semuaPldv) return 'bukan';
+  if (list.length === 1) return 'pldv';
+  if (list.length !== 2) return 'bukan';
+  var v1 = ciriKalimatMtk(list[0]).variabel.join(',');
+  var v2 = ciriKalimatMtk(list[1]).variabel.join(',');
+  return v1 === v2 ? 'spldv' : 'bukan';
+}
+
+/* ---------- Diagnosa unsur ---------- */
+
+var LABEL_UNSUR_PLDV = {
+  variabel: 'variabel',
+  koefX: 'koefisien',
+  koefY: 'koefisien',
+  konstanta: 'konstanta',
+};
+
+/* minta: 'koefX' | 'koefY' | 'konstanta'; nilai: bilangan. */
+function diagnosaUnsurPldv(p, minta, nilai) {
+  var u = unsurPldv(p);
+  var kunci = u[minta];
+  if (hampirSama(nilai, kunci)) return 'benar';
+  if (kunci !== 0 && hampirSama(nilai, -kunci)) return 'tanda';
+  if (minta === 'konstanta') {
+    if (hampirSama(nilai, p.a) || hampirSama(nilai, p.b)) return 'koefDikiraKonstanta';
+    return 'salah';
+  }
+  var lawan = minta === 'koefX' ? p.b : p.a;
+  if (hampirSama(nilai, lawan)) return 'tertukar';
+  if (hampirSama(nilai, p.c)) return 'konstantaDikiraKoef';
+  if (Math.abs(kunci) === 1 && hampirSama(nilai, 0)) return 'koefSatu';
+  return 'salah';
+}
+
+function pesanUnsurPldv(kode, p, minta) {
+  var v = varPldv_(p);
+  var nama = minta === 'koefY' ? v.y : v.x;
+  var PESAN = {
+    benar: '<strong>Tepat.</strong>',
+    tanda:
+      'Bilangannya sudah benar, tetapi <strong>tandanya</strong> belum. Tanda "−" di depan suku ikut menjadi bagian dari koefisien atau konstanta.',
+    tertukar:
+      'Itu koefisien variabel yang lain. Koefisien ' +
+      esc(nama) +
+      ' adalah bilangan yang menempel tepat di depan ' +
+      esc(nama) +
+      '.',
+    konstantaDikiraKoef:
+      'Bilangan itu berdiri sendiri tanpa variabel, jadi ia <strong>konstanta</strong>, bukan koefisien.',
+    koefDikiraKonstanta:
+      'Bilangan itu menempel pada variabel, jadi ia <strong>koefisien</strong>. Konstanta adalah bilangan tanpa variabel.',
+    koefSatu:
+      'Variabel yang ditulis tanpa angka di depannya tetap punya koefisien, yaitu 1 (atau −1 bila bertanda minus). Contoh: ' +
+      esc(nama) +
+      ' sama dengan 1' +
+      esc(nama) +
+      '.',
+    salah:
+      'Belum tepat. Tulis ulang persamaannya, lalu tunjuk: bilangan di depan setiap variabel adalah koefisien, bilangan tanpa variabel adalah konstanta.',
+  };
+  return PESAN[kode] || PESAN.salah;
+}
+
+/* Huruf variabel dari isian bebas ("x, y", "y dan x") → 'benar' | 'kurang' | 'kosong' | 'salah'. */
+function diagnosaVariabelPldv(p, isian) {
+  var s = String(isian === null || isian === undefined ? '' : isian)
+    .toLowerCase()
+    .replace(/\bdan\b/g, ' ');
+  var huruf = s.match(/[a-z]/g) || [];
+  if (!huruf.length) return 'kosong';
+  var unik = huruf.filter(function (h, i) {
+    return huruf.indexOf(h) === i;
+  });
+  var v = varPldv_(p);
+  var cocok = unik.filter(function (h) {
+    return h === v.x || h === v.y;
+  }).length;
+  if (cocok === 2 && unik.length === 2) return 'benar';
+  if (cocok === unik.length && cocok === 1) return 'kurang';
+  return 'salah';
+}
+
+function pesanVariabelPldv(kode) {
+  if (kode === 'kurang')
+    return 'Masih ada yang terlewat. PLDV memuat <strong>dua</strong> variabel — tulis keduanya.';
+  return 'Variabel adalah huruf yang mewakili nilai yang belum diketahui. Tulis hurufnya saja, dipisah koma, mis. "a, b".';
+}
+
+/*
+ * Memeriksa kartu unsur. isian = { variabel, koefX, koefY, konstanta }
+ * (teks mentah). Kembali { lengkap, tepat, kode: { field: kode } }.
+ */
+var FIELD_UNSUR_PLDV = ['variabel', 'koefX', 'koefY', 'konstanta'];
+
+function periksaUnsurPldv(p, isian) {
+  var kode = {};
+  var lengkap = true;
+  FIELD_UNSUR_PLDV.forEach(function (f) {
+    var raw = isian[f];
+    if (f === 'variabel') {
+      kode[f] = diagnosaVariabelPldv(p, raw);
+      if (kode[f] === 'kosong') lengkap = false;
+      return;
+    }
+    var b = parseBilAljabar(raw);
+    if (b.kode !== 'ok') {
+      lengkap = false;
+      kode[f] = 'kosong';
+      return;
+    }
+    kode[f] = diagnosaUnsurPldv(p, f, b.nilai);
+  });
+  var tepat =
+    lengkap &&
+    FIELD_UNSUR_PLDV.every(function (f) {
+      return kode[f] === 'benar';
+    });
+  return { lengkap: lengkap, tepat: tepat, kode: kode };
+}
+
+/* ---------- Diagnosa pasangan ---------- */
+
+/* Isian y saat x diketahui. */
+function diagnosaYPldv(p, x, nilai) {
+  var kunci = yDariXPldv(p, x);
+  if (kunci !== null && hampirSama(nilai, kunci)) return 'benar';
+  if (p.b !== 1 && hampirSama(nilai, p.c - p.a * x)) return 'lupaBagi';
+  if (hampirSama(p.a * nilai + p.b * x, p.c)) return 'tertukar';
+  return 'salah';
+}
+
+function pesanYPldv(kode, p, x) {
+  var v = varPldv_(p);
+  if (kode === 'lupaBagi')
+    return (
+      'Kamu sudah menemukan ' +
+      fmtSuku(p.b) +
+      esc(v.y) +
+      ' = ' +
+      fmtSuku(p.c - p.a * x) +
+      '. Langkah terakhir: bagi dengan koefisien ' +
+      esc(v.y) +
+      ', yaitu ' +
+      fmtSuku(p.b) +
+      '.'
+    );
+  if (kode === 'tertukar')
+    return (
+      'Sepertinya nilai ' +
+      fmtSuku(x) +
+      ' kamu substitusikan ke ' +
+      esc(v.y) +
+      '. Ingat, ' +
+      fmtSuku(x) +
+      ' adalah nilai <strong>' +
+      esc(v.x) +
+      '</strong>: ganti ' +
+      esc(v.x) +
+      ' dengan ' +
+      fmtSuku(x) +
+      ' pada ' +
+      esc(teksPldv(p)) +
+      '.'
+    );
+  return (
+    'Ganti ' +
+    esc(v.x) +
+    ' dengan ' +
+    fmtSuku(x) +
+    ' pada ' +
+    esc(teksPldv(p)) +
+    ', hitung, lalu cari ' +
+    esc(v.y) +
+    ' yang membuat kedua ruas sama.'
+  );
+}
+
+/* Pasangan (x, y) untuk sebuah PLDV. */
+function diagnosaPasanganPldv(p, x, y) {
+  if (memenuhiPldv(p, x, y)) return 'benar';
+  if (memenuhiPldv(p, y, x)) return 'tertukar';
+  if (hampirSama(x + y, p.c)) return 'tanpaKoef';
+  return 'salahHitung';
+}
+
+function pesanPasanganPldv(kode, p, x, y) {
+  var v = varPldv_(p);
+  var subst =
+    'Substitusinya: ' +
+    esc(teksSubstitusiPldv(p, x, y)) +
+    (memenuhiPldv(p, x, y) ? '.' : ', bukan ' + fmtSuku(p.c) + '.');
+  if (kode === 'benar') return '<strong>Tepat.</strong> ' + subst;
+  if (kode === 'tertukar')
+    return (
+      subst +
+      ' Urutan pasangan berurutan (' +
+      esc(v.x) +
+      ', ' +
+      esc(v.y) +
+      ') penting — nilai pertama untuk ' +
+      esc(v.x) +
+      ', nilai kedua untuk ' +
+      esc(v.y) +
+      '. Coba tukar urutannya.'
+    );
+  if (kode === 'tanpaKoef')
+    return (
+      subst +
+      ' Jumlah ' +
+      esc(v.x) +
+      ' + ' +
+      esc(v.y) +
+      ' memang ' +
+      fmtSuku(p.c) +
+      ', tetapi setiap variabel harus <strong>dikalikan koefisiennya</strong> dulu.'
+    );
+  return subst + ' Pasangan yang memenuhi membuat ruas kiri tepat sama dengan ruas kanan.';
+}
+
+/* Pasangan (x, y) untuk SPLDV. */
+function diagnosaPasanganSpldv(sistem, x, y) {
+  var m = memenuhiSpldv(sistem, x, y);
+  if (m.keduanya) return 'benar';
+  if (memenuhiSpldv(sistem, y, x).keduanya) return 'tertukar';
+  if (m.satu) return 'hanyaSatu';
+  if (m.dua) return 'hanyaDua';
+  return 'tidakKeduanya';
+}
+
+function pesanPasanganSpldv(kode, sistem, x, y) {
+  var cek = sistem
+    .map(function (p, i) {
+      return (
+        'Persamaan ' +
+        (i + 1) +
+        ': ' +
+        esc(teksSubstitusiPldv(p, x, y)) +
+        (memenuhiPldv(p, x, y) ? ' ✓' : ' ✗ (seharusnya ' + fmtSuku(p.c) + ')')
+      );
+    })
+    .join('<br>');
+  var PESAN = {
+    benar: '<strong>Tepat.</strong> Pasangan ini memenuhi kedua persamaan.',
+    hanyaSatu:
+      'Pasangan ini hanya memenuhi <strong>persamaan 1</strong>. Penyelesaian SPLDV harus memenuhi kedua persamaan sekaligus.',
+    hanyaDua:
+      'Pasangan ini hanya memenuhi <strong>persamaan 2</strong>. Penyelesaian SPLDV harus memenuhi kedua persamaan sekaligus.',
+    tertukar:
+      'Nilainya sudah tepat, tetapi <strong>urutannya tertukar</strong>. Nilai pertama pasangan untuk variabel pertama.',
+    tidakKeduanya: 'Pasangan ini tidak memenuhi satu pun persamaan.',
+  };
+  return (PESAN[kode] || PESAN.tidakKeduanya) + '<br>' + cek;
+}
+
+/* ---------- Soal isian ---------- */
+
+function nilaiSoalPldv(cek) {
+  if (cek.sistem) {
+    var r = penyelesaianSpldv(cek.sistem);
+    return cek.minta === 'x' ? r.x : r.y;
+  }
+  if (cek.minta === 'y') return yDariXPldv(cek.pers, cek.x);
+  if (cek.minta === 'x') return xDariYPldv(cek.pers, cek.y);
+  return unsurPldv(cek.pers)[cek.minta];
+}
+
+function diagnosaSoalPldv(cek, nilai) {
+  if (hampirSama(nilai, nilaiSoalPldv(cek))) return 'benar';
+  if (cek.sistem) {
+    var r = penyelesaianSpldv(cek.sistem);
+    var lain = cek.minta === 'x' ? r.y : r.x;
+    return hampirSama(nilai, lain) ? 'tertukar' : 'salah';
+  }
+  if (cek.minta === 'y') return diagnosaYPldv(cek.pers, cek.x, nilai);
+  if (cek.minta === 'x') return diagnosaYPldv(tukarPldv_(cek.pers), cek.y, nilai);
+  return diagnosaUnsurPldv(cek.pers, cek.minta, nilai);
+}
+
+/* Persamaan yang sama dengan peran x dan y ditukar. */
+function tukarPldv_(p) {
+  var v = varPldv_(p);
+  return { a: p.b, b: p.a, c: p.c, vx: v.y, vy: v.x };
+}
+
+function pesanSoalPldv(cek, kode) {
+  if (cek.sistem) {
+    var v = varPldv_(cek.sistem[0]);
+    if (kode === 'tertukar')
+      return (
+        'Itu nilai variabel yang satunya lagi. Yang ditanyakan adalah nilai ' +
+        esc(cek.minta === 'x' ? v.x : v.y) +
+        '.'
+      );
+    return 'Coba beberapa pasangan nilai yang memenuhi persamaan pertama, lalu substitusikan ke persamaan kedua. Pasangan yang memenuhi keduanya adalah penyelesaiannya.';
+  }
+  if (cek.minta === 'y') return pesanYPldv(kode, cek.pers, cek.x);
+  if (cek.minta === 'x') return pesanYPldv(kode, tukarPldv_(cek.pers), cek.y);
+  return pesanUnsurPldv(kode, cek.pers, cek.minta);
+}
+
+/* ---------- Kartu unsur isian ---------- */
+
+function makeUnsurPldvState() {
+  return {
+    isian: {},
+    checked: false,
+    tepat: false,
+    revealed: false,
+    attempts: 0,
+    hintLevel: 0,
+  };
+}
+
+function ensureStatePldv_(holder, key, awal) {
+  var st = holder[key] && typeof holder[key] === 'object' ? holder[key] : awal;
+  Object.keys(awal).forEach(function (k) {
+    if (typeof st[k] !== typeof awal[k] || Array.isArray(st[k]) !== Array.isArray(awal[k])) {
+      st[k] = awal[k];
+    }
+  });
+  holder[key] = st;
+  return st;
+}
+
+function ensureUnsurPldvState(holder, key) {
+  return ensureStatePldv_(holder, key, makeUnsurPldvState());
+}
+
+function inputPldv_(id, attr, key, value, label, error, disabled) {
+  return (
+    '<input type="text" class="input-text pldv-isian' +
+    (error ? ' has-error' : '') +
+    '" id="' +
+    id +
+    '" ' +
+    attr +
+    '="' +
+    key +
+    '" inputmode="text" autocomplete="off" value="' +
+    esc(value === null || value === undefined ? '' : value) +
+    '" aria-label="' +
+    esc(label) +
+    '"' +
+    (disabled ? ' disabled' : '') +
+    ' placeholder="…">'
+  );
+}
+
+/*
+ * Kartu unsur: persamaan di atas, empat isian (variabel, koefisien x,
+ * koefisien y, konstanta). Setelah selesai, isian diganti kunci.
+ */
+function buildKartuUnsurPldv(id, p, st) {
+  var v = varPldv_(p);
+  var u = unsurPldv(p);
+  var selesai = st.tepat || st.revealed;
+  var hasil = !selesai && st.checked ? periksaUnsurPldv(p, st.isian) : null;
+  var label = {
+    variabel: 'Variabel',
+    koefX: 'Koefisien ' + v.x,
+    koefY: 'Koefisien ' + v.y,
+    konstanta: 'Konstanta',
+  };
+  var kunci = {
+    variabel: v.x + ', ' + v.y,
+    koefX: fmtSuku(u.koefX),
+    koefY: fmtSuku(u.koefY),
+    konstanta: fmtSuku(u.konstanta),
+  };
+  return (
+    '<div class="pldv-unsur" id="' +
+    id +
+    '">' +
+    '<p class="pldv-persamaan">' +
+    esc(teksPldv(p)) +
+    '</p>' +
+    '<div class="pldv-unsur__grid">' +
+    FIELD_UNSUR_PLDV.map(function (f) {
+      var salah = hasil && hasil.kode[f] !== 'benar' && hasil.kode[f] !== 'kosong';
+      return (
+        '<label class="pldv-unsur__sel" for="' +
+        id +
+        '-' +
+        f +
+        '"><span class="pldv-unsur__nama">' +
+        esc(label[f]) +
+        '</span>' +
+        inputPldv_(
+          id + '-' + f,
+          'data-unsur',
+          f,
+          selesai ? kunci[f] : st.isian[f],
+          label[f] + ' pada ' + teksPldv(p),
+          salah,
+          selesai
+        ) +
+        '</label>'
+      );
+    }).join('') +
+    '</div>' +
+    '</div>'
+  );
+}
+
+/* Pesan diagnosa (HTML) untuk setiap isian kartu unsur yang belum tepat. */
+function pesanKartuUnsurPldv(p, hasil) {
+  var v = varPldv_(p);
+  var nama = { variabel: 'Variabel', koefX: 'Koefisien ' + v.x, koefY: 'Koefisien ' + v.y };
+  nama.konstanta = 'Konstanta';
+  return FIELD_UNSUR_PLDV.filter(function (f) {
+    return hasil.kode[f] !== 'benar';
+  }).map(function (f) {
+    var teks =
+      f === 'variabel' ? pesanVariabelPldv(hasil.kode[f]) : pesanUnsurPldv(hasil.kode[f], p, f);
+    return '<strong>' + esc(nama[f]) + ':</strong> ' + teks;
+  });
+}
+
+function bindKartuUnsurPldv(root, id, st, save) {
+  var el = root.querySelector('#' + id);
+  if (!el) return;
+  el.querySelectorAll('[data-unsur]').forEach(function (inp) {
+    inp.addEventListener('input', function () {
+      st.isian[inp.dataset.unsur] = inp.value;
+      st.checked = false;
+      save();
+    });
+  });
+}
+
+/* ---------- Tabel pasangan isian ---------- */
+
+function makeTabelPasanganState() {
+  return {
+    y: {},
+    checked: false,
+    tepat: false,
+    revealed: false,
+    attempts: 0,
+    hintLevel: 0,
+  };
+}
+
+function ensureTabelPasanganState(holder, key) {
+  return ensureStatePldv_(holder, key, makeTabelPasanganState());
+}
+
+/* Kembali { lengkap, tepat, salah: [{ i, kode }] }; isian boleh desimal berkoma. */
+function periksaTabelPasangan(p, xs, st) {
+  var lengkap = true;
+  var salah = [];
+  xs.forEach(function (x, i) {
+    var b = parseBilAljabar(st.y[i]);
+    if (b.kode !== 'ok') {
+      lengkap = false;
+      return;
+    }
+    var kode = diagnosaYPldv(p, x, b.nilai);
+    if (kode !== 'benar') salah.push({ i: i, kode: kode });
+  });
+  return { lengkap: lengkap, tepat: lengkap && !salah.length, salah: salah };
+}
+
+/*
+ * Tabel x | y | substitusi | cacah? — kolom y berisi isian selama
+ * dikerjakan; setelah selesai tampil langkah substitusi dan apakah
+ * pasangan itu masuk akal sebagai banyak benda (bilangan cacah).
+ *   opts.labelX, opts.labelY, opts.caption
+ */
+function buildTabelPasangan(id, p, xs, st, opts) {
+  opts = opts || {};
+  var v = varPldv_(p);
+  var selesai = !!(st && (st.tepat || st.revealed));
+  var hasil = !selesai && st && st.checked ? periksaTabelPasangan(p, xs, st) : null;
+  var salahIdx = {};
+  if (hasil) {
+    hasil.salah.forEach(function (s) {
+      salahIdx[s.i] = true;
+    });
+  }
+  var lx = opts.labelX ? opts.labelX + ' (' + v.x + ')' : v.x;
+  var ly = opts.labelY ? opts.labelY + ' (' + v.y + ')' : v.y;
+  var head =
+    '<tr><th scope="col">' +
+    esc(lx) +
+    '</th><th scope="col">' +
+    esc(ly) +
+    '</th>' +
+    (selesai
+      ? '<th scope="col">Cek: ' +
+        esc(teksPldv(p).split(' = ')[0]) +
+        '</th><th scope="col">Bilangan cacah?</th>'
+      : '') +
+    '</tr>';
+  var rows = xs
+    .map(function (x, i) {
+      var y = yDariXPldv(p, x);
+      var yCell = selesai
+        ? fmtSuku(y)
+        : inputPldv_(
+            id + '-y-' + i,
+            'data-tpp-y',
+            i,
+            st.y[i],
+            v.y + ' saat ' + v.x + ' = ' + fmtSuku(x),
+            !!salahIdx[i],
+            false
+          );
+      var cacah = Number.isInteger(y) && y >= 0;
+      return (
+        '<tr' +
+        (selesai && !cacah ? ' class="pldv-tabel__baris--pecah"' : '') +
+        '><th scope="row">' +
+        fmtSuku(x) +
+        '</th><td>' +
+        yCell +
+        '</td>' +
+        (selesai
+          ? '<td class="pldv-tabel__subst">' +
+            esc(teksSubstitusiPldv(p, x, y)) +
+            ' ✓</td><td>' +
+            (cacah ? '✓ ya' : '✗ tidak') +
+            '</td>'
+          : '') +
+        '</tr>'
+      );
+    })
+    .join('');
+  return (
+    '<div class="pldv-tabel-wrap"><table class="pldv-tabel" id="' +
+    id +
+    '">' +
+    (opts.caption ? '<caption>' + esc(opts.caption) + '</caption>' : '') +
+    '<thead>' +
+    head +
+    '</thead><tbody>' +
+    rows +
+    '</tbody></table></div>'
+  );
+}
+
+/* Pesan diagnosa (HTML) per baris salah. */
+function pesanTabelPasangan(p, xs, hasil) {
+  var v = varPldv_(p);
+  return hasil.salah.map(function (s) {
+    return (
+      '<strong>' +
+      esc(v.x) +
+      ' = ' +
+      fmtSuku(xs[s.i]) +
+      ':</strong> ' +
+      pesanYPldv(s.kode, p, xs[s.i])
+    );
+  });
+}
+
+function bindTabelPasangan(root, id, st, save) {
+  var tabel = root.querySelector('#' + id);
+  if (!tabel) return;
+  tabel.querySelectorAll('[data-tpp-y]').forEach(function (inp) {
+    inp.addEventListener('input', function () {
+      st.y[inp.dataset.tppY] = inp.value;
+      st.checked = false;
+      save();
+    });
+  });
+}
+
+/* ---------- Bidang pasangan ---------- */
+
+/*
+ * Bidang koordinat kuadran I: setiap seri { pers, label } digambar
+ * sebagai garis putus-putus PLDV (bagian x, y ≥ 0) dan titik-titik
+ * pasangan cacahnya. opts.maks (sumbu 0…maks), opts.sorot {x, y}
+ * (titik yang ditonjolkan), opts.caption, opts.xLabel, opts.yLabel.
+ */
+function buildBidangPasangan(seri, opts) {
+  opts = opts || {};
+  var maks = opts.maks || 10;
+  var sumbu = { min: 0, max: maks, step: maks > 12 ? 2 : 1 };
+  var ax = asoSumbuDari_([], { x: sumbu, y: sumbu });
+  var s = asoSkala_(ax.x, ax.y);
+  var garis = '';
+  var titik = '';
+  seri.forEach(function (sr, k) {
+    var p = sr.pers;
+    var ujung = [];
+    [
+      [0, yDariXPldv(p, 0)],
+      [maks, yDariXPldv(p, maks)],
+      [xDariYPldv(p, 0), 0],
+      [xDariYPldv(p, maks), maks],
+    ].forEach(function (t) {
+      if (t[0] === null || t[1] === null) return;
+      if (t[0] < -1e-9 || t[0] > maks + 1e-9 || t[1] < -1e-9 || t[1] > maks + 1e-9) return;
+      ujung.push(t);
+    });
+    ujung.sort(function (a, b) {
+      return a[0] - b[0];
+    });
+    if (ujung.length >= 2) {
+      var u1 = ujung[0];
+      var u2 = ujung[ujung.length - 1];
+      garis +=
+        '<line class="pldv-garis pldv-garis--' +
+        k +
+        '" x1="' +
+        s.x(u1[0]) +
+        '" y1="' +
+        s.y(u1[1]) +
+        '" x2="' +
+        s.x(u2[0]) +
+        '" y2="' +
+        s.y(u2[1]) +
+        '"/>';
+    }
+    pasanganBulatPldv(p, maks)
+      .filter(function (t) {
+        return t.y <= maks;
+      })
+      .forEach(function (t) {
+        titik +=
+          k === 0
+            ? '<circle class="pldv-titik pldv-titik--0" cx="' +
+              s.x(t.x) +
+              '" cy="' +
+              s.y(t.y) +
+              '" r="6"/>'
+            : '<rect class="pldv-titik pldv-titik--1" x="' +
+              (s.x(t.x) - 5) +
+              '" y="' +
+              (s.y(t.y) - 5) +
+              '" width="10" height="10"/>';
+      });
+  });
+  var sorot = '';
+  if (opts.sorot) {
+    sorot =
+      '<circle class="pldv-sorot" cx="' +
+      s.x(opts.sorot.x) +
+      '" cy="' +
+      s.y(opts.sorot.y) +
+      '" r="11"/>';
+  }
+  var legenda = seri
+    .map(function (sr, k) {
+      return (
+        '<span><i class="pldv-legenda__tanda pldv-legenda__tanda--' +
+        k +
+        '" aria-hidden="true"></i>' +
+        esc(sr.label) +
+        '</span>'
+      );
+    })
+    .join('');
+  return (
+    '<figure class="pldv-bidang">' +
+    '<svg class="aso-plot" viewBox="0 0 ' +
+    ASO_PLOT.W +
+    ' ' +
+    ASO_PLOT.H +
+    '" role="img" aria-label="' +
+    esc(opts.caption || 'Bidang koordinat pasangan nilai') +
+    '">' +
+    asoKerangka_(ax.x, ax.y, s, { xLabel: opts.xLabel || 'x', yLabel: opts.yLabel || 'y' }) +
+    garis +
+    titik +
+    sorot +
+    '</svg>' +
+    '<figcaption class="pldv-legenda">' +
+    legenda +
+    '</figcaption>' +
+    '</figure>'
+  );
+}
+
+/* ---------- Lab SPLDV ---------- */
+
+/*
+ * cfg = { maks, sistem: [{ id, judul, pers: [p1, p2], labelX?, labelY? }] }.
+ * temuan dicatat sebagai '<id sistem>:satu' | ':dua' | ':keduanya'.
+ */
+function makeLabSpldvState() {
+  return { sistem: '', x: 0, y: 0, temuan: {} };
+}
+
+function sistemLabSpldv(st, cfg) {
+  for (var i = 0; i < cfg.sistem.length; i++) {
+    if (cfg.sistem[i].id === st.sistem) return cfg.sistem[i];
+  }
+  return cfg.sistem[0];
+}
+
+function catatLabSpldv_(st, cfg) {
+  var S = sistemLabSpldv(st, cfg);
+  var m = memenuhiSpldv(S.pers, st.x, st.y);
+  if (m.keduanya) st.temuan[S.id + ':keduanya'] = true;
+  else if (m.satu) st.temuan[S.id + ':satu'] = true;
+  else if (m.dua) st.temuan[S.id + ':dua'] = true;
+}
+
+/* aksi: 'x' | 'y' (nilai = langkah ±n), 'sistem' (nilai = id sistem). */
+function ubahLabSpldv(st, cfg, aksi, nilai) {
+  if (aksi === 'sistem') {
+    var ada = cfg.sistem.some(function (S) {
+      return S.id === nilai;
+    });
+    if (ada) st.sistem = nilai;
+  } else if (aksi === 'x' || aksi === 'y') {
+    st[aksi] = Math.max(0, Math.min(cfg.maks, st[aksi] + (nilai || 0)));
+  }
+  catatLabSpldv_(st, cfg);
+  return st;
+}
+
+/* Sistem pertama: temukan pasangan "hanya pers. 1", "hanya pers. 2", "keduanya"; sistem lain: "keduanya". */
+function labSpldvSelesai(st, cfg) {
+  return cfg.sistem.every(function (S, i) {
+    var perlu = i === 0 ? ['satu', 'dua', 'keduanya'] : ['keduanya'];
+    return perlu.every(function (j) {
+      return !!st.temuan[S.id + ':' + j];
+    });
+  });
+}
+
+function buildLabSpldv(id, st, cfg, opts) {
+  opts = opts || {};
+  var S = sistemLabSpldv(st, cfg);
+  var v = varPldv_(S.pers[0]);
+  var m = memenuhiSpldv(S.pers, st.x, st.y);
+
+  var tombolSistem = cfg.sistem
+    .map(function (T) {
+      var aktif = T.id === S.id;
+      return (
+        '<button type="button" class="btn btn--small ' +
+        (aktif ? 'btn--primary' : 'btn--ghost') +
+        '" data-spl-sistem="' +
+        esc(T.id) +
+        '" aria-pressed="' +
+        aktif +
+        '">' +
+        esc(T.judul) +
+        '</button>'
+      );
+    })
+    .join('');
+
+  function pengatur(k, label) {
+    return (
+      '<div class="pldv-lab__pengatur">' +
+      '<span class="pldv-lab__nama">' +
+      esc(label) +
+      '</span>' +
+      '<button type="button" class="btn btn--ghost btn--small" data-spl-ubah="' +
+      k +
+      '" data-step="-1" aria-label="Kurangi ' +
+      esc(label) +
+      '"' +
+      (st[k] <= 0 ? ' disabled' : '') +
+      '>−</button>' +
+      '<output class="pldv-lab__nilai" aria-live="polite">' +
+      fmtSuku(st[k]) +
+      '</output>' +
+      '<button type="button" class="btn btn--ghost btn--small" data-spl-ubah="' +
+      k +
+      '" data-step="1" aria-label="Tambah ' +
+      esc(label) +
+      '"' +
+      (st[k] >= cfg.maks ? ' disabled' : '') +
+      '>+</button>' +
+      '</div>'
+    );
+  }
+
+  var cek = S.pers
+    .map(function (p, i) {
+      var ok = memenuhiPldv(p, st.x, st.y);
+      return (
+        '<li class="pldv-lab__cek' +
+        (ok ? ' pldv-lab__cek--ok' : '') +
+        '"><span class="pldv-lab__pers">' +
+        esc(teksPldv(p)) +
+        '</span><span class="pldv-lab__subst">' +
+        esc(teksSubstitusiPldv(p, st.x, st.y)) +
+        ' ' +
+        (ok ? '= ' + fmtSuku(p.c) + ' ✓' : '≠ ' + fmtSuku(p.c) + ' ✗') +
+        '</span><span class="sr-only">' +
+        (ok ? 'Persamaan ' + (i + 1) + ' terpenuhi' : 'Persamaan ' + (i + 1) + ' tidak terpenuhi') +
+        '</span></li>'
+      );
+    })
+    .join('');
+
+  var temuan;
+  if (m.keduanya)
+    temuan =
+      '🎯 (' +
+      fmtSuku(st.x) +
+      ', ' +
+      fmtSuku(st.y) +
+      ') memenuhi <strong>kedua</strong> persamaan — inilah penyelesaian SPLDV.';
+  else if (m.satu || m.dua)
+    temuan =
+      '½ (' +
+      fmtSuku(st.x) +
+      ', ' +
+      fmtSuku(st.y) +
+      ') hanya memenuhi persamaan ' +
+      (m.satu ? '1' : '2') +
+      '.';
+  else temuan = '✗ Pasangan ini belum memenuhi persamaan mana pun.';
+
+  return (
+    '<div class="pldv-lab" id="' +
+    id +
+    '">' +
+    '<div class="pldv-lab__sistem" role="group" aria-label="Pilih sistem persamaan">' +
+    tombolSistem +
+    '</div>' +
+    (S.cerita ? '<p class="pldv-lab__cerita">' + esc(S.cerita) + '</p>' : '') +
+    '<div class="pldv-lab__isi">' +
+    '<div class="pldv-lab__kontrol">' +
+    pengatur('x', v.x + (S.labelX ? ' (' + S.labelX + ')' : '')) +
+    pengatur('y', v.y + (S.labelY ? ' (' + S.labelY + ')' : '')) +
+    '<ul class="pldv-lab__daftar">' +
+    cek +
+    '</ul>' +
+    '<p class="pldv-lab__temuan" aria-live="polite">' +
+    temuan +
+    '</p>' +
+    '</div>' +
+    buildBidangPasangan(
+      S.pers.map(function (p, i) {
+        return { pers: p, label: 'Persamaan ' + (i + 1) + ': ' + teksPldv(p) };
+      }),
+      {
+        maks: cfg.maks,
+        sorot: { x: st.x, y: st.y },
+        xLabel: v.x,
+        yLabel: v.y,
+        caption: 'Garis kedua persamaan dan titik (' + st.x + ', ' + st.y + ')',
+      }
+    ) +
+    '</div>' +
+    (opts.checklist || '') +
+    '</div>'
+  );
+}
+
+function bindLabSpldv(root, id, st, cfg, onChange) {
+  var lab = root.querySelector('#' + id);
+  if (!lab) return;
+  lab.querySelectorAll('[data-spl-sistem]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      ubahLabSpldv(st, cfg, 'sistem', btn.dataset.splSistem);
+      onChange();
+    });
+  });
+  lab.querySelectorAll('[data-spl-ubah]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      ubahLabSpldv(st, cfg, btn.dataset.splUbah, parseInt(btn.dataset.step, 10));
+      onChange();
+    });
+  });
 }
