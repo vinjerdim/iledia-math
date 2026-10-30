@@ -319,6 +319,14 @@
     "stageCount": 9,
     "extraBody": "partials/reset-modal.html"
   },
+  "fase-d/mpi-17.1": {
+    "title": "Unsur-unsur Lingkaran pada Benda & Gambar di Sekitar — Matematika Fase D",
+    "description": "Media pembelajaran interaktif berbasis Discovery Learning untuk mengidentifikasi unsur-unsur lingkaran (titik pusat, jari-jari, diameter, tali busur, busur, juring, tembereng) pada benda dan gambar di lingkungan sekitar: Lab Lingkaran pada tutup panci (memutar titik untuk membuat ruas, garis lengkung, dan daerah, lalu mencatat bentuk, batas, panjang, dan apakah melewati pusat), tabel pengamatan, pertanyaan penuntun dan pemilahan gambar jam, roda, pizza, semangka, bianglala, dan kipas, verifikasi pada benda acak, menyusun definisi, serta uji terap acak berdiagnosa miskonsepsi.",
+    "kicker": "Matematika — Fase D (SMP)",
+    "h1": "Unsur-unsur Lingkaran pada Benda & Gambar di Sekitar",
+    "stageCount": 10,
+    "extraBody": "partials/reset-modal.html"
+  },
   "fase-d/mpi-22.1": {
     "title": "Unsur-unsur & Jaring-jaring Prisma — Matematika Fase D",
     "description": "Media pembelajaran interaktif berbasis Discovery Learning untuk mengidentifikasi unsur-unsur prisma (titik sudut, rusuk, sisi, dan tinggi) serta jaring-jaring prisma melalui kegiatan memutar model 3D, melipat, dan merakit bentangan karton kemasan.",

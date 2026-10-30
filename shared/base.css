@@ -17514,3 +17514,303 @@ button.akar-tile:disabled {
   border-radius: var(--radius-md);
   background: var(--color-primary-soft);
 }
+
+/* ============================================================
+   UNSUR-UNSUR LINGKARAN (.lkr-*) — engine seksi 84
+   Gambar lingkaran bernomor, Lab Lingkaran, misi, dan tabel
+   pengamatan. Dipakai fase-d/mpi-17.1.
+   ============================================================ */
+
+.lkr-svg {
+  display: block;
+  width: 100%;
+  max-width: 320px;
+  height: auto;
+  margin: 0 auto;
+  overflow: visible;
+}
+
+.lkr-svg--kecil {
+  max-width: 170px;
+}
+
+.lkr-lingkaran {
+  fill: none;
+  stroke: var(--color-ink);
+  stroke-width: 2.5;
+}
+
+.lkr-pusat,
+.lkr-titik {
+  fill: var(--color-ink);
+}
+
+.lkr-nama {
+  fill: var(--color-ink);
+  font-family: var(--font-body);
+  font-size: 15px;
+  font-weight: 700;
+  text-anchor: middle;
+}
+
+.lkr-ruas {
+  stroke: var(--color-blue);
+  stroke-width: 4;
+  stroke-linecap: round;
+}
+
+.lkr-busur {
+  fill: none;
+  stroke: var(--color-purple);
+  stroke-width: 7;
+  stroke-linecap: round;
+}
+
+.lkr-daerah {
+  stroke-width: 2;
+  stroke-linejoin: round;
+}
+
+.lkr-daerah--juring {
+  fill: var(--color-blue-soft);
+  stroke: var(--color-blue);
+}
+
+.lkr-daerah--tembereng {
+  fill: var(--color-purple-soft);
+  stroke: var(--color-purple);
+}
+
+/* Unsur yang sedang diamati/ditanyakan selalu oranye */
+.lkr-ruas.lkr-sorot,
+.lkr-busur.lkr-sorot {
+  stroke: var(--color-orange);
+}
+
+.lkr-daerah.lkr-sorot {
+  fill: var(--color-orange-soft);
+  stroke: var(--color-orange);
+  stroke-width: 3;
+}
+
+.lkr-titik.lkr-sorot {
+  fill: var(--color-orange);
+}
+
+.lkr-tag circle {
+  fill: var(--color-surface);
+  stroke: var(--color-ink);
+  stroke-width: 2;
+}
+
+.lkr-tag text {
+  fill: var(--color-ink);
+  font-family: var(--font-body);
+  font-size: 14px;
+  font-weight: 700;
+  text-anchor: middle;
+}
+
+/* Latar benda nyata */
+.lkr-dekor__isi {
+  fill: var(--color-bg-grid);
+}
+
+.lkr-dekor--pizza .lkr-dekor__isi {
+  fill: var(--color-warning-soft);
+}
+
+.lkr-dekor--semangka .lkr-dekor__isi {
+  fill: var(--color-success-soft);
+}
+
+.lkr-dekor--kipas .lkr-dekor__isi,
+.lkr-dekor--tutup .lkr-dekor__isi {
+  fill: var(--color-surface);
+}
+
+.lkr-dekor__daging {
+  fill: var(--color-error-soft);
+}
+
+.lkr-dekor__bulat {
+  fill: var(--color-error-soft);
+  stroke: var(--color-error);
+  stroke-width: 1.5;
+}
+
+.lkr-dekor__garis {
+  fill: none;
+  stroke: var(--color-border-strong);
+  stroke-width: 2;
+}
+
+.lkr-dekor__ban {
+  fill: none;
+  stroke: var(--color-ink-muted);
+  stroke-width: 8;
+}
+
+.lkr-dekor__kabin {
+  fill: var(--color-warning-soft);
+  stroke: var(--color-warning);
+  stroke-width: 1.5;
+}
+
+/* Lab Lingkaran */
+.lkr-lab {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: var(--space-4);
+  align-items: start;
+}
+
+.lkr-lab__panel {
+  display: grid;
+  gap: var(--space-3);
+  min-width: 0;
+}
+
+.lkr-lab__grup {
+  display: grid;
+  gap: var(--space-1);
+}
+
+.lkr-lab__judul {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--color-ink-muted);
+}
+
+.lkr-lab__pils {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.lkr-pil {
+  min-height: 44px;
+  padding: var(--space-2) var(--space-3);
+  border: 2px solid var(--color-border-strong);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  color: var(--color-ink);
+  font: inherit;
+  font-size: 0.95rem;
+  cursor: pointer;
+}
+
+.lkr-pil--aktif {
+  border-color: var(--color-primary);
+  background: var(--color-primary-soft);
+  color: var(--color-primary-strong);
+  font-weight: 700;
+}
+
+.lkr-pil:focus-visible,
+.lkr-step:focus-visible {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+.lkr-lab__steppers {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+}
+
+.lkr-lab__stepper {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.lkr-step {
+  min-width: 44px;
+  min-height: 44px;
+  font-size: 1.2rem;
+}
+
+.lkr-lab__sudut {
+  min-width: 4.5em;
+  font-family: var(--font-mono);
+  font-weight: 700;
+  text-align: center;
+}
+
+.lkr-lab__info {
+  padding: var(--space-3);
+  border: 2px solid var(--color-orange);
+  border-radius: var(--radius-md);
+  background: var(--color-orange-soft);
+}
+
+.lkr-lab__nama {
+  margin: 0 0 var(--space-1);
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--color-orange-strong);
+}
+
+.lkr-lab__sifat {
+  margin: 0;
+  padding-left: 1.2em;
+}
+
+.lkr-misi {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.lkr-misi__item {
+  display: flex;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+}
+
+.lkr-misi__item--ok {
+  border-color: var(--color-success);
+  background: var(--color-success-soft);
+}
+
+/* Tabel pengamatan */
+.lkr-tabel-wrap {
+  overflow-x: auto;
+}
+
+.lkr-tabel {
+  width: 100%;
+  min-width: 520px;
+  border-collapse: collapse;
+  font-size: 0.92rem;
+}
+
+.lkr-tabel th,
+.lkr-tabel td {
+  padding: var(--space-2);
+  border: 1px solid var(--color-border);
+  text-align: left;
+  vertical-align: top;
+}
+
+.lkr-tabel thead th {
+  background: var(--color-blue-soft);
+}
+
+.lkr-kosong {
+  margin: 0;
+  color: var(--color-ink-muted);
+  font-style: italic;
+}
+
+@media (max-width: 720px) {
+  .lkr-lab {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

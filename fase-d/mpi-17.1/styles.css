@@ -1,0 +1,161 @@
+/* =========================================================================
+   fase-d/mpi-17.1/styles.css
+   Unsur-unsur Lingkaran pada Benda & Gambar di Sekitar —
+   Fase D (SMP Kelas VIII), Discovery Learning
+
+   Hanya memuat gaya yang KHAS modul ini (kartu benda stimulasi, cerita,
+   tata letak benda verifikasi, navigasi & pembahasan uji terap). Dasar
+   design system — panel, tombol, umpan balik, pilihan ganda, petunjuk,
+   pemilahan, gambar lingkaran, Lab Lingkaran & tabel pengamatan
+   (.lkr-*), kartu istilah, perbandingan dugaan, kartu ringkasan,
+   navigasi tahap, modal — berasal dari shared/base.css.
+   ========================================================================= */
+
+/* Stimulasi: kartu benda bundar */
+.ul-kartu-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: var(--space-3);
+  margin-top: var(--space-3);
+}
+
+.ul-kartu {
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--color-border);
+  border-left: 4px solid var(--color-orange);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+}
+
+.ul-kartu__ikon {
+  font-size: 1.8rem;
+}
+
+.ul-kartu__judul {
+  margin: var(--space-1) 0;
+}
+
+.ul-kartu__teks {
+  margin: 0;
+}
+
+.ul-cerita {
+  margin: 0 0 var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  border-left: 4px solid var(--color-blue);
+  border-radius: var(--radius-sm);
+  background: var(--color-blue-soft);
+}
+
+/* Kartu istilah berisi kalimat, bukan rumus: huruf biasa, rata kiri */
+.ul-istilah {
+  max-width: 900px;
+}
+
+.ul-istilah .formula-card {
+  font-family: var(--font-body);
+  font-size: 1rem;
+  font-weight: 500;
+  text-align: left;
+}
+
+/* Verifikasi: gambar benda di samping daftar bagian */
+.ul-benda {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(0, 3fr);
+  gap: var(--space-4);
+  align-items: start;
+  margin-bottom: var(--space-3);
+}
+
+.ul-benda__gambar {
+  position: sticky;
+  top: var(--space-4);
+}
+
+.ul-benda__nama {
+  margin: 0 0 var(--space-2);
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+
+.ul-benda__soal {
+  min-width: 0;
+}
+
+.ul-soal-gambar {
+  margin-bottom: var(--space-3);
+}
+
+/* Uji terap: navigasi soal, satuan & pembahasan */
+.ul-dots {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-bottom: var(--space-4);
+}
+
+.ul-dot {
+  width: 44px;
+  height: 44px;
+  border: 2px solid var(--color-border-strong);
+  border-radius: 50%;
+  background: var(--color-surface);
+  color: var(--color-ink);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.ul-dot--done {
+  border-color: var(--color-success);
+  background: var(--color-success-soft);
+  color: var(--color-success-strong);
+}
+
+.ul-dot--aktif {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px var(--color-primary-soft);
+}
+
+.ul-dot:focus-visible {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+.ul-kasus {
+  margin-top: 0;
+  font-weight: 700;
+  color: var(--color-ink-muted);
+}
+
+.ul-satuan {
+  align-self: center;
+  font-weight: 700;
+}
+
+.ul-bahas {
+  margin-top: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  border: 1px dashed var(--color-border-strong);
+  border-radius: var(--radius-md);
+  background: var(--color-bg);
+}
+
+.ul-bahas p {
+  margin: 0;
+}
+
+.ul-bahas p.ul-bahas__judul {
+  margin-bottom: var(--space-1);
+  font-weight: 700;
+}
+
+@media (max-width: 720px) {
+  .ul-benda {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .ul-benda__gambar {
+    position: static;
+  }
+}
