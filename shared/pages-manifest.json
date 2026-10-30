@@ -311,6 +311,14 @@
     "stageCount": 9,
     "extraBody": "partials/reset-modal.html"
   },
+  "fase-d/mpi-16.1": {
+    "title": "PLDV & SPLDV pada Situasi Kontekstual — Matematika Fase D",
+    "description": "Media pembelajaran interaktif berbasis Discovery Learning untuk mengidentifikasi unsur-unsur (variabel, koefisien, konstanta) dan menentukan pasangan nilai yang memenuhi persamaan linear dua variabel serta sistem persamaan linear dua variabel pada situasi kontekstual Koperasi Sekolah: kartu unsur berdiagnosa, tabel pasangan dengan cek substitusi, bidang koordinat, Lab SPLDV (roti & susu, parkir motor & mobil), pemilahan jebakan miskonsepsi, dan uji terap kontekstual.",
+    "kicker": "Matematika — Fase D (SMP)",
+    "h1": "PLDV & SPLDV pada Situasi Kontekstual",
+    "stageCount": 9,
+    "extraBody": "partials/reset-modal.html"
+  },
   "fase-d/mpi-22.1": {
     "title": "Unsur-unsur & Jaring-jaring Prisma — Matematika Fase D",
     "description": "Media pembelajaran interaktif berbasis Discovery Learning untuk mengidentifikasi unsur-unsur prisma (titik sudut, rusuk, sisi, dan tinggi) serta jaring-jaring prisma melalui kegiatan memutar model 3D, melipat, dan merakit bentangan karton kemasan.",

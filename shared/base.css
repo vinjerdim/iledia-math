@@ -17247,3 +17247,270 @@ button.akar-tile:disabled {
   border-radius: var(--radius-md);
   background: var(--color-primary-soft);
 }
+
+/* ============================================================
+   PLDV & SPLDV (engine seksi 83; dipakai fase-d/mpi-16.1):
+   kartu unsur, tabel pasangan, bidang pasangan, Lab SPLDV
+   ============================================================ */
+
+.pldv-persamaan {
+  margin: 0 0 var(--space-3);
+  font-family: var(--font-mono);
+  font-size: 1.35rem;
+  font-weight: 700;
+  text-align: center;
+  color: var(--color-primary-strong);
+  overflow-wrap: anywhere;
+}
+
+.pldv-unsur__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: var(--space-3);
+}
+
+.pldv-unsur__sel {
+  display: grid;
+  gap: var(--space-1);
+}
+
+.pldv-unsur__nama {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--color-ink-muted);
+}
+
+.pldv-isian {
+  width: 100%;
+  min-width: 4rem;
+  font-family: var(--font-mono);
+  text-align: center;
+}
+
+.pldv-tabel-wrap {
+  max-width: 100%;
+  overflow-x: auto;
+  margin: var(--space-3) 0;
+}
+
+.pldv-tabel {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: var(--font-mono);
+  font-size: 0.95rem;
+  background: var(--color-surface);
+}
+
+.pldv-tabel caption {
+  padding-bottom: var(--space-2);
+  font-family: var(--font-body);
+  font-size: 0.85rem;
+  color: var(--color-ink-muted);
+  text-align: left;
+}
+
+.pldv-tabel th,
+.pldv-tabel td {
+  padding: var(--space-2);
+  border: 1px solid var(--color-border);
+  text-align: center;
+  vertical-align: middle;
+}
+
+.pldv-tabel thead th {
+  background: var(--color-blue-soft);
+  color: var(--color-blue-strong);
+  font-family: var(--font-body);
+  font-size: 0.85rem;
+}
+
+.pldv-tabel tbody th {
+  background: var(--color-bg);
+}
+
+.pldv-tabel .pldv-isian {
+  max-width: 7rem;
+}
+
+.pldv-tabel__subst {
+  font-size: 0.85rem;
+  color: var(--color-success-strong);
+}
+
+.pldv-tabel__baris--pecah td,
+.pldv-tabel__baris--pecah th {
+  color: var(--color-ink-muted);
+  background: var(--color-warning-soft);
+}
+
+.pldv-bidang {
+  margin: 0;
+}
+
+.pldv-bidang .aso-plot {
+  display: block;
+  margin: 0 auto;
+}
+
+.pldv-garis {
+  stroke-width: 2.5;
+  stroke-dasharray: 7 5;
+}
+
+.pldv-garis--0 {
+  stroke: var(--color-blue);
+}
+
+.pldv-garis--1 {
+  stroke: var(--color-orange);
+}
+
+.pldv-titik--0 {
+  fill: var(--color-blue);
+  stroke: #fff;
+  stroke-width: 1.5;
+}
+
+.pldv-titik--1 {
+  fill: var(--color-orange);
+  stroke: #fff;
+  stroke-width: 1.5;
+}
+
+.pldv-sorot {
+  fill: none;
+  stroke: var(--color-success-strong);
+  stroke-width: 3.5;
+}
+
+.pldv-legenda {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--space-2) var(--space-4);
+  margin-top: var(--space-2);
+  font-family: var(--font-mono);
+  font-size: 0.9rem;
+}
+
+.pldv-legenda span {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.pldv-legenda__tanda {
+  display: inline-block;
+  width: 0.8rem;
+  height: 0.8rem;
+}
+
+.pldv-legenda__tanda--0 {
+  border-radius: 50%;
+  background: var(--color-blue);
+}
+
+.pldv-legenda__tanda--1 {
+  background: var(--color-orange);
+}
+
+.pldv-lab {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.pldv-lab__sistem {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.pldv-lab__cerita {
+  margin: 0;
+  padding: var(--space-2) var(--space-3);
+  border-left: 4px solid var(--color-blue);
+  border-radius: var(--radius-sm);
+  background: var(--color-blue-soft);
+}
+
+.pldv-lab__isi {
+  display: grid;
+  gap: var(--space-3);
+  align-items: start;
+}
+
+@media (min-width: 760px) {
+  .pldv-lab__isi {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr);
+  }
+}
+
+.pldv-lab__kontrol {
+  display: grid;
+  gap: var(--space-3);
+  min-width: 0;
+}
+
+.pldv-lab__pengatur {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-1) var(--space-2);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+}
+
+.pldv-lab__nama {
+  flex: 1 1 8rem;
+  font-family: var(--font-mono);
+  font-weight: 700;
+}
+
+.pldv-lab__nilai {
+  min-width: 2.5rem;
+  font-family: var(--font-mono);
+  font-size: 1.2rem;
+  font-weight: 700;
+  text-align: center;
+}
+
+.pldv-lab__daftar {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.pldv-lab__cek {
+  display: grid;
+  gap: var(--space-1);
+  padding: var(--space-2) var(--space-3);
+  border: 2px solid var(--color-error);
+  border-radius: var(--radius-md);
+  background: var(--color-error-soft);
+  font-family: var(--font-mono);
+  overflow-wrap: anywhere;
+}
+
+.pldv-lab__cek--ok {
+  border-color: var(--color-success);
+  background: var(--color-success-soft);
+}
+
+.pldv-lab__pers {
+  font-weight: 700;
+}
+
+.pldv-lab__subst {
+  font-size: 0.9rem;
+}
+
+.pldv-lab__temuan {
+  margin: 0;
+  padding: var(--space-3);
+  border-radius: var(--radius-md);
+  background: var(--color-primary-soft);
+}
