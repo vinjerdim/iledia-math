@@ -48,7 +48,7 @@
                              bersesuaian, membandingkan dugaan awal,
                              memilah pernyataan benar/salah.
      6. Generalisasi (4')  — menyusun definisi & syarat.
-     7. Uji terap    (10') — delapan soal diambil acak dari bank tujuh
+     7. Uji terap    (10') — delapan soal diambil acak dari bank sembilan
                              belas soal (sisi, sudut, jenis, pilihan,
                              isian).
      8. Refleksi     (2')  — rekap, refleksi tertulis, penilaian diri.
