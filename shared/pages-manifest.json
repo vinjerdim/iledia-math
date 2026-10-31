@@ -343,6 +343,14 @@
     "stageCount": 11,
     "extraBody": "partials/reset-modal.html"
   },
+  "fase-d/mpi-20.1": {
+    "title": "Rerata (Mean) Data Tunggal — Matematika Fase D",
+    "description": "Media pembelajaran interaktif berbasis Discovery Learning untuk menentukan dan menafsirkan rerata (mean) data tunggal pada konteks sehari-hari: lomba bank sampah dua kelompok berbeda ukuran, Lab Ratakan Menara (memindahkan balok buku antarmenara sampai rata, termasuk data bernilai 0 dan sisa balok yang menghasilkan desimal), menemukan rumus rerata = jumlah ÷ banyak data dengan isian berdiagnosa miskonsepsi, Lab Titik Seimbang (menggeser penyangga papan berdiagram titik dan mengamati pengaruh pencilan), pemilahan tafsiran, pembuktian pada data baru acak, menyusun kesimpulan, serta uji terap acak.",
+    "kicker": "Matematika — Fase D (SMP)",
+    "h1": "Rerata (Mean) Data Tunggal",
+    "stageCount": 10,
+    "extraBody": "partials/reset-modal.html"
+  },
   "fase-d/mpi-22.1": {
     "title": "Unsur-unsur & Jaring-jaring Prisma — Matematika Fase D",
     "description": "Media pembelajaran interaktif berbasis Discovery Learning untuk mengidentifikasi unsur-unsur prisma (titik sudut, rusuk, sisi, dan tinggi) serta jaring-jaring prisma melalui kegiatan memutar model 3D, melipat, dan merakit bentangan karton kemasan.",
