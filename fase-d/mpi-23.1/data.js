@@ -2,1459 +2,1238 @@
 
 /* ============================================================
    data.js — Konten media pembelajaran
-   Matematika: Keliling & Luas Bangun Datar — Fase D, SMP Kelas VII
+   Matematika: Unsur & Jaring-jaring Tabung, Kerucut, dan Bola
+   Fase D — SMP Kelas IX · Topik 23 Tabung, Kerucut, dan Bola
 
    Tujuan Pembelajaran:
-   Menentukan keliling dan luas segitiga, persegi, persegi panjang,
-   jajargenjang, trapesium, belah ketupat, dan layang-layang melalui
-   kegiatan eksplorasi.
+   Mengidentifikasi unsur-unsur dan jaring-jaring tabung, kerucut, dan
+   bola pada benda di sekitar serta mengaitkannya dengan konsep luas
+   permukaan dan volume.
 
-   Model pembelajaran: DISCOVERY LEARNING (Penemuan Terbimbing),
-   didahului ASESMEN DIAGNOSTIK prasyarat.
+   Model pembelajaran: DISCOVERY LEARNING (Penemuan Terbimbing).
    Pemetaan sintaks ke tahap media:
 
-     Asesmen diagnostik ................ 'diagnostik'
-     Sintaks 1 — Stimulation ........... 'stimulasi'
-     Sintaks 2 — Problem statement ..... 'masalah'
-     Sintaks 3 — Data collection ....... 'koleksi'
-     Sintaks 4 — Data processing ....... 'olahPersegi', 'olahJajar',
-                                         'olahTrapesium' & 'olahDiagonal'
-     Sintaks 5 — Verification .......... 'verifikasi'
-     Sintaks 6 — Generalization ........ 'generalisasi'
-     Penerapan & penutup ............... 'terapkan', 'refleksi', 'selesai'
+     Sintaks 1 — Stimulation ............ 'stimulasi'
+     Sintaks 2 — Problem statement ...... 'masalah'
+     Sintaks 3 — Data collection ........ 'amati', 'bentang', 'bola'
+     Sintaks 4 — Data processing ........ 'olahLuas', 'tuang'
+     Sintaks 5 — Verification ........... 'verifikasi'
+     Sintaks 6 — Generalization ......... 'generalisasi'
+     Penerapan & penutup ................ 'terapkan', 'refleksi', 'selesai'
 
    Rangkaian aktivitas (± 3 × 40 menit, murid berpasangan):
-     0. Diagnostik   (8')  — sembilan butir prasyarat (nama & sifat
-                             bangun, keliling sebagai panjang tepi, luas
-                             sebagai banyak petak, satuan, tinggi,
-                             perkalian & setengah). Tidak dinilai; hasilnya
-                             berupa profil kesiapan per indikator + saran.
-     1. Stimulasi    (7')  — "Proyek Taman Sekolah Kelas VII": denah tujuh
-                             petak taman berbentuk bangun datar. Murid
-                             MENDUGA pagar (keliling) & rumput (luas) yang
-                             diperlukan (tidak dinilai).
-     2. Masalah      (5')  — memilih pertanyaan inti penyelidikan lalu
-                             menulis hipotesis.
-     3. Lab Petak    (15') — mengatur ukuran persegi panjang & persegi,
-                             menyalakan petak & ruas satuan, MENGHITUNG
-                             lalu MENCATAT keliling dan luas (isian
-                             berdiagnosa: keliling ↔ luas tertukar, dsb.).
-     4a. Olah Persegi(10') — menemukan K = 2 × (p + l), L = p × l, dan
-                             kasus khusus persegi dari catatan sendiri.
-     4b. Olah Jajar  (15') — Lab Potong-Susun: jajargenjang dipotong-geser
-                             menjadi persegi panjang (L = a × t); dua
-                             segitiga sama menjadi jajargenjang
-                             (L = ½ × a × t).
-     4c. Olah Trap.  (10') — dua trapesium sama menjadi jajargenjang
-                             beralas a + b (L = ½ × (a + b) × t).
-     4d. Olah Diag.  (10') — belah ketupat & layang-layang dalam persegi
-                             panjang d₁ × d₂ (L = ½ × d₁ × d₂).
-     5. Verifikasi   (10') — memilah rumus luas untuk tujuh bangun baru,
-                             menilai pernyataan, membandingkan dugaan awal
-                             dan hipotesis dengan data.
-     6. Generalisasi (5')  — menyusun kesimpulan dari bank kalimat acak.
-     7. Uji terap    (12') — delapan soal diambil acak dari bank enam belas
-                             soal (isian berdiagnosa & pilihan ganda
-                             berpengecoh miskonsepsi).
-     8. Refleksi     (3')  — rekap, refleksi tertulis, penilaian diri.
+     1. Stimulasi    (8')  — Pojok Kemasan Koperasi Sekolah: delapan benda
+                             (kaleng susu, pipa paralon, cone es krim,
+                             topi ulang tahun, tumpeng, bola voli, kelereng,
+                             jeruk). Murid MENDUGA bentuk label kaleng dan
+                             topi bila dibuka (tidak dinilai).
+     2. Masalah      (5')  — memilih rumusan masalah & menulis hipotesis.
+     3. Lab Unsur    (15') — memiringkan model tabung, kerucut, bola;
+                             mengetuk sisi, jari-jari, diameter, tinggi,
+                             garis pelukis, titik puncak, pusat; mengisi
+                             tabel unsur berdiagnosa; menamai unsur.
+     4. Lab Bentang  (15') — membuka selimut tabung (→ persegi panjang) dan
+                             kerucut (→ juring); menghitung keliling alas,
+                             garis pelukis, busur, dan sudut juring.
+     5. Lab Jeruk    (10') — menempel kepingan kulit jeruk pada lingkaran
+                             jiplakan → tepat 4 lingkaran; bola tidak punya
+                             jaring-jaring.
+     6. Olah Luas    (15') — luas tiap bagian jaring-jaring → rumus luas
+                             permukaan; memilah 7 rancangan jaring-jaring;
+                             menghitung luas tiga benda.
+     7. Lab Tuang    (12') — kerucut 3× tuang = tabung; bola = ⅔ tabung;
+                             mengaitkan volume tabung dengan prisma; dua
+                             hitungan volume.
+     8. Pembuktian   (15') — menguji temuan pada benda baru, prediksi lalu
+                             uji dua rancangan jaring-jaring, menanggapi
+                             miskonsepsi teman.
+     9. Simpulan     (5')  — menyusun kesimpulan dari bank kalimat acak.
+    10. Uji terap    (15') — 10 soal diambil acak dari bank 17 soal (isian
+                             berdiagnosa & pilihan ganda berpengecoh).
+    11. Refleksi     (5')  — rekap, refleksi tertulis, penilaian diri.
 
-   Notasi kunci jawaban (`cek`, lihat engine seksi 73):
-     { jenis, ukuran, minta: 'keliling' | 'luas' }
-     { jenis, ukuran, minta: 'ukuran', cari, dari: 'luas' | 'keliling' }
-     { jenis, minta: 'rumus' } → id rumus luas (RUMUS_LUAS)
-   jenis: segitiga, persegi, persegiPanjang, jajargenjang, trapesium,
-   belahKetupat, layangLayang (BANGUN_DATAR di shared/engine.js).
-   `label` pada petak & soal = label gambar untuk buildBangunSVG.
-
-   Catatan pengacakan: seluruh daftar pilihan di berkas ini ditulis
-   dalam urutan "wajar" (jawaban baku sering di urutan pertama).
-   app.js mengacaknya SEKALI saat state disiapkan (ensureShuffledOrder /
-   ensureSortStates / ensureDiagnostikStates / shuffleArray dari
-   shared/engine.js), sehingga tiap murid dan tiap Reset mendapat urutan
-   berbeda. Soal uji terap juga diambil acak dari bank dan opsi pilihan
-   gandanya dibangun engine (opsiSoalBangun) lalu diacak.
-
-   Konsistensi kunci jawaban diuji tests/mpi-23.1-data.test.js terhadap
-   engine seksi 72–73.
+   Catatan: seluruh daftar pilihan jawaban di berkas ini ditulis dalam
+   urutan "wajar" (jawaban benar sering di depan). Pengacakan dilakukan
+   app.js memakai ensureShuffledOrder()/ensureSortStates()/shuffleArray()
+   dari shared/engine.js, satu kali saat state disiapkan. Teks DATA berupa
+   teks biasa (di-escape app.js). Kunci hitungan ditulis sebagai objek
+   `cek` (shared/engine.js seksi 89) dan diuji di
+   tests/mpi-23.1-data.test.js.
    ============================================================ */
 
-var DL = 'Discovery Learning';
+var OPSI_LIPAT_TKB = [
+  { id: 'bisa', label: 'Dapat dibentuk menjadi bangun ruang' },
+  { id: 'tidak', label: 'Tidak dapat dibentuk menjadi bangun ruang' },
+];
 
 var DATA = {
-  meta: {
-    judul: 'Keliling & Luas Bangun Datar',
-  },
-
-  tahap: [
-    { id: 'diagnostik', label: 'Cek Kesiapan' },
-    { id: 'stimulasi', label: 'Stimulasi' },
-    { id: 'masalah', label: 'Masalah' },
-    { id: 'koleksi', label: 'Lab Petak' },
-    { id: 'olahPersegi', label: 'Olah Persegi' },
-    { id: 'olahJajar', label: 'Olah Jajargenjang' },
-    { id: 'olahTrapesium', label: 'Olah Trapesium' },
-    { id: 'olahDiagonal', label: 'Olah Diagonal' },
-    { id: 'verifikasi', label: 'Verifikasi' },
-    { id: 'generalisasi', label: 'Generalisasi' },
-    { id: 'terapkan', label: 'Uji Terap' },
-    { id: 'refleksi', label: 'Refleksi' },
-    { id: 'selesai', label: 'Selesai' },
-  ],
-
-  /* Label konteks soal (ikon + nama). */
-  konteks: {
-    taman: { ikon: '🌱', nama: 'Taman' },
-    rumah: { ikon: '🏠', nama: 'Rumah' },
-    sekolah: { ikon: '🏫', nama: 'Sekolah' },
-    kerajinan: { ikon: '✂️', nama: 'Kerajinan' },
-    olahraga: { ikon: '⚽', nama: 'Olahraga' },
-  },
-
-  /* ----------------------------------------------------------
-     TAHAP 0 — ASESMEN DIAGNOSTIK
-     Butir sekali-jawab berpembahasan; tidak dinilai. Hasil diringkas
-     per indikator prasyarat (ringkasDiagnostik).
-     ---------------------------------------------------------- */
-  diagnostik: {
-    kicker: 'Tahap 0 · Asesmen Diagnostik',
-    syntax: 'Asesmen Diagnostik',
-    goal: 'Mengecek bekal awal tentang bangun datar, keliling, luas, dan perhitungan sebelum mulai bereksplorasi.',
-    tp: 'Menentukan keliling dan luas segitiga, persegi, persegi panjang, jajargenjang, trapesium, belah ketupat, dan layang-layang melalui kegiatan eksplorasi.',
-    tpJudul: 'Tujuan belajar hari ini',
-    kriteria: [
-      'Membedakan keliling (panjang seluruh tepi) dan luas (banyak petak satuan yang menutupi daerah) beserta satuannya.',
-      'Menemukan rumus keliling dan luas persegi serta persegi panjang dengan menghitung ruas dan petak satuan.',
-      'Menemukan rumus luas jajargenjang, segitiga, dan trapesium dengan memotong dan menyusunnya menjadi persegi panjang atau jajargenjang.',
-      'Menemukan rumus luas belah ketupat dan layang-layang dari kedua diagonalnya.',
-      'Menentukan keliling dan luas ketujuh bangun datar untuk menyelesaikan masalah sehari-hari.',
-    ],
-    guru: 'Asesmen diagnostik dikerjakan mandiri ± 8 menit dan TIDAK masuk nilai. Gunakan profil kesiapan untuk membentuk pasangan heterogen dan menentukan murid yang perlu didampingi, misalnya yang belum membedakan keliling dan luas atau belum mengenal tinggi.',
-    judul: 'Cek kesiapan sebelum menjelajah',
-    pengantar:
-      'Jawab sembilan pertanyaan singkat berikut. Ini bukan ulangan — setiap jawaban langsung dibahas, dan hasilnya membantumu serta gurumu mengetahui bagian yang perlu diperkuat.',
-    indikator: [
-      {
-        id: 'iBangun',
-        label: 'Mengenal nama dan sifat bangun datar',
-        saran:
-          'Ulas kembali ciri tujuh bangun datar (sisi sejajar, sisi sama panjang, diagonal) dengan melihat gambar di Lab Petak dan Lab Potong-Susun.',
-      },
-      {
-        id: 'iKeliling',
-        label: 'Memahami keliling sebagai panjang tepi',
-        saran:
-          'Telusuri tepi buku atau meja dengan jari sambil menjumlahkan panjang setiap sisinya sampai kembali ke titik awal.',
-      },
-      {
-        id: 'iLuas',
-        label: 'Memahami luas sebagai banyak petak satuan',
-        saran:
-          'Hitung petak pada kertas berpetak. Ingat: luas = banyak petak yang menutupi daerah, satuannya persegi (cm², m²).',
-      },
-      {
-        id: 'iTinggi',
-        label: 'Mengenal tinggi bangun',
-        saran:
-          'Pakai pojok kertas sebagai penggaris siku: tinggi adalah garis dari puncak ke alas yang membentuk sudut siku-siku.',
-      },
-      {
-        id: 'iHitung',
-        label: 'Perkalian dan setengah dari bilangan',
-        saran:
-          'Latih perkalian dan membagi dua, mis. ½ × 8 × 5 = 4 × 5 = 20. Kerjakan yang di dalam kurung lebih dulu.',
-      },
-    ],
-    butir: [
-      {
-        id: 'dNama',
-        indikator: 'iBangun',
-        gambar: {
-          jenis: 'jajargenjang',
-          ukuran: { a: 5, t: 3, g: 2 },
-          aria: 'Gambar sebuah segi empat yang condong ke kanan.',
-        },
-        tanya: 'Apa nama bangun pada gambar ini?',
-        opsi: [
-          { id: 'jajar', label: 'Jajargenjang' },
-          { id: 'trapesium', label: 'Trapesium' },
-          { id: 'belah', label: 'Belah ketupat' },
-          { id: 'pp', label: 'Persegi panjang' },
-        ],
-        correct: 'jajar',
-        pembahasan:
-          'Jajargenjang mempunyai dua pasang sisi sejajar yang sama panjang, tetapi sudutnya tidak siku-siku.',
-      },
-      {
-        id: 'dSejajar',
-        indikator: 'iBangun',
-        tanya: 'Segi empat yang hanya mempunyai SEPASANG sisi sejajar adalah …',
-        opsi: [
-          { id: 'trapesium', label: 'Trapesium' },
-          { id: 'jajar', label: 'Jajargenjang' },
-          { id: 'layang', label: 'Layang-layang' },
-          { id: 'persegi', label: 'Persegi' },
-        ],
-        correct: 'trapesium',
-        pembahasan:
-          'Trapesium hanya mempunyai sepasang sisi sejajar. Jajargenjang dan persegi mempunyai dua pasang; layang-layang tidak punya sisi sejajar.',
-      },
-      {
-        id: 'dDiagonal',
-        indikator: 'iBangun',
-        tanya: 'Kedua diagonal belah ketupat dan kedua diagonal layang-layang sama-sama …',
-        opsi: [
-          { id: 'tegak', label: 'saling tegak lurus' },
-          { id: 'sama', label: 'sama panjang' },
-          { id: 'sejajar', label: 'sejajar' },
-          { id: 'tidak', label: 'tidak berpotongan' },
-        ],
-        correct: 'tegak',
-        pembahasan:
-          'Diagonal belah ketupat dan layang-layang berpotongan membentuk sudut siku-siku (tegak lurus). Panjangnya boleh berbeda.',
-      },
-      {
-        id: 'dPita',
-        indikator: 'iKeliling',
-        gambar: {
-          jenis: 'persegiPanjang',
-          ukuran: { p: 5, l: 3 },
-          label: { sisi: true },
-          satuan: 'm',
-        },
-        tanya:
-          'Pak Budi memasang pita di sepanjang tepi papan pengumuman ini. Berapa panjang pita yang diperlukan?',
-        opsi: [
-          { id: 'k16', label: '16 m' },
-          { id: 'k15', label: '15 m' },
-          { id: 'k8', label: '8 m' },
-          { id: 'k30', label: '30 m' },
-        ],
-        correct: 'k16',
-        pembahasan: '5 + 3 + 5 + 3 = 16 m. Keliling adalah panjang SEMUA tepi yang dijumlahkan.',
-      },
-      {
-        id: 'dPetak',
-        indikator: 'iLuas',
-        gambar: { jenis: 'persegiPanjang', ukuran: { p: 4, l: 3 }, petak: true },
-        tanya: 'Daerah ini ditutupi petak-petak satuan. Berapa banyak petaknya?',
-        opsi: [
-          { id: 'p12', label: '12 petak' },
-          { id: 'p14', label: '14 petak' },
-          { id: 'p7', label: '7 petak' },
-          { id: 'p10', label: '10 petak' },
-        ],
-        correct: 'p12',
-        pembahasan:
-          'Ada 3 baris, masing-masing 4 petak: 3 × 4 = 12 petak. Banyak petak yang menutupi daerah itulah luasnya.',
-      },
-      {
-        id: 'dSatuan',
-        indikator: 'iLuas',
-        tanya: 'Satuan yang tepat untuk menyatakan luas lantai kelas adalah …',
-        opsi: [
-          { id: 'm2', label: 'm² (meter persegi)' },
-          { id: 'm', label: 'm (meter)' },
-          { id: 'kg', label: 'kg (kilogram)' },
-          { id: 'l', label: 'L (liter)' },
-        ],
-        correct: 'm2',
-        pembahasan:
-          'Luas diukur dengan petak persegi bersisi 1 m, yaitu meter persegi (m²). Meter (m) dipakai untuk panjang dan keliling.',
-      },
-      {
-        id: 'dTinggi',
-        indikator: 'iTinggi',
-        tanya: 'Tinggi sebuah segitiga adalah …',
-        opsi: [
-          { id: 'tegak', label: 'ruas garis dari titik puncak yang tegak lurus alas' },
-          { id: 'panjang', label: 'sisi terpanjang segitiga' },
-          { id: 'miring', label: 'sisi miring di sebelah kiri' },
-          { id: 'alas', label: 'jarak dari ujung alas ke ujung alas yang lain' },
-        ],
-        correct: 'tegak',
-        pembahasan:
-          'Tinggi selalu tegak lurus (membentuk sudut siku-siku) terhadap alas. Sisi miring bukan tinggi.',
-      },
-      {
-        id: 'dSetengah',
-        indikator: 'iHitung',
-        tanya: '½ × 8 × 5 = …',
-        opsi: [
-          { id: 'h20', label: '20' },
-          { id: 'h40', label: '40' },
-          { id: 'h13', label: '13' },
-          { id: 'h6', label: '6,5' },
-        ],
-        correct: 'h20',
-        pembahasan: '½ × 8 = 4, lalu 4 × 5 = 20.',
-      },
-      {
-        id: 'dKurung',
-        indikator: 'iHitung',
-        tanya: '(6 + 4) × 3 = …',
-        opsi: [
-          { id: 'h30', label: '30' },
-          { id: 'h18', label: '18' },
-          { id: 'h13', label: '13' },
-          { id: 'h24', label: '24' },
-        ],
-        correct: 'h30',
-        pembahasan: 'Kerjakan yang di dalam kurung lebih dulu: 6 + 4 = 10, lalu 10 × 3 = 30.',
-      },
-    ],
-    pesan: {
-      siap: 'Bekalmu sudah kuat — kamu siap bereksplorasi!',
-      sebagian: 'Bekalmu cukup. Perhatikan saran pada indikator bertanda ! selama bereksplorasi.',
-      perlu:
-        'Tidak apa-apa! Baca saran di bawah dan mintalah pendampingan guru — eksplorasi hari ini akan membantumu.',
-    },
-    nextLabel: 'Lanjut: Stimulasi →',
-  },
-
   /* ----------------------------------------------------------
      TAHAP 1 — STIMULASI
-     Dugaan TIDAK dinilai; dibandingkan dengan data pada tahap
-     Verifikasi. `baku` = jawaban menurut engine (lihat cek).
      ---------------------------------------------------------- */
   stimulasi: {
     kicker: 'Tahap 1 · Stimulasi',
-    syntax: DL + ' · Sintaks 1',
-    goal: 'Mengamati denah petak taman sekolah, lalu menduga panjang pagar dan luas rumput yang diperlukan.',
-    guru: 'Tampilkan denah taman. Minta pasangan murid menduga tanpa menghitung rumit. Jangan membenarkan atau menyalahkan — perbedaan dugaan (mis. "luas jajargenjang = 6 × 5 = 30 m²" atau "luas sama berarti pagarnya juga sama") justru menjadi bahan penemuan.',
-    judul: 'Proyek Taman Sekolah Kelas VII',
-    pengantar:
-      'OSIS mengajak Kelas VII merancang taman sekolah. Setiap petak taman berbentuk bangun datar. Tepi petak akan dipagari bambu (perlu tahu KELILING-nya) dan permukaannya ditanami rumput (perlu tahu LUAS-nya). Amati denah tujuh petak berikut.',
-    petak: [
-      {
-        id: 'pMawar',
-        jenis: 'persegi',
-        ukuran: { s: 6 },
-        nama: 'Petak Mawar',
-        label: { sisi: [0] },
-      },
-      {
-        id: 'pMelati',
-        jenis: 'persegiPanjang',
-        ukuran: { p: 9, l: 4 },
-        nama: 'Petak Melati',
-        label: { sisi: true },
-      },
-      {
-        id: 'pAnggrek',
-        jenis: 'jajargenjang',
-        ukuran: { a: 6, t: 4, g: 3 },
-        nama: 'Petak Anggrek',
-        label: { sisi: true, tinggi: true },
-      },
-      {
-        id: 'pKaktus',
-        jenis: 'segitiga',
-        ukuran: { a: 8, t: 3, g: 4 },
-        nama: 'Petak Kaktus',
-        label: { sisi: true, tinggi: true },
-      },
-      {
-        id: 'pKolam',
-        jenis: 'trapesium',
-        ukuran: { a: 12, b: 6, t: 4, g: 3 },
-        nama: 'Kolam Ikan',
-        label: { sisi: [0, 2], tinggi: true },
-      },
-      {
-        id: 'pLidah',
-        jenis: 'belahKetupat',
-        ukuran: { d1: 6, d2: 8 },
-        nama: 'Petak Lidah Buaya',
-        label: { diagonal: true },
-      },
-      {
-        id: 'pKemangi',
-        jenis: 'layangLayang',
-        ukuran: { d1: 16, d2: 21, y: 6 },
-        nama: 'Petak Kemangi',
-        label: { diagonal: true },
-      },
+    syntax: 'Discovery Learning · Sintaks 1 (Stimulation)',
+    goal: 'Mengamati benda-benda berbentuk tabung, kerucut, dan bola di sekitar lalu menduga bentuk bentangannya.',
+    tp: 'Mengidentifikasi unsur-unsur dan jaring-jaring tabung, kerucut, dan bola pada benda di sekitar serta mengaitkannya dengan konsep luas permukaan dan volume.',
+    tpJudul: 'Tujuan belajar hari ini',
+    kriteria: [
+      'Menunjukkan sisi, rusuk, titik puncak, jari-jari, diameter, tinggi, dan garis pelukis pada tabung, kerucut, dan bola.',
+      'Mendeskripsikan jaring-jaring tabung dan kerucut beserta ukurannya, serta menjelaskan mengapa bola tidak memiliki jaring-jaring.',
+      'Mengaitkan luas bagian-bagian jaring-jaring dengan luas permukaan.',
+      'Mengaitkan volume kerucut dan bola dengan volume tabung.',
+    ],
+    guru: 'Bawa benda nyata bila ada (kaleng susu berlabel, topi ulang tahun, bola, jeruk). Biarkan murid menduga tanpa dikoreksi; dugaan akan diuji pada tahap Bentang dan disimpulkan pada tahap Simpulan.',
+    judul: 'Pojok Kemasan Koperasi Sekolah',
+    cerita:
+      'Koperasi sekolah akan menghias stan untuk Pekan Kreativitas. Pak Bima mengumpulkan benda-benda di bawah ini. Ia ingin membuat label kaleng, topi kertas, dan wadah baru sendiri, tetapi bingung harus memotong kertas dengan bentuk apa.',
+    benda: [
+      { id: 'kaleng', nama: '🥫 Kaleng susu', jenis: 'tabung', rasio: 2.6 },
+      { id: 'pipa', nama: '🪈 Pipa paralon', jenis: 'tabung', rasio: 5 },
+      { id: 'cone', nama: '🍦 Cone es krim', jenis: 'kerucut', rasio: 3.2 },
+      { id: 'topi', nama: '🥳 Topi ulang tahun', jenis: 'kerucut', rasio: 3.6 },
+      { id: 'tumpeng', nama: '🍚 Tumpeng', jenis: 'kerucut', rasio: 1.6 },
+      { id: 'voli', nama: '🏐 Bola voli', jenis: 'bola' },
+      { id: 'kelereng', nama: '🔵 Kelereng', jenis: 'bola' },
+      { id: 'jeruk', nama: '🍊 Jeruk', jenis: 'bola' },
     ],
     dugaan: [
       {
-        id: 'dPagar',
+        id: 'dTabung',
         tanya:
-          'Petak Mawar (persegi 6 m × 6 m) dan Petak Melati (persegi panjang 9 m × 4 m): mana yang memerlukan pagar bambu lebih panjang?',
+          'Jika label kertas kaleng susu digunting lurus dari atas ke bawah lalu dibuka, menurutmu bentuknya …',
         opsi: [
-          { id: 'melati', label: 'Petak Melati' },
-          { id: 'mawar', label: 'Petak Mawar' },
-          { id: 'sama', label: 'Sama panjang' },
+          { id: 'persegiPanjang', label: 'persegi panjang' },
+          { id: 'lingkaran', label: 'lingkaran' },
+          { id: 'segitiga', label: 'segitiga' },
+          { id: 'trapesium', label: 'trapesium' },
         ],
-        baku: 'melati',
-        banding: { minta: 'keliling', petak: ['pMawar', 'pMelati'] },
-        pembahasan:
-          'Pagar Petak Mawar 6 + 6 + 6 + 6 = 24 m, Petak Melati 9 + 4 + 9 + 4 = 26 m. Petak Melati lebih panjang.',
       },
       {
-        id: 'dRumput',
-        tanya: 'Dari kedua petak itu, mana yang memerlukan rumput lebih banyak?',
-        opsi: [
-          { id: 'sama', label: 'Sama banyak' },
-          { id: 'melati', label: 'Petak Melati' },
-          { id: 'mawar', label: 'Petak Mawar' },
-        ],
-        baku: 'sama',
-        banding: { minta: 'luas', petak: ['pMawar', 'pMelati'] },
-        pembahasan:
-          'Luas Petak Mawar 6 × 6 = 36 m² dan Petak Melati 9 × 4 = 36 m². Luasnya sama, padahal kelilingnya berbeda!',
-      },
-      {
-        id: 'dAnggrek',
+        id: 'dKerucut',
         tanya:
-          'Petak Anggrek berbentuk jajargenjang: alas 6 m, sisi miring 5 m, tinggi 4 m. Berapa luasnya?',
+          'Jika topi ulang tahun digunting dari tepi bawah ke puncak lalu dibuka, menurutmu bentuknya …',
         opsi: [
-          { id: 'a24', label: '24 m²' },
-          { id: 'a30', label: '30 m² (alas × sisi miring)' },
-          { id: 'a12', label: '12 m² (setengah dari alas × tinggi)' },
-          { id: 'a22', label: '22 m²' },
+          { id: 'juring', label: 'bagian lingkaran seperti potongan kue (juring)' },
+          { id: 'segitiga', label: 'segitiga' },
+          { id: 'persegiPanjang', label: 'persegi panjang' },
+          { id: 'lingkaran', label: 'lingkaran penuh' },
         ],
-        baku: 'a24',
-        cek: { jenis: 'jajargenjang', ukuran: { a: 6, t: 4, g: 3 }, minta: 'luas' },
-        pembahasan:
-          'Jajargenjang yang dipotong dan digeser menjadi persegi panjang 6 m × 4 m, jadi luasnya 24 m². Sisi miring tidak dipakai.',
-      },
-      {
-        id: 'dLidah',
-        tanya:
-          'Petak Lidah Buaya berbentuk belah ketupat dengan diagonal 6 m dan 8 m. Berapa luasnya?',
-        opsi: [
-          { id: 'b24', label: '24 m²' },
-          { id: 'b48', label: '48 m² (6 × 8)' },
-          { id: 'b25', label: '25 m² (sisi × sisi)' },
-          { id: 'b14', label: '14 m² (6 + 8)' },
-        ],
-        baku: 'b24',
-        cek: { jenis: 'belahKetupat', ukuran: { d1: 6, d2: 8 }, minta: 'luas' },
-        pembahasan:
-          'Belah ketupat menempati tepat setengah persegi panjang 6 m × 8 m, jadi luasnya ½ × 6 × 8 = 24 m².',
       },
     ],
-    alasanLabel: 'Bagaimana kamu menduganya? Tulis singkat caramu.',
-    alasanPlaceholder: 'Contoh: aku menjumlahkan semua sisinya, lalu …',
+    alasanLabel: 'Tuliskan alasan dugaanmu.',
+    alasanPlaceholder: 'Aku menduga begitu karena …',
     catatan:
-      'Dugaan ini belum dinilai. Kalian akan memeriksanya sendiri dengan menghitung petak, memotong, dan menyusun bangun.',
-    nextLabel: 'Lanjut: Rumuskan Masalah →',
+      'Belum ada jawaban benar atau salah. Simpan dugaanmu, nanti kamu akan membuktikannya sendiri.',
+    nextLabel: 'Lanjut ke Rumusan Masalah →',
   },
 
   /* ----------------------------------------------------------
-     TAHAP 2 — PROBLEM STATEMENT
+     TAHAP 2 — IDENTIFIKASI MASALAH
      ---------------------------------------------------------- */
   masalah: {
-    kicker: 'Tahap 2 · Merumuskan Masalah',
-    syntax: DL + ' · Sintaks 2',
-    goal: 'Memilih pertanyaan inti yang akan diselidiki dan menuliskan dugaan sementara.',
-    guru: 'Ajak murid membedakan pertanyaan yang hanya menanyakan satu petak dengan pertanyaan yang berlaku untuk semua bangun. Hipotesis boleh keliru — yang penting dapat diuji dengan eksplorasi.',
+    kicker: 'Tahap 2 · Identifikasi Masalah',
+    syntax: 'Discovery Learning · Sintaks 2 (Problem Statement)',
+    goal: 'Merumuskan pertanyaan yang akan diselidiki dan menulis hipotesis.',
+    guru: 'Arahkan murid bahwa sebelum memotong kertas, Pak Bima perlu tahu bagian-bagian benda dan bentuk bentangannya. Terima hipotesis apa pun selama bisa diuji.',
     pengantar:
-      'Dugaan kalian di tahap 1 bisa berbeda-beda. Agar dapat memastikannya untuk SEMUA petak, kita perlu pertanyaan penyelidikan yang tepat.',
-    pertanyaan: 'Pertanyaan mana yang paling tepat untuk diselidiki?',
+      'Agar tidak salah potong, Pak Bima perlu mengenal bagian-bagian (unsur) setiap benda dan bentuk bentangan kertasnya, yang disebut jaring-jaring. Dari jaring-jaring itu ia juga ingin tahu berapa luas kertas yang diperlukan dan berapa banyak isi yang dapat ditampung wadahnya.',
+    pertanyaan: 'Rumusan masalah mana yang paling tepat untuk diselidiki?',
     opsi: [
       {
-        id: 'mInti',
+        id: 'unsur',
         label:
-          'Bagaimana cara menentukan keliling dan luas setiap bangun datar, dan apa hubungan luasnya dengan luas persegi panjang?',
+          'Apa saja unsur tabung, kerucut, dan bola, seperti apa jaring-jaringnya, dan bagaimana kaitannya dengan luas permukaan serta volume?',
       },
-      { id: 'mHarga', label: 'Berapa harga satu batang bambu di toko bangunan?' },
-      { id: 'mSatu', label: 'Berapa luas Petak Mawar saja?' },
-      { id: 'mSama', label: 'Apakah semua petak taman sebaiknya berbentuk persegi?' },
+      { id: 'harga', label: 'Berapa harga satu kaleng susu di koperasi?' },
+      { id: 'warna', label: 'Warna label apa yang paling disukai pembeli?' },
+      { id: 'berat', label: 'Benda mana yang paling berat di antara kedelapan benda itu?' },
     ],
-    correct: 'mInti',
+    correct: 'unsur',
     umpan: {
-      mInti:
-        'Tepat! Pertanyaan ini menyelidiki cara menentukan keliling dan luas untuk ketujuh bangun sekaligus.',
-      mHarga:
-        'Harga bambu penting untuk belanja, tetapi tidak menjawab berapa panjang pagar dan luas rumput yang diperlukan.',
-      mSatu:
-        'Pertanyaan ini hanya untuk satu petak. Kita ingin cara yang berlaku untuk semua bangun.',
-      mSama: 'Itu soal selera desain. Pilih pertanyaan tentang cara menentukan keliling dan luas.',
+      unsur:
+        'Tepat! Pertanyaan ini dapat diselidiki dengan mengamati model, membuka selimutnya, dan menuang isinya.',
+      harga:
+        'Harga tidak menjelaskan bentuk benda. Pilih pertanyaan tentang bagian dan bentangannya.',
+      warna: 'Warna tidak mengubah bentuk label. Pilih pertanyaan tentang bagian dan bentangannya.',
+      berat:
+        'Berat bergantung pada bahan, bukan bentuk. Pilih pertanyaan tentang unsur dan jaring-jaring.',
     },
     hipotesisLabel:
-      'Tulis dugaan sementaramu (hipotesis) tentang cara menentukan luas bangun-bangun itu.',
-    hipotesisPlaceholder:
-      'Contoh: aku menduga luas jajargenjang bisa dicari seperti persegi panjang, yaitu …',
-    nextLabel: 'Lanjut: Kumpulkan Data →',
+      'Tulis hipotesismu: menurutmu, apa hubungan bentuk bentangan kertas dengan ukuran alas bendanya?',
+    hipotesisPlaceholder: 'Menurutku, panjang kertas label kaleng sama dengan …',
+    nextLabel: 'Mulai Mengamati →',
   },
 
   /* ----------------------------------------------------------
-     TAHAP 3 — DATA COLLECTION (Lab Petak)
+     TAHAP 3 — MENGAMATI UNSUR (Lab Unsur)
      ---------------------------------------------------------- */
-  koleksi: {
+  amati: {
     kicker: 'Tahap 3 · Mengumpulkan Data',
-    syntax: DL + ' · Sintaks 3',
-    goal: 'Mengatur ukuran persegi panjang dan persegi, lalu menghitung dan mencatat keliling serta luasnya.',
-    guru: 'Murid bergantian: satu mengatur ukuran dan menunjuk, satu lagi menghitung dan mencatat. Dorong murid mencoba ukuran besar (mis. 10 × 7) agar merasa perlu cara cepat selain menghitung satu per satu. Pesan diagnosa (mis. keliling dan luas tertukar) dapat diangkat dalam diskusi kelas.',
-    pengantar:
-      'Atur panjang dan lebar dengan tombol − dan +. Nyalakan petak satuan untuk menghitung LUAS dan tanda satuan panjang untuk menghitung KELILING. Catat paling sedikit tiga ukuran berbeda untuk persegi panjang dan tiga untuk persegi.',
-    lab: {
-      mode: 'petak',
-      jenisList: ['persegiPanjang', 'persegi'],
-      ukuran: {
-        persegiPanjang: {
-          p: { min: 1, max: 10, awal: 5 },
-          l: { min: 1, max: 7, awal: 3 },
-        },
-        persegi: { s: { min: 1, max: 8, awal: 4 } },
-      },
-      minta: ['keliling', 'luas'],
-      minCatat: 3,
-    },
-    tips: [
-      'Keliling: telusuri tepi bangun dan hitung ruas satuan sampai kembali ke titik awal.',
-      'Luas: hitung petak satuan yang menutupi bangun. Adakah cara lebih cepat daripada menghitung satu per satu?',
-      'Coba ukuran yang besar. Perhatikan hubungan bilanganmu dengan panjang dan lebarnya.',
-    ],
-    selesaiTeks:
-      'Data persegi panjang dan persegi sudah tercatat. Sekarang olah datanya: cari hubungan keliling dan luas dengan ukurannya.',
-    nextLabel: 'Lanjut: Olah Data Persegi →',
-  },
-
-  /* ----------------------------------------------------------
-     TAHAP 4a — DATA PROCESSING: persegi panjang & persegi
-     ---------------------------------------------------------- */
-  olahPersegi: {
-    kicker: 'Tahap 4a · Mengolah Data Persegi Panjang & Persegi',
-    syntax: DL + ' · Sintaks 4',
-    goal: 'Menemukan rumus keliling dan luas persegi panjang serta persegi dari catatan Lab Petak.',
-    guru: 'Minta murid membandingkan kolom p, l, K, dan L di tabel catatan mereka sendiri. Tanyakan: "Berapa petak dalam satu baris? Ada berapa baris?" untuk memunculkan p × l. Tekankan bahwa persegi adalah persegi panjang khusus (p = l = s).',
-    pengantar:
-      'Ini catatanmu dari Lab Petak. Bandingkan bilangan keliling dan luas dengan panjang serta lebarnya.',
-    temuan: [
+    syntax: 'Discovery Learning · Sintaks 3 (Data Collection)',
+    goal: 'Menemukan unsur-unsur tabung, kerucut, dan bola dengan mengamati model.',
+    guru: 'Minta pasangan bergantian: satu murid mengetuk, satu murid menunjukkan bagian yang sama pada benda nyata. Tekankan bahwa garis tepi gambar dan garis melingkar pada bola hanyalah garis bantu.',
+    instruksi:
+      'Pilih bangun, miringkan modelnya, lalu ketuk setiap sisi, garis, dan titik sampai semua bagian ditemukan pada ketiga bangun.',
+    instruksiTabel:
+      'Hitung unsur setiap bangun dari pengamatanmu, lalu isi tabel. Ingat: rusuk adalah pertemuan dua sisi (boleh melengkung).',
+    tabelCaption: 'Tabel unsur tabung, kerucut, dan bola',
+    tabelRows: ['tabung', 'kerucut', 'bola'],
+    tanyaInstruksi: 'Jawab pertanyaan berikut berdasarkan pengamatanmu.',
+    tanya: [
       {
-        id: 'tpKeliling',
-        tanya: 'Dari catatanmu, bagaimana keliling persegi panjang diperoleh dari p dan l?',
+        id: 'aPelukis',
+        tanya: 'Ruas garis pada selimut kerucut dari titik puncak ke tepi alas disebut …',
         opsi: [
-          { id: 'dua', label: 'K = p + l + p + l = 2 × (p + l)' },
-          { id: 'kali', label: 'K = p × l' },
-          { id: 'tambah', label: 'K = p + l' },
-          { id: 'empat', label: 'K = 4 × p' },
+          { id: 'pelukis', label: 'garis pelukis' },
+          { id: 'tinggi', label: 'tinggi' },
+          { id: 'jari', label: 'jari-jari' },
+          { id: 'rusuk', label: 'rusuk' },
         ],
-        correct: 'dua',
+        correct: 'pelukis',
         umpan: {
-          dua: 'Tepat! Tepi persegi panjang terdiri atas dua panjang dan dua lebar.',
-          kali: 'p × l adalah banyak petak (luas). Keliling adalah panjang tepinya.',
-          tambah: 'p + l baru setengah tepinya. Telusuri terus sampai kembali ke titik awal.',
-          empat: '4 × p hanya benar bila panjang dan lebarnya sama (persegi).',
+          pelukis: 'Tepat! Garis pelukis (s) terletak pada selimut, dari puncak ke tepi alas.',
+          tinggi: 'Tinggi berada DI DALAM kerucut, tegak lurus dari puncak ke pusat alas.',
+          jari: 'Jari-jari terletak pada alas, dari pusat ke tepi lingkaran.',
+          rusuk:
+            'Rusuk adalah pertemuan dua sisi. Garis ini berada di tengah satu sisi saja (selimut).',
         },
       },
       {
-        id: 'tpLuas',
-        tanya: 'Bagaimana luas (banyak petak) diperoleh dari p dan l?',
+        id: 'aTinggi',
+        tanya: 'Pada tabung, jarak antara pusat alas dan pusat tutup disebut …',
         opsi: [
-          { id: 'kali', label: 'L = p × l, karena ada l baris yang masing-masing berisi p petak' },
-          { id: 'dua', label: 'L = 2 × (p + l)' },
-          { id: 'tambah', label: 'L = p + l' },
-          { id: 'kuadrat', label: 'L = p × p' },
+          { id: 'tinggi', label: 'tinggi' },
+          { id: 'pelukis', label: 'garis pelukis' },
+          { id: 'diameter', label: 'diameter' },
+          { id: 'keliling', label: 'keliling' },
         ],
-        correct: 'kali',
+        correct: 'tinggi',
         umpan: {
-          kali: 'Tepat! Menghitung baris demi baris sama dengan mengalikan.',
-          dua: '2 × (p + l) adalah kelilingnya, bukan banyak petak.',
-          tambah: 'Coba ukuran 5 × 3: ada 15 petak, bukan 8.',
-          kuadrat: 'p × p hanya benar bila lebarnya sama dengan panjangnya.',
+          tinggi: 'Tepat! Tinggi tabung (t) menghubungkan pusat alas dan pusat tutup.',
+          pelukis: 'Garis pelukis adalah unsur kerucut, bukan tabung.',
+          diameter: 'Diameter terletak pada lingkaran alas atau tutup, melalui pusatnya.',
+          keliling: 'Keliling adalah panjang tepi lingkaran, bukan jarak alas ke tutup.',
         },
       },
       {
-        id: 'tpPersegi',
-        tanya:
-          'Persegi adalah persegi panjang yang panjang dan lebarnya sama (s). Jadi rumus persegi adalah …',
-        opsi: [
-          { id: 'tepat', label: 'K = 4 × s dan L = s × s' },
-          { id: 'tukar', label: 'K = s × s dan L = 4 × s' },
-          { id: 'dua', label: 'K = 2 × s dan L = 2 × s' },
-          { id: 'empat', label: 'K = 4 × s dan L = 4 × s' },
-        ],
-        correct: 'tepat',
-        umpan: {
-          tepat: 'Tepat! Ganti p dan l dengan s: K = 2 × (s + s) = 4 × s, L = s × s.',
-          tukar: 'Rumusnya tertukar. Keliling = panjang tepi, luas = banyak petak.',
-          dua: 'Persegi punya EMPAT sisi, dan luasnya s baris berisi s petak.',
-          empat: 'Kelilingnya benar, tetapi luasnya s × s, bukan 4 × s.',
-        },
-      },
-    ],
-    langkah: [
-      {
-        id: 'lpMelatiK',
-        label: 'Berapa panjang pagar Petak Melati (persegi panjang 9 m × 4 m)?',
-        cek: { jenis: 'persegiPanjang', ukuran: { p: 9, l: 4 }, minta: 'keliling' },
-        satuan: 'm',
-        hints: ['Jumlahkan semua sisinya: p + l + p + l.', '2 × (9 + 4) = …'],
-        temuan: 'Benar, 26 m: 2 × (9 + 4) = 26.',
-      },
-      {
-        id: 'lpMelatiL',
-        label: 'Berapa luas rumput Petak Melati?',
-        cek: { jenis: 'persegiPanjang', ukuran: { p: 9, l: 4 }, minta: 'luas' },
-        satuan: 'm²',
-        hints: ['Ada 4 baris yang masing-masing berisi 9 petak.', '9 × 4 = …'],
-        temuan: 'Benar, 36 m²: 9 × 4 = 36.',
-      },
-      {
-        id: 'lpMawarK',
-        label: 'Berapa panjang pagar Petak Mawar (persegi bersisi 6 m)?',
-        cek: { jenis: 'persegi', ukuran: { s: 6 }, minta: 'keliling' },
-        satuan: 'm',
-        hints: ['Persegi punya empat sisi yang sama panjang.', '4 × 6 = …'],
-        temuan: 'Benar, 24 m: 4 × 6 = 24.',
-      },
-      {
-        id: 'lpMawarL',
-        label: 'Berapa luas rumput Petak Mawar?',
-        cek: { jenis: 'persegi', ukuran: { s: 6 }, minta: 'luas' },
-        satuan: 'm²',
-        hints: ['Luas persegi = s × s.', '6 × 6 = …'],
-        temuan:
-          'Benar, 36 m² — sama dengan Petak Melati, padahal kelilingnya berbeda (24 m dan 26 m)!',
-      },
-    ],
-    rumus: ['persegiPanjang', 'persegi'],
-    nextLabel: 'Lanjut: Olah Jajargenjang & Segitiga →',
-  },
-
-  /* ----------------------------------------------------------
-     TAHAP 4b — DATA PROCESSING: jajargenjang & segitiga
-     ---------------------------------------------------------- */
-  olahJajar: {
-    kicker: 'Tahap 4b · Mengolah Data Jajargenjang & Segitiga',
-    syntax: DL + ' · Sintaks 4',
-    goal: 'Memotong-menyusun jajargenjang dan segitiga untuk menemukan rumus luasnya.',
-    guru: 'Bila memungkinkan, sediakan jajargenjang kertas dan gunting agar murid memotong sendiri. Tanyakan: "Apakah ada petak yang hilang setelah digeser?" dan "Mengapa sisi miring tidak dipakai?" Untuk segitiga, tegaskan bahwa yang dihitung hanya SATU dari dua segitiga.',
-    pengantar:
-      'Gunakan Lab Potong-Susun. Jalankan langkah 1 sampai 3, lalu hitung luas bangun aslinya. Coba paling sedikit dua ukuran untuk jajargenjang dan dua untuk segitiga.',
-    lab: {
-      mode: 'potong',
-      jenisList: ['jajargenjang', 'segitiga'],
-      ukuran: {
-        jajargenjang: {
-          a: { min: 2, max: 9, awal: 6 },
-          t: { min: 1, max: 6, awal: 4 },
-        },
-        segitiga: {
-          a: { min: 2, max: 9, awal: 6 },
-          t: { min: 1, max: 6, awal: 4 },
-        },
-      },
-      minta: ['luas'],
-      minCatat: 2,
-    },
-    temuan: [
-      {
-        id: 'tjLuas',
-        tanya:
-          'Setelah dipotong dan digeser, jajargenjang menjadi persegi panjang yang panjangnya … dan lebarnya …',
-        opsi: [
-          { id: 'tepat', label: 'alas (a) dan tinggi (t), jadi L = a × t' },
-          { id: 'miring', label: 'alas dan sisi miring, jadi L = a × b' },
-          { id: 'setengah', label: 'alas dan tinggi, lalu luasnya dibagi 2' },
-          { id: 'tukar', label: 'sisi miring dan tinggi' },
-        ],
-        correct: 'tepat',
-        umpan: {
-          tepat: 'Tepat! Tidak ada petak yang hilang, jadi luas jajargenjang = a × t.',
-          miring:
-            'Lihat lagi langkah 3: lebar persegi panjang itu adalah garis tinggi, bukan sisi miring.',
-          setengah:
-            'Jajargenjang berubah menjadi SATU persegi panjang utuh — tidak ada yang dibagi dua.',
-          tukar: 'Panjang persegi panjang itu sama dengan alas jajargenjang.',
-        },
-      },
-      {
-        id: 'tjMiring',
-        tanya: 'Mengapa sisi miring TIDAK dipakai untuk menghitung luas jajargenjang?',
+        id: 'aPuncak',
+        tanya: 'Kerucut tidak memiliki titik sudut, tetapi memiliki titik puncak. Mengapa?',
         opsi: [
           {
-            id: 'lebar',
-            label: 'Lebar persegi panjang hasil susunan adalah tinggi, bukan sisi miring',
+            id: 'rusuk',
+            label: 'Di puncak tidak ada rusuk yang bertemu; puncak hanyalah ujung selimut',
           },
-          { id: 'pendek', label: 'Sisi miring selalu lebih pendek daripada tinggi' },
-          { id: 'ukur', label: 'Sisi miring tidak dapat diukur' },
-          { id: 'segitiga', label: 'Sisi miring hanya dipakai untuk segitiga' },
+          { id: 'tumpul', label: 'Karena puncaknya tumpul' },
+          { id: 'dua', label: 'Karena kerucut punya dua rusuk' },
+          { id: 'pusat', label: 'Karena titik puncak sama dengan pusat alas' },
         ],
-        correct: 'lebar',
+        correct: 'rusuk',
         umpan: {
-          lebar: 'Tepat! Sisi miring tetap dipakai untuk KELILING, tetapi tidak untuk luas.',
-          pendek:
-            'Justru sebaliknya: sisi miring lebih panjang daripada tinggi. Bandingkan pada gambar.',
-          ukur: 'Sisi miring dapat diukur, dan dipakai untuk menghitung keliling.',
-          segitiga: 'Luas segitiga juga memakai tinggi, bukan sisi miring.',
+          rusuk:
+            'Tepat! Titik sudut adalah pertemuan tiga rusuk atau lebih. Di puncak kerucut tidak ada rusuk yang bertemu.',
+          tumpul: 'Puncak kerucut runcing. Coba pikirkan: adakah rusuk yang bertemu di puncak?',
+          dua: 'Kerucut hanya punya satu rusuk, yaitu lengkungan tepi alas.',
+          pusat: 'Pusat alas ada di bawah, sedangkan titik puncak di atas.',
         },
       },
       {
-        id: 'tsLuas',
-        tanya:
-          'Dua segitiga yang sama membentuk jajargenjang beralas a dan bertinggi t. Jadi luas SATU segitiga adalah …',
+        id: 'aSiku',
+        tanya: 'Jari-jari (r), tinggi (t), dan garis pelukis (s) kerucut membentuk …',
         opsi: [
-          { id: 'tepat', label: '½ × a × t' },
-          { id: 'penuh', label: 'a × t' },
-          { id: 'dua', label: '2 × a × t' },
-          { id: 'tambah', label: 'a + t' },
+          { id: 'siku', label: 'segitiga siku-siku dengan s sebagai sisi miring' },
+          { id: 'sama', label: 'segitiga sama sisi' },
+          { id: 'persegi', label: 'persegi panjang' },
+          { id: 'lingkaran', label: 'lingkaran' },
         ],
-        correct: 'tepat',
+        correct: 'siku',
         umpan: {
-          tepat: 'Tepat! Satu segitiga = setengah jajargenjang = ½ × a × t.',
-          penuh: 'a × t adalah luas jajargenjang yang dibentuk DUA segitiga.',
-          dua: 'Luas satu segitiga lebih kecil, bukan lebih besar, daripada jajargenjangnya.',
-          tambah: 'Luas diperoleh dari perkalian petak, bukan penjumlahan ukuran.',
+          siku: 'Tepat! Karena itu s dapat dihitung dengan teorema Pythagoras: s = √(r² + t²).',
+          sama: 'Panjang r, t, dan s umumnya berbeda. Perhatikan sudut di pusat alas.',
+          persegi: 'Hanya ada tiga ruas garis, jadi bentuknya segitiga. Sudut apa di pusat alas?',
+          lingkaran: 'Tiga ruas garis lurus membentuk segitiga, bukan lingkaran.',
         },
       },
     ],
-    langkah: [
-      {
-        id: 'ljAnggrekL',
-        label:
-          'Petak Anggrek berbentuk jajargenjang: alas 6 m, sisi miring 5 m, tinggi 4 m. Berapa luasnya?',
-        cek: { jenis: 'jajargenjang', ukuran: { a: 6, t: 4, g: 3 }, minta: 'luas' },
-        satuan: 'm²',
-        hints: ['Luas jajargenjang = alas × tinggi.', '6 × 4 = …'],
-        temuan: 'Benar, 24 m². Sisi miring 5 m tidak dipakai untuk luas.',
-      },
-      {
-        id: 'ljAnggrekK',
-        label: 'Berapa panjang pagar Petak Anggrek?',
-        cek: { jenis: 'jajargenjang', ukuran: { a: 6, t: 4, g: 3 }, minta: 'keliling' },
-        satuan: 'm',
-        hints: [
-          'Keliling memakai sisi-sisinya: dua alas dan dua sisi miring.',
-          '6 + 5 + 6 + 5 = …',
-        ],
-        temuan: 'Benar, 22 m: 2 × (6 + 5). Untuk keliling, sisi miring dipakai, tinggi tidak.',
-      },
-      {
-        id: 'lsKaktusL',
-        label:
-          'Petak Kaktus berbentuk segitiga: alas 8 m, tinggi 3 m, kedua sisi miringnya 5 m. Berapa luasnya?',
-        cek: { jenis: 'segitiga', ukuran: { a: 8, t: 3, g: 4 }, minta: 'luas' },
-        satuan: 'm²',
-        hints: ['Luas segitiga = ½ × alas × tinggi.', '½ × 8 × 3 = 4 × 3 = …'],
-        temuan: 'Benar, 12 m²: ½ × 8 × 3.',
-      },
-      {
-        id: 'lsKaktusK',
-        label: 'Berapa panjang pagar Petak Kaktus?',
-        cek: { jenis: 'segitiga', ukuran: { a: 8, t: 3, g: 4 }, minta: 'keliling' },
-        satuan: 'm',
-        hints: ['Jumlahkan ketiga sisinya.', '8 + 5 + 5 = …'],
-        temuan: 'Benar, 18 m: 8 + 5 + 5.',
-      },
-    ],
-    rumus: ['jajargenjang', 'segitiga'],
-    nextLabel: 'Lanjut: Olah Trapesium →',
+    temuan:
+      'Tabung: 2 sisi datar (alas & tutup) + 1 selimut, 2 rusuk lengkung. Kerucut: 1 alas + 1 selimut, 1 rusuk, 1 titik puncak. Bola: hanya 1 sisi lengkung. Ukuran pentingnya: jari-jari r, diameter d = 2r, tinggi t, dan garis pelukis s = √(r² + t²).',
+    nextLabel: 'Lanjut: Buka Selimutnya →',
   },
 
   /* ----------------------------------------------------------
-     TAHAP 4c — DATA PROCESSING: trapesium
+     TAHAP 4 — MEMBUKA SELIMUT (Lab Bentang)
      ---------------------------------------------------------- */
-  olahTrapesium: {
-    kicker: 'Tahap 4c · Mengolah Data Trapesium',
-    syntax: DL + ' · Sintaks 4',
-    goal: 'Menyusun dua trapesium yang sama menjadi jajargenjang untuk menemukan rumus luas trapesium.',
-    guru: 'Arahkan perhatian murid ke alas jajargenjang hasil susunan: terdiri atas sisi sejajar bawah satu trapesium dan sisi sejajar atas trapesium lainnya. Bandingkan dengan cara segitiga di tahap sebelumnya.',
-    pengantar:
-      'Gunakan Lab Potong-Susun untuk trapesium. Ubah ukurannya dan catat luas paling sedikit dua trapesium berbeda.',
-    lab: {
-      mode: 'potong',
-      jenisList: ['trapesium'],
-      ukuran: {
-        trapesium: {
-          a: { min: 3, max: 10, awal: 7 },
-          b: { min: 1, max: 6, awal: 3 },
-          t: { min: 1, max: 6, awal: 3 },
-        },
-      },
-      minta: ['luas'],
-      minCatat: 2,
-    },
-    temuan: [
+  bentang: {
+    kicker: 'Tahap 4 · Mengumpulkan Data',
+    syntax: 'Discovery Learning · Sintaks 3 (Data Collection)',
+    goal: 'Menemukan bentuk dan ukuran jaring-jaring tabung dan kerucut dengan membuka selimutnya.',
+    guru: 'Bila ada, gunting label kaleng dan topi kertas bersama murid. Tanyakan: bagian mana dari persegi panjang yang dulu melilit tepi alas?',
+    instruksi:
+      'Pilih benda, lalu geser penggeser sampai 100% untuk membuka selimutnya. Lakukan pada tabung dan kerucut.',
+    lab: { tabung: { r: 7, t: 12 }, kerucut: { r: 6, t: 8 } },
+    tanya: [
       {
-        id: 'ttAlas',
-        tanya:
-          'Dua trapesium yang sama disusun menjadi jajargenjang. Alas jajargenjang itu adalah …',
+        id: 'bTabung',
+        tanya: 'Selimut tabung yang dibuka berbentuk …',
         opsi: [
-          { id: 'jumlah', label: 'a + b (jumlah kedua sisi sejajar)' },
-          { id: 'a', label: 'a saja' },
-          { id: 'kali', label: 'a × b' },
-          { id: 'miring', label: 'sisi miring trapesium' },
+          { id: 'pp', label: 'persegi panjang' },
+          { id: 'lingkaran', label: 'lingkaran' },
+          { id: 'segitiga', label: 'segitiga' },
+          { id: 'trapesium', label: 'trapesium' },
         ],
-        correct: 'jumlah',
+        correct: 'pp',
         umpan: {
-          jumlah:
-            'Tepat! Sisi bawah trapesium pertama bersambung dengan sisi atas trapesium kedua.',
-          a: 'Amati langkah 3: alasnya lebih panjang daripada a.',
-          kali: 'Kedua sisi itu bersambung (dijumlahkan), tidak dikalikan.',
-          miring: 'Sisi miring menjadi sisi samping jajargenjang, bukan alasnya.',
+          pp: 'Tepat! Jaring-jaring tabung = 2 lingkaran + 1 persegi panjang.',
+          lingkaran: 'Lingkaran adalah alas dan tutup. Perhatikan bentuk selimutnya.',
+          segitiga: 'Lihat lagi: keempat sudut bentangan selimut tabung siku-siku.',
+          trapesium: 'Sisi atas dan bawah bentangan sama panjang, jadi bukan trapesium.',
         },
       },
       {
-        id: 'ttLuas',
-        tanya: 'Jadi luas SATU trapesium adalah …',
+        id: 'bPanjang',
+        tanya: 'Panjang persegi panjang itu sama dengan …',
         opsi: [
-          { id: 'tepat', label: '½ × (a + b) × t' },
-          { id: 'penuh', label: '(a + b) × t' },
-          { id: 'kali', label: '½ × a × b × t' },
-          { id: 'satu', label: 'a × t' },
+          { id: 'keliling', label: 'keliling lingkaran alas, 2πr' },
+          { id: 'diameter', label: 'diameter alas, 2r' },
+          { id: 'tinggi', label: 'tinggi tabung' },
+          { id: 'luas', label: 'luas alas, πr²' },
         ],
-        correct: 'tepat',
+        correct: 'keliling',
         umpan: {
-          tepat: 'Tepat! Satu trapesium = setengah jajargenjang beralas a + b.',
-          penuh: '(a + b) × t adalah luas jajargenjang dari DUA trapesium.',
-          kali: 'Kedua sisi sejajar dijumlahkan dulu, bukan dikalikan.',
-          satu: 'Trapesium punya dua sisi sejajar; keduanya ikut menentukan luas.',
+          keliling: 'Tepat! Panjang itu dulu melilit tepi alas tepat satu putaran.',
+          diameter:
+            'Diameter hanya lebar tampak depan. Saat dibuka, panjangnya bertambah sampai mengelilingi alas.',
+          tinggi: 'Tinggi tabung menjadi LEBAR persegi panjang, bukan panjangnya.',
+          luas: 'Panjang adalah ukuran garis (cm), sedangkan luas berukuran cm².',
         },
       },
       {
-        id: 'ttKeliling',
-        tanya: 'Bagaimana menentukan keliling trapesium?',
+        id: 'bKerucut',
+        tanya: 'Selimut kerucut yang dibuka berbentuk …',
         opsi: [
-          { id: 'jumlah', label: 'Menjumlahkan keempat sisinya: a + b + c + d' },
-          { id: 'dua', label: '2 × (a + b)' },
-          { id: 'luas', label: '½ × (a + b) × t' },
-          { id: 'tinggi', label: 'a + b + t' },
+          { id: 'juring', label: 'juring lingkaran' },
+          { id: 'segitiga', label: 'segitiga' },
+          { id: 'pp', label: 'persegi panjang' },
+          { id: 'penuh', label: 'lingkaran penuh' },
         ],
-        correct: 'jumlah',
+        correct: 'juring',
         umpan: {
-          jumlah: 'Tepat! Keliling semua bangun = jumlah semua sisinya.',
-          dua: 'Sisi-sisi trapesium belum tentu berpasangan sama panjang.',
-          luas: 'Itu rumus luas, bukan keliling.',
-          tinggi: 'Tinggi ada di dalam bangun, bukan di tepinya.',
+          juring: 'Tepat! Jaring-jaring kerucut = 1 lingkaran + 1 juring lingkaran.',
+          segitiga: 'Tepi bawahnya melengkung (busur), jadi bukan segitiga.',
+          pp: 'Bentangan selimut kerucut punya satu titik di pusat, jadi bukan persegi panjang.',
+          penuh:
+            'Bentangannya hanya sebagian lingkaran. Lingkaran penuh akan bertumpuk saat digulung.',
+        },
+      },
+      {
+        id: 'bJari',
+        tanya: 'Jari-jari juring itu sama dengan … kerucut, dan panjang busurnya sama dengan …',
+        opsi: [
+          { id: 'pelukis', label: 'garis pelukis; keliling alas' },
+          { id: 'tinggi', label: 'tinggi; keliling alas' },
+          { id: 'jari', label: 'jari-jari alas; diameter alas' },
+          { id: 'pelukisLuas', label: 'garis pelukis; luas alas' },
+        ],
+        correct: 'pelukis',
+        umpan: {
+          pelukis:
+            'Tepat! Jari-jari juring = s, dan busurnya dulu melilit tepi alas sehingga panjangnya 2πr.',
+          tinggi: 'Tinggi kerucut berada di dalam; tepi juring adalah garis pelukis pada selimut.',
+          jari: 'Jari-jari alas jauh lebih pendek dari tepi juring. Perhatikan garis dari puncak ke tepi.',
+          pelukisLuas:
+            'Busur adalah panjang (cm), jadi ia sama dengan keliling alas, bukan luasnya.',
         },
       },
     ],
+    langkahInstruksi:
+      'Sekarang hitung ukuran jaring-jaring label kaleng (r = 7 cm, t = 12 cm) dan topi (r = 6 cm, t = 8 cm).',
     langkah: [
       {
-        id: 'ltKolamL',
-        label:
-          'Kolam Ikan berbentuk trapesium: sisi sejajar 12 m dan 6 m, tinggi 4 m. Berapa luasnya?',
-        cek: { jenis: 'trapesium', ukuran: { a: 12, b: 6, t: 4, g: 3 }, minta: 'luas' },
-        satuan: 'm²',
-        hints: ['Jumlahkan sisi sejajarnya dulu: 12 + 6 = 18.', '½ × 18 × 4 = …'],
-        temuan: 'Benar, 36 m²: ½ × (12 + 6) × 4.',
+        id: 'lKel',
+        label: 'Kaleng: panjang persegi panjang = keliling alas = 2 × 22/7 × 7 = … cm',
+        cek: { minta: 'kelilingAlas', jenis: 'tabung', r: 7, pi: '22/7' },
+        hints: ['Keliling lingkaran = 2 × π × r.', '2 × 22/7 × 7 = 2 × 22 = …'],
       },
       {
-        id: 'ltKolamK',
-        label: 'Kedua sisi miring Kolam Ikan masing-masing 5 m. Berapa keliling kolam itu?',
-        cek: { jenis: 'trapesium', ukuran: { a: 12, b: 6, t: 4, g: 3 }, minta: 'keliling' },
-        satuan: 'm',
-        hints: ['Jumlahkan keempat sisinya.', '12 + 5 + 6 + 5 = …'],
-        temuan: 'Benar, 28 m: 12 + 5 + 6 + 5.',
+        id: 'lPelukis',
+        label: 'Topi: garis pelukis s = √(6² + 8²) = … cm',
+        cek: { minta: 'garisPelukis', jenis: 'kerucut', r: 6, t: 8 },
+        hints: ['s² = r² + t² = 36 + 64.', '√100 = …'],
       },
       {
-        id: 'ltTinggi',
-        label:
-          'Kolam lain berbentuk trapesium dengan sisi sejajar 10 m dan 6 m serta luas 40 m². Berapa tingginya?',
-        cek: {
-          jenis: 'trapesium',
-          ukuran: { a: 10, b: 6, t: 5, g: 2 },
-          minta: 'ukuran',
-          cari: 't',
-          dari: 'luas',
-        },
-        satuan: 'm',
+        id: 'lBusur',
+        label: 'Topi: panjang busur juring = keliling alas = 2 × 3,14 × 6 = … cm',
+        cek: { minta: 'kelilingAlas', jenis: 'kerucut', r: 6, pi: '3,14' },
+        hints: ['Busur juring sama dengan keliling alas, 2πr.', '2 × 3,14 × 6 = 6,28 × 6 = …'],
+      },
+      {
+        id: 'lSudut',
+        label: 'Topi: sudut pusat juring = (r ÷ s) × 360° = (6 ÷ 10) × 360° = … °',
+        cek: { minta: 'sudutJuring', jenis: 'kerucut', r: 6, t: 8 },
         hints: [
-          '½ × (10 + 6) × t = 40, jadi 8 × t = 40.',
-          'Bilangan berapa yang dikali 8 hasilnya 40?',
+          'Busur juring : keliling lingkaran berjari-jari s = sudut juring : 360°.',
+          '6 ÷ 10 = 0,6 dan 0,6 × 360 = …',
         ],
-        temuan: 'Benar, 5 m: ½ × 16 × 5 = 40.',
       },
     ],
-    rumus: ['trapesium'],
-    nextLabel: 'Lanjut: Olah Belah Ketupat & Layang-layang →',
+    temuan:
+      'Jaring-jaring tabung: 2 lingkaran kongruen dan 1 persegi panjang berukuran keliling alas (2πr) × tinggi (t). Jaring-jaring kerucut: 1 lingkaran dan 1 juring berjari-jari s dengan panjang busur 2πr dan sudut pusat (r ÷ s) × 360°.',
+    nextLabel: 'Lanjut: Kupas Jeruk →',
   },
 
   /* ----------------------------------------------------------
-     TAHAP 4d — DATA PROCESSING: belah ketupat & layang-layang
+     TAHAP 5 — KULIT BOLA (Lab Kulit Jeruk)
      ---------------------------------------------------------- */
-  olahDiagonal: {
-    kicker: 'Tahap 4d · Mengolah Data Belah Ketupat & Layang-layang',
-    syntax: DL + ' · Sintaks 4',
-    goal: 'Menemukan rumus luas belah ketupat dan layang-layang dari kedua diagonalnya.',
-    guru: 'Tunjukkan bahwa setiap segitiga siku-siku di dalam bangun punya "kembaran" di luar bangun (di dalam persegi panjang d₁ × d₂). Bandingkan dengan dugaan stimulasi "6 × 8 = 48 m²".',
-    pengantar:
-      'Gunakan Lab Potong-Susun untuk belah ketupat dan layang-layang. Catat luas paling sedikit dua ukuran untuk tiap bangun.',
-    lab: {
-      mode: 'potong',
-      jenisList: ['belahKetupat', 'layangLayang'],
-      ukuran: {
-        belahKetupat: {
-          d1: { min: 2, max: 10, awal: 6 },
-          d2: { min: 2, max: 10, awal: 8 },
-        },
-        layangLayang: {
-          d1: { min: 2, max: 10, awal: 6 },
-          d2: { min: 3, max: 10, awal: 9 },
-        },
-      },
-      minta: ['luas'],
-      minCatat: 2,
-    },
-    temuan: [
+  bola: {
+    kicker: 'Tahap 5 · Mengumpulkan Data',
+    syntax: 'Discovery Learning · Sintaks 3 (Data Collection)',
+    goal: 'Menyelidiki apakah bola memiliki jaring-jaring dan berapa luas kulitnya.',
+    guru: 'Bila memungkinkan, lakukan percobaan nyata: jiplak lingkaran terbesar jeruk beberapa kali di kertas, kupas jeruk menjadi kepingan kecil, lalu tempelkan kepingan pada lingkaran-lingkaran itu.',
+    instruksi:
+      'Bu Laras menjiplak lingkaran terbesar sebuah jeruk sebanyak enam kali. Kulit jeruk dikupas menjadi 16 kepingan kecil. Ketuk lingkaran untuk menempelkan kepingan sampai kulitnya habis. Isi penuh satu lingkaran dulu sebelum pindah.',
+    lab: { kepingan: 16, perLingkaran: 4, slot: 6 },
+    tanya: [
       {
-        id: 'tdBagian',
-        tanya:
-          'Persegi panjang di sekeliling bangun berukuran d₁ × d₂. Berapa bagian persegi panjang itu yang ditempati belah ketupat atau layang-layang?',
+        id: 'oEmpat',
+        tanya: 'Kulit jeruk tepat menutupi berapa lingkaran berjari-jari r?',
         opsi: [
-          { id: 'setengah', label: 'Tepat setengahnya' },
-          { id: 'penuh', label: 'Seluruhnya' },
-          { id: 'seperempat', label: 'Seperempatnya' },
-          { id: 'dua', label: 'Dua kalinya' },
-        ],
-        correct: 'setengah',
-        umpan: {
-          setengah: 'Tepat! Ada 4 segitiga di dalam dan 4 segitiga kembarannya di luar.',
-          penuh: 'Lihat bagian oranye di luar bangun — persegi panjang tidak ditempati seluruhnya.',
-          seperempat: 'Hitung segitiganya: 4 di dalam dan 4 di luar. Berapa bagian itu?',
-          dua: 'Bangunnya berada di DALAM persegi panjang, jadi lebih kecil.',
-        },
-      },
-      {
-        id: 'tdLuas',
-        tanya: 'Jadi luas belah ketupat dan layang-layang adalah …',
-        opsi: [
-          { id: 'tepat', label: '½ × d₁ × d₂' },
-          { id: 'penuh', label: 'd₁ × d₂' },
-          { id: 'sisi', label: 's × s' },
-          { id: 'tambah', label: 'd₁ + d₂' },
-        ],
-        correct: 'tepat',
-        umpan: {
-          tepat: 'Tepat! Rumus yang sama berlaku untuk belah ketupat DAN layang-layang.',
-          penuh: 'd₁ × d₂ adalah luas persegi panjang di sekelilingnya.',
-          sisi: 's × s hanya untuk persegi. Belah ketupat sudutnya tidak siku-siku.',
-          tambah: 'Luas diperoleh dari perkalian, bukan penjumlahan diagonal.',
-        },
-      },
-      {
-        id: 'tdKeliling',
-        tanya: 'Keliling belah ketupat yang panjang sisinya s adalah …',
-        opsi: [
-          { id: 'empat', label: '4 × s' },
-          { id: 'diag', label: 'd₁ + d₂' },
-          { id: 'diag2', label: '2 × (d₁ + d₂)' },
-          { id: 'kuadrat', label: 's × s' },
+          { id: 'empat', label: '4 lingkaran' },
+          { id: 'dua', label: '2 lingkaran' },
+          { id: 'tiga', label: '3 lingkaran' },
+          { id: 'enam', label: '6 lingkaran' },
         ],
         correct: 'empat',
         umpan: {
-          empat: 'Tepat! Keempat sisi belah ketupat sama panjang.',
-          diag: 'Diagonal berada di dalam bangun; keliling memakai sisi.',
-          diag2: 'Diagonal bukan tepi bangun. Telusuri sisi-sisinya.',
-          kuadrat: 's × s adalah luas persegi, bukan keliling belah ketupat.',
+          empat: 'Tepat! Kulit jeruk menutupi tepat empat lingkaran besar.',
+          dua: 'Hitung lagi lingkaran yang tertutup penuh di lab.',
+          tiga: 'Hitung lagi lingkaran yang tertutup penuh di lab.',
+          enam: 'Ada lingkaran yang masih kosong. Hitung yang tertutup penuh saja.',
+        },
+      },
+      {
+        id: 'oRumus',
+        tanya: 'Jadi luas kulit (permukaan) bola sama dengan …',
+        opsi: [
+          { id: 'empat', label: '4 × luas lingkaran = 4πr²' },
+          { id: 'dua', label: '2πr²' },
+          { id: 'satu', label: 'πr²' },
+          { id: 'volume', label: '4/3 πr³' },
+        ],
+        correct: 'empat',
+        umpan: {
+          empat: 'Tepat! L bola = 4πr².',
+          dua: 'Itu baru dua lingkaran. Kulit jeruk menutupi lebih banyak.',
+          satu: 'Itu luas satu lingkaran saja.',
+          volume: 'r³ dipakai untuk volume (isi), bukan luas kulit.',
+        },
+      },
+      {
+        id: 'oJaring',
+        tanya: 'Mengapa bola tidak memiliki jaring-jaring?',
+        opsi: [
+          { id: 'rata', label: 'Kulitnya tidak bisa dibentangkan rata tanpa sobek atau kusut' },
+          { id: 'kecil', label: 'Karena bola terlalu kecil untuk digunting' },
+          { id: 'rusuk', label: 'Karena bola punya terlalu banyak rusuk' },
+          { id: 'empat', label: 'Karena jaring-jaring bola adalah empat lingkaran' },
+        ],
+        correct: 'rata',
+        umpan: {
+          rata: 'Tepat! Kepingan kulit jeruk selalu melengkung, sehingga bola tidak punya jaring-jaring.',
+          kecil: 'Bola sebesar apa pun tetap tidak bisa dibentangkan rata.',
+          rusuk: 'Bola tidak punya rusuk sama sekali.',
+          empat:
+            'Empat lingkaran hanya menunjukkan LUASNYA sama. Empat lingkaran datar tidak bisa dilipat menjadi bola.',
         },
       },
     ],
+    temuan:
+      'Kulit bola tidak dapat dibentangkan menjadi bangun datar, jadi bola tidak memiliki jaring-jaring. Namun luas kulitnya sama dengan luas 4 lingkaran berjari-jari r: L = 4πr².',
+    nextLabel: 'Lanjut: Olah Data Luas →',
+  },
+
+  /* ----------------------------------------------------------
+     TAHAP 6 — MENGOLAH DATA: LUAS PERMUKAAN
+     ---------------------------------------------------------- */
+  olahLuas: {
+    kicker: 'Tahap 6 · Mengolah Data',
+    syntax: 'Discovery Learning · Sintaks 4 (Data Processing)',
+    goal: 'Mengaitkan luas bagian-bagian jaring-jaring dengan luas permukaan tabung, kerucut, dan bola.',
+    guru: 'Tekankan bahwa luas permukaan adalah jumlah luas semua bagian jaring-jaring, sehingga murid tidak perlu menghafal rumus. Untuk luas juring, ingatkan perbandingan busur dengan keliling lingkaran.',
+    instruksiKonsep:
+      'Gunakan jaring-jaring yang sudah kamu buka untuk menjawab pertanyaan berikut.',
+    konsep: [
+      {
+        id: 'kSelimutTabung',
+        tanya: 'Luas selimut tabung = luas persegi panjang = panjang × lebar = …',
+        opsi: [
+          { id: 'benar', label: '2πr × t' },
+          { id: 'pr', label: 'πr × t' },
+          { id: 'd', label: '2r × t' },
+          { id: 'luas', label: 'πr² × t' },
+        ],
+        correct: 'benar',
+        umpan: {
+          benar: 'Tepat! Panjangnya keliling alas (2πr), lebarnya tinggi (t).',
+          pr: 'Panjang persegi panjang sama dengan keliling alas, 2πr, bukan πr.',
+          d: '2r adalah diameter. Panjang selimut terbuka sama dengan keliling alas.',
+          luas: 'πr² × t adalah volume tabung, bukan luas selimut.',
+        },
+      },
+      {
+        id: 'kLuasTabung',
+        tanya: 'Luas permukaan tabung tertutup = alas + tutup + selimut = …',
+        opsi: [
+          { id: 'benar', label: '2πr² + 2πrt' },
+          { id: 'satu', label: 'πr² + 2πrt' },
+          { id: 'selimut', label: '2πrt' },
+          { id: 'acak', label: '2πr² + πrt' },
+        ],
+        correct: 'benar',
+        umpan: {
+          benar: 'Tepat! L tabung = 2πr² + 2πrt = 2πr(r + t).',
+          satu: 'Tabung tertutup punya dua lingkaran: alas dan tutup.',
+          selimut: 'Itu hanya luas selimut. Tambahkan luas alas dan tutup.',
+          acak: 'Luas selimut adalah 2πrt, bukan πrt.',
+        },
+      },
+      {
+        id: 'kJuring',
+        tanya:
+          'Luas juring selimut kerucut = (busur ÷ keliling lingkaran berjari-jari s) × πs² = (2πr ÷ 2πs) × πs² = …',
+        opsi: [
+          { id: 'benar', label: 'πrs' },
+          { id: 'r2', label: 'πr²' },
+          { id: 's2', label: 'πs²' },
+          { id: 'dua', label: '2πrs' },
+        ],
+        correct: 'benar',
+        umpan: {
+          benar: 'Tepat! (r ÷ s) × πs² = πrs.',
+          r2: 'πr² adalah luas alas kerucut, bukan selimutnya.',
+          s2: 'πs² adalah luas lingkaran PENUH berjari-jari s. Selimut hanya sebagian (r ÷ s) darinya.',
+          dua: 'Sederhanakan lagi: 2πr ÷ 2πs = r ÷ s, lalu kalikan dengan πs².',
+        },
+      },
+      {
+        id: 'kLuasKerucut',
+        tanya: 'Luas permukaan kerucut = alas + selimut = …',
+        opsi: [
+          { id: 'benar', label: 'πr² + πrs' },
+          { id: 't', label: 'πr² + πrt' },
+          { id: 'selimut', label: 'πrs' },
+          { id: 'dua', label: '2πr² + πrs' },
+        ],
+        correct: 'benar',
+        umpan: {
+          benar: 'Tepat! L kerucut = πr² + πrs = πr(r + s).',
+          t: 'Selimut kerucut memakai garis pelukis s, bukan tinggi t.',
+          selimut: 'Itu luas selimut saja. Jangan lupa alasnya.',
+          dua: 'Kerucut hanya punya satu lingkaran (alas).',
+        },
+      },
+      {
+        id: 'kLuasBola',
+        tanya: 'Luas permukaan bola = …',
+        opsi: [
+          { id: 'benar', label: '4πr²' },
+          { id: 'dua', label: '2πr²' },
+          { id: 'satu', label: 'πr²' },
+          { id: 'volume', label: '4/3 πr³' },
+        ],
+        correct: 'benar',
+        umpan: {
+          benar: 'Tepat! Sesuai percobaan kulit jeruk: empat lingkaran besar.',
+          dua: 'Kulit jeruk menutupi empat lingkaran, bukan dua.',
+          satu: 'Itu luas satu lingkaran besar saja.',
+          volume: '4/3 πr³ adalah volume bola.',
+        },
+      },
+    ],
+    instruksiPilah:
+      'Pak Bima membuat tujuh rancangan bentangan kertas. Tentukan mana yang dapat dibentuk menjadi tabung atau kerucut.',
+    opsiKlas: OPSI_LIPAT_TKB,
+    pilah: [
+      {
+        id: 'pTabungOk',
+        nama: 'Rancangan A',
+        correct: 'bisa',
+        spec: {
+          jenis: 'tabung',
+          r: 1,
+          t: 2,
+          panjang: 6.28,
+          lingkaran: [
+            { r: 1, sisi: 'atas' },
+            { r: 1, sisi: 'bawah' },
+          ],
+        },
+      },
+      {
+        id: 'pSepihak',
+        nama: 'Rancangan B',
+        correct: 'tidak',
+        spec: {
+          jenis: 'tabung',
+          r: 1,
+          t: 2,
+          panjang: 6.28,
+          lingkaran: [
+            { r: 1, sisi: 'atas' },
+            { r: 1, sisi: 'atas' },
+          ],
+        },
+      },
+      {
+        id: 'pPendek',
+        nama: 'Rancangan C',
+        correct: 'tidak',
+        spec: {
+          jenis: 'tabung',
+          r: 1,
+          t: 2,
+          panjang: 2,
+          lingkaran: [
+            { r: 1, sisi: 'atas' },
+            { r: 1, sisi: 'bawah' },
+          ],
+        },
+      },
+      {
+        id: 'pKerucutOk',
+        nama: 'Rancangan D',
+        correct: 'bisa',
+        spec: { jenis: 'kerucut', s: 10, sudut: 216, lingkaran: [{ r: 6 }] },
+      },
+      {
+        id: 'pJuringBesar',
+        nama: 'Rancangan E',
+        correct: 'tidak',
+        spec: { jenis: 'kerucut', s: 10, sudut: 300, lingkaran: [{ r: 6 }] },
+      },
+      {
+        id: 'pSetengah',
+        nama: 'Rancangan F',
+        correct: 'bisa',
+        spec: { jenis: 'kerucut', s: 10, sudut: 180, lingkaran: [{ r: 5 }] },
+      },
+      {
+        id: 'pBola',
+        nama: 'Rancangan G (untuk bola)',
+        correct: 'tidak',
+        spec: { jenis: 'bola' },
+      },
+    ],
+    langkahInstruksi: 'Hitung luas bahan untuk tiga benda Pak Bima. Tulis desimal dengan koma.',
     langkah: [
       {
-        id: 'ldLidahL',
-        label:
-          'Petak Lidah Buaya berbentuk belah ketupat dengan diagonal 6 m dan 8 m. Berapa luasnya?',
-        cek: { jenis: 'belahKetupat', ukuran: { d1: 6, d2: 8 }, minta: 'luas' },
-        satuan: 'm²',
-        hints: ['Luas = ½ × d₁ × d₂.', '½ × 6 × 8 = 3 × 8 = …'],
-        temuan: 'Benar, 24 m² — bukan 48 m² seperti dugaan "6 × 8".',
+        id: 'hKaleng',
+        label: 'Luas permukaan kaleng susu tertutup (r = 7 cm, t = 12 cm, π = 22/7) = … cm²',
+        cek: { minta: 'luasPermukaan', jenis: 'tabung', r: 7, t: 12, pi: '22/7' },
+        hints: [
+          'Luas alas = luas tutup = 22/7 × 7 × 7 = 154 cm².',
+          'Luas selimut = 44 × 12 = 528 cm². Jumlahkan semuanya: 154 + 154 + 528.',
+        ],
       },
       {
-        id: 'ldLidahK',
-        label: 'Setiap sisi Petak Lidah Buaya 5 m. Berapa panjang pagarnya?',
-        cek: { jenis: 'belahKetupat', ukuran: { d1: 6, d2: 8 }, minta: 'keliling' },
-        satuan: 'm',
-        hints: ['Belah ketupat punya empat sisi sama panjang.', '4 × 5 = …'],
-        temuan: 'Benar, 20 m: 4 × 5.',
+        id: 'hTopi',
+        label: 'Luas kertas topi tanpa alas (r = 6 cm, s = 10 cm, π = 3,14) = … cm²',
+        cek: { minta: 'luasSelimut', jenis: 'kerucut', r: 6, t: 8, pi: '3,14' },
+        hints: ['Topi hanya selimut: L = π × r × s.', '3,14 × 6 × 10 = 3,14 × 60 = …'],
       },
       {
-        id: 'ldKemangiL',
-        label:
-          'Petak Kemangi berbentuk layang-layang dengan diagonal 16 m dan 21 m. Berapa luasnya?',
-        cek: { jenis: 'layangLayang', ukuran: { d1: 16, d2: 21, y: 6 }, minta: 'luas' },
-        satuan: 'm²',
-        hints: ['Rumusnya sama dengan belah ketupat: ½ × d₁ × d₂.', '½ × 16 × 21 = 8 × 21 = …'],
-        temuan: 'Benar, 168 m²: ½ × 16 × 21.',
-      },
-      {
-        id: 'ldKemangiK',
-        label: 'Sisi-sisi Petak Kemangi 10 m, 10 m, 17 m, dan 17 m. Berapa panjang pagarnya?',
-        cek: { jenis: 'layangLayang', ukuran: { d1: 16, d2: 21, y: 6 }, minta: 'keliling' },
-        satuan: 'm',
-        hints: ['Layang-layang punya dua pasang sisi sama panjang.', '2 × (10 + 17) = …'],
-        temuan: 'Benar, 54 m: 2 × (10 + 17).',
+        id: 'hBola',
+        label: 'Luas kulit bola plastik (r = 7 cm, π = 22/7) = … cm²',
+        cek: { minta: 'luasPermukaan', jenis: 'bola', r: 7, pi: '22/7' },
+        hints: ['L = 4 × π × r².', '4 × 22/7 × 7 × 7 = 4 × 154 = …'],
       },
     ],
-    rumus: ['belahKetupat', 'layangLayang'],
-    nextLabel: 'Lanjut: Verifikasi →',
+    temuan:
+      'Luas permukaan = jumlah luas semua bagian jaring-jaring. Tabung: 2πr² + 2πrt. Kerucut: πr² + πrs. Bola: 4πr². Bila benda tidak bertutup atau tidak beralas, bagian itu tidak dihitung.',
+    nextLabel: 'Lanjut: Tuang Isinya →',
   },
 
   /* ----------------------------------------------------------
-     TAHAP 5 — VERIFICATION
+     TAHAP 7 — MENGOLAH DATA: VOLUME (Lab Tuang)
+     ---------------------------------------------------------- */
+  tuang: {
+    kicker: 'Tahap 7 · Mengolah Data',
+    syntax: 'Discovery Learning · Sintaks 4 (Data Processing)',
+    goal: 'Mengaitkan volume kerucut dan bola dengan volume tabung.',
+    guru: 'Bila ada, gunakan wadah kerucut dan tabung plastik bening beralas dan bertinggi sama serta beras atau pasir. Ingatkan kembali volume prisma = luas alas × tinggi.',
+    instruksi:
+      'Wadah kerucut beralas dan bertinggi sama dengan tabung. Wadah bola berdiameter sama dengan tinggi tabung (tinggi tabung = 2r). Isi penuh wadah, lalu tuang ke tabung. Coba kedua wadah.',
+    tanya: [
+      {
+        id: 'vTabung',
+        tanya: 'Seperti prisma, volume tabung = luas alas × tinggi = …',
+        opsi: [
+          { id: 'benar', label: 'πr²t' },
+          { id: 'selimut', label: '2πrt' },
+          { id: 'tambah', label: 'πr² + t' },
+          { id: 'dua', label: '2πr²t' },
+        ],
+        correct: 'benar',
+        umpan: {
+          benar: 'Tepat! Alasnya lingkaran (πr²), dikalikan tinggi t.',
+          selimut: '2πrt adalah luas selimut, bukan volume.',
+          tambah: 'Luas alas DIKALIKAN tinggi, bukan ditambah.',
+          dua: 'Luas alas tabung πr², bukan 2πr².',
+        },
+      },
+      {
+        id: 'vTiga',
+        tanya: 'Air dari wadah kerucut harus dituang berapa kali untuk memenuhi tabung?',
+        opsi: [
+          { id: 'tiga', label: '3 kali' },
+          { id: 'dua', label: '2 kali' },
+          { id: 'empat', label: '4 kali' },
+          { id: 'satu', label: '1 kali' },
+        ],
+        correct: 'tiga',
+        umpan: {
+          tiga: 'Tepat! Tiga kerucut penuh tepat memenuhi satu tabung.',
+          dua: 'Lihat lagi di lab: setelah dua tuangan, tabung belum penuh.',
+          empat: 'Pada tuangan keempat air tumpah, berarti tabung sudah penuh sebelumnya.',
+          satu: 'Satu tuangan baru mengisi sebagian kecil tabung.',
+        },
+      },
+      {
+        id: 'vKerucut',
+        tanya: 'Jadi volume kerucut = …',
+        opsi: [
+          { id: 'benar', label: '⅓ × πr²t' },
+          { id: 'setengah', label: '½ × πr²t' },
+          { id: 'tiga', label: '3 × πr²t' },
+          { id: 'sama', label: 'πr²t' },
+        ],
+        correct: 'benar',
+        umpan: {
+          benar: 'Tepat! Volume kerucut = ⅓ volume tabung yang alas dan tingginya sama.',
+          setengah: 'Butuh tiga tuangan, jadi satu kerucut = ⅓ tabung.',
+          tiga: 'Kerucut lebih kecil daripada tabung, bukan tiga kali lebih besar.',
+          sama: 'Itu volume tabung. Kerucut hanya sebagian darinya.',
+        },
+      },
+      {
+        id: 'vBolaBagian',
+        tanya: 'Air dari wadah bola mengisi … bagian tabung.',
+        opsi: [
+          { id: 'duaPertiga', label: '⅔' },
+          { id: 'sepertiga', label: '⅓' },
+          { id: 'setengah', label: '½' },
+          { id: 'penuh', label: 'seluruh' },
+        ],
+        correct: 'duaPertiga',
+        umpan: {
+          duaPertiga: 'Tepat! Bola mengisi dua pertiga tabung yang tingginya 2r.',
+          sepertiga: 'Lihat lagi: tinggi air setelah satu tuangan bola lebih dari sepertiga.',
+          setengah:
+            'Tinggi airnya lebih dari setengah tabung. Bandingkan dengan tiga tuangan kerucut.',
+          penuh: 'Tabung belum penuh setelah satu tuangan bola.',
+        },
+      },
+      {
+        id: 'vBola',
+        tanya: 'Karena tinggi tabung 2r, volume bola = ⅔ × πr² × 2r = …',
+        opsi: [
+          { id: 'benar', label: '4/3 πr³' },
+          { id: 'luas', label: '4πr²' },
+          { id: 'duaPertiga', label: '2/3 πr³' },
+          { id: 'kuadrat', label: '4/3 πr²' },
+        ],
+        correct: 'benar',
+        umpan: {
+          benar: 'Tepat! ⅔ × 2 = 4/3, dan r² × r = r³. V bola = 4/3 πr³.',
+          luas: '4πr² adalah luas permukaan bola.',
+          duaPertiga: 'Jangan lupa tinggi tabung 2r: ⅔ × 2 = 4/3.',
+          kuadrat: 'r² × r = r³, karena volume berdimensi tiga.',
+        },
+      },
+    ],
+    langkahInstruksi: 'Gunakan temuanmu untuk menghitung volume dua benda berikut.',
+    langkah: [
+      {
+        id: 'hTumpeng',
+        label: 'Volume tumpeng (r = 14 cm, t = 15 cm, π = 22/7) = … cm³',
+        cek: { minta: 'volume', jenis: 'kerucut', r: 14, t: 15, pi: '22/7' },
+        hints: ['V = ⅓ × π × r² × t.', '⅓ × 22/7 × 14 × 14 × 15 = 616 × 5 = …'],
+      },
+      {
+        id: 'hKelereng',
+        label: 'Volume bola mainan (r = 3 cm, π = 3,14) = … cm³',
+        cek: { minta: 'volume', jenis: 'bola', r: 3, pi: '3,14' },
+        hints: ['V = 4/3 × π × r³.', '4/3 × 3,14 × 27 = 4 × 3,14 × 9 = …'],
+      },
+    ],
+    temuan:
+      'Volume tabung = luas alas × tinggi = πr²t. Volume kerucut = ⅓ × volume tabung = ⅓πr²t. Volume bola = ⅔ × volume tabung bertinggi 2r = 4/3 πr³.',
+    nextLabel: 'Lanjut ke Pembuktian →',
+  },
+
+  /* ----------------------------------------------------------
+     TAHAP 8 — PEMBUKTIAN
      ---------------------------------------------------------- */
   verifikasi: {
-    kicker: 'Tahap 5 · Verifikasi',
-    syntax: DL + ' · Sintaks 5',
-    goal: 'Memeriksa temuan pada bangun-bangun baru dan membandingkan dugaan awal dengan data.',
-    guru: 'Murid memilah rumus luas tanpa melihat catatan. Bahas pernyataan "kadang-kadang benar" dengan contoh tandingan (mis. persegi panjang 12 × 1 dan 6 × 6). Tutup dengan membandingkan dugaan di tahap 1 dengan data.',
-    judulA: 'A. Pilih rumus luas yang tepat',
-    pengantarA:
-      'Amati setiap bangun baru, lalu pilih rumus luasnya. Ingat bangun apa yang terbentuk saat bangun itu dipotong-susun.',
-    kategori: [
-      'panjangKaliLebar',
-      'sisiKaliSisi',
-      'alasTinggi',
-      'setengahAlasTinggi',
-      'setengahJumlahSejajar',
-      'setengahDiagonal',
-    ],
-    bangun: [
+    kicker: 'Tahap 8 · Pembuktian',
+    syntax: 'Discovery Learning · Sintaks 5 (Verification)',
+    goal: 'Menguji temuan pada benda dan rancangan baru serta menanggapi pendapat teman.',
+    guru: 'Minta pasangan membandingkan hasil hitung dengan hipotesis di tahap 2. Bahas pendapat teman yang keliru secara terbuka sebagai bahan belajar.',
+    instruksiHitung:
+      'Uji temuanmu pada kaleng biskuit (r = 14 cm, t = 10 cm, π = 22/7) dan cone es krim (r = 3 cm, t = 4 cm).',
+    langkah: [
       {
-        id: 'vParkir',
-        jenis: 'persegiPanjang',
-        ukuran: { p: 7, l: 3 },
-        teks: 'Halaman parkir berbentuk persegi panjang',
-        explanation: 'Persegi panjang: l baris berisi p petak, jadi L = p × l.',
+        id: 'vKel',
+        label: 'Panjang kertas label kaleng biskuit = keliling alas = … cm',
+        cek: { minta: 'kelilingAlas', jenis: 'tabung', r: 14, pi: '22/7' },
+        hints: ['Keliling = 2 × π × r.', '2 × 22/7 × 14 = 2 × 44 = …'],
       },
       {
-        id: 'vUbin',
-        jenis: 'persegi',
-        ukuran: { s: 4 },
-        teks: 'Ubin lantai berbentuk persegi',
-        explanation: 'Persegi adalah persegi panjang dengan p = l = s, jadi L = s × s.',
+        id: 'vLuas',
+        label: 'Luas permukaan kaleng biskuit tertutup = … cm²',
+        cek: { minta: 'luasPermukaan', jenis: 'tabung', r: 14, t: 10, pi: '22/7' },
+        hints: [
+          'Luas alas = 22/7 × 14 × 14 = 616 cm²; ada dua (alas & tutup).',
+          'Luas selimut = 88 × 10 = 880 cm². Jumlahkan: 616 + 616 + 880.',
+        ],
       },
       {
-        id: 'vLadang',
-        jenis: 'jajargenjang',
-        ukuran: { a: 5, t: 3, g: 2 },
-        teks: 'Ladang jagung berbentuk jajargenjang',
-        explanation: 'Dipotong dan digeser menjadi persegi panjang a × t, jadi L = a × t.',
+        id: 'vPelukis',
+        label: 'Garis pelukis cone es krim = √(3² + 4²) = … cm',
+        cek: { minta: 'garisPelukis', jenis: 'kerucut', r: 3, t: 4 },
+        hints: ['s² = 9 + 16.', '√25 = …'],
       },
       {
-        id: 'vBendera',
-        jenis: 'segitiga',
-        ukuran: { a: 6, t: 4, g: 1 },
-        teks: 'Bendera lomba berbentuk segitiga',
-        explanation: 'Dua segitiga yang sama membentuk jajargenjang, jadi L = ½ × a × t.',
-      },
-      {
-        id: 'vAtap',
-        jenis: 'trapesium',
-        ukuran: { a: 7, b: 3, t: 3, g: 2 },
-        teks: 'Sisi atap rumah berbentuk trapesium',
-        explanation:
-          'Dua trapesium yang sama membentuk jajargenjang beralas a + b, jadi L = ½ × (a + b) × t.',
-      },
-      {
-        id: 'vHiasan',
-        jenis: 'belahKetupat',
-        ukuran: { d1: 4, d2: 6 },
-        teks: 'Hiasan dinding berbentuk belah ketupat',
-        explanation:
-          'Belah ketupat menempati setengah persegi panjang d₁ × d₂, jadi L = ½ × d₁ × d₂.',
-      },
-      {
-        id: 'vLayang',
-        jenis: 'layangLayang',
-        ukuran: { d1: 4, d2: 6, y: 2 },
-        teks: 'Layang-layang di lapangan',
-        explanation:
-          'Seperti belah ketupat, layang-layang menempati setengah persegi panjang d₁ × d₂: L = ½ × d₁ × d₂.',
+        id: 'vSudut',
+        label: 'Sudut juring jaring-jaring cone = (3 ÷ 5) × 360° = … °',
+        cek: { minta: 'sudutJuring', jenis: 'kerucut', r: 3, t: 4 },
+        hints: ['3 ÷ 5 = 0,6.', '0,6 × 360 = …'],
       },
     ],
-    judulB: 'B. Benar, salah, atau kadang-kadang benar?',
-    opsiPernyataan: [
-      { id: 'benar', label: 'Selalu benar' },
-      { id: 'salah', label: 'Salah' },
-      { id: 'kadang', label: 'Kadang-kadang benar' },
-    ],
-    pernyataan: [
+    instruksiJaring:
+      'Prediksi dulu apakah rancangan ini dapat dibentuk, lalu ketuk “Uji bentuk” untuk membuktikannya.',
+    opsiPrediksi: OPSI_LIPAT_TKB,
+    jaring: [
       {
-        id: 'nSamaLuas',
-        teks: 'Dua petak yang luasnya sama pasti kelilingnya juga sama.',
-        correct: 'salah',
-        explanation:
-          'Petak Mawar (6 m × 6 m) dan Petak Melati (9 m × 4 m) sama-sama 36 m², tetapi kelilingnya 24 m dan 26 m.',
+        id: 'jTabung',
+        nama: 'Rancangan label kaleng Dodi',
+        spec: {
+          jenis: 'tabung',
+          r: 1,
+          t: 1.6,
+          panjang: 3.14,
+          lingkaran: [
+            { r: 1, sisi: 'atas' },
+            { r: 1, sisi: 'bawah' },
+          ],
+        },
       },
       {
-        id: 'nPersegi',
-        teks: 'Persegi termasuk persegi panjang yang panjang dan lebarnya sama, sehingga rumus p × l juga berlaku untuknya.',
-        correct: 'benar',
-        explanation: 'Dengan p = l = s, rumus p × l menjadi s × s.',
-      },
-      {
-        id: 'nMiring',
-        teks: 'Luas jajargenjang dapat dihitung dengan alas × sisi miring.',
-        correct: 'kadang',
-        explanation:
-          'Hanya benar bila sisi miringnya tegak lurus alas (jajargenjang itu persegi panjang). Biasanya sisi miring lebih panjang daripada tinggi.',
-      },
-      {
-        id: 'nSegitiga',
-        teks: 'Luas segitiga adalah setengah luas jajargenjang yang alas dan tingginya sama.',
-        correct: 'benar',
-        explanation:
-          'Dua segitiga yang sama selalu dapat disusun menjadi jajargenjang seperti itu.',
-      },
-      {
-        id: 'nDiagonal',
-        teks: 'Rumus ½ × d₁ × d₂ berlaku untuk belah ketupat dan juga layang-layang.',
-        correct: 'benar',
-        explanation:
-          'Diagonal keduanya saling tegak lurus, sehingga keduanya menempati setengah persegi panjang d₁ × d₂.',
-      },
-      {
-        id: 'nTrapesium',
-        teks: 'Luas trapesium = a × t, dengan a sisi sejajar yang terpanjang.',
-        correct: 'salah',
-        explanation: 'Kedua sisi sejajar dipakai: L = ½ × (a + b) × t.',
-      },
-      {
-        id: 'nLebihBesar',
-        teks: 'Jika luas suatu persegi panjang lebih besar, kelilingnya pasti lebih besar.',
-        correct: 'kadang',
-        explanation:
-          'Persegi panjang 6 × 6 (luas 36, keliling 24) lebih luas daripada 12 × 1 (luas 12, keliling 26), tetapi kelilingnya lebih kecil.',
+        id: 'jKerucut',
+        nama: 'Rancangan topi Sari (s = 5, r = 3)',
+        spec: { jenis: 'kerucut', s: 5, sudut: 216, lingkaran: [{ r: 3 }] },
       },
     ],
-    judulC: 'C. Dugaanmu vs data',
-    nextLabel: 'Lanjut: Generalisasi →',
+    instruksiMiskonsepsi: 'Tanggapi pendapat teman-temanmu berikut.',
+    soal: [
+      {
+        id: 'mPelukis',
+        teks: 'Dimas: “Luas selimut kerucut = π × r × t, karena t adalah tinggi kerucut.”',
+        options: [
+          { id: 'a', label: 'Keliru. Selimut kerucut memakai garis pelukis: π × r × s.' },
+          { id: 'b', label: 'Benar. Tinggi dan garis pelukis sama panjangnya.' },
+          { id: 'c', label: 'Keliru. Seharusnya 2 × π × r × t.' },
+          { id: 'd', label: 'Benar, asalkan π = 3,14.' },
+        ],
+        correct: 'a',
+        explanation:
+          'Jari-jari juring selimut adalah garis pelukis s, dan s selalu lebih panjang dari t karena s sisi miring segitiga siku-siku.',
+      },
+      {
+        id: 'mRusuk',
+        teks: 'Sinta: “Bola punya satu rusuk, yaitu garis melingkar di tengahnya.”',
+        options: [
+          { id: 'a', label: 'Keliru. Garis itu hanya garis bantu; bola tidak punya rusuk.' },
+          { id: 'b', label: 'Benar. Rusuk bola ada satu.' },
+          { id: 'c', label: 'Keliru. Bola punya dua rusuk.' },
+          { id: 'd', label: 'Keliru. Bola punya satu titik sudut.' },
+        ],
+        correct: 'a',
+        explanation:
+          'Rusuk adalah pertemuan dua sisi. Bola hanya punya satu sisi lengkung, jadi tidak ada rusuk maupun titik sudut.',
+      },
+      {
+        id: 'mVolume',
+        teks: 'Raka: “Volume kerucut sama dengan volume tabung, karena alas dan tingginya sama.”',
+        options: [
+          { id: 'a', label: 'Keliru. Volume kerucut hanya ⅓ volume tabung itu.' },
+          { id: 'b', label: 'Benar. Alas dan tinggi sama berarti volume sama.' },
+          { id: 'c', label: 'Keliru. Volume kerucut ½ volume tabung itu.' },
+          { id: 'd', label: 'Keliru. Volume kerucut lebih besar.' },
+        ],
+        correct: 'a',
+        explanation:
+          'Di Lab Tuang, tabung baru penuh setelah tiga kali tuangan kerucut, jadi V kerucut = ⅓πr²t.',
+      },
+      {
+        id: 'mDiameter',
+        teks: 'Nisa: “Kaleng berdiameter 14 cm, jadi jari-jarinya 14 cm dan luas alasnya π × 14 × 14.”',
+        options: [
+          { id: 'a', label: 'Keliru. r = ½ × 14 = 7 cm, jadi luas alas = π × 7 × 7.' },
+          { id: 'b', label: 'Benar. Diameter dan jari-jari sama saja.' },
+          { id: 'c', label: 'Keliru. r = 2 × 14 = 28 cm.' },
+          { id: 'd', label: 'Keliru. Luas alas = 2 × π × 14.' },
+        ],
+        correct: 'a',
+        explanation:
+          'Diameter = 2 × jari-jari. Memakai diameter sebagai jari-jari membuat luas alas menjadi empat kali lipat.',
+      },
+    ],
+    nextLabel: 'Lanjut ke Simpulan →',
   },
 
   /* ----------------------------------------------------------
-     TAHAP 6 — GENERALIZATION
+     TAHAP 9 — MENARIK KESIMPULAN
      ---------------------------------------------------------- */
   generalisasi: {
-    kicker: 'Tahap 6 · Generalisasi',
-    syntax: DL + ' · Sintaks 6',
-    goal: 'Menyusun kesimpulan tentang cara menentukan keliling dan luas ketujuh bangun datar.',
-    guru: 'Minta pasangan membacakan kesimpulan yang sudah tersusun dan menunjukkan buktinya di Lab. Kalimat pengecoh (sisi miring, luas sama berarti keliling sama) dibahas sebagai miskonsepsi.',
+    kicker: 'Tahap 9 · Menarik Kesimpulan',
+    syntax: 'Discovery Learning · Sintaks 6 (Generalization)',
+    goal: 'Menyusun kesimpulan tentang unsur, jaring-jaring, luas permukaan, dan volume tabung, kerucut, dan bola.',
+    guru: 'Minta beberapa pasangan membacakan kesimpulannya. Tegaskan kaitan: jaring-jaring → luas permukaan; tabung → volume kerucut & bola.',
     instruksi:
-      'Lengkapi setiap awal kalimat dengan potongan yang tepat. Setiap potongan hanya dipakai satu kali; ada potongan yang tidak terpakai.',
+      'Lengkapi setiap kalimat dengan potongan yang tepat dari bank kalimat. Setiap potongan hanya dipakai sekali.',
     selectPlaceholder: '— pilih lanjutan kalimat —',
     kalimat: [
-      { id: 'gKeliling', awal: 'Keliling suatu bangun datar adalah', correct: 'bKeliling' },
-      { id: 'gLuas', awal: 'Luas suatu bangun datar adalah', correct: 'bLuas' },
-      { id: 'gPP', awal: 'Luas persegi panjang = p × l karena', correct: 'bPP' },
+      { id: 'gTabung', awal: 'Tabung memiliki', correct: 'bTabung' },
+      { id: 'gKerucut', awal: 'Kerucut memiliki', correct: 'bKerucut' },
+      { id: 'gBola', awal: 'Bola hanya memiliki', correct: 'bBola' },
+      { id: 'gJaringTabung', awal: 'Jaring-jaring tabung terdiri atas', correct: 'bJaringTabung' },
       {
-        id: 'gJajar',
-        awal: 'Jajargenjang dapat dipotong dan digeser menjadi persegi panjang, sehingga',
-        correct: 'bJajar',
+        id: 'gJaringKerucut',
+        awal: 'Jaring-jaring kerucut terdiri atas',
+        correct: 'bJaringKerucut',
       },
+      { id: 'gLuas', awal: 'Luas permukaan adalah', correct: 'bLuas' },
       {
-        id: 'gSetengah',
-        awal: 'Dua segitiga atau dua trapesium yang sama dapat disusun menjadi jajargenjang, sehingga',
-        correct: 'bSetengah',
-      },
-      {
-        id: 'gDiagonal',
-        awal: 'Belah ketupat dan layang-layang menempati setengah persegi panjang d₁ × d₂, sehingga',
-        correct: 'bDiagonal',
+        id: 'gVolume',
+        awal: 'Volume kerucut dan bola berkaitan dengan volume tabung, yaitu',
+        correct: 'bVolume',
       },
     ],
     bank: [
       {
-        id: 'bKeliling',
-        teks: 'jumlah panjang semua sisi yang membatasinya, dengan satuan panjang (cm, m).',
+        id: 'bTabung',
+        teks: 'dua sisi datar berbentuk lingkaran yang kongruen, satu selimut (sisi lengkung), dan dua rusuk lengkung.',
+      },
+      {
+        id: 'bKerucut',
+        teks: 'satu sisi alas berbentuk lingkaran, satu selimut, satu rusuk lengkung, dan satu titik puncak.',
+      },
+      {
+        id: 'bBola',
+        teks: 'satu sisi lengkung tanpa rusuk dan titik sudut, sehingga tidak memiliki jaring-jaring.',
+      },
+      {
+        id: 'bJaringTabung',
+        teks: 'dua lingkaran dan satu persegi panjang yang panjangnya sama dengan keliling alas (2πr) dan lebarnya sama dengan tinggi.',
+      },
+      {
+        id: 'bJaringKerucut',
+        teks: 'satu lingkaran dan satu juring berjari-jari garis pelukis s yang panjang busurnya sama dengan keliling alas.',
       },
       {
         id: 'bLuas',
-        teks: 'banyak petak satuan yang menutupi daerahnya, dengan satuan persegi (cm², m²).',
+        teks: 'jumlah luas semua bagian jaring-jaring: tabung 2πr² + 2πrt, kerucut πr² + πrs, bola 4πr².',
       },
-      { id: 'bPP', teks: 'petaknya tersusun dalam l baris yang masing-masing berisi p petak.' },
-      { id: 'bJajar', teks: 'luasnya = alas × tinggi (bukan alas × sisi miring).' },
-      { id: 'bSetengah', teks: 'luas satu bangunnya = ½ × luas jajargenjang itu.' },
-      { id: 'bDiagonal', teks: 'luasnya = ½ × d₁ × d₂.' },
-      { id: 'xMiring', teks: 'luasnya = alas × sisi miring.' },
-      { id: 'xSama', teks: 'dua bangun yang luasnya sama pasti kelilingnya juga sama.' },
-      { id: 'xTambah', teks: 'jumlah semua petak di sekeliling tepinya saja.' },
+      {
+        id: 'bVolume',
+        teks: 'V kerucut = ⅓ V tabung beralas dan bertinggi sama, dan V bola = ⅔ V tabung bertinggi 2r.',
+      },
+      { id: 'xSegitiga', teks: 'satu lingkaran dan satu segitiga sama kaki.' },
+      { id: 'xRusuk', teks: 'satu rusuk berupa garis melingkar di tengahnya.' },
+      { id: 'xVolume', teks: 'V kerucut sama dengan V tabung karena alas dan tingginya sama.' },
     ],
     rangkuman: [
-      '<strong>Keliling</strong> = jumlah panjang semua sisi (satuan panjang). <strong>Luas</strong> = banyak petak satuan (satuan persegi).',
-      '<strong>Persegi panjang:</strong> K = 2 × (p + l), L = p × l. <strong>Persegi:</strong> K = 4 × s, L = s × s.',
-      '<strong>Jajargenjang:</strong> L = a × t (potong-geser menjadi persegi panjang). <strong>Segitiga:</strong> L = ½ × a × t.',
-      '<strong>Trapesium:</strong> L = ½ × (a + b) × t (dua trapesium menjadi jajargenjang beralas a + b).',
-      '<strong>Belah ketupat & layang-layang:</strong> L = ½ × d₁ × d₂ (setengah persegi panjang d₁ × d₂).',
-      '<strong>Keliling bangun apa pun:</strong> jumlahkan semua sisinya; tinggi dan diagonal tidak termasuk.',
+      'Unsur ukuran: jari-jari r, diameter d = 2r, tinggi t, dan garis pelukis kerucut s = √(r² + t²).',
+      'Jaring-jaring tabung: 2 lingkaran + persegi panjang 2πr × t.',
+      'Jaring-jaring kerucut: 1 lingkaran + juring berjari-jari s, busur 2πr, sudut (r ÷ s) × 360°.',
+      'Bola tidak memiliki jaring-jaring; luas kulitnya = 4 lingkaran besar.',
+      'Luas permukaan: tabung 2πr² + 2πrt, kerucut πr² + πrs, bola 4πr².',
+      'Volume: tabung πr²t, kerucut ⅓πr²t, bola 4/3 πr³.',
     ],
-    nextLabel: 'Lanjut: Uji Terap →',
+    dugaanJudul: 'Bagaimana dengan dugaanmu di awal?',
+    tanggapanDugaan: {
+      dTabung: {
+        persegiPanjang:
+          'Dugaanmu terbukti: label kaleng terbuka menjadi persegi panjang yang panjangnya sama dengan keliling alas.',
+        lain: 'Ternyata label kaleng terbuka menjadi persegi panjang, karena tepinya lurus dan tingginya sama di setiap tempat.',
+      },
+      dKerucut: {
+        juring:
+          'Dugaanmu terbukti: topi terbuka menjadi juring lingkaran berjari-jari garis pelukis.',
+        lain: 'Ternyata topi terbuka menjadi juring lingkaran: semua titik tepinya berjarak s dari puncak, sehingga tepinya melengkung.',
+      },
+    },
+    nextLabel: 'Lanjut ke Uji Terap →',
   },
 
   /* ----------------------------------------------------------
-     TAHAP 7 — UJI TERAP
-     Bank 16 soal; app memilih 4 isian + 4 pilihan ganda secara acak.
-     Opsi pilihan ganda dibangun engine (opsiSoalBangun) lalu diacak.
+     TAHAP 10 — UJI TERAP
      ---------------------------------------------------------- */
   terapkan: {
-    kicker: 'Tahap 7 · Uji Terap',
+    kicker: 'Tahap 10 · Uji Terap',
     syntax: 'Penerapan',
-    goal: 'Menerapkan rumus keliling dan luas ketujuh bangun datar untuk menyelesaikan masalah sehari-hari.',
-    guru: 'Murid bekerja mandiri. Amati pesan diagnosa yang muncul (keliling–luas tertukar, lupa ½, memakai sisi miring, satuan keliru) sebagai bahan umpan balik individual. Minta murid menuliskan rumus sebelum menghitung.',
+    goal: 'Menerapkan unsur, jaring-jaring, luas permukaan, dan volume tabung, kerucut, dan bola pada masalah sehari-hari.',
+    guru: 'Murid bekerja mandiri. Amati pesan diagnosa yang muncul (diameter dipakai sebagai jari-jari, t dipakai sebagai s, lupa tutup, lupa ⅓) sebagai bahan umpan balik individual.',
     instruksi:
-      'Kerjakan delapan soal berikut. Tentukan dulu: yang ditanyakan keliling atau luas? Lalu pilih rumus yang tepat. Desimal ditulis dengan koma, mis. 17,5.',
-    banyak: 8,
-    komposisi: { input: 4, choice: 4 },
+      'Kerjakan sepuluh soal berikut. Tentukan dulu bagian mana yang ditanyakan, lalu gunakan nilai π yang diminta. Desimal ditulis dengan koma, mis. 188,4.',
+    banyak: 10,
+    komposisi: { input: 5, choice: 5 },
     soal: [
       {
-        id: 'iKeramik',
+        id: 'iLabel',
         type: 'input',
-        konteks: 'rumah',
-        cerita: 'Lantai kamar Rina berbentuk persegi panjang 4 m × 3 m akan dipasangi keramik.',
-        pertanyaan: 'Berapa luas lantai kamar itu?',
-        cek: { jenis: 'persegiPanjang', ukuran: { p: 4, l: 3 }, minta: 'luas' },
-        label: { sisi: true },
-        satuan: 'm',
-        hints: ['Luas persegi panjang = p × l.', '4 × 3 = …'],
-        reveal: 'Jawaban: 12 m².',
-        explanation: 'L = p × l = 4 × 3 = 12 m².',
-      },
-      {
-        id: 'iKebun',
-        type: 'input',
-        konteks: 'taman',
+        konteks: '🥫 Koperasi',
         cerita:
-          'Kebun sayur berbentuk persegi panjang 15 m × 8 m akan dipagari kawat di sekeliling tepinya.',
-        pertanyaan: 'Berapa meter kawat yang diperlukan?',
-        cek: { jenis: 'persegiPanjang', ukuran: { p: 15, l: 8 }, minta: 'keliling' },
-        label: { sisi: true },
-        satuan: 'm',
-        hints: ['Keliling = 2 × (p + l).', '2 × (15 + 8) = 2 × 23 = …'],
-        reveal: 'Jawaban: 46 m.',
-        explanation: 'K = 2 × (15 + 8) = 46 m.',
+          'Kaleng susu berjari-jari 7 cm dan bertinggi 10 cm akan dibungkus label kertas pada seluruh selimutnya.',
+        pertanyaan: 'Berapa luas kertas label yang diperlukan? (π = 22/7)',
+        cek: { minta: 'luasSelimut', jenis: 'tabung', r: 7, t: 10, pi: '22/7' },
+        hints: ['Label = selimut = persegi panjang 2πr × t.', '2 × 22/7 × 7 × 10 = 44 × 10 = …'],
+        explanation: 'L selimut = 2πrt = 44 × 10 = 440 cm².',
       },
       {
-        id: 'iBendera',
+        id: 'iToples',
         type: 'input',
-        konteks: 'sekolah',
-        cerita: 'Bendera segitiga untuk lomba tujuh belasan memiliki alas 30 cm dan tinggi 45 cm.',
-        pertanyaan: 'Berapa luas kain sebuah bendera itu?',
-        cek: { jenis: 'segitiga', ukuran: { a: 30, t: 45, g: 15 }, minta: 'luas' },
-        label: { sisi: [0], tinggi: true },
-        satuan: 'cm',
-        hints: ['Luas segitiga = ½ × a × t.', '½ × 30 × 45 = 15 × 45 = …'],
-        reveal: 'Jawaban: 675 cm².',
-        explanation: 'L = ½ × 30 × 45 = 675 cm².',
+        konteks: '🍪 Dapur',
+        cerita: 'Tutup toples kue berbentuk lingkaran dengan diameter 14 cm.',
+        pertanyaan: 'Berapa luas tutup toples itu? (π = 22/7)',
+        cek: { minta: 'luasAlas', jenis: 'tabung', d: 14, pi: '22/7' },
+        hints: ['Jari-jari = ½ × diameter = 7 cm.', '22/7 × 7 × 7 = …'],
+        explanation: 'r = 7 cm, L = πr² = 22/7 × 49 = 154 cm².',
       },
       {
-        id: 'iTaplak',
+        id: 'iTopiS',
         type: 'input',
-        konteks: 'rumah',
+        konteks: '🥳 Pesta',
+        cerita: 'Topi ulang tahun berbentuk kerucut berjari-jari alas 7 cm dan bertinggi 24 cm.',
+        pertanyaan: 'Berapa panjang garis pelukis topi itu?',
+        cek: { minta: 'garisPelukis', jenis: 'kerucut', r: 7, t: 24 },
+        hints: ['s = √(r² + t²).', '√(49 + 576) = √625 = …'],
+        explanation: 's = √(7² + 24²) = √625 = 25 cm.',
+      },
+      {
+        id: 'iTopiKertas',
+        type: 'input',
+        konteks: '🥳 Pesta',
+        cerita: 'Topi itu (r = 7 cm, s = 25 cm) dibuat dari kertas tanpa alas.',
+        pertanyaan: 'Berapa luas kertas sebuah topi? (π = 22/7)',
+        cek: { minta: 'luasSelimut', jenis: 'kerucut', r: 7, s: 25, pi: '22/7' },
+        hints: ['Topi hanya selimut: L = πrs.', '22/7 × 7 × 25 = 22 × 25 = …'],
+        explanation: 'L selimut = πrs = 22/7 × 7 × 25 = 550 cm².',
+      },
+      {
+        id: 'iTumpeng',
+        type: 'input',
+        konteks: '🍚 Syukuran',
+        cerita: 'Cetakan tumpeng berbentuk kerucut berjari-jari 14 cm dan bertinggi 15 cm.',
+        pertanyaan: 'Berapa volume nasi yang dapat dicetak? (π = 22/7)',
+        cek: { minta: 'volume', jenis: 'kerucut', r: 14, t: 15, pi: '22/7' },
+        hints: ['V = ⅓πr²t.', '⅓ × 22/7 × 14 × 14 × 15 = 616 × 5 = …'],
+        explanation: 'V = ⅓ × 22/7 × 196 × 15 = 3.080 cm³.',
+      },
+      {
+        id: 'iBola',
+        type: 'input',
+        konteks: '⚽ Olahraga',
+        cerita: 'Bola plastik berjari-jari 7 cm akan dicat seluruh permukaannya.',
+        pertanyaan: 'Berapa luas permukaan yang dicat? (π = 22/7)',
+        cek: { minta: 'luasPermukaan', jenis: 'bola', r: 7, pi: '22/7' },
+        hints: ['L = 4πr².', '4 × 22/7 × 49 = 4 × 154 = …'],
+        explanation: 'L = 4πr² = 4 × 154 = 616 cm².',
+      },
+      {
+        id: 'iMainan',
+        type: 'input',
+        konteks: '🧸 Mainan',
+        cerita: 'Bola mainan pejal berjari-jari 3 cm dibuat dari lilin.',
+        pertanyaan: 'Berapa volume lilin yang diperlukan? (π = 3,14)',
+        cek: { minta: 'volume', jenis: 'bola', r: 3, pi: '3,14' },
+        hints: ['V = 4/3 πr³.', '4/3 × 3,14 × 27 = 4 × 3,14 × 9 = …'],
+        explanation: 'V = 4/3 × 3,14 × 27 = 113,04 cm³.',
+      },
+      {
+        id: 'iPensil',
+        type: 'input',
+        konteks: '✏️ Sekolah',
         cerita:
-          'Taplak meja berbentuk persegi bersisi 80 cm akan diberi renda di sekeliling tepinya.',
-        pertanyaan: 'Berapa sentimeter renda yang diperlukan?',
-        cek: { jenis: 'persegi', ukuran: { s: 80 }, minta: 'keliling' },
-        label: { sisi: [0] },
-        satuan: 'cm',
-        hints: ['Keliling persegi = 4 × s.', '4 × 80 = …'],
-        reveal: 'Jawaban: 320 cm.',
-        explanation: 'K = 4 × 80 = 320 cm.',
-      },
-      {
-        id: 'iSawah',
-        type: 'input',
-        konteks: 'taman',
-        cerita:
-          'Sawah Pak Darto berbentuk jajargenjang dengan alas 25 m dan tinggi 12 m. Sisi miringnya 13 m.',
-        pertanyaan: 'Berapa luas sawah itu?',
-        cek: { jenis: 'jajargenjang', ukuran: { a: 25, t: 12, g: 5 }, minta: 'luas' },
-        label: { sisi: true, tinggi: true },
-        satuan: 'm',
-        hints: ['Luas jajargenjang = a × t. Sisi miring tidak dipakai.', '25 × 12 = …'],
-        reveal: 'Jawaban: 300 m².',
-        explanation: 'L = a × t = 25 × 12 = 300 m².',
-      },
-      {
-        id: 'iAtap',
-        type: 'input',
-        konteks: 'rumah',
-        cerita:
-          'Satu sisi atap rumah berbentuk trapesium dengan sisi sejajar 10 m dan 6 m serta tinggi 4 m.',
-        pertanyaan: 'Berapa luas sisi atap itu?',
-        cek: { jenis: 'trapesium', ukuran: { a: 10, b: 6, t: 4, g: 2 }, minta: 'luas' },
-        label: { sisi: [0, 2], tinggi: true },
-        satuan: 'm',
-        hints: ['L = ½ × (a + b) × t.', '½ × (10 + 6) × 4 = ½ × 16 × 4 = …'],
-        reveal: 'Jawaban: 32 m².',
-        explanation: 'L = ½ × (10 + 6) × 4 = 32 m².',
-      },
-      {
-        id: 'iLayang',
-        type: 'input',
-        konteks: 'kerajinan',
-        cerita: 'Budi membuat layang-layang dengan kerangka (diagonal) 40 cm dan 60 cm.',
-        pertanyaan: 'Berapa luas kertas yang menutupi layang-layang itu?',
-        cek: { jenis: 'layangLayang', ukuran: { d1: 40, d2: 60, y: 20 }, minta: 'luas' },
-        label: { diagonal: true },
-        satuan: 'cm',
-        hints: ['L = ½ × d₁ × d₂.', '½ × 40 × 60 = 20 × 60 = …'],
-        reveal: 'Jawaban: 1.200 cm².',
-        explanation: 'L = ½ × 40 × 60 = 1.200 cm².',
-      },
-      {
-        id: 'iLebar',
-        type: 'input',
-        konteks: 'sekolah',
-        cerita: 'Halaman upacara berbentuk persegi panjang dengan luas 96 m² dan panjang 12 m.',
-        pertanyaan: 'Berapa lebar halaman itu?',
+          'Tempat pensil berbentuk tabung tanpa tutup berjari-jari 5 cm dan bertinggi 12 cm dilapisi kain flanel di bagian luarnya.',
+        pertanyaan: 'Berapa luas kain flanel yang diperlukan? (π = 3,14)',
         cek: {
-          jenis: 'persegiPanjang',
-          ukuran: { p: 12, l: 8 },
-          minta: 'ukuran',
-          cari: 'l',
-          dari: 'luas',
+          minta: 'luasPermukaan',
+          jenis: 'tabung',
+          r: 5,
+          t: 12,
+          pi: '3,14',
+          tanpa: ['tutup'],
         },
-        label: { sisi: [0] },
-        satuan: 'm',
-        hints: ['p × l = 96, jadi 12 × l = 96.', 'l = 96 : 12 = …'],
-        reveal: 'Jawaban: 8 m.',
-        explanation: 'l = 96 : 12 = 8 m, karena 12 × 8 = 96.',
+        hints: [
+          'Tanpa tutup: L = luas alas + luas selimut.',
+          '3,14 × 25 + 2 × 3,14 × 5 × 12 = 78,5 + 376,8 = …',
+        ],
+        explanation: 'L = πr² + 2πrt = 78,5 + 376,8 = 455,3 cm².',
       },
       {
-        id: 'cHiasanL',
+        id: 'cDrum',
         type: 'choice',
-        konteks: 'kerajinan',
-        cerita: 'Hiasan dinding berbentuk belah ketupat dengan diagonal 12 cm dan 16 cm.',
-        pertanyaan: 'Berapa luas hiasan itu?',
-        cek: { jenis: 'belahKetupat', ukuran: { d1: 12, d2: 16 }, minta: 'luas' },
-        label: { diagonal: true },
-        satuan: 'cm',
-        explanation: 'L = ½ × 12 × 16 = 96 cm².',
+        konteks: '💧 Kebun',
+        cerita: 'Drum air berbentuk tabung berjari-jari 7 dm dan bertinggi 10 dm.',
+        pertanyaan: 'Berapa volume air yang dapat ditampung drum itu? (π = 22/7)',
+        cek: { minta: 'volume', jenis: 'tabung', r: 7, t: 10, pi: '22/7' },
+        satuan: 'dm',
+        explanation: 'V = πr²t = 154 × 10 = 1.540 dm³ = 1.540 liter.',
       },
       {
-        id: 'cHiasanK',
+        id: 'cCone',
         type: 'choice',
-        konteks: 'kerajinan',
+        konteks: '🍦 Kantin',
         cerita:
-          'Tepi hiasan belah ketupat (diagonal 12 cm dan 16 cm, sisi 10 cm) akan diberi pita.',
-        pertanyaan: 'Berapa panjang pita yang diperlukan?',
-        cek: { jenis: 'belahKetupat', ukuran: { d1: 12, d2: 16 }, minta: 'keliling' },
-        label: { sisi: [0], diagonal: true },
-        satuan: 'cm',
-        explanation: 'K = 4 × 10 = 40 cm. Diagonal tidak dipakai untuk keliling.',
+          'Cone es krim berjari-jari 3 cm dan bertinggi 4 cm dibungkus kertas pada selimutnya.',
+        pertanyaan: 'Berapa luas kertas pembungkusnya? (π = 3,14)',
+        cek: { minta: 'luasSelimut', jenis: 'kerucut', r: 3, t: 4, pi: '3,14' },
+        explanation: 's = √(9 + 16) = 5 cm, L = πrs = 3,14 × 3 × 5 = 47,1 cm².',
       },
       {
-        id: 'cPetakSegitiga',
+        id: 'cSudut',
         type: 'choice',
-        konteks: 'taman',
-        cerita: 'Petak bunga berbentuk segitiga dengan alas 10 m dan tinggi 6 m.',
-        pertanyaan: 'Berapa luas petak bunga itu?',
-        cek: { jenis: 'segitiga', ukuran: { a: 10, t: 6, g: 2 }, minta: 'luas' },
-        label: { sisi: [0], tinggi: true },
-        satuan: 'm',
-        explanation: 'L = ½ × 10 × 6 = 30 m².',
-      },
-      {
-        id: 'cKolam',
-        type: 'choice',
-        konteks: 'taman',
+        konteks: '🥳 Pesta',
         cerita:
-          'Kolam renang anak berbentuk trapesium dengan sisi sejajar 14 m dan 8 m serta tinggi 6 m.',
-        pertanyaan: 'Berapa luas permukaan kolam itu?',
-        cek: { jenis: 'trapesium', ukuran: { a: 14, b: 8, t: 6, g: 3 }, minta: 'luas' },
-        label: { sisi: [0, 2], tinggi: true },
-        satuan: 'm',
-        explanation: 'L = ½ × (14 + 8) × 6 = 66 m².',
+          'Sari membuat topi kerucut berjari-jari 6 cm dan bertinggi 8 cm dari selembar juring kertas.',
+        pertanyaan: 'Berapa besar sudut pusat juring yang harus digunting?',
+        cek: { minta: 'sudutJuring', jenis: 'kerucut', r: 6, t: 8 },
+        explanation: 's = 10 cm, sudut = (6 ÷ 10) × 360° = 216°.',
       },
       {
-        id: 'cLapangan',
+        id: 'cBiskuit',
         type: 'choice',
-        konteks: 'olahraga',
+        konteks: '🥫 Koperasi',
         cerita:
-          'Pak guru berlari satu kali mengelilingi tepi lapangan basket berukuran 28 m × 15 m.',
-        pertanyaan: 'Berapa meter jarak yang ditempuhnya?',
-        cek: { jenis: 'persegiPanjang', ukuran: { p: 28, l: 15 }, minta: 'keliling' },
-        label: { sisi: true },
-        satuan: 'm',
-        explanation: 'K = 2 × (28 + 15) = 86 m.',
+          'Kaleng biskuit tertutup berjari-jari 14 cm dan bertinggi 10 cm akan dicat seluruh permukaannya.',
+        pertanyaan: 'Berapa luas permukaan yang dicat? (π = 22/7)',
+        cek: { minta: 'luasPermukaan', jenis: 'tabung', r: 14, t: 10, pi: '22/7' },
+        explanation: 'L = 2 × 616 + 88 × 10 = 1.232 + 880 = 2.112 cm².',
       },
       {
-        id: 'cSisiSenam',
+        id: 'cBasket',
         type: 'choice',
-        konteks: 'olahraga',
-        cerita: 'Keliling matras senam berbentuk persegi adalah 36 m.',
-        pertanyaan: 'Berapa panjang sisinya?',
-        cek: { jenis: 'persegi', ukuran: { s: 9 }, minta: 'ukuran', cari: 's', dari: 'keliling' },
-        label: {},
-        satuan: 'm',
-        explanation: 's = 36 : 4 = 9 m, karena persegi punya empat sisi sama panjang.',
+        konteks: '🏀 Olahraga',
+        cerita: 'Sebuah bola basket berdiameter 28 cm.',
+        pertanyaan: 'Berapa luas permukaan bola basket itu? (π = 22/7)',
+        cek: { minta: 'luasPermukaan', jenis: 'bola', d: 28, pi: '22/7' },
+        explanation: 'r = 14 cm, L = 4πr² = 4 × 22/7 × 196 = 2.464 cm².',
       },
       {
-        id: 'cRumusJajar',
+        id: 'cCorong',
         type: 'choice',
-        konteks: 'sekolah',
-        cerita: 'Raka lupa rumus luas jajargenjang. Ia teringat kegiatan potong-geser di Lab.',
-        pertanyaan: 'Rumus luas jajargenjang yang tepat adalah …',
-        cek: { jenis: 'jajargenjang', minta: 'rumus' },
-        gambar: { ukuran: { a: 6, t: 3, g: 2 }, label: { sisi: [0, 1], tinggi: true } },
-        explanation: 'Jajargenjang dipotong-geser menjadi persegi panjang a × t, jadi L = a × t.',
+        konteks: '🧪 Lab IPA',
+        cerita:
+          'Corong berbentuk kerucut berjari-jari 6 cm dan bertinggi 8 cm ditutup ujungnya lalu diisi air sampai penuh.',
+        pertanyaan: 'Berapa volume air di dalam corong? (π = 3,14)',
+        cek: { minta: 'volume', jenis: 'kerucut', r: 6, t: 8, pi: '3,14' },
+        explanation: 'V = ⅓ × 3,14 × 36 × 8 = 301,44 cm³.',
       },
       {
-        id: 'cRumusTrapesium',
+        id: 'cPita',
         type: 'choice',
-        konteks: 'sekolah',
-        cerita: 'Sinta ingin menghitung luas papan nama berbentuk trapesium.',
-        pertanyaan: 'Rumus luas trapesium yang tepat adalah …',
-        cek: { jenis: 'trapesium', minta: 'rumus' },
-        gambar: { ukuran: { a: 7, b: 3, t: 3, g: 2 }, label: { sisi: [0, 2], tinggi: true } },
+        konteks: '🎁 Kado',
+        cerita: 'Pita dililitkan tepat satu putaran pada tepi tutup kaleng berjari-jari 7 cm.',
+        pertanyaan: 'Berapa panjang pita yang diperlukan? (π = 22/7)',
+        cek: { minta: 'kelilingAlas', jenis: 'tabung', r: 7, pi: '22/7' },
+        explanation: 'Panjang pita = keliling alas = 2 × 22/7 × 7 = 44 cm.',
+      },
+      {
+        id: 'cJaringBola',
+        type: 'choice',
+        konteks: '🏐 Olahraga',
+        cerita:
+          'Raka ingin membuat jaring-jaring bola voli dari karton agar bisa dilipat menjadi bola.',
+        pertanyaan: 'Bagaimana pendapatmu?',
+        options: [
+          { id: 'a', label: 'Tidak bisa, karena kulit bola tidak dapat dibentangkan rata.' },
+          { id: 'b', label: 'Bisa, jaring-jaringnya empat lingkaran.' },
+          { id: 'c', label: 'Bisa, jaring-jaringnya satu lingkaran besar.' },
+          { id: 'd', label: 'Bisa, jaring-jaringnya dua setengah lingkaran.' },
+        ],
+        correct: 'a',
         explanation:
-          'Dua trapesium yang sama membentuk jajargenjang beralas a + b, jadi L = ½ × (a + b) × t.',
+          'Bola hanya punya satu sisi lengkung yang tidak bisa dibuka menjadi bangun datar tanpa sobek, jadi bola tidak memiliki jaring-jaring.',
+      },
+      {
+        id: 'cLebar',
+        type: 'choice',
+        konteks: '🪈 Bengkel',
+        cerita:
+          'Pipa paralon dipotong lurus memanjang lalu dibuka menjadi lembaran persegi panjang.',
+        pertanyaan: 'Ukuran lembaran itu adalah …',
+        options: [
+          { id: 'a', label: 'keliling penampang pipa × panjang pipa' },
+          { id: 'b', label: 'diameter pipa × panjang pipa' },
+          { id: 'c', label: 'luas penampang pipa × panjang pipa' },
+          { id: 'd', label: 'jari-jari pipa × panjang pipa' },
+        ],
+        correct: 'a',
+        explanation:
+          'Pipa adalah selimut tabung: lembarannya berukuran keliling alas (2πr) × tinggi (panjang pipa).',
       },
     ],
-    nextLabel: 'Lanjut: Refleksi →',
+    nextLabel: 'Lanjut ke Refleksi →',
   },
 
   /* ----------------------------------------------------------
-     TAHAP 8 — REFLEKSI
+     TAHAP 11 — REFLEKSI
      ---------------------------------------------------------- */
   refleksi: {
-    kicker: 'Tahap 8 · Refleksi',
-    syntax: 'Penutup',
-    goal: 'Merenungkan cara menemukan rumus keliling dan luas serta menilai pemahaman diri.',
-    guru: 'Beri waktu hening 3 menit. Ajak beberapa murid membacakan jawaban pertanyaan kedua untuk menguatkan strategi "potong-susun menjadi bangun yang sudah dikenal".',
+    kicker: 'Tahap 11 · Refleksi',
+    syntax: 'Discovery Learning · Penutup',
+    goal: 'Merenungkan proses penemuan dan menilai pemahaman diri.',
+    guru: 'Gunakan jawaban refleksi untuk mengetahui murid yang masih menukar t dengan s atau diameter dengan jari-jari. Jawaban hanya tersimpan di perangkat murid.',
     pertanyaan: [
       {
-        id: 'rBangun',
-        teks: 'Rumus bangun mana yang paling menarik untuk kamu temukan, dan bagaimana caranya?',
-        placeholder: 'Contoh: trapesium, karena dua trapesium bisa menjadi jajargenjang …',
+        id: 'r1',
+        teks: 'Dengan kalimatmu sendiri, jelaskan perbedaan unsur tabung, kerucut, dan bola.',
+        placeholder: 'Tabung punya … sedangkan kerucut … dan bola …',
       },
       {
-        id: 'rBeda',
-        teks: 'Dengan kata-katamu sendiri, apa perbedaan keliling dan luas?',
-        placeholder: 'Contoh: keliling adalah …, sedangkan luas adalah …',
+        id: 'r2',
+        teks: 'Apakah dugaan dan hipotesismu di awal terbukti? Apa yang berubah dari pemikiranmu?',
+        placeholder: 'Awalnya aku mengira … ternyata …',
       },
       {
-        id: 'rDugaan',
-        teks: 'Apakah dugaanmu di awal pelajaran tepat? Apa yang membuatmu berubah pikiran?',
-        placeholder: 'Contoh: aku kira luas belah ketupat 6 × 8 = 48 m², ternyata …',
+        id: 'r3',
+        teks: 'Bagaimana jaring-jaring membantumu menghitung luas permukaan? Benda apa di rumahmu yang bisa kamu hitung?',
+        placeholder: 'Jaring-jaring membantuku karena … Di rumah ada …',
       },
     ],
     diriLabel:
-      'Seberapa yakin kamu dapat menentukan keliling dan luas ketujuh bangun datar sekarang?',
+      'Seberapa yakin kamu mengidentifikasi unsur dan jaring-jaring tabung, kerucut, dan bola sekarang?',
     diriOpsi: [
-      { id: 'sangat', label: 'Sangat yakin — aku bisa menjelaskannya kepada teman' },
-      { id: 'yakin', label: 'Yakin — aku bisa mengerjakannya sendiri' },
-      { id: 'cukup', label: 'Cukup yakin — kadang masih perlu melihat rumus' },
-      { id: 'belum', label: 'Belum yakin — aku perlu latihan lagi' },
+      { id: 'd1', label: '🌟 Sangat yakin, bisa menjelaskan ke teman' },
+      { id: 'd2', label: '🙂 Yakin, tapi masih perlu latihan' },
+      { id: 'd3', label: '🤔 Masih bingung di beberapa bagian' },
+      { id: 'd4', label: '🆘 Perlu dibantu guru' },
     ],
-    nextLabel: 'Simpan & Selesai →',
+    nextLabel: 'Simpan & Selesai',
   },
 
   /* ----------------------------------------------------------
-     SELESAI
+     TAHAP 12 — SELESAI
      ---------------------------------------------------------- */
   selesai: {
-    judul: 'Kamu sudah menemukan rumus keliling & luas!',
-    teks: 'Dengan menghitung petak, memotong, dan menyusun bangun, kamu menemukan sendiri cara menentukan keliling dan luas tujuh bangun datar — dan kini taman sekolah siap dirancang.',
-    contoh: [
-      'persegi',
-      'persegiPanjang',
-      'segitiga',
-      'jajargenjang',
-      'trapesium',
-      'belahKetupat',
-      'layangLayang',
-    ],
+    judul: 'Hebat, penemuanmu tuntas!',
+    teks: 'Kamu telah menemukan sendiri unsur dan jaring-jaring tabung, kerucut, dan bola, lalu mengaitkannya dengan luas permukaan dan volume.',
     capaian: [
-      'Membedakan keliling dan luas beserta satuannya.',
-      'Menemukan rumus keliling dan luas persegi panjang serta persegi dari petak dan ruas satuan.',
-      'Menemukan rumus luas jajargenjang, segitiga, dan trapesium dengan memotong-menyusun bangun.',
-      'Menemukan rumus luas belah ketupat dan layang-layang dari kedua diagonalnya.',
-      'Menentukan keliling dan luas ketujuh bangun datar dalam masalah sehari-hari.',
+      'Menunjukkan sisi, rusuk, titik puncak, jari-jari, diameter, tinggi, dan garis pelukis pada tabung, kerucut, dan bola.',
+      'Menemukan jaring-jaring tabung (2 lingkaran + persegi panjang 2πr × t) dan kerucut (lingkaran + juring berjari-jari s).',
+      'Menjelaskan bahwa bola tidak memiliki jaring-jaring, tetapi luas kulitnya sama dengan 4 lingkaran besar.',
+      'Mengaitkan luas bagian jaring-jaring dengan luas permukaan.',
+      'Mengaitkan volume kerucut (⅓ tabung) dan bola (⅔ tabung bertinggi 2r) dengan volume tabung.',
     ],
   },
 };
