@@ -63702,3 +63702,741 @@ function bindTabelUnsurTKB(root, id, st, rows, onSave, onChange) {
     });
   }
 }
+
+/* ============================================================
+   90. PERUBAHAN PROPORSIONAL BANGUN DATAR
+   Lanjutan seksi 26 (bangun { id, nama, jenis, titik, pts } dalam cm,
+   sumbu y ke bawah). jenis 'segitiga' | 'jajargenjang' (termasuk
+   persegi & persegi panjang) menentukan cara "menambah" sisi.
+     • perubahan   aksenTitik, segitigaDariSisi, skalakanBangun,
+                   regangBangun, tambahSisiBangun, ubahBangunPP,
+                   labelAksiPP
+     • banding     bandingUbahPP, pesanBandingPP, buildBandingTabelPP
+     • soal        satuanSoalPP, nilaiSoalPP, calonKeliruPP, diagnosaPP,
+                   periksaSoalPP, siapkanLangkahPP, jawabSoalPP,
+                   opsiSoalPP, PPB_PESAN
+     • Lab Ubah    ensureLabUbahPP, pilihLabUbahPP, terapkanLabUbahPP,
+                   hasilLabUbahPP, labUbahPPLengkap, buildLabUbahPP,
+                   bindLabUbahPP, buildLogUbahPP
+   Fungsi murni diuji di tests/engine-perubahan-proporsional.test.js.
+   Gaya .ppb-* ada di shared/base.css.
+   ============================================================ */
+
+var PPB_TOL_RASIO = 0.005; /* toleransi perbandingan rasio sisi */
+var PPB_TOL_SUDUT = 0.5; /* toleransi derajat sudut "tetap" */
+
+var PPB_AKSI = [
+  { id: 'kali', label: 'Kali setiap sisi', ikon: '✖️' },
+  { id: 'tambah', label: 'Tambah setiap sisi', ikon: '➕' },
+  { id: 'regang', label: 'Regang mendatar saja', ikon: '↔️' },
+];
+
+var PPB_JENIS_LABEL = {
+  proporsional: 'Proporsional (sebangun)',
+  sudutTetap: 'Sudut tetap, sisi tidak sebanding',
+  berubah: 'Bentuk berubah',
+};
+
+/* Dua angka di belakang koma tanpa galat biner. */
+function rapiPP(x) {
+  return Math.round(x * 100) / 100;
+}
+
+function fmtPP(x) {
+  return fmtAngkaRasio(rapiPP(x));
+}
+
+function samaPP_(a, b) {
+  return Math.abs(a - b) <= 0.011;
+}
+
+function aksenTitik(titik) {
+  return titik.map(function (t) {
+    return t + '′';
+  });
+}
+
+/*
+ * Titik-titik segitiga dengan sisi [AB, BC, CA] (urutan sisiPoligon).
+ * acuan (opsional, pts segitiga lama): A tetap, AB searah AB lama, dan
+ * C berada di sisi yang sama dengan C lama. Tanpa acuan: A di (0, 0),
+ * B di sumbu x, C di atas AB (y negatif).
+ */
+function segitigaDariSisi(sisi, acuan) {
+  var ab = sisi[0];
+  var bc = sisi[1];
+  var ca = sisi[2];
+  if (!(ab > 0 && bc > 0 && ca > 0) || ab + bc <= ca || bc + ca <= ab || ca + ab <= bc) {
+    throw new Error('Ketiga panjang itu tidak dapat membentuk segitiga.');
+  }
+  var x = (ab * ab + ca * ca - bc * bc) / (2 * ab);
+  var y = Math.sqrt(Math.max(0, ca * ca - x * x));
+  if (!acuan) {
+    return [
+      [0, 0],
+      [ab, 0],
+      [rapiKgr_(x), rapiKgr_(-y)],
+    ];
+  }
+  var A = acuan[0];
+  var u = kgrUnit([acuan[1][0] - A[0], acuan[1][1] - A[1]]);
+  var w = [acuan[2][0] - A[0], acuan[2][1] - A[1]];
+  var arah = u[0] * w[1] - u[1] * w[0] >= 0 ? 1 : -1;
+  var nrm = [-u[1] * arah, u[0] * arah];
+  return [
+    [A[0], A[1]],
+    [rapiKgr_(A[0] + u[0] * ab), rapiKgr_(A[1] + u[1] * ab)],
+    [rapiKgr_(A[0] + u[0] * x + nrm[0] * y), rapiKgr_(A[1] + u[1] * x + nrm[1] * y)],
+  ];
+}
+
+function rapiKgr_(v) {
+  return bulatKgr(v);
+}
+
+function salinBangunPP_(b, pts, akhiran) {
+  return {
+    id: b.id + (akhiran ? '-' + akhiran : ''),
+    nama: b.nama,
+    jenis: b.jenis,
+    titik: b.titik.slice(),
+    pts: pts,
+  };
+}
+
+function skalakanBangun(b, k) {
+  return salinBangunPP_(
+    b,
+    b.pts.map(function (p) {
+      return [rapiKgr_(p[0] * k), rapiKgr_(p[1] * k)];
+    })
+  );
+}
+
+/* Hanya ukuran mendatar (sumbu x) yang dikali kx. */
+function regangBangun(b, kx) {
+  return salinBangunPP_(
+    b,
+    b.pts.map(function (p) {
+      return [rapiKgr_(p[0] * kx), p[1]];
+    })
+  );
+}
+
+/*
+ * Setiap sisi ditambah c. Segitiga dibangun ulang dari tiga sisi barunya;
+ * jajargenjang (persegi, persegi panjang) mempertahankan arah kedua
+ * pasang sisinya.
+ */
+function tambahSisiBangun(b, c) {
+  if (b.jenis === 'segitiga') {
+    var s = sisiPoligon(b.pts).map(function (v) {
+      return v + c;
+    });
+    return salinBangunPP_(b, segitigaDariSisi(s, b.pts));
+  }
+  if (b.jenis === 'jajargenjang') {
+    var A = b.pts[0];
+    var B = b.pts[1];
+    var D = b.pts[3];
+    var u = kgrUnit([B[0] - A[0], B[1] - A[1]]);
+    var v = kgrUnit([D[0] - A[0], D[1] - A[1]]);
+    var p = jarakTitik(A, B) + c;
+    var l = jarakTitik(A, D) + c;
+    var B2 = [A[0] + u[0] * p, A[1] + u[1] * p];
+    var D2 = [A[0] + v[0] * l, A[1] + v[1] * l];
+    var C2 = [B2[0] + D2[0] - A[0], B2[1] + D2[1] - A[1]];
+    return salinBangunPP_(
+      b,
+      [A, B2, C2, D2].map(function (q) {
+        return [rapiKgr_(q[0]), rapiKgr_(q[1])];
+      })
+    );
+  }
+  throw new Error('Bangun ' + b.jenis + ' tidak dapat ditambah sisinya.');
+}
+
+/* aksi { jenis: 'kali' | 'tambah' | 'regang', nilai } → bangun baru beraksen. */
+function ubahBangunPP(b, aksi) {
+  if (!aksi || !(aksi.nilai > 0)) throw new Error('Nilai perubahan harus positif.');
+  var q;
+  if (aksi.jenis === 'kali') q = skalakanBangun(b, aksi.nilai);
+  else if (aksi.jenis === 'tambah') q = tambahSisiBangun(b, aksi.nilai);
+  else if (aksi.jenis === 'regang') q = regangBangun(b, aksi.nilai);
+  else throw new Error('Aksi perubahan tidak dikenal: ' + aksi.jenis);
+  q.id = b.id + '-' + aksi.jenis + '-' + String(aksi.nilai).replace('.', '_');
+  q.titik = aksenTitik(b.titik);
+  return q;
+}
+
+function labelAksiPP(aksi) {
+  var n = fmtPP(aksi.nilai);
+  if (aksi.jenis === 'kali') return 'Setiap sisi × ' + n;
+  if (aksi.jenis === 'tambah') return 'Setiap sisi + ' + n + ' cm';
+  if (aksi.jenis === 'regang') return 'Hanya ukuran mendatar × ' + n;
+  throw new Error('Aksi perubahan tidak dikenal: ' + aksi.jenis);
+}
+
+/* ---------- Perbandingan sebelum–sesudah ---------- */
+
+/*
+ * p (lama) dan q (baru) dengan titik bersesuaian pada indeks yang sama.
+ * jenis: 'proporsional' (rasio sisi sama & sudut tetap), 'sudutTetap'
+ * (sudut tetap tetapi rasio sisi berbeda), atau 'berubah'.
+ */
+function bandingUbahPP(p, q) {
+  var sp = sisiPoligon(p.pts);
+  var sq = sisiPoligon(q.pts);
+  var ap = sudutPoligon(p.pts);
+  var aq = sudutPoligon(q.pts);
+  var sisi = sp.map(function (v, i) {
+    return {
+      nama: namaSisi(p.titik, i),
+      namaBaru: namaSisi(q.titik, i),
+      lama: v,
+      baru: sq[i],
+      rasio: sq[i] / v,
+      selisih: rapiKgr_(sq[i] - v),
+    };
+  });
+  var sudut = ap.map(function (v, i) {
+    return {
+      nama: namaSudut(p.titik, i),
+      namaBaru: namaSudut(q.titik, i),
+      lama: v,
+      baru: aq[i],
+      tetap: Math.abs(v - aq[i]) <= PPB_TOL_SUDUT,
+    };
+  });
+  var r0 = sisi[0].rasio;
+  var rasioSama = sisi.every(function (s) {
+    return Math.abs(s.rasio - r0) <= PPB_TOL_RASIO;
+  });
+  var sudutTetap = sudut.every(function (a) {
+    return a.tetap;
+  });
+  var jenis = rasioSama && sudutTetap ? 'proporsional' : sudutTetap ? 'sudutTetap' : 'berubah';
+  return {
+    sisi: sisi,
+    sudut: sudut,
+    rasioSama: rasioSama,
+    faktor: rasioSama ? rapiKgr_(r0) : null,
+    sudutTetap: sudutTetap,
+    jenis: jenis,
+  };
+}
+
+function pesanBandingPP(r) {
+  if (r.jenis === 'proporsional') {
+    return (
+      'Setiap sisi baru = ' +
+      fmtPP(r.faktor) +
+      ' × sisi lama (rasio sisi bersesuaian sama), dan semua sudut tetap. Perubahannya proporsional: bentuknya sama, hanya ukurannya berbeda.'
+    );
+  }
+  if (r.jenis === 'sudutTetap') {
+    return 'Sudut-sudutnya memang tetap, tetapi rasio sisi baru ÷ sisi lama tidak sama untuk semua sisi. Perubahannya tidak proporsional: bangunnya menjadi lebih gemuk atau lebih ramping.';
+  }
+  return 'Rasio sisi baru ÷ sisi lama tidak sama untuk semua sisi, dan ada sudut yang berubah besarnya. Perubahannya tidak proporsional: bentuknya berubah.';
+}
+
+/* Tabel sisi & sudut lama–baru (rasio dua angka di belakang koma). */
+function buildBandingTabelPP(p, q, opts) {
+  opts = opts || {};
+  var r = bandingUbahPP(p, q);
+  var baris = function (sel) {
+    return '<tr>' + sel.join('') + '</tr>';
+  };
+  var th = function (t) {
+    return '<th scope="col">' + t + '</th>';
+  };
+  var td = function (t, cls) {
+    return '<td' + (cls ? ' class="' + cls + '"' : '') + '>' + t + '</td>';
+  };
+  var html =
+    '<div class="kgr-table-wrap"><table class="kgr-table ppb-banding">' +
+    (opts.caption ? '<caption>' + esc(opts.caption) + '</caption>' : '') +
+    '<thead>' +
+    baris([th('Sisi lama'), th('Sisi baru'), th('baru ÷ lama')]) +
+    '</thead><tbody>' +
+    r.sisi
+      .map(function (s) {
+        return baris([
+          td(esc(s.nama) + ' = ' + esc(formatPanjang(s.lama))),
+          td(esc(s.namaBaru) + ' = ' + esc(formatPanjang(s.baru))),
+          td(
+            '<strong>' + esc(fmtPP(s.rasio)) + '</strong>',
+            r.rasioSama ? 'ppb-sel--sama' : 'ppb-sel--beda'
+          ),
+        ]);
+      })
+      .join('') +
+    '</tbody><thead>' +
+    baris([th('Sudut lama'), th('Sudut baru'), th('Berubah?')]) +
+    '</thead><tbody>' +
+    r.sudut
+      .map(function (a) {
+        return baris([
+          td(esc(a.nama) + ' = ' + esc(formatSudut(a.lama))),
+          td(esc(a.namaBaru) + ' = ' + esc(formatSudut(a.baru))),
+          td(a.tetap ? '= tetap' : '≠ berubah', a.tetap ? 'ppb-sel--sama' : 'ppb-sel--beda'),
+        ]);
+      })
+      .join('') +
+    '</tbody></table></div>';
+  return html;
+}
+
+/* ---------- Soal: kunci, calon jawaban keliru, pemeriksa, opsi ---------- */
+
+/*
+ * cek = { minta, … }:
+ *   sisiBaru     { lama, k }          sisi baru = k × lama
+ *   sisiLama     { baru, k }          sisi lama = baru ÷ k
+ *   sisiHilang   { a1, a2, b1 }       a1 → a2 sepasang sisi bersesuaian; b1 → ?
+ *   faktor       { lama, baru }       k = baru ÷ lama
+ *   sudutBaru    { sudut, k }         sudut tidak berubah
+ *   kelilingBaru { sisi: [..], k }    keliling baru = k × keliling lama
+ */
+var PPB_MINTA = {
+  sisiBaru: 'sisi',
+  sisiLama: 'sisi',
+  sisiHilang: 'sisi',
+  kelilingBaru: 'sisi',
+  faktor: 'faktor',
+  sudutBaru: 'sudut',
+};
+
+function satuanSoalPP(minta, satuan) {
+  var j = PPB_MINTA[minta];
+  if (!j) throw new Error('Permintaan soal tidak dikenal: ' + minta);
+  if (j === 'sudut') return '°';
+  if (j === 'faktor') return '';
+  return satuan || 'cm';
+}
+
+function jumlahPP_(list) {
+  return list.reduce(function (s, v) {
+    return s + v;
+  }, 0);
+}
+
+function nilaiSoalPP(c) {
+  switch (c.minta) {
+    case 'sisiBaru':
+      return rapiPP(c.lama * c.k);
+    case 'sisiLama':
+      return rapiPP(c.baru / c.k);
+    case 'sisiHilang':
+      return rapiPP((c.b1 * c.a2) / c.a1);
+    case 'faktor':
+      return rapiPP(c.baru / c.lama);
+    case 'sudutBaru':
+      return rapiPP(c.sudut);
+    case 'kelilingBaru':
+      return rapiPP(jumlahPP_(c.sisi) * c.k);
+    default:
+      throw new Error('Permintaan soal tidak dikenal: ' + c.minta);
+  }
+}
+
+/* Calon jawaban keliru khas: [{ kode, nilai }] (belum disaring). */
+function calonKeliruPP(c) {
+  var out = [];
+  function tambah(kode, nilai) {
+    out.push({ kode: kode, nilai: rapiPP(nilai) });
+  }
+  switch (c.minta) {
+    case 'sisiBaru':
+      tambah('tambahFaktor', c.lama + c.k);
+      tambah('bagiBukanKali', c.lama / c.k);
+      break;
+    case 'sisiLama':
+      tambah('kaliBukanBagi', c.baru * c.k);
+      tambah('kurangFaktor', c.baru - c.k);
+      break;
+    case 'sisiHilang':
+      tambah('tambahSelisih', c.b1 + (c.a2 - c.a1));
+      tambah('faktorTerbalik', (c.b1 * c.a1) / c.a2);
+      tambah('salinSisi', c.a2);
+      break;
+    case 'faktor':
+      tambah('faktorTerbalik', c.lama / c.baru);
+      tambah('selisihBukanFaktor', c.baru - c.lama);
+      break;
+    case 'sudutBaru':
+      tambah('sudutDikali', c.sudut * c.k);
+      tambah('sudutDibagi', c.sudut / c.k);
+      tambah('pelurus', 180 - c.sudut);
+      break;
+    case 'kelilingBaru':
+      tambah('tambahFaktor', jumlahPP_(c.sisi) + c.sisi.length * c.k);
+      tambah('lupaKali', jumlahPP_(c.sisi));
+      tambah('kuadratFaktor', jumlahPP_(c.sisi) * c.k * c.k);
+      break;
+    default:
+      throw new Error('Permintaan soal tidak dikenal: ' + c.minta);
+  }
+  return out;
+}
+
+var PPB_PESAN = {
+  benar:
+    'Tepat! Pada perubahan proporsional, setiap sisi dikali faktor yang sama dan sudutnya tetap.',
+  lain: 'Belum tepat. Cari dulu faktor perubahan k = sisi baru ÷ sisi lama, lalu ingat: sisi dikali k, sudut tidak berubah.',
+  kosong: 'Isi jawabanmu lebih dulu.',
+  format: 'Tulis satu bilangan, mis. 7,5 (desimal memakai koma).',
+  tambahSelisih:
+    'Kamu menambahkan selisih yang sama pada sisi lain. Pada perubahan proporsional, sisi DIKALI faktor yang sama, bukan ditambah bilangan yang sama.',
+  faktorTerbalik:
+    'Faktornya terbalik. Faktor perubahan k = sisi BARU ÷ sisi LAMA; jika bangun membesar, k lebih dari 1.',
+  salinSisi:
+    'Itu panjang sisi pasangan yang lain. Cari sisi yang BERSESUAIAN dengan sisi yang ditanyakan, lalu kalikan dengan faktornya.',
+  sudutDikali:
+    'Sudutnya ikut kamu kalikan. Saat sisi diubah secara proporsional, besar sudut TIDAK berubah — ukur saja dengan busur!',
+  sudutDibagi:
+    'Sudut tidak dibagi atau dikali. Pada perubahan proporsional, besar sudut tetap sama dengan sudut semula.',
+  pelurus:
+    'Kamu menghitung pelurusnya (180° dikurangi). Sudut bersesuaian pada perubahan proporsional sama besar.',
+  tambahFaktor:
+    'Kamu MENAMBAHKAN faktornya. Faktor perubahan berarti setiap sisi DIKALI k, bukan ditambah k.',
+  bagiBukanKali: 'Kamu membagi. Bangun yang diperbesar k kali berarti sisi lama DIKALI k.',
+  kaliBukanBagi:
+    'Kamu mengalikan sisi baru dengan k. Untuk kembali ke ukuran lama, sisi baru DIBAGI k.',
+  kurangFaktor:
+    'Kamu mengurangkan faktornya. Ukuran lama = ukuran baru DIBAGI faktor k, bukan dikurangi k.',
+  selisihBukanFaktor:
+    'Itu selisih panjangnya, bukan faktor. Faktor perubahan = sisi baru ÷ sisi lama.',
+  lupaKali: 'Itu keliling bangun lama. Setiap sisi dikali k, jadi kelilingnya juga dikali k.',
+  kuadratFaktor:
+    'Kamu mengalikan dengan k dua kali. Keliling adalah jumlah panjang sisi, jadi cukup dikali k satu kali.',
+};
+
+function diagnosaPP(c, v) {
+  var kunci = nilaiSoalPP(c);
+  if (samaPP_(v, kunci)) return 'benar';
+  var calon = calonKeliruPP(c);
+  for (var i = 0; i < calon.length; i++) {
+    if (!samaPP_(calon[i].nilai, kunci) && samaPP_(v, calon[i].nilai)) return calon[i].kode;
+  }
+  return 'lain';
+}
+
+function periksaSoalPP(isian, s) {
+  var p = parseAngkaRasio(isian);
+  if (p.kode !== 'ok') return { benar: false, kode: p.kode, pesan: PPB_PESAN[p.kode] };
+  var kode = diagnosaPP(s.cek, p.nilai);
+  return { benar: kode === 'benar', kode: kode, pesan: PPB_PESAN[kode] };
+}
+
+/*
+ * Langkah isian berdiagnosa untuk buildLangkahRasio/bindLangkahRasio
+ * (seksi 68): pemeriksa periksaSoalPP, isian satu bilangan, satuan dari cek.
+ */
+function siapkanLangkahPP(step) {
+  return Object.assign({}, step, {
+    periksa: periksaSoalPP,
+    angka: true,
+    satuan: satuanSoalPP(step.cek.minta, step.satuan),
+  });
+}
+
+function jawabSoalPP(s) {
+  return fmtPP(nilaiSoalPP(s.cek));
+}
+
+/*
+ * Empat opsi pilihan ganda: satu baku (id 'baku') + tiga pengecoh dari
+ * calon jawaban keliru (berumpan balik diagnosa), dilengkapi kelipatan
+ * (kode 'lain') bila kurang. Urutan opsi diacak oleh pemanggil.
+ */
+function opsiSoalPP(s) {
+  var c = s.cek;
+  var kunci = nilaiSoalPP(c);
+  var sat = satuanSoalPP(c.minta, s.satuan);
+  function label(v) {
+    if (sat === '°') return fmtPP(v) + '°';
+    return fmtPP(v) + (sat ? ' ' + sat : '');
+  }
+  var out = [{ id: 'baku', label: label(kunci), kode: 'benar', umpan: PPB_PESAN.benar }];
+  var dipakai = [kunci];
+  function tambah(kode, v) {
+    if (out.length >= 4) return;
+    var nilai = rapiPP(v);
+    if (!(nilai > 0) || !isFinite(nilai) || (sat === '°' && nilai >= 360)) return;
+    var unik = dipakai.every(function (d) {
+      return Math.abs(d - nilai) > 0.05;
+    });
+    if (!unik) return;
+    dipakai.push(nilai);
+    out.push({ id: 'k' + out.length, label: label(nilai), kode: kode, umpan: PPB_PESAN[kode] });
+  }
+  calonKeliruPP(c).forEach(function (k) {
+    tambah(k.kode, k.nilai);
+  });
+  [2, 0.5, 1.5, 3, 0.75].forEach(function (f) {
+    tambah('lain', kunci * f);
+  });
+  return out;
+}
+
+/* ---------- Lab Ubah Ukuran ---------- */
+
+/*
+ * cfg = { bangun: [bangun], nilai: { kali: [..], tambah: [..], regang: [..] },
+ *         minCoba }. State { bangun, aksi, nilai, tampil, log: [{ bangun,
+ * aksi, nilai, jenis }] }; tampil = true setelah perubahan diterapkan.
+ */
+function cariBangunPP_(cfg, id) {
+  return (
+    cfg.bangun.filter(function (b) {
+      return b.id === id;
+    })[0] || null
+  );
+}
+
+function aksiLabPP_(cfg) {
+  return PPB_AKSI.filter(function (a) {
+    return cfg.nilai[a.id] && cfg.nilai[a.id].length;
+  });
+}
+
+function ensureLabUbahPP(state, key, cfg) {
+  var st = state[key] && typeof state[key] === 'object' ? state[key] : {};
+  if (!cariBangunPP_(cfg, st.bangun)) st.bangun = cfg.bangun[0].id;
+  if (!cfg.nilai[st.aksi]) st.aksi = null;
+  if (!st.aksi || cfg.nilai[st.aksi].indexOf(st.nilai) === -1)
+    st.nilai = st.aksi ? cfg.nilai[st.aksi][0] : null;
+  if (typeof st.tampil !== 'boolean' || !st.aksi) st.tampil = false;
+  if (!Array.isArray(st.log)) st.log = [];
+  st.log = st.log.filter(function (e) {
+    return (
+      e &&
+      cariBangunPP_(cfg, e.bangun) &&
+      cfg.nilai[e.aksi] &&
+      cfg.nilai[e.aksi].indexOf(e.nilai) !== -1
+    );
+  });
+  state[key] = st;
+  return st;
+}
+
+/* field 'bangun' | 'aksi' | 'nilai'. Pilihan mengubah tampilan → tampil = false. */
+function pilihLabUbahPP(st, cfg, field, value) {
+  if (field === 'bangun') {
+    if (!cariBangunPP_(cfg, value)) return false;
+    st.bangun = value;
+  } else if (field === 'aksi') {
+    if (!cfg.nilai[value]) return false;
+    st.aksi = value;
+    st.nilai = cfg.nilai[value][0];
+  } else if (field === 'nilai') {
+    if (!st.aksi || cfg.nilai[st.aksi].indexOf(value) === -1) return false;
+    st.nilai = value;
+  } else {
+    return false;
+  }
+  st.tampil = false;
+  return true;
+}
+
+function hasilLabUbahPP(st, cfg) {
+  if (!st.tampil || !st.aksi) return null;
+  var p = cariBangunPP_(cfg, st.bangun);
+  var q = ubahBangunPP(p, { jenis: st.aksi, nilai: st.nilai });
+  return { p: p, q: q, banding: bandingUbahPP(p, q) };
+}
+
+/* Menerapkan perubahan terpilih dan mencatatnya (sekali per kombinasi). */
+function terapkanLabUbahPP(st, cfg) {
+  if (!st.aksi) return null;
+  st.tampil = true;
+  var r = hasilLabUbahPP(st, cfg);
+  var ada = st.log.some(function (e) {
+    return e.bangun === st.bangun && e.aksi === st.aksi && e.nilai === st.nilai;
+  });
+  if (!ada) {
+    st.log.push({ bangun: st.bangun, aksi: st.aksi, nilai: st.nilai, jenis: r.banding.jenis });
+  }
+  return r;
+}
+
+function labUbahPPLengkap(st, cfg) {
+  var semuaAksi = aksiLabPP_(cfg).every(function (a) {
+    return st.log.some(function (e) {
+      return e.aksi === a.id;
+    });
+  });
+  return semuaAksi && st.log.length >= (cfg.minCoba || 3);
+}
+
+function tombolPP_(id, attr, nilai, teks, aktif) {
+  return (
+    '<button type="button" class="kgr-chip ppb-pilih' +
+    (aktif ? ' is-done' : '') +
+    '" data-ppb="' +
+    esc(id) +
+    '" ' +
+    attr +
+    '="' +
+    esc(String(nilai)) +
+    '" aria-pressed="' +
+    (aktif ? 'true' : 'false') +
+    '">' +
+    teks +
+    '</button>'
+  );
+}
+
+/* Kotak gambar bersama (cm) agar bangun lama & baru berskala sama. */
+function skalaPasanganPP_(p, q) {
+  var r = kgrRadius([p, q]);
+  return Math.max(8, Math.min(26, 120 / r));
+}
+
+function buildLabUbahPP(id, st, cfg) {
+  var b = cariBangunPP_(cfg, st.bangun);
+  var hasil = hasilLabUbahPP(st, cfg);
+  var html =
+    '<div class="ppb-lab" data-ppb-lab="' +
+    esc(id) +
+    '">' +
+    '<div class="ppb-lab__baris" role="group" aria-label="Pilih bangun">' +
+    '<span class="kgr-chips__label">1. Bangun</span>' +
+    cfg.bangun
+      .map(function (x) {
+        return tombolPP_(id, 'data-ppb-bangun', x.id, esc(x.nama), x.id === st.bangun);
+      })
+      .join('') +
+    '</div>' +
+    '<div class="ppb-lab__baris" role="group" aria-label="Pilih perubahan">' +
+    '<span class="kgr-chips__label">2. Perubahan</span>' +
+    aksiLabPP_(cfg)
+      .map(function (a) {
+        return tombolPP_(
+          id,
+          'data-ppb-aksi',
+          a.id,
+          '<span aria-hidden="true">' + a.ikon + '</span> ' + esc(a.label),
+          a.id === st.aksi
+        );
+      })
+      .join('') +
+    '</div>';
+  if (st.aksi) {
+    html +=
+      '<div class="ppb-lab__baris" role="group" aria-label="Pilih nilai perubahan">' +
+      '<span class="kgr-chips__label">3. Nilai</span>' +
+      cfg.nilai[st.aksi]
+        .map(function (n) {
+          return tombolPP_(
+            id,
+            'data-ppb-nilai',
+            n,
+            esc(labelAksiPP({ jenis: st.aksi, nilai: n })),
+            n === st.nilai
+          );
+        })
+        .join('') +
+      '</div>' +
+      '<div class="btn-group btn-group--end">' +
+      '<button type="button" class="btn btn--primary" data-ppb="' +
+      esc(id) +
+      '" data-ppb-terapkan="1">🖨️ Ubah &amp; ukur</button>' +
+      '</div>';
+  }
+  if (hasil) {
+    var sk = skalaPasanganPP_(hasil.p, hasil.q);
+    html +=
+      '<div class="ppb-lab__hasil" aria-live="polite">' +
+      '<p class="kgr-status">' +
+      esc(b.nama + ': ' + labelAksiPP({ jenis: st.aksi, nilai: st.nilai })) +
+      '</p>' +
+      buildShapePair(
+        Object.assign({}, hasil.p, { nama: 'Sebelum' }),
+        Object.assign({}, hasil.q, { nama: 'Sesudah' }),
+        {
+          skala: sk,
+          p: { tampilSisi: 'semua', tampilSudut: 'semua', judul: 'Sebelum: ' + b.nama },
+          q: { tampilSisi: 'semua', tampilSudut: 'semua', judul: 'Sesudah: ' + b.nama },
+        }
+      ) +
+      buildBandingTabelPP(hasil.p, hasil.q, { caption: 'Hasil pengukuran penggaris & busur' }) +
+      '</div>';
+  } else {
+    html +=
+      '<div class="ppb-lab__hasil">' +
+      '<div class="kgr-pair"><figure class="kgr-pair__item">' +
+      buildShapeSVG(b, { skala: 20, warna: 'a', judul: 'Sebelum: ' + b.nama }) +
+      '<figcaption>Sebelum</figcaption></figure></div>' +
+      '<p class="kgr-status">👆 Pilih perubahan, lalu tekan “Ubah &amp; ukur”.</p>' +
+      '</div>';
+  }
+  return html + '</div>';
+}
+
+function bindLabUbahPP(root, id, st, cfg, onChange) {
+  root.querySelectorAll('[data-ppb="' + id + '"]').forEach(function (el) {
+    el.addEventListener('click', function () {
+      var d = el.dataset;
+      var fokus;
+      if (d.ppbBangun) {
+        pilihLabUbahPP(st, cfg, 'bangun', d.ppbBangun);
+        fokus = '[data-ppb-bangun="' + d.ppbBangun + '"]';
+      } else if (d.ppbAksi) {
+        pilihLabUbahPP(st, cfg, 'aksi', d.ppbAksi);
+        fokus = '[data-ppb-aksi="' + d.ppbAksi + '"]';
+      } else if (d.ppbNilai) {
+        pilihLabUbahPP(st, cfg, 'nilai', parseFloat(d.ppbNilai));
+        fokus = '[data-ppb-nilai="' + d.ppbNilai + '"]';
+      } else if (d.ppbTerapkan) {
+        terapkanLabUbahPP(st, cfg);
+        fokus = '[data-ppb-terapkan]';
+      }
+      KGR_LAST_FOCUS[id] = '[data-ppb="' + id + '"]' + fokus;
+      onChange();
+    });
+  });
+  kgrFokusKembali(root, id);
+}
+
+/* Tabel catatan percobaan Lab Ubah Ukuran. */
+function buildLogUbahPP(st, cfg) {
+  if (!st.log.length) {
+    return '<p class="dl-caption">Belum ada percobaan yang tercatat.</p>';
+  }
+  return (
+    '<div class="kgr-table-wrap"><table class="kgr-table ppb-log">' +
+    '<caption>Catatan percobaan (' +
+    st.log.length +
+    ')</caption>' +
+    '<thead><tr><th scope="col">Bangun</th><th scope="col">Perubahan</th>' +
+    '<th scope="col">Rasio sisi sama?</th><th scope="col">Sudut tetap?</th></tr></thead><tbody>' +
+    st.log
+      .map(function (e) {
+        var b = cariBangunPP_(cfg, e.bangun);
+        var r = bandingUbahPP(b, ubahBangunPP(b, { jenis: e.aksi, nilai: e.nilai }));
+        var ya = function (v) {
+          return (
+            '<td class="' +
+            (v ? 'ppb-sel--sama' : 'ppb-sel--beda') +
+            '">' +
+            (v ? 'Ya' : 'Tidak') +
+            '</td>'
+          );
+        };
+        return (
+          '<tr><td>' +
+          esc(b.nama) +
+          '</td><td>' +
+          esc(labelAksiPP({ jenis: e.aksi, nilai: e.nilai })) +
+          '</td>' +
+          ya(r.rasioSama) +
+          ya(r.sudutTetap) +
+          '</tr>'
+        );
+      })
+      .join('') +
+    '</tbody></table></div>'
+  );
+}
