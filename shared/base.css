@@ -18269,3 +18269,164 @@ button.akar-tile:disabled {
     width: 32px;
   }
 }
+
+/* =========================================================================
+   Lab Geser Data (.mmm-*) — hubungan mean, median & modus (engine seksi 88)
+   Diagram titik + penanda mean ▲ (oranye), median ◆ (ungu), modus ■ (hijau).
+   ========================================================================= */
+
+.mmm-lab {
+  padding: var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+}
+
+.mmm-lab__svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.mmm-sumbu,
+.mmm-tik {
+  stroke: var(--color-ink);
+  stroke-width: 2;
+}
+
+.mmm-angka {
+  font-size: 16px;
+  fill: var(--color-ink);
+}
+
+.mmm-titik {
+  fill: var(--color-blue);
+  stroke: var(--color-surface);
+  stroke-width: 1.5;
+}
+
+.mmm-titik.is-dipilih {
+  fill: var(--color-orange);
+  stroke: var(--color-ink);
+  stroke-width: 2.5;
+}
+
+.mmm-pandu {
+  stroke-width: 1.5;
+  stroke-dasharray: 4 3;
+}
+
+.mmm-pandu--mean,
+.mmm-tanda--mean {
+  stroke: var(--color-orange);
+  fill: var(--color-orange);
+}
+
+.mmm-pandu--median,
+.mmm-tanda--median {
+  stroke: var(--color-purple);
+  fill: var(--color-purple);
+}
+
+.mmm-pandu--modus,
+.mmm-tanda--modus {
+  stroke: var(--color-success);
+  fill: var(--color-success);
+}
+
+.mmm-baca {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--space-2) var(--space-4);
+  margin: var(--space-2) 0 0;
+  font-size: 0.95rem;
+}
+
+.mmm-baca__item--mean {
+  color: var(--color-orange-strong);
+}
+
+.mmm-baca__item--median {
+  color: var(--color-purple-strong);
+}
+
+.mmm-baca__item--modus {
+  color: var(--color-success-strong);
+}
+
+.mmm-baca__hub {
+  flex-basis: 100%;
+  text-align: center;
+  font-weight: 700;
+}
+
+.mmm-chips {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--space-2);
+  margin-top: var(--space-3);
+}
+
+.mmm-chip {
+  min-height: 44px;
+  padding: var(--space-1) var(--space-3);
+  border: 2px solid var(--color-border-strong);
+  border-radius: 999px;
+  background: var(--color-surface);
+  color: var(--color-ink);
+  font: inherit;
+  cursor: pointer;
+}
+
+.mmm-chip:hover:not(:disabled) {
+  border-color: var(--color-blue);
+}
+
+.mmm-chip:focus-visible {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+.mmm-chip.is-dipilih {
+  border-color: var(--color-orange);
+  background: var(--color-orange-soft);
+}
+
+.mmm-chip:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.mmm-chip__nama {
+  font-size: 0.85rem;
+  color: var(--color-ink-muted);
+}
+
+.mmm-tombol {
+  margin-top: var(--space-3);
+}
+
+.mmm-status {
+  margin: var(--space-2) 0 0;
+  text-align: center;
+  font-size: 0.9rem;
+  color: var(--color-ink-muted);
+}
+
+@media (max-width: 480px) {
+  .mmm-lab {
+    padding: var(--space-2);
+  }
+
+  .mmm-chip {
+    padding: var(--space-1) var(--space-2);
+  }
+
+  /* SVG mengecil ± 60% di ponsel: perbesar angka sumbu agar tetap terbaca. */
+  .mmm-angka {
+    font-size: 24px;
+    font-weight: 600;
+  }
+}

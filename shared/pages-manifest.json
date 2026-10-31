@@ -351,6 +351,14 @@
     "stageCount": 10,
     "extraBody": "partials/reset-modal.html"
   },
+  "fase-d/mpi-21.1": {
+    "title": "Hubungan Mean, Median & Modus Data Tunggal — Matematika Fase D",
+    "description": "Media pembelajaran interaktif berbasis Discovery Learning untuk menganalisis hubungan antara mean, median, dan modus pada data tunggal melalui soal kontekstual: tiga juru bicara dengan klaim tabungan berbeda, Lab Geser Data (menggeser titik pada diagram titik dan mengamati penanda mean, median, modus pada data simetris, ekor kanan, dan ekor kiri), isian berdiagnosa miskonsepsi median dan modus, memilih ukuran yang paling mewakili sesuai konteks, pembuktian pada data baru acak, menyusun kesimpulan, serta uji terap acak.",
+    "kicker": "Matematika — Fase D (SMP)",
+    "h1": "Hubungan Mean, Median & Modus Data Tunggal",
+    "stageCount": 10,
+    "extraBody": "partials/reset-modal.html"
+  },
   "fase-d/mpi-22.1": {
     "title": "Unsur-unsur & Jaring-jaring Prisma — Matematika Fase D",
     "description": "Media pembelajaran interaktif berbasis Discovery Learning untuk mengidentifikasi unsur-unsur prisma (titik sudut, rusuk, sisi, dan tinggi) serta jaring-jaring prisma melalui kegiatan memutar model 3D, melipat, dan merakit bentangan karton kemasan.",

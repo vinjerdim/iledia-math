@@ -60931,3 +60931,692 @@ function bindTitikSeimbang(id, st, opts, onChange) {
     });
   });
 }
+
+/* ============================================================
+   88. HUBUNGAN MEAN, MEDIAN & MODUS DATA TUNGGAL
+   Melanjutkan seksi 87 (jumlahData, rerataData, medianData,
+   modusData, urutNaik_, kandidat pengecoh rerata).
+     • ukuran      semuaModus, teksModus, ringkasUkuran
+     • hubungan    hubunganRerataMedian ('sama' | 'lebih' | 'kurang'),
+                   bentukSebaran ('simetris' | 'ekorKanan' | 'ekorKiri')
+     • pengaruh    ubahNilai, ukuranBerubah — ukuran mana yang berubah
+                   bila satu nilai data diganti
+     • misi lab    cekMisiUkuran (sama | rerataLebih | rerataKurang |
+                   hanyaRerata)
+     • diagnosa    diagnosaMedian/pesanMedian/opsiMedian,
+                   diagnosaModus/pesanModus/opsiModus, serta pembungkus
+                   per jenis ukuran: kunciUkuran, diagnosaUkuran,
+                   pesanUkuran, opsiUkuran (jenis 'rerata' memakai
+                   seksi 87)
+     • komponen    Lab Geser Data (ensure/build/bindGeserData): diagram
+                   titik dengan penanda mean ▲, median ◆, modus ■ yang
+                   bergerak langsung saat satu titik digeser
+   Fungsi murni diuji di tests/engine-hubungan-ukuran.test.js.
+   ============================================================ */
+
+var NAMA_UKURAN = { rerata: 'mean (rerata)', median: 'median', modus: 'modus' };
+
+/* Semua nilai berfrekuensi terbesar (terurut naik); [] bila setiap nilai muncul sekali. */
+function semuaModus(data) {
+  var frek = {};
+  var maks = 1;
+  urutNaik_(data || []).forEach(function (v) {
+    frek[v] = (frek[v] || 0) + 1;
+    if (frek[v] > maks) maks = frek[v];
+  });
+  return Object.keys(frek)
+    .map(Number)
+    .filter(function (v) {
+      return maks > 1 && frek[v] === maks;
+    })
+    .sort(function (a, b) {
+      return a - b;
+    });
+}
+
+/* Frekuensi terbesar pada data (1 bila tidak ada nilai yang berulang). */
+function frekuensiMaks_(data) {
+  var frek = {};
+  var maks = 0;
+  data.forEach(function (v) {
+    frek[v] = (frek[v] || 0) + 1;
+    if (frek[v] > maks) maks = frek[v];
+  });
+  return maks;
+}
+
+/* "tidak ada" | "5" | "5 dan 7" | "1, 2, dan 3" */
+function teksModus(data) {
+  var m = semuaModus(data).map(function (v) {
+    return formatDesimal(v, 2);
+  });
+  if (!m.length) return 'tidak ada';
+  if (m.length === 1) return m[0];
+  if (m.length === 2) return m[0] + ' dan ' + m[1];
+  return m.slice(0, -1).join(', ') + ', dan ' + m[m.length - 1];
+}
+
+function ringkasUkuran(data) {
+  return { rerata: rerataData(data), median: medianData(data), modus: semuaModus(data) };
+}
+
+/* Membandingkan rerata terhadap median: 'sama' | 'lebih' | 'kurang'. */
+function hubunganRerataMedian(data) {
+  var r = rerataData(data);
+  var m = medianData(data);
+  if (hampirSama(r, m)) return 'sama';
+  return r > m ? 'lebih' : 'kurang';
+}
+
+/*
+ * Bentuk sebaran sederhana dari posisi rerata terhadap median: nilai
+ * ekstrem di kanan (ekor kanan) menarik rerata ke atas median, nilai
+ * ekstrem di kiri (ekor kiri) menariknya ke bawah median.
+ */
+function bentukSebaran(data) {
+  return { sama: 'simetris', lebih: 'ekorKanan', kurang: 'ekorKiri' }[hubunganRerataMedian(data)];
+}
+
+/* Mengganti nilai data ke-i dengan v; array baru, null bila indeks tidak sah. */
+function ubahNilai(data, i, v) {
+  if (i < 0 || i >= data.length || i !== Math.floor(i)) return null;
+  var out = data.slice();
+  out[i] = v;
+  return out;
+}
+
+function samaDaftar_(a, b) {
+  return (
+    a.length === b.length &&
+    a.every(function (v, i) {
+      return hampirSama(v, b[i]);
+    })
+  );
+}
+
+/* Ukuran mana yang nilainya berubah dari dataLama ke dataBaru. */
+function ukuranBerubah(dataLama, dataBaru) {
+  var a = ringkasUkuran(dataLama);
+  var b = ringkasUkuran(dataBaru);
+  return {
+    rerata: !hampirSama(a.rerata, b.rerata),
+    median: !hampirSama(a.median, b.median),
+    modus: !samaDaftar_(a.modus, b.modus),
+  };
+}
+
+/*
+ * Misi Lab Geser Data:
+ *   'sama'         mean = median = modus (tepat satu modus)
+ *   'rerataLebih'  mean > median (ekor kanan)
+ *   'rerataKurang' mean < median (ekor kiri)
+ *   'hanyaRerata'  dibanding misi.awal hanya mean yang berubah
+ */
+function cekMisiUkuran(data, misi) {
+  var u = ringkasUkuran(data);
+  var h = hubunganRerataMedian(data);
+  if (misi.jenis === 'sama') {
+    return h === 'sama' && u.modus.length === 1 && hampirSama(u.modus[0], u.median);
+  }
+  if (misi.jenis === 'rerataLebih') return h === 'lebih';
+  if (misi.jenis === 'rerataKurang') return h === 'kurang';
+  if (misi.jenis === 'hanyaRerata') {
+    var b = ukuranBerubah(misi.awal, data);
+    return b.rerata && !b.median && !b.modus;
+  }
+  return false;
+}
+
+/* Saring kandidat keliru: buang nilai tak terdefinisi & yang sama dengan kunci. */
+function saringKandidat_(list, kunci) {
+  return list
+    .map(function (k) {
+      return {
+        id: k.id,
+        nilai: k.nilai.filter(function (v) {
+          return typeof v === 'number' && !isNaN(v) && !hampirSama(v, kunci);
+        }),
+      };
+    })
+    .filter(function (k) {
+      return k.nilai.length > 0;
+    });
+}
+
+/*
+ * Nilai keliru yang sering muncul saat mencari median, dalam urutan
+ * prioritas diagnosa:
+ *   'tidakUrut'   nilai tengah data TANPA diurutkan
+ *   'genapSatu'   data genap: hanya mengambil salah satu nilai tengah
+ *   'genapJumlah' data genap: dua nilai tengah dijumlah tanpa dibagi 2
+ *   'posisi'      menulis letak median (n + 1) ÷ 2, bukan nilainya
+ *   'rerata', 'modus'
+ */
+function kandidatKeliruMedian_(data) {
+  var n = data.length;
+  var u = urutNaik_(data);
+  var t = Math.floor(n / 2);
+  var genap = n % 2 === 0;
+  var modus = semuaModus(data);
+  return saringKandidat_(
+    [
+      { id: 'tidakUrut', nilai: [genap ? (data[t - 1] + data[t]) / 2 : data[t]] },
+      { id: 'genapSatu', nilai: genap ? [u[t - 1], u[t]] : [] },
+      { id: 'genapJumlah', nilai: genap ? [u[t - 1] + u[t]] : [] },
+      { id: 'posisi', nilai: [(n + 1) / 2] },
+      { id: 'rerata', nilai: [rerataData(data)] },
+      { id: 'modus', nilai: modus.length === 1 ? modus : [] },
+    ],
+    medianData(data)
+  );
+}
+
+/*
+ * Nilai keliru saat mencari modus:
+ *   'frekuensi' menulis banyak kemunculannya, bukan nilainya
+ *   'median', 'rerata'
+ *   'terbesar'  mengambil nilai data terbesar
+ */
+function kandidatKeliruModus_(data) {
+  var m = semuaModus(data);
+  var kunci = m.length ? m[0] : null;
+  return saringKandidat_(
+    [
+      { id: 'frekuensi', nilai: [frekuensiMaks_(data)] },
+      { id: 'median', nilai: [medianData(data)] },
+      { id: 'rerata', nilai: [rerataData(data)] },
+      { id: 'terbesar', nilai: [Math.max.apply(null, data)] },
+    ],
+    kunci
+  ).filter(function (k) {
+    k.nilai = k.nilai.filter(function (v) {
+      return m.every(function (x) {
+        return !hampirSama(v, x);
+      });
+    });
+    return k.nilai.length > 0;
+  });
+}
+
+function diagnosaDariKandidat_(kandidat, v) {
+  for (var i = 0; i < kandidat.length; i++) {
+    for (var j = 0; j < kandidat[i].nilai.length; j++) {
+      if (hampirSama(v, kandidat[i].nilai[j])) return kandidat[i].id;
+    }
+  }
+  return 'lain';
+}
+
+function diagnosaMedian(data, v) {
+  if (hampirSama(v, medianData(data))) return 'benar';
+  return diagnosaDariKandidat_(kandidatKeliruMedian_(data), v);
+}
+
+/* Umpan balik diagnosa median. Pesan salah tidak menyebut kunci jawaban. */
+function pesanMedian(kode, data, satuan) {
+  var n = data.length;
+  var su = satuan ? ' ' + satuan : '';
+  var genap = n % 2 === 0;
+  var pesan = {
+    benar:
+      'Tepat! Setelah diurutkan (' +
+      urutNaik_(data)
+        .map(function (v) {
+          return formatDesimal(v, 2);
+        })
+        .join(', ') +
+      '), ' +
+      (genap ? 'rata-rata dua nilai tengahnya' : 'nilai tengahnya') +
+      ' adalah ' +
+      formatDesimal(medianData(data), 2) +
+      su +
+      '.',
+    tidakUrut:
+      'Sepertinya data belum diurutkan. Urutkan dulu dari terkecil ke terbesar, baru ambil nilai tengahnya.',
+    genapSatu:
+      'Banyak datanya genap (' +
+      n +
+      ' data), jadi ada DUA nilai tengah. Median adalah rata-rata kedua nilai tengah itu.',
+    genapJumlah: 'Dua nilai tengahnya sudah ditemukan — jangan lupa jumlahnya dibagi 2.',
+    posisi:
+      'Itu LETAK median (data ke-(n + 1) ÷ 2), bukan nilainya. Lihat nilai data yang berada di letak itu.',
+    rerata:
+      'Itu mean (rerata): jumlah ÷ banyak data. Median adalah nilai tengah setelah data diurutkan.',
+    modus:
+      'Itu nilai yang paling sering muncul (modus). Median adalah nilai tengah setelah data diurutkan.',
+    lain: 'Belum tepat. Urutkan datanya, lalu cari nilai yang tepat di tengah (data genap: rata-rata dua nilai tengah).',
+  };
+  return pesan[kode] || pesan.lain;
+}
+
+function diagnosaModus(data, v) {
+  var m = semuaModus(data);
+  var tepat = m.some(function (x) {
+    return hampirSama(v, x);
+  });
+  if (tepat) return 'benar';
+  return diagnosaDariKandidat_(kandidatKeliruModus_(data), v);
+}
+
+/* Umpan balik diagnosa modus. Pesan salah tidak menyebut kunci jawaban. */
+function pesanModus(kode, data, satuan) {
+  var su = satuan ? ' ' + satuan : '';
+  var pesan = {
+    benar:
+      'Tepat! Nilai ' +
+      teksModus(data) +
+      su +
+      ' paling sering muncul (' +
+      frekuensiMaks_(data) +
+      ' kali), jadi itulah modusnya.',
+    frekuensi:
+      'Itu BANYAK kemunculannya (frekuensi). Modus adalah NILAI datanya, yaitu nilai yang muncul sebanyak itu.',
+    median:
+      'Itu nilai tengah setelah data diurutkan (median). Modus adalah nilai yang paling sering muncul.',
+    rerata:
+      'Itu mean (rerata): jumlah ÷ banyak data. Modus adalah nilai yang paling sering muncul.',
+    terbesar:
+      'Itu nilai terbesar. Modus bukan nilai terbesar, melainkan nilai yang paling SERING muncul.',
+    lain: 'Belum tepat. Hitung berapa kali setiap nilai muncul, lalu pilih nilai yang paling sering muncul.',
+  };
+  return pesan[kode] || pesan.lain;
+}
+
+/*
+ * Opsi pilihan ganda ber-id diagnosa: 'benar' + pengecoh dari kandidat
+ * (maks. 5 opsi), dilengkapi 'dekatAtas'/'dekatBawah'/'dekatAtas2' bila
+ * kurang dari 4. Urutan belum diacak — app.js mengacaknya sekali.
+ */
+function opsiDariKandidat_(kunci, kandidat, diagnosa, satuan) {
+  var su = satuan ? ' ' + satuan : '';
+  var opsi = [{ id: 'benar', nilai: kunci }];
+  var dipakai = function (v) {
+    return opsi.some(function (o) {
+      return hampirSama(o.nilai, v);
+    });
+  };
+  kandidat.forEach(function (k) {
+    if (opsi.length < 5 && !dipakai(k.nilai[0])) opsi.push({ id: k.id, nilai: k.nilai[0] });
+  });
+  [
+    { id: 'dekatAtas', nilai: kunci + 1 },
+    { id: 'dekatBawah', nilai: kunci - 1 },
+    { id: 'dekatAtas2', nilai: kunci + 2 },
+  ].forEach(function (k) {
+    if (opsi.length < 4 && k.nilai >= 0 && !dipakai(k.nilai) && diagnosa(k.nilai) === 'lain') {
+      opsi.push(k);
+    }
+  });
+  return opsi.map(function (o) {
+    return { id: o.id, nilai: o.nilai, label: formatDesimal(o.nilai, 2) + su };
+  });
+}
+
+function opsiMedian(data, satuan) {
+  return opsiDariKandidat_(
+    medianData(data),
+    kandidatKeliruMedian_(data),
+    function (v) {
+      return diagnosaMedian(data, v);
+    },
+    satuan
+  );
+}
+
+/* Data untuk opsi modus sebaiknya bermodus tunggal. */
+function opsiModus(data, satuan) {
+  return opsiDariKandidat_(
+    modusData(data),
+    kandidatKeliruModus_(data),
+    function (v) {
+      return diagnosaModus(data, v);
+    },
+    satuan
+  );
+}
+
+/* ---------- Pembungkus per jenis ukuran ('rerata' | 'median' | 'modus') ---------- */
+
+function kunciUkuran(data, jenis) {
+  if (jenis === 'median') return medianData(data);
+  if (jenis === 'modus') return modusData(data);
+  return rerataData(data);
+}
+
+function diagnosaUkuran(data, jenis, v) {
+  if (jenis === 'median') return diagnosaMedian(data, v);
+  if (jenis === 'modus') return diagnosaModus(data, v);
+  return diagnosaRerata(data, v);
+}
+
+function pesanUkuran(kode, data, jenis, satuan) {
+  if (jenis === 'median') return pesanMedian(kode, data, satuan);
+  if (jenis === 'modus') return pesanModus(kode, data, satuan);
+  return pesanRerata(kode, data, satuan);
+}
+
+function opsiUkuran(data, jenis, satuan) {
+  if (jenis === 'median') return opsiMedian(data, satuan);
+  if (jenis === 'modus') return opsiModus(data, satuan);
+  return opsiRerata(data, satuan);
+}
+
+/* ---------- Komponen: Lab Geser Data ---------- */
+
+/*
+ * state[key] = { data, pilih, geser }. Disiapkan ulang bila belum ada
+ * atau banyak datanya tidak cocok dengan `awal`.
+ */
+function ensureGeserDataState(state, key, awal) {
+  var st = state[key];
+  var cocok =
+    st &&
+    Array.isArray(st.data) &&
+    st.data.length === awal.length &&
+    st.data.every(function (v) {
+      return typeof v === 'number' && !isNaN(v);
+    });
+  if (!cocok) state[key] = { data: awal.slice(), pilih: null, geser: 0 };
+  return state[key];
+}
+
+/* Indeks titik yang boleh digeser (opts.gerak), default semua. */
+function bolehGeser_(opts, i) {
+  return !opts.gerak || opts.gerak.indexOf(i) !== -1;
+}
+
+/*
+ * Diagram titik + penanda mean ▲, median ◆, modus ■ di bawah sumbu.
+ *   opts { min, max, nama: [..], satuan, label,
+ *          gerak: [indeks] (titik yang boleh digeser; default semua),
+ *          statis: true → tanpa tombol,
+ *          penanda: false → sembunyikan penanda & bacaan ukuran }
+ */
+function buildGeserData(id, st, opts) {
+  opts = opts || {};
+  var data = st.data;
+  var min = typeof opts.min === 'number' ? opts.min : 0;
+  var max = typeof opts.max === 'number' ? opts.max : Math.max.apply(null, data) + 1;
+  var penanda = opts.penanda !== false;
+  var W = 560;
+  var kiriX = 30;
+  var lebar = W - 60;
+  var sx = function (v) {
+    return kiriX + ((v - min) / (max - min)) * lebar;
+  };
+  var frekMaks = Math.max(frekuensiMaks_(data), 3);
+  var atas = 16;
+  var sumbuY = atas + frekMaks * 20 + 6;
+  var H = sumbuY + (penanda ? 112 : 36);
+
+  var tumpuk = {};
+  var titik = data
+    .map(function (v, i) {
+      tumpuk[v] = (tumpuk[v] || 0) + 1;
+      var cls = 'mmm-titik' + (st.pilih === i ? ' is-dipilih' : '');
+      return (
+        '<circle class="' +
+        cls +
+        '" cx="' +
+        sx(v).toFixed(1) +
+        '" cy="' +
+        (sumbuY - 12 - (tumpuk[v] - 1) * 20) +
+        '" r="8.5"/>'
+      );
+    })
+    .join('');
+
+  var sumbu =
+    '<line class="mmm-sumbu" x1="' +
+    (kiriX - 10) +
+    '" x2="' +
+    (kiriX + lebar + 10) +
+    '" y1="' +
+    sumbuY +
+    '" y2="' +
+    sumbuY +
+    '"/>';
+  for (var v = min; v <= max; v++) {
+    var x = sx(v).toFixed(1);
+    sumbu +=
+      '<line class="mmm-tik" x1="' +
+      x +
+      '" x2="' +
+      x +
+      '" y1="' +
+      (sumbuY - 4) +
+      '" y2="' +
+      (sumbuY + 4) +
+      '"/>' +
+      '<text class="mmm-angka" x="' +
+      x +
+      '" y="' +
+      (sumbuY + 20) +
+      '" text-anchor="middle">' +
+      v +
+      '</text>';
+  }
+
+  var u = ringkasUkuran(data);
+  var tanda = '';
+  if (penanda) {
+    var baris = function (nilaiList, k, bentuk) {
+      var y = sumbuY + 40 + k * 26;
+      return nilaiList
+        .map(function (nv) {
+          var px = sx(nv);
+          var garis =
+            '<line class="mmm-pandu mmm-pandu--' +
+            bentuk +
+            '" x1="' +
+            px.toFixed(1) +
+            '" x2="' +
+            px.toFixed(1) +
+            '" y1="' +
+            (sumbuY + 2) +
+            '" y2="' +
+            (y - 8) +
+            '"/>';
+          var simbol;
+          if (bentuk === 'mean') {
+            simbol =
+              '<polygon class="mmm-tanda mmm-tanda--mean" points="' +
+              px.toFixed(1) +
+              ',' +
+              (y - 8) +
+              ' ' +
+              (px - 8).toFixed(1) +
+              ',' +
+              (y + 6) +
+              ' ' +
+              (px + 8).toFixed(1) +
+              ',' +
+              (y + 6) +
+              '"/>';
+          } else if (bentuk === 'median') {
+            simbol =
+              '<polygon class="mmm-tanda mmm-tanda--median" points="' +
+              px.toFixed(1) +
+              ',' +
+              (y - 8) +
+              ' ' +
+              (px + 8).toFixed(1) +
+              ',' +
+              y +
+              ' ' +
+              px.toFixed(1) +
+              ',' +
+              (y + 8) +
+              ' ' +
+              (px - 8).toFixed(1) +
+              ',' +
+              y +
+              '"/>';
+          } else {
+            simbol =
+              '<rect class="mmm-tanda mmm-tanda--modus" x="' +
+              (px - 7).toFixed(1) +
+              '" y="' +
+              (y - 7) +
+              '" width="14" height="14" rx="2"/>';
+          }
+          return garis + simbol;
+        })
+        .join('');
+    };
+    tanda =
+      baris([u.rerata], 0, 'mean') + baris([u.median], 1, 'median') + baris(u.modus, 2, 'modus');
+  }
+
+  var hub = { sama: 'Mean = Median', lebih: 'Mean > Median', kurang: 'Mean < Median' }[
+    hubunganRerataMedian(data)
+  ];
+  var aria =
+    (opts.label || 'Diagram titik data') +
+    ': ' +
+    data.join(', ') +
+    (penanda
+      ? '. Mean ' +
+        formatDesimal(u.rerata, 2) +
+        ', median ' +
+        formatDesimal(u.median, 2) +
+        ', modus ' +
+        teksModus(data) +
+        '.'
+      : '.');
+
+  var bacaan = penanda
+    ? '<p class="mmm-baca" aria-live="polite">' +
+      '<span class="mmm-baca__item mmm-baca__item--mean"><span aria-hidden="true">▲</span> Mean <strong>' +
+      formatDesimal(u.rerata, 2) +
+      '</strong></span>' +
+      '<span class="mmm-baca__item mmm-baca__item--median"><span aria-hidden="true">◆</span> Median <strong>' +
+      formatDesimal(u.median, 2) +
+      '</strong></span>' +
+      '<span class="mmm-baca__item mmm-baca__item--modus"><span aria-hidden="true">■</span> Modus <strong>' +
+      esc(teksModus(data)) +
+      '</strong></span>' +
+      '<span class="mmm-baca__hub">' +
+      hub +
+      '</span>' +
+      '</p>'
+    : '';
+
+  var kontrol = '';
+  if (!opts.statis) {
+    var nama = opts.nama || [];
+    var chip = data
+      .map(function (nv, i) {
+        var boleh = bolehGeser_(opts, i);
+        var dipilih = st.pilih === i;
+        return (
+          '<button type="button" class="mmm-chip' +
+          (dipilih ? ' is-dipilih' : '') +
+          '" data-geser="' +
+          esc(id) +
+          '" data-geser-i="' +
+          i +
+          '" aria-pressed="' +
+          (dipilih ? 'true' : 'false') +
+          '"' +
+          (boleh ? '' : ' disabled') +
+          '><span class="mmm-chip__nama">' +
+          esc(nama[i] || 'Data ' + (i + 1)) +
+          '</span> <strong>' +
+          formatDesimal(nv, 2) +
+          '</strong></button>'
+        );
+      })
+      .join('');
+    var p = st.pilih;
+    var adaPilih = p !== null && p !== undefined && bolehGeser_(opts, p);
+    kontrol =
+      '<div class="mmm-chips" role="group" aria-label="Pilih titik yang akan digeser">' +
+      chip +
+      '</div>' +
+      '<div class="btn-group btn-group--center mmm-tombol">' +
+      '<button type="button" class="btn btn--ghost" id="' +
+      esc(id) +
+      '-kiri"' +
+      (adaPilih && data[p] - 1 >= min ? '' : ' disabled') +
+      '>◀ Kurangi 1</button>' +
+      '<button type="button" class="btn btn--ghost" id="' +
+      esc(id) +
+      '-kanan"' +
+      (adaPilih && data[p] + 1 <= max ? '' : ' disabled') +
+      '>Tambah 1 ▶</button>' +
+      '<button type="button" class="btn btn--ghost btn--small" id="' +
+      esc(id) +
+      '-ulang">↺ Ulangi</button>' +
+      '</div>' +
+      '<p class="mmm-status" aria-live="polite">' +
+      (adaPilih
+        ? 'Titik ' +
+          esc(nama[p] || 'Data ' + (p + 1)) +
+          ' dipilih. Geser dengan tombol ◀ atau ▶. Titik digeser: ' +
+          st.geser +
+          ' kali.'
+        : 'Ketuk satu nama untuk memilih titiknya.') +
+      '</p>';
+  }
+
+  return (
+    '<div class="mmm-lab">' +
+    '<svg class="mmm-lab__svg" viewBox="0 0 ' +
+    W +
+    ' ' +
+    H +
+    '" role="img" aria-label="' +
+    esc(aria) +
+    '">' +
+    sumbu +
+    titik +
+    tanda +
+    '</svg>' +
+    bacaan +
+    kontrol +
+    '</div>'
+  );
+}
+
+/*
+ * Memasang event Lab Geser Data. opts sama dengan buildGeserData,
+ * ditambah opts.awal untuk tombol Ulangi.
+ */
+function bindGeserData(root, id, st, opts, onChange) {
+  opts = opts || {};
+  var min = typeof opts.min === 'number' ? opts.min : 0;
+  var max = typeof opts.max === 'number' ? opts.max : Infinity;
+  root.querySelectorAll('[data-geser="' + id + '"]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var i = parseInt(btn.dataset.geserI, 10);
+      st.pilih = st.pilih === i ? null : i;
+      onChange();
+    });
+  });
+  [
+    ['-kiri', -1],
+    ['-kanan', 1],
+  ].forEach(function (pr) {
+    var btn = document.getElementById(id + pr[0]);
+    if (!btn) return;
+    btn.addEventListener('click', function () {
+      var p = st.pilih;
+      if (p === null || p === undefined || !bolehGeser_(opts, p)) return;
+      var baru = st.data[p] + pr[1];
+      if (baru < min || baru > max) return;
+      st.data = ubahNilai(st.data, p, baru);
+      st.geser += 1;
+      onChange();
+    });
+  });
+  var ulang = document.getElementById(id + '-ulang');
+  if (ulang && opts.awal) {
+    ulang.addEventListener('click', function () {
+      st.data = opts.awal.slice();
+      st.pilih = null;
+      st.geser = 0;
+      onChange();
+    });
+  }
+}
