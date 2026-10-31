@@ -1,0 +1,94 @@
+/* =========================================================================
+   fase-d/mpi-19.1/styles.css
+   Hubungan Luas Persegi pada Sisi Segitiga Siku-siku —
+   Fase D (SMP Kelas VIII), Inquiry Learning
+
+   Hanya memuat gaya yang KHAS modul ini (orientasi taman, kartu
+   pembanding, rumus rangkuman, ikon soal, contoh selesai). Dasar design
+   system — panel, tombol, umpan balik, pilihan ganda, petunjuk,
+   pemilahan, gambar persegi pada sisi segitiga, ukur luas, Lab Kotak
+   Persegi, tabel luas (.ptg-*), perbandingan dugaan, kartu ringkasan,
+   navigasi tahap, modal — berasal dari shared/base.css.
+   ========================================================================= */
+
+/* Orientasi: cerita + gambar taman */
+.ptg-orientasi {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: var(--space-4);
+  align-items: center;
+}
+
+.ptg-orientasi__teks {
+  margin: 0;
+}
+
+.ptg-orientasi__gambar {
+  margin: 0;
+  text-align: center;
+}
+
+/* Pembanding */
+.ptg-banding {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.ptg-banding__judul {
+  margin: 0;
+}
+
+.ptg-banding__jenis {
+  font-weight: 400;
+  font-size: 0.95rem;
+  color: var(--color-success-strong);
+}
+
+.ptg-banding__relasi .quiz-item {
+  margin-bottom: 0;
+}
+
+/* Petunjuk lab */
+.ptg-petunjuk {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-2);
+  margin-top: var(--space-4);
+}
+
+/* Rumus rangkuman */
+.ptg-rumus {
+  margin: 0 0 var(--space-4);
+  text-align: center;
+  font-size: clamp(1.6rem, 6vw, 2.4rem);
+  font-weight: 800;
+  color: var(--color-primary-strong);
+  letter-spacing: 0.02em;
+}
+
+/* Uji terap */
+.ptg-soal-ikon {
+  font-size: 1.3rem;
+}
+
+/* Selesai */
+.ptg-contoh-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: var(--space-3);
+  margin: var(--space-4) 0;
+}
+
+.ptg-contoh-grid__num {
+  display: block;
+  font-size: 1.3rem;
+  color: var(--color-primary-strong);
+}
+
+@media (max-width: 720px) {
+  .ptg-orientasi {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
