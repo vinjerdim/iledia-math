@@ -207,6 +207,14 @@
     "stageCount": 12,
     "extraBody": "partials/reset-modal.html"
   },
+  "fase-d/mpi-24.1": {
+    "title": "Pengaruh Perubahan Proporsional terhadap Sudut & Sisi Bangun Datar — Matematika Fase D",
+    "description": "Media pembelajaran interaktif berbasis Discovery Learning untuk menjelaskan pengaruh perubahan panjang sisi secara proporsional terhadap besar sudut dan panjang sisi bangun datar melalui pengamatan dan pengukuran: Lab Ukur dengan penggaris dan busur virtual pada bendera dan cetakannya, Lab Ubah Ukuran (kali k, tambah c, regang mendatar) dengan catatan percobaan, faktor perubahan k = sisi baru ÷ sisi lama, sisi yang hilang dan keliling, pemilahan perubahan proporsional, pembuktian pada bangun baru, dan uji terap acak berdiagnosa miskonsepsi.",
+    "kicker": "Matematika — Fase D (SMP)",
+    "h1": "Pengaruh Perubahan Proporsional terhadap Sudut & Sisi Bangun Datar",
+    "stageCount": 11,
+    "extraBody": "partials/reset-modal.html"
+  },
   "fase-f/mpi-1.1": {
     "title": "Konsep Barisan Aritmetika & Beda — Matematika Fase F",
     "description": "Media pembelajaran interaktif berbasis Inquiry Learning untuk mengidentifikasi dan menjelaskan konsep barisan aritmetika serta menentukan beda dari suatu barisan bilangan.",
