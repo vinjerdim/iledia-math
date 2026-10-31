@@ -18430,3 +18430,468 @@ button.akar-tile:disabled {
     font-weight: 600;
   }
 }
+
+/* ============================================================
+   Tabung, kerucut & bola (engine seksi 89, dipakai fase-d/mpi-23.1):
+   model yang dapat dimiringkan & diketuk (.tkb-svg, .tkb-part*),
+   jaring-jaring (.tkb-net-*), Lab Unsur, Lab Bentang, Lab Kulit Jeruk
+   (.tkb-jeruk*, .tkb-slot*), Lab Tuang (.tkb-tuang-svg, .tkb-air), dan
+   tabel unsur (.tkb-tabel*).
+   ============================================================ */
+
+.tkb-lab {
+  display: grid;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  border: 2px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-bg);
+  min-width: 0;
+}
+
+.tkb-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.tkb-tab {
+  min-height: 44px;
+  padding: var(--space-1) var(--space-3);
+  border: 2px solid var(--color-border-strong);
+  border-radius: 999px;
+  background: var(--color-surface);
+  color: var(--color-ink);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.tkb-tab:hover {
+  border-color: var(--color-blue);
+}
+
+.tkb-tab:focus-visible {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+.tkb-tab[aria-pressed='true'] {
+  border-color: var(--color-blue);
+  background: var(--color-blue-soft);
+  color: var(--color-blue-strong);
+}
+
+.tkb-tab__hitung {
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--color-ink-muted);
+}
+
+.tkb-stage {
+  display: flex;
+  justify-content: center;
+  padding: var(--space-3);
+  border: 2px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  min-width: 0;
+}
+
+.tkb-svg {
+  width: 100%;
+  max-width: 260px;
+  height: auto;
+  overflow: visible;
+}
+
+.tkb-net-svg {
+  width: 100%;
+  max-width: 320px;
+  height: auto;
+}
+
+.tkb-net-svg--bentang {
+  max-width: 420px;
+}
+
+.tkb-face {
+  stroke: var(--color-blue-strong);
+  stroke-width: 2;
+}
+
+.tkb-face--lengkung {
+  fill: var(--color-blue-soft);
+}
+
+.tkb-face--tutup {
+  fill: #c3d6ee;
+}
+
+.tkb-face--alas {
+  fill: var(--color-blue-soft);
+  fill-opacity: 0.35;
+  stroke-dasharray: 5 4;
+}
+
+.tkb-bantu {
+  fill: none;
+  stroke: var(--color-blue-strong);
+  stroke-width: 1.5;
+}
+
+.tkb-bantu--belakang {
+  stroke-dasharray: 5 4;
+  opacity: 0.7;
+}
+
+.tkb-line {
+  stroke: var(--color-ink);
+  stroke-width: 2.5;
+  stroke-linecap: round;
+}
+
+.tkb-line--r {
+  stroke: var(--color-orange);
+}
+
+.tkb-line--d {
+  stroke: var(--color-purple);
+}
+
+.tkb-line--t {
+  stroke: var(--color-success);
+  stroke-dasharray: 6 4;
+}
+
+.tkb-line--s {
+  stroke: var(--color-error);
+}
+
+.tkb-hit {
+  stroke: transparent;
+  stroke-width: 18;
+  stroke-linecap: round;
+}
+
+.tkb-hit-dot {
+  fill: transparent;
+}
+
+.tkb-dot {
+  fill: var(--color-ink);
+}
+
+.tkb-label {
+  font-size: 15px;
+  font-weight: 700;
+  font-style: italic;
+  fill: var(--color-ink);
+  paint-order: stroke;
+  stroke: var(--color-surface);
+  stroke-width: 3px;
+}
+
+.tkb-label--warn {
+  fill: var(--color-error-strong);
+  font-style: normal;
+}
+
+.tkb-part.is-ketuk {
+  cursor: pointer;
+}
+
+.tkb-part.is-ketuk:focus {
+  outline: none;
+}
+
+.tkb-part.is-ketuk:focus-visible .tkb-face,
+.tkb-part.is-ketuk:focus-visible .tkb-line,
+.tkb-part.is-ketuk:focus-visible .tkb-dot {
+  stroke: var(--color-focus);
+  stroke-width: 4;
+}
+
+.tkb-part.is-sorot .tkb-face {
+  fill: var(--color-warning-soft);
+  stroke: var(--color-orange-strong);
+  stroke-width: 3;
+}
+
+.tkb-part.is-sorot .tkb-line {
+  stroke-width: 5;
+}
+
+.tkb-part.is-sorot .tkb-dot {
+  fill: var(--color-orange);
+}
+
+.tkb-slider {
+  display: grid;
+  gap: var(--space-1);
+}
+
+.tkb-slider label {
+  font-weight: 600;
+}
+
+.tkb-slider input[type='range'] {
+  width: 100%;
+  min-height: 44px;
+  accent-color: var(--color-blue);
+}
+
+.tkb-info {
+  margin: 0;
+  padding: var(--space-3);
+  border-left: 4px solid var(--color-blue);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+}
+
+.tkb-cek-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.tkb-cek {
+  padding: var(--space-2) var(--space-3);
+  border: 2px dashed var(--color-border-strong);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+  color: var(--color-ink-muted);
+  font-size: 0.9rem;
+}
+
+.tkb-cek.is-ada {
+  border-style: solid;
+  border-color: var(--color-success);
+  background: var(--color-success-soft);
+  color: var(--color-success-strong);
+  font-weight: 600;
+}
+
+.tkb-net-rect {
+  fill: var(--color-orange-soft);
+  stroke: var(--color-orange-strong);
+  stroke-width: 2;
+}
+
+.tkb-net-circle {
+  fill: var(--color-blue-soft);
+  stroke: var(--color-blue-strong);
+  stroke-width: 2;
+}
+
+.tkb-lengkung {
+  stroke: var(--color-orange-strong);
+  stroke-width: 1.5;
+}
+
+.tkb-galeri {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: var(--space-3);
+  margin: var(--space-4) 0 0;
+}
+
+.tkb-galeri__item {
+  display: grid;
+  justify-items: center;
+  gap: var(--space-1);
+  margin: 0;
+  padding: var(--space-2);
+  border: 2px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  text-align: center;
+  font-size: 0.9rem;
+}
+
+.tkb-galeri__item .tkb-svg {
+  max-width: 110px;
+}
+
+.tkb-opt-net {
+  display: block;
+  max-width: 220px;
+}
+
+.tkb-jeruk {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.tkb-jeruk .tkb-info {
+  flex: 1 1 200px;
+}
+
+.tkb-jeruk-svg {
+  width: 120px;
+  height: 120px;
+  flex: none;
+}
+
+.tkb-jeruk-isi {
+  fill: #fde7b0;
+  stroke: var(--color-orange-strong);
+  stroke-width: 2;
+}
+
+.tkb-jeruk-kulit {
+  fill: #f59e0b;
+  transition: opacity 0.3s ease;
+}
+
+.tkb-slots {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(96px, 1fr));
+  gap: var(--space-2);
+}
+
+.tkb-slot {
+  display: grid;
+  justify-items: center;
+  gap: var(--space-1);
+  min-height: 44px;
+  padding: var(--space-2);
+  border: 2px solid var(--color-border-strong);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  color: var(--color-ink);
+  font: inherit;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.tkb-slot:hover:not(:disabled) {
+  border-color: var(--color-orange);
+}
+
+.tkb-slot:focus-visible {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+.tkb-slot:disabled {
+  cursor: default;
+}
+
+.tkb-slot.is-penuh {
+  border-color: var(--color-success);
+  background: var(--color-success-soft);
+}
+
+.tkb-slot-svg {
+  width: 72px;
+  height: 72px;
+}
+
+.tkb-slot-circle {
+  fill: none;
+  stroke: var(--color-ink-muted);
+  stroke-width: 2;
+  stroke-dasharray: 4 3;
+}
+
+.tkb-kulit {
+  fill: #f59e0b;
+  stroke: var(--color-orange-strong);
+  stroke-width: 1;
+}
+
+.tkb-tuang-svg {
+  width: 100%;
+  max-width: 360px;
+  height: auto;
+}
+
+.tkb-air {
+  fill: #9cc7f0;
+}
+
+.tkb-air-top {
+  fill: #7bb3e8;
+}
+
+.tkb-wadah {
+  fill: none;
+  stroke: var(--color-ink);
+  stroke-width: 2.5;
+}
+
+.tkb-tabel {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.92rem;
+}
+
+.tkb-tabel caption {
+  margin-bottom: var(--space-2);
+  text-align: left;
+  font-weight: 600;
+}
+
+.tkb-tabel th,
+.tkb-tabel td {
+  padding: var(--space-2);
+  border: 1px solid var(--color-border);
+  text-align: center;
+}
+
+.tkb-tabel thead th {
+  background: var(--color-blue-soft);
+}
+
+.tkb-tabel__input {
+  width: 4.5rem;
+  min-height: 44px;
+  text-align: center;
+}
+
+.tkb-tabel__input.is-benar {
+  border-color: var(--color-success);
+  background: var(--color-success-soft);
+}
+
+.tkb-pesan {
+  margin: 0;
+  padding-left: 1.1rem;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tkb-jeruk-kulit {
+    transition: none;
+  }
+}
+
+@media (max-width: 480px) {
+  .tkb-lab {
+    padding: var(--space-2);
+  }
+
+  .tkb-stage {
+    padding: var(--space-2);
+  }
+
+  .tkb-tabel {
+    font-size: 0.82rem;
+  }
+
+  .tkb-tabel th,
+  .tkb-tabel td {
+    padding: var(--space-1);
+  }
+
+  .tkb-tabel__input {
+    width: 2.6rem;
+    padding-left: 0;
+    padding-right: 0;
+  }
+}

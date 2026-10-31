@@ -287,6 +287,13 @@
        jenis segitiga dari luas, isian luas berdiagnosa miskonsepsi,
        opsi berpengecoh uji terap, gambar persegi pada sisi SVG, ukur
        luas tiga persegi, Lab Kotak Persegi, tabel luas isian)
+   87. Rerata (mean) data tunggal
+   88. Hubungan mean, median & modus data tunggal
+   89. Tabung, kerucut & bola (unsur & diagnosa tabel unsur, bagian
+       model yang dapat diketuk, jaring-jaring & pemeriksanya, garis
+       pelukis, sudut juring, luas permukaan & volume, kunci/diagnosa/
+       opsi soal berpengecoh, model 3D yang dapat dimiringkan, Lab
+       Unsur, Lab Bentang, Lab Kulit Jeruk, Lab Tuang, tabel unsur)
    ============================================================ */
 
 /* ============================================================
@@ -61616,6 +61623,2081 @@ function bindGeserData(root, id, st, opts, onChange) {
       st.data = opts.awal.slice();
       st.pilih = null;
       st.geser = 0;
+      onChange();
+    });
+  }
+}
+
+/* ============================================================
+   89. TABUNG, KERUCUT & BOLA — UNSUR, JARING-JARING, LUAS
+       PERMUKAAN & VOLUME
+   Dipakai fase-d/mpi-23.1 (Discovery Learning). Melanjutkan seksi 78
+   (unsurBangunRuang untuk tabung & kerucut) dan memakai ulang
+   parseAngkaRasio & fmtAngkaRasio (seksi 68).
+
+   Konvensi unsur sama dengan seksi 78: rusuk adalah pertemuan dua sisi
+   (boleh lengkung); garis pelukis, garis tepi gambar tabung, dan garis
+   khatulistiwa gambar bola hanya GARIS BANTU, bukan rusuk.
+
+   Ukuran { r, t } (tabung, kerucut) atau { r, s } (kerucut, t dicari
+   dengan Pythagoras) atau { r } (bola); r boleh diganti d (diameter).
+   π ditulis sebagai mode '22/7' atau '3,14' (piTKB). Semua hasil hitung
+   dirapikan ke dua angka di belakang koma (rapiTKB).
+
+     • unsur      unsurTKB, TKB_KOLOM, diagnosaUnsurTKB, bagianTKB
+     • jaring     garisPelukis, sudutJuringKerucut, jaringTabung,
+                  jaringKerucut, cekJaringTKB
+     • besaran    luasBagianTKB, luasPermukaanTKB, volumeTKB
+     • soal       cek = { minta, jenis, r|d, t, s, pi, tanpa }
+                  minta: kelilingAlas | luasAlas | luasSelimut |
+                  luasPermukaan | volume | garisPelukis | sudutJuring
+                  → nilaiSoalTKB, satuanSoalTKB, calonKeliruTKB,
+                  diagnosaTKB, periksaSoalTKB, jawabSoalTKB, opsiSoalTKB
+     • komponen   buildBendaTKBSVG (model yang dapat dimiringkan &
+                  diketuk), buildJaringTKBSVG, Lab Unsur, Lab Bentang
+                  (membuka selimut), Lab Kulit Jeruk (luas bola),
+                  Lab Tuang (volume kerucut & bola), tabel unsur isian
+   Gaya .tkb-* ada di shared/base.css. Diuji di
+   tests/engine-tabung-kerucut-bola.test.js.
+   ============================================================ */
+
+var TKB_JENIS = ['tabung', 'kerucut', 'bola'];
+
+var TKB_NAMA = { tabung: 'Tabung', kerucut: 'Kerucut', bola: 'Bola' };
+
+/* ---------- π & pembulatan ---------- */
+
+function piTKB(mode) {
+  if (mode === '22/7') return 22 / 7;
+  if (mode === '3,14') return 3.14;
+  throw new Error('Nilai π tidak dikenal: ' + mode);
+}
+
+function teksPiTKB(mode) {
+  piTKB(mode);
+  return mode;
+}
+
+function rapiTKB(x) {
+  return Math.round(Math.round(x * 1e6) / 1e4) / 100;
+}
+
+function jenisTKB_(jenis) {
+  if (TKB_JENIS.indexOf(jenis) === -1) throw new Error('Bangun tidak dikenal: ' + jenis);
+  return jenis;
+}
+
+/* ---------- Unsur ---------- */
+
+function unsurTKB(jenis) {
+  jenisTKB_(jenis);
+  if (jenis === 'bola') {
+    return { sisiDatar: 0, sisiLengkung: 1, sisi: 1, rusuk: 0, titikSudut: 0, titikPuncak: 0 };
+  }
+  var u = unsurBangunRuang(jenis);
+  return {
+    sisiDatar: u.sisiDatar,
+    sisiLengkung: u.sisiLengkung,
+    sisi: u.sisi,
+    rusuk: u.rusuk,
+    titikSudut: u.titikSudut,
+    titikPuncak: u.titikPuncak,
+  };
+}
+
+var TKB_KOLOM = [
+  { id: 'sisiDatar', label: 'Sisi datar' },
+  { id: 'sisiLengkung', label: 'Sisi lengkung' },
+  { id: 'rusuk', label: 'Rusuk' },
+  { id: 'titikPuncak', label: 'Titik puncak' },
+];
+
+var TKB_PESAN = {
+  benar: 'Tepat.',
+  lain: 'Belum tepat. Periksa lagi langkah dan hitunganmu.',
+  kosong: 'Isi jawabanmu lebih dulu.',
+  format: 'Tulis satu bilangan, mis. 1.320 atau 188,4 (desimal memakai koma).',
+  /* unsur */
+  lupaTutup: 'Tabung punya DUA sisi datar: alas dan tutup yang sama-sama berbentuk lingkaran.',
+  selimutDatar:
+    'Selimut tabung dan kerucut itu melengkung, jadi ia sisi lengkung, bukan sisi datar.',
+  pelukisRusuk:
+    'Garis pelukis dan garis tepi gambar hanya garis bantu pada selimut, bukan rusuk. Rusuk kerucut hanya satu: lengkungan tempat alas bertemu selimut.',
+  garisTepi:
+    'Dua garis tegak di tepi gambar tabung hanya batas pandang selimut, bukan rusuk. Rusuk tabung adalah dua lengkungan tempat selimut bertemu alas dan tutup.',
+  lupaPuncak:
+    'Kerucut punya satu titik puncak di ujung atasnya, tempat semua garis pelukis bertemu.',
+  garisBantu:
+    'Garis melingkar di tengah gambar bola hanya garis bantu agar bola tampak tiga dimensi. Bola tidak punya rusuk.',
+  bolaDatar: 'Bola tidak punya bagian yang datar; seluruh permukaannya melengkung.',
+  /* jaring-jaring */
+  jaringBenar: 'Jaring-jaring ini dapat dilipat dan digulung menjadi bangun yang dimaksud.',
+  lingkaranKurang: 'Jaring-jaring ini kekurangan sisi lingkaran (alas atau tutup).',
+  lingkaranLebih: 'Ada lingkaran yang berlebih, sehingga satu lingkaran tidak mendapat tempat.',
+  lingkaranBeda: 'Alas dan tutup tabung harus kongruen: jari-jari kedua lingkaran sama.',
+  sepihak:
+    'Kedua lingkaran menempel di tepi yang sama, sehingga saat digulung keduanya bertumpuk di satu ujung dan ujung lainnya terbuka.',
+  panjangKurang:
+    'Persegi panjangnya terlalu pendek: saat digulung tidak bisa mengelilingi lingkaran alas. Panjangnya harus sama dengan keliling alas, 2πr.',
+  panjangLebih:
+    'Persegi panjangnya terlalu panjang: saat digulung ada bagian yang bertumpuk. Panjangnya harus sama dengan keliling alas, 2πr.',
+  juringBesar:
+    'Busur juring lebih panjang daripada keliling lingkaran alas, jadi selimut bertumpuk saat digulung.',
+  juringKecil:
+    'Busur juring lebih pendek daripada keliling lingkaran alas, jadi selimut tidak bisa menutup alasnya.',
+  bola: 'Kulit bola tidak dapat dibentangkan rata tanpa sobek atau kusut, jadi bola tidak memiliki jaring-jaring.',
+  /* soal */
+  diameterJariJari: 'Sepertinya diameter dipakai sebagai jari-jari. Ingat, r = ½ × d.',
+  tinggiBukanPelukis:
+    'Selimut kerucut memakai garis pelukis s, bukan tinggi t. Hitung dulu s = √(r² + t²).',
+  satuLingkaran: 'Tabung tertutup punya dua lingkaran: alas dan tutup. Keduanya ikut dihitung.',
+  duaLingkaran: 'Bangun ini tidak bertutup, jadi hanya satu lingkaran yang dihitung.',
+  tambahAlas: 'Benda ini tidak beralas, jadi luas lingkaran alas tidak ikut dihitung.',
+  hanyaSelimut: 'Itu baru luas selimut. Luas permukaan = jumlah luas SEMUA bagian jaring-jaring.',
+  setengahKeliling: 'Panjang persegi panjang selimut sama dengan keliling alas, 2πr, bukan πr.',
+  luasJuringPenuh:
+    'Itu luas lingkaran penuh berjari-jari s. Selimut kerucut hanya sebagian lingkaran itu (juring): πrs.',
+  kelilingLuas: 'Keliling alas (2πr) dan luas alas (πr²) tertukar.',
+  kelilingBukanLuas: 'Volume = luas alas × tinggi, bukan keliling alas × tinggi.',
+  lupaSepertiga: 'Volume kerucut hanya ⅓ volume tabung yang alas dan tingginya sama.',
+  setengahBola: 'Kulit bola menutupi EMPAT lingkaran besar, bukan dua: L = 4πr².',
+  satuLingkaranBola: 'Itu baru luas satu lingkaran besar. Kulit bola menutupi empat: L = 4πr².',
+  tertukarRumusBola: 'Rumus luas permukaan bola (4πr²) dan volume bola (4/3 πr³) tertukar.',
+  lupaPangkat: 'Volume bola memakai r³ = r × r × r.',
+  jumlahSisi: 'Garis pelukis bukan r + t. Ia sisi miring segitiga siku-siku: s = √(r² + t²).',
+  kurangKuadrat:
+    'Garis pelukis adalah sisi terpanjang (sisi miring), jadi s² = r² + t², bukan selisihnya.',
+  pelengkap: 'Itu sudut sisanya (360° dikurangi sudut juring). Sudut juring = (r ÷ s) × 360°.',
+  piLain: 'Hitunganmu memakai nilai π yang berbeda. Gunakan nilai π yang diminta soal.',
+};
+
+function diagnosaUnsurTKB(jenis, kolom, nilai) {
+  var kunci = unsurTKB(jenis)[kolom];
+  var kode = 'lain';
+  if (nilai === kunci) kode = 'benar';
+  else if (jenis === 'tabung' && kolom === 'sisiDatar' && nilai === 1) kode = 'lupaTutup';
+  else if (kolom === 'sisiDatar' && jenis !== 'bola' && nilai === kunci + 1) kode = 'selimutDatar';
+  else if (kolom === 'sisiLengkung' && jenis !== 'bola' && nilai === 0) kode = 'selimutDatar';
+  else if (jenis === 'kerucut' && kolom === 'rusuk' && nilai > 1) kode = 'pelukisRusuk';
+  else if (jenis === 'tabung' && kolom === 'rusuk' && nilai === 4) kode = 'garisTepi';
+  else if (jenis === 'kerucut' && kolom === 'titikPuncak' && nilai === 0) kode = 'lupaPuncak';
+  else if (jenis === 'bola' && kolom === 'rusuk' && nilai > 0) kode = 'garisBantu';
+  else if (jenis === 'bola' && kolom === 'sisiDatar' && nilai > 0) kode = 'bolaDatar';
+  return { benar: kode === 'benar', kode: kode, pesan: TKB_PESAN[kode] };
+}
+
+/* Bagian yang dapat diketuk pada model (Lab Unsur). */
+var TKB_BAGIAN = {
+  tabung: [
+    {
+      id: 'alas',
+      label: 'Sisi alas',
+      tipe: 'sisi',
+      info: 'Sisi alas: sisi datar berbentuk lingkaran di bagian bawah.',
+    },
+    {
+      id: 'tutup',
+      label: 'Sisi tutup (atas)',
+      tipe: 'sisi',
+      info: 'Sisi tutup: sisi datar berbentuk lingkaran, kongruen dengan alas dan sejajar dengannya.',
+    },
+    {
+      id: 'selimut',
+      label: 'Selimut',
+      tipe: 'sisi',
+      info: 'Selimut tabung: satu-satunya sisi lengkung yang mengelilingi alas dan tutup.',
+    },
+    {
+      id: 'jariJari',
+      label: 'Jari-jari (r)',
+      tipe: 'ukuran',
+      info: 'Jari-jari (r): jarak dari pusat lingkaran alas/tutup ke tepinya.',
+    },
+    {
+      id: 'diameter',
+      label: 'Diameter (d)',
+      tipe: 'ukuran',
+      info: 'Diameter (d): ruas garis melalui pusat lingkaran dari tepi ke tepi; d = 2r.',
+    },
+    {
+      id: 'tinggi',
+      label: 'Tinggi (t)',
+      tipe: 'ukuran',
+      info: 'Tinggi (t): jarak antara pusat alas dan pusat tutup.',
+    },
+  ],
+  kerucut: [
+    {
+      id: 'alas',
+      label: 'Sisi alas',
+      tipe: 'sisi',
+      info: 'Sisi alas: satu-satunya sisi datar kerucut, berbentuk lingkaran.',
+    },
+    {
+      id: 'selimut',
+      label: 'Selimut',
+      tipe: 'sisi',
+      info: 'Selimut kerucut: sisi lengkung dari tepi alas sampai titik puncak.',
+    },
+    {
+      id: 'jariJari',
+      label: 'Jari-jari (r)',
+      tipe: 'ukuran',
+      info: 'Jari-jari (r): jarak dari pusat alas ke tepi alas.',
+    },
+    {
+      id: 'tinggi',
+      label: 'Tinggi (t)',
+      tipe: 'ukuran',
+      info: 'Tinggi (t): jarak tegak lurus dari titik puncak ke pusat alas.',
+    },
+    {
+      id: 'garisPelukis',
+      label: 'Garis pelukis (s)',
+      tipe: 'ukuran',
+      info: 'Garis pelukis (s): ruas garis pada selimut dari titik puncak ke tepi alas. r, t, dan s membentuk segitiga siku-siku.',
+    },
+    {
+      id: 'puncak',
+      label: 'Titik puncak',
+      tipe: 'titik',
+      info: 'Titik puncak: titik di ujung kerucut tempat semua garis pelukis bertemu.',
+    },
+  ],
+  bola: [
+    {
+      id: 'permukaan',
+      label: 'Sisi lengkung',
+      tipe: 'sisi',
+      info: 'Bola hanya punya satu sisi lengkung yang menutup seluruh bangun.',
+    },
+    {
+      id: 'pusat',
+      label: 'Titik pusat',
+      tipe: 'titik',
+      info: 'Titik pusat: titik di dalam bola yang jaraknya sama ke setiap titik pada permukaan.',
+    },
+    {
+      id: 'jariJari',
+      label: 'Jari-jari (r)',
+      tipe: 'ukuran',
+      info: 'Jari-jari (r): jarak dari titik pusat ke permukaan bola.',
+    },
+    {
+      id: 'diameter',
+      label: 'Diameter (d)',
+      tipe: 'ukuran',
+      info: 'Diameter (d): ruas garis melalui pusat dari permukaan ke permukaan; d = 2r.',
+    },
+  ],
+};
+
+function bagianTKB(jenis) {
+  return TKB_BAGIAN[jenisTKB_(jenis)];
+}
+
+function labelBagianTKB(jenis, id) {
+  var b = bagianTKB(jenis).filter(function (x) {
+    return x.id === id;
+  })[0];
+  return b ? b.label : '';
+}
+
+/* ---------- Ukuran jaring-jaring ---------- */
+
+function garisPelukis(r, t) {
+  return rapiTKB(Math.sqrt(r * r + t * t));
+}
+
+function sudutJuringKerucut(r, s) {
+  return rapiTKB((360 * r) / s);
+}
+
+/* Melengkapi ukuran: r dari d, t dari s (atau sebaliknya) untuk kerucut. */
+function ukuranTKB_(u) {
+  var r = typeof u.r === 'number' ? u.r : u.d / 2;
+  var t = u.t;
+  var s = u.s;
+  if (typeof t !== 'number' && typeof s === 'number') t = Math.sqrt(s * s - r * r);
+  if (typeof s !== 'number' && typeof t === 'number') s = Math.sqrt(r * r + t * t);
+  return { r: r, t: t, s: s };
+}
+
+function jaringTabung(r, t, mode) {
+  var pi = piTKB(mode);
+  return {
+    jenis: 'tabung',
+    r: r,
+    t: t,
+    panjang: rapiTKB(2 * pi * r),
+    lebar: t,
+    luasAlas: rapiTKB(pi * r * r),
+    luasSelimut: rapiTKB(2 * pi * r * t),
+  };
+}
+
+function jaringKerucut(r, t, mode) {
+  var pi = piTKB(mode);
+  var s = Math.sqrt(r * r + t * t);
+  return {
+    jenis: 'kerucut',
+    r: r,
+    t: t,
+    s: rapiTKB(s),
+    busur: rapiTKB(2 * pi * r),
+    sudut: rapiTKB((360 * r) / s),
+    luasAlas: rapiTKB(pi * r * r),
+    luasSelimut: rapiTKB(pi * r * s),
+  };
+}
+
+function hasilJaringTKB_(kode) {
+  return {
+    valid: kode === 'benar',
+    kode: kode,
+    pesan: TKB_PESAN[kode === 'benar' ? 'jaringBenar' : kode],
+  };
+}
+
+/*
+ * Memeriksa rancangan jaring-jaring.
+ *   tabung  { jenis, r, t, panjang, lingkaran: [{ r, sisi: 'atas'|'bawah' }] }
+ *   kerucut { jenis, s, sudut, lingkaran: [{ r }] }
+ *   bola    { jenis } — selalu tidak valid
+ * Panjang dibandingkan dengan keliling 2πr (π sebenarnya, toleransi 3%).
+ */
+function cekJaringTKB(spec) {
+  if (spec.jenis === 'bola') return hasilJaringTKB_('bola');
+  var L = spec.lingkaran || [];
+  if (spec.jenis === 'tabung') {
+    if (L.length < 2) return hasilJaringTKB_('lingkaranKurang');
+    if (L.length > 2) return hasilJaringTKB_('lingkaranLebih');
+    if (Math.abs(L[0].r - L[1].r) > 1e-9) return hasilJaringTKB_('lingkaranBeda');
+    if (L[0].sisi === L[1].sisi) return hasilJaringTKB_('sepihak');
+    var kel = 2 * Math.PI * L[0].r;
+    if (spec.panjang < kel * 0.97) return hasilJaringTKB_('panjangKurang');
+    if (spec.panjang > kel * 1.03) return hasilJaringTKB_('panjangLebih');
+    return hasilJaringTKB_('benar');
+  }
+  if (L.length < 1) return hasilJaringTKB_('lingkaranKurang');
+  if (L.length > 1) return hasilJaringTKB_('lingkaranLebih');
+  var sudut = (360 * L[0].r) / spec.s;
+  if (spec.sudut > sudut + 1) return hasilJaringTKB_('juringBesar');
+  if (spec.sudut < sudut - 1) return hasilJaringTKB_('juringKecil');
+  return hasilJaringTKB_('benar');
+}
+
+/* ---------- Luas permukaan & volume ---------- */
+
+function luasBagianTKB(jenis, ukuran, mode) {
+  var pi = piTKB(mode);
+  var u = ukuranTKB_(ukuran);
+  var r = u.r;
+  if (jenisTKB_(jenis) === 'bola') {
+    return [
+      {
+        id: 'permukaan',
+        nama: 'Kulit bola (4 lingkaran besar)',
+        rumus: '4 × π × r²',
+        luas: rapiTKB(4 * pi * r * r),
+      },
+    ];
+  }
+  var alas = { id: 'alas', nama: 'Alas (lingkaran)', rumus: 'π × r²', luas: rapiTKB(pi * r * r) };
+  if (jenis === 'tabung') {
+    return [
+      alas,
+      { id: 'tutup', nama: 'Tutup (lingkaran)', rumus: 'π × r²', luas: alas.luas },
+      {
+        id: 'selimut',
+        nama: 'Selimut (persegi panjang)',
+        rumus: '2 × π × r × t',
+        luas: rapiTKB(2 * pi * r * u.t),
+      },
+    ];
+  }
+  return [
+    alas,
+    { id: 'selimut', nama: 'Selimut (juring)', rumus: 'π × r × s', luas: rapiTKB(pi * r * u.s) },
+  ];
+}
+
+/* opsi.tanpa: id bagian yang tidak ikut dihitung, mis. ['tutup'] atau ['alas']. */
+function luasPermukaanTKB(jenis, ukuran, mode, opsi) {
+  var tanpa = (opsi && opsi.tanpa) || [];
+  return rapiTKB(
+    luasBagianTKB(jenis, ukuran, mode).reduce(function (acc, b) {
+      return tanpa.indexOf(b.id) === -1 ? acc + b.luas : acc;
+    }, 0)
+  );
+}
+
+function volumeTKB(jenis, ukuran, mode) {
+  var pi = piTKB(mode);
+  var u = ukuranTKB_(ukuran);
+  if (jenisTKB_(jenis) === 'bola') return rapiTKB((4 / 3) * pi * u.r * u.r * u.r);
+  var v = pi * u.r * u.r * u.t;
+  return rapiTKB(jenis === 'kerucut' ? v / 3 : v);
+}
+
+/* ---------- Soal: kunci, calon jawaban keliru, pemeriksa, opsi ---------- */
+
+var TKB_SATUAN_DIMENSI = {
+  kelilingAlas: 1,
+  garisPelukis: 1,
+  luasAlas: 2,
+  luasSelimut: 2,
+  luasPermukaan: 2,
+  volume: 3,
+  sudutJuring: 0,
+};
+
+function satuanSoalTKB(minta, satuan) {
+  var dim = TKB_SATUAN_DIMENSI[minta];
+  if (dim === undefined) throw new Error('Permintaan soal tidak dikenal: ' + minta);
+  if (dim === 0) return '°';
+  return (satuan || 'cm') + (dim === 2 ? '²' : dim === 3 ? '³' : '');
+}
+
+/* Nilai mentah (belum dirapikan) sebuah permintaan untuk ukuran u & π. */
+function hitungTKB_(c, u, pi) {
+  var r = u.r;
+  var tanpa = c.tanpa || [];
+  switch (c.minta) {
+    case 'kelilingAlas':
+      return 2 * pi * r;
+    case 'luasAlas':
+      return pi * r * r;
+    case 'garisPelukis':
+      return Math.sqrt(r * r + u.t * u.t);
+    case 'sudutJuring':
+      return (360 * r) / u.s;
+    case 'luasSelimut':
+      return c.jenis === 'tabung' ? 2 * pi * r * u.t : pi * r * u.s;
+    case 'luasPermukaan':
+      if (c.jenis === 'bola') return 4 * pi * r * r;
+      if (c.jenis === 'tabung') {
+        return (2 - (tanpa.indexOf('tutup') === -1 ? 0 : 1)) * pi * r * r + 2 * pi * r * u.t;
+      }
+      return (tanpa.indexOf('alas') === -1 ? pi * r * r : 0) + pi * r * u.s;
+    case 'volume':
+      if (c.jenis === 'bola') return (4 / 3) * pi * r * r * r;
+      return (c.jenis === 'kerucut' ? 1 / 3 : 1) * pi * r * r * u.t;
+    default:
+      throw new Error('Permintaan soal tidak dikenal: ' + c.minta);
+  }
+}
+
+function piSoalTKB_(c) {
+  return piTKB(c.pi || '3,14');
+}
+
+function nilaiSoalTKB(c) {
+  jenisTKB_(c.jenis);
+  return rapiTKB(hitungTKB_(c, ukuranTKB_(c), piSoalTKB_(c)));
+}
+
+/* Calon jawaban keliru khas: [{ kode, nilai }] (belum disaring). */
+function calonKeliruTKB(c) {
+  var pi = piSoalTKB_(c);
+  var u = ukuranTKB_(c);
+  var r = u.r;
+  var t = u.t;
+  var s = u.s;
+  var tanpa = c.tanpa || [];
+  var out = [];
+  function tambah(kode, nilai) {
+    out.push({ kode: kode, nilai: nilai });
+  }
+  /* ukuran dengan diameter dipakai sebagai jari-jari */
+  var u2 = { r: 2 * r, t: t, s: typeof t === 'number' ? Math.sqrt(4 * r * r + t * t) : s };
+  if (c.minta !== 'sudutJuring' || u2.s) tambah('diameterJariJari', hitungTKB_(c, u2, pi));
+
+  switch (c.minta) {
+    case 'kelilingAlas':
+      tambah('kelilingLuas', pi * r * r);
+      break;
+    case 'luasAlas':
+      tambah('kelilingLuas', 2 * pi * r);
+      break;
+    case 'luasSelimut':
+      if (c.jenis === 'tabung') {
+        tambah('setengahKeliling', pi * r * t);
+      } else {
+        tambah('tinggiBukanPelukis', pi * r * t);
+        tambah('luasJuringPenuh', pi * s * s);
+      }
+      break;
+    case 'luasPermukaan':
+      if (c.jenis === 'bola') {
+        tambah('setengahBola', 2 * pi * r * r);
+        tambah('satuLingkaranBola', pi * r * r);
+        tambah('tertukarRumusBola', (4 / 3) * pi * r * r * r);
+      } else if (c.jenis === 'tabung') {
+        if (tanpa.indexOf('tutup') === -1) tambah('satuLingkaran', pi * r * r + 2 * pi * r * t);
+        else tambah('duaLingkaran', 2 * pi * r * r + 2 * pi * r * t);
+        tambah('hanyaSelimut', 2 * pi * r * t);
+      } else {
+        var alas = tanpa.indexOf('alas') === -1 ? pi * r * r : 0;
+        tambah('tinggiBukanPelukis', alas + pi * r * t);
+        if (alas) tambah('hanyaSelimut', pi * r * s);
+        else tambah('tambahAlas', pi * r * r + pi * r * s);
+      }
+      break;
+    case 'volume':
+      if (c.jenis === 'bola') {
+        tambah('tertukarRumusBola', 4 * pi * r * r);
+        tambah('lupaPangkat', (4 / 3) * pi * r * r);
+      } else if (c.jenis === 'kerucut') {
+        tambah('lupaSepertiga', pi * r * r * t);
+        tambah('tinggiBukanPelukis', (pi * r * r * s) / 3);
+      } else {
+        tambah('kelilingBukanLuas', 2 * pi * r * t);
+      }
+      break;
+    case 'garisPelukis':
+      tambah('jumlahSisi', r + t);
+      if (t > r) tambah('kurangKuadrat', Math.sqrt(t * t - r * r));
+      break;
+    case 'sudutJuring':
+      if (t > r) tambah('tinggiBukanPelukis', (360 * r) / t);
+      tambah('pelengkap', 360 - (360 * r) / s);
+      break;
+  }
+  if (TKB_SATUAN_DIMENSI[c.minta] > 0 && c.minta !== 'garisPelukis') {
+    var piLain = c.pi === '22/7' ? 3.14 : 22 / 7;
+    tambah('piLain', hitungTKB_(c, u, piLain));
+  }
+  return out;
+}
+
+/* Toleransi pembulatan dua angka di belakang koma. */
+function samaTKB_(a, b) {
+  return Math.abs(a - b) <= 0.011;
+}
+
+function diagnosaTKB(c, v) {
+  var kunci = nilaiSoalTKB(c);
+  if (samaTKB_(v, kunci)) return 'benar';
+  var calon = calonKeliruTKB(c);
+  for (var i = 0; i < calon.length; i++) {
+    if (!samaTKB_(calon[i].nilai, kunci) && samaTKB_(v, rapiTKB(calon[i].nilai))) {
+      return calon[i].kode;
+    }
+  }
+  return 'lain';
+}
+
+function periksaSoalTKB(isian, s) {
+  var p = parseAngkaRasio(isian);
+  if (p.kode !== 'ok') return { benar: false, kode: p.kode, pesan: TKB_PESAN[p.kode] };
+  var kode = diagnosaTKB(s.cek, p.nilai);
+  return { benar: kode === 'benar', kode: kode, pesan: TKB_PESAN[kode] };
+}
+
+/*
+ * Langkah isian berdiagnosa untuk buildLangkahRasio/bindLangkahRasio
+ * (seksi 68): step { id, label, cek, hints, temuan, satuan } →
+ * pemeriksa periksaSoalTKB, isian satu bilangan, satuan dari cek.
+ */
+function siapkanLangkahTKB(step) {
+  return Object.assign({}, step, {
+    periksa: periksaSoalTKB,
+    angka: true,
+    satuan: satuanSoalTKB(step.cek.minta, step.satuan),
+  });
+}
+
+function jawabSoalTKB(s) {
+  return fmtAngkaRasio(nilaiSoalTKB(s.cek));
+}
+
+/*
+ * Empat opsi pilihan ganda: satu baku (id 'baku') + tiga pengecoh dari
+ * calon jawaban keliru (berumpan balik diagnosa). Bila calon kurang,
+ * ditambah pengecoh kelipatan (kode 'lain'). Urutan opsi diacak oleh
+ * pemanggil (optionOrder di State).
+ */
+function opsiSoalTKB(s) {
+  var c = s.cek;
+  var kunci = nilaiSoalTKB(c);
+  var sat = satuanSoalTKB(c.minta, s.satuan);
+  var sudut = c.minta === 'sudutJuring';
+  function label(v) {
+    return fmtAngkaRasio(v) + (sudut ? sat : ' ' + sat);
+  }
+  var out = [{ id: 'baku', label: label(kunci), kode: 'benar', umpan: TKB_PESAN.benar }];
+  var dipakai = [kunci];
+  function boleh(v) {
+    if (!(v > 0) || !isFinite(v) || (sudut && v >= 360)) return false;
+    return dipakai.every(function (d) {
+      return Math.abs(d - v) > 0.05;
+    });
+  }
+  function tambah(kode, v) {
+    if (out.length >= 4) return;
+    var nilai = rapiTKB(v);
+    if (!boleh(nilai)) return;
+    dipakai.push(nilai);
+    out.push({ id: 'k' + out.length, label: label(nilai), kode: kode, umpan: TKB_PESAN[kode] });
+  }
+  calonKeliruTKB(c).forEach(function (k) {
+    if (k.kode !== 'piLain') tambah(k.kode, k.nilai);
+  });
+  [0.5, 2, 1.5, 0.75, 3].forEach(function (f) {
+    tambah('lain', kunci * f);
+  });
+  return out;
+}
+
+/* ---------- Gambar model (dapat dimiringkan & diketuk) ---------- */
+
+function f1TKB_(x) {
+  return String(Math.round(x * 10) / 10);
+}
+
+function bagianSVG_(jenis, id, isi, opts, tipe) {
+  var sorot = (opts.sorot || []).indexOf(id) !== -1;
+  var cls = 'tkb-part tkb-part--' + tipe + (sorot ? ' is-sorot' : '');
+  if (!opts.ketuk) return '<g class="' + cls + '">' + isi + '</g>';
+  return (
+    '<g class="' +
+    cls +
+    ' is-ketuk" data-tkb-part="' +
+    id +
+    '" role="button" tabindex="0" aria-label="' +
+    esc(labelBagianTKB(jenis, id)) +
+    '">' +
+    isi +
+    '</g>'
+  );
+}
+
+function garisTKB_(x1, y1, x2, y2, kelas) {
+  var a =
+    'x1="' +
+    f1TKB_(x1) +
+    '" y1="' +
+    f1TKB_(y1) +
+    '" x2="' +
+    f1TKB_(x2) +
+    '" y2="' +
+    f1TKB_(y2) +
+    '"';
+  return (
+    '<line class="tkb-hit" ' + a + '/>' + '<line class="tkb-line ' + (kelas || '') + '" ' + a + '/>'
+  );
+}
+
+function teksTKB_(x, y, t) {
+  return (
+    '<text class="tkb-label" x="' + f1TKB_(x) + '" y="' + f1TKB_(y) + '">' + esc(t) + '</text>'
+  );
+}
+
+/* Busur elips separuh (depan: bawah, belakang: atas). */
+function busurElipsTKB_(cx, cy, rx, ry, depan) {
+  return (
+    'M' +
+    f1TKB_(cx - rx) +
+    ' ' +
+    f1TKB_(cy) +
+    ' A' +
+    f1TKB_(rx) +
+    ' ' +
+    f1TKB_(ry) +
+    ' 0 0 ' +
+    (depan ? 0 : 1) +
+    ' ' +
+    f1TKB_(cx + rx) +
+    ' ' +
+    f1TKB_(cy)
+  );
+}
+
+/*
+ * Model tabung/kerucut/bola.
+ *   opts.elevasi  sudut pandang 5–60° (default 22): makin besar, alas
+ *                 makin tampak sebagai elips yang membuka
+ *   opts.ketuk    true → setiap bagian (bagianTKB) dapat diketuk
+ *   opts.sorot    id bagian yang disorot
+ *   opts.label    true (default) → huruf r, d, t, s, T pada gambar
+ *   opts.rasio    t ÷ r untuk bentuk gambar (default 2 tabung, 2,4 kerucut)
+ *   opts.aria     label aksesibel
+ */
+function buildBendaTKBSVG(jenis, opts) {
+  opts = opts || {};
+  jenisTKB_(jenis);
+  var elev = Math.max(5, Math.min(60, typeof opts.elevasi === 'number' ? opts.elevasi : 22));
+  var sinE = Math.sin((elev * Math.PI) / 180);
+  var lbl = opts.label !== false;
+  var W = 220;
+  var cx = W / 2;
+  var body = '';
+  var H;
+  if (jenis === 'bola') {
+    var R = 82;
+    var cy = 104;
+    H = 210;
+    var ry = R * sinE;
+    body =
+      bagianSVG_(
+        jenis,
+        'permukaan',
+        '<circle class="tkb-face tkb-face--lengkung" cx="' +
+          cx +
+          '" cy="' +
+          cy +
+          '" r="' +
+          R +
+          '"/>',
+        opts,
+        'face'
+      ) +
+      '<path class="tkb-bantu tkb-bantu--belakang" d="' +
+      busurElipsTKB_(cx, cy, R, ry, false) +
+      '"/>' +
+      '<path class="tkb-bantu" d="' +
+      busurElipsTKB_(cx, cy, R, ry, true) +
+      '"/>' +
+      bagianSVG_(
+        jenis,
+        'diameter',
+        garisTKB_(cx - R, cy, cx + R, cy, 'tkb-line--d') +
+          (lbl ? teksTKB_(cx - R / 2, cy + 18, 'd') : ''),
+        opts,
+        'line'
+      ) +
+      bagianSVG_(
+        jenis,
+        'jariJari',
+        garisTKB_(cx, cy, cx + R * 0.7, cy - R * 0.71, 'tkb-line--r') +
+          (lbl ? teksTKB_(cx + R * 0.42, cy - R * 0.32, 'r') : ''),
+        opts,
+        'line'
+      ) +
+      bagianSVG_(
+        jenis,
+        'pusat',
+        '<circle class="tkb-hit-dot" cx="' +
+          cx +
+          '" cy="' +
+          cy +
+          '" r="14"/><circle class="tkb-dot" cx="' +
+          cx +
+          '" cy="' +
+          cy +
+          '" r="5"/>',
+        opts,
+        'dot'
+      );
+  } else {
+    var rasio = opts.rasio || (jenis === 'tabung' ? 2 : 2.4);
+    var Rb = 66;
+    var tinggi = Math.max(70, Math.min(170, (Rb * rasio) / 1.4));
+    var ryb = Rb * sinE;
+    var yTop = 24 + (jenis === 'tabung' ? ryb : 0);
+    var yBot = yTop + tinggi;
+    H = yBot + ryb + 20;
+    var alasEl =
+      '<ellipse class="tkb-face tkb-face--alas" cx="' +
+      cx +
+      '" cy="' +
+      f1TKB_(yBot) +
+      '" rx="' +
+      Rb +
+      '" ry="' +
+      f1TKB_(ryb) +
+      '"/>';
+    if (jenis === 'tabung') {
+      var selimut =
+        'M' +
+        (cx - Rb) +
+        ' ' +
+        f1TKB_(yTop) +
+        ' L' +
+        (cx - Rb) +
+        ' ' +
+        f1TKB_(yBot) +
+        ' A' +
+        Rb +
+        ' ' +
+        f1TKB_(ryb) +
+        ' 0 0 0 ' +
+        (cx + Rb) +
+        ' ' +
+        f1TKB_(yBot) +
+        ' L' +
+        (cx + Rb) +
+        ' ' +
+        f1TKB_(yTop) +
+        ' A' +
+        Rb +
+        ' ' +
+        f1TKB_(ryb) +
+        ' 0 0 1 ' +
+        (cx - Rb) +
+        ' ' +
+        f1TKB_(yTop) +
+        ' Z';
+      body =
+        bagianSVG_(jenis, 'alas', alasEl, opts, 'face') +
+        bagianSVG_(
+          jenis,
+          'selimut',
+          '<path class="tkb-face tkb-face--lengkung" d="' + selimut + '"/>',
+          opts,
+          'face'
+        ) +
+        '<path class="tkb-bantu tkb-bantu--belakang" d="' +
+        busurElipsTKB_(cx, yBot, Rb, ryb, false) +
+        '"/>' +
+        bagianSVG_(
+          jenis,
+          'tutup',
+          '<ellipse class="tkb-face tkb-face--tutup" cx="' +
+            cx +
+            '" cy="' +
+            f1TKB_(yTop) +
+            '" rx="' +
+            Rb +
+            '" ry="' +
+            f1TKB_(ryb) +
+            '"/>',
+          opts,
+          'face'
+        ) +
+        bagianSVG_(
+          jenis,
+          'tinggi',
+          garisTKB_(cx, yTop, cx, yBot, 'tkb-line--t') +
+            (lbl ? teksTKB_(cx - 16, (yTop + yBot) / 2 + 5, 't') : ''),
+          opts,
+          'line'
+        ) +
+        bagianSVG_(
+          jenis,
+          'jariJari',
+          garisTKB_(cx, yTop, cx + Rb, yTop, 'tkb-line--r') +
+            (lbl ? teksTKB_(cx + Rb / 2 - 4, yTop - 6, 'r') : ''),
+          opts,
+          'line'
+        ) +
+        bagianSVG_(
+          jenis,
+          'diameter',
+          garisTKB_(cx - Rb, yBot, cx + Rb, yBot, 'tkb-line--d') +
+            (lbl ? teksTKB_(cx + Rb / 2, yBot + 18, 'd') : ''),
+          opts,
+          'line'
+        );
+    } else {
+      var ax = cx;
+      var ay = yTop;
+      var kerSel =
+        'M' +
+        ax +
+        ' ' +
+        ay +
+        ' L' +
+        (cx - Rb) +
+        ' ' +
+        f1TKB_(yBot) +
+        ' A' +
+        Rb +
+        ' ' +
+        f1TKB_(ryb) +
+        ' 0 0 0 ' +
+        (cx + Rb) +
+        ' ' +
+        f1TKB_(yBot) +
+        ' Z';
+      body =
+        bagianSVG_(jenis, 'alas', alasEl, opts, 'face') +
+        bagianSVG_(
+          jenis,
+          'selimut',
+          '<path class="tkb-face tkb-face--lengkung" d="' + kerSel + '"/>',
+          opts,
+          'face'
+        ) +
+        '<path class="tkb-bantu tkb-bantu--belakang" d="' +
+        busurElipsTKB_(cx, yBot, Rb, ryb, false) +
+        '"/>' +
+        bagianSVG_(
+          jenis,
+          'tinggi',
+          garisTKB_(ax, ay, cx, yBot, 'tkb-line--t') +
+            (lbl ? teksTKB_(cx + 6, (ay + yBot) / 2 + 18, 't') : ''),
+          opts,
+          'line'
+        ) +
+        bagianSVG_(
+          jenis,
+          'jariJari',
+          garisTKB_(cx, yBot, cx + Rb, yBot, 'tkb-line--r') +
+            (lbl ? teksTKB_(cx + Rb / 2 - 4, yBot - 6, 'r') : ''),
+          opts,
+          'line'
+        ) +
+        bagianSVG_(
+          jenis,
+          'garisPelukis',
+          garisTKB_(ax, ay, cx - Rb, yBot, 'tkb-line--s') +
+            (lbl ? teksTKB_((ax + cx - Rb) / 2 - 16, (ay + yBot) / 2, 's') : ''),
+          opts,
+          'line'
+        ) +
+        bagianSVG_(
+          jenis,
+          'puncak',
+          '<circle class="tkb-hit-dot" cx="' +
+            ax +
+            '" cy="' +
+            ay +
+            '" r="14"/><circle class="tkb-dot" cx="' +
+            ax +
+            '" cy="' +
+            ay +
+            '" r="5"/>' +
+            (lbl ? teksTKB_(ax + 10, ay + 4, 'T') : ''),
+          opts,
+          'dot'
+        );
+    }
+  }
+  return (
+    '<svg class="tkb-svg" viewBox="0 0 ' +
+    W +
+    ' ' +
+    f1TKB_(H) +
+    '" role="img" aria-label="' +
+    esc(opts.aria || 'Model ' + jenis) +
+    '">' +
+    body +
+    '</svg>'
+  );
+}
+
+/* ---------- Jaring-jaring (gambar statis) ---------- */
+
+function juringPathTKB_(ax, ay, R, sudut) {
+  var a = Math.min(sudut, 359.9);
+  var a0 = ((90 - a / 2) * Math.PI) / 180;
+  var a1 = ((90 + a / 2) * Math.PI) / 180;
+  return (
+    'M' +
+    f1TKB_(ax) +
+    ' ' +
+    f1TKB_(ay) +
+    ' L' +
+    f1TKB_(ax + R * Math.cos(a0)) +
+    ' ' +
+    f1TKB_(ay + R * Math.sin(a0)) +
+    ' A' +
+    f1TKB_(R) +
+    ' ' +
+    f1TKB_(R) +
+    ' 0 ' +
+    (a > 180 ? 1 : 0) +
+    ' 1 ' +
+    f1TKB_(ax + R * Math.cos(a1)) +
+    ' ' +
+    f1TKB_(ay + R * Math.sin(a1)) +
+    ' Z'
+  );
+}
+
+function lingkaranTKB_(x, y, r, kelas) {
+  return (
+    '<circle class="tkb-net-circle ' +
+    (kelas || '') +
+    '" cx="' +
+    f1TKB_(x) +
+    '" cy="' +
+    f1TKB_(y) +
+    '" r="' +
+    f1TKB_(r) +
+    '"/>'
+  );
+}
+
+/*
+ * Jaring-jaring rancangan (lihat cekJaringTKB untuk bentuk spec).
+ * spec.jenis 'bola' digambar sebagai empat lingkaran berderet (rancangan
+ * keliru yang sering diusulkan murid). opts.label true → keterangan
+ * panjang/busur; opts.aria label aksesibel.
+ */
+function buildJaringTKBSVG(spec, opts) {
+  opts = opts || {};
+  var W = 260;
+  var H;
+  var body = '';
+  var L = spec.lingkaran || [];
+  if (spec.jenis === 'bola') {
+    H = 90;
+    for (var i = 0; i < 4; i++) body += lingkaranTKB_(40 + i * 60, 45, 27);
+  } else if (spec.jenis === 'tabung') {
+    var rMaks = L.reduce(function (m, l) {
+      return Math.max(m, l.r);
+    }, spec.r || 1);
+    var u = Math.min(210 / spec.panjang, 150 / (spec.t + 4 * rMaks));
+    var w = spec.panjang * u;
+    var h = spec.t * u;
+    var atas = L.filter(function (l) {
+      return l.sisi === 'atas';
+    });
+    var bawah = L.filter(function (l) {
+      return l.sisi !== 'atas';
+    });
+    var tAtas = atas.length ? 2 * rMaks * u : 0;
+    var x0 = (W - w) / 2;
+    var y0 = 10 + tAtas;
+    H = y0 + h + (bawah.length ? 2 * rMaks * u : 0) + 10;
+    body =
+      '<rect class="tkb-net-rect" x="' +
+      f1TKB_(x0) +
+      '" y="' +
+      f1TKB_(y0) +
+      '" width="' +
+      f1TKB_(w) +
+      '" height="' +
+      f1TKB_(h) +
+      '"/>';
+    [
+      [atas, -1],
+      [bawah, 1],
+    ].forEach(function (grp) {
+      grp[0].forEach(function (l, k) {
+        var x = x0 + (w * (k + 1)) / (grp[0].length + 1);
+        var y = grp[1] < 0 ? y0 - l.r * u : y0 + h + l.r * u;
+        body += lingkaranTKB_(x, y, l.r * u);
+      });
+    });
+    if (opts.label) {
+      body +=
+        teksTKB_(x0 + w / 2 - 14, y0 + h / 2 + 5, '2πr') +
+        teksTKB_(x0 + w + 4, y0 + h / 2 + 5, 't');
+    }
+  } else {
+    var lr = L.reduce(function (m, l) {
+      return Math.max(m, l.r);
+    }, 0);
+    var a = Math.min(spec.sudut, 359.9);
+    var bawahJuring = a >= 180 ? 1 : Math.cos(((a / 2) * Math.PI) / 180);
+    var atasJuring = a > 180 ? -Math.cos(((a / 2) * Math.PI) / 180) : 0;
+    var uk = Math.min(110 / spec.s, 200 / (spec.s * (atasJuring + 1) + 2 * lr));
+    var S = spec.s * uk;
+    var ax = W / 2;
+    var ay = 10 + S * atasJuring;
+    var yLing = ay + S * Math.max(bawahJuring, 1);
+    H = yLing + 2 * lr * uk + 10;
+    body = '<path class="tkb-net-rect" d="' + juringPathTKB_(ax, ay, S, spec.sudut) + '"/>';
+    L.forEach(function (l, k) {
+      var x = ax + (k - (L.length - 1) / 2) * (2 * l.r * uk + 8);
+      body += lingkaranTKB_(x, yLing + l.r * uk, l.r * uk);
+    });
+    if (opts.label) body += teksTKB_(ax + 6, ay + S / 2, 's');
+  }
+  return (
+    '<svg class="tkb-net-svg" viewBox="0 0 ' +
+    W +
+    ' ' +
+    f1TKB_(H) +
+    '" role="img" aria-label="' +
+    esc(opts.aria || 'Rancangan jaring-jaring') +
+    '">' +
+    body +
+    '</svg>'
+  );
+}
+
+/* ---------- Lab Unsur ---------- */
+
+function ensureLabUnsurTKB(state, key) {
+  var st = state[key] && typeof state[key] === 'object' ? state[key] : {};
+  if (TKB_JENIS.indexOf(st.jenis) === -1) st.jenis = 'tabung';
+  if (typeof st.elevasi !== 'number' || st.elevasi < 5 || st.elevasi > 60) st.elevasi = 22;
+  var lama = st.ditemukan && typeof st.ditemukan === 'object' ? st.ditemukan : {};
+  st.ditemukan = {};
+  TKB_JENIS.forEach(function (j) {
+    var ids = bagianTKB(j).map(function (b) {
+      return b.id;
+    });
+    st.ditemukan[j] = (Array.isArray(lama[j]) ? lama[j] : []).filter(function (id, i, arr) {
+      return ids.indexOf(id) !== -1 && arr.indexOf(id) === i;
+    });
+  });
+  if (!labelBagianTKB(st.jenis, st.aktif)) st.aktif = null;
+  state[key] = st;
+  return st;
+}
+
+/* Mengetuk bagian: true bila bagian baru ditemukan. */
+function ketukBagianTKB(st, jenis, id) {
+  if (!labelBagianTKB(jenis, id)) return false;
+  st.aktif = id;
+  if (st.ditemukan[jenis].indexOf(id) !== -1) return false;
+  st.ditemukan[jenis].push(id);
+  return true;
+}
+
+function labUnsurTKBLengkap(st) {
+  return TKB_JENIS.every(function (j) {
+    return st.ditemukan[j].length === bagianTKB(j).length;
+  });
+}
+
+function stageLabUnsurTKB_(st) {
+  return buildBendaTKBSVG(st.jenis, {
+    elevasi: st.elevasi,
+    ketuk: true,
+    sorot: st.aktif ? [st.aktif] : [],
+    aria: 'Model ' + st.jenis + ' yang dapat diketuk',
+  });
+}
+
+function infoLabUnsurTKB_(st) {
+  if (!st.aktif) {
+    return 'Ketuk sisi, garis, atau titik pada model untuk mengenal namanya.';
+  }
+  var b = bagianTKB(st.jenis).filter(function (x) {
+    return x.id === st.aktif;
+  })[0];
+  return '<strong>' + esc(b.label) + '.</strong> ' + esc(b.info);
+}
+
+function daftarLabUnsurTKB_(st) {
+  return bagianTKB(st.jenis)
+    .map(function (b) {
+      var ada = st.ditemukan[st.jenis].indexOf(b.id) !== -1;
+      return (
+        '<li class="tkb-cek' +
+        (ada ? ' is-ada' : '') +
+        '">' +
+        (ada ? '✓ ' + esc(b.label) : '❓ Belum ditemukan') +
+        '</li>'
+      );
+    })
+    .join('');
+}
+
+function buildLabUnsurTKB(id, st) {
+  return (
+    '<div class="tkb-lab" id="' +
+    id +
+    '">' +
+    '<div class="tkb-tabs" role="group" aria-label="Pilih bangun">' +
+    TKB_JENIS.map(function (j) {
+      return (
+        '<button type="button" class="tkb-tab" data-tkb-jenis="' +
+        j +
+        '" aria-pressed="' +
+        (st.jenis === j ? 'true' : 'false') +
+        '">' +
+        TKB_NAMA[j] +
+        ' <span class="tkb-tab__hitung">' +
+        st.ditemukan[j].length +
+        '/' +
+        bagianTKB(j).length +
+        '</span></button>'
+      );
+    }).join('') +
+    '</div>' +
+    '<div class="tkb-stage" id="' +
+    id +
+    '-stage">' +
+    stageLabUnsurTKB_(st) +
+    '</div>' +
+    '<div class="tkb-slider">' +
+    '<label for="' +
+    id +
+    '-elevasi">↕️ Miringkan model</label>' +
+    '<input type="range" id="' +
+    id +
+    '-elevasi" min="5" max="60" step="1" value="' +
+    st.elevasi +
+    '">' +
+    '</div>' +
+    '<p class="tkb-info" id="' +
+    id +
+    '-info" aria-live="polite">' +
+    infoLabUnsurTKB_(st) +
+    '</p>' +
+    '<ul class="tkb-cek-list" aria-label="Bagian yang sudah ditemukan">' +
+    daftarLabUnsurTKB_(st) +
+    '</ul>' +
+    '</div>'
+  );
+}
+
+/*
+ * onChange dipanggil bila ada bagian BARU ditemukan atau bangun diganti
+ * (pemanggil merender ulang); perubahan lain (miringkan, ketuk ulang)
+ * diperbarui di tempat lalu onSave dipanggil.
+ */
+function bindLabUnsurTKB(root, id, st, onChange, onSave) {
+  var save = onSave || function () {};
+  function pasangBagian() {
+    var stage = document.getElementById(id + '-stage');
+    if (!stage) return;
+    stage.querySelectorAll('[data-tkb-part]').forEach(function (g) {
+      function ketuk() {
+        var baru = ketukBagianTKB(st, st.jenis, g.getAttribute('data-tkb-part'));
+        if (baru) {
+          onChange();
+          return;
+        }
+        save();
+        segarkan();
+      }
+      g.addEventListener('click', ketuk);
+      g.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          ketuk();
+        }
+      });
+    });
+  }
+  function segarkan() {
+    var stage = document.getElementById(id + '-stage');
+    var info = document.getElementById(id + '-info');
+    if (stage) stage.innerHTML = stageLabUnsurTKB_(st);
+    if (info) info.innerHTML = infoLabUnsurTKB_(st);
+    pasangBagian();
+  }
+  root.querySelectorAll('#' + id + ' [data-tkb-jenis]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      st.jenis = btn.getAttribute('data-tkb-jenis');
+      st.aktif = null;
+      onChange();
+    });
+  });
+  var slider = document.getElementById(id + '-elevasi');
+  if (slider) {
+    slider.addEventListener('input', function () {
+      st.elevasi = Number(slider.value);
+      save();
+      segarkan();
+    });
+  }
+  pasangBagian();
+}
+
+/* ---------- Lab Bentang (membuka selimut) ---------- */
+
+function lerpTKB_(a, b, f) {
+  return a + (b - a) * f;
+}
+
+function ensureLabBentangTKB(state, key) {
+  var st = state[key] && typeof state[key] === 'object' ? state[key] : {};
+  if (st.jenis !== 'tabung' && st.jenis !== 'kerucut') st.jenis = 'tabung';
+  var buka = st.buka && typeof st.buka === 'object' ? st.buka : {};
+  var dibuka = st.dibuka && typeof st.dibuka === 'object' ? st.dibuka : {};
+  st.buka = {};
+  st.dibuka = {};
+  ['tabung', 'kerucut'].forEach(function (j) {
+    var p = Number(buka[j]);
+    st.buka[j] = p >= 0 && p <= 100 ? p : 0;
+    st.dibuka[j] = dibuka[j] === true;
+  });
+  state[key] = st;
+  return st;
+}
+
+function aturBukaTKB(st, jenis, p) {
+  var v = Math.max(0, Math.min(100, Math.round(Number(p) || 0)));
+  st.buka[jenis] = v;
+  if (v >= 100) st.dibuka[jenis] = true;
+  return v;
+}
+
+function bentangTKBLengkap(st) {
+  return st.dibuka.tabung && st.dibuka.kerucut;
+}
+
+/*
+ * Selimut yang sedang dibuka, p = 0 (tertutup) … 100 (jaring-jaring).
+ * Tabung: lebar persegi panjang bertambah dari 2r (tampak depan) ke 2πr,
+ * lingkaran alas & tutup bergeser keluar. Kerucut: sudut juring membuka
+ * dari sudut tampak samping kerucut ke (r ÷ s) × 360°.
+ */
+function buildBentangTKBSVG(jenis, ukuran, p) {
+  var f = Math.max(0, Math.min(100, p)) / 100;
+  var r = ukuran.r;
+  var t = ukuran.t;
+  var W = 340;
+  var H;
+  var body = '';
+  if (jenis === 'tabung') {
+    var u = Math.min(300 / (2 * Math.PI * r), 130 / t, 40 / r);
+    var w = lerpTKB_(2 * r, 2 * Math.PI * r, f) * u;
+    var h = t * u;
+    var R = r * u;
+    var x0 = (W - w) / 2;
+    var y0 = 16 + 2 * R;
+    var ry = lerpTKB_(R * 0.32, R, f);
+    H = y0 + h + 2 * R + 34;
+    var garis = '';
+    if (f < 1) {
+      for (var i = 1; i < 6; i++) {
+        var gx = x0 + (w * i) / 6;
+        garis +=
+          '<line class="tkb-lengkung" x1="' +
+          f1TKB_(gx) +
+          '" y1="' +
+          f1TKB_(y0) +
+          '" x2="' +
+          f1TKB_(gx) +
+          '" y2="' +
+          f1TKB_(y0 + h) +
+          '" style="opacity:' +
+          f1TKB_((1 - f) * 0.8) +
+          '"/>';
+      }
+    }
+    body =
+      '<rect class="tkb-net-rect tkb-net-rect--selimut" x="' +
+      f1TKB_(x0) +
+      '" y="' +
+      f1TKB_(y0) +
+      '" width="' +
+      f1TKB_(w) +
+      '" height="' +
+      f1TKB_(h) +
+      '"/>' +
+      garis +
+      '<ellipse class="tkb-net-circle" cx="' +
+      f1TKB_(W / 2) +
+      '" cy="' +
+      f1TKB_(y0 - lerpTKB_(0, R, f)) +
+      '" rx="' +
+      f1TKB_(R) +
+      '" ry="' +
+      f1TKB_(ry) +
+      '"/>' +
+      '<ellipse class="tkb-net-circle" cx="' +
+      f1TKB_(W / 2) +
+      '" cy="' +
+      f1TKB_(y0 + h + lerpTKB_(0, R, f)) +
+      '" rx="' +
+      f1TKB_(R) +
+      '" ry="' +
+      f1TKB_(ry) +
+      '"/>';
+    if (f >= 1) {
+      body +=
+        teksTKB_(x0 + w / 2 - 70, y0 + h / 2 + 5, 'panjang = keliling alas') +
+        teksTKB_(x0 + w + 4, y0 + h / 2 + 5, 't') +
+        teksTKB_(W / 2 + 4, y0 - R - 4, 'r') +
+        teksTKB_(W / 2 + 4, y0 + h + R - 4, 'r');
+      body +=
+        '<line class="tkb-line tkb-line--r" x1="' +
+        f1TKB_(W / 2) +
+        '" y1="' +
+        f1TKB_(y0 - R) +
+        '" x2="' +
+        f1TKB_(W / 2 + R) +
+        '" y2="' +
+        f1TKB_(y0 - R) +
+        '"/>';
+    }
+  } else {
+    var s = Math.sqrt(r * r + t * t);
+    var uk = Math.min(110 / s, 44 / r);
+    var S = s * uk;
+    var Rk = r * uk;
+    var a0 = (2 * Math.asin(r / s) * 180) / Math.PI;
+    var a1 = (360 * r) / s;
+    var a = lerpTKB_(a0, a1, f);
+    var atas = a > 180 ? -Math.cos(((a / 2) * Math.PI) / 180) * S : 0;
+    var ax = W / 2;
+    var ay = 14 + Math.max(atas, 0);
+    var cyAlas = lerpTKB_(ay + t * uk, ay + S + Rk, f);
+    H = ay + S + 2 * Rk + 44;
+    body =
+      '<path class="tkb-net-rect tkb-net-rect--selimut" d="' +
+      juringPathTKB_(ax, ay, S, a) +
+      '"/>' +
+      '<ellipse class="tkb-net-circle" cx="' +
+      f1TKB_(ax) +
+      '" cy="' +
+      f1TKB_(cyAlas) +
+      '" rx="' +
+      f1TKB_(Rk) +
+      '" ry="' +
+      f1TKB_(lerpTKB_(Rk * 0.32, Rk, f)) +
+      '"/>';
+    if (f >= 1) {
+      body +=
+        teksTKB_(ax + 6, ay + S / 2, 's') +
+        teksTKB_(ax - 78, ay + S + 2 * Rk + 26, 'busur = keliling alas') +
+        teksTKB_(ax + Rk + 4, cyAlas + 5, 'r');
+    }
+  }
+  return (
+    '<svg class="tkb-net-svg tkb-net-svg--bentang" viewBox="0 0 ' +
+    W +
+    ' ' +
+    f1TKB_(H) +
+    '" role="img" aria-label="Selimut ' +
+    jenis +
+    ' dibuka ' +
+    Math.round(f * 100) +
+    '%">' +
+    body +
+    '</svg>'
+  );
+}
+
+function infoBentangTKB_(st) {
+  var j = st.jenis;
+  if (st.buka[j] < 100) return 'Geser penggeser sampai 100% untuk membuka selimut ' + j + '.';
+  return j === 'tabung'
+    ? 'Selimut tabung terbuka menjadi <strong>persegi panjang</strong>. Panjangnya pernah melilit tepi alas, jadi panjang = keliling alas; lebarnya = tinggi tabung.'
+    : 'Selimut kerucut terbuka menjadi <strong>juring lingkaran</strong> berjari-jari garis pelukis s. Busurnya pernah melilit tepi alas, jadi panjang busur = keliling alas.';
+}
+
+/* cfg = { tabung: { r, t }, kerucut: { r, t } } (ukuran gambar). */
+function buildLabBentangTKB(id, st, cfg) {
+  var j = st.jenis;
+  return (
+    '<div class="tkb-lab" id="' +
+    id +
+    '">' +
+    '<div class="tkb-tabs" role="group" aria-label="Pilih benda">' +
+    ['tabung', 'kerucut']
+      .map(function (k) {
+        return (
+          '<button type="button" class="tkb-tab" data-tkb-bentang="' +
+          k +
+          '" aria-pressed="' +
+          (j === k ? 'true' : 'false') +
+          '">' +
+          (st.dibuka[k] ? '✓ ' : '') +
+          TKB_NAMA[k] +
+          '</button>'
+        );
+      })
+      .join('') +
+    '</div>' +
+    '<div class="tkb-stage tkb-stage--bentang" id="' +
+    id +
+    '-stage">' +
+    buildBentangTKBSVG(j, cfg[j], st.buka[j]) +
+    '</div>' +
+    '<div class="tkb-slider">' +
+    '<label for="' +
+    id +
+    '-buka">✂️ Buka selimut: <output id="' +
+    id +
+    '-val">' +
+    st.buka[j] +
+    '%</output></label>' +
+    '<input type="range" id="' +
+    id +
+    '-buka" min="0" max="100" step="5" value="' +
+    st.buka[j] +
+    '">' +
+    '</div>' +
+    '<p class="tkb-info" id="' +
+    id +
+    '-info" aria-live="polite">' +
+    infoBentangTKB_(st) +
+    '</p>' +
+    '</div>'
+  );
+}
+
+/* onChange: dipanggil saat ganti benda atau saat selimut PERTAMA kali terbuka penuh. */
+function bindLabBentangTKB(root, id, st, cfg, onChange, onSave) {
+  var save = onSave || function () {};
+  root.querySelectorAll('#' + id + ' [data-tkb-bentang]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      st.jenis = btn.getAttribute('data-tkb-bentang');
+      onChange();
+    });
+  });
+  var slider = document.getElementById(id + '-buka');
+  if (!slider) return;
+  slider.addEventListener('input', function () {
+    var j = st.jenis;
+    var sudah = st.dibuka[j];
+    var v = aturBukaTKB(st, j, slider.value);
+    if (!sudah && st.dibuka[j]) {
+      onChange();
+      return;
+    }
+    save();
+    var stage = document.getElementById(id + '-stage');
+    var out = document.getElementById(id + '-val');
+    var info = document.getElementById(id + '-info');
+    if (stage) stage.innerHTML = buildBentangTKBSVG(j, cfg[j], v);
+    if (out) out.textContent = v + '%';
+    if (info) info.innerHTML = infoBentangTKB_(st);
+  });
+}
+
+/* ---------- Lab Kulit Jeruk (luas permukaan bola) ---------- */
+
+/* cfg = { kepingan, perLingkaran, slot } */
+function ensureLabKulitJeruk(state, key, cfg) {
+  var st = state[key] && typeof state[key] === 'object' ? state[key] : {};
+  var isi = Array.isArray(st.isi) ? st.isi : [];
+  st.isi = [];
+  for (var i = 0; i < cfg.slot; i++) {
+    var v = Math.round(Number(isi[i]) || 0);
+    st.isi.push(Math.max(0, Math.min(cfg.perLingkaran, v)));
+  }
+  var terpakai = st.isi.reduce(function (a, b) {
+    return a + b;
+  }, 0);
+  if (terpakai > cfg.kepingan) {
+    st.isi = st.isi.map(function () {
+      return 0;
+    });
+    terpakai = 0;
+  }
+  st.sisa = cfg.kepingan - terpakai;
+  state[key] = st;
+  return st;
+}
+
+function tempelKulitJeruk(st, cfg, i) {
+  if (st.sisa <= 0 || i < 0 || i >= st.isi.length) return false;
+  if (st.isi[i] >= cfg.perLingkaran) return false;
+  st.isi[i] += 1;
+  st.sisa -= 1;
+  return true;
+}
+
+function kulitJerukSelesai(st) {
+  return st.sisa === 0;
+}
+
+function lingkaranPenuhJeruk(st, cfg) {
+  return st.isi.filter(function (v) {
+    return v >= cfg.perLingkaran;
+  }).length;
+}
+
+function slotJerukSVG_(isi, per) {
+  var R = 34;
+  var c = 40;
+  var keping = '';
+  for (var k = 0; k < isi; k++) {
+    var a0 = (k / per) * 2 * Math.PI - Math.PI / 2;
+    var a1 = ((k + 1) / per) * 2 * Math.PI - Math.PI / 2;
+    keping +=
+      '<path class="tkb-kulit" d="M' +
+      c +
+      ' ' +
+      c +
+      ' L' +
+      f1TKB_(c + R * Math.cos(a0)) +
+      ' ' +
+      f1TKB_(c + R * Math.sin(a0)) +
+      ' A' +
+      R +
+      ' ' +
+      R +
+      ' 0 ' +
+      (a1 - a0 > Math.PI ? 1 : 0) +
+      ' 1 ' +
+      f1TKB_(c + R * Math.cos(a1)) +
+      ' ' +
+      f1TKB_(c + R * Math.sin(a1)) +
+      ' Z"/>';
+  }
+  return (
+    '<svg class="tkb-slot-svg" viewBox="0 0 80 80" aria-hidden="true">' +
+    '<circle class="tkb-slot-circle" cx="' +
+    c +
+    '" cy="' +
+    c +
+    '" r="' +
+    R +
+    '"/>' +
+    keping +
+    '</svg>'
+  );
+}
+
+function jerukSVG_(st, cfg) {
+  var f = st.sisa / cfg.kepingan;
+  return (
+    '<svg class="tkb-jeruk-svg" viewBox="0 0 120 120" role="img" aria-label="Jeruk, sisa kulit ' +
+    st.sisa +
+    ' kepingan">' +
+    '<circle class="tkb-jeruk-isi" cx="60" cy="60" r="44"/>' +
+    '<circle class="tkb-jeruk-kulit" cx="60" cy="60" r="44" style="opacity:' +
+    f1TKB_(f) +
+    '"/>' +
+    '<path class="tkb-bantu" d="M16 60 A44 13 0 0 0 104 60"/>' +
+    '<line class="tkb-line tkb-line--r" x1="60" y1="60" x2="104" y2="60"/>' +
+    '<text class="tkb-label" x="76" y="54">r</text>' +
+    '</svg>'
+  );
+}
+
+function buildLabKulitJeruk(id, st, cfg) {
+  return (
+    '<div class="tkb-lab" id="' +
+    id +
+    '">' +
+    '<div class="tkb-jeruk">' +
+    jerukSVG_(st, cfg) +
+    '<p class="tkb-info"><strong>Sisa kulit: ' +
+    st.sisa +
+    ' kepingan</strong><br>Setiap lingkaran dijiplak dari lingkaran terbesar jeruk (jari-jari r).</p>' +
+    '</div>' +
+    '<div class="tkb-slots" role="group" aria-label="Lingkaran jiplakan">' +
+    st.isi
+      .map(function (v, i) {
+        return (
+          '<button type="button" class="tkb-slot' +
+          (v >= cfg.perLingkaran ? ' is-penuh' : '') +
+          '" data-kj-slot="' +
+          i +
+          '" aria-label="Lingkaran ' +
+          (i + 1) +
+          ': ' +
+          v +
+          ' dari ' +
+          cfg.perLingkaran +
+          ' bagian tertutup"' +
+          (st.sisa <= 0 ? ' disabled' : '') +
+          '>' +
+          slotJerukSVG_(v, cfg.perLingkaran) +
+          '<span>Lingkaran ' +
+          (i + 1) +
+          '</span></button>'
+        );
+      })
+      .join('') +
+    '</div>' +
+    '<div class="btn-group btn-group--center">' +
+    '<button type="button" class="btn btn--outline-primary btn--small" id="' +
+    id +
+    '-tempel"' +
+    (st.sisa <= 0 ? ' disabled' : '') +
+    '>🍊 Tempel satu kepingan berikutnya</button>' +
+    '</div>' +
+    '</div>'
+  );
+}
+
+function bindLabKulitJeruk(root, id, st, cfg, onChange) {
+  root.querySelectorAll('#' + id + ' [data-kj-slot]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      if (tempelKulitJeruk(st, cfg, Number(btn.getAttribute('data-kj-slot')))) onChange();
+    });
+  });
+  var tempel = document.getElementById(id + '-tempel');
+  if (tempel) {
+    tempel.addEventListener('click', function () {
+      for (var i = 0; i < st.isi.length; i++) {
+        if (tempelKulitJeruk(st, cfg, i)) {
+          onChange();
+          return;
+        }
+      }
+    });
+  }
+}
+
+/* ---------- Lab Tuang (volume kerucut & bola) ---------- */
+
+/*
+ * Wadah kerucut beralas & bertinggi sama dengan tabung (1 tuangan = ⅓
+ * tabung) dan bola berdiameter = tinggi tabung (1 tuangan = ⅔ tabung).
+ * isi dicatat dalam pertiga tabung; catat.kerucut = banyak tuangan saat
+ * tabung pertama kali penuh, catat.bola = isi setelah tuangan pertama.
+ */
+function ensureLabTuangTKB(state, key) {
+  var st = state[key] && typeof state[key] === 'object' ? state[key] : {};
+  if (st.wadah !== 'kerucut' && st.wadah !== 'bola') st.wadah = 'kerucut';
+  ['isi', 'tuang', 'tumpah', 'catat'].forEach(function (k) {
+    if (!st[k] || typeof st[k] !== 'object') st[k] = {};
+  });
+  ['kerucut', 'bola'].forEach(function (w) {
+    var isi = Math.round(Number(st.isi[w]) || 0);
+    st.isi[w] = Math.max(0, Math.min(3, isi));
+    st.tuang[w] = Math.max(0, Math.round(Number(st.tuang[w]) || 0));
+    st.tumpah[w] = st.tumpah[w] === true;
+    if (typeof st.catat[w] !== 'number') st.catat[w] = null;
+  });
+  state[key] = st;
+  return st;
+}
+
+function tuangTKB(st, wadah) {
+  var tambah = wadah === 'bola' ? 2 : 1;
+  st.tuang[wadah] += 1;
+  if (st.isi[wadah] + tambah > 3) {
+    st.isi[wadah] = 3;
+    st.tumpah[wadah] = true;
+  } else {
+    st.isi[wadah] += tambah;
+  }
+  if (wadah === 'kerucut' && st.catat.kerucut === null && st.isi.kerucut === 3) {
+    st.catat.kerucut = st.tuang.kerucut;
+  }
+  if (wadah === 'bola' && st.catat.bola === null) st.catat.bola = st.isi.bola;
+}
+
+function kosongkanTKB(st, wadah) {
+  st.isi[wadah] = 0;
+  st.tuang[wadah] = 0;
+  st.tumpah[wadah] = false;
+}
+
+function labTuangLengkap(st) {
+  return st.catat.kerucut !== null && st.catat.bola !== null;
+}
+
+function tuangSVG_(st) {
+  var w = st.wadah;
+  var R = 44;
+  var Ht = 132;
+  var x1 = 220;
+  var yTop = 34;
+  var yBot = yTop + Ht;
+  var ry = 10;
+  var level = (st.isi[w] / 3) * Ht;
+  var wadahSVG;
+  if (w === 'kerucut') {
+    wadahSVG =
+      '<path class="tkb-air" d="M' +
+      (90 - R) +
+      ' ' +
+      yTop +
+      ' L90 ' +
+      yBot +
+      ' L' +
+      (90 + R) +
+      ' ' +
+      yTop +
+      ' Z"/>' +
+      '<ellipse class="tkb-air-top" cx="90" cy="' +
+      yTop +
+      '" rx="' +
+      R +
+      '" ry="' +
+      ry +
+      '"/>' +
+      '<path class="tkb-wadah" d="M' +
+      (90 - R) +
+      ' ' +
+      yTop +
+      ' L90 ' +
+      yBot +
+      ' L' +
+      (90 + R) +
+      ' ' +
+      yTop +
+      '"/>' +
+      '<text class="tkb-label" x="52" y="' +
+      (yBot + 22) +
+      '">kerucut</text>';
+  } else {
+    wadahSVG =
+      '<circle class="tkb-air" cx="90" cy="' +
+      (yTop + Ht / 2) +
+      '" r="' +
+      Ht / 2 +
+      '"/>' +
+      '<path class="tkb-bantu" d="M' +
+      (90 - Ht / 2) +
+      ' ' +
+      (yTop + Ht / 2) +
+      ' A' +
+      Ht / 2 +
+      ' 12 0 0 0 ' +
+      (90 + Ht / 2) +
+      ' ' +
+      (yTop + Ht / 2) +
+      '"/>' +
+      '<text class="tkb-label" x="70" y="' +
+      (yBot + 22) +
+      '">bola</text>';
+  }
+  return (
+    '<svg class="tkb-tuang-svg" viewBox="0 0 300 200" role="img" aria-label="Tabung terisi ' +
+    st.isi[w] +
+    ' dari 3 bagian">' +
+    wadahSVG +
+    (level > 0
+      ? '<rect class="tkb-air" x="' +
+        (x1 - R) +
+        '" y="' +
+        (yBot - level) +
+        '" width="' +
+        2 * R +
+        '" height="' +
+        level +
+        '"/>' +
+        '<ellipse class="tkb-air-top" cx="' +
+        x1 +
+        '" cy="' +
+        (yBot - level) +
+        '" rx="' +
+        R +
+        '" ry="' +
+        ry +
+        '"/>'
+      : '') +
+    '<path class="tkb-wadah" d="M' +
+    (x1 - R) +
+    ' ' +
+    yTop +
+    ' L' +
+    (x1 - R) +
+    ' ' +
+    yBot +
+    ' A' +
+    R +
+    ' ' +
+    ry +
+    ' 0 0 0 ' +
+    (x1 + R) +
+    ' ' +
+    yBot +
+    ' L' +
+    (x1 + R) +
+    ' ' +
+    yTop +
+    '"/>' +
+    '<ellipse class="tkb-wadah" cx="' +
+    x1 +
+    '" cy="' +
+    yTop +
+    '" rx="' +
+    R +
+    '" ry="' +
+    ry +
+    '"/>' +
+    '<text class="tkb-label" x="' +
+    (x1 - 26) +
+    '" y="' +
+    (yBot + 22) +
+    '">tabung</text>' +
+    (st.tumpah[w]
+      ? '<text class="tkb-label tkb-label--warn" x="' +
+        (x1 - 40) +
+        '" y="' +
+        (yTop - 14) +
+        '">💦 tumpah!</text>'
+      : '') +
+    '</svg>'
+  );
+}
+
+function statusTuangTKB_(st) {
+  var w = st.wadah;
+  var isi = st.isi[w];
+  var keadaan = isi === 0 ? 'masih kosong' : isi === 3 ? 'penuh' : 'belum penuh';
+  return (
+    'Banyak tuangan dari ' +
+    w +
+    ': <strong>' +
+    st.tuang[w] +
+    '</strong>. Tabung <strong>' +
+    keadaan +
+    '</strong>' +
+    (st.tumpah[w] ? ' — air tumpah karena tabung sudah penuh.' : '.')
+  );
+}
+
+function buildLabTuangTKB(id, st) {
+  return (
+    '<div class="tkb-lab" id="' +
+    id +
+    '">' +
+    '<div class="tkb-tabs" role="group" aria-label="Pilih wadah">' +
+    ['kerucut', 'bola']
+      .map(function (w) {
+        return (
+          '<button type="button" class="tkb-tab" data-tkb-wadah="' +
+          w +
+          '" aria-pressed="' +
+          (st.wadah === w ? 'true' : 'false') +
+          '">' +
+          (st.catat[w] !== null ? '✓ ' : '') +
+          'Wadah ' +
+          w +
+          '</button>'
+        );
+      })
+      .join('') +
+    '</div>' +
+    '<div class="tkb-stage">' +
+    tuangSVG_(st) +
+    '</div>' +
+    '<p class="tkb-info" aria-live="polite">' +
+    statusTuangTKB_(st) +
+    '</p>' +
+    '<div class="btn-group btn-group--center">' +
+    '<button type="button" class="btn btn--primary btn--small" id="' +
+    id +
+    '-tuang">🫗 Isi penuh wadah, lalu tuang</button>' +
+    '<button type="button" class="btn btn--ghost btn--small" id="' +
+    id +
+    '-kosong">Kosongkan tabung</button>' +
+    '</div>' +
+    '</div>'
+  );
+}
+
+function bindLabTuangTKB(root, id, st, onChange) {
+  root.querySelectorAll('#' + id + ' [data-tkb-wadah]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      st.wadah = btn.getAttribute('data-tkb-wadah');
+      onChange();
+    });
+  });
+  var tuang = document.getElementById(id + '-tuang');
+  if (tuang) {
+    tuang.addEventListener('click', function () {
+      tuangTKB(st, st.wadah);
+      onChange();
+    });
+  }
+  var kosong = document.getElementById(id + '-kosong');
+  if (kosong) {
+    kosong.addEventListener('click', function () {
+      kosongkanTKB(st, st.wadah);
+      onChange();
+    });
+  }
+}
+
+/* ---------- Tabel unsur (isian berdiagnosa) ---------- */
+
+function ensureTabelUnsurTKB(state, key, rows) {
+  var st = state[key] && typeof state[key] === 'object' ? state[key] : {};
+  var isi = st.isian && typeof st.isian === 'object' ? st.isian : {};
+  var has = st.hasil && typeof st.hasil === 'object' ? st.hasil : {};
+  st.isian = {};
+  st.hasil = {};
+  rows.forEach(function (j) {
+    st.isian[j] = {};
+    st.hasil[j] = {};
+    TKB_KOLOM.forEach(function (k) {
+      var v = isi[j] && typeof isi[j][k.id] === 'string' ? isi[j][k.id] : '';
+      st.isian[j][k.id] = v;
+      st.hasil[j][k.id] = has[j] && typeof has[j][k.id] === 'string' ? has[j][k.id] : null;
+    });
+  });
+  state[key] = st;
+  return st;
+}
+
+function periksaTabelUnsurTKB(st, rows) {
+  rows.forEach(function (j) {
+    TKB_KOLOM.forEach(function (k) {
+      var p = parseInputInt(st.isian[j][k.id]);
+      if (p.error) st.hasil[j][k.id] = p.error === 'empty' ? 'kosong' : 'format';
+      else st.hasil[j][k.id] = diagnosaUnsurTKB(j, k.id, p.value).kode;
+    });
+  });
+}
+
+function tabelUnsurTKBBenar(st, rows) {
+  return rows.every(function (j) {
+    return TKB_KOLOM.every(function (k) {
+      return st.hasil[j][k.id] === 'benar';
+    });
+  });
+}
+
+function buildTabelUnsurTKB(id, st, rows, opts) {
+  opts = opts || {};
+  var beres = tabelUnsurTKBBenar(st, rows);
+  var pesan = [];
+  var html =
+    '<div class="table-scroll"><table class="tkb-tabel">' +
+    (opts.caption ? '<caption>' + esc(opts.caption) + '</caption>' : '') +
+    '<thead><tr><th scope="col">Bangun</th>' +
+    TKB_KOLOM.map(function (k) {
+      return '<th scope="col">' + esc(k.label) + '</th>';
+    }).join('') +
+    '</tr></thead><tbody>' +
+    rows
+      .map(function (j) {
+        return (
+          '<tr><th scope="row">' +
+          TKB_NAMA[j] +
+          '</th>' +
+          TKB_KOLOM.map(function (k) {
+            var h = st.hasil[j][k.id];
+            var salah = h && h !== 'benar';
+            if (salah && h !== 'kosong') {
+              pesan.push(
+                '<li><strong>' +
+                  TKB_NAMA[j] +
+                  ' · ' +
+                  esc(k.label.toLowerCase()) +
+                  ':</strong> ' +
+                  esc(TKB_PESAN[h]) +
+                  '</li>'
+              );
+            }
+            return (
+              '<td><input type="text" inputmode="numeric" class="input-text tkb-tabel__input' +
+              (salah ? ' has-error' : h === 'benar' ? ' is-benar' : '') +
+              '" id="' +
+              id +
+              '-' +
+              j +
+              '-' +
+              k.id +
+              '" data-tkb-sel="' +
+              j +
+              '|' +
+              k.id +
+              '" value="' +
+              esc(st.isian[j][k.id]) +
+              '" aria-label="' +
+              esc(k.label + ' ' + j) +
+              '" autocomplete="off"' +
+              (beres ? ' disabled' : '') +
+              '></td>'
+            );
+          }).join('') +
+          '</tr>'
+        );
+      })
+      .join('') +
+    '</tbody></table></div>';
+  if (pesan.length) {
+    html += buildFeedbackBox('warning', '💭', '<ul class="tkb-pesan">' + pesan.join('') + '</ul>');
+  }
+  if (!beres) {
+    html +=
+      '<div class="btn-group btn-group--end"><button type="button" class="btn btn--primary" id="' +
+      id +
+      '-cek">Periksa tabel</button></div>';
+  }
+  return html;
+}
+
+function bindTabelUnsurTKB(root, id, st, rows, onSave, onChange) {
+  root.querySelectorAll('[data-tkb-sel]').forEach(function (inp) {
+    if (inp.id.indexOf(id + '-') !== 0) return;
+    inp.addEventListener('input', function () {
+      var p = inp.getAttribute('data-tkb-sel').split('|');
+      st.isian[p[0]][p[1]] = inp.value;
+      onSave();
+    });
+  });
+  var cek = document.getElementById(id + '-cek');
+  if (cek) {
+    cek.addEventListener('click', function () {
+      periksaTabelUnsurTKB(st, rows);
+      if (!tabelUnsurTKBBenar(st, rows)) showNotice('Masih ada isian yang belum tepat.');
       onChange();
     });
   }
