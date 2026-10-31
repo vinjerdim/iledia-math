@@ -18059,3 +18059,213 @@ button.akar-tile:disabled {
     max-height: 320px;
   }
 }
+
+/* -------------------------------------------------------------------------
+   Rerata data tunggal (engine seksi 87, fase-d/mpi-20.1).
+   Lab Ratakan Menara: menara balok bertombol; balok pindahan bercorak
+   garis (tidak bergantung warna saja), bayangan putus-putus = tinggi awal.
+   Lab Titik Seimbang: papan jungkat-jungkit berdiagram titik.
+   ------------------------------------------------------------------------- */
+
+.rrt-menara {
+  --rrt-balok: 22px;
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-2) 0;
+  overflow-x: auto;
+}
+
+.rrt-menara__kolom {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-1);
+  min-width: 56px;
+  padding: var(--space-2);
+  border: 2px solid transparent;
+  border-radius: var(--radius-md, 10px);
+  background: transparent;
+  color: var(--color-ink);
+  font: inherit;
+  cursor: pointer;
+}
+
+.rrt-menara__kolom:hover:not(:disabled) {
+  background: var(--color-primary-soft);
+}
+
+.rrt-menara__kolom:focus-visible {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+.rrt-menara__kolom.is-dipilih {
+  border-color: var(--color-orange);
+  background: var(--color-orange-soft);
+}
+
+.rrt-menara__kolom:disabled {
+  cursor: default;
+}
+
+.rrt-menara__tumpuk {
+  position: relative;
+  display: flex;
+  flex-direction: column-reverse;
+  justify-content: flex-start;
+  width: 40px;
+}
+
+.rrt-menara__bayang {
+  position: absolute;
+  left: -3px;
+  right: -3px;
+  bottom: 0;
+  border: 2px dashed var(--color-border-strong);
+  border-radius: 4px;
+  pointer-events: none;
+}
+
+.rrt-balok {
+  position: relative;
+  display: block;
+  height: calc(var(--rrt-balok) - 2px);
+  margin-top: 2px;
+  border-radius: 3px;
+  background: var(--color-blue);
+}
+
+.rrt-balok--pindahan {
+  background: repeating-linear-gradient(
+    45deg,
+    var(--color-orange),
+    var(--color-orange) 4px,
+    var(--color-orange-strong) 4px,
+    var(--color-orange-strong) 8px
+  );
+}
+
+.rrt-menara__kolom.is-dipilih .rrt-balok:last-child {
+  outline: 3px solid var(--color-orange-strong);
+  transform: translateY(-4px);
+}
+
+.rrt-menara__angka {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--color-primary-strong);
+}
+
+.rrt-menara__nama {
+  font-size: 0.85rem;
+  color: var(--color-ink-muted);
+}
+
+.rrt-menara__garis {
+  position: absolute;
+  left: -14px;
+  right: -14px;
+  z-index: 1;
+  border-top: 3px dashed var(--color-success);
+  pointer-events: none;
+}
+
+.rrt-menara__bar {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--space-2);
+  margin-top: var(--space-3);
+}
+
+.rrt-menara__status {
+  margin: 0;
+  font-size: 0.92rem;
+}
+
+.rrt-menara__hitung {
+  display: inline-block;
+  margin-left: var(--space-2);
+  color: var(--color-ink-muted);
+}
+
+.rrt-seimbang__svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-height: 260px;
+}
+
+.rrt-papan {
+  fill: var(--color-orange-soft);
+  stroke: var(--color-orange-strong);
+  stroke-width: 1.5;
+}
+
+.rrt-papan__tik,
+.rrt-lantai {
+  stroke: var(--color-ink-muted);
+  stroke-width: 1.5;
+}
+
+.rrt-papan__angka {
+  font-size: 18px;
+  fill: var(--color-ink);
+}
+
+.rrt-titik {
+  fill: var(--color-blue);
+  stroke: var(--color-surface);
+  stroke-width: 1.5;
+}
+
+.rrt-penyangga {
+  fill: var(--color-purple);
+}
+
+.rrt-seimbang.is-seimbang .rrt-penyangga {
+  fill: var(--color-success);
+}
+
+.rrt-seimbang__baca {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--space-2) var(--space-4);
+  margin: var(--space-2) 0 0;
+  font-size: 0.92rem;
+}
+
+.rrt-seimbang__ket {
+  flex-basis: 100%;
+  text-align: center;
+  font-weight: 600;
+}
+
+.rrt-seimbang.is-seimbang .rrt-seimbang__ket {
+  color: var(--color-success-strong);
+}
+
+.rrt-seimbang__tombol {
+  margin-top: var(--space-3);
+}
+
+@media (max-width: 480px) {
+  .rrt-menara {
+    --rrt-balok: 18px;
+    gap: var(--space-1);
+  }
+
+  .rrt-menara__kolom {
+    min-width: 46px;
+    padding: var(--space-1);
+  }
+
+  .rrt-menara__tumpuk {
+    width: 32px;
+  }
+}

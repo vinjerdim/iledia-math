@@ -60288,3 +60288,646 @@ function bindTabelLuas(root, id, rows, st, onChange) {
     onChange(kosong ? 'kosong' : null);
   });
 }
+
+/* ============================================================
+   87. REREATA (MEAN) DATA TUNGGAL
+   Data tunggal = array bilangan tak negatif (mis. banyak buku dibaca).
+     • ukuran      jumlahData, rerataData, medianData, modusData,
+                   simpanganRerata
+     • lab menara  pindahBalok, menaraRata, sisaRatakan,
+                   langkahMinRatakan — balok dipindah antarmenara
+                   sampai rata; tinggi rata = jumlah ÷ banyak data
+     • seimbang    momenSeimbang — jarak total titik data di kiri dan
+                   kanan penyangga; seimbang tepat di rerata
+     • data hilang dataHilangDariRerata, diagnosaDataHilang,
+                   pesanDataHilang
+     • diagnosa    diagnosaRerata, pesanRerata, opsiRerata (opsi
+                   berpengecoh dari miskonsepsi)
+     • komponen    Lab Ratakan Menara (ensure/build/bindMenaraRata),
+                   Lab Titik Seimbang (ensure/build/bindTitikSeimbang)
+   Fungsi murni diuji di tests/engine-rerata.test.js.
+   ============================================================ */
+
+function jumlahData(data) {
+  return data.reduce(function (a, b) {
+    return a + b;
+  }, 0);
+}
+
+/* Rerata = jumlah seluruh nilai data ÷ banyak data; null bila kosong. */
+function rerataData(data) {
+  if (!data || !data.length) return null;
+  return jumlahData(data) / data.length;
+}
+
+function urutNaik_(data) {
+  return data.slice().sort(function (a, b) {
+    return a - b;
+  });
+}
+
+/* Nilai tengah setelah data diurutkan; null bila kosong. */
+function medianData(data) {
+  if (!data || !data.length) return null;
+  var u = urutNaik_(data);
+  var t = Math.floor(u.length / 2);
+  return u.length % 2 ? u[t] : (u[t - 1] + u[t]) / 2;
+}
+
+/*
+ * Nilai yang paling sering muncul; bila seri, nilai terkecilnya. null
+ * bila setiap nilai hanya muncul sekali (tidak ada modus).
+ */
+function modusData(data) {
+  var frek = {};
+  var terbaik = null;
+  var maks = 1;
+  urutNaik_(data || []).forEach(function (v) {
+    frek[v] = (frek[v] || 0) + 1;
+    if (frek[v] > maks) {
+      maks = frek[v];
+      terbaik = v;
+    }
+  });
+  return terbaik;
+}
+
+/* Selisih tiap nilai data terhadap rerata; jumlahnya selalu 0. */
+function simpanganRerata(data) {
+  var r = rerataData(data);
+  return data.map(function (v) {
+    return Math.round((v - r) * 1e9) / 1e9;
+  });
+}
+
+/* Memindahkan satu balok dari menara `dari` ke `ke`; null bila tidak sah. */
+function pindahBalok(tinggi, dari, ke) {
+  if (dari === ke || !(dari in tinggi) || !(ke in tinggi) || tinggi[dari] < 1) return null;
+  var out = tinggi.slice();
+  out[dari] -= 1;
+  out[ke] += 1;
+  return out;
+}
+
+/*
+ * Menara sudah rata bila selisih tertinggi–terendah paling banyak 1
+ * balok. Selisih 1 hanya terjadi bila jumlah balok tidak habis dibagi
+ * banyak menara: sisa balok itu harus "dipotong" dan dibagi rata.
+ */
+function menaraRata(tinggi) {
+  return Math.max.apply(null, tinggi) - Math.min.apply(null, tinggi) <= 1;
+}
+
+/* Tinggi dasar (bagian bulat rerata) dan banyak balok sisa. */
+function sisaRatakan(tinggi) {
+  var n = tinggi.length;
+  var dasar = Math.floor(jumlahData(tinggi) / n);
+  return { dasar: dasar, sisa: jumlahData(tinggi) - dasar * n, banyak: n };
+}
+
+/*
+ * Banyak pemindahan paling sedikit agar menara rata: menara tertinggi
+ * mendapat tinggi dasar + 1 (sebanyak sisa), lainnya tinggi dasar.
+ */
+function langkahMinRatakan(tinggi) {
+  var s = sisaRatakan(tinggi);
+  return tinggi
+    .slice()
+    .sort(function (a, b) {
+      return b - a;
+    })
+    .reduce(function (acc, t, i) {
+      return acc + Math.max(0, t - (s.dasar + (i < s.sisa ? 1 : 0)));
+    }, 0);
+}
+
+/*
+ * Jarak total titik data di kiri dan kanan penyangga pada posisi p.
+ * arah: 'seimbang' | 'kanan' (papan turun ke kanan → geser penyangga ke
+ * kanan) | 'kiri'. Papan seimbang tepat bila p = rerata.
+ */
+function momenSeimbang(data, p) {
+  var kiri = 0;
+  var kanan = 0;
+  data.forEach(function (v) {
+    if (v < p) kiri += p - v;
+    else kanan += v - p;
+  });
+  kiri = Math.round(kiri * 1e9) / 1e9;
+  kanan = Math.round(kanan * 1e9) / 1e9;
+  var selisih = Math.round((kanan - kiri) * 1e9) / 1e9;
+  var arah = 'seimbang';
+  if (!hampirSama(selisih, 0)) arah = selisih > 0 ? 'kanan' : 'kiri';
+  return { kiri: kiri, kanan: kanan, selisih: selisih, arah: arah };
+}
+
+/* Satu data yang belum diketahui bila rerata seluruh data (n = diketahui + 1) diketahui. */
+function dataHilangDariRerata(diketahui, rerata) {
+  return rerata * (diketahui.length + 1) - jumlahData(diketahui);
+}
+
+/*
+ * Diagnosa isian data yang hilang:
+ *   'benar' | 'rerata' (menulis rerata saja) | 'total' (berhenti di
+ *   rerata × n) | 'pembagiKurang' (memakai n − 1) | 'lain'
+ */
+function diagnosaDataHilang(diketahui, rerata, v) {
+  var n = diketahui.length + 1;
+  if (hampirSama(v, dataHilangDariRerata(diketahui, rerata))) return 'benar';
+  if (hampirSama(v, rerata)) return 'rerata';
+  if (hampirSama(v, rerata * n)) return 'total';
+  if (hampirSama(v, rerata * (n - 1) - jumlahData(diketahui))) return 'pembagiKurang';
+  return 'lain';
+}
+
+function pesanDataHilang(kode, diketahui, rerata, satuan) {
+  var n = diketahui.length + 1;
+  var su = satuan ? ' ' + satuan : '';
+  var fd = function (v) {
+    return formatDesimal(v, 2);
+  };
+  var pesan = {
+    benar:
+      'Tepat! Jumlah seluruh data = ' +
+      fd(rerata) +
+      ' × ' +
+      n +
+      ' = ' +
+      fd(rerata * n) +
+      '. Dikurangi jumlah data yang diketahui (' +
+      fd(jumlahData(diketahui)) +
+      '), data yang hilang = ' +
+      fd(dataHilangDariRerata(diketahui, rerata)) +
+      su +
+      '.',
+    rerata:
+      'Data yang hilang belum tentu sama dengan reratanya. Cari dulu jumlah seluruh data dari rerata × banyak data.',
+    total:
+      'Itu jumlah SELURUH data. Kurangi dengan jumlah data yang sudah diketahui untuk mendapat data yang hilang.',
+    pembagiKurang:
+      'Hati-hati menghitung banyak data: data yang hilang juga termasuk, jadi ada ' + n + ' data.',
+    lain: 'Belum tepat. Langkahnya: jumlah seluruh data = rerata × banyak data, lalu kurangi jumlah data yang diketahui.',
+  };
+  return pesan[kode] || pesan.lain;
+}
+
+/*
+ * Nilai-nilai keliru yang sering muncul saat menghitung rerata, dalam
+ * urutan prioritas diagnosa. Hanya nilai yang berbeda dari rerata dan
+ * terdefinisi yang dikembalikan.
+ */
+function kandidatKeliruRerata_(data) {
+  var n = data.length;
+  var jumlah = jumlahData(data);
+  var r = jumlah / n;
+  var tanpaNol = data.filter(function (v) {
+    return v !== 0;
+  }).length;
+  var bulat = hampirSama(r, Math.round(r)) ? [] : [Math.floor(r), Math.round(r)];
+  var list = [
+    { id: 'jumlah', nilai: [jumlah] },
+    { id: 'tanpaNol', nilai: tanpaNol && tanpaNol < n ? [jumlah / tanpaNol] : [] },
+    { id: 'pembagiKurang', nilai: n > 1 ? [jumlah / (n - 1)] : [] },
+    { id: 'median', nilai: [medianData(data)] },
+    { id: 'modus', nilai: modusData(data) === null ? [] : [modusData(data)] },
+    {
+      id: 'tengahRentang',
+      nilai: [(Math.min.apply(null, data) + Math.max.apply(null, data)) / 2],
+    },
+    { id: 'bulat', nilai: bulat },
+  ];
+  return list
+    .map(function (k) {
+      return {
+        id: k.id,
+        nilai: k.nilai.filter(function (v) {
+          return !hampirSama(v, r);
+        }),
+      };
+    })
+    .filter(function (k) {
+      return k.nilai.length > 0;
+    });
+}
+
+/*
+ * Diagnosa isian rerata:
+ *   'benar'          jumlah ÷ banyak data
+ *   'jumlah'         lupa membagi
+ *   'tanpaNol'       nilai 0 tidak ikut dihitung sebagai pembagi
+ *   'pembagiKurang'  membagi dengan banyak data − 1
+ *   'median'         mengambil nilai tengah data terurut
+ *   'modus'          mengambil nilai yang paling sering muncul
+ *   'tengahRentang'  (terkecil + terbesar) ÷ 2
+ *   'bulat'          hasil bagi dibulatkan/dipotong tanpa desimal
+ *   'lain'
+ */
+function diagnosaRerata(data, v) {
+  if (hampirSama(v, rerataData(data))) return 'benar';
+  var k = kandidatKeliruRerata_(data);
+  for (var i = 0; i < k.length; i++) {
+    for (var j = 0; j < k[i].nilai.length; j++) {
+      if (hampirSama(v, k[i].nilai[j])) return k[i].id;
+    }
+  }
+  return 'lain';
+}
+
+/* Umpan balik diagnosa rerata. Pesan salah tidak menyebut kunci jawaban. */
+function pesanRerata(kode, data, satuan) {
+  var n = data.length;
+  var su = satuan ? ' ' + satuan : '';
+  var pesan = {
+    benar:
+      'Tepat! Jumlah seluruh data ' +
+      formatDesimal(jumlahData(data), 2) +
+      ' dibagi banyak data ' +
+      n +
+      ' = ' +
+      formatDesimal(rerataData(data), 2) +
+      su +
+      '.',
+    jumlah:
+      'Itu baru jumlah seluruh data. Rerata didapat setelah jumlah itu dibagi banyak data (' +
+      n +
+      ' data).',
+    tanpaNol:
+      'Sepertinya data bernilai 0 tidak ikut dihitung. Nilai 0 tetap termasuk data, jadi pembaginya ' +
+      n +
+      '.',
+    pembagiKurang:
+      'Coba hitung lagi banyak datanya: ada ' + n + ' data, jadi pembaginya ' + n + '.',
+    median:
+      'Itu nilai tengah setelah data diurutkan (median), bukan rerata. Rerata memakai jumlah semua nilai data ÷ banyak data.',
+    modus:
+      'Itu nilai yang paling sering muncul (modus), bukan rerata. Rerata memakai jumlah semua nilai data ÷ banyak data.',
+    tengahRentang:
+      'Itu titik tengah nilai terkecil dan terbesar saja. Rerata memakai SEMUA nilai data: jumlah ÷ banyak data.',
+    bulat:
+      'Hampir! Hasil baginya tidak bulat — tulis hasil bagi lengkap dengan desimal (pakai koma), jangan dibulatkan.',
+    lain: 'Belum tepat. Jumlahkan semua nilai data (termasuk yang bernilai 0), lalu bagi dengan banyak data.',
+  };
+  return pesan[kode] || pesan.lain;
+}
+
+/*
+ * Opsi pilihan ganda untuk rerata: 'benar' + 3–4 pengecoh dari
+ * miskonsepsi (id = kode diagnosa), dilengkapi 'dekatAtas'/'dekatBawah'
+ * (rerata ± 1) bila pengecoh kurang. Setiap opsi { id, nilai, label }.
+ * Urutan belum diacak — app.js mengacaknya sekali saat state disiapkan.
+ */
+function opsiRerata(data, satuan) {
+  var r = rerataData(data);
+  var su = satuan ? ' ' + satuan : '';
+  var opsi = [{ id: 'benar', nilai: r }];
+  var dipakai = function (v) {
+    return opsi.some(function (o) {
+      return hampirSama(o.nilai, v);
+    });
+  };
+  kandidatKeliruRerata_(data).forEach(function (k) {
+    if (opsi.length < 5 && !dipakai(k.nilai[0])) opsi.push({ id: k.id, nilai: k.nilai[0] });
+  });
+  [
+    { id: 'dekatAtas', nilai: r + 1 },
+    { id: 'dekatBawah', nilai: r - 1 },
+    { id: 'dekatAtas2', nilai: r + 2 },
+  ].forEach(function (k) {
+    if (
+      opsi.length < 4 &&
+      k.nilai >= 0 &&
+      !dipakai(k.nilai) &&
+      diagnosaRerata(data, k.nilai) === 'lain'
+    ) {
+      opsi.push(k);
+    }
+  });
+  return opsi.map(function (o) {
+    return { id: o.id, nilai: o.nilai, label: formatDesimal(o.nilai, 2) + su };
+  });
+}
+
+/* ---------- Komponen: Lab Ratakan Menara ---------- */
+
+/*
+ * state[key] = { tinggi, pilih, pindah }. Disiapkan ulang bila belum ada
+ * atau tidak cocok dengan `awal` (banyak menara/jumlah balok berbeda).
+ */
+function ensureMenaraState(state, key, awal) {
+  var st = state[key];
+  var cocok =
+    st &&
+    Array.isArray(st.tinggi) &&
+    st.tinggi.length === awal.length &&
+    st.tinggi.every(function (t) {
+      return typeof t === 'number' && t >= 0 && t === Math.floor(t);
+    }) &&
+    jumlahData(st.tinggi) === jumlahData(awal);
+  if (!cocok) state[key] = { tinggi: awal.slice(), pilih: null, pindah: 0 };
+  return state[key];
+}
+
+/*
+ * Menara balok bertombol: ketuk menara asal (diambil 1 balok), lalu
+ * ketuk menara tujuan. Bayangan putus-putus menandai tinggi awal.
+ *   set     { nama: [..], awal: [..], satuan }  satuan per balok, mis. 'buku'
+ *   opts    { garisRata: true → garis putus-putus setinggi rerata,
+ *             terkunci: true → tombol menara dimatikan }
+ */
+function buildMenaraRata(id, st, set, opts) {
+  opts = opts || {};
+  var maks = Math.max.apply(null, set.awal.concat(st.tinggi, [1]));
+  var kunci = !!opts.terkunci;
+  var r = rerataData(st.tinggi);
+  var garis =
+    opts.garisRata && r !== null
+      ? '<span class="rrt-menara__garis" style="bottom:calc(' +
+        r +
+        ' * var(--rrt-balok))" aria-hidden="true"></span>'
+      : '';
+  var kolom = st.tinggi
+    .map(function (t, i) {
+      var balok = '';
+      for (var b = 0; b < t; b++) {
+        balok +=
+          '<span class="rrt-balok' + (b >= set.awal[i] ? ' rrt-balok--pindahan' : '') + '"></span>';
+      }
+      var dipilih = st.pilih === i;
+      return (
+        '<button type="button" class="rrt-menara__kolom' +
+        (dipilih ? ' is-dipilih' : '') +
+        '" data-menara="' +
+        esc(id) +
+        '" data-menara-i="' +
+        i +
+        '" aria-pressed="' +
+        (dipilih ? 'true' : 'false') +
+        '" aria-label="' +
+        esc(set.nama[i]) +
+        ': ' +
+        t +
+        ' ' +
+        esc(set.satuan) +
+        (dipilih ? ', dipilih sebagai asal' : '') +
+        '"' +
+        (kunci ? ' disabled' : '') +
+        '>' +
+        '<span class="rrt-menara__tumpuk" style="height:calc(' +
+        maks +
+        ' * var(--rrt-balok))">' +
+        '<span class="rrt-menara__bayang" style="height:calc(' +
+        set.awal[i] +
+        ' * var(--rrt-balok))" aria-hidden="true"></span>' +
+        balok +
+        garis +
+        '</span>' +
+        '<span class="rrt-menara__angka" aria-hidden="true">' +
+        t +
+        '</span>' +
+        '<span class="rrt-menara__nama" aria-hidden="true">' +
+        esc(set.nama[i]) +
+        '</span>' +
+        '</button>'
+      );
+    })
+    .join('');
+  var status = kunci
+    ? 'Menara sudah rata.'
+    : st.pilih === null
+    ? 'Ketuk menara yang akan diambil satu baloknya.'
+    : 'Ketuk menara tujuan untuk menaruh balok dari ' +
+      set.nama[st.pilih] +
+      ' (ketuk lagi untuk batal).';
+  return (
+    '<div class="rrt-menara" role="group" aria-label="Menara balok ' +
+    esc(set.satuan) +
+    '">' +
+    kolom +
+    '</div>' +
+    '<div class="rrt-menara__bar">' +
+    '<p class="rrt-menara__status" aria-live="polite">' +
+    esc(status) +
+    ' <span class="rrt-menara__hitung">Balok dipindah: ' +
+    st.pindah +
+    '</span></p>' +
+    (kunci
+      ? ''
+      : '<button type="button" class="btn btn--ghost btn--small" id="' +
+        esc(id) +
+        '-ulang">↺ Ulangi</button>') +
+    '</div>'
+  );
+}
+
+function bindMenaraRata(root, id, st, awal, onChange) {
+  root.querySelectorAll('[data-menara="' + id + '"]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var i = parseInt(btn.dataset.menaraI, 10);
+      if (st.pilih === null) {
+        if (st.tinggi[i] < 1) return;
+        st.pilih = i;
+      } else if (st.pilih === i) {
+        st.pilih = null;
+      } else {
+        var baru = pindahBalok(st.tinggi, st.pilih, i);
+        if (baru) {
+          st.tinggi = baru;
+          st.pindah += 1;
+        }
+        st.pilih = null;
+      }
+      onChange();
+    });
+  });
+  var ulang = document.getElementById(id + '-ulang');
+  if (ulang) {
+    ulang.addEventListener('click', function () {
+      st.tinggi = awal.slice();
+      st.pilih = null;
+      st.pindah = 0;
+      onChange();
+    });
+  }
+}
+
+/* ---------- Komponen: Lab Titik Seimbang ---------- */
+
+function ensureSeimbangState(state, key, awal) {
+  var st = state[key];
+  if (!st || typeof st.posisi !== 'number' || isNaN(st.posisi)) {
+    state[key] = { posisi: awal, geser: 0 };
+  }
+  return state[key];
+}
+
+/*
+ * Papan jungkat-jungkit berdiagram titik: titik data ditumpuk di atas
+ * garis bilangan, penyangga segitiga di st.posisi. Papan miring ke sisi
+ * yang jarak totalnya lebih besar.
+ *   opts { min, max, langkah (default 0.5), statis (tanpa tombol),
+ *          satuan, label }
+ */
+function buildTitikSeimbang(id, data, st, opts) {
+  opts = opts || {};
+  var min = typeof opts.min === 'number' ? opts.min : 0;
+  var max = typeof opts.max === 'number' ? opts.max : Math.max.apply(null, data) + 1;
+  var langkah = opts.langkah || 0.5;
+  var W = 560;
+  var kiriX = 30;
+  var lebar = W - 60;
+  var sx = function (v) {
+    return kiriX + ((v - min) / (max - min)) * lebar;
+  };
+  var papanY = 150;
+  var m = momenSeimbang(data, st.posisi);
+  var sudut = Math.max(-7, Math.min(7, m.selisih * 0.8));
+  var px = sx(st.posisi);
+
+  var tumpuk = {};
+  var titik = data
+    .map(function (v) {
+      tumpuk[v] = (tumpuk[v] || 0) + 1;
+      return (
+        '<circle class="rrt-titik" cx="' +
+        sx(v).toFixed(1) +
+        '" cy="' +
+        (papanY - 13 - (tumpuk[v] - 1) * 19) +
+        '" r="8.5"/>'
+      );
+    })
+    .join('');
+  var garis = '';
+  var angka = '';
+  for (var v = min; v <= max; v++) {
+    garis +=
+      '<line class="rrt-papan__tik" x1="' +
+      sx(v).toFixed(1) +
+      '" x2="' +
+      sx(v).toFixed(1) +
+      '" y1="' +
+      (papanY - 3) +
+      '" y2="' +
+      (papanY + 5) +
+      '"/>';
+    angka +=
+      '<text class="rrt-papan__angka" x="' +
+      sx(v).toFixed(1) +
+      '" y="' +
+      (papanY + 62) +
+      '" text-anchor="middle">' +
+      v +
+      '</text>';
+  }
+  var keterangan = {
+    seimbang: 'Papan seimbang!',
+    kanan: 'Papan miring ke kanan — sisi kanan lebih berat.',
+    kiri: 'Papan miring ke kiri — sisi kiri lebih berat.',
+  }[m.arah];
+  var aria =
+    (opts.label || 'Diagram titik data') +
+    ': ' +
+    data.join(', ') +
+    '. Penyangga di ' +
+    formatDesimal(st.posisi, 2) +
+    '. ' +
+    keterangan;
+
+  return (
+    '<div class="rrt-seimbang' +
+    (m.arah === 'seimbang' ? ' is-seimbang' : '') +
+    '">' +
+    '<svg class="rrt-seimbang__svg" viewBox="0 0 ' +
+    W +
+    ' 230" role="img" aria-label="' +
+    esc(aria) +
+    '">' +
+    '<g transform="rotate(' +
+    sudut.toFixed(2) +
+    ' ' +
+    px.toFixed(1) +
+    ' ' +
+    (papanY + 4) +
+    ')">' +
+    '<rect class="rrt-papan" x="' +
+    (kiriX - 14) +
+    '" y="' +
+    papanY +
+    '" width="' +
+    (lebar + 28) +
+    '" height="8" rx="4"/>' +
+    garis +
+    titik +
+    '</g>' +
+    '<polygon class="rrt-penyangga" points="' +
+    px.toFixed(1) +
+    ',' +
+    (papanY + 9) +
+    ' ' +
+    (px - 16).toFixed(1) +
+    ',' +
+    (papanY + 40) +
+    ' ' +
+    (px + 16).toFixed(1) +
+    ',' +
+    (papanY + 40) +
+    '"/>' +
+    '<line class="rrt-lantai" x1="10" x2="' +
+    (W - 10) +
+    '" y1="' +
+    (papanY + 41) +
+    '" y2="' +
+    (papanY + 41) +
+    '"/>' +
+    angka +
+    '</svg>' +
+    '<p class="rrt-seimbang__baca" aria-live="polite">' +
+    '<span>Penyangga di <strong>' +
+    formatDesimal(st.posisi, 2) +
+    '</strong></span>' +
+    '<span>Jarak total kiri: <strong>' +
+    formatDesimal(m.kiri, 2) +
+    '</strong></span>' +
+    '<span>Jarak total kanan: <strong>' +
+    formatDesimal(m.kanan, 2) +
+    '</strong></span>' +
+    '<span class="rrt-seimbang__ket">' +
+    esc(keterangan) +
+    '</span>' +
+    '</p>' +
+    (opts.statis
+      ? ''
+      : '<div class="btn-group btn-group--center rrt-seimbang__tombol">' +
+        '<button type="button" class="btn btn--ghost" id="' +
+        esc(id) +
+        '-kiri"' +
+        (st.posisi - langkah < min - 1e-9 ? ' disabled' : '') +
+        '>◀ Geser ' +
+        formatDesimal(langkah, 2) +
+        '</button>' +
+        '<button type="button" class="btn btn--ghost" id="' +
+        esc(id) +
+        '-kanan"' +
+        (st.posisi + langkah > max + 1e-9 ? ' disabled' : '') +
+        '>Geser ' +
+        formatDesimal(langkah, 2) +
+        ' ▶</button>' +
+        '</div>') +
+    '</div>'
+  );
+}
+
+function bindTitikSeimbang(id, st, opts, onChange) {
+  var langkah = (opts && opts.langkah) || 0.5;
+  [
+    ['-kiri', -1],
+    ['-kanan', 1],
+  ].forEach(function (p) {
+    var btn = document.getElementById(id + p[0]);
+    if (!btn) return;
+    btn.addEventListener('click', function () {
+      st.posisi = Math.round((st.posisi + p[1] * langkah) * 1e6) / 1e6;
+      st.geser += 1;
+      onChange();
+    });
+  });
+}
