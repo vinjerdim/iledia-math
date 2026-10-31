@@ -335,6 +335,14 @@
     "stageCount": 10,
     "extraBody": "partials/reset-modal.html"
   },
+  "fase-d/mpi-19.1": {
+    "title": "Hubungan Luas Persegi pada Sisi Segitiga Siku-siku — Matematika Fase D",
+    "description": "Media pembelajaran interaktif berbasis Inquiry Learning untuk menganalisis hubungan luas persegi pada sisi-sisi segitiga siku-siku dan merumuskan dugaan teorema Pythagoras: Taman Ubin OSIS, Lab Kotak Persegi (mengatur kaki segitiga siku-siku di kertas berpetak, membilang petak, dan strategi bingkai untuk persegi miring dengan isian berdiagnosa miskonsepsi), Tabel Data pola La + Lb = Lc, pembanding segitiga lancip, tumpul, dan siku-siku miring, menguji hipotesis, menyusun kesimpulan a² + b² = c², serta uji terap acak.",
+    "kicker": "Matematika — Fase D (SMP)",
+    "h1": "Hubungan Luas Persegi pada Sisi Segitiga Siku-siku",
+    "stageCount": 11,
+    "extraBody": "partials/reset-modal.html"
+  },
   "fase-d/mpi-22.1": {
     "title": "Unsur-unsur & Jaring-jaring Prisma — Matematika Fase D",
     "description": "Media pembelajaran interaktif berbasis Discovery Learning untuk mengidentifikasi unsur-unsur prisma (titik sudut, rusuk, sisi, dan tinggi) serta jaring-jaring prisma melalui kegiatan memutar model 3D, melipat, dan merakit bentangan karton kemasan.",

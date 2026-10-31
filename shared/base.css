@@ -17814,3 +17814,248 @@ button.akar-tile:disabled {
     grid-template-columns: minmax(0, 1fr);
   }
 }
+
+/* -------------------------------------------------------------------------
+   Luas persegi pada sisi segitiga — dugaan teorema Pythagoras
+   (engine seksi 86, fase-d/mpi-19.1). Tiga persegi dibedakan warna
+   (biru/oranye/ungu) DAN nama sisi pada isian, sehingga tidak bergantung
+   warna saja. Bingkai persegi miring + segitiga pojok: oranye putus-putus.
+   ------------------------------------------------------------------------- */
+
+.ptg-svg {
+  max-height: 420px;
+  width: auto;
+}
+
+.ptg-persegi {
+  stroke: none;
+}
+
+.ptg-persegi--0 {
+  fill: var(--color-blue-soft);
+}
+
+.ptg-persegi--1 {
+  fill: var(--color-orange-soft);
+}
+
+.ptg-persegi--2 {
+  fill: var(--color-purple-soft);
+}
+
+.ptg-persegi-tepi {
+  fill: none;
+  stroke-width: 2.5;
+  stroke-linejoin: round;
+}
+
+.ptg-persegi-tepi--0 {
+  stroke: var(--color-blue);
+}
+
+.ptg-persegi-tepi--1 {
+  stroke: var(--color-orange);
+}
+
+.ptg-persegi-tepi--2 {
+  stroke: var(--color-purple);
+}
+
+.ptg-bingkai {
+  fill: var(--color-warning-soft);
+  stroke: var(--color-orange-strong);
+  stroke-width: 2;
+  stroke-dasharray: 6 4;
+}
+
+.ptg-segitiga {
+  fill: var(--color-surface);
+  stroke: var(--color-ink);
+  stroke-width: 2.5;
+  stroke-linejoin: round;
+}
+
+.ptg-luas-teks {
+  font-size: 15px;
+}
+
+.ptg-chip {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  margin-right: var(--space-2);
+  border-radius: 3px;
+  border: 2px solid;
+  vertical-align: -2px;
+}
+
+.ptg-chip--0 {
+  background: var(--color-blue-soft);
+  border-color: var(--color-blue);
+}
+
+.ptg-chip--1 {
+  background: var(--color-orange-soft);
+  border-color: var(--color-orange);
+}
+
+.ptg-chip--2 {
+  background: var(--color-purple-soft);
+  border-color: var(--color-purple);
+}
+
+/* Ukur luas tiga persegi */
+
+.ptg-ukur {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
+  gap: var(--space-4);
+  align-items: start;
+}
+
+.ptg-ukur__gambar {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-3);
+  min-width: 0;
+}
+
+.ptg-ukur__bingkai-info {
+  margin: 0;
+  padding-left: var(--space-5);
+  font-size: 0.9rem;
+  color: var(--color-ink-muted);
+}
+
+.ptg-ukur__form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.ptg-ukur__label {
+  display: block;
+  font-weight: 600;
+  margin-bottom: var(--space-1);
+}
+
+.ptg-ukur__warna {
+  font-weight: 400;
+  color: var(--color-ink-muted);
+  font-size: 0.85rem;
+}
+
+.ptg-ukur__isi {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.ptg-ukur__input {
+  max-width: 120px;
+}
+
+.ptg-ukur__input.is-correct,
+.ptg-tabel__input.is-correct {
+  border-color: var(--color-success);
+  background: var(--color-success-soft);
+  color: var(--color-success-strong);
+  font-weight: 700;
+}
+
+.ptg-ukur__satuan {
+  color: var(--color-ink-muted);
+  font-size: 0.9rem;
+}
+
+.ptg-ukur__pesan {
+  margin: var(--space-1) 0 0;
+  font-size: 0.88rem;
+  color: var(--color-error-strong);
+}
+
+.ptg-ukur__pesan:empty {
+  display: none;
+}
+
+.ptg-ukur__pesan--ok {
+  color: var(--color-success-strong);
+}
+
+/* Lab Kotak Persegi */
+
+.ptg-lab {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.ptg-lab__atur {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3) var(--space-5);
+}
+
+.ptg-stepper {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.ptg-stepper__label {
+  font-weight: 600;
+}
+
+.ptg-stepper__btn {
+  min-width: 44px;
+  min-height: 44px;
+  font-size: 1.2rem;
+  font-weight: 700;
+}
+
+.ptg-stepper__val {
+  min-width: 2ch;
+  text-align: center;
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--color-primary-strong);
+}
+
+.ptg-lab__judul-tabel {
+  margin: 0;
+}
+
+.ptg-tabel td,
+.ptg-tabel th {
+  text-align: center;
+}
+
+.ptg-tabel__input {
+  max-width: 90px;
+  margin: 0 auto;
+  text-align: center;
+}
+
+.ptg-tabel__catatan td {
+  text-align: left;
+  font-size: 0.85rem;
+  color: var(--color-ink-muted);
+  border-bottom-width: 2px;
+}
+
+.ptg-kosong {
+  margin: 0;
+  color: var(--color-ink-muted);
+  font-style: italic;
+}
+
+@media (max-width: 720px) {
+  .ptg-ukur {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .ptg-svg {
+    max-height: 320px;
+  }
+}

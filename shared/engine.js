@@ -282,6 +282,11 @@
        26: kunci, opsi & diagnosa pemasangan titik/sisi/sudut, opsi
        notasi, ringkasan & diagnosa klasifikasi, soal isian sebangun,
        gambar pasangan bersorot)
+   86. Luas persegi pada sisi segitiga — dugaan teorema Pythagoras
+       (luas persegi berpetak & strategi bingkai, persegi luar sisi,
+       jenis segitiga dari luas, isian luas berdiagnosa miskonsepsi,
+       opsi berpengecoh uji terap, gambar persegi pada sisi SVG, ukur
+       luas tiga persegi, Lab Kotak Persegi, tabel luas isian)
    ============================================================ */
 
 /* ============================================================
@@ -59291,5 +59296,995 @@ function buildSorotBersesuaian(p, q, map, jenis, i, opts) {
     skala: opts.skala,
     p: Object.assign({}, opts.p, { sorot: kp }),
     q: Object.assign({}, opts.q, { sorot: kq }),
+  });
+}
+
+/* ============================================================
+   86. LUAS PERSEGI PADA SISI SEGITIGA (DUGAAN TEOREMA PYTHAGORAS)
+   Segitiga berpetak = { id?, nama?, titik: ['A','B','C'], pts } dengan
+   koordinat bilangan bulat; sisi ke-i menghubungkan pts[i] → pts[i+1].
+   Memakai ulang pemeta kanvas & kisi seksi 73 (kanvasBangun,
+   kotakBatasBangun, kisiBangun, petakDalamBangun, teksBangun).
+     • luas        luasPersegiRuas, bingkaiPersegiRuas, persegiLuarRuas,
+                   luasPersegiSegitiga, segitigaSikuKisi,
+                   titikSikuSegitiga, jenisSegitigaLuas, jenisSegitiga
+     • isian       diagnosaLuasPersegi, pesanLuasPersegi
+     • uji terap   opsiSoalPythagoras, nilaiSoalPythagoras
+     • komponen    buildPersegiSisiSVG, ukur luas tiga persegi
+                   (ensure/build/bindUkurLuas, ukurLuasBenar), Lab Kotak
+                   Persegi (ensure/build/bindLabPersegi,
+                   labPersegiSelesai), tabel luas isian
+                   (ensure/build/bindTabelLuas, tabelLuasBenar)
+   Fungsi murni diuji di tests/engine-pythagoras.test.js.
+   ============================================================ */
+
+/* Luas persegi yang sisinya ruas p–q pada kertas berpetak: dx² + dy². */
+function luasPersegiRuas(p, q) {
+  var dx = q[0] - p[0];
+  var dy = q[1] - p[1];
+  return dx * dx + dy * dy;
+}
+
+/*
+ * Strategi bingkai untuk persegi miring: persegi bingkai berisi
+ * (dx + dy)² petak dikurangi empat segitiga pojok ½·dx·dy.
+ * Untuk ruas mendatar/tegak, luas cukup dihitung petaknya (tanpa bingkai).
+ */
+function bingkaiPersegiRuas(p, q) {
+  var dx = Math.abs(q[0] - p[0]);
+  var dy = Math.abs(q[1] - p[1]);
+  var miring = dx > 0 && dy > 0;
+  var s = dx + dy;
+  return {
+    dx: dx,
+    dy: dy,
+    miring: miring,
+    sisiBingkai: s,
+    bingkai: s * s,
+    segitiga: miring ? (dx * dy) / 2 : 0,
+    banyakSegitiga: miring ? 4 : 0,
+    luas: dx * dx + dy * dy,
+  };
+}
+
+/* Empat titik persegi pada ruas p→q yang dibangun menjauhi titik r. */
+function persegiLuarRuas(p, q, r) {
+  var vx = q[0] - p[0];
+  var vy = q[1] - p[1];
+  var nx = vy;
+  var ny = -vx;
+  var mx = (p[0] + q[0]) / 2;
+  var my = (p[1] + q[1]) / 2;
+  if (nx * (r[0] - mx) + ny * (r[1] - my) > 0) {
+    nx = -nx;
+    ny = -ny;
+  }
+  return [
+    [p[0], p[1]],
+    [q[0], q[1]],
+    [q[0] + nx, q[1] + ny],
+    [p[0] + nx, p[1] + ny],
+  ];
+}
+
+/* Segitiga siku-siku berpetak: kaki mendatar BC = a, kaki tegak AB = b. */
+function segitigaSikuKisi(a, b) {
+  return {
+    titik: ['A', 'B', 'C'],
+    pts: [
+      [0, b],
+      [0, 0],
+      [a, 0],
+    ],
+  };
+}
+
+/* Indeks titik bersudut siku-siku (hasil kali titik vektor = 0), atau -1. */
+function titikSikuSegitiga(pts) {
+  for (var i = 0; i < 3; i++) {
+    var v = pts[i];
+    var p = pts[(i + 1) % 3];
+    var q = pts[(i + 2) % 3];
+    if ((p[0] - v[0]) * (q[0] - v[0]) + (p[1] - v[1]) * (q[1] - v[1]) === 0) return i;
+  }
+  return -1;
+}
+
+/*
+ * Luas ketiga persegi menurut urutan sisi, indeks sisi terbesar (Lc), dan
+ * dua luas lainnya (La, Lb) dalam urutan sisi.
+ */
+function luasPersegiSegitiga(pts) {
+  var sisi = [0, 1, 2].map(function (i) {
+    return luasPersegiRuas(pts[i], pts[(i + 1) % 3]);
+  });
+  var terbesar = 0;
+  for (var i = 1; i < 3; i++) if (sisi[i] > sisi[terbesar]) terbesar = i;
+  var lain = sisi.filter(function (v, j) {
+    return j !== terbesar;
+  });
+  return { sisi: sisi, terbesar: terbesar, Lc: sisi[terbesar], La: lain[0], Lb: lain[1] };
+}
+
+/*
+ * Membandingkan jumlah dua luas kecil dengan luas terbesar:
+ *   La + Lb = Lc → siku-siku, La + Lb > Lc → lancip, La + Lb < Lc → tumpul.
+ * Urutan argumen bebas; luas terbesar dianggap Lc.
+ */
+function jenisSegitigaLuas(La, Lb, Lc) {
+  var L = [La, Lb, Lc].sort(function (x, y) {
+    return x - y;
+  });
+  var jumlah = L[0] + L[1];
+  if (jumlah === L[2]) return { jenis: 'siku', tanda: '=' };
+  return jumlah > L[2] ? { jenis: 'lancip', tanda: '>' } : { jenis: 'tumpul', tanda: '<' };
+}
+
+function jenisSegitiga(pts) {
+  var r = luasPersegiSegitiga(pts);
+  return jenisSegitigaLuas(r.La, r.Lb, r.Lc);
+}
+
+/* ---------- Isian luas persegi berdiagnosa ---------- */
+
+var PESAN_LUAS_PERSEGI = {
+  benar: 'Tepat! Banyak petak satuan di dalam persegi itu sama dengan luasnya.',
+  panjang:
+    'Itu panjang sisinya, bukan luasnya. Luas persegi = banyak petak satuan di dalamnya (sisi × sisi).',
+  kaliDua: 'Kamu menghitung sisi × 2. Luas persegi = sisi × sisi; hitung petak di dalamnya.',
+  keliling:
+    'Itu keliling persegi (4 × sisi). Yang dicari luasnya: banyak petak satuan di dalam persegi.',
+  bingkai:
+    'Itu luas seluruh bingkai. Persegi miring tidak memenuhi bingkai — kurangi dulu keempat segitiga di pojoknya.',
+  kurangDua:
+    'Hampir! Kamu baru mengurangi dua segitiga. Ada EMPAT segitiga pojok di dalam bingkai — kurangi semuanya.',
+  jumlahLangkah:
+    'Kamu menjumlahkan langkah mendatar dan tegak. Itu sisi bingkai, bukan luas persegi miring. Aktifkan bingkai lalu hitung luasnya.',
+  salah:
+    'Belum tepat. Hitung ulang petaknya. Untuk persegi miring: luas bingkai − 4 × luas segitiga pojok.',
+  kosong: 'Isi dulu luas persegi ini.',
+  bukanBilangan: 'Tulis luas sebagai bilangan bulat, mis. 25.',
+};
+
+/* Kode miskonsepsi isian luas persegi pada ruas p–q. */
+function diagnosaLuasPersegi(isian, p, q) {
+  var r = parseInputInt(String(isian === null || isian === undefined ? '' : isian));
+  if (r.error === 'empty') return 'kosong';
+  if (r.error) return 'bukanBilangan';
+  var v = r.value;
+  var b = bingkaiPersegiRuas(p, q);
+  if (v === b.luas) return 'benar';
+  var panjang = Math.sqrt(b.luas);
+  if (Math.round(panjang) === panjang && v === panjang) return 'panjang';
+  if (!b.miring) {
+    if (v === 2 * panjang) return 'kaliDua';
+    if (v === 4 * panjang) return 'keliling';
+    return 'salah';
+  }
+  if (v === b.bingkai) return 'bingkai';
+  if (v === b.bingkai - 2 * b.segitiga) return 'kurangDua';
+  if (v === b.sisiBingkai) return 'jumlahLangkah';
+  return 'salah';
+}
+
+function pesanLuasPersegi(kode) {
+  return PESAN_LUAS_PERSEGI[kode] || PESAN_LUAS_PERSEGI.salah;
+}
+
+/* ---------- Uji terap: opsi berpengecoh ---------- */
+
+var OPSI_JENIS_LUAS = [
+  {
+    jenis: 'siku',
+    label: 'Segitiga siku-siku',
+    umpan: 'Segitiga siku-siku hanya bila jumlah dua luas kecil TEPAT SAMA dengan luas terbesar.',
+  },
+  {
+    jenis: 'lancip',
+    label: 'Segitiga lancip',
+    umpan:
+      'Segitiga lancip bila jumlah dua luas kecil LEBIH BESAR daripada luas terbesar. Bandingkan lagi.',
+  },
+  {
+    jenis: 'tumpul',
+    label: 'Segitiga tumpul',
+    umpan:
+      'Segitiga tumpul bila jumlah dua luas kecil LEBIH KECIL daripada luas terbesar. Bandingkan lagi.',
+  },
+  {
+    jenis: 'tidakTentu',
+    label: 'Tidak dapat ditentukan dari luas persegi',
+    umpan:
+      'Justru dapat ditentukan: bandingkan jumlah dua luas kecil dengan luas persegi terbesar.',
+  },
+];
+
+/*
+ * Opsi uji terap [{ id, label, umpan, jenis? }] — id 'benar' untuk kunci.
+ *   minta 'luasMiring' { La, Lb, satuan } → luas persegi sisi miring
+ *         'luasKaki'   { Lc, La, satuan } → luas persegi kaki lainnya
+ *         'sisiMiring' { a, b, satuan }   → panjang sisi miring
+ *         'jenis'      { La, Lb, Lc }     → jenis segitiga dari luas
+ *         'hubungan'   { titik, siku }    → hubungan luas pada segitiga bernama
+ * Pengecoh bernilai sama dengan kunci, nol, atau kembar dibuang.
+ */
+function opsiSoalPythagoras(s) {
+  var out = [];
+  var label = {};
+  function tambah(id, teks, umpan, extra) {
+    if (out.length >= 5 || label[teks]) return;
+    label[teks] = true;
+    out.push(Object.assign({ id: id, label: teks, umpan: umpan }, extra || {}));
+  }
+  function angka(v) {
+    return formatNumber(v) + (s.satuan ? ' ' + s.satuan : '');
+  }
+  function nilai(id, v, umpan) {
+    if (v > 0 && Math.round(v) === v) tambah(id, angka(v), umpan);
+  }
+
+  if (s.minta === 'jenis') {
+    var j = jenisSegitigaLuas(s.La, s.Lb, s.Lc).jenis;
+    OPSI_JENIS_LUAS.forEach(function (o) {
+      var benar = o.jenis === j;
+      tambah(
+        benar ? 'benar' : o.jenis,
+        o.label,
+        benar ? 'Tepat — bandingkan jumlah dua luas kecil dengan luas terbesar.' : o.umpan,
+        { jenis: o.jenis }
+      );
+    });
+    return out;
+  }
+
+  if (s.minta === 'hubungan') {
+    var t = s.titik;
+    var k = t.indexOf(s.siku);
+    var p = t[(k + 1) % 3];
+    var q = t[(k + 2) % 3];
+    var urut = function (x, y) {
+      return t.indexOf(x) < t.indexOf(y) ? x + y : y + x;
+    };
+    var c = urut(p, q);
+    var a = urut(s.siku, p);
+    var b = urut(s.siku, q);
+    var kaki = [a, b].sort();
+    tambah(
+      'benar',
+      c + '² = ' + kaki[0] + '² + ' + kaki[1] + '²',
+      'Tepat — sisi miring di depan sudut siku-siku.'
+    );
+    tambah(
+      'tukarA',
+      kaki[0] + '² = ' + c + '² + ' + kaki[1] + '²',
+      kaki[0] +
+        ' adalah kaki (mengapit sudut siku-siku). Persegi terbesar ada pada sisi miring ' +
+        c +
+        ', di depan sudut siku-siku.'
+    );
+    tambah(
+      'tukarB',
+      kaki[1] + '² = ' + kaki[0] + '² + ' + c + '²',
+      kaki[1] +
+        ' adalah kaki (mengapit sudut siku-siku). Persegi terbesar ada pada sisi miring ' +
+        c +
+        ', di depan sudut siku-siku.'
+    );
+    tambah(
+      'tanpaKuadrat',
+      c + ' = ' + kaki[0] + ' + ' + kaki[1],
+      'Yang dijumlahkan adalah LUAS persegi (sisi²), bukan panjang sisi. Panjang dua sisi selalu lebih dari sisi ketiga.'
+    );
+    return out;
+  }
+
+  if (s.minta === 'luasMiring') {
+    var Lc = s.La + s.Lb;
+    var ra = akarBulat(s.La, 2);
+    var rb = akarBulat(s.Lb, 2);
+    nilai('benar', Lc, 'Tepat — luas persegi sisi miring = jumlah luas dua persegi kaki.');
+    nilai(
+      'selisih',
+      Math.abs(s.Lb - s.La),
+      'Kamu mengurangkan. Persegi pada sisi miring adalah yang TERBESAR, jadi luasnya jumlah kedua luas lainnya.'
+    );
+    if (ra && rb) {
+      nilai(
+        'jumlahSisi',
+        ra + rb,
+        'Itu jumlah panjang kedua kaki. Yang dicari luas persegi: jumlahkan LUAS kedua persegi kaki.'
+      );
+      nilai(
+        'kuadratJumlah',
+        (ra + rb) * (ra + rb),
+        'Itu luas bingkai (a + b)². Persegi sisi miring lebih kecil dari bingkainya.'
+      );
+    }
+    nilai(
+      'kali',
+      s.La * s.Lb,
+      'Kamu mengalikan kedua luas. Dari data tabel, luas persegi sisi miring = jumlah kedua luas lainnya.'
+    );
+    nilai(
+      'kaliDua',
+      2 * Lc,
+      'Luas persegi sisi miring sama dengan jumlah kedua luas, bukan dua kalinya.'
+    );
+    return out;
+  }
+
+  if (s.minta === 'luasKaki') {
+    var Lb = s.Lc - s.La;
+    var rc = akarBulat(s.Lc, 2);
+    var ra2 = akarBulat(s.La, 2);
+    nilai(
+      'benar',
+      Lb,
+      'Tepat — luas persegi kaki = luas persegi sisi miring − luas persegi kaki lainnya.'
+    );
+    nilai(
+      'jumlah',
+      s.Lc + s.La,
+      'Kamu menjumlahkan. Persegi sisi miring sudah yang terbesar, jadi luas persegi kaki = selisihnya.'
+    );
+    if (akarBulat(Lb, 2)) {
+      nilai('panjang', akarBulat(Lb, 2), 'Itu panjang sisi kaki. Yang ditanyakan LUAS perseginya.');
+    }
+    if (rc && ra2) {
+      nilai(
+        'selisihSisi',
+        (rc - ra2) * (rc - ra2),
+        'Kamu mengurangkan panjang sisi lalu menguadratkan. Kurangkan LUAS perseginya langsung.'
+      );
+    }
+    nilai('kaliDua', 2 * Lb, 'Luas persegi kaki = selisih kedua luas, bukan dua kalinya.');
+    return out;
+  }
+
+  /* sisiMiring */
+  var L = s.a * s.a + s.b * s.b;
+  var c2 = akarBulat(L, 2);
+  nilai(
+    'benar',
+    c2,
+    'Tepat — luas persegi sisi miring = a² + b², lalu panjang sisinya akar dari luas itu.'
+  );
+  nilai(
+    'jumlahSisi',
+    s.a + s.b,
+    'Panjang sisi tidak dijumlahkan langsung. Jumlahkan LUAS persegi kaki, lalu cari sisi perseginya.'
+  );
+  nilai(
+    'lupaAkar',
+    L,
+    'Itu LUAS persegi sisi miring. Panjang sisinya adalah bilangan yang jika dikuadratkan menghasilkan luas itu.'
+  );
+  nilai(
+    'selisih',
+    Math.abs(s.b - s.a),
+    'Sisi miring adalah sisi terpanjang, jadi tidak mungkin selisih kedua kaki.'
+  );
+  nilai('tambahSatu', c2 + 1, 'Periksa lagi: kuadratkan jawabanmu, apakah sama dengan a² + b²?');
+  return out;
+}
+
+/* Kunci soal uji terap: selalu id 'benar' (opsi dibangun opsiSoalPythagoras). */
+function nilaiSoalPythagoras(s) {
+  var opsi = opsiSoalPythagoras(s);
+  return opsi.some(function (o) {
+    return o.id === 'benar';
+  })
+    ? 'benar'
+    : null;
+}
+
+/* ---------- UI: gambar persegi pada sisi segitiga (SVG) ---------- */
+
+/* Nama sisi ke-i, mis. 'AB'. */
+function namaSisiSegitiga(seg, i) {
+  return seg.titik[i] + seg.titik[(i + 1) % 3];
+}
+
+function kotakBatasPersegi(sq) {
+  return kotakBatasBangun([sq]);
+}
+
+/*
+ * Segitiga berpetak dengan persegi di luar setiap sisinya.
+ *   opts.skala    piksel per satuan (default 20)
+ *   opts.label    [teks pusat persegi sisi 0, 1, 2] (mis. '?' atau '25')
+ *   opts.bingkai  true → tampilkan bingkai setiap persegi miring beserta
+ *                 empat segitiga pojoknya (oranye)
+ *   opts.petak    false → sembunyikan petak satuan di dalam persegi
+ *   opts.judul    teks aksesibel gambar
+ */
+function buildPersegiSisiSVG(seg, opts) {
+  opts = opts || {};
+  var pts = seg.pts;
+  var skala = opts.skala || 20;
+  var persegi = [0, 1, 2].map(function (i) {
+    return persegiLuarRuas(pts[i], pts[(i + 1) % 3], pts[(i + 2) % 3]);
+  });
+  var b = kotakBatasBangun([pts].concat(persegi));
+  var batas = {
+    x0: Math.floor(b.x0) - 1,
+    y0: Math.floor(b.y0) - 1,
+    x1: Math.ceil(b.x1) + 1,
+    y1: Math.ceil(b.y1) + 1,
+  };
+  var K = kanvasBangun(batas, skala, 4);
+  var isi = kisiBangun(K, batas);
+
+  persegi.forEach(function (sq, i) {
+    var bs = kotakBatasPersegi(sq);
+    var miring = bingkaiPersegiRuas(pts[i], pts[(i + 1) % 3]).miring;
+    if (opts.bingkai && miring) {
+      isi += poligonBangun(
+        K,
+        [
+          [bs.x0, bs.y0],
+          [bs.x1, bs.y0],
+          [bs.x1, bs.y1],
+          [bs.x0, bs.y1],
+        ],
+        'ptg-bingkai'
+      );
+    }
+    isi += poligonBangun(K, sq, 'ptg-persegi ptg-persegi--' + i);
+    if (opts.petak !== false) isi += petakDalamBangun(K, bs, sq);
+    isi += poligonBangun(K, sq, 'ptg-persegi-tepi ptg-persegi-tepi--' + i);
+  });
+
+  isi += poligonBangun(K, pts, 'ptg-segitiga');
+
+  var siku = titikSikuSegitiga(pts);
+  if (siku !== -1) {
+    var v = pts[siku];
+    var arah = [pts[(siku + 1) % 3], pts[(siku + 2) % 3]].map(function (p) {
+      var d = jarakBangun(v, p);
+      return [((p[0] - v[0]) / d) * 0.6, ((p[1] - v[1]) / d) * 0.6];
+    });
+    isi += poligonBangun(
+      K,
+      [
+        v,
+        [v[0] + arah[0][0], v[1] + arah[0][1]],
+        [v[0] + arah[0][0] + arah[1][0], v[1] + arah[0][1] + arah[1][1]],
+        [v[0] + arah[1][0], v[1] + arah[1][1]],
+      ],
+      'bangun-siku'
+    );
+  }
+
+  /* Nama titik digeser menjauhi titik berat segitiga. */
+  var gx = (pts[0][0] + pts[1][0] + pts[2][0]) / 3;
+  var gy = (pts[0][1] + pts[1][1] + pts[2][1]) / 3;
+  pts.forEach(function (p, i) {
+    var dx = p[0] - gx;
+    var dy = p[1] - gy;
+    var d = Math.sqrt(dx * dx + dy * dy) || 1;
+    isi += teksBangun(
+      K.x(p[0] + (dx / d) * 0.55),
+      K.y(p[1] + (dy / d) * 0.55),
+      seg.titik[i],
+      'bangun-teks ptg-titik'
+    );
+  });
+
+  if (opts.label) {
+    persegi.forEach(function (sq, i) {
+      if (opts.label[i] === undefined || opts.label[i] === null || opts.label[i] === '') return;
+      var cx = (sq[0][0] + sq[2][0]) / 2;
+      var cy = (sq[0][1] + sq[2][1]) / 2;
+      isi += teksBangun(K.x(cx), K.y(cy), String(opts.label[i]), 'bangun-teks ptg-luas-teks');
+    });
+  }
+
+  return (
+    '<svg class="bangun-svg ptg-svg" viewBox="0 0 ' +
+    K.w +
+    ' ' +
+    K.h +
+    '" width="' +
+    K.w +
+    '" height="' +
+    K.h +
+    '" role="img" aria-label="' +
+    esc(
+      opts.judul ||
+        'Segitiga ' + seg.titik.join('') + ' pada kertas berpetak dengan persegi di setiap sisinya'
+    ) +
+    '">' +
+    isi +
+    '</svg>'
+  );
+}
+
+/* ---------- UI: ukur luas ketiga persegi ---------- */
+
+var WARNA_PERSEGI = ['biru', 'oranye', 'ungu'];
+
+function ensureUkurLuas(st) {
+  st = st && typeof st === 'object' ? st : {};
+  if (!Array.isArray(st.isian) || st.isian.length !== 3) st.isian = ['', '', ''];
+  if (!Array.isArray(st.kode) || st.kode.length !== 3) st.kode = [null, null, null];
+  st.bingkai = !!st.bingkai;
+  return st;
+}
+
+function ukurLuasBenar(seg, st) {
+  return [0, 1, 2].every(function (i) {
+    return st.kode[i] === 'benar';
+  });
+}
+
+/* Ada persegi miring pada segitiga ini (perlu strategi bingkai)? */
+function adaPersegiMiring(seg) {
+  return [0, 1, 2].some(function (i) {
+    return bingkaiPersegiRuas(seg.pts[i], seg.pts[(i + 1) % 3]).miring;
+  });
+}
+
+/*
+ * Gambar + tiga isian luas persegi berdiagnosa + tombol bingkai.
+ *   opts.skala   piksel per satuan gambar
+ *   opts.judul   teks aksesibel gambar
+ */
+function buildUkurLuas(id, seg, st, opts) {
+  opts = opts || {};
+  var semua = ukurLuasBenar(seg, st);
+  var miring = adaPersegiMiring(seg);
+  var label = [0, 1, 2].map(function (i) {
+    return st.kode[i] === 'benar' ? String(luasPersegiRuas(seg.pts[i], seg.pts[(i + 1) % 3])) : '?';
+  });
+
+  var infoBingkai = '';
+  if (st.bingkai) {
+    infoBingkai = [0, 1, 2]
+      .map(function (i) {
+        var bk = bingkaiPersegiRuas(seg.pts[i], seg.pts[(i + 1) % 3]);
+        if (!bk.miring) return '';
+        return (
+          '<li>Persegi pada sisi <strong>' +
+          namaSisiSegitiga(seg, i) +
+          '</strong>: bingkai ' +
+          bk.sisiBingkai +
+          ' × ' +
+          bk.sisiBingkai +
+          ' petak; setiap segitiga pojok beralas ' +
+          bk.dx +
+          ' dan bertinggi ' +
+          bk.dy +
+          ' (atau sebaliknya).</li>'
+        );
+      })
+      .join('');
+    infoBingkai = infoBingkai ? '<ul class="ptg-ukur__bingkai-info">' + infoBingkai + '</ul>' : '';
+  }
+
+  var isian = [0, 1, 2]
+    .map(function (i) {
+      var kode = st.kode[i];
+      var benar = kode === 'benar';
+      var cls = 'input-text ptg-ukur__input';
+      if (kode && !benar) cls += ' has-error';
+      if (benar) cls += ' is-correct';
+      var inputId = id + '-in' + i;
+      return (
+        '<div class="ptg-ukur__baris">' +
+        '<label for="' +
+        inputId +
+        '" class="ptg-ukur__label">' +
+        '<span class="ptg-chip ptg-chip--' +
+        i +
+        '" aria-hidden="true"></span>' +
+        'Luas persegi pada sisi <strong>' +
+        namaSisiSegitiga(seg, i) +
+        '</strong> <span class="ptg-ukur__warna">(' +
+        WARNA_PERSEGI[i] +
+        ')</span></label>' +
+        '<div class="ptg-ukur__isi">' +
+        '<input type="text" inputmode="numeric" autocomplete="off" class="' +
+        cls +
+        '" id="' +
+        inputId +
+        '" data-ukur-in="' +
+        i +
+        '" value="' +
+        esc(st.isian[i]) +
+        '"' +
+        (benar ? ' disabled' : '') +
+        ' aria-describedby="' +
+        inputId +
+        '-msg" />' +
+        '<span class="ptg-ukur__satuan">petak</span>' +
+        '</div>' +
+        '<p class="ptg-ukur__pesan' +
+        (benar ? ' ptg-ukur__pesan--ok' : '') +
+        '" id="' +
+        inputId +
+        '-msg">' +
+        (kode ? (benar ? '✓ ' : '✗ ') + esc(pesanLuasPersegi(kode)) : '') +
+        '</p>' +
+        '</div>'
+      );
+    })
+    .join('');
+
+  return (
+    '<div class="ptg-ukur" id="' +
+    id +
+    '">' +
+    '<div class="ptg-ukur__gambar">' +
+    buildPersegiSisiSVG(seg, {
+      skala: opts.skala,
+      label: label,
+      bingkai: st.bingkai,
+      judul: opts.judul,
+    }) +
+    (miring
+      ? '<button type="button" class="btn btn--ghost btn--small" id="' +
+        id +
+        '-bingkai" aria-pressed="' +
+        (st.bingkai ? 'true' : 'false') +
+        '">' +
+        (st.bingkai ? '🔲 Sembunyikan bingkai' : '🔲 Tampilkan bingkai') +
+        '</button>'
+      : '') +
+    infoBingkai +
+    '</div>' +
+    '<div class="ptg-ukur__form">' +
+    isian +
+    (semua
+      ? ''
+      : '<div class="btn-group btn-group--end">' +
+        '<button type="button" class="btn btn--primary" id="' +
+        id +
+        '-cek">Periksa Luas</button>' +
+        '</div>') +
+    '</div>' +
+    '</div>'
+  );
+}
+
+/* onChange(selectorFokus) dipanggil setelah state berubah (simpan + render ulang). */
+function bindUkurLuas(root, id, seg, st, onChange) {
+  root.querySelectorAll('#' + id + ' [data-ukur-in]').forEach(function (inp) {
+    inp.addEventListener('input', function () {
+      st.isian[+inp.dataset.ukurIn] = inp.value;
+    });
+    inp.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter') {
+        var btn = document.getElementById(id + '-cek');
+        if (btn) btn.click();
+      }
+    });
+  });
+  var cek = document.getElementById(id + '-cek');
+  if (cek) {
+    cek.addEventListener('click', function () {
+      [0, 1, 2].forEach(function (i) {
+        if (st.kode[i] === 'benar') return;
+        st.kode[i] = diagnosaLuasPersegi(st.isian[i], seg.pts[i], seg.pts[(i + 1) % 3]);
+      });
+      var salah = [0, 1, 2].filter(function (i) {
+        return st.kode[i] !== 'benar';
+      });
+      onChange(salah.length ? '#' + id + '-in' + salah[0] : null);
+    });
+  }
+  var bk = document.getElementById(id + '-bingkai');
+  if (bk) {
+    bk.addEventListener('click', function () {
+      st.bingkai = !st.bingkai;
+      onChange('#' + id + '-bingkai');
+    });
+  }
+}
+
+/* ---------- UI: Lab Kotak Persegi (segitiga siku-siku berpetak) ---------- */
+
+/*
+ * cfg = { min, max, awal: [a, b], minCatat }
+ * st  = { a, b, ukur, catat: [{ a, b, La, Lb, Lc }] }
+ *   La = luas persegi kaki mendatar (a²), Lb = kaki tegak (b²),
+ *   Lc = sisi miring (dihitung murid lewat petak/bingkai).
+ */
+function ensureLabPersegi(st, cfg) {
+  st = st && typeof st === 'object' ? st : {};
+  var batas = function (v, awal) {
+    v = Math.round(+v);
+    return v >= cfg.min && v <= cfg.max ? v : awal;
+  };
+  st.a = batas(st.a, cfg.awal[0]);
+  st.b = batas(st.b, cfg.awal[1]);
+  st.ukur = ensureUkurLuas(st.ukur);
+  if (!Array.isArray(st.catat)) st.catat = [];
+  st.catat = st.catat.filter(function (c) {
+    return c && c.a >= cfg.min && c.a <= cfg.max && c.b >= cfg.min && c.b <= cfg.max;
+  });
+  return st;
+}
+
+function segitigaLabPersegi(st) {
+  return segitigaSikuKisi(st.a, st.b);
+}
+
+function labPersegiSudahDicatat(st) {
+  return st.catat.some(function (c) {
+    return (c.a === st.a && c.b === st.b) || (c.a === st.b && c.b === st.a);
+  });
+}
+
+function labPersegiSelesai(st, cfg) {
+  return st.catat.length >= cfg.minCatat;
+}
+
+function buildStepperLab(id, kunci, label, nilai, cfg) {
+  return (
+    '<div class="ptg-stepper" role="group" aria-label="' +
+    esc(label) +
+    '">' +
+    '<span class="ptg-stepper__label">' +
+    label +
+    '</span>' +
+    '<button type="button" class="btn btn--ghost btn--small ptg-stepper__btn" data-lab-step="' +
+    kunci +
+    '" data-delta="-1" aria-label="Kurangi ' +
+    esc(label) +
+    '"' +
+    (nilai <= cfg.min ? ' disabled' : '') +
+    '>−</button>' +
+    '<output class="ptg-stepper__val" id="' +
+    id +
+    '-' +
+    kunci +
+    '" aria-live="polite">' +
+    nilai +
+    '</output>' +
+    '<button type="button" class="btn btn--ghost btn--small ptg-stepper__btn" data-lab-step="' +
+    kunci +
+    '" data-delta="1" aria-label="Tambah ' +
+    esc(label) +
+    '"' +
+    (nilai >= cfg.max ? ' disabled' : '') +
+    '>+</button>' +
+    '</div>'
+  );
+}
+
+function buildLabPersegi(id, st, cfg) {
+  var seg = segitigaLabPersegi(st);
+  var benar = ukurLuasBenar(seg, st.ukur);
+  var dicatat = labPersegiSudahDicatat(st);
+  var aksi = '';
+  if (benar && !dicatat) {
+    aksi =
+      '<div class="btn-group btn-group--end">' +
+      '<button type="button" class="btn btn--primary" id="' +
+      id +
+      '-catat">📋 Catat ke tabel</button>' +
+      '</div>';
+  } else if (benar && dicatat) {
+    aksi = buildFeedbackBox(
+      'info',
+      '📋',
+      'Percobaan ini sudah tercatat. Ubah panjang kaki untuk membuat segitiga siku-siku yang baru.'
+    );
+  }
+
+  var baris = st.catat
+    .map(function (c, i) {
+      return (
+        '<tr><td>' +
+        (i + 1) +
+        '</td><td>' +
+        c.a +
+        '</td><td>' +
+        c.b +
+        '</td><td>' +
+        c.La +
+        '</td><td>' +
+        c.Lb +
+        '</td><td>' +
+        c.Lc +
+        '</td></tr>'
+      );
+    })
+    .join('');
+
+  return (
+    '<div class="ptg-lab" id="' +
+    id +
+    '">' +
+    '<div class="ptg-lab__atur">' +
+    buildStepperLab(id, 'a', 'Kaki mendatar BC', st.a, cfg) +
+    buildStepperLab(id, 'b', 'Kaki tegak AB', st.b, cfg) +
+    '</div>' +
+    buildUkurLuas(id + '-ukur', seg, st.ukur, {
+      judul:
+        'Segitiga siku-siku ABC dengan kaki BC ' +
+        st.a +
+        ' satuan dan AB ' +
+        st.b +
+        ' satuan, persegi pada setiap sisinya',
+    }) +
+    aksi +
+    '<h4 class="ptg-lab__judul-tabel">Catatan percobaan (' +
+    Math.min(st.catat.length, cfg.minCatat) +
+    '/' +
+    cfg.minCatat +
+    ')</h4>' +
+    (st.catat.length
+      ? '<div class="table-scroll"><table class="data-table ptg-tabel">' +
+        '<caption class="sr-only">Catatan luas persegi pada sisi segitiga siku-siku</caption>' +
+        '<thead><tr><th scope="col">No.</th><th scope="col">BC</th><th scope="col">AB</th>' +
+        '<th scope="col">Luas persegi BC</th><th scope="col">Luas persegi AB</th>' +
+        '<th scope="col">Luas persegi CA (sisi miring)</th></tr></thead>' +
+        '<tbody>' +
+        baris +
+        '</tbody></table></div>'
+      : '<p class="ptg-kosong">Belum ada percobaan yang dicatat.</p>') +
+    '</div>'
+  );
+}
+
+function bindLabPersegi(root, id, st, cfg, onChange) {
+  root.querySelectorAll('#' + id + ' [data-lab-step]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var k = btn.dataset.labStep;
+      var v = st[k] + +btn.dataset.delta;
+      if (v < cfg.min || v > cfg.max) return;
+      st[k] = v;
+      st.ukur = ensureUkurLuas(null);
+      var sel = '#' + id + ' [data-lab-step="' + k + '"][data-delta="' + btn.dataset.delta + '"]';
+      onChange(sel);
+    });
+  });
+  var seg = segitigaLabPersegi(st);
+  bindUkurLuas(root, id + '-ukur', seg, st.ukur, onChange);
+  var catat = document.getElementById(id + '-catat');
+  if (catat) {
+    catat.addEventListener('click', function () {
+      if (labPersegiSudahDicatat(st) || !ukurLuasBenar(seg, st.ukur)) return;
+      var L = luasPersegiSegitiga(seg.pts);
+      st.catat.push({ a: st.a, b: st.b, La: L.sisi[1], Lb: L.sisi[0], Lc: L.sisi[2] });
+      onChange('#' + id + ' [data-lab-step="a"][data-delta="1"]');
+    });
+  }
+}
+
+/* ---------- UI: tabel luas isian ---------- */
+
+/*
+ * rows = [{ id, a, b, La, Lb, Lc, isi: ['La'|'Lb'|'jumlah'|'Lc', …], catatan? }]
+ * Kolom tetap: a, b, La, Lb, La + Lb, Lc. Kolom di `isi` menjadi isian.
+ * st = { nilai: { <rowId>: { <kolom>: teks } }, status: { <rowId>: { <kolom>: bool } } }
+ */
+var KOLOM_TABEL_LUAS = ['La', 'Lb', 'jumlah', 'Lc'];
+
+function nilaiKolomLuas(row, kol) {
+  return kol === 'jumlah' ? row.La + row.Lb : row[kol];
+}
+
+function ensureTabelLuas(st, rows) {
+  st = st && typeof st === 'object' ? st : {};
+  var nilai = st.nilai && typeof st.nilai === 'object' ? st.nilai : {};
+  var status = st.status && typeof st.status === 'object' ? st.status : {};
+  st.nilai = {};
+  st.status = {};
+  rows.forEach(function (r) {
+    st.nilai[r.id] = {};
+    st.status[r.id] = {};
+    r.isi.forEach(function (k) {
+      var v = nilai[r.id] && nilai[r.id][k];
+      st.nilai[r.id][k] = typeof v === 'string' ? v : '';
+      st.status[r.id][k] = !!(status[r.id] && status[r.id][k]);
+    });
+  });
+  return st;
+}
+
+function tabelLuasBenar(rows, st) {
+  return rows.every(function (r) {
+    return r.isi.every(function (k) {
+      return st.status[r.id] && st.status[r.id][k] === true;
+    });
+  });
+}
+
+function buildTabelLuas(id, rows, st, judulKolom) {
+  var J = judulKolom || {};
+  var head = [
+    J.a || 'a',
+    J.b || 'b',
+    J.La || 'Luas persegi a',
+    J.Lb || 'Luas persegi b',
+    J.jumlah || 'La + Lb',
+    J.Lc || 'Luas persegi sisi miring',
+  ];
+  var body = rows
+    .map(function (r) {
+      var sel = KOLOM_TABEL_LUAS.map(function (k) {
+        if (r.isi.indexOf(k) === -1) return '<td>' + nilaiKolomLuas(r, k) + '</td>';
+        var ok = st.status[r.id][k];
+        var v = st.nilai[r.id][k];
+        var salah = v !== '' && st.diperiksa && !ok;
+        return (
+          '<td><input type="text" inputmode="numeric" autocomplete="off" class="input-text ptg-tabel__input' +
+          (ok ? ' is-correct' : '') +
+          (salah ? ' has-error' : '') +
+          '" data-tabel-row="' +
+          esc(r.id) +
+          '" data-tabel-kol="' +
+          k +
+          '" value="' +
+          esc(v) +
+          '" aria-label="' +
+          esc(head[KOLOM_TABEL_LUAS.indexOf(k) + 2] + ' untuk a = ' + r.a + ', b = ' + r.b) +
+          '"' +
+          (ok ? ' disabled' : '') +
+          ' /></td>'
+        );
+      }).join('');
+      return (
+        '<tr><td>' +
+        r.a +
+        '</td><td>' +
+        r.b +
+        '</td>' +
+        sel +
+        '</tr>' +
+        (r.catatan
+          ? '<tr class="ptg-tabel__catatan"><td colspan="6">' + esc(r.catatan) + '</td></tr>'
+          : '')
+      );
+    })
+    .join('');
+  return (
+    '<div class="table-scroll" id="' +
+    id +
+    '"><table class="data-table ptg-tabel">' +
+    '<thead><tr>' +
+    head
+      .map(function (h) {
+        return '<th scope="col">' + esc(h) + '</th>';
+      })
+      .join('') +
+    '</tr></thead><tbody>' +
+    body +
+    '</tbody></table></div>' +
+    (tabelLuasBenar(rows, st)
+      ? ''
+      : '<div class="btn-group btn-group--end" style="margin-top:var(--space-3);">' +
+        '<button type="button" class="btn btn--primary" id="' +
+        id +
+        '-cek">Periksa Tabel</button></div>')
+  );
+}
+
+function bindTabelLuas(root, id, rows, st, onChange) {
+  var byId = {};
+  rows.forEach(function (r) {
+    byId[r.id] = r;
+  });
+  root.querySelectorAll('[data-tabel-row]').forEach(function (inp) {
+    inp.addEventListener('input', function () {
+      st.nilai[inp.dataset.tabelRow][inp.dataset.tabelKol] = inp.value;
+    });
+  });
+  var cek = document.getElementById(id + '-cek');
+  if (!cek) return;
+  cek.addEventListener('click', function () {
+    var kosong = false;
+    rows.forEach(function (r) {
+      r.isi.forEach(function (k) {
+        var p = parseInputInt(st.nilai[r.id][k]);
+        if (p.error === 'empty') kosong = true;
+        st.status[r.id][k] = p.value === nilaiKolomLuas(byId[r.id], k);
+      });
+    });
+    st.diperiksa = true;
+    onChange(kosong ? 'kosong' : null);
   });
 }
