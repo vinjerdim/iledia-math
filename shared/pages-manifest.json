@@ -215,6 +215,14 @@
     "stageCount": 11,
     "extraBody": "partials/reset-modal.html"
   },
+  "fase-d/mpi-25.1": {
+    "title": "Koordinat Kartesius, Sifat Bangun Datar & Ide Awal Transformasi — Matematika Fase D",
+    "description": "Media pembelajaran interaktif berbasis Inquiry Learning untuk mengidentifikasi kemampuan prasyarat menentukan koordinat titik dan sifat bangun datar pada bidang koordinat Kartesius serta menjelaskan ide awal transformasi geometri dari contoh sehari-hari: Denah Panggung Pensi — Lab Titik untuk memasang properti di keempat kuadran dengan diagnosa x–y tertukar dan tanda terbalik, Lab Bangun untuk melengkapi titik keempat dan membaca sifat segi empat dari koordinat, Lab Gerak untuk memilah contoh geser, cermin, putar, dan perbesar serta mengamati ukuran, bentuk, dan arah hadap bayangan, uji hipotesis, dan uji terap acak berdiagnosa miskonsepsi.",
+    "kicker": "Matematika — Fase D (SMP)",
+    "h1": "Koordinat Kartesius, Sifat Bangun Datar & Ide Awal Transformasi",
+    "stageCount": 11,
+    "extraBody": "partials/reset-modal.html"
+  },
   "fase-f/mpi-1.1": {
     "title": "Konsep Barisan Aritmetika & Beda — Matematika Fase F",
     "description": "Media pembelajaran interaktif berbasis Inquiry Learning untuk mengidentifikasi dan menjelaskan konsep barisan aritmetika serta menentukan beda dari suatu barisan bilangan.",

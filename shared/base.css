@@ -41,11 +41,11 @@
   --color-warning-strong: #6a4c00;
   --color-focus: #2563eb;
 
-  --font-display: 'Avenir Next', 'Segoe UI Semibold', 'Segoe UI', 'Helvetica Neue', Arial,
-    sans-serif;
+  --font-display:
+    'Avenir Next', 'Segoe UI Semibold', 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
   --font-body: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
-  --font-mono: ui-monospace, 'Cascadia Mono', 'Segoe UI Mono', Consolas, 'Liberation Mono',
-    monospace;
+  --font-mono:
+    ui-monospace, 'Cascadia Mono', 'Segoe UI Mono', Consolas, 'Liberation Mono', monospace;
 
   --space-1: 4px;
   --space-2: 8px;
@@ -79,7 +79,8 @@ body {
   font-family: var(--font-body);
   color: var(--color-ink);
   background-color: var(--color-bg);
-  background-image: linear-gradient(var(--color-bg-grid) 1px, transparent 1px),
+  background-image:
+    linear-gradient(var(--color-bg-grid) 1px, transparent 1px),
     linear-gradient(90deg, var(--color-bg-grid) 1px, transparent 1px);
   background-size: 28px 28px;
   line-height: 1.6;
@@ -4597,7 +4598,8 @@ details.hint-reveal[open] summary::before {
   height: var(--dec-u);
   border: 1px solid var(--color-blue-strong);
   background-color: var(--color-blue-soft);
-  background-image: linear-gradient(to right, rgba(24, 86, 164, 0.35) 1px, transparent 1px),
+  background-image:
+    linear-gradient(to right, rgba(24, 86, 164, 0.35) 1px, transparent 1px),
     linear-gradient(to bottom, rgba(24, 86, 164, 0.35) 1px, transparent 1px);
   background-size: var(--dec-t) var(--dec-t);
 }
@@ -19005,6 +19007,362 @@ button.akar-tile:disabled {
 
   .ppb-banding,
   .ppb-log {
+    font-size: 0.82rem;
+  }
+}
+
+/* =========================================================================
+   BIDANG KARTESIUS & IDE AWAL TRANSFORMASI (shared/engine.js seksi 91)
+   Bidang koordinat interaktif (.kts-bidang, .kts-svg, .kts-sumbu,
+   .kts-titik, .kts-bangun, .kts-kursor), Lab Titik & titik keempat
+   (.kts-lab*, .kts-tugas*, .kts-chip), tabel sifat & catatan
+   (.kts-sifat, .kts-log, .kts-sel--*), dan Lab Gerak (.kts-pilih,
+   .kts-gerak*, .kts-banding). Memakai kisi .bangun-kisi (seksi 73).
+   ========================================================================= */
+
+.kts-bidang {
+  margin: 0;
+  min-width: 0;
+  text-align: center;
+}
+
+.kts-svg {
+  display: block;
+  width: 100%;
+  max-width: 420px;
+  height: auto;
+  margin: 0 auto;
+  overflow: visible;
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+}
+
+.kts-bidang--aktif .kts-svg {
+  cursor: crosshair;
+  touch-action: manipulation;
+  border: 2px dashed var(--color-border-strong);
+}
+
+.kts-bidang--aktif .kts-svg:focus-visible {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 3px;
+  border-color: var(--color-focus);
+}
+
+.kts-kisi .bangun-kisi {
+  stroke: var(--color-border);
+}
+
+.kts-sumbu {
+  stroke: var(--color-ink);
+  stroke-width: 1.8;
+}
+
+.kts-panah {
+  fill: var(--color-ink);
+}
+
+.kts-angka,
+.kts-label-sumbu,
+.kts-label {
+  font-family: var(--font-body);
+  paint-order: stroke;
+  stroke: var(--color-surface);
+  stroke-width: 3px;
+  stroke-linejoin: round;
+}
+
+.kts-angka {
+  font-size: 9px;
+  fill: var(--color-ink-muted);
+}
+
+.kts-label-sumbu {
+  font-size: 13px;
+  font-style: italic;
+  font-weight: 700;
+  fill: var(--color-ink);
+}
+
+.kts-label {
+  font-size: 12px;
+  font-weight: 700;
+  fill: var(--color-blue-strong);
+}
+
+.kts-label--bayangan {
+  fill: var(--color-orange-strong);
+}
+
+.kts-label--soal {
+  fill: var(--color-purple-strong);
+}
+
+.kts-titik {
+  stroke: var(--color-surface);
+  stroke-width: 1.5;
+  fill: var(--color-blue);
+}
+
+.kts-titik--bayangan {
+  fill: var(--color-orange);
+}
+
+.kts-titik--soal {
+  fill: var(--color-purple);
+}
+
+.kts-bangun {
+  stroke-width: 2.5;
+  stroke-linejoin: round;
+}
+
+.kts-bangun--asal {
+  fill: var(--color-blue-soft);
+  fill-opacity: 0.8;
+  stroke: var(--color-blue);
+}
+
+.kts-bangun--bayangan {
+  fill: var(--color-orange-soft);
+  fill-opacity: 0.8;
+  stroke: var(--color-orange);
+  stroke-dasharray: 6 3;
+}
+
+.kts-bangun--bantu {
+  fill: none;
+  stroke: var(--color-purple);
+  stroke-dasharray: 4 4;
+}
+
+polyline.kts-bangun--asal {
+  fill: none;
+}
+
+.kts-bantu {
+  stroke: var(--color-purple);
+  stroke-width: 1.5;
+  stroke-dasharray: 4 3;
+}
+
+.kts-kursor {
+  fill: var(--color-purple-soft);
+  fill-opacity: 0.6;
+  stroke: var(--color-purple);
+  stroke-width: 2.5;
+}
+
+.kts-bidang__baca {
+  margin: var(--space-2) 0 0;
+  font-size: 0.95rem;
+}
+
+/* Lab Titik & titik keempat */
+
+.kts-lab {
+  display: grid;
+  grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+  gap: var(--space-4);
+  align-items: start;
+}
+
+.kts-lab__bidang,
+.kts-lab__panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  min-width: 0;
+}
+
+.kts-lab__perintah {
+  margin: 0;
+  font-size: 1.05rem;
+  line-height: 1.5;
+}
+
+.kts-tugas {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.kts-tugas__item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  font-size: 0.95rem;
+}
+
+.kts-tugas__item--aktif {
+  border-color: var(--color-purple);
+  background: var(--color-purple-soft);
+}
+
+.kts-tugas__item--ok {
+  border-color: var(--color-success);
+  background: var(--color-success-soft);
+}
+
+.kts-tugas__ikon {
+  font-size: 1.2rem;
+}
+
+.kts-tugas__cek,
+.kts-beres {
+  color: var(--color-success-strong);
+  font-weight: 700;
+}
+
+.kts-koord-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin: 0;
+}
+
+.kts-chip {
+  display: inline-block;
+  padding: var(--space-1) var(--space-3);
+  border: 1px solid var(--color-blue);
+  border-radius: 999px;
+  background: var(--color-blue-soft);
+  color: var(--color-blue-strong);
+  font-weight: 700;
+  font-size: 0.9rem;
+  white-space: nowrap;
+}
+
+.kts-chip--tanya {
+  border-color: var(--color-purple);
+  background: var(--color-purple-soft);
+  color: var(--color-purple-strong);
+}
+
+.kts-chip--ya {
+  border-color: var(--color-success);
+  background: var(--color-success-soft);
+  color: var(--color-success-strong);
+}
+
+.kts-chip--tidak {
+  border-color: var(--color-warning);
+  background: var(--color-warning-soft);
+  color: var(--color-warning-strong);
+}
+
+.kts-sifat,
+.kts-tabel,
+.kts-log {
+  margin-bottom: var(--space-2);
+}
+
+.kts-sifat th[scope='row'] {
+  text-align: left;
+  font-weight: 600;
+}
+
+.kts-sel--ya {
+  background: var(--color-success-soft);
+  color: var(--color-success-strong);
+  font-weight: 700;
+}
+
+.kts-sel--tidak {
+  background: var(--color-warning-soft);
+  color: var(--color-warning-strong);
+  font-weight: 700;
+}
+
+/* Lab Gerak */
+
+.kts-pilih {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--space-2);
+}
+
+.kts-pilih .btn {
+  min-height: 44px;
+}
+
+.kts-gerak {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: var(--space-2);
+}
+
+.kts-gerak__btn {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: 48px;
+  padding: var(--space-2) var(--space-3);
+  border: 2px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  color: var(--color-ink);
+  font: inherit;
+  font-size: 0.9rem;
+  text-align: left;
+  cursor: pointer;
+}
+
+.kts-gerak__btn:hover {
+  border-color: var(--color-primary);
+}
+
+.kts-gerak__btn:focus-visible {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+.kts-gerak__btn.is-done {
+  border-color: var(--color-success);
+}
+
+.kts-gerak__btn.is-active {
+  border-color: var(--color-orange);
+  background: var(--color-orange-soft);
+  font-weight: 700;
+}
+
+.kts-gerak__ikon {
+  font-size: 1.2rem;
+}
+
+.kts-banding {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.kts-log-wrap {
+  margin-top: var(--space-4);
+}
+
+@media (max-width: 720px) {
+  .kts-lab {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 480px) {
+  .kts-gerak {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .kts-log,
+  .kts-tabel,
+  .kts-sifat {
     font-size: 0.82rem;
   }
 }

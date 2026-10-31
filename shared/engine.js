@@ -294,6 +294,13 @@
        pelukis, sudut juring, luas permukaan & volume, kunci/diagnosa/
        opsi soal berpengecoh, model 3D yang dapat dimiringkan, Lab
        Unsur, Lab Bentang, Lab Kulit Jeruk, Lab Tuang, tabel unsur)
+   90. Perubahan proporsional bangun datar (kali, tambah & regang sisi,
+       banding rasio sisi & sudut, soal berdiagnosa, Lab Ubah Ukuran)
+   91. Bidang Kartesius & ide awal transformasi (kuadran, penulisan &
+       diagnosa koordinat, sifat & jenis segi empat dari koordinat,
+       titik keempat, geser/cermin/putar/perbesar, banding asal–
+       bayangan, opsi soal berpengecoh, bidang Kartesius interaktif,
+       Lab Titik, titik keempat, Lab Gerak)
    ============================================================ */
 
 /* ============================================================
@@ -996,8 +1003,8 @@ function createExerciseStage(cfg) {
         (cfg.inputMode
           ? ' inputmode="' + esc(cfg.inputMode) + '"'
           : cfg.allowNegative
-          ? ''
-          : ' inputmode="numeric"') +
+            ? ''
+            : ' inputmode="numeric"') +
         ' id="' +
         prefix +
         'Input" class="input-text" placeholder="' +
@@ -1087,8 +1094,8 @@ function createExerciseStage(cfg) {
       feedbackHTML = cfg.buildChoiceFeedback
         ? cfg.buildChoiceFeedback(s, ex)
         : ex.correct
-        ? buildFeedbackBox('success', '✓', '<strong>Benar!</strong> ' + s.explanation)
-        : buildFeedbackBox('error', '✗', '<strong>Belum tepat.</strong> ' + s.explanation);
+          ? buildFeedbackBox('success', '✓', '<strong>Benar!</strong> ' + s.explanation)
+          : buildFeedbackBox('error', '✗', '<strong>Belum tepat.</strong> ' + s.explanation);
     }
 
     return (
@@ -1737,8 +1744,8 @@ function readDlNumber(val, rational) {
       parsed.error === 'empty'
         ? 'Isi jawabanmu terlebih dahulu.'
         : rational
-        ? 'Tulis jawaban berupa bilangan, pecahan, atau desimal, mis. 3, 1/2, atau 0,5.'
-        : 'Tulis jawaban berupa bilangan bulat, mis. 12 atau −40.'
+          ? 'Tulis jawaban berupa bilangan, pecahan, atau desimal, mis. 3, 1/2, atau 0,5.'
+          : 'Tulis jawaban berupa bilangan bulat, mis. 12 atau −40.'
     );
     return null;
   }
@@ -5085,8 +5092,8 @@ function buildIntegerOpSimulator(id, sim, opts) {
     (r.by > 0
       ? 'Lompatan <strong>' + r.by + ' langkah ke kanan</strong>.'
       : r.by < 0
-      ? 'Lompatan <strong>' + -r.by + ' langkah ke kiri</strong>.'
-      : 'Tidak ada lompatan — titiknya diam.') +
+        ? 'Lompatan <strong>' + -r.by + ' langkah ke kiri</strong>.'
+        : 'Tidak ada lompatan — titiknya diam.') +
     '</p>' +
     '</div>'
   );
@@ -5713,8 +5720,8 @@ function buildPlaceValueTable(str, opts) {
             c.pos <= 0
               ? nilaiBulat[-c.pos]
               : DESIMAL_TEMPAT[c.pos]
-              ? DESIMAL_TEMPAT[c.pos].pecahan
-              : '';
+                ? DESIMAL_TEMPAT[c.pos].pecahan
+                : '';
           return '<td class="' + cls(c) + '">' + esc(t) + '</td>';
         })
         .join('') +
@@ -12845,8 +12852,8 @@ function modelPrisma(n, opts) {
     typeof opts.sudutAwal === 'number'
       ? opts.sudutAwal
       : rebah
-      ? -Math.PI / 2 + (n % 2 ? 0 : Math.PI / n)
-      : -Math.PI / 2 - Math.PI / n;
+        ? -Math.PI / 2 + (n % 2 ? 0 : Math.PI / n)
+        : -Math.PI / 2 - Math.PI / n;
   var L = labelTitikPrisma(n);
   var titik = [];
   [0, h].forEach(function (z, lapis) {
@@ -18544,12 +18551,12 @@ function buildPilihSimbolDesimal(a, b, order, st, opts) {
     (benar
       ? buildFeedbackBox('success', '✓', esc(alasanBandingDesimal(a, b)))
       : salah
-      ? buildFeedbackBox(
-          'warning',
-          '💭',
-          esc(pesanDiagnosaDesimal(diagnosaBandingDesimal(a, b, st.chosen), a, b))
-        )
-      : '')
+        ? buildFeedbackBox(
+            'warning',
+            '💭',
+            esc(pesanDiagnosaDesimal(diagnosaBandingDesimal(a, b, st.chosen), a, b))
+          )
+        : '')
   );
 }
 
@@ -19172,12 +19179,12 @@ function buildPilihSimbolTerpadu(a, b, order, st, opts) {
     (benar
       ? buildFeedbackBox('success', '✓', esc(alasanBandingTerpadu(a, b)))
       : salah
-      ? buildFeedbackBox(
-          'warning',
-          '💭',
-          esc(pesanDiagnosaTerpadu(diagnosaBandingTerpadu(a, b, st.chosen), a, b))
-        )
-      : '')
+        ? buildFeedbackBox(
+            'warning',
+            '💭',
+            esc(pesanDiagnosaTerpadu(diagnosaBandingTerpadu(a, b, st.chosen), a, b))
+          )
+        : '')
   );
 }
 
@@ -20519,8 +20526,8 @@ function pesanDiagnosaResidu(kode, y, yTopi) {
       (e > 0
         ? '. Titik berada di atas garis.'
         : e < 0
-        ? '. Titik berada di bawah garis.'
-        : '. Titik tepat pada garis.')
+          ? '. Titik berada di bawah garis.'
+          : '. Titik tepat pada garis.')
     );
   }
   if (kode === 'tanda') {
@@ -23233,16 +23240,16 @@ function buildSifatStep(id, step, st, opts) {
                         formatPangkat(step.a, -hasil.k) +
                         ', lalu tulis kebalikannya (pecahan).'
                     : hasil.k === 0
-                    ? 'Ingat: a⁰ = 1 untuk a ≠ 0.'
-                    : step.op === 'basisBeda'
-                    ? 'Hitung ' +
-                      formatPangkat(step.a, step.m) +
-                      ' dan ' +
-                      formatPangkat(step.b, step.n) +
-                      ' lebih dulu, lalu kalikan.'
-                    : 'Tuliskan ' +
-                      hasil.teks +
-                      ' sebagai perkalian berulang, lalu hitung. Perhatikan tanda bila basisnya negatif.'
+                      ? 'Ingat: a⁰ = 1 untuk a ≠ 0.'
+                      : step.op === 'basisBeda'
+                        ? 'Hitung ' +
+                          formatPangkat(step.a, step.m) +
+                          ' dan ' +
+                          formatPangkat(step.b, step.n) +
+                          ' lebih dulu, lalu kalikan.'
+                        : 'Tuliskan ' +
+                          hasil.teks +
+                          ' sebagai perkalian berulang, lalu hitung. Perhatikan tanda bila basisnya negatif.'
                 )
             )
           : '');
@@ -33415,8 +33422,8 @@ function lplSusunSVG(p, t) {
         (jadi
           ? ' dijajarkan berselang atas–bawah membentuk ' + z.bentuk
           : t < 0.001
-          ? ' tersusun seperti kipas mengelilingi titik puncak'
-          : ' sedang dipindahkan')
+            ? ' tersusun seperti kipas mengelilingi titik puncak'
+            : ' sedang dipindahkan')
     ) +
     '">' +
     tri +
@@ -35201,8 +35208,8 @@ function vlTuangInfo(st, p) {
     (st.isi[p.id]
       ? 'Wadah limas penuh pasir. Tuang isinya ke wadah prisma.'
       : n >= VLM_TUANG
-      ? 'Prisma sudah penuh. Kosongkan bila ingin mengulang percobaan.'
-      : 'Isi wadah limas sampai penuh (rata dengan puncak), lalu tuang ke prisma.') +
+        ? 'Prisma sudah penuh. Kosongkan bila ingin mengulang percobaan.'
+        : 'Isi wadah limas sampai penuh (rata dengan puncak), lalu tuang ke prisma.') +
     '</p>'
   );
 }
@@ -38429,8 +38436,8 @@ function diagnosaOperasiDesimal(isian, a, op, b) {
       kode === 'benar'
         ? 'Tepat! ' + fmtOperasiDesimal(a, op, b) + ' = ' + hasilOperasiDesimal(a, op, b) + '.'
         : kode === 'koma-geser'
-        ? pesanKomaGeserDesimal(a, op, b)
-        : PESAN_OPERASI_DESIMAL[kode];
+          ? pesanKomaGeserDesimal(a, op, b)
+          : PESAN_OPERASI_DESIMAL[kode];
     return { benar: kode === 'benar', kode: kode, pesan: pesan };
   }
   var s = String(isian == null ? '' : isian).replace(/\s/g, '');
@@ -50799,19 +50806,19 @@ function buildTabelLabBatas(st, cfg) {
         var isi = lengkap
           ? formatHimpunanBulat(ya)
           : c.uji.length
-          ? c.uji
-              .map(function (u) {
-                return (
-                  '<span class="lab-neraca__uji ' +
-                  (u.benar ? 'is-benar' : 'is-salah') +
-                  '">' +
-                  u.x +
-                  (u.benar ? ' ✓' : ' ✗') +
-                  '</span>'
-                );
-              })
-              .join(' ')
-          : '…';
+            ? c.uji
+                .map(function (u) {
+                  return (
+                    '<span class="lab-neraca__uji ' +
+                    (u.benar ? 'is-benar' : 'is-salah') +
+                    '">' +
+                    u.x +
+                    (u.benar ? ' ✓' : ' ✗') +
+                    '</span>'
+                  );
+                })
+                .join(' ')
+            : '…';
         return (
           '<tr' +
           (s.id === st.aktif ? ' class="is-aktif"' : '') +
@@ -51941,8 +51948,8 @@ function buildLabSudut(id, st, cfg) {
           ' ke posisi lain.'
       )
     : st.aktif === null
-    ? '<p class="dl-caption">👆 Ketuk sebuah sudut (pada gambar atau tombolnya) untuk memasang busur.</p>'
-    : '';
+      ? '<p class="dl-caption">👆 Ketuk sebuah sudut (pada gambar atau tombolnya) untuk memasang busur.</p>'
+      : '';
 
   return (
     '<div class="lab-neraca lab-sudut" id="' +
@@ -52939,8 +52946,8 @@ function buildBidangPenyusunSVG(jenis, n, opts) {
     var kelas = k.b.lengkung
       ? 'bgr-bidang--selimut'
       : /alas/.test(k.b.peran)
-      ? 'bgr-bidang--alas'
-      : 'bgr-bidang--tegak';
+        ? 'bgr-bidang--alas'
+        : 'bgr-bidang--tegak';
     var bentuk;
     if (k.b.bentuk === 'lingkaran') {
       bentuk = '<circle cx="' + psmFmt(cx) + '" cy="' + psmFmt(cy) + '" r="' + C * 0.42 + '"/>';
@@ -55673,8 +55680,8 @@ function buildLabTanya(id, st, cfg) {
               ringkas.length +
               ' jawaban berbeda, jadi pertanyaan ini perlu dijawab dengan mengumpulkan data dari kelompok.'
             : q.ciri && q.ciri.banyak === false
-            ? '<strong>Tepat.</strong> Hanya satu orang yang bisa menjawab, jadi datanya hanya satu.'
-            : '<strong>Tepat.</strong> Semua menjawab sama. Jawabannya cukup dicari sekali, tidak perlu mengumpulkan data.';
+              ? '<strong>Tepat.</strong> Hanya satu orang yang bisa menjawab, jadi datanya hanya satu.'
+              : '<strong>Tepat.</strong> Semua menjawab sama. Jawabannya cukup dicari sekali, tidak perlu mengumpulkan data.';
       } else {
         umpan =
           'Lihat lagi ringkasan jawabannya: ada <strong>' +
@@ -60701,10 +60708,10 @@ function buildMenaraRata(id, st, set, opts) {
   var status = kunci
     ? 'Menara sudah rata.'
     : st.pilih === null
-    ? 'Ketuk menara yang akan diambil satu baloknya.'
-    : 'Ketuk menara tujuan untuk menaruh balok dari ' +
-      set.nama[st.pilih] +
-      ' (ketuk lagi untuk batal).';
+      ? 'Ketuk menara yang akan diambil satu baloknya.'
+      : 'Ketuk menara tujuan untuk menaruh balok dari ' +
+        set.nama[st.pilih] +
+        ' (ketuk lagi untuk batal).';
   return (
     '<div class="rrt-menara" role="group" aria-label="Menara balok ' +
     esc(set.satuan) +
@@ -64433,6 +64440,1418 @@ function buildLogUbahPP(st, cfg) {
           '</td>' +
           ya(r.rasioSama) +
           ya(r.sudutTetap) +
+          '</tr>'
+        );
+      })
+      .join('') +
+    '</tbody></table></div>'
+  );
+}
+
+/* ============================================================
+   91. BIDANG KARTESIUS & IDE AWAL TRANSFORMASI
+   Titik ditulis [x, y] berkoordinat bulat pada bidang Kartesius
+   (sumbu y ke atas, batas −n … n). Bangun = { id, nama, titik, pts }.
+   Transformasi t = { jenis: 'geser', dx, dy } | { jenis: 'cermin',
+   sumbu: 'x' | 'y' } | { jenis: 'putar', sudut: 90 | 180 | 270 }
+   (berlawanan arah jarum jam, pusat O) | { jenis: 'perbesar', k }
+   (pusat O). Memakai ulang pemeta kanvas & kisi seksi 73
+   (kanvasBangun, kisiBangun, teksBangun, poinBangun).
+     • titik       kuadranTitik, KTS_KUADRAN_LABEL, formatKoordinat,
+                   diagnosaKoordinat, pesanKoordinat, ktsBulatkanTitik
+     • bangun      panjangRuasSumbu, sifatSegiEmpat, jenisSegiEmpat,
+                   KTS_JENIS_LABEL, titikKeempatJajargenjang
+     • gerak       KTS_GERAK, transformasiTitik, transformasiBangun,
+                   labelTransformasi, bandingTransformasi
+     • soal        jawabSoalKts, opsiSoalKts
+     • komponen    bidang Kartesius SVG (buildBidangKartesius,
+                   bindBidangKartesius), Lab Titik (ensure/periksa/
+                   build/bindLabTitikKts, labTitikSelesai), titik
+                   keempat (ensure/periksa/build/bindTitikKeempatKts,
+                   buildSifatSegiEmpatKts), Lab Gerak (ensure/terapkan/
+                   build/bindLabGerakKts, labGerakLengkap, buildLogGerakKts)
+   Fungsi murni diuji di tests/engine-kartesius-transformasi.test.js.
+   Gaya .kts-* ada di shared/base.css.
+   ============================================================ */
+
+var KTS_KUADRAN_LABEL = {
+  I: 'Kuadran I (x positif, y positif)',
+  II: 'Kuadran II (x negatif, y positif)',
+  III: 'Kuadran III (x negatif, y negatif)',
+  IV: 'Kuadran IV (x positif, y negatif)',
+  sumbuX: 'Tepat pada sumbu-x (tidak di kuadran mana pun)',
+  sumbuY: 'Tepat pada sumbu-y (tidak di kuadran mana pun)',
+  O: 'Titik asal O (0, 0)',
+};
+
+var KTS_JENIS_LABEL = {
+  persegi: 'Persegi',
+  persegiPanjang: 'Persegi panjang',
+  belahKetupat: 'Belah ketupat',
+  jajargenjang: 'Jajargenjang',
+  trapesium: 'Trapesium',
+  layangLayang: 'Layang-layang',
+  segiEmpat: 'Segi empat sembarang',
+};
+
+/* Ciri pembeda setiap jenis segi empat (untuk umpan balik pengecoh). */
+var KTS_JENIS_CIRI = {
+  persegi: 'persegi punya empat sisi sama panjang DAN empat sudut siku-siku',
+  persegiPanjang: 'persegi panjang punya dua pasang sisi sejajar dan empat sudut siku-siku',
+  belahKetupat:
+    'belah ketupat punya empat sisi sama panjang, tetapi sudutnya tidak harus siku-siku',
+  jajargenjang: 'jajargenjang punya dua pasang sisi sejajar, tetapi sudutnya tidak siku-siku',
+  trapesium: 'trapesium hanya punya SATU pasang sisi sejajar',
+  layangLayang:
+    'layang-layang punya dua pasang sisi berdekatan yang sama panjang dan tidak punya sisi sejajar',
+  segiEmpat: 'segi empat sembarang tidak punya sisi sejajar maupun sisi berdekatan yang sama',
+};
+
+/* Pengecoh jenis bangun yang paling sering tertukar. */
+var KTS_JENIS_KELIRU = {
+  persegi: ['persegiPanjang', 'belahKetupat', 'layangLayang'],
+  persegiPanjang: ['persegi', 'jajargenjang', 'trapesium'],
+  belahKetupat: ['persegi', 'jajargenjang', 'layangLayang'],
+  jajargenjang: ['persegiPanjang', 'belahKetupat', 'trapesium'],
+  trapesium: ['jajargenjang', 'layangLayang', 'persegiPanjang'],
+  layangLayang: ['belahKetupat', 'trapesium', 'jajargenjang'],
+  segiEmpat: ['trapesium', 'layangLayang', 'jajargenjang'],
+};
+
+var KTS_GERAK = [
+  {
+    id: 'geser',
+    nama: 'Geser',
+    istilah: 'translasi',
+    ikon: '➡️',
+    ciri: 'setiap titik berpindah dengan arah dan jarak yang sama',
+  },
+  {
+    id: 'cermin',
+    nama: 'Cermin',
+    istilah: 'refleksi',
+    ikon: '🪞',
+    ciri: 'bangun dibalik terhadap sebuah garis seperti bayangan di cermin',
+  },
+  {
+    id: 'putar',
+    nama: 'Putar',
+    istilah: 'rotasi',
+    ikon: '🔄',
+    ciri: 'bangun berputar mengelilingi satu titik pusat',
+  },
+  {
+    id: 'perbesar',
+    nama: 'Perbesar/perkecil',
+    istilah: 'dilatasi',
+    ikon: '🔍',
+    ciri: 'ukuran bangun dikali sebuah faktor, bentuknya tetap',
+  },
+];
+
+function ktsNol_(v) {
+  var r = Math.round(v * 1e9) / 1e9;
+  return r === 0 ? 0 : r;
+}
+
+function ktsTitik_(x, y) {
+  return [ktsNol_(x), ktsNol_(y)];
+}
+
+function samaTitikKts_(p, q) {
+  return !!(p && q && p[0] === q[0] && p[1] === q[1]);
+}
+
+function gerakKts_(id) {
+  return KTS_GERAK.filter(function (g) {
+    return g.id === id;
+  })[0];
+}
+
+/* Letak titik: 'I' … 'IV', 'sumbuX', 'sumbuY', atau 'O'. */
+function kuadranTitik(p) {
+  var x = p[0];
+  var y = p[1];
+  if (x === 0 && y === 0) return 'O';
+  if (y === 0) return 'sumbuX';
+  if (x === 0) return 'sumbuY';
+  if (x > 0) return y > 0 ? 'I' : 'IV';
+  return y > 0 ? 'II' : 'III';
+}
+
+/* (x, y) dengan lambang minus tipografis. */
+function formatKoordinat(p) {
+  return '(' + formatNumber(p[0], '−') + ', ' + formatNumber(p[1], '−') + ')';
+}
+
+/*
+ * Diagnosa jawaban koordinat terhadap kunci `benar`:
+ * 'tepat' | 'kosong' | 'tertukar' (x dan y tertukar) | 'tandaX' |
+ * 'tandaY' | 'tandaXY' (tanda salah) | 'xSaja' (hanya x yang tepat) |
+ * 'ySaja' (hanya y yang tepat) | 'lain'.
+ */
+function diagnosaKoordinat(benar, jawab) {
+  if (!jawab) return 'kosong';
+  var bx = benar[0];
+  var by = benar[1];
+  var x = jawab[0];
+  var y = jawab[1];
+  if (x === bx && y === by) return 'tepat';
+  if (bx !== by && x === by && y === bx) return 'tertukar';
+  if (x === -bx && y === by && bx !== 0) return 'tandaX';
+  if (x === bx && y === -by && by !== 0) return 'tandaY';
+  if (x === -bx && y === -by) return 'tandaXY';
+  if (x === bx) return 'xSaja';
+  if (y === by) return 'ySaja';
+  return 'lain';
+}
+
+/* Umpan balik untuk hasil diagnosaKoordinat. */
+function pesanKoordinat(diag, benar) {
+  var bx = formatNumber(benar[0], '−');
+  var by = formatNumber(benar[1], '−');
+  var pesan = {
+    tepat: 'Tepat! Titiknya berada di ' + formatKoordinat(benar) + '.',
+    kosong: 'Ketuk dulu sebuah titik pada bidang koordinat, lalu periksa.',
+    tertukar:
+      'Nilai x dan y tertukar. Ingat urutannya: (x, y) — bergerak MENDATAR dulu sejauh x, baru TEGAK sejauh y.',
+    tandaX:
+      'Arah mendatarnya terbalik. x = ' +
+      bx +
+      ': positif berarti ke KANAN dari O, negatif berarti ke KIRI.',
+    tandaY:
+      'Arah tegaknya terbalik. y = ' +
+      by +
+      ': positif berarti ke ATAS dari O, negatif berarti ke BAWAH.',
+    tandaXY:
+      'Kedua arahnya terbalik. Tanda positif: ke kanan / ke atas; tanda negatif: ke kiri / ke bawah.',
+    xSaja: 'Langkah mendatarnya (x = ' + bx + ') sudah tepat. Periksa lagi langkah tegaknya (y).',
+    ySaja: 'Langkah tegaknya (y = ' + by + ') sudah tepat. Periksa lagi langkah mendatarnya (x).',
+    lain:
+      'Belum tepat. Mulai dari titik asal O, bilang ' +
+      bx +
+      ' langkah mendatar lalu ' +
+      by +
+      ' langkah tegak.',
+  };
+  return pesan[diag] || pesan.lain;
+}
+
+/* Membulatkan posisi ketuk ke titik kisi terdekat dalam batas −n … n. */
+function ktsBulatkanTitik(x, y, n) {
+  var c = function (v) {
+    return Math.max(-n, Math.min(n, Math.round(v)));
+  };
+  return ktsTitik_(c(x), c(y));
+}
+
+/* Panjang ruas mendatar/tegak dari selisih koordinat; null bila miring. */
+function panjangRuasSumbu(p, q) {
+  if (p[1] === q[1]) return Math.abs(q[0] - p[0]);
+  if (p[0] === q[0]) return Math.abs(q[1] - p[1]);
+  return null;
+}
+
+function vekKts_(p, q) {
+  return [q[0] - p[0], q[1] - p[1]];
+}
+
+function panjangKts_(v) {
+  return Math.sqrt(v[0] * v[0] + v[1] * v[1]);
+}
+
+function sejajarKts_(u, v) {
+  return Math.abs(u[0] * v[1] - u[1] * v[0]) < 1e-9;
+}
+
+function samaPanjangKts_(a, b) {
+  return Math.abs(a - b) < 1e-9;
+}
+
+/*
+ * Sifat segi empat ABCD dari koordinat titik sudutnya:
+ *   sisi     panjang [AB, BC, CD, DA]
+ *   sejajar  [AB ∥ CD, BC ∥ DA]
+ *   siku     sudut siku-siku di [A, B, C, D]
+ *   sisiSama keempat sisi sama panjang
+ */
+function sifatSegiEmpat(pts) {
+  var v = [0, 1, 2, 3].map(function (i) {
+    return vekKts_(pts[i], pts[(i + 1) % 4]);
+  });
+  var sisi = v.map(function (w) {
+    return ktsNol_(panjangKts_(w));
+  });
+  var siku = [0, 1, 2, 3].map(function (i) {
+    var masuk = v[(i + 3) % 4];
+    var keluar = v[i];
+    return Math.abs(masuk[0] * keluar[0] + masuk[1] * keluar[1]) < 1e-9;
+  });
+  return {
+    sisi: sisi,
+    sejajar: [sejajarKts_(v[0], v[2]), sejajarKts_(v[1], v[3])],
+    siku: siku,
+    sisiSama: sisi.every(function (s) {
+      return samaPanjangKts_(s, sisi[0]);
+    }),
+  };
+}
+
+/* Jenis segi empat (kunci KTS_JENIS_LABEL) dari sifatnya. */
+function jenisSegiEmpat(pts) {
+  var s = sifatSegiEmpat(pts);
+  var siku = s.siku.every(Boolean);
+  if (s.sejajar[0] && s.sejajar[1]) {
+    if (siku) return s.sisiSama ? 'persegi' : 'persegiPanjang';
+    return s.sisiSama ? 'belahKetupat' : 'jajargenjang';
+  }
+  if (s.sejajar[0] || s.sejajar[1]) return 'trapesium';
+  var d = s.sisi;
+  if (
+    (samaPanjangKts_(d[0], d[1]) && samaPanjangKts_(d[2], d[3])) ||
+    (samaPanjangKts_(d[0], d[3]) && samaPanjangKts_(d[1], d[2]))
+  ) {
+    return 'layangLayang';
+  }
+  return 'segiEmpat';
+}
+
+/* Titik D jajargenjang ABCD (termasuk persegi & persegi panjang): A + C − B. */
+function titikKeempatJajargenjang(a, b, c) {
+  return ktsTitik_(a[0] + c[0] - b[0], a[1] + c[1] - b[1]);
+}
+
+/* Bayangan titik p oleh transformasi t. */
+function transformasiTitik(p, t) {
+  var x = p[0];
+  var y = p[1];
+  if (t.jenis === 'geser') return ktsTitik_(x + (t.dx || 0), y + (t.dy || 0));
+  if (t.jenis === 'cermin') return t.sumbu === 'x' ? ktsTitik_(x, -y) : ktsTitik_(-x, y);
+  if (t.jenis === 'putar') {
+    var s = (((t.sudut || 0) % 360) + 360) % 360;
+    if (s === 90) return ktsTitik_(-y, x);
+    if (s === 180) return ktsTitik_(-x, -y);
+    if (s === 270) return ktsTitik_(y, -x);
+    return ktsTitik_(x, y);
+  }
+  if (t.jenis === 'perbesar') return ktsTitik_(x * t.k, y * t.k);
+  return ktsTitik_(x, y);
+}
+
+function transformasiBangun(pts, t) {
+  return pts.map(function (p) {
+    return transformasiTitik(p, t);
+  });
+}
+
+function langkahKts_(n, pos, neg) {
+  return formatNumber(Math.abs(n)) + ' ke ' + (n >= 0 ? pos : neg);
+}
+
+/* Kalimat sehari-hari untuk transformasi t. */
+function labelTransformasi(t) {
+  if (t.jenis === 'geser') {
+    var bagian = [];
+    if (t.dx) bagian.push(langkahKts_(t.dx, 'kanan', 'kiri'));
+    if (t.dy) bagian.push(langkahKts_(t.dy, 'atas', 'bawah'));
+    return 'Geser ' + (bagian.length ? bagian.join(' dan ') : 'di tempat');
+  }
+  if (t.jenis === 'cermin') return 'Cerminkan terhadap sumbu-' + t.sumbu;
+  if (t.jenis === 'putar') {
+    return 'Putar ' + t.sudut + '° berlawanan arah jarum jam dengan pusat O';
+  }
+  if (t.jenis === 'perbesar') {
+    return (t.k >= 1 ? 'Perbesar ' : 'Perkecil ') + formatDesimal(t.k) + ' kali dari pusat O';
+  }
+  return '';
+}
+
+function luasBertandaKts_(pts) {
+  var s = 0;
+  pts.forEach(function (p, i) {
+    var q = pts[(i + 1) % pts.length];
+    s += p[0] * q[1] - q[0] * p[1];
+  });
+  return s / 2;
+}
+
+function sisiKts_(pts) {
+  return pts.map(function (p, i) {
+    return panjangKts_(vekKts_(p, pts[(i + 1) % pts.length]));
+  });
+}
+
+function sudutKts_(pts) {
+  var n = pts.length;
+  return pts.map(function (p, i) {
+    var a = vekKts_(p, pts[(i + n - 1) % n]);
+    var b = vekKts_(p, pts[(i + 1) % n]);
+    return (a[0] * b[0] + a[1] * b[1]) / (panjangKts_(a) * panjangKts_(b));
+  });
+}
+
+/*
+ * Membandingkan bangun asal dengan bayangannya (titik bersesuaian):
+ *   ukuranTetap   semua panjang sisi sama
+ *   bentukTetap   sisi sebanding dan sudut bersesuaian sama besar
+ *   posisiBerubah ada titik yang berpindah
+ *   arahTetap     urutan titik tetap searah (tidak terbalik seperti
+ *                 bayangan cermin)
+ */
+function bandingTransformasi(asal, hasil) {
+  var sa = sisiKts_(asal);
+  var sh = sisiKts_(hasil);
+  var k = sh[0] / sa[0];
+  var ua = sudutKts_(asal);
+  var uh = sudutKts_(hasil);
+  return {
+    ukuranTetap: sa.every(function (s, i) {
+      return samaPanjangKts_(s, sh[i]);
+    }),
+    bentukTetap:
+      sa.every(function (s, i) {
+        return Math.abs(sh[i] - k * s) < 1e-9;
+      }) &&
+      ua.every(function (c, i) {
+        return Math.abs(c - uh[i]) < 1e-9;
+      }),
+    posisiBerubah: asal.some(function (p, i) {
+      return !samaTitikKts_(p, hasil[i]);
+    }),
+    arahTetap: luasBertandaKts_(asal) * luasBertandaKts_(hasil) > 0,
+  };
+}
+
+/* ---------- Soal uji terap ---------- */
+
+function labelGerakKts_(g) {
+  return g.nama + ' (' + g.istilah + ')';
+}
+
+/* Teks jawaban benar soal s (kunci dihitung, bukan ditulis tangan). */
+function jawabSoalKts(s) {
+  switch (s.minta) {
+    case 'koordinat':
+      return formatKoordinat(s.p);
+    case 'kuadran':
+      return KTS_KUADRAN_LABEL[kuadranTitik(s.p)];
+    case 'titikKeempat':
+      return formatKoordinat(titikKeempatJajargenjang(s.pts[0], s.pts[1], s.pts[2]));
+    case 'panjang':
+      return formatNumber(panjangRuasSumbu(s.p, s.q)) + ' ' + (s.satuan || 'satuan');
+    case 'jenisBangun':
+      return KTS_JENIS_LABEL[jenisSegiEmpat(s.pts)];
+    case 'gerak':
+      return labelGerakKts_(gerakKts_(s.gerak));
+    case 'bayangan':
+      return formatKoordinat(transformasiTitik(s.p, s.t));
+    default:
+      throw new Error('Jenis soal tidak dikenal: ' + s.minta);
+  }
+}
+
+/* Menambah pengecoh unik (label berbeda dari yang sudah ada). */
+function tambahOpsiKts_(opsi, id, label, umpan) {
+  var ada = opsi.some(function (o) {
+    return o.label === label || o.id === id;
+  });
+  if (!ada) opsi.push({ id: id, label: label, umpan: umpan });
+}
+
+function pengecohTitikKts_(opsi, p, umpan) {
+  var x = p[0];
+  var y = p[1];
+  tambahOpsiKts_(opsi, 'tertukar', formatKoordinat([y, x]), umpan.tertukar);
+  tambahOpsiKts_(opsi, 'tandaX', formatKoordinat([-x, y]), umpan.tandaX);
+  tambahOpsiKts_(opsi, 'tandaY', formatKoordinat([x, -y]), umpan.tandaY);
+  tambahOpsiKts_(opsi, 'tandaXY', formatKoordinat([-x, -y]), umpan.tandaXY);
+  tambahOpsiKts_(opsi, 'geserX', formatKoordinat([x + 1, y]), umpan.geser);
+  tambahOpsiKts_(opsi, 'geserY', formatKoordinat([x, y + 1]), umpan.geser);
+}
+
+var KTS_UMPAN_TITIK = {
+  tertukar: 'Nilai x dan y tertukar. Koordinat ditulis (x, y): langkah mendatar dulu, baru tegak.',
+  tandaX: 'Tanda x terbalik. Ke kanan dari O bertanda positif, ke kiri bertanda negatif.',
+  tandaY: 'Tanda y terbalik. Ke atas dari O bertanda positif, ke bawah bertanda negatif.',
+  tandaXY: 'Kedua tanda terbalik. Periksa arah kanan/kiri dan atas/bawah dari titik asal O.',
+  geser: 'Hitung ulang langkahnya dari titik asal O — ada satu langkah yang kelebihan.',
+};
+
+function opsiTitikKeempatKts_(s) {
+  var A = s.pts[0];
+  var B = s.pts[1];
+  var C = s.pts[2];
+  var D = titikKeempatJajargenjang(A, B, C);
+  var opsi = [{ id: 'benar', label: formatKoordinat(D), umpan: 'Tepat: D = A + C − B.' }];
+  tambahOpsiKts_(
+    opsi,
+    'diagonalAC',
+    formatKoordinat(titikKeempatJajargenjang(B, A, C)),
+    'Titik itu membentuk jajargenjang dengan urutan B–A–C–D. Pada ABCD, D harus berhadapan dengan B: geser A dengan langkah yang sama seperti dari B ke C.'
+  );
+  tambahOpsiKts_(
+    opsi,
+    'diagonalAB',
+    formatKoordinat(titikKeempatJajargenjang(A, C, B)),
+    'Titik itu berhadapan dengan C, bukan dengan B. Urutan ABCD berarti D bertetangga dengan A dan C.'
+  );
+  tambahOpsiKts_(
+    opsi,
+    'tertukar',
+    formatKoordinat([D[1], D[0]]),
+    'Letak titiknya sudah benar, tetapi x dan y tertukar saat ditulis.'
+  );
+  tambahOpsiKts_(
+    opsi,
+    'tandaX',
+    formatKoordinat([-D[0], D[1]]),
+    'Tanda x terbalik. Periksa apakah D berada di kiri atau di kanan sumbu-y.'
+  );
+  return opsi;
+}
+
+function opsiPanjangKts_(s) {
+  var len = panjangRuasSumbu(s.p, s.q);
+  var sat = ' ' + (s.satuan || 'satuan');
+  var datar = s.p[1] === s.q[1];
+  var a = datar ? s.p[0] : s.p[1];
+  var b = datar ? s.q[0] : s.q[1];
+  var opsi = [
+    {
+      id: 'benar',
+      label: formatNumber(len) + sat,
+      umpan: 'Tepat: selisih koordinat ' + (datar ? 'x' : 'y') + '-nya.',
+    },
+  ];
+  tambahOpsiKts_(
+    opsi,
+    'abaikanTanda',
+    formatNumber(Math.abs(Math.abs(b) - Math.abs(a))) + sat,
+    'Tanda negatif tidak boleh diabaikan. Ruas ini melewati sumbu, jadi bilang petaknya dari satu ujung ke ujung lain.'
+  );
+  tambahOpsiKts_(
+    opsi,
+    'hitungTitik',
+    formatNumber(len + 1) + sat,
+    'Itu banyak TITIK kisi pada ruas, bukan panjangnya. Panjang = banyak petak (jarak) antar ujung.'
+  );
+  tambahOpsiKts_(
+    opsi,
+    'jumlahKoordinat',
+    formatNumber(Math.abs(a + b)) + sat,
+    'Koordinat kedua ujung tidak dijumlahkan. Panjang = selisih koordinat yang berubah.'
+  );
+  tambahOpsiKts_(
+    opsi,
+    'kurangSatu',
+    formatNumber(Math.max(1, len - 1)) + sat,
+    'Kurang satu petak. Bilang lagi petaknya satu per satu dari ujung ke ujung.'
+  );
+  tambahOpsiKts_(
+    opsi,
+    'lebihDua',
+    formatNumber(len + 2) + sat,
+    'Terlalu panjang. Panjang ruas = selisih koordinat ujung-ujungnya.'
+  );
+  return opsi;
+}
+
+/*
+ * Opsi soal s: [{ id, label, umpan }] — opsi benar ber-id 'benar',
+ * pengecoh mewakili miskonsepsi. Urutan "wajar"; app mengacaknya.
+ */
+function opsiSoalKts(s) {
+  var opsi;
+  var benar = jawabSoalKts(s);
+  if (s.minta === 'koordinat') {
+    opsi = [{ id: 'benar', label: benar, umpan: 'Tepat: mendatar dulu (x), lalu tegak (y).' }];
+    pengecohTitikKts_(opsi, s.p, KTS_UMPAN_TITIK);
+  } else if (s.minta === 'kuadran') {
+    var letak = kuadranTitik(s.p);
+    opsi = [{ id: 'benar', label: benar, umpan: 'Tepat: lihat tanda x dan tanda y.' }];
+    ['I', 'II', 'III', 'IV', 'sumbuX', 'sumbuY'].forEach(function (k) {
+      if (k === letak || opsi.length >= 4) return;
+      tambahOpsiKts_(
+        opsi,
+        k,
+        KTS_KUADRAN_LABEL[k],
+        'Periksa tanda koordinatnya: x = ' +
+          formatNumber(s.p[0], '−') +
+          ' dan y = ' +
+          formatNumber(s.p[1], '−') +
+          '. Kuadran ditentukan oleh pasangan tanda itu' +
+          (s.p[0] === 0 || s.p[1] === 0 ? ', dan titik bernilai 0 berada tepat pada sumbu.' : '.')
+      );
+    });
+  } else if (s.minta === 'titikKeempat') {
+    opsi = opsiTitikKeempatKts_(s);
+  } else if (s.minta === 'panjang') {
+    opsi = opsiPanjangKts_(s);
+  } else if (s.minta === 'jenisBangun') {
+    var jenis = jenisSegiEmpat(s.pts);
+    opsi = [{ id: 'benar', label: benar, umpan: 'Tepat: ' + KTS_JENIS_CIRI[jenis] + '.' }];
+    KTS_JENIS_KELIRU[jenis].forEach(function (k) {
+      tambahOpsiKts_(
+        opsi,
+        k,
+        KTS_JENIS_LABEL[k],
+        'Belum tepat: ' + KTS_JENIS_CIRI[k] + '. Periksa sisi sejajar, panjang sisi, dan sudutnya.'
+      );
+    });
+  } else if (s.minta === 'gerak') {
+    var g0 = gerakKts_(s.gerak);
+    opsi = [{ id: 'benar', label: benar, umpan: 'Tepat: ' + g0.ciri + '.' }];
+    KTS_GERAK.forEach(function (g) {
+      if (g.id === s.gerak) return;
+      tambahOpsiKts_(opsi, g.id, labelGerakKts_(g), 'Pada ' + g.istilah + ', ' + g.ciri + '.');
+    });
+  } else if (s.minta === 'bayangan') {
+    opsi = opsiBayanganKts_(s, benar);
+  }
+  return opsi.slice(0, 5);
+}
+
+function opsiBayanganKts_(s, benar) {
+  var p = s.p;
+  var t = s.t;
+  var x = p[0];
+  var y = p[1];
+  var opsi = [{ id: 'benar', label: benar, umpan: 'Tepat: ' + labelTransformasi(t) + '.' }];
+  var tambah = function (id, q, umpan) {
+    tambahOpsiKts_(opsi, id, formatKoordinat(ktsTitik_(q[0], q[1])), umpan);
+  };
+  if (t.jenis === 'geser') {
+    tambah(
+      'terbalik',
+      [x - t.dx, y - t.dy],
+      'Arah geserannya terbalik. Ke kanan/atas menambah, ke kiri/bawah mengurangi.'
+    );
+    tambah(
+      'xSaja',
+      [x + t.dx, y],
+      'Baru langkah mendatarnya. Jangan lupa geser juga secara tegak.'
+    );
+    tambah(
+      'ySaja',
+      [x, y + t.dy],
+      'Baru langkah tegaknya. Jangan lupa geser juga secara mendatar.'
+    );
+  } else if (t.jenis === 'cermin') {
+    var salah = t.sumbu === 'x' ? 'y' : 'x';
+    tambah(
+      'sumbuLain',
+      t.sumbu === 'x' ? [-x, y] : [x, -y],
+      'Itu bayangan terhadap sumbu-' +
+        salah +
+        '. Pada cermin sumbu-' +
+        t.sumbu +
+        ', jarak ke sumbu-' +
+        t.sumbu +
+        ' tetap tetapi sisinya berpindah.'
+    );
+    tambah('keduanya', [-x, -y], 'Kedua tanda berubah — itu putaran 180°, bukan pencerminan.');
+    tambah('tertukar', [y, x], 'Pencerminan terhadap sumbu tidak menukar x dan y.');
+  } else if (t.jenis === 'putar') {
+    tambah(
+      'searah',
+      transformasiTitik(p, { jenis: 'putar', sudut: 360 - t.sudut }),
+      'Itu putaran searah jarum jam. Diminta berlawanan arah jarum jam.'
+    );
+    tambah('cerminX', [x, -y], 'Itu bayangan cermin terhadap sumbu-x, bukan putaran.');
+    tambah('cerminY', [-x, y], 'Itu bayangan cermin terhadap sumbu-y, bukan putaran.');
+    tambah(
+      'tertukar',
+      [y, x],
+      'Menukar x dan y saja bukan putaran. Bayangkan titik berputar mengelilingi O.'
+    );
+  } else if (t.jenis === 'perbesar') {
+    tambah(
+      'tambah',
+      [x + t.k, y + t.k],
+      'Pada perbesaran, koordinat DIKALI faktor skala, bukan ditambah.'
+    );
+    tambah('xSaja', [x * t.k, y], 'Kedua koordinat harus dikali faktor skala, bukan hanya x.');
+    tambah('ySaja', [x, y * t.k], 'Kedua koordinat harus dikali faktor skala, bukan hanya y.');
+  }
+  tambah(
+    'lain1',
+    [x + 1, y + 1],
+    'Hitung ulang dari koordinat titik asalnya, langkah demi langkah.'
+  );
+  return opsi.slice(0, 5);
+}
+
+/* ---------- Bidang Kartesius (SVG) ---------- */
+
+var KTS_SKALA = 26;
+var KTS_PAD = 22;
+
+function ktsKanvas_(n, skala) {
+  return kanvasBangun({ x0: -n, y0: -n, x1: n, y1: n }, skala || KTS_SKALA, KTS_PAD);
+}
+
+/*
+ * Bidang koordinat Kartesius −n … n dengan kisi, sumbu berpanah, angka
+ * skala, titik berlabel, dan bangun.
+ *   opts.n         batas (default 6)
+ *   opts.skala     piksel per satuan (default 26)
+ *   opts.titik     [{ p, label, cls }] — cls: 'asal' | 'bayangan' | 'soal'
+ *   opts.bangun    [{ pts, cls, label: ['A', …], terbuka }] — cls 'asal'
+ *                  (biru) | 'bayangan' (oranye) | 'bantu' (putus-putus);
+ *                  terbuka → polyline (sisi terakhir belum ditutup)
+ *   opts.kursor    [x, y] penanda pilihan murid (atau null)
+ *   opts.interaktif true → dapat diketuk & digerakkan dengan tombol panah
+ *   opts.judul     teks aksesibel
+ */
+function buildBidangKartesius(id, opts) {
+  opts = opts || {};
+  var n = opts.n || 6;
+  var skala = opts.skala || KTS_SKALA;
+  var K = ktsKanvas_(n, skala);
+  var batas = { x0: -n, y0: -n, x1: n, y1: n };
+  var isi = '<g class="kts-kisi">' + kisiBangun(K, batas) + '</g>';
+  var ox = K.x(0);
+  var oy = K.y(0);
+  isi +=
+    '<line class="kts-sumbu" x1="' +
+    K.x(-n) +
+    '" y1="' +
+    oy +
+    '" x2="' +
+    (K.x(n) + 10) +
+    '" y2="' +
+    oy +
+    '"/>' +
+    '<line class="kts-sumbu" x1="' +
+    ox +
+    '" y1="' +
+    K.y(-n) +
+    '" x2="' +
+    ox +
+    '" y2="' +
+    (K.y(n) - 10) +
+    '"/>' +
+    '<polygon class="kts-panah" points="' +
+    (K.x(n) + 14) +
+    ',' +
+    oy +
+    ' ' +
+    (K.x(n) + 6) +
+    ',' +
+    (oy - 4) +
+    ' ' +
+    (K.x(n) + 6) +
+    ',' +
+    (oy + 4) +
+    '"/>' +
+    '<polygon class="kts-panah" points="' +
+    ox +
+    ',' +
+    (K.y(n) - 14) +
+    ' ' +
+    (ox - 4) +
+    ',' +
+    (K.y(n) - 6) +
+    ' ' +
+    (ox + 4) +
+    ',' +
+    (K.y(n) - 6) +
+    '"/>' +
+    teksBangun(K.x(n) + 8, oy - 12, 'x', 'kts-label-sumbu') +
+    teksBangun(ox + 12, K.y(n) - 10, 'y', 'kts-label-sumbu') +
+    teksBangun(ox - 9, oy + 10, 'O', 'kts-angka');
+  for (var v = -n; v <= n; v++) {
+    if (v === 0) continue;
+    isi += teksBangun(K.x(v), oy + 11, formatNumber(v, '−'), 'kts-angka');
+    isi += teksBangun(ox - 11, K.y(v), formatNumber(v, '−'), 'kts-angka');
+  }
+  (opts.bangun || []).forEach(function (b) {
+    var cls = 'kts-bangun kts-bangun--' + (b.cls || 'asal');
+    var poin = poinBangun(K, b.pts);
+    isi += b.terbuka
+      ? '<polyline class="' + cls + '" points="' + poin + '"/>'
+      : '<polygon class="' + cls + '" points="' + poin + '"/>';
+    (b.label || []).forEach(function (lb, i) {
+      if (!lb) return;
+      isi += ktsLabelTitik_(K, b.pts, i, lb, b.cls);
+    });
+  });
+  (opts.titik || []).forEach(function (t) {
+    var c = 'kts-titik kts-titik--' + (t.cls || 'asal');
+    isi += '<circle class="' + c + '" cx="' + K.x(t.p[0]) + '" cy="' + K.y(t.p[1]) + '" r="5"/>';
+    if (t.label) {
+      isi += teksBangun(
+        K.x(t.p[0]) + 12,
+        K.y(t.p[1]) - 11,
+        t.label,
+        'kts-label kts-label--' + (t.cls || 'asal')
+      );
+    }
+  });
+  if (opts.kursor) {
+    var kx = K.x(opts.kursor[0]);
+    var ky = K.y(opts.kursor[1]);
+    isi +=
+      '<line class="kts-bantu" x1="' +
+      kx +
+      '" y1="' +
+      oy +
+      '" x2="' +
+      kx +
+      '" y2="' +
+      ky +
+      '"/>' +
+      '<line class="kts-bantu" x1="' +
+      ox +
+      '" y1="' +
+      ky +
+      '" x2="' +
+      kx +
+      '" y2="' +
+      ky +
+      '"/>' +
+      '<circle class="kts-kursor" cx="' +
+      kx +
+      '" cy="' +
+      ky +
+      '" r="8"/>';
+  }
+  var judul = opts.judul || 'Bidang koordinat Kartesius';
+  var attr = opts.interaktif
+    ? ' tabindex="0" role="application" data-kts-bidang="' +
+      esc(id) +
+      '" data-n="' +
+      n +
+      '" data-skala="' +
+      skala +
+      '" aria-describedby="' +
+      esc(id) +
+      '-baca"' +
+      ' aria-label="' +
+      esc(judul + '. Ketuk titik pada kisi, atau pakai tombol panah untuk memindahkan penanda.') +
+      '"'
+    : ' role="img" aria-label="' + esc(judul) + '"';
+  return (
+    '<figure class="kts-bidang' +
+    (opts.interaktif ? ' kts-bidang--aktif' : '') +
+    '">' +
+    '<svg id="' +
+    esc(id) +
+    '" class="kts-svg" viewBox="0 0 ' +
+    (K.w + 16) +
+    ' ' +
+    K.h +
+    '" width="' +
+    (K.w + 16) +
+    '" height="' +
+    K.h +
+    '"' +
+    attr +
+    '>' +
+    isi +
+    '</svg>' +
+    (opts.interaktif
+      ? '<p class="kts-bidang__baca" id="' +
+        esc(id) +
+        '-baca" aria-live="polite">' +
+        (opts.kursor
+          ? 'Penanda di <strong>' + formatKoordinat(opts.kursor) + '</strong>'
+          : 'Belum ada titik yang dipilih.') +
+        '</p>'
+      : '') +
+    (opts.caption ? '<figcaption class="dl-caption">' + esc(opts.caption) + '</figcaption>' : '') +
+    '</figure>'
+  );
+}
+
+/* Label titik sudut didorong menjauhi pusat bangun agar tidak menutupi sisi. */
+function ktsLabelTitik_(K, pts, i, lb, cls) {
+  var cx = 0;
+  var cy = 0;
+  pts.forEach(function (p) {
+    cx += p[0] / pts.length;
+    cy += p[1] / pts.length;
+  });
+  var dx = pts[i][0] - cx;
+  var dy = pts[i][1] - cy;
+  var d = Math.sqrt(dx * dx + dy * dy) || 1;
+  var x = K.x(pts[i][0]) + (dx / d) * 13;
+  var y = K.y(pts[i][1]) - (dy / d) * 13;
+  return teksBangun(x, y, lb, 'kts-label kts-label--' + (cls || 'asal'));
+}
+
+/*
+ * Memasang ketuk & tombol panah pada bidang interaktif `id`.
+ * getKursor() → [x, y] | null; onPindah([x, y]) dipanggil setiap
+ * penanda berpindah. Enter/Spasi memanggil opts.onPilih bila ada.
+ */
+function bindBidangKartesius(root, id, getKursor, onPindah, onPilih) {
+  var svg = root.querySelector('[data-kts-bidang="' + id + '"]');
+  if (!svg) return;
+  var n = Number(svg.getAttribute('data-n'));
+  var skala = Number(svg.getAttribute('data-skala'));
+  svg.addEventListener('click', function (e) {
+    var pt = svg.createSVGPoint();
+    pt.x = e.clientX;
+    pt.y = e.clientY;
+    var ctm = svg.getScreenCTM();
+    if (!ctm) return;
+    var lok = pt.matrixTransform(ctm.inverse());
+    onPindah(ktsBulatkanTitik((lok.x - KTS_PAD) / skala - n, n - (lok.y - KTS_PAD) / skala, n));
+  });
+  svg.addEventListener('keydown', function (e) {
+    var arah = { ArrowRight: [1, 0], ArrowLeft: [-1, 0], ArrowUp: [0, 1], ArrowDown: [0, -1] }[
+      e.key
+    ];
+    if (arah) {
+      e.preventDefault();
+      var k = getKursor() || [0, 0];
+      onPindah(ktsBulatkanTitik(k[0] + arah[0], k[1] + arah[1], n));
+    } else if ((e.key === 'Enter' || e.key === ' ') && onPilih) {
+      e.preventDefault();
+      onPilih();
+    }
+  });
+}
+
+/* ---------- Lab Titik: memasang titik (x, y) ---------- */
+
+/* tugas = [{ id, p, nama }]; state { idx, kursor, hasil: {id: {...}} }. */
+function ensureLabTitikKts(st, tugas) {
+  var ok =
+    st &&
+    typeof st === 'object' &&
+    typeof st.idx === 'number' &&
+    st.idx >= 0 &&
+    st.idx <= tugas.length &&
+    st.hasil &&
+    typeof st.hasil === 'object';
+  if (!ok) st = { idx: 0, kursor: null, hasil: {} };
+  tugas.forEach(function (t) {
+    var h = st.hasil[t.id];
+    if (!h || typeof h !== 'object') {
+      st.hasil[t.id] = { done: false, attempts: 0, diag: null, firstTry: false };
+    }
+  });
+  if (!Array.isArray(st.kursor)) st.kursor = null;
+  return st;
+}
+
+/* Memeriksa penanda terhadap tugas aktif; maju bila tepat. → diagnosa. */
+function periksaLabTitikKts(st, tugas) {
+  var t = tugas[st.idx];
+  if (!t) return 'tepat';
+  var h = st.hasil[t.id];
+  var diag = diagnosaKoordinat(t.p, st.kursor);
+  if (diag === 'kosong') return diag;
+  h.attempts += 1;
+  h.diag = diag;
+  if (diag === 'tepat') {
+    h.done = true;
+    h.firstTry = h.attempts === 1;
+    st.idx += 1;
+    st.kursor = null;
+  }
+  return diag;
+}
+
+function labTitikSelesai(st, tugas) {
+  return tugas.every(function (t) {
+    return st.hasil[t.id] && st.hasil[t.id].done;
+  });
+}
+
+function buildLabTitikKts(id, tugas, st, opts) {
+  opts = opts || {};
+  var aktif = tugas[st.idx];
+  var selesai = labTitikSelesai(st, tugas);
+  var titik = tugas
+    .filter(function (t) {
+      return st.hasil[t.id].done;
+    })
+    .map(function (t) {
+      return { p: t.p, label: t.label, cls: 'asal' };
+    });
+  var hAktif = aktif ? st.hasil[aktif.id] : null;
+  var daftar =
+    '<ol class="kts-tugas">' +
+    tugas
+      .map(function (t, i) {
+        var h = st.hasil[t.id];
+        var cls = h.done ? ' kts-tugas__item--ok' : i === st.idx ? ' kts-tugas__item--aktif' : '';
+        return (
+          '<li class="kts-tugas__item' +
+          cls +
+          '">' +
+          '<span class="kts-tugas__ikon" aria-hidden="true">' +
+          (t.ikon || '📍') +
+          '</span>' +
+          '<span>' +
+          esc(t.nama) +
+          ' <strong>' +
+          esc(t.label) +
+          formatKoordinat(t.p) +
+          '</strong>' +
+          (h.done ? ' <span class="kts-tugas__cek">✓</span>' : '') +
+          '</span>' +
+          '</li>'
+        );
+      })
+      .join('') +
+    '</ol>';
+  return (
+    '<div class="kts-lab" id="' +
+    esc(id) +
+    '">' +
+    '<div class="kts-lab__bidang">' +
+    buildBidangKartesius(id + '-bidang', {
+      titik: titik,
+      kursor: selesai ? null : st.kursor,
+      interaktif: !selesai,
+      judul: opts.judul || 'Denah panggung pada bidang koordinat',
+    }) +
+    '</div>' +
+    '<div class="kts-lab__panel">' +
+    (aktif
+      ? '<p class="kts-lab__perintah">' +
+        (aktif.ikon || '📍') +
+        ' Pasang <strong>' +
+        esc(aktif.nama) +
+        '</strong> di titik <strong>' +
+        esc(aktif.label) +
+        formatKoordinat(aktif.p) +
+        '</strong>.</p>' +
+        '<div class="btn-group">' +
+        '<button type="button" class="btn btn--primary" id="' +
+        esc(id) +
+        '-cek"' +
+        (st.kursor ? '' : ' disabled') +
+        '>Periksa titik</button>' +
+        '</div>' +
+        (hAktif && hAktif.diag && hAktif.diag !== 'tepat'
+          ? buildFeedbackBox('warning', '💭', esc(pesanKoordinat(hAktif.diag, aktif.p)))
+          : '')
+      : buildFeedbackBox('success', '✓', '<strong>Semua properti sudah terpasang!</strong>')) +
+    daftar +
+    '</div>' +
+    '</div>'
+  );
+}
+
+function bindLabTitikKts(root, id, tugas, st, save, rerender) {
+  bindBidangKartesius(
+    root,
+    id + '-bidang',
+    function () {
+      return st.kursor;
+    },
+    function (p) {
+      st.kursor = p;
+      save();
+      rerender('#' + id + '-bidang');
+    },
+    function () {
+      var btn = root.querySelector('#' + id + '-cek');
+      if (btn && !btn.disabled) btn.click();
+    }
+  );
+  var cek = root.querySelector('#' + id + '-cek');
+  if (cek) {
+    cek.addEventListener('click', function () {
+      var diag = periksaLabTitikKts(st, tugas);
+      save();
+      if (diag === 'tepat') showNotice('Tepat! Properti terpasang.');
+      rerender(
+        labTitikSelesai(st, tugas)
+          ? null
+          : diag === 'tepat'
+            ? '#' + id + '-bidang'
+            : '#' + id + '-cek'
+      );
+    });
+  }
+}
+
+/* ---------- Titik keempat segi empat ---------- */
+
+function ensureTitikKeempatKts(st) {
+  if (!st || typeof st !== 'object') st = {};
+  if (!Array.isArray(st.kursor)) st.kursor = null;
+  st.done = !!st.done;
+  st.attempts = typeof st.attempts === 'number' ? st.attempts : 0;
+  st.diag = st.diag || null;
+  return st;
+}
+
+/* b = { pts: [A, B, C, D] }; murid memasang D. → diagnosa. */
+function periksaTitikKeempatKts(st, b) {
+  var diag = diagnosaKoordinat(b.pts[3], st.kursor);
+  if (diag === 'kosong') return diag;
+  st.attempts += 1;
+  st.diag = diag;
+  if (diag === 'tepat') st.done = true;
+  return diag;
+}
+
+/* Tabel sifat segi empat (panjang sisi, sejajar, siku) dari koordinat. */
+function buildSifatSegiEmpatKts(pts, titik) {
+  var s = sifatSegiEmpat(pts);
+  var nama = function (i) {
+    return titik[i] + titik[(i + 1) % 4];
+  };
+  var ya = function (v) {
+    return (
+      '<td class="' + (v ? 'kts-sel--ya' : 'kts-sel--tidak') + '">' + (v ? 'Ya' : 'Tidak') + '</td>'
+    );
+  };
+  var pjg = function (i) {
+    var len = panjangRuasSumbu(pts[i], pts[(i + 1) % 4]);
+    return len === null ? 'miring' : formatNumber(len) + ' satuan';
+  };
+  return (
+    '<div class="kgr-table-wrap"><table class="kgr-table kts-sifat">' +
+    '<caption>Sifat dari koordinat</caption>' +
+    '<thead><tr><th scope="col">Sisi</th><th scope="col">Panjang (sejajar sumbu)</th></tr></thead><tbody>' +
+    [0, 1, 2, 3]
+      .map(function (i) {
+        return '<tr><td>' + esc(nama(i)) + '</td><td>' + esc(pjg(i)) + '</td></tr>';
+      })
+      .join('') +
+    '</tbody></table>' +
+    '<table class="kgr-table kts-sifat"><tbody>' +
+    '<tr><th scope="row">' +
+    esc(nama(0) + ' ∥ ' + nama(2)) +
+    '?</th>' +
+    ya(s.sejajar[0]) +
+    '</tr>' +
+    '<tr><th scope="row">' +
+    esc(nama(1) + ' ∥ ' + nama(3)) +
+    '?</th>' +
+    ya(s.sejajar[1]) +
+    '</tr>' +
+    '<tr><th scope="row">Keempat sudut siku-siku?</th>' +
+    ya(s.siku.every(Boolean)) +
+    '</tr>' +
+    '<tr><th scope="row">Keempat sisi sama panjang?</th>' +
+    ya(s.sisiSama) +
+    '</tr>' +
+    '</tbody></table></div>'
+  );
+}
+
+/* b = { id, nama, titik: ['A','B','C','D'], pts }. */
+function buildTitikKeempatKts(id, b, st) {
+  var tiga = b.pts.slice(0, 3);
+  var bangun = st.done
+    ? [{ pts: b.pts, cls: 'asal', label: b.titik }]
+    : [{ pts: tiga, cls: 'asal', label: b.titik.slice(0, 3), terbuka: true }];
+  if (!st.done && st.kursor) {
+    bangun.push({ pts: [b.pts[2], st.kursor, b.pts[0]], cls: 'bantu', terbuka: true });
+  }
+  return (
+    '<div class="kts-lab" id="' +
+    esc(id) +
+    '">' +
+    '<div class="kts-lab__bidang">' +
+    buildBidangKartesius(id + '-bidang', {
+      bangun: bangun,
+      kursor: st.done ? null : st.kursor,
+      interaktif: !st.done,
+      judul:
+        b.nama +
+        ': titik ' +
+        b.titik.slice(0, 3).join(', ') +
+        ' sudah dipasang; tentukan titik ' +
+        b.titik[3],
+    }) +
+    '</div>' +
+    '<div class="kts-lab__panel">' +
+    '<p class="kts-lab__perintah">' +
+    esc(b.perintah) +
+    '</p>' +
+    '<p class="kts-koord-list">' +
+    b.titik
+      .slice(0, 3)
+      .map(function (t, i) {
+        return '<span class="kts-chip">' + esc(t) + formatKoordinat(b.pts[i]) + '</span>';
+      })
+      .join('') +
+    '<span class="kts-chip kts-chip--tanya">' +
+    esc(b.titik[3]) +
+    (st.done ? formatKoordinat(b.pts[3]) : '(?, ?)') +
+    '</span>' +
+    '</p>' +
+    (st.done
+      ? buildFeedbackBox(
+          'success',
+          '✓',
+          'Tepat! Titik ' + esc(b.titik[3]) + ' berada di ' + formatKoordinat(b.pts[3]) + '.'
+        ) + buildSifatSegiEmpatKts(b.pts, b.titik)
+      : '<div class="btn-group">' +
+        '<button type="button" class="btn btn--primary" id="' +
+        esc(id) +
+        '-cek"' +
+        (st.kursor ? '' : ' disabled') +
+        '>Periksa titik ' +
+        esc(b.titik[3]) +
+        '</button>' +
+        '</div>' +
+        (st.diag && st.diag !== 'tepat'
+          ? buildFeedbackBox(
+              'warning',
+              '💭',
+              esc(
+                b.umpan ||
+                  'Belum tepat. Perhatikan sifat bangunnya: sisi mana yang harus sejajar atau sama panjang?'
+              ) + (st.diag === 'tertukar' ? ' ' + esc(pesanKoordinat('tertukar', b.pts[3])) : '')
+            )
+          : '')) +
+    '</div>' +
+    '</div>'
+  );
+}
+
+function bindTitikKeempatKts(root, id, b, st, save, rerender) {
+  bindBidangKartesius(
+    root,
+    id + '-bidang',
+    function () {
+      return st.kursor;
+    },
+    function (p) {
+      st.kursor = p;
+      save();
+      rerender('#' + id + '-bidang');
+    },
+    function () {
+      var btn = root.querySelector('#' + id + '-cek');
+      if (btn && !btn.disabled) btn.click();
+    }
+  );
+  var cek = root.querySelector('#' + id + '-cek');
+  if (cek) {
+    cek.addEventListener('click', function () {
+      periksaTitikKeempatKts(st, b);
+      save();
+      rerender(st.done ? null : '#' + id + '-cek');
+    });
+  }
+}
+
+/* ---------- Lab Gerak: geser, cermin, putar, perbesar ---------- */
+
+/* cfg = { bangun: [{ id, nama, titik, pts }], preset: [{ id, t }] }. */
+function ensureLabGerakKts(st, cfg) {
+  if (!st || typeof st !== 'object') st = {};
+  var bangunIds = cfg.bangun.map(function (b) {
+    return b.id;
+  });
+  var presetIds = cfg.preset.map(function (p) {
+    return p.id;
+  });
+  if (bangunIds.indexOf(st.bangun) === -1) st.bangun = bangunIds[0];
+  if (presetIds.indexOf(st.preset) === -1) st.preset = null;
+  st.log = (Array.isArray(st.log) ? st.log : []).filter(function (e) {
+    return e && bangunIds.indexOf(e.bangun) !== -1 && presetIds.indexOf(e.preset) !== -1;
+  });
+  return st;
+}
+
+function cariKts_(list, id) {
+  return list.filter(function (x) {
+    return x.id === id;
+  })[0];
+}
+
+/* Menerapkan preset pada bangun aktif dan mencatatnya (sekali). */
+function terapkanLabGerakKts(st, cfg, presetId) {
+  if (!cariKts_(cfg.preset, presetId)) return false;
+  st.preset = presetId;
+  var ada = st.log.some(function (e) {
+    return e.bangun === st.bangun && e.preset === presetId;
+  });
+  if (!ada) st.log.push({ bangun: st.bangun, preset: presetId });
+  return true;
+}
+
+/* Lengkap bila keempat jenis gerak sudah dicoba (bangun mana pun). */
+function labGerakLengkap(st, cfg) {
+  var jenis = {};
+  st.log.forEach(function (e) {
+    var p = cariKts_(cfg.preset, e.preset);
+    if (p) jenis[p.t.jenis] = true;
+  });
+  return KTS_GERAK.every(function (g) {
+    return jenis[g.id];
+  });
+}
+
+function ktsYaTidak_(v, ya, tidak) {
+  return (
+    '<span class="kts-chip ' +
+    (v ? 'kts-chip--ya' : 'kts-chip--tidak') +
+    '">' +
+    esc(v ? ya : tidak) +
+    '</span>'
+  );
+}
+
+function buildLabGerakKts(id, st, cfg) {
+  var b = cariKts_(cfg.bangun, st.bangun);
+  var preset = st.preset ? cariKts_(cfg.preset, st.preset) : null;
+  var hasil = preset ? transformasiBangun(b.pts, preset.t) : null;
+  var aksen = b.titik.map(function (t) {
+    return t + '′';
+  });
+  var bangun = [{ pts: b.pts, cls: 'asal', label: b.titik }];
+  if (hasil) bangun.push({ pts: hasil, cls: 'bayangan', label: aksen });
+  var banding = hasil ? bandingTransformasi(b.pts, hasil) : null;
+  var tab =
+    '<div class="kts-pilih" role="group" aria-label="Pilih bangun">' +
+    cfg.bangun
+      .map(function (x) {
+        return (
+          '<button type="button" class="btn btn--small ' +
+          (x.id === st.bangun ? 'btn--primary' : 'btn--ghost') +
+          '" data-kts-bangun="' +
+          esc(x.id) +
+          '" aria-pressed="' +
+          (x.id === st.bangun) +
+          '">' +
+          esc(x.ikon || '') +
+          ' ' +
+          esc(x.nama) +
+          '</button>'
+        );
+      })
+      .join('') +
+    '</div>';
+  var tombol =
+    '<div class="kts-gerak" role="group" aria-label="Pilih gerakan">' +
+    cfg.preset
+      .map(function (p) {
+        var g = gerakKts_(p.t.jenis);
+        var dicoba = st.log.some(function (e) {
+          return e.bangun === st.bangun && e.preset === p.id;
+        });
+        return (
+          '<button type="button" class="kts-gerak__btn' +
+          (p.id === st.preset ? ' is-active' : '') +
+          (dicoba ? ' is-done' : '') +
+          '" data-kts-preset="' +
+          esc(p.id) +
+          '" aria-pressed="' +
+          (p.id === st.preset) +
+          '">' +
+          '<span class="kts-gerak__ikon" aria-hidden="true">' +
+          g.ikon +
+          '</span>' +
+          '<span>' +
+          esc(labelTransformasi(p.t)) +
+          '</span>' +
+          '</button>'
+        );
+      })
+      .join('') +
+    '</div>';
+  var tabel = hasil
+    ? '<div class="kgr-table-wrap"><table class="kgr-table kts-tabel">' +
+      '<caption>' +
+      esc(labelTransformasi(preset.t)) +
+      '</caption>' +
+      '<thead><tr><th scope="col">Titik asal</th><th scope="col">Bayangan</th></tr></thead><tbody>' +
+      b.pts
+        .map(function (p, i) {
+          return (
+            '<tr><td>' +
+            esc(b.titik[i]) +
+            formatKoordinat(p) +
+            '</td><td>' +
+            esc(aksen[i]) +
+            formatKoordinat(hasil[i]) +
+            '</td></tr>'
+          );
+        })
+        .join('') +
+      '</tbody></table></div>' +
+      '<div class="kts-banding">' +
+      ktsYaTidak_(banding.ukuranTetap, 'Ukuran tetap', 'Ukuran berubah') +
+      ktsYaTidak_(banding.bentukTetap, 'Bentuk tetap', 'Bentuk berubah') +
+      ktsYaTidak_(!banding.posisiBerubah, 'Posisi tetap', 'Posisi berpindah') +
+      ktsYaTidak_(banding.arahTetap, 'Arah hadap tetap', 'Arah hadap terbalik') +
+      '</div>'
+    : '<p class="dl-caption">Pilih sebuah gerakan untuk melihat bayangan bangun (oranye).</p>';
+  return (
+    '<div class="kts-lab kts-lab--gerak" id="' +
+    esc(id) +
+    '">' +
+    '<div class="kts-lab__bidang">' +
+    tab +
+    buildBidangKartesius(id + '-bidang', {
+      bangun: bangun,
+      judul:
+        b.nama +
+        ' (biru)' +
+        (hasil ? ' dan bayangannya (oranye) setelah ' + labelTransformasi(preset.t) : ''),
+    }) +
+    '</div>' +
+    '<div class="kts-lab__panel">' +
+    tombol +
+    tabel +
+    '</div>' +
+    '</div>'
+  );
+}
+
+function bindLabGerakKts(root, id, st, cfg, save, rerender) {
+  var el = root.querySelector('#' + id);
+  if (!el) return;
+  el.querySelectorAll('[data-kts-bangun]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      st.bangun = btn.dataset.ktsBangun;
+      st.preset = null;
+      save();
+      rerender('[data-kts-bangun="' + st.bangun + '"]');
+    });
+  });
+  el.querySelectorAll('[data-kts-preset]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      terapkanLabGerakKts(st, cfg, btn.dataset.ktsPreset);
+      save();
+      rerender('[data-kts-preset="' + btn.dataset.ktsPreset + '"]');
+    });
+  });
+}
+
+/* Tabel catatan percobaan Lab Gerak. */
+function buildLogGerakKts(st, cfg) {
+  if (!st.log.length) return '<p class="dl-caption">Belum ada percobaan yang tercatat.</p>';
+  var ya = function (v) {
+    return (
+      '<td class="' + (v ? 'kts-sel--ya' : 'kts-sel--tidak') + '">' + (v ? 'Ya' : 'Tidak') + '</td>'
+    );
+  };
+  return (
+    '<div class="kgr-table-wrap"><table class="kgr-table kts-log">' +
+    '<caption>Catatan percobaan (' +
+    st.log.length +
+    ')</caption>' +
+    '<thead><tr><th scope="col">Bangun</th><th scope="col">Gerakan</th><th scope="col">Ukuran tetap?</th>' +
+    '<th scope="col">Bentuk tetap?</th><th scope="col">Arah hadap tetap?</th></tr></thead><tbody>' +
+    st.log
+      .map(function (e) {
+        var b = cariKts_(cfg.bangun, e.bangun);
+        var p = cariKts_(cfg.preset, e.preset);
+        var r = bandingTransformasi(b.pts, transformasiBangun(b.pts, p.t));
+        return (
+          '<tr><td>' +
+          esc(b.nama) +
+          '</td><td>' +
+          esc(labelTransformasi(p.t)) +
+          '</td>' +
+          ya(r.ukuranTetap) +
+          ya(r.bentukTetap) +
+          ya(r.arahTetap) +
           '</tr>'
         );
       })
